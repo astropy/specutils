@@ -15,7 +15,7 @@ import specutils
 
 # Set affiliated package-specific settings
 PACKAGENAME = 'specutils'
-DESCRIPTION = 'Astropy affiliated package for 1D spectral operations. '
+DESCRIPTION = 'Astropy affiliated package for astronomical spectral operations.'
 LONG_DESCRIPTION = specutils.__doc__
 AUTHOR = 'Specutils developers, Wolfgang Kerzendorf'
 AUTHOR_EMAIL = 'wkerzendorf@gmail.com'
