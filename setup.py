@@ -11,12 +11,14 @@ from setuptools import setup, find_packages
 from astropy import setup_helpers
 from astropy.version_helper import get_git_devstr, generate_version_py
 
+import specutils
+
 # Set affiliated package-specific settings
-PACKAGENAME = 'packagename'
-DESCRIPTION = 'Astropy affiliated package'
-LONG_DESCRIPTION = ''
-AUTHOR = ''
-AUTHOR_EMAIL = ''
+PACKAGENAME = 'specutils'
+DESCRIPTION = 'Astropy affiliated package for 1D spectral operations. '
+LONG_DESCRIPTION = specutils.__doc__
+AUTHOR = 'Specutils developers, Wolfgang Kerzendorf'
+AUTHOR_EMAIL = 'wkerzendorf@gmail.com'
 LICENSE = 'BSD'
 URL = 'http://astropy.org'
 
