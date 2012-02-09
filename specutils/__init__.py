@@ -1,4 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""
+The specutils package implements base classes and utilities for
+interacting with astronomical spectra in Python and the Astropy 
+project.  It is intended for eventual merger with the `astropy`
+package, but for now is being developed independently.
+"""
+
 
 try:
     from .version import version as __version__
