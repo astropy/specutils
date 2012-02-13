@@ -26,11 +26,11 @@ class Spectrum1D(NDData):
     """Class implementing a 1D spectrum"""
     
     @classmethod
-    def from_dispflux(cls, disp, flux, error=None, mask=None):
-        """Initializing `Spectrum1D`-object from two `numpy.ndarray` object
+    def from_array(cls, disp, flux, error=None, mask=None):
+        """Initializing `Spectrum1D`-object from two `numpy.ndarray` objects
         
-        Paramateres:
-        ------------
+        Parameters:
+        -----------
             disp: `numpy.ndarray`
                 dispersion solution (e.g. wavelength array)
             flux: `numpy.ndarray`
@@ -40,6 +40,26 @@ class Spectrum1D(NDData):
             
         return cls(data=flux, wcs=disp, error=error, mask=mask)
     
+    @classmethod
+    def from_table(cls, table, error=None, mask=None, disp_col='disp', flux_col='flux'):
+        flux = table[flux_col]
+        disp = table[disp_col]
+        return cls(data=flux, wcs=disp, error=error, mask=mask)
+        
+    
+    
+    @classmethod
+    def from_ascii(cls, filename, error=None, mask=None, dtype=np.float, comments='#',
+                   delimiter=None, converters=None, skiprows=0,
+                   usecols=None):
+        raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
+                   delimiter=delimiter, converters=converters,
+                   skiprows=skiprows, usecols=usecols, ndmin=2)
+        if raw_data.shape[1] != 2:
+            raise ValueError('Data from asciifile needs to have excatley two columns')
+        
+        return cls(data=raw_data[:,1], wcs=raw_data[:,0], error=error, mask=mask)
+        
     @classmethod
     def from_fits(cls, filename, error=None):
         """This is an example function to demonstrate how
