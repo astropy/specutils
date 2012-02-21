@@ -3,7 +3,7 @@
 
 # Python packages
 from abc import ABCMeta, abstractmethod, abstractproperty
-from copy impory copy, deepcopy
+from copy import copy, deepcopy
 
 # External packages
 from scipy import interpolate
