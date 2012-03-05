@@ -2,17 +2,25 @@
 #This module implements the Spectrum1D class. It is eventually supposed to migrate to astropy core
 
 from astropy.nddata import NDData
-from scipy import interpolate
+
+#!!!! checking scipy availability
+scipy_available = True
+try:
+    import scipy
+    from scipy import interpolate
+except ImportError:
+    scipy_available = False
+
+import copy
+
 import numpy as np
 
 def spec_operation(func):
     def convert_operands(self, operand):
         if isinstance(operand, self.__class__):
-            if all(self.disp == operand.disp):
-                return func(self, operand.flux)
-            else:
-                new_disp = np.union1d(self.disp, operand.disp)
-                return func(self.interpolate(new_disp), operand.interpolate(new_disp).flux)
+            if not (all(self.dispersion == operand.dispersion) and\
+                self.units == operand.units):
+                raise ValueError('Dispersion and units need to match for both Spectrum1D objects')
 
         elif np.isscalar(operand):
             return func(self, operand)
@@ -21,84 +29,145 @@ def spec_operation(func):
                              (type(self), type(operand)))
     return convert_operands
 
+class BoolMask(object):
+    
+    #Needs to live in NDData sooner or later
+    #should also be a subclass of nddata, but am not sure how.
+    
+    def __init__(self, mask):
+        self.mask = mask.astype(bool)
+    
+    def __getitem__(self, key):
+        return BoolMask(self.mask[key])
+    
+    def interpolate():
+        pass
+    
+    def bool_arithmetic(a, b):
+        if isinstance(a, BoolMask) and isinstance(b, boolmask):
+            return BoolMask(np.logical_and(a.mask, b.mask))
+        else:
+            raise ValueError("unsupported operand type(s): %s and %s" % \
+                             (type(a), type(b)))
+    
+    def __add__(self, operand):
+        return bool_arithmetic(self, operand)
+    
+    def __sub__(self, operand):
+        return bool_arithmetic(self, operand)
+        
+    def __mul__(self, operand):
+        return bool_arithmetic(self, operand)
+
+    def __div__(self, operand):
+        return bool_arithmetic(self, operand)
+    
+    
+    #mirror functions
+    def __radd__(self, operand):
+        return self.__add__(operand, self)
+        
+    def __rsub__(self, operand):
+        return self.__sub__(operand, self)
+        
+    def __rmul__(self, operand):
+        return self.__mul__(operand, self)
+            
+    def __rdiv__(self, operand):
+        return self.__div__(operand, self)
+
 
 class Spectrum1D(NDData):
     """Class implementing a 1D spectrum"""
     
-    @classmethod
-    def from_array(cls, disp, flux, error=None, mask=None):
-        """Initializing `Spectrum1D`-object from two `numpy.ndarray` objects
+    def __init__(self, flux, dispersion=None, dispersion_unit=None,
+                 error=None, mask=None, wcs=None, meta=None,
+                 units=None, copy=True, validate=True):
+        #needed to change order from (dispersion, flux) -> (flux, dispersion)
+        #as dispersion=None for wcs.
         
-        Parameters:
-        -----------
-            disp: `numpy.ndarray`
-                dispersion solution (e.g. wavelength array)
-            flux: `numpy.ndarray`
-                flux array"""
-        if disp.ndim != 1 or disp.shape != flux.shape:
-            raise ValueError('disp and flux need to be one-dimensional arrays with the same shape')
-            
-        return cls(data=flux, wcs=disp, error=error, mask=mask)
-    
-    @classmethod
-    def from_table(cls, table, error=None, mask=None, disp_col='disp', flux_col='flux'):
-        flux = table[flux_col]
-        disp = table[disp_col]
-        return cls(data=flux, wcs=disp, error=error, mask=mask)
+        #added some WCS classes as I was not sure how to deal with both wcs and 
         
-    
-    
-    @classmethod
-    def from_ascii(cls, filename, error=None, mask=None, dtype=np.float, comments='#',
-                   delimiter=None, converters=None, skiprows=0,
-                   usecols=None):
-        raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
-                   delimiter=delimiter, converters=converters,
-                   skiprows=skiprows, usecols=usecols, ndmin=2)
-        if raw_data.shape[1] != 2:
-            raise ValueError('Data from asciifile needs to have excatley two columns')
+                
         
-        return cls(data=raw_data[:,1], wcs=raw_data[:,0], error=error, mask=mask)
+        NDData.__init__(self, data=flux, error=error, mask=mask,
+                        wcs=wcs, meta=meta, units=units,
+                        copy=copy, validate=validate)
         
-    @classmethod
-    def from_fits(cls, filename, error=None):
-        """This is an example function to demonstrate how
-        classmethods are a clean way to instantiate Spectrum1D objects"""
-        raise NotImplementedError('This function is not implemented yet')
-    
+        if wcs==None:
+            self.dispersion = dispersion
+            self.dispersion_unit = dispersion_unit
+        else:
+            self.wcs = wcs
+            self.dispersion = wcs.get_lookup_table()
+            self.dispersion_unit = wcs.units[0]
     
     @property
     def flux(self):
         #returning the flux
         return self.data
         
-    @flux.setter
-    def flux_setter(self, flux):
-        self.data = flux
+        
+    #!!!! Not sure if we should have a setter for the flux
+    #!!!! as we don't check if the new flux has the same shape as the error and mask
     
-    @property
-    def disp(self):
-        #returning the disp
-        return self.wcs
+    #@flux.setter
+    #def flux_setter(self, flux):
+    #    self.data = flux
+    
     
         
-    def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
+    def interpolate(self, dispersion, kind='linear', bounds_error=True, fill_value=np.nan, copy=True):
         """Interpolates onto a new wavelength grid and returns a `Spectrum1D`-obect
         Parameters:
         -----------
         
-        new_disp: `numpy.ndarray`
+        dispersion: `numpy.ndarray`
             new dispersion array
         """
-        spectrum_interp = interpolate.interp1d(self.disp, self.flux,
+        
+        if not scipy_available:
+            if kind != 'linear':
+                raise ValueError('Only \'linear\' interpolation is available if scipy is not installed')
+            
+            #### Erik & Thomas --- Can you tell me which logging stream to attach to and warn,
+            #### about that bounds_error & fill_value is ignored as scipy not available
+            interpolated_flux = np.interp(new_)
+        else:
+            spectrum_interp = interpolate.interp1d(self.disp, self.flux,
                                         kind=kind, bounds_error=bounds_error,
                                         fill_value=fill_value)
-        new_flux = spectrum_interp(new_disp)
+            new_flux = spectrum_interp(dispersion)
+            
+            if error!=None:
+                new_error = self.error.interpolate(dispersion,
+                                                   kind=kind,
+                                                   bounds_error=bounds_error,
+                                                   fill_value=fill_value)
+            else:
+                new_error = None
+            
+            if mask!=None:
+                new_mask = self.mask.interpolate(dispersion,
+                                                   kind=kind,
+                                                   bounds_error=bounds_error,
+                                                   fill_value=fill_value)
+            else:
+                new_mask = None
+            
+            
+            
         
-        return self.__class__.from_dispflux(new_disp, new_flux)
+        if copy:    
+            return self.__class__(new_flux, dispersion, error=new_error,
+                                mask=new_mask, meta=copy.deepcopy(meta),
+                                copy=False)
+        else:
+            raise NotImplementedError('Inplace will be implemented soon')
         
         
-    def slice(self, start=None, stop=None, units='disp'):
+        
+    def slice(self, start=None, stop=None, units='dispersion'):
         """Slicing the spectrum
         
         Paramaters:
@@ -112,11 +181,11 @@ class Spectrum1D(NDData):
             allowed values are 'disp', 'pixel'
         """
         
-        if units == 'disp':
+        if units == 'dispersion':
             if start == None:
                 start_idx = None
             else:
-                start_idx = self.disp.searchsorted(start)
+                start_idx = self.dispersion.searchsorted(start)
             
             if stop == None:
                 stop_idx = None
@@ -124,70 +193,19 @@ class Spectrum1D(NDData):
                 stop_idx = self.disp.searchsorted(stop)
             
             spectrum_slice = slice(start_idx, stop_idx)
-        elif units == 'pixel':
+        elif units == 'index':
             spectrum_slice = slice(start, stop)
         else:
-            raise ValueError("units keyword can only have the values 'disp', 'pixel'")
+            raise ValueError("units keyword can only have the values 'disp', 'index'")
         
-        return self.__class__.from_dispflux(self.disp[spectrum_slice], self.flux[spectrum_slice])
-    
-    @spec_operation
-    def __add__(self, operand):
         
-        """Adds two spectra together, or adds finite real numbers across an entire spectrum."""
-        
-        return self.__class__.from_dispflux(self.disp, self.flux + operand)
-        
-
-    @spec_operation
-    def __sub__(self, operand):
-        
-        """Subtracts two spectra, or subtracts a finite real numbers from an entire spectrum."""
-        
-        return self.__class__.from_dispflux(self.disp, self.flux - operand)
-        
-
-    @spec_operation
-    def __mul__(self, operand):
-        
-        """Multiplies two spectra, or multiplies a finite real numbers across an entire spectrum."""
-        
-        return self.__class__.from_dispflux(self.disp, self.flux * operand)
-        
-
-    @spec_operation
-    def __div__(self, operand):
-        
-        """Divides two spectra, or divides a finite real numbers across an entire spectrum."""
-        
-        return self.__class__.from_dispflux(self.disp, self.flux / operand)
-        
-    @spec_operation
-    def __pow__(self, operand):
-        
-        """Performs power operations on spectra."""
-        
-        return self.__class__.from_dispflux(self.disp, self.flux ** operand)
-        
-
-    def __len__(self):
-        return len(self.disp)
+        if copy:
+            return self.__class__(self.flux[spectrum_slice],
+                                  self.dispersion[spectrum_slice],
+                                  error=self.error[spectrum_slice],
+                                  mask=self.mask[spectrum_slice],
+                                  meta=copy.deepcopy(meta))
+        else:
+            raise NotImplementedError('Inplace will be implemented soon')
 
 
-    # Mirror functions
-    
-    def __radd__(self, spectrum, **kwargs):
-        return self.__add__(spectrum, **kwargs)
-        
-    def __rsub__(self, spectrum, **kwargs):
-        return self.__sub__(spectrum, **kwargs)
-        
-    def __rmul__(self, spectrum, **kwargs):
-        return self.__mul__(spectrum, **kwargs)
-            
-    def __rdiv__(self, spectrum, **kwargs):
-        return self.__div__(spectrum, **kwargs)
-    
-    def __rpow__(self, spectrum, **kwargs):
-        return self.__pow__(spectrum, **kwargs)
-        
