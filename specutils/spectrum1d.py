@@ -111,8 +111,7 @@ class SDError(np.ndarray):
         return obj
     
     def interpolate(self, old_lookup_table, new_lookup_table):
-        new_mask_raw = np.interp(new_lookup_table, old_lookup_table, self.astype(float64), left=1, right=1)
-        return np.ceil(new_mask_raw).astype(bool)
+        return np.interp(new_lookup_table, old_lookup_table)
     
     def check_operand(self, operand):
     #checking if both of the operands are SDerrors or raising an exception
@@ -198,13 +197,13 @@ class Spectrum1D(NDData):
             #### about that bounds_error & fill_value is ignored as scipy not available
             interpolated_flux = np.interp(new_)
         else:
-            spectrum_interp = interpolate.interp1d(self.disp, self.flux,
+            spectrum_interp = interpolate.interp1d(self.dispersion, self.flux,
                                         kind=kind, bounds_error=bounds_error,
                                         fill_value=fill_value)
             new_flux = spectrum_interp(dispersion)
             
             if error!=None:
-                new_error = self.error.interpolate(dispersion,
+                new_error = self.error.interpolate(self.dispersion, dispersion,
                                                    kind=kind,
                                                    bounds_error=bounds_error,
                                                    fill_value=fill_value)
@@ -212,7 +211,7 @@ class Spectrum1D(NDData):
                 new_error = None
             
             if mask!=None:
-                new_mask = self.mask.interpolate(dispersion,
+                new_mask = self.mask.interpolate(self.dispersion, dispersion,
                                                    kind=kind,
                                                    bounds_error=bounds_error,
                                                    fill_value=fill_value)
