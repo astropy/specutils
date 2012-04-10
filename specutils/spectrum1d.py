@@ -53,89 +53,16 @@ def spec_operation(func):
                 raise ValueError('Dispersion and units need to match for both Spectrum1D objects')
             
             flux = operand.flux
-            mask = operand.mask
-            error = operand.error
-            meta = operand.meta
-        #for a scalar the flux is the scalar and the error and mask and meta are None/ {}
         elif np.isscalar(operand):
             flux = operand
-            mask = None
-            error = None
-            meta = {}
             
         else:
             raise ValueError("unsupported operand type(s) for operation: %s and %s" %
                              (type(self), type(operand)))
         
-        return func(self, flux, error, mask, meta)
+        return func(self, flux)
         
     return convert_operands
-
-
-class BoolMask(np.ndarray):
-    # !!! To be discussed; should probably live somewhere near NDData
-    def __new__(cls, input_array):
-        obj = np.asarray(input_array, dtype='bool').view(cls)
-        return obj
-    
-    def interpolate(self, old_lookup_table, new_lookup_table):
-        new_mask_raw = np.interp(new_lookup_table, old_lookup_table, self.astype(float64), left=1, right=1)
-        return np.ceil(new_mask_raw).astype(bool)
-    
-    def bool_arithmetic(self, operand):
-        # !!!! What happens if None?
-        if operand == None:
-            return self
-        if not isinstance(operand, BoolMask):
-            raise ValueError('unsupported operand type(s) for +: %s and %s' %\
-                             (type(self), type(operand)))
-        return np.logical_or(self, operand)
-
-    def mask_add(self, operand):
-        return self.bool_arithmetic(operand)
-        
-    def mask_sub(self, operand):
-        return self.bool_arithmetic(operand)
-    
-    def mask_mul(self, operand):
-        return self.bool_arithmetic(operand)
-        
-    def mask_div(self, operand):
-        return self.bool_arithmetic(operand)
-
-
-class SDError(np.ndarray):
-    
-    def __new__(cls, input_array):
-        obj = np.asarray(input_array).view(cls)
-        return obj
-    
-    def interpolate(self, old_lookup_table, new_lookup_table):
-        return np.interp(new_lookup_table, old_lookup_table)
-    
-    def check_operand(self, operand):
-    #checking if both of the operands are SDerrors or raising an exception
-    
-    # !!!! What happens if None?
-        if not isinstance(operand, SDError):
-            raise ValueError('unsupported operand type(s) for +: %s and %s' %\
-                             (type(self), type(operand)))
-    
-    def error_add(self, self_data, operand, operand_data, result_data):
-        self.check_operand(operand)
-        return np.sqrt(self**2 + operand**2)
-        
-    def error_sub(self, self_data, operand, operand_data, result_data):
-        self.check_operand(operand)
-        return np.sqrt(self**2 + operand**2)
-
-    def error_mul(self, self_data, operand, operand_data, result_data):
-        self.check_operand(operand)
-        return np.sqrt((self / self_data)**2 + (operand / operand_data)**2)
-        
-    def error_div(self, self_data, operand, operand_data, result_data):
-        self.check_operand(operand)
-        return np.sqrt((self / self_data)**2 + (operand / operand_data)**2)
 
 
 
@@ -201,25 +128,7 @@ class Spectrum1D(NDData):
                                         kind=kind, bounds_error=bounds_error,
                                         fill_value=fill_value)
             new_flux = spectrum_interp(dispersion)
-            
-            if error!=None:
-                new_error = self.error.interpolate(self.dispersion, dispersion,
-                                                   kind=kind,
-                                                   bounds_error=bounds_error,
-                                                   fill_value=fill_value)
-            else:
-                new_error = None
-            
-            if mask!=None:
-                new_mask = self.mask.interpolate(self.dispersion, dispersion,
-                                                   kind=kind,
-                                                   bounds_error=bounds_error,
-                                                   fill_value=fill_value)
-            else:
-                new_mask = None
-            
-            
-            
+
         
         if copy:    
             return self.__class__(new_flux, dispersion, error=new_error,
@@ -275,116 +184,14 @@ class Spectrum1D(NDData):
             raise NotImplementedError('Inplace will be implemented soon')
 
     @spec_operation
-    def __add__(self, operand_flux, operand_error, operand_mask, operand_meta):
-        new_flux = self.flux + operand_flux
-        
-        if self.error != None and operand_error!=None:
-            new_error = self.error.error_add(self.flux, operand_error, operand_flux, new_flux)
-        else:
-            new_error = None
-        
-        if self.mask != None:
-            new_mask = self.mask.mask_add(operand_mask)
-        elif operand_mask != None:
-            new_mask = operand_mask.copy()
-        else:
-            new_mask = None
-        
-        new_meta = merge_meta(self.meta, operand_meta)
-        
-        return self.__class__(new_flux,
-                              #!!! What if it's a WCS
-                              self.dispersion.copy(),
-                              error=new_error,
-                              mask=new_mask,
-                              meta=new_meta)
-    
-    @spec_operation
-    def __sub__(self, operand_flux, operand_error, operand_mask, operand_meta):
-        new_flux = self.flux + operand_flux
-        
-        if self.error != None and operand_error!=None:
-            new_error = self.error.error_sub(self.flux, operand_error, operand_flux, new_flux)
-        else:
-            new_error = None
-        
-        if self.mask != None:
-            new_mask = self.mask.mask_sub(operand_mask)
-        elif operand_mask != None:
-            new_mask = operand_mask.copy()
-        else:
-            new_mask = None
-        
-        new_meta = merge_meta(self.meta, operand_meta)
-        
-        return self.__class__(new_flux,
-                              #!!! What if it's a WCS
-                              self.dispersion.copy(),
-                              error=new_error,
-                              mask=new_mask,
-                              meta=new_meta)
-    
-    @spec_operation
-    def __mul__(self, operand_flux, operand_error, operand_mask, operand_meta):
-        new_flux = self.flux + operand_flux
-        
-        if self.error != None and operand_error!=None:
-            new_error = self.error.error_mul(self.flux, operand_error, operand_flux, new_flux)
-        else:
-            new_error = None
-        
-        if self.mask != None:
-            new_mask = self.mask.mask_mul(operand_mask)
-            
-        elif operand_mask != None:
-            new_mask = operand_mask.copy()
-        else:
-            new_mask = None
-        
-        new_meta = merge_meta(self.meta, operand_meta)
-        
-        return self.__class__(new_flux,
-                              #!!! What if it's a WCS
-                              self.dispersion.copy(),
-                              error=new_error,
-                              mask=new_mask,
-                              meta=new_meta)
-    
-    @spec_operation
-    def __div__(self, operand_flux, operand_error, operand_mask, operand_meta):
-        new_flux = self.flux + operand_flux
-        
-        if self.error != None and operand_error!=None:
-            new_error = self.error.error_div(self.flux, operand_error, operand_flux, new_flux)
-        else:
-            new_error = None
-        
-        if self.mask != None:
-            new_mask = self.mask.mask_div(operand_mask)
-        elif operand_mask != None:
-            new_mask = operand_mask.copy()
-        else:
-            new_mask = None
-        
-        new_meta = merge_meta(self.meta, operand_meta)
-        
-        return self.__class__(new_flux,
-                              #!!! What if it's a WCS
-                              self.dispersion.copy(),
-                              error=new_error,
-                              mask=new_mask,
-                              meta=new_meta)
+    def __add__(self, operand_flux):
 
-if __name__ == '__main__':
-    my_first_spec = Spectrum1D(np.random.rand(1000),
-                               linspace(4000, 7000, 1000),
-                               error=SDError(np.random.rand(1000)),
-                               mask = BoolMask(np.random.rand(1000) > .5),
-                               meta = dict(a=5, b=7, c=9))
-    
-    my_second_spec = Spectrum1D(np.random.rand(1000),
-                               linspace(4000, 7000, 1000),
-                               error=SDError(np.random.rand(1000)),
-                               mask = BoolMask(np.random.rand(1000) > .5),
-                               meta = dict(c=9, d=11, e=13))
-
+        new_flux = self.flux + operand_flux
+        
+        
+        new_meta = merge_meta(self.meta, operand_meta)
+        
+        return self.__class__(new_flux,
+                              #!!! What if it's a WCS
+                              self.dispersion.copy(),
+                              meta=new_meta)
