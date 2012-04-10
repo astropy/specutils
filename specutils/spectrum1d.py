@@ -1,293 +1,194 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-# This module implements the Spectrum1D class. It is eventually supposed to migrate to astropy core
+#This module implements the Spectrum1D class. It is eventually supposed to migrate to astropy core
 
-# Python packages
-from abc import ABCMeta, abstractmethod, abstractproperty
-from copy import copy, deepcopy
-
-# External packages
-from scipy import interpolate
-import numpy as np  
-
-# Local packages
 from astropy.nddata import NDData
 
-class SpectrumErrorArray(object):
-    """ Represents the error axis of a Spectrum object
-    
-    .. warning::
-        This is skeleton code!
-    
-    Spectral data errors can be represented in a variety of ways, e.g. 1-sigma
-    errors, inverse variance, variance, etc. In order to provide generic functionality,
-    the error data must carry with it some metadata and operations that help
-    handle transformations of the error array.
+#!!!! checking scipy availability
+scipy_available = True
+try:
+    import scipy
+    from scipy import interpolate
+except ImportError:
+    scipy_available = False
 
-    Parameters
-    ----------
-    array : `~numpy.ndarray`
-        The error values
-    
-    Notes
-    -----
-    This class is abstract and can only be subclassed and used by
-    classes that will access its API.
+import copy
 
-    """
-    
-    # This is an abstract class and can only be subclassed.
-    __metaclass__ = ABCMeta
-    
-    def __init__(self, values):
-        self.values = values
-    
-    @abstractmethod
-    def interpolate(self, new_dispersion):
-        pass
+import numpy as np
 
-class InverseVarianceErrorArray(SpectrumErrorArray):
-    # ...
-    
-    def interpolate(self, new_dispersion):
-        pass
 
-class VarianceErrorArray(SpectrumErrorArray):
-    # ...
+def warn2logging(message, logstream=None):
+    #!!!!!! Thomas you are the logging expert, I will call this function whenever I want to log to warn.
+    #!!!!! Can you tell me what to write in here.
+    print 'WARNING: %s' % message
     
-    def interpolate(self, new_dispersion):
-        pass
+    
+    
+def merge_meta(meta1, meta2, logstream=None):
+    #Merging meta information and removing all duplicate keys -- warning what keys were removed
+    #should be in NDData somewhere
+    meta1_keys = meta1.viewkeys()
+    meta2_keys = meta2.viewkeys()
+    
+    
+    duplicates = meta1_keys & meta2_keys
+    
+    if len(duplicates) > 0:
+        warn2logging('Removing duplicate keys found in meta data: ' + ','.join(duplicates), logstream=logstream)
+    
+    new_meta = copy.deepcopy(meta1)
+    new_meta.update(copy.deepcopy(meta2))
+    for key in duplicates:
+        del new_meta[key]
+    
+    return new_meta
 
-class Spectrum1DBase(NDData):
-    """ Base class for Spectrum1D objects.
-    
-    .. warning::
-        This is skeleton code!
-    
-    `Spectrum1DBase` is a stripped-down superclass of the Spectrum1D object
-    that allows for creation of a Spectrum-like object **without** an internal
-    dispersion array. This allows for the possibility of creating a 
-    SpectrumCollection type class that could contain many spectra that share
-    the same dispersion axis (e.g. SDSS spectra from the same plate).
-
-    Parameters
-    ----------
-    flux : `~numpy.ndarray`
-        The flux data as an array
+def spec_operation(func):
+    #used as a decorator for the arithmetic of spectra
+    def convert_operands(self, operand):
         
-    Notes
-    -----
-    This class should be 'private' in that it should really only be subclassed
-    and used by Spectrum1D and SpectrumCollection
-
-    """
-    def __init__(self):
-        pass # not yet implemented
-        
-    @property
-    def spectrum1DBase(self):
-        """ This method returns an object equivalent to this spectrum but as
-            a Spectrum1DBase object, i.e. without a dispersion array.
-            It is left to subclasses to handle this in more detail (e.g., see Spectrum1D).
-        """
-        return self    
-    
-class Spectrum1D(Spectrum1DBase):
-    """ Class for 1-dimensional Spectrum objects.
-    
-    .. warning::
-        This is skeleton code!
-    
-    `Spectrum1D` provides a container for 1-dimensional spectral data as well
-    as generic operations for this data.
-
-    Parameters
-    ----------
-    flux : `~numpy.ndarray`
-        The flux data as an array
-    dispersion : `~numpy.ndarray`
-        An array of data representing the dispersion axis of the spectral data,
-        e.g. wavelength, frequency, energy, velocity, etc.
-    <NDData parameters...>
-        
-    Notes
-    -----
-    
-    """
-    # This is an abstract class and can only be subclassed.
-    __metaclass__ = ABCMeta
-    
-    @property
-    def spectrum1DBase(self):
-        """ Return a new Spectrum1DBase object from this spectrum.
-        
-            This basically is the same thing but without the dispersion array,
-            but we'll see how this develops. """
-        # There will be a better way to do this, but this is the general idea.
-        # Basically I want to create a Spectrum1DBase object from a Spectrum1D object.
-        spectrum_copy = deepcopy(self)
-        spectrum_copy.dispersion = None
-        return spectrum_copy
-
-    def slice_dispersion(self, start=None, end=None):
-        """ Slices the data arrays based on values in the dispersion array
-        
-            Parameters
-            ----------
-            start : any numeric type, optional
-                The minimum value in the dispersion axis to slice on
-            end : any numeric type, optional
-                The maximum value in the dispersion axis to slice on
-        """
-        pass
-    
-    def slice_pixel(self, start=None, end=None):
-        """ Slices the data arrays on pixel index (e.g. array index)
-        
-            Parameters
-            ----------
-            start : int, optional
-                The starting index to slice the arrays on
-            end : int, optional
-                The ending index to slice the arrays on
+        #checking if they have the same wcs and units
+        if isinstance(operand, self.__class__):
+            if not (all(self.dispersion == operand.dispersion) and\
+                self.units == operand.units):
+                raise ValueError('Dispersion and units need to match for both Spectrum1D objects')
             
-            Notes
-            -----
-            This is equivalent to slicing each array like array[start:end]
+            flux = operand.flux
+        elif np.isscalar(operand):
+            flux = operand
             
-        """
-        pass
-    
-    def interpolate_linear(self, new_dispersion):
-        """ Uses linear interpolation to resample the internal arrays onto
-            the specified dispersion axis.
-        
-            Parameters
-            ----------
-            new_dispersion : `~numpy.ndarray`
-                The new dispersion array to interpolate on to
-            
-        """
-        pass
-        
-    def interpolate_bspline(self, new_dispersion):
-        """ Uses B-spline interpolation to resample the internal arrays onto
-            the specified dispersion axis.
-        
-            Parameters
-            ----------
-            new_dispersion : `~numpy.ndarray`
-                The new dispersion array to interpolate on to
-            
-        """
-        pass
-    
-    def smooth_boxcar(self, width):
-        """ Uses boxcar smoothing to smooth the internal arrays.
-        
-            Parameters
-            ----------
-            width : integer
-                The boxcar width in pixels.
-                
-            Reference: <a href="http://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.boxcar.html" target="_blank">scipy.signal.boxcar</a>
-        
-        """
-        # I don't know if this is really the proper way to do this... should be tested!!
-        from scipy.signal import convolve, boxcar
-        self.flux = convolve(self.flux, boxcar(M=width))
-    
-    def smooth_custom(self):
-        """ Allows for a user defined smoothing operation.
-            
-            This is simply a template function meant to be overwritten
-            by a custom function e.g.:
-            
-            def so_smooth(self):
-                # Do something with flux, dispersion, error
-            
-            spectrumObject.custom_smooth = so_smooth
-            spectrumObject.custom_smooth()
-        """
-        pass
-    
-    def plot(self, **kwargs):
-        """ Plotting utility for the spectrum.
-            
-            Parameters
-            ----------
-            axes : `~matplotlib.pyplot.Axes`, optional
-                A matplotlib Axes() object to plot the spectrum on
-            filename : str, optional
-                A filename to save the plot to
-            show_error : bool, optional
-                Decide whether to use the error data when plotting
-                
-            Usage
-            -----
-            s = Spectrum1D(...)
-            
-            s.plot() - Attempt to display the object on screen
-                       using matplotlib's `show()` command.
-
-            s.plot(axes=ax) - Plot the data onto the specified
-                              Axes() object.
-            
-            s.plot(axes=ax) - Plot the data onto the specified
-                              Axes() object.
-            
-            s.plot(filename="myPlot.png") - Plot the data onto a new figure and
-                                save to the specified filename and path
-                                (default path if not specified).
-                                The format of the file will be deduced from the
-                                extension (e.g. ps, png, pdf).
-            
-            Notes
-            -----
-            Where it makes sense (i.e. not conflicting), multiple parameters
-            can be specified. For example,
-            
-            s.plot(filename="myPlot.pdf", axes=ax)
-            
-            will both write a file to the disk and return a matplotlib.Axes() object.
-        
-        """
-        pass
-            
-class Spectrum1DCollection(object):
-    """ A collection object for spectra that share the same dispersion information.
-    
-    """
-    def __init__(self):
-        self.spectra = list()
-        self.dispersion = None
-        
-    def append(self, spectrum):
-        """ Add a spectrum (of type Spectrum1D or Spectrum1DBase) to this collection.
-        
-        """
-        self.spectra.append(new_spectrum.spectrum1DBase)
-    
-    def len(self):
-        return len(self.spectra)
-    
-    @property
-    def dispersion(self):
-        return self.dispersion
-    
-    @dispersion.setter
-    def dispersion(self, new_dispersion):
-        """ Set the dispersion array to be used for all spectra in this collection.
-        
-        The dispersion argument accepts both a numpy array and a Spectrum1D object.
-        When the latter is specified, the dispersion is extracted from the object.
-        """
-        if is_instance(new_dispersion, Spectrum1D):
-            self.dispersion = new_dispersion.dispersion
-        elif is_instance(new_dispersion, list):
-            self.dispersion = np.array(new_dispersion)
-        elif is_instance(new_dispersion, np.array):
-            self.dispersion = new_dispersion
         else:
-            raise ValueError, "The dispersion specified could is not a known type. Should be a list, a numpy array, or a Spectrum1D object."
-        # Add other types that unambiguously define a dispersion array.
+            raise ValueError("unsupported operand type(s) for operation: %s and %s" %
+                             (type(self), type(operand)))
+        
+        return func(self, flux)
+        
+    return convert_operands
 
+
+
+class Spectrum1D(NDData):
+    """Class implementing a 1D spectrum"""
+    
+    def __init__(self, flux, dispersion=None, dispersion_unit=None,
+                 error=None, mask=None, wcs=None, meta=None,
+                 units=None, copy=True, validate=True):
+        #needed to change order from (dispersion, flux) -> (flux, dispersion)
+        #as dispersion=None for wcs.
+        
+        #added some WCS classes as I was not sure how to deal with both wcs and 
+        
+        
+        NDData.__init__(self, data=flux, error=error, mask=mask,
+                        wcs=wcs, meta=meta, units=units,
+                        copy=copy, validate=validate)
+        
+        if wcs==None:
+            self.dispersion = dispersion
+            self.dispersion_unit = dispersion_unit
+        else:
+            self.wcs = wcs
+            self.dispersion = wcs.get_lookup_table()
+            self.dispersion_unit = wcs.units[0]
+    
+    @property
+    def flux(self):
+        #returning the flux
+        return self.data
+        
+        
+    #!!!! Not sure if we should have a setter for the flux
+    #!!!! as we don't check if the new flux has the same shape as the error and mask
+    
+    #@flux.setter
+    #def flux_setter(self, flux):
+    #    self.data = flux
+    
+
+    
+
+    
+    def interpolate(self, dispersion, kind='linear', bounds_error=True, fill_value=np.nan, copy=True):
+        """Interpolates onto a new wavelength grid and returns a `Spectrum1D`-obect
+        Parameters:
+        -----------
+        
+        dispersion: `numpy.ndarray`
+            new dispersion array
+        """
+        
+        if not scipy_available:
+            if kind != 'linear':
+                raise ValueError('Only \'linear\' interpolation is available if scipy is not installed')
+            
+            #### Erik & Thomas --- Can you tell me which logging stream to attach to and warn,
+            #### about that bounds_error & fill_value is ignored as scipy not available
+            interpolated_flux = np.interp(new_)
+        else:
+            spectrum_interp = interpolate.interp1d(self.dispersion, self.flux,
+                                        kind=kind, bounds_error=bounds_error,
+                                        fill_value=fill_value)
+            new_flux = spectrum_interp(dispersion)
+
+        
+        if copy:    
+            return self.__class__(new_flux, dispersion, error=new_error,
+                                mask=new_mask, meta=copy.deepcopy(meta),
+                                copy=False)
+        else:
+            raise NotImplementedError('Inplace will be implemented soon')
+        
+        
+    #naming convention start and stop taken from python slices. these are nothing else but slices
+    #so i think we should keep start stop step
+    def slice(self, start=None, stop=None, step=None, units='dispersion'):
+        """Slicing the spectrum
+        
+        Paramaters:
+        -----------
+        
+        start: numpy.float or int
+            start of slice
+        stop:  numpy.float or int
+            stop of slice
+        units: str
+            allowed values are 'disp', 'pixel'
+        """
+        
+        if units == 'dispersion':
+            if step != None:
+                raise ValueError('step can only be specified for units=pixel')
+            if start == None:
+                start_idx = None
+            else:
+                start_idx = self.dispersion.searchsorted(start)
+            
+            if stop == None:
+                stop_idx = None
+            else:
+                stop_idx = self.dispersion.searchsorted(stop)
+            
+            spectrum_slice = slice(start_idx, stop_idx)
+        elif units == 'index':
+            spectrum_slice = slice(start, stop, step)
+        else:
+            raise ValueError("units keyword can only have the values 'disp', 'index'")
+        
+        
+        if copy:
+            return self.__class__(self.flux[spectrum_slice],
+                                  self.dispersion[spectrum_slice],
+                                  error=self.error[spectrum_slice],
+                                  mask=self.mask[spectrum_slice],
+                                  meta=copy.deepcopy(meta))
+        else:
+            raise NotImplementedError('Inplace will be implemented soon')
+
+    @spec_operation
+    def __add__(self, operand_flux):
+
+        new_flux = self.flux + operand_flux
+        new_meta = merge_meta(self.meta, operand_meta)
+        return self.__class__(new_flux,
+                              #!!! What if it's a WCS
+                              self.dispersion.copy(),
+                              meta=new_meta)
