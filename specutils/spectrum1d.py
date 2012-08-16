@@ -8,14 +8,6 @@ from astropy.nddata import NDData
 
 import numpy as np
 
-# Check for SciPy availability
-try:
-    from scipy import interpolate
-except ImportError as e:
-    is_scipy_available = False
-else:
-    is_scipy_available = True
-
 
 class Spectrum1D(NDData):
     """A subclass of `NDData` for a one dimensional spectrum in Astropy.
@@ -116,6 +108,12 @@ class Spectrum1D(NDData):
             If provided, then this value will be used to fill in for requested
             dispersion points outside of the original dispersion map. If not
             provided, then the default is NaN.
+        
+        Raises
+        ------
+        ImportError
+            If the `SciPy interpolate interp1d <http://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html>`_
+            function cannot be imported.
             
         Notes
         -----
@@ -123,6 +121,14 @@ class Spectrum1D(NDData):
         uncertainty is taken for each new dispersion point.
         
         """
+        
+        # Check for SciPy availability
+        try:
+            from scipy import interpolate
+        except ImportError as e:
+            raise ImportError("Could not import interpolate from scipy; cannot"+
+                              " interpolate to new dispersion map without this"+
+                              " (need scipy.interpolate.interp1d)")
         
         spectrum_interp = interpolate.interp1d(self.disp,
                                                self.flux,
