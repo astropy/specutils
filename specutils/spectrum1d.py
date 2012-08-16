@@ -46,7 +46,7 @@ class Spectrum1D(NDData):
         """
         
         if disp.ndim != 1 or disp.shape != flux.shape:
-            raise ValueError('disp and flux need to be one-dimensional arrays with the same shape')
+            raise ValueError("`disp` and `flux` need to be one-dimensional `~np.ndarrays` with the same shape")
             
         return cls(data=flux, wcs=disp, *args)
     
@@ -93,19 +93,76 @@ class Spectrum1D(NDData):
     
         
     def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
-        """Interpolates onto a new wavelength grid and returns a `Spectrum1D`-object.
-        Parameters:
-        -----------
+        """Interpolates onto a new wavelength grid and returns a new `Spectrum1D`-object.
         
-        new_disp: `numpy.ndarray`
-            new dispersion array
+        Parameters
+        ----------
+        new_disp : `~numpy.ndarray`
+            The dispersion array to interpolate the flux on to.
+        
+        kind : `str` or `int`, optional
+            Specifies the kind of interpolation as a string
+            ('linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic')
+            or as an integer specifying the order of the spline interpolator
+            to use. Default is 'linear'.
+        
+        bounds_error : `bool`, optional
+            If True, an error is thrown any time interpolation is attempted on a
+            dispersion point outside of the range of the original dispersion map
+            (where extrapolation is necessary). If False, out of bounds values
+            are assigned `fill_value`. By default, an error is raised.
+            
+        fill_value : `float`, optional
+            If provided, then this value will be used to fill in for requested
+            dispersion points outside of the original dispersion map. If not
+            provided, then the default is NaN.
+            
+        Notes
+        -----
+        When the `Spectrum1D` class has an associated error array, the nearest
+        uncertainty is taken for each new dispersion point.
+        
         """
-        spectrum_interp = interpolate.interp1d(self.disp, self.flux,
-                                        kind=kind, bounds_error=bounds_error,
-                                        fill_value=fill_value)
+        
+        spectrum_interp = interpolate.interp1d(self.disp,
+                                               self.flux,
+                                               kind=kind,
+                                               bounds_error=bounds_error,
+                                               fill_value=fill_value)
+        
         new_flux = spectrum_interp(new_disp)
         
-        return self.__class__.from_dispflux(new_disp, new_flux)
+        # We need to perform error calculation for the new dispersion map
+        if self.error is None:
+            new_error = None
+        else:
+            # After having a short think about it, it seems reasonable to me only to
+            # take the nearest uncertainty for each interpolated dispersion point
+            
+            new_error = interpolate.interp1d(self.disp,
+                                             self.flux,
+                                             kind=1, # Nearest
+                                             bounds_error=bounds_error,
+                                             fill_value=fill_value)
+        
+        # The same should also apply for masks
+        if self.mask is None:
+            new_mask = None
+        else:
+            new_mask = interpolate.interp1d(self.disp,
+                                            self.flux,
+                                            kind=1, # Nearest
+                                            bounds_error=bounds_error,
+                                            fill_value=fill_value)
+            
+        # As for flags it is not entirely clear to me what the best behaviour is
+        # In the face of uncertainty, for the time being, I am discarding flags
+        
+        return self.__class__.from_dispflux(new_disp,
+                                            new_flux,
+                                            error=new_error,
+                                            mask=new_mask,
+                                            meta=self.meta)
         
         
     def slice(self, start=None, stop=None, units='disp'):
