@@ -158,11 +158,11 @@ class Spectrum1D(NDData):
         # As for flags it is not entirely clear to me what the best behaviour is
         # In the face of uncertainty, for the time being, I am discarding flags
         
-        return self.__class__.from_dispflux(new_disp,
-                                            new_flux,
-                                            error=new_error,
-                                            mask=new_mask,
-                                            meta=self.meta)
+        return self.__class__.from_array(new_disp,
+                                         new_flux,
+                                         error=new_error,
+                                         mask=new_mask,
+                                         meta=self.meta)
         
         
     def slice_dispersion(self, start=None, stop=None):
@@ -257,47 +257,15 @@ class Spectrum1D(NDData):
         
         return self.__slice__(start_index, stop_index)
         
-    
         
         
-    def slice(self, start=None, stop=None, method='disp'):
-        """Slicing the spectrum
-        
-        Paramaters:
-        -----------
-        start : `float` or `int`
-            start of slice
-        stop : `float` or `int`
-            stop of slice
-        units : `str`
-            allowed values are 'disp', 'pixel'
-        """
-        
-        if units == 'disp':
-            if start == None:
-                start_idx = None
-            else:
-                start_idx = self.disp.searchsorted(start)
-            
-            if stop == None:
-                stop_idx = None
-            else:
-                stop_idx = self.disp.searchsorted(stop)
-            
-            spectrum_slice = slice(start_idx, stop_idx)
-        elif units == 'pixel':
-            spectrum_slice = slice(start, stop)
-        else:
-            raise ValueError("units keyword can only have the values 'disp', 'pixel'")
-        
-        return self.__class__.from_dispflux(self.disp[spectrum_slice], self.flux[spectrum_slice])
     
     @spec_operation
     def __add__(self, operand):
         
         """Adds two spectra together, or adds finite real numbers across an entire spectrum."""
         
-        return self.__class__.from_dispflux(self.disp, self.flux + operand)
+        return self.__class__.from_array(self.disp, self.flux + operand)
         
 
     @spec_operation
@@ -305,7 +273,7 @@ class Spectrum1D(NDData):
         
         """Subtracts two spectra, or subtracts a finite real numbers from an entire spectrum."""
         
-        return self.__class__.from_dispflux(self.disp, self.flux - operand)
+        return self.__class__.from_array(self.disp, self.flux - operand)
         
 
     @spec_operation
@@ -313,7 +281,7 @@ class Spectrum1D(NDData):
         
         """Multiplies two spectra, or multiplies a finite real numbers across an entire spectrum."""
         
-        return self.__class__.from_dispflux(self.disp, self.flux * operand)
+        return self.__class__.from_array(self.disp, self.flux * operand)
         
 
     @spec_operation
@@ -321,14 +289,14 @@ class Spectrum1D(NDData):
         
         """Divides two spectra, or divides a finite real numbers across an entire spectrum."""
         
-        return self.__class__.from_dispflux(self.disp, self.flux / operand)
+        return self.__class__.from_array(self.disp, self.flux / operand)
         
     @spec_operation
     def __pow__(self, operand):
         
         """Performs power operations on spectra."""
         
-        return self.__class__.from_dispflux(self.disp, self.flux ** operand)
+        return self.__class__.from_array(self.disp, self.flux ** operand)
         
 
     def __len__(self):
