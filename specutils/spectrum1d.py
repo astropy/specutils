@@ -3,6 +3,8 @@
 
 from __future__ import print_function, division
 
+__all__ = ['Spectrum1D', 'spec_operation']
+
 from astropy import log
 from astropy.nddata import NDData
 
@@ -57,8 +59,9 @@ class Spectrum1D(NDData):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
                    delimiter=delimiter, converters=converters,
                    skiprows=skiprows, usecols=usecols, ndmin=2)
+    
         if raw_data.shape[1] != 2:
-            raise ValueError('Data from asciifile needs to have excatley two columns')
+            raise ValueError('data contained in `filename` must have exactly two columns')
         
         return cls(data=raw_data[:,1], wcs=raw_data[:,0], error=error, mask=mask)
         
