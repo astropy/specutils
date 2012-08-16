@@ -165,7 +165,102 @@ class Spectrum1D(NDData):
                                             meta=self.meta)
         
         
-    def slice(self, start=None, stop=None, units='disp'):
+    def slice_dispersion(self, start=None, stop=None):
+        """Slice the spectrum within a given start and end dispersion value.
+        
+        Parameters
+        ----------
+        start : `float`
+            Starting slice point.
+        stop : `float`
+            Stopping slice point.
+        
+        Notes
+        -----
+        Often it is useful to slice out a portion of a `Spectrum1D` objects
+        either by two dispersion points (e.g. two wavelengths) or by the indices
+        of the dispersion/flux arrays (see `~Spectrum1D.slice_index` for this
+        functionality).
+        
+        For example::
+        
+            >>> from astropy.specutils import Spectrum1D
+            >>> from astropy.units import Units as unit
+            >>> import numpy as np
+            
+            >>> dispersion = np.arange(4000, 5000, 0.12)
+            >>> flux = np.random(len(dispersion))
+            >>> mySpectrum = Spectrum1D.from_array(dispersion,
+                                                   flux,
+                                                   units=unit.Wavelength)
+            
+            >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
+            >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
+            >>> hBeta
+            <hBeta __repr__ #TODO>
+        
+        See Also
+        --------
+        `~Spectrum1D.slice_index`
+        """
+        
+        # Transform the dispersion end points to index space
+        start_index, stop_index = self.disp.searchsorted([start, stop])
+        
+        return self.slice_index(start_index, stop_index)
+    
+    
+    def slice_index(self, start=None, stop=None):
+        """Slice the spectrum within a given start and end dispersion value.
+        
+        Parameters
+        ----------
+        start : `float`
+            Starting slice point.
+        stop : `float`
+            Stopping slice point.
+        
+        Notes
+        -----
+        Often it is useful to slice out a portion of a `Spectrum1D` objects
+        either by two dispersion points (e.g. two wavelengths) or by the indices
+        of the dispersion/flux arrays (see `~Spectrum1D.slice_index` for this
+        functionality).
+        
+        For example::
+        
+            >>> from astropy.specutils import Spectrum1D
+            >>> from astropy.units import Units as unit
+            >>> import numpy as np
+            
+            >>> dispersion = np.arange(4000, 5000, 0.12)
+            >>> flux = np.random(len(dispersion))
+            >>> mySpectrum = Spectrum1D.from_array(dispersion,
+                                                   flux,
+                                                   units=unit.Wavelength)
+            
+            >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
+            >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
+            >>> hBeta
+            <hBeta __repr__ #TODO>
+        
+        See Also
+        --------
+        `~Spectrum1D.slice_index`
+        """
+        
+        # We need to slice the following items:
+        # >> disp, flux, error, mask, and flags
+        # Which are all common NDData objects, therefore I am (perhaps
+        # reasonably) assuming that __slice__ will be a NDData base function
+        # which we will inherit.
+        
+        return self.__slice__(start_index, stop_index)
+        
+    
+        
+        
+    def slice(self, start=None, stop=None, method='disp'):
         """Slicing the spectrum
         
         Paramaters:
