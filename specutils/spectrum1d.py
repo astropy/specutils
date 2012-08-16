@@ -1,44 +1,54 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-#This module implements the Spectrum1D class. It is eventually supposed to migrate to astropy core
+# This module implements the Spectrum1D class.
 
+from __future__ import print_function, division
+
+from astropy import log
 from astropy.nddata import NDData
-from scipy import interpolate
+
 import numpy as np
 
-def spec_operation(func):
-    def convert_operands(self, operand):
-        if isinstance(operand, self.__class__):
-            if all(self.disp == operand.disp):
-                return func(self, operand.flux)
-            else:
-                new_disp = np.union1d(self.disp, operand.disp)
-                return func(self.interpolate(new_disp), operand.interpolate(new_disp).flux)
-
-        elif np.isscalar(operand):
-            return func(self, operand)
-        else:
-            raise ValueError("unsupported operand type(s) for operation: %s and %s" %
-                             (type(self), type(operand)))
-    return convert_operands
+# Check for SciPy availability
+try:
+    from scipy import interpolate
+except ImportError as e:
+    is_scipy_available = False
+else:
+    is_scipy_available = True
 
 
 class Spectrum1D(NDData):
-    """Class implementing a 1D spectrum"""
+    """A subclass of `NDData` for a one dimensional spectrum in Astropy.
+    
+    This class inherits all the base class functionality from the NDData class
+    and is communicative with other Spectrum1D objects in ways which make sense.
+    """
+    
     
     @classmethod
-    def from_array(cls, disp, flux, error=None, mask=None):
-        """Initializing `Spectrum1D`-object from two `numpy.ndarray` objects
+    def from_array(cls, disp, flux, *args):
+        """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
         -----------
-            disp: `numpy.ndarray`
-                dispersion solution (e.g. wavelength array)
-            flux: `numpy.ndarray`
-                flux array"""
+        disp : `~numpy.ndarray`
+            The dispersion for the Spectrum (i.e. an array of wavelength points).
+        
+        flux : `~numpy.ndarray`
+            The flux level for each wavelength point. Should have the same length
+            as `disp`.
+        
+        Raises
+        ------
+        ValueError
+            If the `disp` and `flux` arrays cannot be broadcast (e.g. their shapes
+            do not match), or the input arrays are not one dimensional.
+        """
+        
         if disp.ndim != 1 or disp.shape != flux.shape:
             raise ValueError('disp and flux need to be one-dimensional arrays with the same shape')
             
-        return cls(data=flux, wcs=disp, error=error, mask=mask)
+        return cls(data=flux, wcs=disp, *args)
     
     @classmethod
     def from_table(cls, table, error=None, mask=None, disp_col='disp', flux_col='flux'):
@@ -83,7 +93,7 @@ class Spectrum1D(NDData):
     
         
     def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
-        """Interpolates onto a new wavelength grid and returns a `Spectrum1D`-obect
+        """Interpolates onto a new wavelength grid and returns a `Spectrum1D`-object.
         Parameters:
         -----------
         
@@ -103,12 +113,11 @@ class Spectrum1D(NDData):
         
         Paramaters:
         -----------
-        
-        start: numpy.float or int
+        start : `float` or `int`
             start of slice
-        stop:  numpy.float or int
+        stop : `float` or `int`
             stop of slice
-        units: str
+        units : `str`
             allowed values are 'disp', 'pixel'
         """
         
@@ -190,4 +199,23 @@ class Spectrum1D(NDData):
     
     def __rpow__(self, spectrum, **kwargs):
         return self.__pow__(spectrum, **kwargs)
+        
+        
+
+
+def spec_operation(func):
+    def convert_operands(self, operand):
+        if isinstance(operand, self.__class__):
+            if all(self.disp == operand.disp):
+                return func(self, operand.flux)
+            else:
+                new_disp = np.union1d(self.disp, operand.disp)
+                return func(self.interpolate(new_disp), operand.interpolate(new_disp).flux)
+
+        elif np.isscalar(operand):
+            return func(self, operand)
+        else:
+            raise ValueError("unsupported operand type(s) for operation: %s and %s" %
+                             (type(self), type(operand)))
+    return convert_operands
         
