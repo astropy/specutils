@@ -40,7 +40,7 @@ class Spectrum1D(NDData):
         """
         
         if disp.ndim != 1 or disp.shape != flux.shape:
-            raise ValueError("`disp` and `flux` need to be one-dimensional `~np.ndarrays` with the same shape")
+            raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
             
         return cls(data=flux, wcs=disp, *args)
     
@@ -61,7 +61,7 @@ class Spectrum1D(NDData):
                    skiprows=skiprows, usecols=usecols, ndmin=2)
     
         if raw_data.shape[1] != 2:
-            raise ValueError('data contained in `filename` must have exactly two columns')
+            raise ValueError('data contained in filename must have exactly two columns')
         
         return cls(data=raw_data[:,1], wcs=raw_data[:,0], error=error, mask=mask)
         
