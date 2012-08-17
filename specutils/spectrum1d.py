@@ -20,7 +20,8 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, disp, flux, *args):
+    def from_array(cls, disp, flux, error=None, mask=None, flags=None, meta=None,
+                   units=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
@@ -31,18 +32,48 @@ class Spectrum1D(NDData):
         flux : `~numpy.ndarray`
             The flux level for each wavelength point. Should have the same length
             as `disp`.
+
+        error : `~astropy.nddata.NDError`, optional
+            Errors on the data. 
+
+        mask : `~numpy.ndarray`, optional
+            Mask for the data, given as a boolean Numpy array with a shape
+            matching that of the data. The values should be ``False`` where the
+            data is *valid* and ``True`` when it is not (as for Numpy masked
+            arrays).
+
+        flags : `~numpy.ndarray` or `~astropy.nddata.FlagCollection`, optional
+            Flags giving information about each pixel. These can be specified
+            either as a Numpy array of any type with a shape matching that of the
+            data, or as a `~astropy.nddata.FlagCollection` instance which has a
+            shape matching that of the data. 
+
+        meta : `dict`-like object, optional
+            Metadata for this object. "Metadata here means all information that
+            is included with this object but not part of any other attribute
+            of this particular object. e.g., creation date, unique identifier,
+            simulation parameters, exposure time, telescope name, etc.
+
+        units : undefined, optional
+            The units of the data. See `~NDData` for more current information.
+
+        copy : bool, optional
+            If True, the array will be *copied* from the provided `data`,
+            otherwise it will be referenced if possible (see `numpy.array` :attr:`copy`
+            argument for details).
         
         Raises
         ------
         ValueError
             If the `disp` and `flux` arrays cannot be broadcast (e.g. their shapes
             do not match), or the input arrays are not one dimensional.
+
         """
         
         if disp.ndim != 1 or disp.shape != flux.shape:
             raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
             
-        return cls(data=flux, wcs=disp, *args)
+        return cls(data=flux, wcs=disp, *args, **kwargs)
     
     @classmethod
     def from_table(cls, table, error=None, mask=None, disp_col='disp', flux_col='flux'):
