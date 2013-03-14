@@ -70,17 +70,17 @@ class Spectrum1D(NDData):
     """Class implementing a 1D spectrum"""
     
     def __init__(self, flux, dispersion=None, dispersion_unit=None,
-                 error=None, mask=None, wcs=None, meta=None,
-                 units=None, copy=True, validate=True):
+                 uncertainty=None, mask=None, wcs=None, meta=None,
+                 unit=None, flags=None):
         #needed to change order from (dispersion, flux) -> (flux, dispersion)
         #as dispersion=None for wcs.
         
         #added some WCS classes as I was not sure how to deal with both wcs and 
         
         
-        NDData.__init__(self, data=flux, error=error, mask=mask,
-                        wcs=wcs, meta=meta, units=units,
-                        copy=copy, validate=validate)
+        NDData.__init__(self, data=flux, uncertainty=uncertainty, mask=mask,
+                        wcs=wcs, meta=meta, unit=unit,
+                        flags=flags)
         
         if wcs==None:
             self.dispersion = dispersion
