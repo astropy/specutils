@@ -127,4 +127,4 @@ if not _PACKAGE_SETUP_:
             warn(config.configuration.ConfigurationDefaultMissingWarning(wmsg))
             del e
 
-    del os, warn, config_dir, e  # clean up namespace
+    del os, warn, config_dir  # clean up namespace
