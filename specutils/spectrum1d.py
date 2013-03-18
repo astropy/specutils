@@ -20,7 +20,7 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, disp, flux, error=None, mask=None, flags=None, meta=None,
+    def from_array(cls, disp, flux, uncertainty=None, mask=None, flags=None, meta=None,
                    units=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
@@ -76,15 +76,15 @@ class Spectrum1D(NDData):
         return cls(data=flux, wcs=disp, *args, **kwargs)
     
     @classmethod
-    def from_table(cls, table, error=None, mask=None, disp_col='disp', flux_col='flux'):
+    def from_table(cls, table, uncertainty=None, mask=None, disp_col='disp', flux_col='flux'):
         flux = table[flux_col]
         disp = table[disp_col]
-        return cls(data=flux, wcs=disp, error=error, mask=mask)
+        return cls(data=flux, wcs=disp, uncertainty=uncertainty, mask=mask)
         
     
     
     @classmethod
-    def from_ascii(cls, filename, error=None, mask=None, dtype=np.float, comments='#',
+    def from_ascii(cls, filename, uncertainty=None, mask=None, dtype=np.float, comments='#',
                    delimiter=None, converters=None, skiprows=0,
                    usecols=None):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
@@ -94,10 +94,10 @@ class Spectrum1D(NDData):
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
         
-        return cls(data=raw_data[:,1], wcs=raw_data[:,0], error=error, mask=mask)
+        return cls(data=raw_data[:,1], wcs=raw_data[:,0], uncertainty=uncertainty, mask=mask)
         
     @classmethod
-    def from_fits(cls, filename, error=None):
+    def from_fits(cls, filename, uncertainty=None):
         """This is an example function to demonstrate how
         classmethods are a clean way to instantiate Spectrum1D objects"""
         raise NotImplementedError('This function is not implemented yet')
@@ -173,13 +173,13 @@ class Spectrum1D(NDData):
         new_flux = spectrum_interp(new_disp)
         
         # We need to perform error calculation for the new dispersion map
-        if self.error is None:
-            new_error = None
+        if self.uncertainty is None:
+            new_uncertainty = None
         else:
             # After having a short think about it, it seems reasonable to me only to
             # take the nearest uncertainty for each interpolated dispersion point
             
-            new_error = interpolate.interp1d(self.disp,
+            new_uncertainty = interpolate.interp1d(self.disp,
                                              self.flux,
                                              kind=1, # Nearest
                                              bounds_error=bounds_error,
@@ -200,7 +200,7 @@ class Spectrum1D(NDData):
         
         return self.__class__.from_array(new_disp,
                                          new_flux,
-                                         error=new_error,
+                                         uncertainty=new_uncertainty,
                                          mask=new_mask,
                                          meta=self.meta)
         
@@ -276,88 +276,6 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        
+        raise NotImplemented('Will presumeably implemented in core NDDATA')
         return self.__slice__(start_index, stop_index)
-        
-        
-        
-    
-    @spec_operation
-    def __add__(self, operand):
-        
-        """Adds two spectra together, or adds finite real numbers across an entire spectrum."""
-        
-        return self.__class__.from_array(self.disp, self.flux + operand)
-        
-
-    @spec_operation
-    def __sub__(self, operand):
-        
-        """Subtracts two spectra, or subtracts a finite real numbers from an entire spectrum."""
-        
-        return self.__class__.from_array(self.disp, self.flux - operand)
-        
-
-    @spec_operation
-    def __mul__(self, operand):
-        
-        """Multiplies two spectra, or multiplies a finite real numbers across an entire spectrum."""
-        
-        return self.__class__.from_array(self.disp, self.flux * operand)
-        
-
-    @spec_operation
-    def __div__(self, operand):
-        
-        """Divides two spectra, or divides a finite real numbers across an entire spectrum."""
-        
-        return self.__class__.from_array(self.disp, self.flux / operand)
-        
-    @spec_operation
-    def __pow__(self, operand):
-        
-        """Performs power operations on spectra."""
-        
-        return self.__class__.from_array(self.disp, self.flux ** operand)
-        
-
-    def __len__(self):
-        return len(self.disp)
-
-
-    # Mirror functions
-    
-    def __radd__(self, spectrum, **kwargs):
-        return self.__add__(spectrum, **kwargs)
-        
-    def __rsub__(self, spectrum, **kwargs):
-        return self.__sub__(spectrum, **kwargs)
-        
-    def __rmul__(self, spectrum, **kwargs):
-        return self.__mul__(spectrum, **kwargs)
-            
-    def __rdiv__(self, spectrum, **kwargs):
-        return self.__div__(spectrum, **kwargs)
-    
-    def __rpow__(self, spectrum, **kwargs):
-        return self.__pow__(spectrum, **kwargs)
-        
-        
-
-
-def spec_operation(func):
-    def convert_operands(self, operand):
-        if isinstance(operand, self.__class__):
-            if all(self.disp == operand.disp):
-                return func(self, operand.flux)
-            else:
-                new_disp = np.union1d(self.disp, operand.disp)
-                return func(self.interpolate(new_disp), operand.interpolate(new_disp).flux)
-
-        elif np.isscalar(operand):
-            return func(self, operand)
-        else:
-            raise ValueError("unsupported operand type(s) for operation: %s and %s" %
-                             (type(self), type(operand)))
-    return convert_operands
         
