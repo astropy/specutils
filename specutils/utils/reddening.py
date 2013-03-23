@@ -56,13 +56,17 @@ def ccm_reddening(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
     
     model = model.lower()
     if model not in ['ccm89','gcc09']:
-        raise ValueError('ccm_dered: model must be ccm89 or gcc09')
+        raise ValueError('model must be ccm89 or gcc09')
     if (a_v is None) and (ebv is None):
         raise ValueError('Must specify either a_v or ebv')
     if (a_v is not None) and (ebv is not None):
         raise ValueError('Cannot specify both a_v and ebv')
     if a_v is not None:
         ebv = a_v / r_v
+        
+    if model == 'gcc09':
+        raise ValueError('TEMPORARY: gcc09 currently does 2175A bump 
+            incorrectly')
     
     x = 1e4 / wave      # inverse microns
     
@@ -181,14 +185,17 @@ def fm_reddening(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     
     model = model.lower()
     if model not in ['f99','fm07']:
-        raise ValueError('fm_dered: model must be f99 or fm07')
+        raise ValueError('model must be f99 or fm07')
     if (a_v is None) and (ebv is None):
         raise ValueError('Must specify either a_v or ebv')
     if (a_v is not None) and (ebv is not None):
         raise ValueError('Cannot specify both a_v and ebv')
     if a_v is not None:
         ebv = a_v / r_v
-    
+
+    if model == 'fm07':
+        raise ValueError('TEMPORARY: fm07 currently not properly R dependent')
+
     x = 1e4 / wave      # inverse microns
     k = np.zeros(x.size)
     
