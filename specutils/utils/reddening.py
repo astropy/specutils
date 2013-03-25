@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d 
 import warnings
 
-def ccm_reddening(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
+def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
     """Determines a CCM reddening curve.
     
     Parameters
@@ -65,8 +65,8 @@ def ccm_reddening(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
         ebv = a_v / r_v
         
     if model == 'gcc09':
-        raise ValueError('TEMPORARY: gcc09 currently does 2175A bump 
-            incorrectly')
+        raise ValueError('TEMPORARY: gcc09 currently does 2175A bump '+ 
+            'incorrectly')
     
     x = 1e4 / wave      # inverse microns
     
@@ -138,7 +138,7 @@ def ccm_reddening(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
 #    return a_lambda / a_v  #debug
     
     
-def fm_reddening(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
+def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     """Determines a Fitzpatrick & Massa reddening curve.
     
     Parameters
