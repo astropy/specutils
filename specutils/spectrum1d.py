@@ -330,9 +330,9 @@ class Spectrum1D(NDData):
                 else:
                     if self._arithmetic_threshold_units is None:
                         # not sure this should ever be allowed
-                        dispcheck = all((self.disp-other.disp) < self._arithmetic_threshold)
+                        dispcheck = all(np.abs(self.disp-other.disp) < self._arithmetic_threshold)
                     else:
-                        dispcheck = all((self.disp.as_unit(self._arithmetic_threshold_units)-other.disp.as_unit(self._arithmetic_threshold_units)) < self._arithmetic_threshold)
+                        dispcheck = all(np.abs(self.disp.as_unit(self._arithmetic_threshold_units)-other.disp.as_unit(self._arithmetic_threshold_units)) < self._arithmetic_threshold)
 
                 if self.shape == other.shape and dispcheck:
                     newspec = self.copy()
