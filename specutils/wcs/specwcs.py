@@ -55,7 +55,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
 
-        if len(self.lookup) != len(np.unique(self.lookup_table)):
+        if len(self.lookup_table) != len(np.unique(self.lookup_table)):
             raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
 
 

@@ -87,7 +87,7 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-        return cls.from_array(data=flux.data, wcs=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, units=flux.units)
+        return cls.from_array(flux=flux.data, disp=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, units=flux.units)
         
     
     
@@ -102,7 +102,7 @@ class Spectrum1D(NDData):
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
         
-        return cls.from_array(data=raw_data[:,0], wcs=raw_data[:,1], uncertainty=uncertainty, mask=mask)
+        return cls.from_array(disp=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
     def from_fits(cls, filename, uncertainty=None):
