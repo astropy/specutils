@@ -1,12 +1,20 @@
 # This module provides a basic and probably temporary WCS solution until astropy has a wcs built-in
 #This is all built upon @nden's work on the models class
-from astropy import models
+
+# Add when nden's models are merged
+# from astropy import models
+
 import numpy as np
 
+from astropy.utils import misc
+
+class NDenModelsPlaceHolder(object):
+
+    pass
 class BaseSpectrum1DWCSError(Exception):
     pass
 
-class BaseSpectrum1DWCS(models.Model):
+class BaseSpectrum1DWCS(NDenModelsPlaceHolder):
     """
         Base class for a Spectrum1D WCS
     """
@@ -25,7 +33,7 @@ class BaseSpectrum1DWCS(models.Model):
 
 
 
-class LookupWCS(BaseSpectrum1DWCS):
+class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
     A simple lookup table wcs
 
@@ -36,7 +44,7 @@ class LookupWCS(BaseSpectrum1DWCS):
         lookup table for
     """
 
-    def __init__(self, lookup_table):
+    def __init__(self, lookup_table, units=None):
         self.lookup_table = lookup_table
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
@@ -51,18 +59,38 @@ class LookupWCS(BaseSpectrum1DWCS):
     def invert(self, dispersion_values):
         return np.searchsorted(self.lookup_table, dispersion_values)
 
-    @property
+    @misc.lazyproperty
     def lut(self):
         return self.lookup_table
 
+class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
+    """
+        A simple linear wcs
+    """
 
-class ChebyshevSpectrum1D(models.ChebyshevModel):
+    def __init__(self, dispersion0, dispersion_delta, dispersion_pixel0=0, unit=None):
+        self.unit = unit
+        self.dispersion0 = dispersion0
+        self.dispersion_delta = dispersion_delta
+        self.dispersion_pixel0 = dispersion_pixel0
+
+    def __call__(self, pixel_indices):
+        return self.dispersion0 + self.dispersion_delta * (pixel_indices - self.dispersion_pixel0)
+
+    def invert(self, dispersion_values):
+        return (dispersion_values - self.dispersion0) / self.dispersion_delta + self.dispersion_pixel0
+
+
+#### EXAMPLE implementation for Chebyshev
+#class ChebyshevSpectrum1D(models.ChebyshevModel):
+class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
 
     @classmethod
     def from_fits_header(cls, header):
+        pass
         ### here be @hamogu's code ###
-        degree, parameters = hamogu_read_fits(header)
-        return cls(degree, **parameters)
+        #degree, parameters = hamogu_read_fits(header)
+        #return cls(degree, **parameters)
 
     def create_lookup_table(self, pixel_indices):
         self.lut = self(pixel_indices)
