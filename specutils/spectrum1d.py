@@ -23,7 +23,7 @@ class Spectrum1D(NDData):
     
     @classmethod
     def from_array(cls, disp, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
-                   units=None, copy=True):
+                   unit=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
@@ -75,7 +75,7 @@ class Spectrum1D(NDData):
         if disp.ndim != 1 or disp.shape != flux.shape:
             raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
         spec_wcs = Spectrum1DLookupWCS(disp, unit=dispersion_unit)
-        return cls(data=flux, wcs=spec_wcs)
+        return cls(data=flux, wcs=spec_wcs, unit=unit)
     
     @classmethod
     def from_table(cls, table, mask=None, dispersion_column='disp', flux_column='flux', uncertainty_column=None):
@@ -87,7 +87,7 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-        return cls.from_array(flux=flux.data, disp=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, units=flux.units)
+        return cls.from_array(flux=flux.data, disp=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, unit=flux.units)
         
     
     
@@ -126,15 +126,15 @@ class Spectrum1D(NDData):
         if not hasattr(self.wcs, 'lookup_table'):
             self.wcs.create_lookup_table(np.arange(len(self.flux)))
 
-        return self.wcs
+        return self.wcs.lookup_table
 
     @property
     def dispersion_unit(self):
-        self.wcs.unit
+        return self.wcs.unit
 
     @property
     def flux_unit(self):
-        self.units
+        return self.unit
     
         
     def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
