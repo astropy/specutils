@@ -122,6 +122,14 @@ class Spectrum1D(NDData):
             self.wcs.create_lookup_table(np.arange(len(self.flux)))
 
         return self.wcs
+
+    @property
+    def dispersion_unit(self):
+        self.wcs.unit
+
+    @property
+    def flux_unit(self):
+        self.units
     
         
     def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
