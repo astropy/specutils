@@ -82,7 +82,12 @@ class Spectrum1D(NDData):
         flux = table[flux_column]
         disp = table[dispersion_column]
 
-        return cls.from_array(data=flux.data, wcs=disp.data, dispersion_unit=disp.units, units=flux.units)
+        if uncertainty_column is not None:
+            uncertainty = table[uncertainty_column]
+        else:
+            uncertainty = None
+
+        return cls.from_array(data=flux.data, wcs=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, units=flux.units)
         
     
     
