@@ -8,6 +8,8 @@ __all__ = ['Spectrum1D', 'spec_operation']
 from astropy import log
 from astropy.nddata import NDData
 
+from .wcs import Spectrum1DLookupWCS, Spectrum1DLinearWCS
+
 import numpy as np
 
 
@@ -20,7 +22,7 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, disp, flux, uncertainty=None, mask=None, flags=None, meta=None,
+    def from_array(cls, disp, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
                    units=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
@@ -72,8 +74,8 @@ class Spectrum1D(NDData):
         
         if disp.ndim != 1 or disp.shape != flux.shape:
             raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
-            
-        return cls(data=flux, wcs=disp, *args, **kwargs)
+        spec_wcs = Spectrum1DLookupWCS(disp, unit=dispersion_unit)
+        return cls(data=flux, wcs=disp)
     
     @classmethod
     def from_table(cls, table, uncertainty=None, mask=None, disp_col='disp', flux_col='flux'):
@@ -115,6 +117,9 @@ class Spectrum1D(NDData):
     @property
     def disp(self):
         #returning the disp
+        if not hasattr(self.wcs, 'lookup_table'):
+            self.wcs.create_lookup_table(np.arange(len(self.flux)))
+
         return self.wcs
     
         
