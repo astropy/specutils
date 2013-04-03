@@ -75,13 +75,14 @@ class Spectrum1D(NDData):
         if disp.ndim != 1 or disp.shape != flux.shape:
             raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
         spec_wcs = Spectrum1DLookupWCS(disp, unit=dispersion_unit)
-        return cls(data=flux, wcs=disp)
+        return cls(data=flux, wcs=spec_wcs)
     
     @classmethod
-    def from_table(cls, table, uncertainty=None, mask=None, disp_col='disp', flux_col='flux'):
-        flux = table[flux_col]
-        disp = table[disp_col]
-        return cls(data=flux, wcs=disp, uncertainty=uncertainty, mask=mask)
+    def from_table(cls, table, mask=None, dispersion_column='disp', flux_column='flux', uncertainty_column=None):
+        flux = table[flux_column]
+        disp = table[dispersion_column]
+
+        return cls.from_array(data=flux.data, wcs=disp.data, dispersion_unit=disp.units, units=flux.units)
         
     
     
@@ -96,7 +97,7 @@ class Spectrum1D(NDData):
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
         
-        return cls(data=raw_data[:,1], wcs=raw_data[:,0], uncertainty=uncertainty, mask=mask)
+        return cls.from_array(data=raw_data[:,0], wcs=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
     def from_fits(cls, filename, uncertainty=None):
@@ -250,7 +251,7 @@ class Spectrum1D(NDData):
         """
         
         # Transform the dispersion end points to index space
-        start_index, stop_index = self.disp.searchsorted([start, stop])
+        start_index, stop_index = self.wcs.dispersion2pixel([start, stop])
         
         return self.slice_index(start_index, stop_index)
     
