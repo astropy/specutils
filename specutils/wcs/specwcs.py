@@ -7,6 +7,7 @@
 import numpy as np
 
 from astropy.utils import misc
+from astropy.io import fits
 
 class NDenModelsPlaceHolder(object):
 
@@ -66,7 +67,15 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     """
         A simple linear wcs
+
     """
+
+
+    @classmethod
+    def from_fits(cls, fname, unit=None, **kwargs):
+        header = fits.getheader(fname, **kwargs)
+        return cls(header['CRVAL1'], header['CDELT1'], header['CRPIX1'] - 1, unit=unit)
+
 
     def __init__(self, dispersion0, dispersion_delta, dispersion_pixel0=0, unit=None):
         self.unit = unit
