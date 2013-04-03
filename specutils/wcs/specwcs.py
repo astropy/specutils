@@ -32,6 +32,10 @@ class BaseSpectrum1DWCS(NDenModelsPlaceHolder):
         """
         return self.invert(dispersion_value)
 
+    def create_lookup_table(self, pixel_indices):
+        self.lookup_table = self(pixel_indices)
+
+
 
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
@@ -42,10 +46,11 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     ----------
 
     lookup_table : ~np.ndarray
-        lookup table for
+        lookup table for the array
     """
 
-    def __init__(self, lookup_table, units=None):
+    def __init__(self, lookup_table, unit=None):
+        self.unit = unit
         self.lookup_table = lookup_table
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
@@ -60,9 +65,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     def invert(self, dispersion_values):
         return np.searchsorted(self.lookup_table, dispersion_values)
 
-    @misc.lazyproperty
-    def lut(self):
-        return self.lookup_table
+
 
 class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     """
@@ -101,8 +104,6 @@ class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
         #degree, parameters = hamogu_read_fits(header)
         #return cls(degree, **parameters)
 
-    def create_lookup_table(self, pixel_indices):
-        self.lut = self(pixel_indices)
 
 
 
