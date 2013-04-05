@@ -6,6 +6,7 @@ project.  It is intended for eventual merger with the `astropy`
 package, but for now is being developed independently.
 """
 
+from .spectrum1d import Spectrum1D
 
 #this indicates whether or not we are in the package's setup.py
 try:
@@ -128,3 +129,5 @@ if not _PACKAGE_SETUP_:
             del e
 
     del os, warn, config_dir  # clean up namespace
+
+

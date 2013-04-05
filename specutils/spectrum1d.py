@@ -8,6 +8,8 @@ __all__ = ['Spectrum1D', 'spec_operation']
 from astropy import log
 from astropy.nddata import NDData
 
+from .wcs import Spectrum1DLookupWCS, Spectrum1DLinearWCS
+
 import numpy as np
 
 
@@ -20,8 +22,8 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, disp, flux, uncertainty=None, mask=None, flags=None, meta=None,
-                   units=None, copy=True):
+    def from_array(cls, disp, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
+                   unit=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
@@ -72,14 +74,20 @@ class Spectrum1D(NDData):
         
         if disp.ndim != 1 or disp.shape != flux.shape:
             raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
-            
-        return cls(data=flux, wcs=disp, *args, **kwargs)
+        spec_wcs = Spectrum1DLookupWCS(disp, unit=dispersion_unit)
+        return cls(data=flux, wcs=spec_wcs, unit=unit)
     
     @classmethod
-    def from_table(cls, table, uncertainty=None, mask=None, disp_col='disp', flux_col='flux'):
-        flux = table[flux_col]
-        disp = table[disp_col]
-        return cls(data=flux, wcs=disp, uncertainty=uncertainty, mask=mask)
+    def from_table(cls, table, mask=None, dispersion_column='disp', flux_column='flux', uncertainty_column=None):
+        flux = table[flux_column]
+        disp = table[dispersion_column]
+
+        if uncertainty_column is not None:
+            uncertainty = table[uncertainty_column]
+        else:
+            uncertainty = None
+
+        return cls.from_array(flux=flux.data, disp=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, unit=flux.units)
         
     
     
@@ -94,7 +102,7 @@ class Spectrum1D(NDData):
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
         
-        return cls(data=raw_data[:,1], wcs=raw_data[:,0], uncertainty=uncertainty, mask=mask)
+        return cls.from_array(disp=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
     def from_fits(cls, filename, uncertainty=None):
@@ -115,7 +123,18 @@ class Spectrum1D(NDData):
     @property
     def disp(self):
         #returning the disp
-        return self.wcs
+        if not hasattr(self.wcs, 'lookup_table'):
+            self.wcs.create_lookup_table(np.arange(len(self.flux)))
+
+        return self.wcs.lookup_table
+
+    @property
+    def dispersion_unit(self):
+        return self.wcs.unit
+
+    @property
+    def flux_unit(self):
+        return self.unit
     
         
     def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
@@ -245,7 +264,7 @@ class Spectrum1D(NDData):
         """
         
         # Transform the dispersion end points to index space
-        start_index, stop_index = self.disp.searchsorted([start, stop])
+        start_index, stop_index = self.wcs.dispersion2pixel([start, stop])
         
         return self.slice_index(start_index, stop_index)
     
