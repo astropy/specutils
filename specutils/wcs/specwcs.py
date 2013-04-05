@@ -59,10 +59,13 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
             raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
 
 
-    def __call__(self, pixel_index):
-        return self.lookup_table[pixel_index]
+    def __call__(self, pixel_indices):
+        if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, basestring):
+            pixel_indices = np.array(pixel_indices)
+        return self.lookup_table[pixel_indices]
 
     def invert(self, dispersion_values):
+
         return np.searchsorted(self.lookup_table, dispersion_values)
 
 
@@ -87,9 +90,13 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         self.dispersion_pixel0 = dispersion_pixel0
 
     def __call__(self, pixel_indices):
+        if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, basestring):
+            pixel_indices = np.array(pixel_indices)
         return self.dispersion0 + self.dispersion_delta * (pixel_indices - self.dispersion_pixel0)
 
     def invert(self, dispersion_values):
+        if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, basestring):
+            dispersion_values = np.array(dispersion_values)
         return (dispersion_values - self.dispersion0) / self.dispersion_delta + self.dispersion_pixel0
 
 
