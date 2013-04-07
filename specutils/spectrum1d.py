@@ -87,7 +87,8 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-        return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty, dispersion_unit=disp.units, unit=flux.units)
+        return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty,
+                              dispersion_unit=dispersion.units, unit=flux.units)
         
     
     
