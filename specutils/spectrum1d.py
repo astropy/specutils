@@ -6,7 +6,9 @@ from __future__ import print_function, division
 __all__ = ['Spectrum1D', 'spec_operation']
 
 from astropy import log
-from astropy.nddata import NDData
+from astropy.nddata import NDData, FlagCollection
+
+from astropy.utils import misc
 
 from .wcs import Spectrum1DLookupWCS, Spectrum1DLinearWCS
 
@@ -109,10 +111,17 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-
+        if isinstance(flag_columns, basestring):
+            flags = table[flag_columns]
+        elif misc.isiterable(flag_columns):
+            flags = FlagCollection(shape=flux.shape)
+            for flag_column in flag_columns:
+                flags[flag_column] = table[flag_column]
+        else:
+            raise ValueError('flag_columns should either be a string or a list of strings')
 
         return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty,
-                              dispersion_unit=dispersion.units, unit=flux.units, mask=table.mask)
+                              dispersion_unit=dispersion.units, unit=flux.units, mask=table.mask, flags=flags)
         
     
     
