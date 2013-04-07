@@ -22,13 +22,13 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, disp, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
+    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
                    unit=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
         -----------
-        disp : `~numpy.ndarray`
+        dispersion : `~numpy.ndarray`
             The dispersion for the Spectrum (i.e. an array of wavelength points).
         
         flux : `~numpy.ndarray`
@@ -67,27 +67,27 @@ class Spectrum1D(NDData):
         Raises
         ------
         ValueError
-            If the `disp` and `flux` arrays cannot be broadcast (e.g. their shapes
+            If the `dispersion` and `flux` arrays cannot be broadcast (e.g. their shapes
             do not match), or the input arrays are not one dimensional.
 
         """
         
-        if disp.ndim != 1 or disp.shape != flux.shape:
-            raise ValueError("disp and flux need to be one-dimensional Numpy arrays with the same shape")
-        spec_wcs = Spectrum1DLookupWCS(disp, unit=dispersion_unit)
+        if dispersion.ndim != 1 or dispersion.shape != flux.shape:
+            raise ValueError("dispersion and flux need to be one-dimensional Numpy arrays with the same shape")
+        spec_wcs = Spectrum1DLookupWCS(dispersion, unit=dispersion_unit)
         return cls(data=flux, wcs=spec_wcs, unit=unit)
     
     @classmethod
     def from_table(cls, table, mask=None, dispersion_column='disp', flux_column='flux', uncertainty_column=None):
         flux = table[flux_column]
-        disp = table[dispersion_column]
+        dispersion = table[dispersion_column]
 
         if uncertainty_column is not None:
             uncertainty = table[uncertainty_column]
         else:
             uncertainty = None
 
-        return cls.from_array(flux=flux.data, disp=disp.data, uncertainty=uncertainty, dispersion_unit=disp.units, unit=flux.units)
+        return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty, dispersion_unit=disp.units, unit=flux.units)
         
     
     
@@ -102,7 +102,7 @@ class Spectrum1D(NDData):
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
         
-        return cls.from_array(disp=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
+        return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
     def from_fits(cls, filename, uncertainty=None):
@@ -121,7 +121,7 @@ class Spectrum1D(NDData):
         self.data = flux
     
     @property
-    def disp(self):
+    def dispersion(self):
         #returning the disp
         if not hasattr(self.wcs, 'lookup_table'):
             self.wcs.create_lookup_table(np.arange(len(self.flux)))
@@ -137,7 +137,7 @@ class Spectrum1D(NDData):
         return self.unit
     
         
-    def interpolate(self, new_disp, kind='linear', bounds_error=True, fill_value=np.nan):
+    def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
         """Interpolates onto a new wavelength grid and returns a new `Spectrum1D`-object.
         
         Parameters
@@ -183,13 +183,13 @@ class Spectrum1D(NDData):
                               " interpolate to new dispersion map without this"+
                               " (need scipy.interpolate.interp1d)")
         
-        spectrum_interp = interpolate.interp1d(self.disp,
+        spectrum_interp = interpolate.interp1d(self.dispersion,
                                                self.flux,
                                                kind=kind,
                                                bounds_error=bounds_error,
                                                fill_value=fill_value)
         
-        new_flux = spectrum_interp(new_disp)
+        new_flux = spectrum_interp(new_dispersion)
         
         # We need to perform error calculation for the new dispersion map
         if self.uncertainty is None:
@@ -198,7 +198,7 @@ class Spectrum1D(NDData):
             # After having a short think about it, it seems reasonable to me only to
             # take the nearest uncertainty for each interpolated dispersion point
             
-            new_uncertainty = interpolate.interp1d(self.disp,
+            new_uncertainty = interpolate.interp1d(self.dispersion,
                                              self.flux,
                                              kind=1, # Nearest
                                              bounds_error=bounds_error,
@@ -208,7 +208,7 @@ class Spectrum1D(NDData):
         if self.mask is None:
             new_mask = None
         else:
-            new_mask = interpolate.interp1d(self.disp,
+            new_mask = interpolate.interp1d(self.dispersion,
                                             self.flux,
                                             kind=1, # Nearest
                                             bounds_error=bounds_error,
@@ -217,7 +217,7 @@ class Spectrum1D(NDData):
         # As for flags it is not entirely clear to me what the best behaviour is
         # In the face of uncertainty, for the time being, I am discarding flags
         
-        return self.__class__.from_array(new_disp,
+        return self.__class__.from_array(new_dispersion,
                                          new_flux,
                                          uncertainty=new_uncertainty,
                                          mask=new_mask,
@@ -296,5 +296,4 @@ class Spectrum1D(NDData):
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
         raise NotImplemented('Will presumeably implemented in core NDDATA')
-        return self.__slice__(start_index, stop_index)
-        
+
