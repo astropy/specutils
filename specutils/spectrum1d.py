@@ -80,7 +80,8 @@ class Spectrum1D(NDData):
         return cls(data=flux, wcs=spec_wcs, unit=unit)
     
     @classmethod
-    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None, flag_columns=None):
+    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None,
+                   flag_columns=None):
         """
         Initializes a `Spectrum1D`-object from an `~astropy.table.Table` object
 
