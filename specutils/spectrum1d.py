@@ -78,7 +78,29 @@ class Spectrum1D(NDData):
         return cls(data=flux, wcs=spec_wcs, unit=unit)
     
     @classmethod
-    def from_table(cls, table, mask=None, dispersion_column='disp', flux_column='flux', uncertainty_column=None):
+    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None, flag_columns=None):
+        """
+        Initializes a `Spectrum1D`-object from an `~astropy.table.Table` object
+
+        Parameters
+        ----------
+
+        table : ~astropy.table.Table object
+
+        dispersion_column : str, optional
+            name of the dispersion column. default is 'dispersion'
+
+        flux_column : str, optional
+            name of the flux column. default is 'flux'
+
+        uncertainty_column : str, optional
+            name of the uncertainty column. If set to None uncertainty is set to None. default is None
+
+        flag_columns : str or list, optional
+            name or names of flag columns. If multiple names are supplied a ~astropy.nddata.FlagCollection will be built.
+            default is None
+        """
+
         flux = table[flux_column]
         dispersion = table[dispersion_column]
 
@@ -87,8 +109,10 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
+
+
         return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty,
-                              dispersion_unit=dispersion.units, unit=flux.units)
+                              dispersion_unit=dispersion.units, unit=flux.units, mask=table.mask)
         
     
     
