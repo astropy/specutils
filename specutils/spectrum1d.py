@@ -109,6 +109,9 @@ class Spectrum1D(NDData):
 
         if uncertainty_column is not None:
             uncertainty = table[uncertainty_column]
+            if uncertainty.unit is not flux.unit:
+                log.warning('"uncertainty"-column and "flux"-column do not share the units (%s vs %s) ',
+                            uncertainty.unit, flux.unit)
         else:
             uncertainty = None
 
