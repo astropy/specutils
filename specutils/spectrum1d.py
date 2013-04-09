@@ -6,7 +6,9 @@ from __future__ import print_function, division
 __all__ = ['Spectrum1D', 'spec_operation']
 
 from astropy import log
-from astropy.nddata import NDData
+from astropy.nddata import NDData, FlagCollection
+
+from astropy.utils import misc
 
 from .wcs import Spectrum1DLookupWCS, Spectrum1DLinearWCS
 
@@ -78,17 +80,53 @@ class Spectrum1D(NDData):
         return cls(data=flux, wcs=spec_wcs, unit=unit)
     
     @classmethod
-    def from_table(cls, table, mask=None, dispersion_column='disp', flux_column='flux', uncertainty_column=None):
+    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None,
+                   flag_columns=None):
+        """
+        Initializes a `Spectrum1D`-object from an `~astropy.table.Table` object
+
+        Parameters
+        ----------
+
+        table : ~astropy.table.Table object
+
+        dispersion_column : str, optional
+            name of the dispersion column. default is 'dispersion'
+
+        flux_column : str, optional
+            name of the flux column. default is 'flux'
+
+        uncertainty_column : str, optional
+            name of the uncertainty column. If set to None uncertainty is set to None. default is None
+
+        flag_columns : str or list, optional
+            name or names of flag columns. If multiple names are supplied a ~astropy.nddata.FlagCollection will be built.
+            default is None
+        """
+
         flux = table[flux_column]
         dispersion = table[dispersion_column]
 
         if uncertainty_column is not None:
             uncertainty = table[uncertainty_column]
+            if uncertainty.unit != flux.unit:
+                log.warning('"uncertainty"-column and "flux"-column do not share the units (%s vs %s) ',
+                            uncertainty.unit, flux.unit)
         else:
             uncertainty = None
 
-        return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty,
-                              dispersion_unit=dispersion.units, unit=flux.units)
+        if isinstance(flag_columns, basestring):
+            flags = table[flag_columns]
+        elif misc.isiterable(flag_columns):
+            flags = FlagCollection(shape=flux.shape)
+            for flag_column in flag_columns:
+                flags[flag_column] = table[flag_column]
+        else:
+            raise ValueError('flag_columns should either be a string or a list (or iterable) of strings')
+
+        return cls.from_array(flux=flux.data, dispersion=dispersion.data,
+                              uncertainty=uncertainty, dispersion_unit=dispersion.units,
+                              unit=flux.units, mask=table.mask, flags=flags)
         
     
     
