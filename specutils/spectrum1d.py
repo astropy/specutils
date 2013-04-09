@@ -109,7 +109,7 @@ class Spectrum1D(NDData):
 
         if uncertainty_column is not None:
             uncertainty = table[uncertainty_column]
-            if uncertainty.unit is not flux.unit:
+            if uncertainty.unit != flux.unit:
                 log.warning('"uncertainty"-column and "flux"-column do not share the units (%s vs %s) ',
                             uncertainty.unit, flux.unit)
         else:
@@ -122,10 +122,11 @@ class Spectrum1D(NDData):
             for flag_column in flag_columns:
                 flags[flag_column] = table[flag_column]
         else:
-            raise ValueError('flag_columns should either be a string or a list of strings')
+            raise ValueError('flag_columns should either be a string or a list (or iterable) of strings')
 
-        return cls.from_array(flux=flux.data, dispersion=dispersion.data, uncertainty=uncertainty,
-                              dispersion_unit=dispersion.units, unit=flux.units, mask=table.mask, flags=flags)
+        return cls.from_array(flux=flux.data, dispersion=dispersion.data,
+                              uncertainty=uncertainty, dispersion_unit=dispersion.units,
+                              unit=flux.units, mask=table.mask, flags=flags)
         
     
     
