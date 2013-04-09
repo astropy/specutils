@@ -41,8 +41,8 @@ install:
    - if $OPTIONAL_DEPS; then pip install h5py -q --use-mirrors; fi
    - if [[ $SETUP_CMD == build_sphinx* ]]; then pip -q install sphinx --use-mirrors; fi
    - if [[ $SETUP_CMD != egg_info ]]; then pip -q install Cython --use-mirrors; fi
-   # use 0.2 release rather than latest dev release
-   - pip install -i http://stsdas.stsci.edu/download/packages/index astropy==0.2rc1
+   # use 0.2 release rather than latest dev release (using 0.2.1 explicitly)
+   - pip install -i http://stsdas.stsci.edu/download/packages/index astropy==0.2.1
 
 script:
    - export OPEN_FILES=""
