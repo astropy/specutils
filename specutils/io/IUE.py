@@ -3,7 +3,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.nddata.nduncertainty import StdDevUncertainty
 
-from specutils.spectrum1d import Spectrum1D
+from ..spectrum1d import Spectrum1D
 
 class ApertureException(Exception):
 
@@ -84,7 +84,7 @@ def read_IUE_mxlo(filename, aperture = ''):
     dispersion_unit =  tab.columns[_find_col_index(tab.columns, 'WAVELENGTH')].unit
     flux_unit = _get_unit(tab.columns[_find_col_index(tab.columns, 'FLUX')].unit)
 
-    spec = Spectrum1D(flux, dispersion = wave,
+    spec = Spectrum1D.from_array(wave, flux, 
       uncertainty = StdDevUncertainty(sigma), meta = meta,
       dispersion_unit = dispersion_unit, unit = flux_unit,
       mask = (flags != 0), flags = flags
