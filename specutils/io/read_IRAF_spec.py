@@ -256,7 +256,7 @@ def wave_1dspec(header):
         wavelength array in the format specified in the header.
     '''
     w = WCS(header)
-    return w.wcs_pix2world(np.arange(header['NAXIS1'])[:,np.newaxis], 0)
+    return w.wcs_pix2world(np.arange(header['NAXIS1'])[:,np.newaxis], 0).squeeze()
 
 
 def make_IRAF_wave(header):
@@ -280,7 +280,7 @@ def make_IRAF_wave(header):
     finally:
         fits.STRIP_HEADER_WHITESPACE.set(old_STRIP_HEADER_WHITESPACE)
 
-def read_IRAF_Spec(filename):
+def read_IRAF_spec(filename):
     '''
     Read spectrum in IRAF WCS=MULTISPEC form
   
@@ -308,7 +308,7 @@ def read_IRAF_Spec(filename):
     finally:
         hdus.close()
 
-    spec = Spectrum1D(flux, dispersion = wave, meta = meta)
+    spec = Spectrum1D.from_array(wave, flux, meta = meta)
     return spec
 
 
