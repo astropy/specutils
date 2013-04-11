@@ -6,7 +6,7 @@ import numpy as np
 
 import astropy.io.fits as fits
 from astropy.wcs import WCS
-from specutils.spectrum1d import Spectrum1D
+from ..spectrum1d import Spectrum1D
 
 class IrafFormatError(Exception):
     '''
