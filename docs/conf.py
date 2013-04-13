@@ -47,7 +47,8 @@ rst_epilog += """
 
 # This does not *have* to match the package name, but typically does
 project = u'specutils' 
-copyright = u'2012, Specutils Developers'
+author = u'The Specutils Developers'
+copyright = u'2012, ' + author
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -57,7 +58,7 @@ import specutils
 # The short X.Y version.
 version = specutils.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
-release = specuitils.__version__
+release = specutils.__version__
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -102,26 +103,30 @@ htmlhelp_basename = project + 'doc'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-  ('index', 'specutils.tex', u'Specutils Documentation',
-   u'Specutils Developers', 'manual'),
-]
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-#latex_logo = None
+latex_documents = [('index', project + '.tex', project + u' Documentation',
+                    author, 'manual')]
 
 
 # -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'specutils', u'Specutils Documentation',
-     [u'Specutils Developers'], 1)
-]
+man_pages = [('index', project.lower(), project + u' Documentation',
+              [author], 1)]
 
-# This is added to the end of RST files - a good place to put substitutions to
-# be used globally.
-rst_epilog += """
-"""
+
+## -- Options for the edit_on_github extension ----------------------------------------
+#
+#extensions += ['astropy.sphinx.ext.edit_on_github']
+#
+## Don't import the module as "version" or it will override the
+## "version" configuration parameter
+#from packagename import version as versionmod
+#edit_on_github_project = "astropy/reponame"
+#if versionmod.release:
+#    edit_on_github_branch = "v" + versionmod.version
+#else:
+#    edit_on_github_branch = "master"
+#
+#edit_on_github_source_root = ""
+#edit_on_github_doc_root = "docs"
