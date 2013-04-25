@@ -296,7 +296,6 @@ def read_IRAF_spec(filename):
     -----
     - take care of units
     - look for uncertainties
-    - check BZERO keywords etc. are handeled correctly
     '''
 
     hdus = fits.open(filename)
