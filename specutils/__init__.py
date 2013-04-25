@@ -11,14 +11,14 @@ from . import io
 
 #this indicates whether or not we are in the package's setup.py
 try:
-    _PACKAGE_SETUP_
+    _ASTROPY_SETUP_
 except NameError:
     from sys import version_info
     if version_info[0] >= 3:
         import builtins
     else:
         import __builtin__ as builtins
-    builtins._PACKAGE_SETUP_ = False
+    builtins._ASTROPY_SETUP_ = False
     del version_info
 
 try:
@@ -110,7 +110,7 @@ def test(package=None, test_path=None, args=None, plugins=None,
         remote_data=remote_data, pep8=pep8, pdb=pdb,
         coverage=coverage, open_files=open_files, **kwargs)
 
-if not _PACKAGE_SETUP_:
+if not _ASTROPY_SETUP_:
 
     import os
     from warnings import warn
@@ -131,4 +131,4 @@ if not _PACKAGE_SETUP_:
 
     del os, warn, config_dir  # clean up namespace
 
-
+from .spectrum1d import Spectrum1D
