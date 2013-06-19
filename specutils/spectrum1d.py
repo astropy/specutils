@@ -279,7 +279,7 @@ class Spectrum1D(NDData):
         -----
         Often it is useful to slice out a portion of a `Spectrum1D` objects
         either by two dispersion points (e.g. two wavelengths) or by the indices
-        of the dispersion/flux arrays (see `~Spectrum1D.slice_index` for this
+        of the dispersion/flux arrays (see :meth:`~Spectrum1D.slice_index` for this
         functionality).
         
         For example::
@@ -323,7 +323,7 @@ class Spectrum1D(NDData):
         Notes
         -----
         Often it is useful to slice out a portion of a `Spectrum1D` objects
-        either by two index points (see `~Spectrum1D.slice_dispersion`) or by
+        either by two index points (see :meth:`~Spectrum1D.slice_dispersion`) or by
         the indices of the dispersion/flux array.
         
         See Also

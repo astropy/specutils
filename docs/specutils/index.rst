@@ -9,5 +9,8 @@ Currently we have implemented:
  * A simple Spectrum1D object that is currently in the very early stages
  * A method to calculate extinction
 
+ .. toctree::
+    spectrum1d.rst
+
 
 
