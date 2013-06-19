@@ -11,6 +11,7 @@ Currently we have implemented:
 
  .. toctree::
     spectrum1d.rst
+    reddening.rst
 
 
 

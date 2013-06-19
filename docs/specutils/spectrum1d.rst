@@ -1,9 +1,14 @@
 Spectrum1D
 ----------
 
-The :class:`Spectrum1d` class is one of the core classes of the ``specutils`` package. It is a child of the
+The :class:`~specutils.Spectrum1D` class is one of the core classes of the ``specutils`` package. It is a child of the
 :class:`~astropy.nddata.NDData` class. :class:`Spectrum1D` stores the flux and the associated units within the framework
 of :class:`~astropy.nddata.NDData` and the wavelength solution is stored within a subclass of :class:`BaseSpectrum1DWCS`.
+
+.. warning::
+    `~specutils.Spectrum1D` is currently a work-in-progress, and thus it is
+    possible there will be significant API changes in later versions of
+    `specutils`.
 
 There are several ways to instantiate a :class:`Spectrum1D` object:
 
