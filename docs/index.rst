@@ -10,4 +10,4 @@ this package is here:
   specutils/index.rst
 
 .. note:: Do not edit this page - instead, place all documentation for the
-          affiliated package inside ``packagename/``
+          affiliated package inside ``specutils/``
