@@ -77,7 +77,8 @@ class Spectrum1D(NDData):
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
             raise ValueError("dispersion and flux need to be one-dimensional Numpy arrays with the same shape")
         spec_wcs = Spectrum1DLookupWCS(dispersion, unit=dispersion_unit)
-        return cls(data=flux, wcs=spec_wcs, unit=unit)
+        return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
+                   mask=mask, flags=flags, meta=meta)
     
     @classmethod
     def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None,
@@ -126,7 +127,8 @@ class Spectrum1D(NDData):
 
         return cls.from_array(flux=flux.data, dispersion=dispersion.data,
                               uncertainty=uncertainty, dispersion_unit=dispersion.units,
-                              unit=flux.units, mask=table.mask, flags=flags)
+                              unit=flux.units, mask=table.mask, flags=flags,
+                              meta=table.meta)
         
     
     
@@ -277,7 +279,7 @@ class Spectrum1D(NDData):
         -----
         Often it is useful to slice out a portion of a `Spectrum1D` objects
         either by two dispersion points (e.g. two wavelengths) or by the indices
-        of the dispersion/flux arrays (see `~Spectrum1D.slice_index` for this
+        of the dispersion/flux arrays (see :meth:`~Spectrum1D.slice_index` for this
         functionality).
         
         For example::
@@ -321,7 +323,7 @@ class Spectrum1D(NDData):
         Notes
         -----
         Often it is useful to slice out a portion of a `Spectrum1D` objects
-        either by two index points (see `~Spectrum1D.slice_dispersion`) or by
+        either by two index points (see :meth:`~Spectrum1D.slice_dispersion`) or by
         the indices of the dispersion/flux array.
         
         See Also
