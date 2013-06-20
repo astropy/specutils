@@ -57,7 +57,7 @@ import specutils
 # The short X.Y version.
 version = specutils.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
-release = specuitils.__version__
+release = specutils.__version__
 
 
 # -- Options for HTML output ---------------------------------------------------
