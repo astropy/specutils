@@ -7,6 +7,7 @@ __all__ = ['Spectrum1D', 'spec_operation']
 
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
+from astropy.io import fits
 
 from astropy.utils import misc
 
@@ -146,15 +147,55 @@ class Spectrum1D(NDData):
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
-    def from_fits(cls, filename, uncertainty=None):
+    def from_fits(cls, filename, uncertainty=None,extension=0):
         """This is an example function to demonstrate how
         classmethods are a clean way to instantiate Spectrum1D objects"""
-        raise NotImplementedError('This function is not implemented yet')
-    
-    
+
+        
+        # Attempting to implement a basic version that just reads in a
+        # linear FITS WCS
+        hdulist = fits.open(filename)
+        data = hdulist[extension].data
+        header = hdulist[extension].header
+
+        # assume that the wavelength is in axis 1
+        if 'CDELT1' in header.keys():
+            cdelt = header['CDELT1']
+        elif 'CD1_1' in header.keys():
+            cdelt = header['CD1_1']
+        else:
+            cdelt = 1
+
+        crval = header['CRVAL1']
+        crpix = header['CRPIX1']
+        wstart = crval - ((crpix-1.0))*cdelt
+        
+        wavelengths = np.arange(len(data))*cdelt+wstart
+        hdulist.close()
+        
+        return cls.from_array(dispersion=wavelengths, flux=data)
+
+
+    def to_fits(self, filename, uncertainty=None,extension=0):
+        '''Write the spectrum to a FITS file with a linear FITS WCS,
+        This format should be readable by IRAF
+        '''
+
+        hdulist = fits.PrimaryHDU()
+        hdulist.data = self.flux
+        wavelength = self.dispersion
+        cdelt = wavelength[1] - wavelength[0]
+        header = hdulist.header
+        header['CTYPE1'] = 'LINEAR'
+        header['CRPIX1'] = '1'
+        header['CRVAL1'] = wavelength[0]
+        header['CD1_1'] = cdelt
+        header['CDELT1'] = cdelt
+        hdulist.writeto(filename,clobber=True)
+
+        
     @property
-    def flux(self):
-        #returning the flux
+    def flux(self): #returning the flux
         return self.data
         
     @flux.setter
