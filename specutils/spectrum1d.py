@@ -342,7 +342,7 @@ class Spectrum1D(NDData):
         
         See Also
         --------
-        `~Spectrum1D.slice_index`
+        See `~Spectrum1D.slice_index`
         """
         
         # Transform the dispersion end points to index space
@@ -369,7 +369,7 @@ class Spectrum1D(NDData):
         
         See Also
         --------
-        `~Spectrum1D.slice_dispersion`
+        See `~Spectrum1D.slice_dispersion`
         """
         
         # We need to slice the following items:
