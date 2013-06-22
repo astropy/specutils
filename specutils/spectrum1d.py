@@ -3,7 +3,7 @@
 
 from __future__ import print_function, division
 
-__all__ = ['Spectrum1D', 'spec_operation']
+__all__ = ['Spectrum1D']
 
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
