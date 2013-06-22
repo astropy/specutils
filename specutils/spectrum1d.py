@@ -10,7 +10,7 @@ from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
-from .wcs import Spectrum1DLookupWCS, Spectrum1DLinearWCS
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
 
 import numpy as np
 
@@ -183,7 +183,7 @@ class Spectrum1D(NDData):
         
         Parameters
         ----------
-        new_disp : `~numpy.ndarray`
+        new_dispersion : `~numpy.ndarray`
             The dispersion array to interpolate the flux on to.
         
         kind : `str` or `int`, optional
@@ -217,53 +217,22 @@ class Spectrum1D(NDData):
         """
         
         # Check for SciPy availability
-        try:
-            from scipy import interpolate
-        except ImportError as e:
-            raise ImportError("Could not import interpolate from scipy; cannot"+
-                              " interpolate to new dispersion map without this"+
-                              " (need scipy.interpolate.interp1d)")
+
+
+        if kind != 'linear':
+            raise ValueError('No other kind but linear supported')
+
+        if not isinstance(new_dispersion, BaseSpectrum1DWCS):
+            new_dispersion = Spectrum1DLookupWCS(np.array(new_dispersion))
+
+
+        new_pixel = self.wcs.invert(new_dispersion.lookup_table)
+
+        new_flux = np.interp(new_pixel, self.wcs.pixel_index, self.flux)
         
-        spectrum_interp = interpolate.interp1d(self.dispersion,
-                                               self.flux,
-                                               kind=kind,
-                                               bounds_error=bounds_error,
-                                               fill_value=fill_value)
-        
-        new_flux = spectrum_interp(new_dispersion)
-        
-        # We need to perform error calculation for the new dispersion map
-        if self.uncertainty is None:
-            new_uncertainty = None
-        else:
-            # After having a short think about it, it seems reasonable to me only to
-            # take the nearest uncertainty for each interpolated dispersion point
-            
-            new_uncertainty = interpolate.interp1d(self.dispersion,
-                                             self.flux,
-                                             kind=1, # Nearest
-                                             bounds_error=bounds_error,
-                                             fill_value=fill_value)
-        
-        # The same should also apply for masks
-        if self.mask is None:
-            new_mask = None
-        else:
-            new_mask = interpolate.interp1d(self.dispersion,
-                                            self.flux,
-                                            kind=1, # Nearest
-                                            bounds_error=bounds_error,
-                                            fill_value=fill_value)
-            
-        # As for flags it is not entirely clear to me what the best behaviour is
-        # In the face of uncertainty, for the time being, I am discarding flags
-        
-        return self.__class__.from_array(new_dispersion,
-                                         new_flux,
-                                         uncertainty=new_uncertainty,
-                                         mask=new_mask,
-                                         meta=self.meta)
-        
+
+        return self.__class__(new_flux, wcs=new_dispersion, meta=self.meta)
+
         
     def slice_dispersion(self, start=None, stop=None):
         """Slice the spectrum within a given start and end dispersion value.
