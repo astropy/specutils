@@ -31,5 +31,15 @@ Once a spectrum is instantiated, one can access the `flux` and `dispersion`::
     array([ 0.34272852,  0.92834782,  0.64680224, ...,  0.03348069,
             0.10291822,  0.33614334])
 
+**Playing with WCS**:
+
+    >>> flux = np.random.random(1000)
+    >>> wave = np.sort(np.random.random(1000))
+    >>> spec1d = Spectrum1D.from_array(wave, flux)
+    >>> spec1d = Spectrum1D.interpolate(Spectrum1DLinearWCS(6000, dispersion_delta=1, pixel_index=np.arange(1000)))
+    >>> #Now it can be written to a fits file as it is linear encoded which is representable in FITS headers.
+
+
+
 .. automodapi:: specutils
     :no-inheritance-diagram:
