@@ -228,7 +228,7 @@ class Spectrum1D(NDData):
 
         new_pixel = self.wcs.invert(new_dispersion.lookup_table)
 
-        new_flux = np.interp(new_pixel, self.wcs.pixel_index, self.flux)
+        new_flux = np.interp(new_pixel, self.wcs.pixel_index, self.flux, left=np.nan, right=np.nan)
         
 
         return self.__class__(new_flux, wcs=new_dispersion, meta=self.meta)
@@ -253,8 +253,8 @@ class Spectrum1D(NDData):
         
         For example::
         
-            >>> from astropy.specutils import Spectrum1D
-            >>> from astropy.units import Units as unit
+            >>> from specutils import Spectrum1D
+            >>> from astropy.units import Unit as unit
             >>> import numpy as np
             
             >>> dispersion = np.arange(4000, 5000, 0.12)
