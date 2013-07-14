@@ -24,16 +24,17 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
-                   unit=None, copy=True):
+    def from_array(cls, dispersion, flux, uncertainty=None, mask=None,
+            flags=None, meta=None, copy=True):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
         -----------
-        dispersion : `~numpy.ndarray`
-            The dispersion for the Spectrum (i.e. an array of wavelength points).
+        dispersion : `~astropy.units.quantity.Quantity`
+            The dispersion for the Spectrum (e.g. an array of wavelength
+            points).
         
-        flux : `~numpy.ndarray`
+        flux : `~astropy.units.quantity.Quantity`
             The flux level for each wavelength point. Should have the same length
             as `disp`.
 
@@ -58,9 +59,6 @@ class Spectrum1D(NDData):
             of this particular object. e.g., creation date, unique identifier,
             simulation parameters, exposure time, telescope name, etc.
 
-        units : undefined, optional
-            The units of the data. See `~NDData` for more current information.
-
         copy : bool, optional
             If True, the array will be *copied* from the provided `data`,
             otherwise it will be referenced if possible (see `numpy.array` :attr:`copy`
@@ -77,11 +75,16 @@ class Spectrum1D(NDData):
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
             raise ValueError("dispersion and flux need to be one-dimensional Numpy arrays with the same shape")
         spec_wcs = Spectrum1DLookupWCS(dispersion, unit=dispersion_unit)
+
+        if copy:
+            flux = flux.copy()
+
         return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
     
     @classmethod
-    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None,
+    def from_table(cls, table, dispersion_column='dispersion',
+                   flux_column='flux', uncertainty_column=None,
                    flag_columns=None):
         """
         Initializes a `Spectrum1D`-object from an `~astropy.table.Table` object
@@ -149,6 +152,11 @@ class Spectrum1D(NDData):
     def from_fits(cls, filename, uncertainty=None):
         """This is an example function to demonstrate how
         classmethods are a clean way to instantiate Spectrum1D objects"""
+        header = fits.getheader(filename)
+        try:
+            self.dispersion = Spectrum1DLinearWCS.from_header(header)
+        except:
+            pass
         raise NotImplementedError('This function is not implemented yet')
     
     
@@ -305,5 +313,6 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        raise NotImplemented('Will presumeably implemented in core NDDATA')
+        # raise NotImplemented('Will presumeably implemented in core NDDATA')
+        return self[start:stop]
 
