@@ -9,7 +9,9 @@ import numpy as np
 from astropy.utils import misc
 from astropy.io import fits
 from astropy import modeling
+import astropy.units as u
 
+valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
 
 class BaseSpectrum1DWCSError(Exception):
     pass
@@ -47,29 +49,24 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         lookup table for the array
     """
 
-    def __init__(self, lookup_table, unit=None):
+    def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
 
         self._lookup_table_parameter = modeling.parameters.Parameter('lookup_table_parameter', lookup_table, self, 1)
 
         if unit is None and not hasattr(lookup_table, 'unit'):
             raise TypeError("Lookup table must have a unit attribute or units must be specified.")
-        elif not isinstance(unit, u.BaseUnit):
+        elif unit is not None:
             try:
                 unit = u.Unit(unit)
-                unit.name
-                unit.to('m',u.spectral())
-            except AttributeError,u.UnitsException:
-                # attribute error: if it doesn't have a name, it's a composite unit, e.g. Unit(5)
-                # UnitsException: if it can't be converted to 'm' by spectral equivalency, it's not a valid unit
-                # *** THE LATTER IS NOT ENTIRELY RIGHT: velocity is a valid unit, but requires doppler equiv. ***
-                raise ValueError("Unit must be specified as a valid wavelength-equivalent unit.")
             except ValueError:
                 # e.g., Unit("blah")
                 raise ValueError("Invalid unit specified")
+
+            if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
+                raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
+                                 ", ".join([x.to_string() for x in valid_spectral_units]))
             self.lookup_table = lookup_table * unit
-        elif unit is not None:
-            self.lookup_table = lookup_table * unit
-        elif unit is None:
+        elif unit is None: # lookup_table is already unit'd
             self.lookup_table = lookup_table
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
@@ -103,16 +100,17 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     param_names = ['dispersion0', 'dispersion_delta']
 
     @classmethod
-    def from_header(cls, header, unit=None, **kwargs):
+    def from_header(cls, header, unit=None, spectroscopic_axis_number=1,
+            **kwargs):
         """
         Load a simple linear Spectral WCS from a FITS header.
 
         Respects the following keywords:
 
-         * CDELT1 or CD1_1: delta-dispersion
-         * CRVAL1: reference position
-         * CRPIX1: reference pixel
-         * CUNIT1: dispersion units (parsed by astropy.units)
+         * CDELT or CD: delta-dispersion
+         * CRVAL: reference position
+         * CRPIX: reference pixel
+         * CUNIT: dispersion units (parsed by astropy.units)
 
         Parameters
         ----------
@@ -128,15 +126,18 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
         if unit is None:
             try:
-                unit = u.Unit(header.get('CUNIT1'))
+                unit = u.Unit(header.get('CUNIT%i' % spectroscopic_axis_number))
             except u.UnitsException:
-                raise u.UnitsException("No units were specified and CUNIT1 did not contain unit information.")
+                raise u.UnitsException("No units were specified and CUNIT did not contain unit information.")
 
-        cd1 = header.get('CDELT1')
-        if cd1 is None:
-            cd1 = header.get('CD1_1')
+        cdelt = header.get('CDELT%i' % spectroscopic_axis_number)
+        if cdelt is None:
+            cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
 
-        return cls(header['CRVAL1'], cd1, header['CRPIX1'] - 1, unit=unit)
+        crpix = header['CRPIX%i' % spectroscopic_axis_number]
+        crval = header['CRVAL%i' % spectroscopic_axis_number]
+
+        return cls(crval, cdelt, crpix - 1, unit=unit)
 
 
     def __init__(self, dispersion0, dispersion_delta, pixel_index, unit=None):
