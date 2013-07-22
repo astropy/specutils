@@ -10,7 +10,9 @@ from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
-from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS
+
+from astropy.io import fits
 
 import numpy as np
 
@@ -25,7 +27,8 @@ class Spectrum1D(NDData):
     
     @classmethod
     def from_array(cls, dispersion, flux, uncertainty=None, mask=None,
-            flags=None, meta=None, copy=True):
+                   flags=None, meta=None, copy=True, dispersion_unit=None,
+                   unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
@@ -39,7 +42,7 @@ class Spectrum1D(NDData):
             as `disp`.
 
         error : `~astropy.nddata.NDError`, optional
-            Errors on the data. 
+            Errors on the data.
 
         mask : `~numpy.ndarray`, optional
             Mask for the data, given as a boolean Numpy array with a shape
@@ -51,7 +54,7 @@ class Spectrum1D(NDData):
             Flags giving information about each pixel. These can be specified
             either as a Numpy array of any type with a shape matching that of the
             data, or as a `~astropy.nddata.FlagCollection` instance which has a
-            shape matching that of the data. 
+            shape matching that of the data.
 
         meta : `dict`-like object, optional
             Metadata for this object. "Metadata here means all information that
@@ -140,8 +143,8 @@ class Spectrum1D(NDData):
                    delimiter=None, converters=None, skiprows=0,
                    usecols=None):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
-                   delimiter=delimiter, converters=converters,
-                   skiprows=skiprows, usecols=usecols, ndmin=2)
+                              delimiter=delimiter, converters=converters,
+                              skiprows=skiprows, usecols=usecols, ndmin=2)
     
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
@@ -154,7 +157,7 @@ class Spectrum1D(NDData):
         classmethods are a clean way to instantiate Spectrum1D objects"""
         header = fits.getheader(filename)
         try:
-            self.dispersion = Spectrum1DLinearWCS.from_header(header)
+            cls.dispersion = Spectrum1DLinearWCS.from_header(header)
         except:
             pass
         raise NotImplementedError('This function is not implemented yet')
@@ -259,22 +262,22 @@ class Spectrum1D(NDData):
         of the dispersion/flux arrays (see :meth:`~Spectrum1D.slice_index` for this
         functionality).
         
-        For example::
+        Examples
+        --------
         
-            >>> from specutils import Spectrum1D
-            >>> from astropy.units import Unit as unit
-            >>> import numpy as np
-            
-            >>> dispersion = np.arange(4000, 5000, 0.12)
-            >>> flux = np.random(len(dispersion))
-            >>> mySpectrum = Spectrum1D.from_array(dispersion,
-                                                   flux,
-                                                   units=unit.Wavelength)
-            
-            >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
-            >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
-            >>> hBeta
-            <hBeta __repr__ #TODO>
+        >>> from specutils import Spectrum1D
+        >>> from astropy import units
+        >>> import numpy as np
+        >>> dispersion = np.arange(4000, 5000, 0.12)
+        >>> flux = np.random(len(dispersion))
+        >>> mySpectrum = Spectrum1D.from_array(dispersion,
+                                               flux,
+                                               units=units.m)
+        
+        >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
+        >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
+        >>> hBeta
+        <hBeta __repr__ #TODO>
         
         See Also
         --------
