@@ -269,10 +269,10 @@ class Spectrum1D(NDData):
         >>> from astropy import units
         >>> import numpy as np
         >>> dispersion = np.arange(4000, 5000, 0.12)
-        >>> flux = np.random(len(dispersion))
+        >>> flux = np.random.randn(len(dispersion))
         >>> mySpectrum = Spectrum1D.from_array(dispersion,
                                                flux,
-                                               units=units.m)
+                                               dispersion_unit=units.m)
         
         >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
         >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
@@ -316,6 +316,7 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        # raise NotImplemented('Will presumeably implemented in core NDDATA')
+        raise NotImplementedError('Will presumeably implemented in core NDDATA,'
+                                  'though this is just trivial indexing.')
         return self[start:stop]
 

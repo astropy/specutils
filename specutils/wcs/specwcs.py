@@ -70,23 +70,23 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
             self.lookup_table = lookup_table
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
-        super(Spectrum1DLookupWCS, self).__init__(self.param_names, n_inputs=1, n_outputs=1, param_dim=1)
+        super(Spectrum1DLookupWCS, self).__init__((), n_inputs=1, n_outputs=1, param_dim=1)
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
-        if len(self.lookup_table_parameter[0]) != len(np.unique(self.lookup_table_parameter[0])):
+        if len(self._lookup_table_parameter[0]) != len(np.unique(self._lookup_table_parameter[0])):
             raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
-        self.pixel_index = np.arange(len(self.lookup_table_parameter[0]))
+        self.pixel_index = np.arange(len(self._lookup_table_parameter[0]))
 
     def __call__(self, pixel_indices):
         if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(pixel_indices, self.pixel_index, self.lookup_table_parameter[0], left=np.nan, right=np.nan)
+            return np.interp(pixel_indices, self.pixel_index, self._lookup_table_parameter[0], left=np.nan, right=np.nan)
         else:
             raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
 
     def invert(self, dispersion_values):
         if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(dispersion_values, self.lookup_table_parameter[0], self.pixel_index, left=np.nan, right=np.nan)
+            return np.interp(dispersion_values, self._lookup_table_parameter[0], self.pixel_index, left=np.nan, right=np.nan)
         else:
             raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
