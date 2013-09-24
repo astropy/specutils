@@ -305,5 +305,73 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        raise NotImplemented('Will presumeably implemented in core NDDATA')
+        # raise NotImplemented('Will presumeably implemented in core NDDATA')
+        return self.__slice__(start_index, stop_index)
+        
+    # PROPOSAL:
+    def _operation_wrapper(operation):
+        """
+        Perform an operation (addition, subtraction, mutiplication, division,
+        etc.) after checking for shape matching
+        """
 
+        def ofunc(self, other): 
+            """ operation function """
+            if np.isscalar(other):
+                newspec = self.copy()
+                newspec.data = operation(newspec.data, other) 
+                return newspec
+
+            # check if both are spectra (or can be treated as such)
+            elif hasattr(self,'disp') and hasattr(other,'disp'): 
+
+                if self._arithmetic_threshold == 'exact':
+                    dispcheck = all(self.disp == other.disp)
+                else:
+                    if self._arithmetic_threshold_units is None:
+                        # not sure this should ever be allowed
+                        dispcheck = all(np.abs(self.disp-other.disp) < self._arithmetic_threshold)
+                    else:
+                        dispcheck = all(np.abs(self.disp.as_unit(self._arithmetic_threshold_units)-other.disp.as_unit(self._arithmetic_threshold_units)) < self._arithmetic_threshold)
+
+                if self.shape == other.shape and dispcheck:
+                    newspec = self.copy()
+                    newspec.data = operation(newspec.data, other.data)
+                    return newspec
+                elif self.shape != other.shape:
+                    raise ValueError("Shape mismatch in data")
+                elif not dispcheck:
+                    raise ValueError("X-axes do not match.")
+            elif hasattr(self,'shape') and hasattr(other,'shape'):
+                # allow array subtraction
+                if self.shape != other.shape:
+                    raise ValueError("Shape mismatch in data")
+                elif hasattr(self,'disp'):
+                    newspec = self.copy()
+                    newspec.data = operation(newspec.data, other)
+                elif hasattr(other,'disp'): # is this even possible?
+                    newspec = other.copy()
+                    newspec.data = operation(self, other.data)
+
+        return ofunc
+
+    @property
+    def _arithmetic_threshold(self):
+        return self._arithmetic_threshold_value
+
+    @_arithmetic_threshold.setter
+    def _arithmetic_threshold(self, value, units=None):
+        self._arithmetic_threshold_value = value
+        if units is None:
+            self._arithmetic_threshold_units = self.disp.units
+        else:
+            self._arithmetic_threshold_units = units
+
+    _arithmetic_threshold_value = 'exact'
+    _arithmetic_threshold_units = None
+
+    __add__ = _operation_wrapper(np.add)
+    __radd__ = _operation_wrapper(np.add)
+    __sub__ = _operation_wrapper(np.subtract)
+    __mul__ = _operation_wrapper(np.multiply)
+    __div__ = _operation_wrapper(np.divide)
