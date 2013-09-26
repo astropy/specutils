@@ -1,23 +1,25 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import print_function, division
+"""Extinction law functions."""
+
+from __future__ import division
 import numpy as np
 import warnings
 
 def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
-    """Determines a CCM reddening curve.
+    """Return the Cardelli, Clayton, Mathis (CCM) reddening values at
+    the given wavelength(s).
 
     Parameters
     ----------
-    wave: ~numpy.ndarray
-        wavelength in Angstroms
-    flux: ~numpy.ndarray
-    ebv: float
-        E(B-V) differential extinction; specify either this or a_v.
-    a_v: float
-        A(V) extinction; specify either this or ebv.
-    r_v: float, optional
-        defaults to standard Milky Way average of 3.1
-    model: {'ccm89', 'gcc09'}, optional
+    wave : float or list_like
+        Wavelength(s) in Angstroms at which to evaluate the reddening.
+    ebv or a_v : float
+        E(B-V) differential extinction, or A(V) total V band extinction,
+        in magnitudes. Specify exactly one. The two values are related by
+        A(V) = R_V * E(B-V).
+    r_v : float, optional
+        R_V parameter. Default is the standard Milky Way average of 3.1.
+    model : {'ccm89', 'gcc09'}, optional
         * 'ccm89' is the default Cardelli, Clayton, & Mathis (1989) [1]_, but
           does include the O'Donnell (1994) parameters to match IDL astrolib.
         * 'gcc09' is Gordon, Cartledge, & Clayton (2009) [2]_. This paper has
@@ -25,8 +27,11 @@ def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
 
     Returns
     -------
-    reddening_curve: ~numpy.ndarray
-        Multiply to deredden flux, divide to redden.
+    reddening : float or `~numpy.ndarray`
+        Inverse of flux transmission fraction, equivalent to ``10**(0.4 * a)``
+        where ``a`` is the extinction in magnitudes. To deredden spectral flux
+        values, multiply by `reddening`. To redden spectral flux values,
+        divide by `reddening`.
 
     Notes
     -----
@@ -47,13 +52,11 @@ def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
 
     References
     ----------
-    [1] Cardelli, J. A., Clayton, G. C., & Mathis, J. S. 1989, ApJ, 345, 245
-    [2] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
-    [3] O'Donnell, J. E. 1994, ApJ, 422, 158O
+    .. [1] Cardelli, J. A., Clayton, G. C., & Mathis, J. S. 1989, ApJ, 345, 245
+    .. [2] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
+    .. [3] O'Donnell, J. E. 1994, ApJ, 422, 158O
 
     """
-
-    from scipy.interpolate import interp1d
 
     model = model.lower()
     if model not in ['ccm89','gcc09']:
@@ -66,21 +69,23 @@ def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
         ebv = a_v / r_v
 
     if model == 'gcc09':
-        raise ValueError('TEMPORARY: gcc09 currently does 2175A bump '+
-            'incorrectly')
+        raise ValueError('TEMPORARY: gcc09 currently does 2175A bump '
+                         'incorrectly')
 
-    x = 1e4 / wave      # inverse microns
+    return_scalar = np.isscalar(wave)
+    wave = np.asarray(wave)
+    x = 1.e4 / np.ravel(wave)  # Inverse microns.
 
-    if any(x < 0.3) or any(x > 11):
-        raise ValueError('ccm_dered valid only for wavelengths from 910 A to '+
-            '3.3 microns')
-    if any(x > 8) and (model == 'ccm89'):
+    if np.any(x < 0.3) or np.any(x > 11.):
+        raise ValueError('CCM law valid only for wavelengths from '
+                         '910 Angstroms to 3.3 microns')
+    if np.any(x > 8.) and (model == 'ccm89'):
         warnings.warn('CCM89 should not be used below 1250 A.')
-#    if any(x < 3.3) and any(x > 3.3) and (model == 'gcc09'):
-#        warnings.warn('GCC09 has a discontinuity at 3030 A.')
+    #    if any(x < 3.3) and any(x > 3.3) and (model == 'gcc09'):
+    #        warnings.warn('GCC09 has a discontinuity at 3030 A.')
 
-    a = np.zeros(x.size)
-    b = np.zeros(x.size)
+    a = np.empty_like(x)
+    b = np.empty_like(x)
 
     # NIR
     valid = (0.3 <= x) & (x < 1.1)
@@ -91,17 +96,17 @@ def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
     valid = (1.1 <= x) & (x < 3.3)
     y = x[valid] - 1.82
     coef_a = np.array([-0.505, 1.647, -0.827, -1.718, 1.137, 0.701, -0.609,
-        0.104, 1.])
+                       0.104, 1.])
     coef_b = np.array([3.347, -10.805, 5.491, 11.102, -7.985, -3.989, 2.908,
-        1.952, 0.])
-    a[valid] = np.polyval(coef_a,y)
-    b[valid] = np.polyval(coef_b,y)
+                       1.952, 0.])
+    a[valid] = np.polyval(coef_a, y)
+    b[valid] = np.polyval(coef_b, y)
 
     # UV
     valid = (3.3 <= x) & (x < 8)
     y = x[valid]
-    f_a = np.zeros(y.size)
-    f_b = np.zeros(y.size)
+    f_a = np.zeros_like(y)
+    f_b = np.zeros_like(y)
     select = (y >= 5.9)
     yselect = y[select] - 5.9
 
@@ -115,8 +120,8 @@ def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
     y = x[valid] - 8.
     coef_a = np.array([-0.070, 0.137, -0.628, -1.073])
     coef_b = np.array([0.374, -0.420, 4.257, 13.670])
-    a[valid] = np.polyval(coef_a,y)
-    b[valid] = np.polyval(coef_b,y)
+    a[valid] = np.polyval(coef_a, y)
+    b[valid] = np.polyval(coef_b, y)
 
     # Overwrite UV with GCC09 model if applicable. Not an extrapolation.
     if model == 'gcc09':
@@ -132,59 +137,62 @@ def reddening_ccm(wave, ebv=None, a_v=None, r_v=3.1, model='ccm89'):
         b[valid] = -3.503 + 2.057*y + (0.718 / ((y-4.59)**2 + 0.0530*3.1)) + f_b
 
     a_v = ebv * r_v
-    a_lambda = a_v * (a + b/r_v)
-    reddening_curve = 10**(0.4 * a_lambda)
+    a_lambda = a_v * (a + b / r_v)
+    reddening = 10**(0.4 * a_lambda)
 
-    return reddening_curve
-#    return a_lambda / a_v  #debug
-
+    if return_scalar:
+        return reddening[0]
+    return reddening
 
 def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
-    """Determines a Fitzpatrick & Massa reddening curve.
+    """Return the Fitzpatrick & Massa reddening values at
+    the given wavelength(s).
 
     Parameters
     ----------
-    wave: ~numpy.ndarray
+    wave : float or list_like
         wavelength in Angstroms
-    ebv: float
-        E(B-V) differential extinction; specify either this or a_v.
-    a_v: float
-        A(V) extinction; specify either this or ebv.
-    r_v: float, optional
-        defaults to standard Milky Way average of 3.1
-    model: {'f99', 'fm07'}, optional
+    ebv or a_v : float
+        E(B-V) differential extinction, or A(V) total V band extinction,
+        in magnitudes. Specify exactly one. Related by A(V) = R_V * E(B-V).
+    r_v : float, optional
+        R_V parameter. Default is the standard Milky Way average of 3.1.
+    model : {'f99', 'fm07'}, optional
         * 'f99' is the default Fitzpatrick (1999) [1]_
         * 'fm07' is Fitzpatrick & Massa (2007) [2]_. Currently not R dependent.
 
     Returns
     -------
-    reddening_curve: ~numpy.ndarray
-        Multiply to deredden flux, divide to redden.
+    reddening : float or `~numpy.ndarray`
+        Inverse of flux transmission fraction, equivalent to ``10**(0.4 * a)``
+        where ``a`` is the extinction in magnitudes. To deredden spectral flux
+        values, multiply by `reddening`. To redden spectral flux values,
+        divide by `reddening`.
 
     Notes
     -----
     Uses Fitzpatrick (1999) [1]_ by default, which relies on the UV
-    parametrization of Fitzpatrick & Massa (1990) [2]_ and spline fitting in the
-    optical and IR. This function is defined from 910 A to 6 microns, but note
-    the claimed validity goes down only to 1150 A. The optical spline points are
-    not taken from F99 Table 4, but rather updated versions from E. Fitzpatrick
-    (this matches the Goddard IDL astrolib routine FM_UNRED).
+    parametrization of Fitzpatrick & Massa (1990) [2]_ and spline
+    fitting in the optical and IR. This function is defined from 910 A
+    to 6 microns, but note the claimed validity goes down only to 1150
+    A. The optical spline points are not taken from F99 Table 4, but
+    rather updated versions from E. Fitzpatrick (this matches the
+    Goddard IDL astrolib routine FM_UNRED).
 
-    The fm07 model uses the Fitzpatrick & Massa (2007) [3]_ parametrization,
-    which has a slightly different functional form. That paper claims it
-    preferable, although it is unclear if signficantly (Gordon et al. 2009)
-    [4]_. It is not the literature standard, so not default here.
+    The fm07 model uses the Fitzpatrick & Massa (2007) [3]_
+    parametrization, which has a slightly different functional
+    form. That paper claims it preferable, although it is unclear if
+    signficantly (Gordon et al. 2009) [4]_. It is not the literature
+    standard, so not default here.
 
     References
     ----------
-    [1] Fitzpatrick, E. L. 1999, PASP, 111, 63
-    [2] Fitpatrick, E. L. & Massa, D. 1990, ApJS, 72, 163
-    [3] Fitpatrick, E. L. & Massa, D. 2007, ApJ, 663, 320
-    [4] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
+    .. [1] Fitzpatrick, E. L. 1999, PASP, 111, 63
+    .. [2] Fitpatrick, E. L. & Massa, D. 1990, ApJS, 72, 163
+    .. [3] Fitpatrick, E. L. & Massa, D. 2007, ApJ, 663, 320
+    .. [4] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
 
     """
-
-    from scipy.interpolate import interp1d
 
     model = model.lower()
     if model not in ['f99','fm07']:
@@ -199,18 +207,21 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     if model == 'fm07':
         raise ValueError('TEMPORARY: fm07 currently not properly R dependent')
 
-    x = 1e4 / wave      # inverse microns
-    k = np.zeros(x.size)
+    return_scalar = np.isscalar(wave)
+    wave = np.asarray(wave)
+    x = 1.e4 / np.ravel(wave)  # Inverse microns.
 
-    if any(x < 0.167) or any(x > 11):
-        raise ValueError('fm_dered valid only for wavelengths from 910 A to '+
-            '6 microns')
+    k = np.zeros_like(x)
+
+    if np.any(x < 0.167) or np.any(x > 11.):
+        raise ValueError('fm_dered valid only for wavelengths from 910 A to '
+                         '6 microns')
 
     # UV region
-    uvsplit = 10000. / 2700.  # Turn 2700A split into inverse microns.
+    uvsplit = 1.e4 / 2700.  # Turn 2700A split into inverse microns.
     uv_region = (x >= uvsplit)
     y = x[uv_region]
-    k_uv = np.zeros(y.size)
+    k_uv = np.zeros_like(y)
 
     # Fitzpatrick (1999) model
     if model == 'f99':
@@ -218,11 +229,12 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         c3, c4 = 3.23, 0.41
         c2 = -0.824 + 4.717 / r_v
         c1 = 2.030 - 3.007 * c2
-        D = y**2 / ((y**2-x0**2)**2 + y**2 * gamma**2)
+        D = y**2 / ((y**2 - x0**2)**2 + y**2 * gamma**2)
         F = np.zeros(y.size)
         valid = (y >= 5.9)
-        F[valid] = 0.5392 * (y[valid]-5.9)**2 + 0.05644 * (y[valid]-5.9)**3
+        F[valid] = 0.5392 * (y[valid] - 5.9)**2 + 0.05644 * (y[valid] - 5.9)**3
         k_uv = c1 + c2*y + c3*D + c4*F
+
     # Fitzpatrick & Massa (2007) model
     if model == 'fm07':
         x0, gamma = 4.592, 0.922
@@ -231,7 +243,7 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         valid = (y <= c5)
         k_uv[valid] = c1 + c2*y[valid] + c3*D[valid]
         valid = (y > c5)
-        k_uv[valid] = c1 + c2*y[valid] + c3*D[valid] + c4*(y[valid]-c5)**2
+        k_uv[valid] = c1 + c2*y[valid] + c3*D[valid] + c4*(y[valid] - c5)**2
 
     k[uv_region] = k_uv
 
@@ -271,7 +283,7 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         anchors_k = np.append(anchors_k_IR, anchors_k_opt)
         anchors_k = np.append(anchors_k, k_uv_spline)
         anchors_x = np.array([0., 0.25, 0.50, 0.75, 1.])  # IR
-        opt_x = 1e4 / np.array([5530., 4000., 3300.])  # optical
+        opt_x = 1.e4 / np.array([5530., 4000., 3300.])  # optical
         anchors_x = np.append(anchors_x, opt_x)
         anchors_x = np.append(anchors_x, x_uv_spline)
         OIR_spline = interp1d(anchors_x, anchors_k, kind='cubic')
@@ -279,7 +291,9 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
 
     k[OIR_region] = k_OIR
 
-    reddening_curve = 10**(0.4 * ebv * (k+r_v))
+    reddening = 10**(0.4 * ebv * (k+r_v))
 
-    return reddening_curve
-#    return (k+r_v) / r_v # debug
+    if return_scalar:
+        return reddening
+    return reddening
+
