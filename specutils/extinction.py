@@ -293,9 +293,9 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
 
     k[OIR_region] = k_OIR
 
-    reddening = 10**(0.4 * ebv * (k+r_v))
+    reddening = 10.**(0.4 * ebv * (k + r_v))
 
     if return_scalar:
-        return reddening
+        return reddening[0]
     return reddening
 
