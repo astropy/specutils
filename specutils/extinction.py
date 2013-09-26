@@ -194,6 +194,8 @@ def reddening_fm(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
 
     """
 
+    from scipy.interpolate import interp1d
+
     model = model.lower()
     if model not in ['f99','fm07']:
         raise ValueError('model must be f99 or fm07')
