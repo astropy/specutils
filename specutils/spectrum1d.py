@@ -10,7 +10,9 @@ from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
-from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS
+
+from astropy.io import fits
 
 import numpy as np
 
@@ -24,21 +26,23 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
-                   unit=None, copy=True):
+    def from_array(cls, dispersion, flux, uncertainty=None, mask=None,
+                   flags=None, meta=None, copy=True, dispersion_unit=None,
+                   unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
         -----------
-        dispersion : `~numpy.ndarray`
-            The dispersion for the Spectrum (i.e. an array of wavelength points).
+        dispersion : `~astropy.units.quantity.Quantity`
+            The dispersion for the Spectrum (e.g. an array of wavelength
+            points).
         
-        flux : `~numpy.ndarray`
+        flux : `~astropy.units.quantity.Quantity`
             The flux level for each wavelength point. Should have the same length
             as `disp`.
 
         error : `~astropy.nddata.NDError`, optional
-            Errors on the data. 
+            Errors on the data.
 
         mask : `~numpy.ndarray`, optional
             Mask for the data, given as a boolean Numpy array with a shape
@@ -50,16 +54,13 @@ class Spectrum1D(NDData):
             Flags giving information about each pixel. These can be specified
             either as a Numpy array of any type with a shape matching that of the
             data, or as a `~astropy.nddata.FlagCollection` instance which has a
-            shape matching that of the data. 
+            shape matching that of the data.
 
         meta : `dict`-like object, optional
             Metadata for this object. "Metadata here means all information that
             is included with this object but not part of any other attribute
             of this particular object. e.g., creation date, unique identifier,
             simulation parameters, exposure time, telescope name, etc.
-
-        units : undefined, optional
-            The units of the data. See `~NDData` for more current information.
 
         copy : bool, optional
             If True, the array will be *copied* from the provided `data`,
@@ -77,11 +78,16 @@ class Spectrum1D(NDData):
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
             raise ValueError("dispersion and flux need to be one-dimensional Numpy arrays with the same shape")
         spec_wcs = Spectrum1DLookupWCS(dispersion, unit=dispersion_unit)
+
+        if copy:
+            flux = flux.copy()
+
         return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
     
     @classmethod
-    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None,
+    def from_table(cls, table, dispersion_column='dispersion',
+                   flux_column='flux', uncertainty_column=None,
                    flag_columns=None):
         """
         Initializes a `Spectrum1D`-object from an `~astropy.table.Table` object
@@ -137,8 +143,8 @@ class Spectrum1D(NDData):
                    delimiter=None, converters=None, skiprows=0,
                    usecols=None):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
-                   delimiter=delimiter, converters=converters,
-                   skiprows=skiprows, usecols=usecols, ndmin=2)
+                              delimiter=delimiter, converters=converters,
+                              skiprows=skiprows, usecols=usecols, ndmin=2)
     
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
@@ -149,6 +155,11 @@ class Spectrum1D(NDData):
     def from_fits(cls, filename, uncertainty=None):
         """This is an example function to demonstrate how
         classmethods are a clean way to instantiate Spectrum1D objects"""
+        header = fits.getheader(filename)
+        try:
+            cls.dispersion = Spectrum1DLinearWCS.from_header(header)
+        except:
+            pass
         raise NotImplementedError('This function is not implemented yet')
     
     
@@ -251,22 +262,22 @@ class Spectrum1D(NDData):
         of the dispersion/flux arrays (see :meth:`~Spectrum1D.slice_index` for this
         functionality).
         
-        For example::
+        Examples
+        --------
         
-            >>> from specutils import Spectrum1D
-            >>> from astropy.units import Unit as unit
-            >>> import numpy as np
-            
-            >>> dispersion = np.arange(4000, 5000, 0.12)
-            >>> flux = np.random(len(dispersion))
-            >>> mySpectrum = Spectrum1D.from_array(dispersion,
-                                                   flux,
-                                                   units=unit.Wavelength)
-            
-            >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
-            >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
-            >>> hBeta
-            <hBeta __repr__ #TODO>
+        >>> from specutils import Spectrum1D
+        >>> from astropy import units
+        >>> import numpy as np
+        >>> dispersion = np.arange(4000, 5000, 0.12)
+        >>> flux = np.random.randn(len(dispersion))
+        >>> mySpectrum = Spectrum1D.from_array(dispersion,
+                                               flux,
+                                               dispersion_unit=units.m)
+        
+        >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
+        >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
+        >>> hBeta
+        <hBeta __repr__ #TODO>
         
         See Also
         --------
@@ -305,5 +316,7 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        raise NotImplemented('Will presumeably implemented in core NDDATA')
+        raise NotImplementedError('Will presumeably implemented in core NDDATA,'
+                                  'though this is just trivial indexing.')
+        return self[start:stop]
 
