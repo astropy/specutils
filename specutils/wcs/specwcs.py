@@ -73,9 +73,9 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         super(Spectrum1DLookupWCS, self).__init__((), n_inputs=1, n_outputs=1, param_dim=1)
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
-        if len(self._lookup_table_parameter[0]) != len(np.unique(self._lookup_table_parameter[0])):
+        if len(np.atleast_1d(self._lookup_table_parameter[0])) != len(np.unique(self._lookup_table_parameter[0])):
             raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
-        self.pixel_index = np.arange(len(self._lookup_table_parameter[0]))
+        self.pixel_index = np.arange(len(np.atleast_1d(self._lookup_table_parameter[0])))
 
     def __call__(self, pixel_indices):
         if self.lookup_table_interpolation_kind == 'linear':

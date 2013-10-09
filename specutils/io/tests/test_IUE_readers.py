@@ -16,7 +16,7 @@ def test_mxlo():
     
     spec3 = read_IUE_mxlo(data_path('swp02283.mxlo'), aperture='SMALL')
     spec4 = read_IUE_mxlo(data_path('swp02283.mxlo'), aperture='LARGE')
-    assert spec3.dispersion[0] == 1050.
+    assert spec3.dispersion[0].value == 1050.
     assert abs(spec3.dispersion[1]- (1050.+1.676338)) < 1e-4
 
 
