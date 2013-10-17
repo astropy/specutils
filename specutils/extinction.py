@@ -6,7 +6,7 @@ import numpy as np
 import warnings
 
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
-    """Return extinction at given wavelength(s).
+    """Return extinction in magnitudes at given wavelength(s).
 
     Parameters
     ----------
@@ -41,14 +41,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
 
     Notes
     -----
-    The extinction scales linearly with `a_v` or `ebv`, so one can
-    compute extinction ahead of time for a given set of wavelengths
-    with ``a_v=1.`` and then scale by `a_v` later: ``ext_ratio =
-    extinction(wave, a_v=1.)``, then later: ``ext = a_v *
-    ext_ratio``. Similarly for `ebv`: ``ext_ratio = extinction(wave,
-    ebv=1.); ext = ebv * ext_ratio``.
 
-    **Model choices**
+    Description of model options:
 
     * **'ccm89'** The Cardelli, Clayton, & Mathis (1989) [1]_
       parameterization with coefficients given in that paper. The
@@ -105,7 +99,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
 
     .. math::
 
-       A(\lambda) = A_V * (a(x) + b(x) / R_V)
+       A(\lambda) = A_V (a(x) + b(x) / R_V)
 
     where A_V can either be specified directly or via E(B-V)
     (by defintion, A_V = R_V * E(B-V)).
@@ -125,7 +119,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     
     **Visual comparison of models**
 
-    The plots below show a comparison of the models for
+    The plot below shows a comparison of the models for
     ``r_v=3.1``. The shaded regions show the limits of claimed
     validity for the f99 model (> 1150 A) and the ccm89/od94 models (>
     1250 A). The vertical dotted lines indicate transition wavelengths in
@@ -138,55 +132,47 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
        import matplotlib.pyplot as plt
        from mpl_toolkits.axes_grid1 import make_axes_locatable
        from specutils.extinction import extinction
-       wave = np.linspace(910., 33000., 2000)
-       a_ccm89 = extinction(wave, a_v=1., r_v=3.1, model='ccm89')
-       a_od94 = extinction(wave, a_v=1., r_v=3.1, model='od94')
-       a_gcc09 = extinction(wave, a_v=1., r_v=3.1, model='gcc09')
-       a_f99 = extinction(wave, a_v=1., r_v=3.1, model='f99')
-       a_fm07 = extinction(wave, a_v=1., r_v=3.1, model='fm07')
 
-       for wave_min, wave_max in [(909., 3300.), (2800., 9400.),
-                                  (8500., 30000.)]:
-           fig = plt.figure()
-           idx = (wave > wave_min) & (wave < wave_max)
+       models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07']
+       wave = np.logspace(np.log10(910.), np.log10(30000.), 2000)
+       a_lambda = {model: extinction(wave, a_v=1., model=model)
+                   for model in models}
 
-           ax = plt.axes()
-           plt.plot(wave[idx], a_ccm89[idx], label='ccm89')
-           plt.plot(wave[idx], a_od94[idx], label='od94')
-           plt.plot(wave[idx], a_f99[idx], label='f99')
-           plt.plot(wave[idx], a_gcc09[idx], label='gcc09')
-           plt.plot(wave[idx], a_fm07[idx], label='fm07')
-           plt.axvline(x=2700., ls=':', c='k')
-           plt.axvline(x=3030.3030, ls=':', c='k')
-           plt.axvline(x=9090.9091, ls=':', c='k')
-           plt.text(0.6, 0.95, '$R_V = 3.1$', transform=ax.transAxes, va='top',
-                    size='x-large')
-           if wave_min < 1250.:
-               plt.axvspan(wave_min, 1150., fc='0.8', ec='none', zorder=-1000)
-               plt.axvspan(1150., 1250., fc='0.9', ec='none', zorder=-1000)
-           plt.ylabel('Extinction ($A(\lambda)$ / $A_V$)')
-           plt.legend()
-           plt.setp(ax.get_xticklabels(), visible=False)
+       fig = plt.figure(figsize=(8.5, 6.))
 
-           divider = make_axes_locatable(ax)
-           axresid = divider.append_axes("bottom", size=1.5, pad=0.2,
-                                         sharex=ax)
-           plt.plot(wave[idx], a_ccm89[idx] - a_f99[idx])
-           plt.plot(wave[idx], a_od94[idx] - a_f99[idx])
-           plt.plot(wave[idx], a_f99[idx] - a_f99[idx])
-           plt.plot(wave[idx], a_gcc09[idx] - a_f99[idx])
-           plt.plot(wave[idx], a_fm07[idx] - a_f99[idx])
-           plt.axvline(x=2700., ls=':', c='k')
-           plt.axvline(x=3030.3030, ls=':', c='k')
-           plt.axvline(x=9090.9091, ls=':', c='k')
-           plt.xlim(wave_min, wave_max)
-           if wave_min < 1250.:
-               plt.axvspan(wave_min, 1150., fc='0.8', ec='none', zorder=-1000)
-               plt.axvspan(1150., 1250., fc='0.9', ec='none', zorder=-1000)
-           plt.ylabel('residual from f99')
-           plt.xlabel('Wavelength ($\AA$)')
+       ax = plt.axes()
+       for model in models:
+           plt.plot(wave, a_lambda[model], label=model)
+       plt.axvline(x=2700., ls=':', c='k')
+       plt.axvline(x=3030.3030, ls=':', c='k')
+       plt.axvline(x=9090.9091, ls=':', c='k')
+       plt.axvspan(wave[0], 1150., fc='0.8', ec='none', zorder=-1000)
+       plt.axvspan(1150., 1250., fc='0.9', ec='none', zorder=-1000)    
+       plt.text(0.67, 0.95, '$R_V = 3.1$', transform=ax.transAxes, va='top',
+                size='x-large')
+       plt.ylabel('Extinction ($A(\lambda)$ / $A_V$)')
+       plt.legend()
+       plt.setp(ax.get_xticklabels(), visible=False)
 
-           fig.show()
+       divider = make_axes_locatable(ax)
+       axresid = divider.append_axes("bottom", size=2.0, pad=0.2, sharex=ax)
+       for model in models:
+           plt.plot(wave, a_lambda[model] - a_lambda['f99'])
+       plt.axvline(x=2700., ls=':', c='k')
+       plt.axvline(x=3030.3030, ls=':', c='k')
+       plt.axvline(x=9090.9091, ls=':', c='k')
+       plt.axvspan(wave[0], 1150., fc='0.8', ec='none', zorder=-1000)
+       plt.axvspan(1150., 1250., fc='0.9', ec='none', zorder=-1000)
+       plt.xlim(wave[0], wave[-1])
+       plt.ylim(ymax=0.4)
+       plt.ylabel('residual from f99')
+       plt.xlabel('Wavelength ($\AA$)')
+
+       ax.set_xscale('log')
+       axresid.set_xscale('log')
+       plt.tight_layout()
+
+       fig.show()
 
     References
     ----------
@@ -205,9 +191,24 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
 
     >>> import numpy as np
     >>> from specutils.extinction import extinction
-    >>> wave = np.linspace(910., 33000., 1000)
-    >>> a_lambda = extinction(wave, a_v=1., r_v=3.1, model='f99')
+    >>> wave = np.array([2000., 2500., 3000.])
+    >>> extinction(wave, a_v=1., r_v=3.1, model='f99')
+    array([ 2.76225609,  2.27590036,  1.79939955])
 
+    The extinction scales linearly with `a_v` or `ebv`. This means
+    that when calculating extinction for multiple values of `a_v` or
+    `ebv`, one can compute extinction ahead of time for a given set of
+    wavelengths and then scale by `a_v` or `ebv` later.  For example:
+
+    >>> a_lambda_over_a_v = extinction(wave, a_v=1.)  # somewhat slow
+    >>> a_v = 0.5
+    >>> a_lambda = a_v * a_lambda_over_a_v  # relatively fast
+
+    Similarly for `ebv`:
+
+    >>> a_lambda_over_ebv = extinction(wave, ebv=1.)  # somewhat slow
+    >>> ebv = 0.1
+    >>> a_lambda = ebv * a_lambda_over_ebv  # relatively fast
 
     """
 
