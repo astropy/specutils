@@ -4,7 +4,8 @@ import numpy as np
 
 from astropy.utils import misc
 from astropy.io import fits
-from astropy.modeling import Model, Parameter
+from astropy.modeling import Model
+from astropy.modeling.parameters import Parameter
 
 import astropy.units as u
 
@@ -18,6 +19,10 @@ class BaseSpectrum1DWCS(Model):
     Base class for a Spectrum1D WCS
     """
 
+
+    n_inputs = 1
+    n_outputs = 1
+
     @misc.lazyproperty
     def lookup_table(self):
         return self(self.pixel_index)
@@ -30,18 +35,15 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     Parameters
     ----------
 
-    lookup_table : ~np.ndarray
+    lookup_table : ~np.ndarray or ~astropy.units.Quantity
         lookup table for the array
     """
 
     n_inputs = 1
     n_outputs = 1
-
-    lookup_table_parameter = Parameter()
+    lookup_table_parameter = Parameter('lookup_table_parameter')
 
     def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
-
-        self.lookup_table_parameter = modeling.parameters.Parameter('lookup_table_parameter', lookup_table, self, 1)
 
         if unit is None and not hasattr(lookup_table, 'unit'):
             raise TypeError("Lookup table must have a unit attribute or units must be specified.")
@@ -55,12 +57,12 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
             if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
                 raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
                                  ", ".join([x.to_string() for x in valid_spectral_units]))
-            self.lookup_table = lookup_table * unit
+            self.lookup_table_parameter = lookup_table * unit
         elif unit is None: # lookup_table is already unit'd
-            self.lookup_table = lookup_table
+            self.lookup_table_parameter = lookup_table
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
-        super(Spectrum1DLookupWCS, self).__init__((), n_inputs=1, n_outputs=1, param_dim=1)
+        super(Spectrum1DLookupWCS, self).__init__(())
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
         if len(self._lookup_table_parameter[0]) != len(np.unique(self._lookup_table_parameter[0])):
