@@ -1,14 +1,11 @@
 # This module provides a basic and probably temporary WCS solution until astropy has a wcs built-in
-#This is all built upon @nden's work on the models class
-
-# Add when nden's models are merged
-# from astropy import models
 
 import numpy as np
 
 from astropy.utils import misc
 from astropy.io import fits
-from astropy import modeling
+from astropy.modeling import Model, Parameter
+
 import astropy.units as u
 
 valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
@@ -16,22 +13,10 @@ valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
 class BaseSpectrum1DWCSError(Exception):
     pass
 
-class BaseSpectrum1DWCS(modeling.Model):
+class BaseSpectrum1DWCS(Model):
     """
     Base class for a Spectrum1D WCS
     """
-
-    def pixel2dispersion(self, pixel_index):
-        """
-        This should be the forward transformation in normal WCS classes
-        """
-        return self[pixel_index]
-
-    def dispersion2pixel(self, dispersion_value):
-        """
-        This should be the inverse transformation in normal WCS classes
-        """
-        return self.invert(dispersion_value)
 
     @misc.lazyproperty
     def lookup_table(self):
@@ -49,9 +34,14 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         lookup table for the array
     """
 
+    n_inputs = 1
+    n_outputs = 1
+
+    lookup_table_parameter = Parameter()
+
     def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
 
-        self._lookup_table_parameter = modeling.parameters.Parameter('lookup_table_parameter', lookup_table, self, 1)
+        self.lookup_table_parameter = modeling.parameters.Parameter('lookup_table_parameter', lookup_table, self, 1)
 
         if unit is None and not hasattr(lookup_table, 'unit'):
             raise TypeError("Lookup table must have a unit attribute or units must be specified.")
