@@ -199,3 +199,6 @@ class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
 
 
 
+
+fits_capable_wcs = [Spectrum1DLinearWCS]
+
