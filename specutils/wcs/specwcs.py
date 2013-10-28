@@ -172,7 +172,7 @@ class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
 
 
 
-
+#def fits_wcs_reader
 
 
 
