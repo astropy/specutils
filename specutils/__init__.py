@@ -6,6 +6,9 @@ project.  It is intended for eventual merger with the `astropy`
 package, but for now is being developed independently.
 """
 
+from .spectrum1d import Spectrum1D
+from . import io
+
 #this indicates whether or not we are in the package's setup.py
 try:
     _ASTROPY_SETUP_
