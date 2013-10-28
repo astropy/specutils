@@ -12,7 +12,9 @@ from astropy.utils import misc
 
 from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS
 
+
 from astropy.io import fits
+from astropy import units as u
 
 import numpy as np
 
@@ -26,21 +28,22 @@ class Spectrum1D(NDData):
     
     
     @classmethod
-    def from_array(cls, dispersion, flux, uncertainty=None, mask=None,
-                   flags=None, meta=None, copy=True, dispersion_unit=None,
+    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
+                   flags=None, meta=None, copy=True,
                    unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
         -----------
-        dispersion : `~astropy.units.quantity.Quantity`
+        dispersion : `~astropy.units.quantity.Quantity` or `~np.array`
             The dispersion for the Spectrum (e.g. an array of wavelength
-            points).
+            points). If an array is specified `dispersion_unit` needs to be a spectral unit
         
-        flux : `~astropy.units.quantity.Quantity`
+        flux : `~astropy.units.quantity.Quantity` or `~np.array`
             The flux level for each wavelength point. Should have the same length
-            as `disp`.
+            as `dispersion`.
 
+        dispersion_unit :
         error : `~astropy.nddata.NDError`, optional
             Errors on the data.
 
@@ -183,6 +186,78 @@ class Spectrum1D(NDData):
     @property
     def dispersion_unit(self):
         return self.wcs.unit
+
+
+    @property
+    def wavelength(self):
+        if not hasattr(self, '_wavelength'):
+            if self.wcs.unit.physical_type == 'length':
+                self._wavelength_unit = self.wcs.unit
+            else:
+                self._wavelength_unit = u.m
+
+            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=u.spectral())
+
+        return self._wavelength
+
+    @property
+    def wavelength_unit(self):
+        return self._wavelength_unit
+
+    @wavelength_unit.setter
+    def wavelength_unit(self, unit):
+        self._wavelength_unit = u.Unit(unit)
+        assert self._wavelength_unit.physical_type == 'length'
+        self._wavelength = self._wavelength.to(self._wavelength_unit)
+
+
+    @property
+    def frequency(self):
+        if not hasattr(self, '_frequency'):
+            if self.wcs.unit.physical_type == 'frequency':
+                self._frequency_unit = self.wcs.unit
+            else:
+                self._frequency_unit = u.Hz
+
+            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=u.spectral())
+
+        return self._frequency
+
+    @property
+    def frequency_unit(self):
+        return self._frequency_unit
+
+    @frequency_unit.setter
+    def frequency_unit(self, unit):
+        self._frequency_unit = u.Unit(unit)
+        assert self._frequency_unit.physical_type == 'frequency'
+        self._frequency = self._frequency.to(self._frequency_unit)
+
+
+
+
+    @property
+    def energy(self):
+        if not hasattr(self, '_energy'):
+            if self.wcs.unit.physical_type == 'energy':
+                self._energy_unit = self.wcs.unit
+            else:
+                self._energy_unit = u.J
+
+            self._energy = self.dispersion.to(self._energy_unit, equivalencies=u.spectral())
+
+        return self._energy
+
+    @property
+    def energy_unit(self):
+        return self._energy_unit
+
+    @energy_unit.setter
+    def energy_unit(self, unit):
+        self._energy_unit = u.Unit(unit)
+        assert self._energy_unit.physical_type == 'energy'
+        self._energy = self._energy.to(self._energy_unit)
+
 
     @property
     def flux_unit(self):
