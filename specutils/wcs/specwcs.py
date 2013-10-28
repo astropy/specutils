@@ -44,7 +44,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     lookup_table_parameter = Parameter('lookup_table_parameter')
 
     def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
-
+        super(Spectrum1DLookupWCS, self).__init__()
         if unit is None and not hasattr(lookup_table, 'unit'):
             raise TypeError("Lookup table must have a unit attribute or units must be specified.")
         elif unit is not None:
@@ -57,17 +57,20 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
             if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
                 raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
                                  ", ".join([x.to_string() for x in valid_spectral_units]))
-            self.lookup_table_parameter = lookup_table * unit
-        elif unit is None: # lookup_table is already unit'd
-            self.lookup_table_parameter = lookup_table
+            lookup_table *= unit
+
+
+
+        self.lookup_table_parameter = lookup_table
+        ##### Quick fix - needs to be fixed in modelling ###
+        self.unit = lookup_table.unit
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
-        super(Spectrum1DLookupWCS, self).__init__(())
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
-        if len(self._lookup_table_parameter[0]) != len(np.unique(self._lookup_table_parameter[0])):
+        if len(self.lookup_table_parameter.value) != len(np.unique(self.lookup_table_parameter.value)):
             raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
-        self.pixel_index = np.arange(len(self._lookup_table_parameter[0]))
+        self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
         if self.lookup_table_interpolation_kind == 'linear':
