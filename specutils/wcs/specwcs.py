@@ -11,6 +11,13 @@ import astropy.units as u
 
 valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
 
+
+
+def check_valid_unit(unit):
+    if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
+                raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
+                                 ", ".join([x.to_string() for x in valid_spectral_units]))
+
 class BaseSpectrum1DWCSError(Exception):
     pass
 
@@ -54,9 +61,8 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
                 # e.g., Unit("blah")
                 raise ValueError("Invalid unit specified")
 
-            if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
-                raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
-                                 ", ".join([x.to_string() for x in valid_spectral_units]))
+            check_valid_unit(unit)
+
             lookup_table *= unit
 
 
@@ -74,14 +80,15 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
     def __call__(self, pixel_indices):
         if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(pixel_indices, self.pixel_index, self._lookup_table_parameter[0], left=np.nan, right=np.nan)
+            return np.interp(pixel_indices, self.pixel_index, self.lookup_table_parameter.value, left=np.nan,
+                             right=np.nan) * self.unit
         else:
             raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
 
     def invert(self, dispersion_values):
         if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(dispersion_values, self._lookup_table_parameter[0], self.pixel_index, left=np.nan, right=np.nan)
+            return np.interp(dispersion_values, self.lookup_table_parameter.value, self.pixel_index, left=np.nan, right=np.nan)
         else:
             raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
@@ -92,10 +99,13 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     A simple linear wcs
     """
 
-    param_names = ['dispersion0', 'dispersion_delta']
+    dispersion0 = Parameter('dispersion0')
+    dispersion_delta = Parameter('dispersion_delta')
+
+
 
     @classmethod
-    def from_header(cls, header, unit=None, spectroscopic_axis_number=1,
+    def from_fits_header(cls, header, unit=None, spectroscopic_axis_number=1,
             **kwargs):
         """
         Load a simple linear Spectral WCS from a FITS header.
@@ -136,19 +146,37 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 
     def __init__(self, dispersion0, dispersion_delta, pixel_index, unit=None):
+        super(Spectrum1DLinearWCS, self).__init__()
+
+        #### Not clear what to do about units of dispersion0 and dispersion_delta.
+        # dispersion0 should have units like angstrom, whereas dispersion_delta should have units like angstrom/pix
+        # for now I assume pixels don't have units and both dispersion0 and dispersion_delta should have the same unit
+        dispersion0 = u.Quantity(dispersion0, unit)
+        dispersion_delta = u.Quantity(dispersion_delta, unit)
+
+        check_valid_unit(dispersion0.unit)
+        check_valid_unit(dispersion_delta.unit)
+
+
+        ##### Quick fix - needs to be fixed in modelling ###
+        if unit is None:
+            unit = dispersion0.unit
+
         self.unit = unit
-        self.dispersion0 = dispersion0 * self.unit
-        self.dispersion_delta = dispersion_delta * self.unit
+
+        self.dispersion0 = dispersion0.value
+        self.dispersion_delta = dispersion_delta.value
         self.pixel_index = pixel_index
 
     def __call__(self, pixel_indices):
         if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, basestring):
             pixel_indices = np.array(pixel_indices)
-        return self.dispersion0 + self.dispersion_delta * (pixel_indices - self.pixel_index)
+        return (self.dispersion0 + self.dispersion_delta * (pixel_indices - self.pixel_index)) * self.unit
 
     def invert(self, dispersion_values):
         if not hasattr(dispersion_values, 'unit'):
-            raise u.UnitsException('Must give a dispersion value with a valid unit')
+            raise u.UnitsException('Must give a dispersion value with a valid unit (i.e. quantity 5 * u.Angstrom)')
+
         if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, basestring):
             dispersion_values = np.array(dispersion_values)
         return float((dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
