@@ -18,7 +18,14 @@ def check_valid_unit(unit):
                 raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
                                  ", ".join([x.to_string() for x in valid_spectral_units]))
 
-class BaseSpectrum1DWCSError(Exception):
+class Spectrum1DWCSError(Exception):
+    pass
+
+
+class Spectrum1DWCSFITSError(Spectrum1DWCSError):
+    pass
+
+class Spectrum1DWCSUnitError(Spectrum1DWCSError):
     pass
 
 class BaseSpectrum1DWCS(Model):
@@ -75,7 +82,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
         if len(self.lookup_table_parameter.value) != len(np.unique(self.lookup_table_parameter.value)):
-            raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
+            raise Spectrum1DWCSError('The Lookup Table does not describe a unique transformation')
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
@@ -133,14 +140,19 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
             try:
                 unit = u.Unit(header.get('CUNIT%i' % spectroscopic_axis_number))
             except u.UnitsException:
-                raise u.UnitsException("No units were specified and CUNIT did not contain unit information.")
+                raise Spectrum1DWCSUnitError("No units were specified and CUNIT did not contain unit information.")
 
-        cdelt = header.get('CDELT%i' % spectroscopic_axis_number)
-        if cdelt is None:
-            cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
+        try:
+            cdelt = header['CDELT%i' % spectroscopic_axis_number]
+            crpix = header['CRPIX%i' % spectroscopic_axis_number]
+            crval = header['CRVAL%i' % spectroscopic_axis_number]
+        except KeyError:
+            raise Spectrum1DWCSFITSError('Necessary keywords (CRDELT, CRPIX, CRVAL) missing - can not reconstruct WCS')
 
-        crpix = header['CRPIX%i' % spectroscopic_axis_number]
-        crval = header['CRVAL%i' % spectroscopic_axis_number]
+        # What happens if both of them are present (fix???)
+        #if cdelt is None:
+        #    cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
+
 
         return cls(crval, cdelt, crpix - 1, unit=unit)
 
