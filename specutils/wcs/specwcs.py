@@ -77,6 +77,9 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
 
+        #Making sure that 1d transformations are sensible
+        assert self.lookup_table_parameter.value.ndim == 1
+
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
         if len(self.lookup_table_parameter.value) != len(np.unique(self.lookup_table_parameter.value)):
             raise Spectrum1DWCSError('The Lookup Table does not describe a unique transformation')
@@ -192,6 +195,13 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, basestring):
             dispersion_values = np.array(dispersion_values)
         return float((dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
+
+    def to_fits_header(self, fits_header, spectroscopic_axis_number=1):
+
+        fits_header['crval%d' % spectroscopic_axis_number] = self.dispersion0.value
+        fits_header['crpix%d' % spectroscopic_axis_number] = self.pixel_index + 1
+        fits_header['cdelt%d' % spectroscopic_axis_number] = self.dispersion_delta.value
+        fits_header['cunit%d' % spectroscopic_axis_number] = self.unit.to_string()
 
 
 #### EXAMPLE implementation for Chebyshev

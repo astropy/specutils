@@ -10,7 +10,7 @@ from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
-from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS, Spectrum1DWCSFITSError
 
 
 from astropy.io import fits
@@ -360,7 +360,7 @@ class Spectrum1D(NDData):
         """
         
         # Transform the dispersion end points to index space
-        start_index, stop_index = self.wcs.dispersion2pixel([start, stop])
+        start_index, stop_index = self.wcs([start, stop])
         
         return self.slice_index(start_index, stop_index)
     
@@ -395,3 +395,26 @@ class Spectrum1D(NDData):
                                   'though this is just trivial indexing.')
         return self[start:stop]
 
+    def to_fits(self, filename):
+        """
+        Write to fits file
+
+        Parameters
+        ----------
+
+        filename : `str`
+            file name to write the current spectrum to in FITS format
+
+        Notes
+        -----
+
+
+        """
+        fits_file = fits.PrimaryHDU(self.data)
+        try:
+            self.wcs.to_fits_header(fits_file.header)
+        except AttributeError:
+            raise Spectrum1DWCSFITSError('Current WCS does not support writing to FITS files - interpolate to one that '
+                                         'does')
+
+        fits_file.writeto(filename)
