@@ -10,8 +10,10 @@ Currently we have implemented:
  * A method to calculate extinction
 
  .. toctree::
+    :maxdepth: 1
+
     spectrum1d.rst
-    reddening.rst
+    extinction.rst
 
 
 

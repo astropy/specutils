@@ -1,1 +1,1 @@
-from read_IRAF_spec import read_IRAF_spec
+from .read_IRAF_spec import read_IRAF_spec
