@@ -179,7 +179,7 @@ class Spectrum1D(NDData):
     def dispersion(self):
         #returning the disp
         if not hasattr(self.wcs, 'lookup_table'):
-            self.wcs.create_lookup_table(np.arange(len(self.flux)))
+            self.wcs.lookup_table = self.wcs(np.arange(len(self.flux)))
 
         return self.wcs.lookup_table
 

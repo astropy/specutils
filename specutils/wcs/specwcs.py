@@ -37,9 +37,6 @@ class BaseSpectrum1DWCS(Model):
     n_inputs = 1
     n_outputs = 1
 
-    @misc.lazyproperty
-    def lookup_table(self):
-        return self(self.pixel_index)
 
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
@@ -139,7 +136,8 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         if unit is None:
             try:
                 unit = u.Unit(header.get('CUNIT%i' % spectroscopic_axis_number))
-            except u.UnitsException:
+            # UnitsException is never really called, do we need to put it here?
+            except (u.UnitsException, TypeError):
                 raise Spectrum1DWCSUnitError("No units were specified and CUNIT did not contain unit information.")
 
         try:
@@ -179,6 +177,8 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         self.dispersion0 = dispersion0.value
         self.dispersion_delta = dispersion_delta.value
         self.pixel_index = pixel_index
+
+
 
     def __call__(self, pixel_indices):
         if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, basestring):
