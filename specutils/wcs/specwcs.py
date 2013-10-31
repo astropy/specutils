@@ -18,7 +18,14 @@ def check_valid_unit(unit):
                 raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
                                  ", ".join([x.to_string() for x in valid_spectral_units]))
 
-class BaseSpectrum1DWCSError(Exception):
+class Spectrum1DWCSError(Exception):
+    pass
+
+
+class Spectrum1DWCSFITSError(Spectrum1DWCSError):
+    pass
+
+class Spectrum1DWCSUnitError(Spectrum1DWCSError):
     pass
 
 class BaseSpectrum1DWCS(Model):
@@ -30,9 +37,6 @@ class BaseSpectrum1DWCS(Model):
     n_inputs = 1
     n_outputs = 1
 
-    @misc.lazyproperty
-    def lookup_table(self):
-        return self(self.pixel_index)
 
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
@@ -73,9 +77,12 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
 
+        #Making sure that 1d transformations are sensible
+        assert self.lookup_table_parameter.value.ndim == 1
+
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
         if len(self.lookup_table_parameter.value) != len(np.unique(self.lookup_table_parameter.value)):
-            raise BaseSpectrum1DWCSError('The Lookup Table does not describe a unique transformation')
+            raise Spectrum1DWCSError('The Lookup Table does not describe a unique transformation')
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
@@ -132,15 +139,21 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         if unit is None:
             try:
                 unit = u.Unit(header.get('CUNIT%i' % spectroscopic_axis_number))
-            except u.UnitsException:
-                raise u.UnitsException("No units were specified and CUNIT did not contain unit information.")
+            # UnitsException is never really called, do we need to put it here?
+            except (u.UnitsException, TypeError):
+                raise Spectrum1DWCSUnitError("No units were specified and CUNIT did not contain unit information.")
 
-        cdelt = header.get('CDELT%i' % spectroscopic_axis_number)
-        if cdelt is None:
-            cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
+        try:
+            cdelt = header['CDELT%i' % spectroscopic_axis_number]
+            crpix = header['CRPIX%i' % spectroscopic_axis_number]
+            crval = header['CRVAL%i' % spectroscopic_axis_number]
+        except KeyError:
+            raise Spectrum1DWCSFITSError('Necessary keywords (CRDELT, CRPIX, CRVAL) missing - can not reconstruct WCS')
 
-        crpix = header['CRPIX%i' % spectroscopic_axis_number]
-        crval = header['CRVAL%i' % spectroscopic_axis_number]
+        # What happens if both of them are present (fix???)
+        #if cdelt is None:
+        #    cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
+
 
         return cls(crval, cdelt, crpix - 1, unit=unit)
 
@@ -168,6 +181,8 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         self.dispersion_delta = dispersion_delta.value
         self.pixel_index = pixel_index
 
+
+
     def __call__(self, pixel_indices):
         if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, basestring):
             pixel_indices = np.array(pixel_indices)
@@ -180,6 +195,13 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, basestring):
             dispersion_values = np.array(dispersion_values)
         return float((dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
+
+    def to_fits_header(self, fits_header, spectroscopic_axis_number=1):
+
+        fits_header['crval%d' % spectroscopic_axis_number] = self.dispersion0.value
+        fits_header['crpix%d' % spectroscopic_axis_number] = self.pixel_index + 1
+        fits_header['cdelt%d' % spectroscopic_axis_number] = self.dispersion_delta.value
+        fits_header['cunit%d' % spectroscopic_axis_number] = self.unit.to_string()
 
 
 #### EXAMPLE implementation for Chebyshev
@@ -195,10 +217,12 @@ class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
 
 
 
-#def fits_wcs_reader
 
+# Checking which WCSes
 
+fits_capable_wcs = []
 
-
-fits_capable_wcs = [Spectrum1DLinearWCS]
+for wcs in BaseSpectrum1DWCS.__subclasses__():
+    if hasattr(wcs, 'from_fits_header') and hasattr(wcs, 'to_fits_header'):
+        fits_capable_wcs.append(wcs)
 
