@@ -23,10 +23,21 @@ One can instantiate also from astropy tables as well as files::
     >>> spec1d = Spectrum1D.from_table(spec_table, flux_column='objecta_flux')
     >>> spec1d = Spectrum1D.from_ascii('objecta.dat')
 
-Once a spectrum is instantiated, one can access the `flux` and `dispersion`::
+Once a spectrum is instantiated, one can access the `flux`, `wavelength`, `frequency`, `energy`
+(default units can be changed with `energy_unit`, etc.)::
 
-    >>> spec1d.dispersion
-    array([6000, 6001, 6002, ..., 8997, 8998, 8999])
+    >>> spec1d.wavelength
+    <Quantity [ 6000., 6001., 6002.,...,  8997., 8998., 8999.] Angstrom>
+    >>> spec1d.frequency
+    <Quantity [  4.99654097e+14,  4.99570835e+14,  4.99487601e+14,...,
+                 3.33213802e+14,  3.33176770e+14,  3.33139747e+14] Hz>
+    >>> spec1d.energy
+    <Quantity [  3.31074281e-19,  3.31019111e-19,  3.30963959e-19,...,
+             2.20789784e-19,  2.20765246e-19,  2.20740714e-19] J>
+    >>> spec1d.energy_unit = 'eV'
+    >>> spec1d.energy
+    <Quantity [ 2.06640322, 2.06605887, 2.06571464,...,  1.3780615 ,
+            1.37790835, 1.37775523] eV>
     >>> spec1d.flux
     array([ 0.34272852,  0.92834782,  0.64680224, ...,  0.03348069,
             0.10291822,  0.33614334])
