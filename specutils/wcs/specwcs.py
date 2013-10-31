@@ -217,10 +217,12 @@ class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
 
 
 
-#def fits_wcs_reader
 
+# Checking which WCSes
 
+fits_capable_wcs = []
 
-
-fits_capable_wcs = [Spectrum1DLinearWCS]
+for wcs in BaseSpectrum1DWCS.__subclasses__():
+    if hasattr(wcs, 'from_fits_header') and hasattr(wcs, 'to_fits_header'):
+        fits_capable_wcs.append(wcs)
 
