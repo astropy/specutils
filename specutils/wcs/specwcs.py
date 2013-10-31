@@ -4,9 +4,10 @@ import numpy as np
 
 from astropy.utils import misc
 from astropy.io import fits
-from astropy.modeling import Model
+from astropy.modeling import Model, polynomial
 from astropy.modeling.parameters import Parameter
 
+from astropy import modeling
 import astropy.units as u
 
 valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
@@ -158,7 +159,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         return cls(crval, cdelt, crpix - 1, unit=unit)
 
 
-    def __init__(self, dispersion0, dispersion_delta, pixel_index, unit=None):
+    def __init__(self, dispersion0, dispersion_delta, pixel_index, unit):
         super(Spectrum1DLinearWCS, self).__init__()
 
         #### Not clear what to do about units of dispersion0 and dispersion_delta.
@@ -203,19 +204,14 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         fits_header['cdelt%d' % spectroscopic_axis_number] = self.dispersion_delta.value
         fits_header['cunit%d' % spectroscopic_axis_number] = self.unit.to_string()
 
+class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1DModel):
 
-#### EXAMPLE implementation for Chebyshev
-#class ChebyshevSpectrum1D(models.ChebyshevModel):
-class ChebyshevSpectrum1D(BaseSpectrum1DWCS):
-
-    @classmethod
-    def from_fits_header(cls, header):
-        pass
-        ### here be @hamogu's code ###
-        #degree, parameters = hamogu_read_fits(header)
-        #return cls(degree, **parameters)
-
-
+    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1,
+                 **params):
+        polynomial.Legendre1DModel.__init__(self, degree, domain=domain, window=window, param_dim=param_dim,
+                 **params)
+        check_valid_unit(unit)
+        self.unit = unit
 
 
 # Checking which WCSes
