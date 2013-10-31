@@ -208,7 +208,7 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1DModel):
 
     def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1,
                  **params):
-        polynomial.Legendre1DModel.__init__(self, degree, domain=domain, window=window, param_dim=param_dim,
+        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
         check_valid_unit(unit)
         self.unit = unit
@@ -224,4 +224,3 @@ fits_capable_wcs = []
 for wcs in BaseSpectrum1DWCS.__subclasses__():
     if hasattr(wcs, 'from_fits_header') and hasattr(wcs, 'to_fits_header'):
         fits_capable_wcs.append(wcs)
-
