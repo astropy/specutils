@@ -24,13 +24,17 @@ class Spectrum1D(NDData):
     
     This class inherits all the base class functionality from the NDData class
     and is communicative with other Spectrum1D objects in ways which make sense.
+
+    Parameters
+    ----------
+    data: array
+    wcs: wcs
+    unit: unit
     """
-    
     
     @classmethod
     def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
                    flags=None, meta=None, copy=True,
-                   doppler_convention='relativistic',
                    unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
@@ -70,10 +74,6 @@ class Spectrum1D(NDData):
             If True, the array will be *copied* from the provided `data`,
             otherwise it will be referenced if possible (see `numpy.array` :attr:`copy`
             argument for details).
-
-        doppler_convention : 'relativistic','radio', or 'optical'
-            The doppler convention to use when converting between spectral
-            units and doppler units
         
         Raises
         ------
@@ -90,13 +90,8 @@ class Spectrum1D(NDData):
         if copy:
             flux = flux.copy()
 
-        self = cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
+        return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
-
-        # this could be put in "metadata" but I think it is a necessary attribute
-        self.doppler_convention = doppler_convention
-
-        return self
     
     @classmethod
     def from_table(cls, table, dispersion_column='dispersion',
@@ -206,7 +201,7 @@ class Spectrum1D(NDData):
             else:
                 self._wavelength_unit = u.m
 
-            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=self.equivalencies)
+            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=self._equivalencies)
 
         return self._wavelength
 
@@ -229,7 +224,7 @@ class Spectrum1D(NDData):
             else:
                 self._frequency_unit = u.Hz
 
-            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=self.equivalencies)
+            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=self._equivalencies)
 
         return self._frequency
 
@@ -252,7 +247,7 @@ class Spectrum1D(NDData):
             else:
                 self._energy_unit = u.J
 
-            self._energy = self.dispersion.to(self._energy_unit, equivalencies=self.equivalencies)
+            self._energy = self.dispersion.to(self._energy_unit, equivalencies=self._equivalencies)
 
         return self._energy
 
@@ -267,42 +262,13 @@ class Spectrum1D(NDData):
         self._energy = self._energy.to(self._energy_unit)
 
     @property
-    def reference_frequency(self):
-        """
-        The frequency reference for conversion between spectral units
-        Can be specified as any spectral equivalent
-        (TODO: make reference_wavelength, reference_energy...)
-        """
-        return self._reference_frequency
-
-    @reference_frequency.setter
-    def reference_frequency(self, rf):
-        self._reference_frequency = u.Unit(rf).to(u.Hz, equivalencies=u.spectral())
-
-    @property
-    def doppler_convention(self):
-        return self._doppler_convention
-
-    @doppler_convention.setter
-    def doppler_convention(self, dc):
-        dcd = {'relativistic': u.doppler_relativistic,
-               'radio': u.doppler_radio,
-               'optical': u.doppler_optical}
-        if dc in dcd:
-            self._doppler_convention = dcd[dc]
-        elif dc in dcd.values(): # allow users to specify the convention directly
-            self._doppler_convention = dc
-        else:
-            raise ValueError("Doppler convention must be one of " + ",".join(dcd.keys()))
-
-    @property
     def flux_unit(self):
         return self.unit
 
     @property
-    def equivalencies(self):
+    def _equivalencies(self):
         """Equivalencies for spectral axes include spectral equivalencies and doppler"""
-        return [u.spectral(), u._doppler_convention(self.reference_frequency)]
+        return u.spectral() + self.wcs.doppler_convention(self.wcs.reference_frequency)
     
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):

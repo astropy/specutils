@@ -32,6 +32,12 @@ class Spectrum1DWCSUnitError(Spectrum1DWCSError):
 class BaseSpectrum1DWCS(Model):
     """
     Base class for a Spectrum1D WCS
+
+    Parameters
+    ----------
+    doppler_convention : 'relativistic','radio', or 'optical'
+        The doppler convention to use when converting between spectral
+        units and doppler units
     """
 
 
@@ -39,6 +45,35 @@ class BaseSpectrum1DWCS(Model):
     n_outputs = 1
 
 
+    @property
+    def doppler_convention(self):
+        return self._doppler_convention
+
+    @doppler_convention.setter
+    def doppler_convention(self, dc):
+        dcd = {'relativistic': u.doppler_relativistic,
+               'radio': u.doppler_radio,
+               'optical': u.doppler_optical}
+        if dc in dcd:
+            self._doppler_convention = dcd[dc]
+        elif dc in dcd.values(): # allow users to specify the convention directly
+            self._doppler_convention = dc
+        else:
+            raise ValueError("Doppler convention must be one of " + ",".join(dcd.keys()))
+
+
+    @property
+    def reference_frequency(self):
+        """
+        The frequency reference for conversion between spectral units
+        Can be specified as any spectral equivalent
+        (TODO: make reference_wavelength, reference_energy...)
+        """
+        return self._reference_frequency
+
+    @reference_frequency.setter
+    def reference_frequency(self, rf):
+        self._reference_frequency = u.Quantity(rf).to(u.Hz, equivalencies=u.spectral())
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
@@ -55,7 +90,8 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     n_outputs = 1
     lookup_table_parameter = Parameter('lookup_table_parameter')
 
-    def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
+    def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear',
+                 doppler_convention='relativistic'):
         super(Spectrum1DLookupWCS, self).__init__()
         if unit is None and not hasattr(lookup_table, 'unit'):
             raise TypeError("Lookup table must have a unit attribute or units must be specified.")
@@ -70,7 +106,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
             lookup_table *= unit
 
-
+        self.doppler_convention = doppler_convention
 
         self.lookup_table_parameter = lookup_table
         ##### Quick fix - needs to be fixed in modelling ###
@@ -156,8 +192,18 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         #    cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
 
 
-        return cls(crval, cdelt, crpix - 1, unit=unit)
+        self = cls(crval, cdelt, crpix - 1, unit=unit)
 
+        if 'RESTFREQ' in header:
+            self.reference_frequency = header['RESTFREQ'] * u.Hz
+        elif 'RESTFRQ' in header:
+            self.reference_frequency = header['RESTFRQ'] * u.Hz
+        if 'REFFREQ' in header: # this one may not be legit...
+            self.reference_frequency = header['REFFREQ'] * u.Hz
+        # there are header keywords that specify this, but for now force a sensible default...
+        self.doppler_convention = 'relativistic'
+
+        return self
 
     def __init__(self, dispersion0, dispersion_delta, pixel_index, unit):
         super(Spectrum1DLinearWCS, self).__init__()
