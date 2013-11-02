@@ -6,6 +6,7 @@ from astropy.utils import misc
 from astropy.io import fits
 from astropy.modeling import Model, polynomial
 from astropy.modeling.parameters import Parameter
+from warnings import warn
 
 from astropy import modeling
 import astropy.units as u
@@ -44,6 +45,21 @@ class BaseSpectrum1DWCS(Model):
     n_inputs = 1
     n_outputs = 1
 
+
+
+    @property
+    def equivalencies(self):
+        """Equivalencies for spectral axes include spectral equivalencies and doppler"""
+        return self._equivalencies
+
+    @equivalencies.setter
+    def equivalencies(self, equiv):
+        if not isinstance(equiv, list):
+            # TODO: make a smarter test here
+            raise ValueError("Equivalencies must be lists.")
+        if not u.spectral() in equiv:
+            warn("Specutral equivalencies not included in WCS equivalencies!  You probably didn't mean to do this.")
+        self._equivalencies = equiv
 
     @property
     def doppler_convention(self):
@@ -107,6 +123,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
             lookup_table *= unit
 
         self.doppler_convention = doppler_convention
+        self.equivalencies = u.spectral()
 
         self.lookup_table_parameter = lookup_table
         ##### Quick fix - needs to be fixed in modelling ###
@@ -202,6 +219,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
             self.reference_frequency = header['REFFREQ'] * u.Hz
         # there are header keywords that specify this, but for now force a sensible default...
         self.doppler_convention = 'relativistic'
+        self.equivalencies = u.spectral() + self.doppler_convention(self.reference_frequency)
 
         return self
 

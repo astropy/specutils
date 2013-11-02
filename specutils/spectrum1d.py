@@ -201,7 +201,7 @@ class Spectrum1D(NDData):
             else:
                 self._wavelength_unit = u.m
 
-            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=self._equivalencies)
+            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=self.wcs.equivalencies)
 
         return self._wavelength
 
@@ -224,7 +224,7 @@ class Spectrum1D(NDData):
             else:
                 self._frequency_unit = u.Hz
 
-            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=self._equivalencies)
+            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=self.wcs.equivalencies)
 
         return self._frequency
 
@@ -247,7 +247,7 @@ class Spectrum1D(NDData):
             else:
                 self._energy_unit = u.J
 
-            self._energy = self.dispersion.to(self._energy_unit, equivalencies=self._equivalencies)
+            self._energy = self.dispersion.to(self._energy_unit, equivalencies=self.wcs.equivalencies)
 
         return self._energy
 
@@ -264,11 +264,6 @@ class Spectrum1D(NDData):
     @property
     def flux_unit(self):
         return self.unit
-
-    @property
-    def _equivalencies(self):
-        """Equivalencies for spectral axes include spectral equivalencies and doppler"""
-        return u.spectral() + self.wcs.doppler_convention(self.wcs.reference_frequency)
     
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
