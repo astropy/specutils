@@ -33,49 +33,46 @@ class Spectrum1DWCSUnitError(Spectrum1DWCSError):
 class BaseSpectrum1DWCS(Model):
     """
     Base class for a Spectrum1D WCS
-
-    Parameters
-    ----------
-    doppler_convention : 'relativistic','radio', or 'optical'
-        The doppler convention to use when converting between spectral
-        units and doppler units
     """
 
 
     n_inputs = 1
     n_outputs = 1
 
-
+    _default_equivalencies = u.spectral()
 
     @property
     def equivalencies(self):
         """Equivalencies for spectral axes include spectral equivalencies and doppler"""
         return self._equivalencies
 
-    @equivalencies.setter
-    def equivalencies(self, equiv):
-        if not isinstance(equiv, list):
-            # TODO: make a smarter test here
-            raise ValueError("Equivalencies must be lists.")
-        if not u.spectral() in equiv:
-            warn("Specutral equivalencies not included in WCS equivalencies!  You probably didn't mean to do this.")
-        self._equivalencies = equiv
+    #@equivalencies.setter
+    #def equivalencies(self, equiv):
+    #    u.core._normalize_equivalencies(equiv)
+    #    self._equivalencies = equiv
 
-    @property
-    def doppler_convention(self):
-        return self._doppler_convention
+    def reset_equivalencies(self):
+        """
+        Reset the equivalencies to the defaults (probably u.spectral())
+        """
+        self._equivalencies = self._default_equivalencies
 
-    @doppler_convention.setter
-    def doppler_convention(self, dc):
-        dcd = {'relativistic': u.doppler_relativistic,
-               'radio': u.doppler_radio,
-               'optical': u.doppler_optical}
-        if dc in dcd:
-            self._doppler_convention = dcd[dc]
-        elif dc in dcd.values(): # allow users to specify the convention directly
-            self._doppler_convention = dc
-        else:
-            raise ValueError("Doppler convention must be one of " + ",".join(dcd.keys()))
+    def add_equivalency(self, new_equiv):
+        """
+        Add a new equivalency
+
+        Parameters
+        ----------
+        new_equiv: list
+            A list of equivalency mappings
+
+        Examples
+        --------
+        >>> wcs.add_equivalency(u.doppler_optical(5*u.AA))
+        """
+        u.core._normalize_equivalencies(new_equiv)
+        self._equivalencies += new_equiv
+
 
 
     @property
@@ -90,6 +87,7 @@ class BaseSpectrum1DWCS(Model):
     @reference_frequency.setter
     def reference_frequency(self, rf):
         self._reference_frequency = u.Quantity(rf).to(u.Hz, equivalencies=u.spectral())
+
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
@@ -106,8 +104,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     n_outputs = 1
     lookup_table_parameter = Parameter('lookup_table_parameter')
 
-    def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear',
-                 doppler_convention='relativistic'):
+    def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
         super(Spectrum1DLookupWCS, self).__init__()
         if unit is None and not hasattr(lookup_table, 'unit'):
             raise TypeError("Lookup table must have a unit attribute or units must be specified.")
@@ -122,7 +119,6 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
             lookup_table *= unit
 
-        self.doppler_convention = doppler_convention
         self.equivalencies = u.spectral()
 
         self.lookup_table_parameter = lookup_table
@@ -218,7 +214,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         if 'REFFREQ' in header: # this one may not be legit...
             self.reference_frequency = header['REFFREQ'] * u.Hz
         # there are header keywords that specify this, but for now force a sensible default...
-        self.doppler_convention = 'relativistic'
+        self.doppler_convention = _parse_doppler_convention('relativistic')
         self.equivalencies = u.spectral() + self.doppler_convention(self.reference_frequency)
 
         return self
@@ -288,3 +284,16 @@ fits_capable_wcs = []
 for wcs in BaseSpectrum1DWCS.__subclasses__():
     if hasattr(wcs, 'from_fits_header') and hasattr(wcs, 'to_fits_header'):
         fits_capable_wcs.append(wcs)
+
+
+
+def _parse_doppler_convention(dc):
+    dcd = {'relativistic': u.doppler_relativistic,
+           'radio': u.doppler_radio,
+           'optical': u.doppler_optical}
+    if dc in dcd:
+        return dcd[dc]
+    elif dc in dcd.values(): # allow users to specify the convention directly
+        return dc
+    else:
+        raise ValueError("Doppler convention must be one of " + ",".join(dcd.keys()))
