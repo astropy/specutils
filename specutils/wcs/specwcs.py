@@ -74,21 +74,6 @@ class BaseSpectrum1DWCS(Model):
         self._equivalencies += new_equiv
 
 
-
-    @property
-    def reference_frequency(self):
-        """
-        The frequency reference for conversion between spectral units
-        Can be specified as any spectral equivalent
-        (TODO: make reference_wavelength, reference_energy...)
-        """
-        return self._reference_frequency
-
-    @reference_frequency.setter
-    def reference_frequency(self, rf):
-        self._reference_frequency = u.Quantity(rf).to(u.Hz, equivalencies=u.spectral())
-
-
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
     A simple lookup table wcs
@@ -208,14 +193,14 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         self = cls(crval, cdelt, crpix - 1, unit=unit)
 
         if 'RESTFREQ' in header:
-            self.reference_frequency = header['RESTFREQ'] * u.Hz
+            reference_frequency = header['RESTFREQ'] * u.Hz
         elif 'RESTFRQ' in header:
-            self.reference_frequency = header['RESTFRQ'] * u.Hz
+            reference_frequency = header['RESTFRQ'] * u.Hz
         if 'REFFREQ' in header: # this one may not be legit...
-            self.reference_frequency = header['REFFREQ'] * u.Hz
+            reference_frequency = header['REFFREQ'] * u.Hz
         # there are header keywords that specify this, but for now force a sensible default...
         self.doppler_convention = _parse_doppler_convention('relativistic')
-        self.equivalencies = u.spectral() + self.doppler_convention(self.reference_frequency)
+        self.equivalencies = u.spectral() + self.doppler_convention(reference_frequency)
 
         return self
 
