@@ -3,10 +3,111 @@ import re
 
 from astropy.io import fits
 from astropy import units as u
-
+from collections import OrderedDict
 
 from specutils.wcs import specwcs
 from specutils import Spectrum1D
+import numpy as np
+
+wat_keyword_pattern = re.compile('([^=\s]*)\s*=\s*(([^\"\'\s]+)|([\"\'][^\"\']+[\"\']))\s*')
+
+class FITSWCSError(Exception):
+    pass
+
+
+class BaseReadFITSSpectrumWCS(object):
+    """
+
+    """
+
+    def __init__(self, fits_header):
+        self.fits_header = fits.Header(fits_header)
+        try:
+            self.wcs_dim = self.fits_header['WCSDIM']
+        except KeyError:
+            self.wcs_dim = None
+
+        try:
+            self.global_wcs_attributes = self.read_wcs_attributes(0)
+        except FITSWCSError:
+            self.global_wcs_attributes = None
+
+        if self.wcs_dim is not None:
+            self.wcs_attributes = []
+            for axis in xrange(self.wcs_dim):
+                self.wcs_attributes.append(self.read_wcs_attributes(axis + 1))
+
+
+            if self.wcs_dim is None:
+                matrix_dim = self.fits_header['NAXIS']
+            else:
+                matrix_dim = self.wcs_dim
+
+        self.transform_matrix = self.read_transform_matrix()
+
+
+
+    def read_affine_transforms(self, wcs_dim=None):
+        if self.wcs_dim is none
+
+
+    def read_transform_matrix(self, matrix_dim=None):
+        if len(self.fits_header['cd?_?']) > 0:
+            if matrix_dim is None:
+                if self.wcs_dim is None:
+                    matrix_dim = self.fits_header['NAXIS']
+                else:
+                    matrix_dim = self.wcs_dim
+
+            transform_matrix = np.matrix(np.zeros((matrix_dim, matrix_dim)))
+            matrix_element_keyword_pattern = re.compile('cd(\d)_(\d)', re.IGNORECASE)
+            for matrix_element_keyword in self.fits_header['cd?_?']:
+                i, j = map(int, matrix_element_keyword_pattern.match(matrix_element_keyword).groups())
+                transform_matrix[j-1, i-1] = self.fits_header[matrix_element_keyword]
+            return transform_matrix
+
+        else:
+            return None
+
+
+
+
+
+
+    def read_wcs_attributes(self, axis):
+        """
+        Reading WCS attribute information in WAT0_001-like keywords
+
+        Paramaters:
+            axis: int
+                specifying which axis to read (e.g axis=2 will read WAT2_???).
+        """
+        wcs_attributes = self.fits_header['wat{0:d}_???'.format(axis)]
+        if len(wcs_attributes) == 0:
+            raise FITSWCSError
+
+        raw_wcs_attributes = ''.join([wcs_attributes[key] for key in sorted(wcs_attributes.keys())])
+
+        wat_dictionary = OrderedDict()
+        for wat_keyword_match in wat_keyword_pattern.finditer(raw_wcs_attributes):
+            wat_dictionary[wat_keyword_match.groups()[0]] = wat_keyword_match.groups()[1].strip('\"\'')
+
+        return wat_dictionary
+
+
+
+
+
+
+class LinearReadFITSSpectrumWCS(BaseReadFITSSpectrumWCS):
+
+    def _init__(self, fits_header):
+        super(LinearReadFITSSpectrumWCS, self).__init__(fits_header)
+
+
+
+
+
 
 def read_fits_single_spec(filename, dispersion_unit=None, flux_unit=None):
 
