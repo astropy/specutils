@@ -24,8 +24,13 @@ class Spectrum1D(NDData):
     
     This class inherits all the base class functionality from the NDData class
     and is communicative with other Spectrum1D objects in ways which make sense.
+
+    Parameters
+    ----------
+    data: array
+    wcs: wcs
+    unit: unit
     """
-    
     
     @classmethod
     def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
@@ -196,7 +201,7 @@ class Spectrum1D(NDData):
             else:
                 self._wavelength_unit = u.m
 
-            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=u.spectral())
+            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=self.wcs.equivalencies)
 
         return self._wavelength
 
@@ -219,7 +224,7 @@ class Spectrum1D(NDData):
             else:
                 self._frequency_unit = u.Hz
 
-            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=u.spectral())
+            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=self.wcs.equivalencies)
 
         return self._frequency
 
@@ -234,8 +239,6 @@ class Spectrum1D(NDData):
         self._frequency = self._frequency.to(self._frequency_unit)
 
 
-
-
     @property
     def energy(self):
         if not hasattr(self, '_energy'):
@@ -244,7 +247,7 @@ class Spectrum1D(NDData):
             else:
                 self._energy_unit = u.J
 
-            self._energy = self.dispersion.to(self._energy_unit, equivalencies=u.spectral())
+            self._energy = self.dispersion.to(self._energy_unit, equivalencies=self.wcs.equivalencies)
 
         return self._energy
 
@@ -257,7 +260,6 @@ class Spectrum1D(NDData):
         self._energy_unit = u.Unit(unit)
         assert self._energy_unit.physical_type == 'energy'
         self._energy = self._energy.to(self._energy_unit)
-
 
     @property
     def flux_unit(self):

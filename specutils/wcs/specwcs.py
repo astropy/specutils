@@ -6,6 +6,7 @@ from astropy.utils import misc
 from astropy.io import fits
 from astropy.modeling import Model, polynomial
 from astropy.modeling.parameters import Parameter
+from warnings import warn
 
 from astropy import modeling
 import astropy.units as u
@@ -38,6 +39,39 @@ class BaseSpectrum1DWCS(Model):
     n_inputs = 1
     n_outputs = 1
 
+    _default_equivalencies = u.spectral()
+
+    @property
+    def equivalencies(self):
+        """Equivalencies for spectral axes include spectral equivalencies and doppler"""
+        return self._equivalencies
+
+    #@equivalencies.setter
+    #def equivalencies(self, equiv):
+    #    u.core._normalize_equivalencies(equiv)
+    #    self._equivalencies = equiv
+
+    def reset_equivalencies(self):
+        """
+        Reset the equivalencies to the defaults (probably u.spectral())
+        """
+        self._equivalencies = self._default_equivalencies
+
+    def add_equivalency(self, new_equiv):
+        """
+        Add a new equivalency
+
+        Parameters
+        ----------
+        new_equiv: list
+            A list of equivalency mappings
+
+        Examples
+        --------
+        >>> wcs.add_equivalency(u.doppler_optical(5*u.AA))
+        """
+        u.core._normalize_equivalencies(new_equiv)
+        self._equivalencies += new_equiv
 
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
@@ -70,7 +104,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
             lookup_table *= unit
 
-
+        self.equivalencies = u.spectral()
 
         self.lookup_table_parameter = lookup_table
         ##### Quick fix - needs to be fixed in modelling ###
@@ -156,8 +190,19 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         #    cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
 
 
-        return cls(crval, cdelt, crpix - 1, unit=unit)
+        self = cls(crval, cdelt, crpix - 1, unit=unit)
 
+        if 'RESTFREQ' in header:
+            reference_frequency = header['RESTFREQ'] * u.Hz
+        elif 'RESTFRQ' in header:
+            reference_frequency = header['RESTFRQ'] * u.Hz
+        if 'REFFREQ' in header: # this one may not be legit...
+            reference_frequency = header['REFFREQ'] * u.Hz
+        # there are header keywords that specify this, but for now force a sensible default...
+        self.doppler_convention = _parse_doppler_convention('relativistic')
+        self.equivalencies = u.spectral() + self.doppler_convention(reference_frequency)
+
+        return self
 
     def __init__(self, dispersion0, dispersion_delta, pixel_index, unit):
         super(Spectrum1DLinearWCS, self).__init__()
@@ -224,3 +269,16 @@ fits_capable_wcs = []
 for wcs in BaseSpectrum1DWCS.__subclasses__():
     if hasattr(wcs, 'from_fits_header') and hasattr(wcs, 'to_fits_header'):
         fits_capable_wcs.append(wcs)
+
+
+
+def _parse_doppler_convention(dc):
+    dcd = {'relativistic': u.doppler_relativistic,
+           'radio': u.doppler_radio,
+           'optical': u.doppler_optical}
+    if dc in dcd:
+        return dcd[dc]
+    elif dc in dcd.values(): # allow users to specify the convention directly
+        return dc
+    else:
+        raise ValueError("Doppler convention must be one of " + ",".join(dcd.keys()))
