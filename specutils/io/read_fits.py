@@ -28,14 +28,13 @@ fits_wcs_spec_func_type = {1:'chebyshev',
                            3:'cubicspline',
                            4:'linearspline',
                            5:'pixelcoordinatearray',
-                           6:'sampledcoordinatearray'
-        }
+                           6:'sampledcoordinatearray'}
 
 fits_wcs_spec_func_parameter = {'chebyshev': ['order', 'pmin', 'pmax'],
                                 'legendre' : ['order', 'pmin', 'pmax']}
 
 fits_wcs_spec_func_parameter_dtype = {'chebyshev': [int, float, float],
-                                'legendre' : [int, float, float]}
+                                      'legendre' : [int, float, float]}
 
 def _parse_fits_units(fits_unit_string):
     """
