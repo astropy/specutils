@@ -184,7 +184,7 @@ class Spectrum1D(NDData):
         if name in self._wcs_attributes:
             if 'lookup_table' not in self._wcs_attributes[name]:
                 self._wcs_attributes[name]['lookup_table'] = self.dispersion.to(self._wcs_attributes[name]['unit'],
-                                                                                equivalencies=u.spectral())
+                                                                                equivalencies=self.wcs.equivalencies)
             return self._wcs_attributes[name]['lookup_table']
 
         elif name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
