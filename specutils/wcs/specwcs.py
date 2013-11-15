@@ -145,65 +145,6 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     dispersion_delta = Parameter('dispersion_delta')
 
 
-
-    @classmethod
-    def from_fits_header(cls, header, unit=None, spectroscopic_axis_number=1,
-            **kwargs):
-        """
-        Load a simple linear Spectral WCS from a FITS header.
-
-        Respects the following keywords:
-
-         * CDELT or CD: delta-dispersion
-         * CRVAL: reference position
-         * CRPIX: reference pixel
-         * CUNIT: dispersion units (parsed by astropy.units)
-
-        Parameters
-        ----------
-        header : str
-            FITS Filename or FITS Header instance
-        unit : astropy.units.Unit
-            Specified units. Overrides CUNIT1 if specified.
-
-        .. todo:: Allow FITS files or just headers to be passed...
-        """
-        if isinstance(header, basestring):
-            header = fits.getheader(header, **kwargs)
-
-        if unit is None:
-            try:
-                unit = u.Unit(header.get('CUNIT%i' % spectroscopic_axis_number))
-            # UnitsException is never really called, do we need to put it here?
-            except (u.UnitsException, TypeError):
-                raise Spectrum1DWCSUnitError("No units were specified and CUNIT did not contain unit information.")
-
-        try:
-            cdelt = header['CDELT%i' % spectroscopic_axis_number]
-            crpix = header['CRPIX%i' % spectroscopic_axis_number]
-            crval = header['CRVAL%i' % spectroscopic_axis_number]
-        except KeyError:
-            raise Spectrum1DWCSFITSError('Necessary keywords (CRDELT, CRPIX, CRVAL) missing - can not reconstruct WCS')
-
-        # What happens if both of them are present (fix???)
-        #if cdelt is None:
-        #    cdelt = header.get('CD%i_%i' % (spectroscopic_axis_number,spectroscopic_axis_number))
-
-
-        self = cls(crval, cdelt, crpix - 1, unit=unit)
-
-        if 'RESTFREQ' in header:
-            reference_frequency = header['RESTFREQ'] * u.Hz
-        elif 'RESTFRQ' in header:
-            reference_frequency = header['RESTFRQ'] * u.Hz
-        if 'REFFREQ' in header: # this one may not be legit...
-            reference_frequency = header['REFFREQ'] * u.Hz
-        # there are header keywords that specify this, but for now force a sensible default...
-        self.doppler_convention = _parse_doppler_convention('relativistic')
-        self.equivalencies = u.spectral() + self.doppler_convention(reference_frequency)
-
-        return self
-
     def __init__(self, dispersion0, dispersion_delta, pixel_index, unit):
         super(Spectrum1DLinearWCS, self).__init__()
 
@@ -249,7 +190,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         fits_header['cdelt%d' % spectroscopic_axis_number] = self.dispersion_delta.value
         fits_header['cunit%d' % spectroscopic_axis_number] = self.unit.to_string()
 
-class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1DModel):
+class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
 
     def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1,
                  **params):
