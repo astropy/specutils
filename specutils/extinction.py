@@ -18,7 +18,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         A(V) = R_V * E(B-V).
     r_v : float, optional
         R_V parameter. Default is the standard Milky Way average of 3.1.
-    model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07'}, optional
+    model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07', 'd03'}, optional
         * 'ccm89': Cardelli, Clayton, & Mathis (1989).
         * 'od94': Like 'ccm89' but using the O'Donnell (1994) optical
           coefficients between 3030 A and 9091 A.
@@ -29,6 +29,9 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         * 'f99': Fitzpatrick (1999) model. == DEFAULT ==
         * 'fm07': Fitzpatrick & Massa (2007) model. This model is not
           currently not R dependent, so can only be used with ``r_v=3.1``.
+        * 'wd01': Weingartner and Draine (2001) dust model.
+        * 'd03': Draine (2003) model. Like the 'wd01' but with lower
+          PAH C abundance relative to H.
 
     Returns
     -------
@@ -78,11 +81,36 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
       signficantly so (Gordon et al. 2009). Defined from 910 A to 6
       microns.
 
+    * **'wd01'** The Weingartner & Draine (2001) [10]_ dust model.
+      This model is a calculation of the interstellar extinction
+      using a dust model of carbonaceous grains and amorphous 
+      silicate grains. The carbonaceous grains are like PAHs when 
+      small and like graphite when large. This model is evaluated
+      at discrete wavelengths and interpolated between these 
+      wavelengths. Grid goes from 1 A to 1000 microns. The model 
+      has been calculated for three different grain size 
+      distributions which produce interstellar exinctions that 
+      look like 'ccm89' at Rv = 3.1, Rv = 4.0 and Rv = 5.5.
+      No interpolation to other Rv values is performed, so this 
+      model can be evaluated only for these values.
+
+    * **'d03'** The Draine (2003) [11]_ update to 'wd01' where the 
+      grain abundances relative to 'wd01' have been reduced by a 
+      factor of 0.93. Since this routine returns an extinction 
+      relative to Av, this normalization is unimportant. Currently, 
+      therefore, 'd03' and 'wd01' return the same values for extinction.
+
     .. warning :: The 'gcc09' model currently does the 2175 Angstrom bump
                   incorrectly.
 
     .. warning :: The 'fm07' model is not properly R dependent. A ValueError
                   is raised if r_v values other than 3.1 are used.
+
+    .. warning :: The 'wd01' and 'd03' models are not analytic 
+                  functions of R. Only r_v = 3.1, r_v = 4.0 and
+                  r_v = 5.5 are accepted. Otherwise a ValueError
+                  is raised.
+
 
     **ccm89, od94 & gcc09 models**
 
@@ -186,6 +214,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     .. [7] Savage & Mathis 1979, ARA&A, 17, 73
     .. [8] Longo et al. 1989, ApJ, 339,474
     .. [9] Valencic et al. 2004, ApJ, 616, 912
+    .. [10] Weingartner, J.C. & Draine, B.T. 2001, ApJ, 548, 296
+    .. [11] Draine, B.T. 2003, ARA&A, 41, 241
 
     Examples
     --------
