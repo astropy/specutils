@@ -110,5 +110,35 @@ def test_extinction_od94():
                         0.885,0.746,0.597,
                         1.197,0.811,0.580])
     od94_alambda = extinction(sfd_eff_waves,a_v=1.,r_v=3.1,model='od94')
+
+    od94_alambda_lo = extinction(sfd_eff_waves-1.,a_v=1.,r_v=3.1,model='od94')
+    od94_alambda_hi = extinction(sfd_eff_waves+1.,a_v=1.,r_v=3.1,model='od94')
+    #print("I am a fish")
+
+    #Plot the differences to look for patterns
+    import matplotlib.pyplot as plt
+    diff = sfd_table_alambda-od94_alambda
+    diff_lo = sfd_table_alambda-od94_alambda_lo
+    diff_hi = sfd_table_alambda-od94_alambda_hi
+
+    plt.clf()
+    plt.plot(sfd_eff_waves,diff,'ko')
+    plt.plot(sfd_eff_waves,diff_lo,'bo')
+    plt.plot(sfd_eff_waves,diff_hi,'ro')
+
+    plt.xlabel("Wavelength [Angstroms]")
+    plt.ylabel("SFD98 - Specutils [mag]")
+    plt.axhline(0.001,color='black')
+    plt.axhline(-0.001,color='black')
+    for label,x,y in zip(sfd_filter_names,sfd_eff_waves,diff):
+         if abs(y) > 0.002:
+             plt.annotate(
+             label,xy=(x,y),xytext=(80,-20),
+             size='smaller',
+             textcoords = 'offset points', ha = 'right', va = 'bottom',
+             arrowprops = dict(arrowstyle = '->', 
+                 connectionstyle = 'arc3,rad=0'))
+    plt.savefig("sfd_od98_test.png")
+
     #print(sfd_table_alambda-od94_alambda)
     np.testing.assert_allclose(sfd_table_alambda,od94_alambda,atol=1e-3)
