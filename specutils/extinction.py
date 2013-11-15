@@ -26,7 +26,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
           wavelengths below 3030 A, otherwise the same as O'Donnell (1994).
           Note that the GCC09 paper has incorrect parameters for the
           2175A bump, and these incorrect parameters **are** used here.
-        * 'f99': Fitzpatrick (1999) model.
+        * 'f99': Fitzpatrick (1999) model. == DEFAULT ==
         * 'fm07': Fitzpatrick & Massa (2007) model. This model is not
           currently not R dependent, so can only be used with ``r_v=3.1``.
 
@@ -69,7 +69,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
       A to 6 microns, but note the claimed validity goes down only to
       1150 A. The optical spline points are not taken from F99 Table
       4, but rather updated versions from E. Fitzpatrick (this matches
-      the Goddard IDL astrolib routine FM_UNRED).
+      the Goddard IDL astrolib routine FM_UNRED). This model is the
+      DEFAULT extinction law used.
 
     * **'fm07'** The Fitzpatrick & Massa (2007) [6]_ model, which has
       a slightly different functional form from 'f99'. Fitzpatrick &
