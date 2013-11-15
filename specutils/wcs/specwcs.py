@@ -249,7 +249,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         fits_header['cdelt%d' % spectroscopic_axis_number] = self.dispersion_delta.value
         fits_header['cunit%d' % spectroscopic_axis_number] = self.unit.to_string()
 
-class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1DModel):
+class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
 
     def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1,
                  **params):
