@@ -51,3 +51,79 @@ def test_extinction_ccm89():
     # Could be due to floating point errors in original paper?
     # Should compare to IDL routines.
 
+def test_extinction_od94():
+    """
+    Tests the broadband extinction estimates from O'Donnell 1998
+    at Rv = 3.1 against the widely used values tabulated in 
+    Schlegel, Finkbeiner and Davis (1998)
+    http://adsabs.harvard.edu/abs/1998ApJ...500..525S
+
+    This is tested by evaluating the extinction curve at a (given)
+    effective wavelength, since these effective wavelengths:
+    "... represent(s) that wavelength on the extinction curve 
+    with the same extinction as the full passband."
+
+    The test does not include UKIRT L' (which, at 3.8 microns) is 
+    beyond the range of wavelengths currently in specutils
+    or the APM b_J filter which is defined in a non-standard way. 
+
+    Precision is tested to the significance of the SFD98 
+    tabulated values (1e-3).
+    """
+    sfd_eff_waves = np.array([3372.,4404.,5428.,
+                    6509.,8090.,
+                    3683.,4393.,5519.,6602.,8046.,
+                    12660.,16732.,22152.,
+                    5244.,6707.,7985.,9055.,
+                    6993.,
+                    3502.,4676.,4127.,
+                    4861.,5479.,
+                    3546.,4925.,6335.,7799.,9294.,
+                    3047.,4711.,5498.,
+                    6042.,7068.,8066.,
+                    4814.,6571.,8183.])
+    sfd_filter_names = np.array(['Landolt_U', 'Landolt_B','Landolt_V',
+                        'Landolt_R','Landolt_I',
+                        'CTIO_U','CTIO_B','CTIO_V','CTIO_R','CTIO_I',
+                        'UKIRT_J','UKIRT_H','UKIRT_K',
+                        'Gunn_g','Gunn_r','Gunn_i','Gunn_z',
+                        'Spinard_R',
+                        'Stromgren_u','Stromgren_b','Stromgren_v',
+                        'Stromgren_beta','Stromgren_y',
+                        'Sloan_u','Sloan_g','Sloan_r','Sloan_i','Sloan_z',
+                        'WFPC2_F300W','WFPC2_F450W','WFPC2_F555W',
+                        'WFPC2_F606W','WFPC2_F702W','WFPC2_F814W',
+                        'DSSII_g','DSSII_r','DSSII_i'])
+    sfd_table_alambda = np.array([1.664,1.321,1.015,
+                        0.819,0.594,
+                        1.521,1.324,0.992,0.807,0.601,
+                        0.276,0.176,0.112,
+                        1.065,0.793,0.610,0.472,
+                        0.755,
+                        1.602,1.240,1.394,
+                        1.182,1.004,
+                        1.579,1.161,0.843,0.639,0.453,
+                        1.791,1.229,0.996,
+                        0.885,0.746,0.597,
+                        1.197,0.811,0.580])
+    od94_alambda = extinction(sfd_eff_waves,a_v=1.,r_v=3.1,model='od94')
+    #print(sfd_table_alambda-od94_alambda)
+    #Plot the differences to look for patterns
+    import matplotlib.pyplot as plt
+    diff = sfd_table_alambda-od94_alambda
+    plt.clf()
+    plt.plot(sfd_eff_waves,diff,'ko')
+    plt.xlabel("Wavelength [Angstroms]")
+    plt.ylabel("SFD98 - Specutils [mag]")
+    plt.axhline(0.001,color='black')
+    plt.axhline(-0.001,color='black')
+    for label,x,y in zip(sfd_filter_names,sfd_eff_waves,diff):
+        if abs(y) > 0.002:
+            plt.annotate(
+            label,xy=(x,y),xytext=(80,-20),
+            size='smaller',
+            textcoords = 'offset points', ha = 'right', va = 'bottom',
+            arrowprops = dict(arrowstyle = '->', 
+                connectionstyle = 'arc3,rad=0'))
+    plt.savefig("sfd_od98_test.png")
+    np.testing.assert_allclose(sfd_table_alambda,od94_alambda,atol=1e-3)
