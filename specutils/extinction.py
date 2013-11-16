@@ -4,6 +4,7 @@
 from __future__ import division
 import numpy as np
 import warnings
+from astropy.io import ascii
 
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     """Return extinction in magnitudes at given wavelength(s).
@@ -272,6 +273,10 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         a_lambda = _f99_like(x, ebv, r_v, model='f99')
     elif model == 'fm07':
         a_lambda = _f99_like(x, ebv, r_v, model='fm07')
+    elif model == 'wd01':
+        a_lambda = _wd01_like(x, ebv, r_v, model='wd01')
+    elif model == 'd03':
+        a_lambda = _wd01_like(x, ebv, r_v, model='d03')
     else:
         raise ValueError('unknown model: {}'.format(model))
 
@@ -303,6 +308,8 @@ def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
           corrected here.
         * 'f99': Fitzpatrick (1999).
         * 'fm07': Fitzpatrick & Massa (2007). Currently not R dependent.
+        * 'wd01': Weingartner & Draine (2001)
+        * 'd03': Draine (2003)
 
     Returns
     -------
@@ -468,3 +475,41 @@ def _f99_like(x, ebv, r_v, model='f99'):
     k[oir_region] = oir_spline(y)
 
     return ebv * (k + r_v)
+
+def _wd01_like(x, ebv, r_v, model='wd01'):
+    """
+      Read in the dust model, interpolate and normalize
+
+      The dust model gives the extinction per H nucleon.
+      For consistency with other extinction laws we 
+      normalize this extinction law so that it is equal
+      to 1.0 at 5495 angstroms
+    """
+    defined_rvs = [3.1,4.0,5.5]
+    if np.any(x < 0.001) or np.any(x > 1.e4):
+        raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
+    if r_v not in defined_rvs:
+        raise ValueError('wd01 and d03 only defined for r_v = 3.1, 4.0 & 5.5')
+    from scipy.interpolate import interp1d
+
+    if model == 'wd01':
+        if r_v == 3.1:
+            model_file = 'data/kext_albedo_WD_MW_3.1A_60_D03_all.txt'
+        elif r_v == 4.0:
+            model_file = 'data/kext_albedo_WD_MW_4.0A_40_D03_all.txt'
+        elif r_v == 5.5:
+            model_file = 'data/kext_albedo_WD_MW_5.5A_30_D03_all.txt'
+    dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=67,
+                  names=['wave','albedo','avg_cos','C_ext','K_abs',
+                  'avg_cos_sq','comment'],
+                  col_starts=[0 ,12,20,27,37,47,55],
+                    col_ends=[11,19,26,36,46,54,80],guess=False)
+    #Put waves into inverse microns
+    waves_ang = 1./np.array(dust_table['wave'])
+    c_vals = np.array(dust_table['C_ext'])
+    ext_spline = interp1d(waves_ang,c_vals)
+    #Evaluate at effective V band.
+    normalization = ext_spline(1.e4/5495.)
+    k = ext_spline(x)/normalization
+    return(k)
+
