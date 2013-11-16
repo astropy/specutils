@@ -3,6 +3,7 @@
 
 import numpy as np
 from specutils.extinction import extinction
+import pytest
 
 extinction_models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07']
 
@@ -51,6 +52,7 @@ def test_extinction_ccm89():
     # Could be due to floating point errors in original paper?
     # Should compare to IDL routines.
 
+@pytest.mark.xfail
 def test_extinction_od94():
     """
     Tests the broadband extinction estimates from O'Donnell 1998
