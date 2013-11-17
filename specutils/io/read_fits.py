@@ -30,11 +30,20 @@ fits_wcs_spec_func_type = {1:'chebyshev',
                            5:'pixelcoordinatearray',
                            6:'sampledcoordinatearray'}
 
-fits_wcs_spec_func_parameter = {'chebyshev': ['order', 'pmin', 'pmax'],
+wcs_attributes_function_parameters = {'chebyshev': ['order', 'pmin', 'pmax'],
                                 'legendre' : ['order', 'pmin', 'pmax']}
 
-fits_wcs_spec_func_parameter_dtype = {'chebyshev': [int, float, float],
-                                      'legendre' : [int, float, float]}
+
+#keywords as described in http://iraf.net/irafdocs/specwcs.php
+wcs_attributes_general_keywords = OrderedDict([('aperture', int), ('beam', int), ('dispersion_type', int),
+                                               ('dispersion0', float), ('average_dispersion_delta', float),
+                                               ('no_valid_pixels', int), ('doppler_factor', float),
+                                               ('aperture_low', float), ('aperture_high', float)])
+
+wcs_attributes_function_keywords = OrderedDict([('weight', float), ('zero_point_offset', float), ('type', int),
+                                               ('order', int), ('pmin', float), ('pmax', float)])
+
+
 
 def _parse_fits_units(fits_unit_string):
     """
@@ -64,11 +73,6 @@ def _parse_multispec_dict(multispec_dict):
             e.g. multi_spec_dict = {'wtype':'multispec', spec1:'...', 'spec2':'...', ..., 'specN':'...'}
 
     """
-    general_spec_key_name = ('ap', 'beam', 'dtype', 'w1', 'dw', 'nw', 'z', 'aplow', 'aphigh')
-    general_spec_key_dtype = (int, int, int, float, float, float, float, float, float)
-
-    function_spec_key_name = ('weight', 'zero_point_offset', 'type')
-    function_spec_key_dtype = (float, float, int)
 
     parsed_multispec_dict = OrderedDict()
 
@@ -78,26 +82,31 @@ def _parse_multispec_dict(multispec_dict):
 
         single_spec_dict = OrderedDict()
         split_single_spec_string = multispec_dict[spec_key].strip().split()
-        for key_name, key_dtype in zip(general_spec_key_name, general_spec_key_dtype):
+        for key_name, key_dtype in wcs_attributes_general_keywords.items():
             single_spec_dict[key_name] = key_dtype(split_single_spec_string.pop(0))
 
         if len(split_single_spec_string) > 0:
 
             #There seems to be a function defined for this spectrum - checking that the dispersion type indicates that:
-            assert single_spec_dict['dtype'] == 2
+            assert single_spec_dict['dispersion_type'] == 2
 
             single_spec_dict['function'] = {}
-            for key_name, key_dtype in zip(function_spec_key_name, function_spec_key_dtype):
+            for key_name, key_dtype in wcs_attributes_function_keywords.items():
                 single_spec_dict['function'][key_name] = key_dtype(split_single_spec_string.pop(0))
+
+                #last of the general keywords
                 if key_name == 'type':
                     single_spec_dict['function']['type'] = fits_wcs_spec_func_type[single_spec_dict['function']['type']]
+                    break
+
+
             #different function types defined in http://iraf.net/irafdocs/specwcs.php -- see fits_wcs_spec_func_type
 
             function_type =  single_spec_dict['function']['type']
-            if function_type in fits_wcs_spec_func_parameter:
+            if function_type in wcs_attributes_function_parameters:
 
-                for key_name, key_dtype in zip(fits_wcs_spec_func_parameter[function_type],
-                                               fits_wcs_spec_func_parameter_dtype[function_type]):
+                for key_name in wcs_attributes_function_parameters[function_type]:
+                    key_dtype = wcs_attributes_function_keywords[key_name]
                     single_spec_dict['function'][key_name] = key_dtype(split_single_spec_string.pop(0))
 
                 single_spec_dict['function']['coefficients'] = map(float, split_single_spec_string)

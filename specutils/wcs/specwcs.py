@@ -200,7 +200,7 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return polynomial.Legendre1DModel.__call__(self, pixel_indices) * self.unit
+        return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
 
 
 # Checking which WCSes
