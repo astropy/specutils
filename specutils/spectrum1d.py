@@ -31,6 +31,10 @@ class Spectrum1D(NDData):
     wcs: wcs
     unit: unit
     """
+
+    _wcs_attributes = {'wavelength': {'unit': u.m},
+                      'frequency': {'unit': u.Hz},
+                      'energy': {'unit': u.J}}
     
     @classmethod
     def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
@@ -169,7 +173,40 @@ class Spectrum1D(NDData):
         except:
             pass
         raise NotImplementedError('This function is not implemented yet')
-    
+
+    def __init__(self, *args, **kwargs):
+        super(Spectrum1D, self).__init__(*args, **kwargs)
+        for key in self._wcs_attributes:
+            if self._wcs_attributes[key]['unit'].physical_type == self.wcs.unit.physical_type:
+                self._wcs_attributes[key]['unit'] = self.wcs.unit
+
+    def __getattr__(self, name):
+        if name in self._wcs_attributes:
+            if 'lookup_table' not in self._wcs_attributes[name]:
+                self._wcs_attributes[name]['lookup_table'] = self.dispersion.to(self._wcs_attributes[name]['unit'],
+                                                                                equivalencies=self.wcs.equivalencies)
+            return self._wcs_attributes[name]['lookup_table']
+
+        elif name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
+            return self._wcs_attributes[name[:-5]]['unit']
+        else:
+            super(Spectrum1D, self).__getattribute__(name)
+
+
+    def __setattr__(self, name, value):
+        if name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
+            self._wcs_attributes[name[:-5]]['unit'] = u.Unit(value)
+            try:
+                del self._wcs_attributes[name[:-5]]['lookup_table']
+            except KeyError:
+                pass
+        else:
+            super(Spectrum1D, self).__setattr__(name, value)
+
+    def __dir__(self):
+        return self.__dict__.keys() + self._wcs_attributes.keys() + \
+               [item + '_unit' for item in self._wcs_attributes.keys()]
+
     
     @property
     def flux(self):
@@ -192,79 +229,6 @@ class Spectrum1D(NDData):
     def dispersion_unit(self):
         return self.wcs.unit
 
-
-    @property
-    def wavelength(self):
-        if not hasattr(self, '_wavelength'):
-            if self.wcs.unit.physical_type == 'length':
-                self._wavelength_unit = self.wcs.unit
-            else:
-                self._wavelength_unit = u.m
-
-            self._wavelength = self.dispersion.to(self._wavelength_unit, equivalencies=self.wcs.equivalencies)
-
-        return self._wavelength
-
-    @property
-    def wavelength_unit(self):
-        return self._wavelength_unit
-
-    @wavelength_unit.setter
-    def wavelength_unit(self, unit):
-        self._wavelength_unit = u.Unit(unit)
-        assert self._wavelength_unit.physical_type == 'length'
-        self._wavelength = self._wavelength.to(self._wavelength_unit)
-
-
-    @property
-    def frequency(self):
-        if not hasattr(self, '_frequency'):
-            if self.wcs.unit.physical_type == 'frequency':
-                self._frequency_unit = self.wcs.unit
-            else:
-                self._frequency_unit = u.Hz
-
-            self._frequency = self.dispersion.to(self._frequency_unit, equivalencies=self.wcs.equivalencies)
-
-        return self._frequency
-
-    @property
-    def frequency_unit(self):
-        return self._frequency_unit
-
-    @frequency_unit.setter
-    def frequency_unit(self, unit):
-        self._frequency_unit = u.Unit(unit)
-        assert self._frequency_unit.physical_type == 'frequency'
-        self._frequency = self._frequency.to(self._frequency_unit)
-
-
-    @property
-    def energy(self):
-        if not hasattr(self, '_energy'):
-            if self.wcs.unit.physical_type == 'energy':
-                self._energy_unit = self.wcs.unit
-            else:
-                self._energy_unit = u.J
-
-            self._energy = self.dispersion.to(self._energy_unit, equivalencies=self.wcs.equivalencies)
-
-        return self._energy
-
-    @property
-    def energy_unit(self):
-        return self._energy_unit
-
-    @energy_unit.setter
-    def energy_unit(self, unit):
-        self._energy_unit = u.Unit(unit)
-        assert self._energy_unit.physical_type == 'energy'
-        self._energy = self._energy.to(self._energy_unit)
-
-    @property
-    def flux_unit(self):
-        return self.unit
-    
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
         """Interpolates onto a new wavelength grid and returns a new `Spectrum1D`-object.
