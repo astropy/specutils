@@ -23,6 +23,8 @@ class FITSWCSSpectrum1DUnitError(FITSWCSError):
 
 
 
+#keywords as described in http://iraf.net/irafdocs/specwcs.php
+
 fits_wcs_spec_func_type = {1:'chebyshev',
                            2:'legendre',
                            3:'cubicspline',
@@ -34,7 +36,6 @@ wcs_attributes_function_parameters = {'chebyshev': ['order', 'pmin', 'pmax'],
                                 'legendre' : ['order', 'pmin', 'pmax']}
 
 
-#keywords as described in http://iraf.net/irafdocs/specwcs.php
 wcs_attributes_general_keywords = OrderedDict([('aperture', int), ('beam', int), ('dispersion_type', int),
                                                ('dispersion0', float), ('average_dispersion_delta', float),
                                                ('no_valid_pixels', int), ('doppler_factor', float),
@@ -126,7 +127,16 @@ def _parse_multispec_dict(multispec_dict):
 
 
 class FITSWCSSpectrum(object):
-    """
+    """This class is designed to extract all known spectroscopic WCS keywords from a FITS keyword header.
+     The resulting keywords can then be validated (several keywords will encode the same information). Other keywords
+     come in pairs (e.g. CRVAL1, CRVAL2) and will be available as a list (e.g. `.affine_transform_dict['crval']`).
+     Several FITS readers make use of this object.
+
+    Parameters
+    ----------
+
+    fits_header: dict-like object (e.g. `~astropy.io.fits.Header`)
+        FITS Header to be read
 
     """
 
