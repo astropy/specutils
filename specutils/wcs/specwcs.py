@@ -3,13 +3,13 @@
 import numpy as np
 
 from astropy.utils import misc
-from astropy.io import fits
 from astropy.modeling import Model, polynomial
 from astropy.modeling.parameters import Parameter
-from warnings import warn
 
-from astropy import modeling
+
 import astropy.units as u
+
+from astropy.utils.misc import deprecated
 
 valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
 
@@ -44,7 +44,10 @@ class BaseSpectrum1DWCS(Model):
     @property
     def equivalencies(self):
         """Equivalencies for spectral axes include spectral equivalencies and doppler"""
-        return self._equivalencies
+        if hasattr(self, '_equivalencies'):
+            return self._equivalencies
+        else:
+            return self._default_equivalencies
 
     #@equivalencies.setter
     #def equivalencies(self, equiv):
@@ -144,7 +147,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     dispersion0 = Parameter('dispersion0')
     dispersion_delta = Parameter('dispersion_delta')
 
-
+    @deprecated('0.dev??', message='please use Spectrum1DPolynomialWCS')
     def __init__(self, dispersion0, dispersion_delta, pixel_index, unit):
         super(Spectrum1DLinearWCS, self).__init__()
 
@@ -193,11 +196,11 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
-    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1, **params)
+    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1, **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
         self.unit = unit
-        
+
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
 
