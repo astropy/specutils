@@ -181,10 +181,10 @@ class Spectrum1D(NDData):
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
             if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
-                wcs_attribute_unit = self.wcs.unit
+                self._wcs_attributes[key]['unit'] = self.wcs.unit
 
             try:
-                unit_equivalent = wcs_attribute_unit.is_equivalent(self.wcs.unit)
+                unit_equivalent = wcs_attribute_unit.is_equivalent(self.wcs.unit, equivalencies=self.wcs.equivalencies)
             except TypeError:
                 unit_equivalent = False
 

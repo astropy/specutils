@@ -54,6 +54,18 @@ class BaseSpectrum1DWCS(Model):
     #    u.core._normalize_equivalencies(equiv)
     #    self._equivalencies = equiv
 
+    @property
+    def unit(self):
+        if self._unit is None:
+            return 1.0
+        else:
+            return self._unit
+
+    @unit.setter
+    def unit(self, value):
+        self._unit = value
+
+
     def reset_equivalencies(self):
         """
         Reset the equivalencies to the defaults (probably u.spectral())
@@ -94,22 +106,14 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
     def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
         super(Spectrum1DLookupWCS, self).__init__()
-        if unit is None and not hasattr(lookup_table, 'unit'):
-            raise TypeError("Lookup table must have a unit attribute or units must be specified.")
-        elif unit is not None:
-            try:
-                unit = u.Unit(unit)
-            except ValueError:
-                # e.g., Unit("blah")
-                raise ValueError("Invalid unit specified")
 
-            check_valid_unit(unit)
+        if unit is not None:
+            self.lookup_table_parameter = u.Quantity(lookup_table, unit)
+            self.unit = lookup_table.unit
+        else:
+            self.lookup_table_parameter = lookup_table
+            self.unit = None
 
-            lookup_table *= unit
-
-        self.lookup_table_parameter = lookup_table
-        ##### Quick fix - needs to be fixed in modelling ###
-        self.unit = lookup_table.unit
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
 
