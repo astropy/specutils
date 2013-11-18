@@ -104,7 +104,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
             lookup_table *= unit
 
-        self.equivalencies = u.spectral()
+        self._equivalencies = u.spectral()
 
         self.lookup_table_parameter = lookup_table
         ##### Quick fix - needs to be fixed in modelling ###
