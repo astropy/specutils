@@ -192,7 +192,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
-    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1, **params):
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1, **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
         self.unit = unit
@@ -203,7 +203,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
 
-    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1,
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1,
                  **params):
         super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
