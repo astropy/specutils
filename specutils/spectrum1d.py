@@ -177,16 +177,17 @@ class Spectrum1D(NDData):
     def __init__(self, *args, **kwargs):
         super(Spectrum1D, self).__init__(*args, **kwargs)
         for key in self._wcs_attributes:
-            if self._wcs_attributes[key]['unit'].physical_type == self.wcs.unit.physical_type:
-                self._wcs_attributes[key]['unit'] = self.wcs.unit
+
+            wcs_attribute_unit = self._wcs_attributes[key]['unit']
+            if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
+                wcs_attribute_unit = self.wcs.unit
+
+            if not wcs_attribute_unit.is_equivalent_to(self.wcs.unit):
+                del self._wcs_attributes[key]
 
     def __getattr__(self, name):
         if name in self._wcs_attributes:
-            if 'lookup_table' not in self._wcs_attributes[name]:
-                self._wcs_attributes[name]['lookup_table'] = self.dispersion.to(self._wcs_attributes[name]['unit'],
-                                                                                equivalencies=self.wcs.equivalencies)
-            return self._wcs_attributes[name]['lookup_table']
-
+            return self.dispersion.to(self._wcs_attributes[name]['unit'], equivalencies=self.wcs.equivalencies)
         elif name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
             return self._wcs_attributes[name[:-5]]['unit']
         else:
@@ -196,10 +197,6 @@ class Spectrum1D(NDData):
     def __setattr__(self, name, value):
         if name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
             self._wcs_attributes[name[:-5]]['unit'] = u.Unit(value)
-            try:
-                del self._wcs_attributes[name[:-5]]['lookup_table']
-            except KeyError:
-                pass
         else:
             super(Spectrum1D, self).__setattr__(name, value)
 
