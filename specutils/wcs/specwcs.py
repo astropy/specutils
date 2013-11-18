@@ -107,8 +107,6 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
             lookup_table *= unit
 
-        self.equivalencies = u.spectral()
-
         self.lookup_table_parameter = lookup_table
         ##### Quick fix - needs to be fixed in modelling ###
         self.unit = lookup_table.unit
@@ -186,12 +184,6 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
             dispersion_values = np.array(dispersion_values)
         return float((dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
 
-    def to_fits_header(self, fits_header, spectroscopic_axis_number=1):
-
-        fits_header['crval%d' % spectroscopic_axis_number] = self.dispersion0.value
-        fits_header['crpix%d' % spectroscopic_axis_number] = self.pixel_index + 1
-        fits_header['cdelt%d' % spectroscopic_axis_number] = self.dispersion_delta.value
-        fits_header['cunit%d' % spectroscopic_axis_number] = self.unit.to_string()
 
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):

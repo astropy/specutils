@@ -2,8 +2,13 @@ import os
 from ..IUE import read_IUE_mxlo
 from ..IUE import ApertureException
 
+
 #already written for astropy, if might not quite fit here
 import pytest
+pytestmark = pytest.mark.skipif(True, reason='tests need to be reimplemented')
+
+#marking whole file for skipping (as most of this will be re-implemented using the WCS classes
+
 
 def data_path(filename):
     data_dir = os.path.join(os.path.dirname(__file__), 't')

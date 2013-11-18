@@ -328,7 +328,7 @@ class Spectrum1D(NDData):
         # Transform the dispersion end points to index space
         start_index, stop_index = self.wcs([start, stop])
         
-        return self.slice_index(start_index, stop_index)
+        #return self.slice_index(start_index, stop_index)
     
     
     def slice_index(self, start=None, stop=None):
