@@ -135,6 +135,11 @@ class FITSWCSSpectrum(object):
 
         self.naxis = self.fits_header['naxis']
 
+        self.shape = []
+
+        for i in xrange(self.naxis):
+            self.shape.append(self.fits_header['naxis{0:d}'.format(i+1)])
+
         try:
             self.wcs_dim = self.fits_header['WCSDIM']
         except KeyError:
@@ -326,7 +331,10 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None):
 
     if dispersion_unit is None:
         raise FITSWCSSpectrum1DUnitError
-    return specwcs.Spectrum1DLinearWCS(dispersion_start, dispersion_delta, pixel_offset, dispersion_unit)
+    return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
+                                           domain=[pixel_offset, fits_wcs_information.shape[0]],
+                                           c0=dispersion_start, c1=dispersion_delta)
+
 
 
 

@@ -202,7 +202,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
+        return polynomial.Polynomial1D.__call__(self, pixel_indices) * self.unit
 
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
