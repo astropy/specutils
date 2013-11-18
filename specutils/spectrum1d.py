@@ -176,13 +176,19 @@ class Spectrum1D(NDData):
 
     def __init__(self, *args, **kwargs):
         super(Spectrum1D, self).__init__(*args, **kwargs)
-        for key in self._wcs_attributes:
+
+        for key in self._wcs_attributes.keys():
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
             if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
                 wcs_attribute_unit = self.wcs.unit
 
-            if not wcs_attribute_unit.is_equivalent_to(self.wcs.unit):
+            try:
+                unit_equivalent = wcs_attribute_unit.is_equivalent(self.wcs.unit)
+            except TypeError:
+                unit_equivalent = False
+
+            if not unit_equivalent:
                 del self._wcs_attributes[key]
 
     def __getattr__(self, name):
