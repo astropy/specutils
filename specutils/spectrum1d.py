@@ -5,6 +5,7 @@ from __future__ import print_function, division
 
 __all__ = ['Spectrum1D']
 
+import copy
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
 
@@ -177,6 +178,7 @@ class Spectrum1D(NDData):
     def __init__(self, *args, **kwargs):
         super(Spectrum1D, self).__init__(*args, **kwargs)
 
+        self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
         for key in self._wcs_attributes.keys():
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
