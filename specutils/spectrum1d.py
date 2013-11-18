@@ -180,16 +180,21 @@ class Spectrum1D(NDData):
         for key in self._wcs_attributes.keys():
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
-            if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
-                self._wcs_attributes[key]['unit'] = self.wcs.unit
 
             try:
                 unit_equivalent = wcs_attribute_unit.is_equivalent(self.wcs.unit, equivalencies=self.wcs.equivalencies)
             except TypeError:
                 unit_equivalent = False
 
+
             if not unit_equivalent:
+                #if unit is not convertible to wcs attribute - delete that wcs attribute
                 del self._wcs_attributes[key]
+                continue
+
+            if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
+                self._wcs_attributes[key]['unit'] = self.wcs.unit
+
 
     def __getattr__(self, name):
         if name in self._wcs_attributes:

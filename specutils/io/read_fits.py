@@ -329,8 +329,6 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None):
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
 
-    if dispersion_unit is None:
-        raise FITSWCSSpectrum1DUnitError
     return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
                                            domain=[pixel_offset, fits_wcs_information.shape[0]],
                                            c0=dispersion_start, c1=dispersion_delta)
@@ -356,10 +354,6 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
             wcs = fits_wcs(fits_wcs_information, dispersion_unit=dispersion_unit)
         except FITSWCSSpectrum1DError:
             continue
-        except FITSWCSSpectrum1DUnitError:
-            raise specwcs.Spectrum1DWCSUnitError('"{0:s}" can read WCS information in the file, however no dispersion unit'
-                                                 ' was found. Please specify this using the keyword dispersion_unit '
-                                                 '(e.g. dispersion_unit=\'Angstrom\')'.format(fits_wcs.__name__))
         else:
             break
     else:
