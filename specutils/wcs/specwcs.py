@@ -1,5 +1,6 @@
 # This module provides a basic and probably temporary WCS solution until astropy has a wcs built-in
 
+import warnings
 import numpy as np
 
 from astropy.utils import misc
@@ -11,15 +12,18 @@ import astropy.units as u
 
 from astropy.utils.misc import deprecated
 
+
+##### Delete at earliest convenience (currently deprecated)
+#### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
 
-
-
+@deprecated('0.dev???', 'using no units is now allowed for WCS')
 def check_valid_unit(unit):
     if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
                 raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
                                  ", ".join([x.to_string() for x in valid_spectral_units]))
 
+#^^^^^^^^^^^^^^^^^
 class Spectrum1DWCSError(Exception):
     pass
 
@@ -63,6 +67,8 @@ class BaseSpectrum1DWCS(Model):
 
     @unit.setter
     def unit(self, value):
+        if value is None:
+            warnings.warn('Initializing a Spectrum1D WCS with units set to `None` is not recommended')
         self._unit = value
 
 
@@ -207,7 +213,6 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
                  **params):
         super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
-        check_valid_unit(unit)
         self.unit = unit
 
     def __call__(self, pixel_indices):
