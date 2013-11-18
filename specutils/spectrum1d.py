@@ -35,7 +35,8 @@ class Spectrum1D(NDData):
 
     _wcs_attributes = {'wavelength': {'unit': u.m},
                       'frequency': {'unit': u.Hz},
-                      'energy': {'unit': u.J}}
+                      'energy': {'unit': u.J},
+                      'velocity': {'unit': u.m/u.s}}
     
     @classmethod
     def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
