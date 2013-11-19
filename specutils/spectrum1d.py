@@ -11,10 +11,9 @@ from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
-from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS, Spectrum1DWCSFITSError
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
 
 
-from astropy.io import fits
 from astropy import units as u
 
 import numpy as np
@@ -193,15 +192,14 @@ class Spectrum1D(NDData):
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
-    def from_fits(cls, filename, uncertainty=None):
-        """This is an example function to demonstrate how
-        classmethods are a clean way to instantiate Spectrum1D objects"""
-        header = fits.getheader(filename)
-        try:
-            cls.dispersion = Spectrum1DLinearWCS.from_header(header)
-        except:
-            pass
-        raise NotImplementedError('This function is not implemented yet')
+    def from_fits(cls, filename):
+        """
+        This function is a dummy function and will fail for now. Please use
+
+        """
+
+        raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
+                                  ' documentation')
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None, flags=None, meta=None):
 
@@ -364,7 +362,7 @@ class Spectrum1D(NDData):
         --------
         See `~Spectrum1D.slice_index`
         """
-        
+        raise NotImplementedError('Waiting for slicing implementation in WCS and NDData')
         # Transform the dispersion end points to index space
         start_index, stop_index = self.wcs([start, stop])
         
@@ -400,27 +398,3 @@ class Spectrum1D(NDData):
         raise NotImplementedError('Will presumeably implemented in core NDDATA,'
                                   'though this is just trivial indexing.')
         return self[start:stop]
-
-    def to_fits(self, filename):
-        """
-        Write to fits file
-
-        Parameters
-        ----------
-
-        filename : `str`
-            file name to write the current spectrum to in FITS format
-
-        Notes
-        -----
-
-
-        """
-        fits_file = fits.PrimaryHDU(self.data)
-        try:
-            self.wcs.to_fits_header(fits_file.header)
-        except AttributeError:
-            raise Spectrum1DWCSFITSError('Current WCS does not support writing to FITS files - interpolate to one that '
-                                         'does')
-
-        fits_file.writeto(filename)
