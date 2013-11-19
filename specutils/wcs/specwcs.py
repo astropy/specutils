@@ -197,7 +197,8 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
-
+    __doc__ = 'WCS for polynomial dispersion. The only added parameter is a unit, otherwise the same as ' \
+              '`~astropy.modeling.polynomial.Polynomial1D`:\n' + polynomial.Polynomial1D.__doc__
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1, **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
@@ -208,6 +209,8 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
+    __doc__ = 'WCS for polynomial dispersion using Legendre Polynomials. The only added parameter is a unit, otherwise the same as ' \
+              '`~astropy.modeling.polynomial.Legendre1D`:\n' + polynomial.Polynomial1D.__doc__
 
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1,
                  **params):
