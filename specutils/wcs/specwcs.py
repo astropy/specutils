@@ -115,7 +115,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
         if unit is not None:
             self.lookup_table_parameter = u.Quantity(lookup_table, unit)
-            self.unit = lookup_table.unit
+            self.unit = self.lookup_table_parameter.unit
         else:
             self.lookup_table_parameter = lookup_table
             self.unit = None
