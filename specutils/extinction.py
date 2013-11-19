@@ -96,10 +96,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
       model can be evaluated only for these values.
 
     * **'d03'** The Draine (2003) [11]_ update to 'wd01' where the 
-      grain abundances relative to 'wd01' have been reduced by a 
-      factor of 0.93. Since this routine returns an extinction 
-      relative to Av, this normalization is unimportant. Currently, 
-      therefore, 'd03' and 'wd01' return the same values for extinction.
+      carbon/PAH abundances relative to 'wd01' have been reduced by a 
+      factor of 0.93. 
 
     .. warning :: The 'gcc09' model currently does the 2175 Angstrom bump
                   incorrectly.
@@ -476,7 +474,7 @@ def _f99_like(x, ebv, r_v, model='f99'):
 
     return ebv * (k + r_v)
 
-def _wd01_like(x, ebv, r_v, model='wd01'):
+def _wd01_like(x, ebv, r_v, model=None):
     """
       Read in the dust model, interpolate and normalize
 
@@ -492,21 +490,41 @@ def _wd01_like(x, ebv, r_v, model='wd01'):
         raise ValueError('wd01 and d03 only defined for r_v = 3.1, 4.0 & 5.5')
     from scipy.interpolate import interp1d
 
-    if model == 'wd01':
+    if model == 'd03':
         if r_v == 3.1:
             model_file = 'data/kext_albedo_WD_MW_3.1A_60_D03_all.txt'
         elif r_v == 4.0:
             model_file = 'data/kext_albedo_WD_MW_4.0A_40_D03_all.txt'
         elif r_v == 5.5:
             model_file = 'data/kext_albedo_WD_MW_5.5A_30_D03_all.txt'
-    dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=67,
-                  names=['wave','albedo','avg_cos','C_ext','K_abs',
-                  'avg_cos_sq','comment'],
-                  col_starts=[0 ,12,20,27,37,47,55],
-                    col_ends=[11,19,26,36,46,54,80],guess=False)
+        #The d03 and w01 data files have different hard-to-parse formats
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=67,
+              names=['wave','albedo','avg_cos','C_ext','K_abs',
+              'avg_cos_sq','comment'],
+              col_starts=[0 ,12,20,27,37,47,55],
+                col_ends=[11,19,26,36,46,54,80],guess=False)
+        waves = np.array(dust_table['wave'])
+        c_vals = np.array(dust_table['C_ext'])
+
+    if model == 'wd01':
+        if r_v == 3.1:
+            model_file = 'data/kext_albedo_WD_MW_3.1B_60.txt'
+        elif r_v == 4.0:
+            model_file = 'data/kext_albedo_WD_MW_4.0B_40.txt'
+        if r_v == 5.5:
+            model_file = 'data/kext_albedo_WD_MW_5.5B_30.txt'
+
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=51,
+                            names=['wave','albedo','avg_cos','C_ext','K_abs'],
+                            col_starts=[0,10,18,25,35],
+                            col_ends=  [9,17,24,34,42],guess=False)
+        #We have to reverse the entries for wd01
+        waves = np.array(dust_table['wave'])[::-1]
+        c_vals = np.array(dust_table['C_ext'])[::-1]
+
     #Put waves into inverse microns
-    waves_ang = 1./np.array(dust_table['wave'])
-    c_vals = np.array(dust_table['C_ext'])
+    waves_ang = 1./waves
+    c_vals = c_vals
     ext_spline = interp1d(waves_ang,c_vals)
     #Evaluate at effective V band.
     normalization = ext_spline(1.e4/5495.)
