@@ -5,6 +5,7 @@ from __future__ import print_function, division
 
 __all__ = ['Spectrum1D']
 
+import copy
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
 
@@ -34,7 +35,8 @@ class Spectrum1D(NDData):
 
     _wcs_attributes = {'wavelength': {'unit': u.m},
                       'frequency': {'unit': u.Hz},
-                      'energy': {'unit': u.J}}
+                      'energy': {'unit': u.J},
+                      'velocity': {'unit': u.m/u.s}}
     
     @classmethod
     def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
@@ -176,17 +178,30 @@ class Spectrum1D(NDData):
 
     def __init__(self, *args, **kwargs):
         super(Spectrum1D, self).__init__(*args, **kwargs)
-        for key in self._wcs_attributes:
-            if self._wcs_attributes[key]['unit'].physical_type == self.wcs.unit.physical_type:
+
+        self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
+        for key in self._wcs_attributes.keys():
+
+            wcs_attribute_unit = self._wcs_attributes[key]['unit']
+
+            try:
+                unit_equivalent = wcs_attribute_unit.is_equivalent(self.wcs.unit, equivalencies=self.wcs.equivalencies)
+            except TypeError:
+                unit_equivalent = False
+
+
+            if not unit_equivalent:
+                #if unit is not convertible to wcs attribute - delete that wcs attribute
+                del self._wcs_attributes[key]
+                continue
+
+            if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
                 self._wcs_attributes[key]['unit'] = self.wcs.unit
+
 
     def __getattr__(self, name):
         if name in self._wcs_attributes:
-            if 'lookup_table' not in self._wcs_attributes[name]:
-                self._wcs_attributes[name]['lookup_table'] = self.dispersion.to(self._wcs_attributes[name]['unit'],
-                                                                                equivalencies=self.wcs.equivalencies)
-            return self._wcs_attributes[name]['lookup_table']
-
+            return self.dispersion.to(self._wcs_attributes[name]['unit'], equivalencies=self.wcs.equivalencies)
         elif name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
             return self._wcs_attributes[name[:-5]]['unit']
         else:
@@ -196,10 +211,6 @@ class Spectrum1D(NDData):
     def __setattr__(self, name, value):
         if name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
             self._wcs_attributes[name[:-5]]['unit'] = u.Unit(value)
-            try:
-                del self._wcs_attributes[name[:-5]]['lookup_table']
-            except KeyError:
-                pass
         else:
             super(Spectrum1D, self).__setattr__(name, value)
 

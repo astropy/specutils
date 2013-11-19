@@ -1,5 +1,6 @@
 # This module provides a basic and probably temporary WCS solution until astropy has a wcs built-in
 
+import warnings
 import numpy as np
 
 from astropy.utils import misc
@@ -11,15 +12,18 @@ import astropy.units as u
 
 from astropy.utils.misc import deprecated
 
+
+##### Delete at earliest convenience (currently deprecated)
+#### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km/u.s, u.m, u.Hz, u.erg]
 
-
-
+@deprecated('0.dev???', 'using no units is now allowed for WCS')
 def check_valid_unit(unit):
     if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
                 raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
                                  ", ".join([x.to_string() for x in valid_spectral_units]))
 
+#^^^^^^^^^^^^^^^^^
 class Spectrum1DWCSError(Exception):
     pass
 
@@ -53,6 +57,20 @@ class BaseSpectrum1DWCS(Model):
     #def equivalencies(self, equiv):
     #    u.core._normalize_equivalencies(equiv)
     #    self._equivalencies = equiv
+
+    @property
+    def unit(self):
+        if self._unit is None:
+            return 1.0
+        else:
+            return self._unit
+
+    @unit.setter
+    def unit(self, value):
+        if value is None:
+            warnings.warn('Initializing a Spectrum1D WCS with units set to `None` is not recommended')
+        self._unit = value
+
 
     def reset_equivalencies(self):
         """
@@ -94,22 +112,14 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
     def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
         super(Spectrum1DLookupWCS, self).__init__()
-        if unit is None and not hasattr(lookup_table, 'unit'):
-            raise TypeError("Lookup table must have a unit attribute or units must be specified.")
-        elif unit is not None:
-            try:
-                unit = u.Unit(unit)
-            except ValueError:
-                # e.g., Unit("blah")
-                raise ValueError("Invalid unit specified")
 
-            check_valid_unit(unit)
+        if unit is not None:
+            self.lookup_table_parameter = u.Quantity(lookup_table, unit)
+            self.unit = lookup_table.unit
+        else:
+            self.lookup_table_parameter = lookup_table
+            self.unit = None
 
-            lookup_table *= unit
-
-        self.lookup_table_parameter = lookup_table
-        ##### Quick fix - needs to be fixed in modelling ###
-        self.unit = lookup_table.unit
 
         self.lookup_table_interpolation_kind = lookup_table_interpolation_kind
 
@@ -188,7 +198,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
-    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1, **params):
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1, **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
         self.unit = unit
@@ -199,11 +209,10 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
 
-    def __init__(self, degree, unit, domain=None, window=[-1, 1], param_dim=1,
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1,
                  **params):
         super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                  **params)
-        check_valid_unit(unit)
         self.unit = unit
 
     def __call__(self, pixel_indices):

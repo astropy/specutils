@@ -293,7 +293,10 @@ class FITSWCSSpectrum(object):
 
 
 
-def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None):
+def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_axis=0):
+
+    #for the 1D reader setting the spectral_axis to anything else than 0 seems to be strange
+    assert spectral_axis == 0
 
     dispersion_unit = dispersion_unit
 
@@ -302,37 +305,35 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None):
 
     dispersion_delta = None
     if fits_wcs_information.transform_matrix is not None:
-        dispersion_delta = fits_wcs_information.transform_matrix[0, 0]
+        dispersion_delta = fits_wcs_information.transform_matrix[spectral_axis, spectral_axis]
 
 
-    if fits_wcs_information.affine_transform_dict['cdelt'][0] is not None:
+    if fits_wcs_information.affine_transform_dict['cdelt'][spectral_axis] is not None:
         #checking that both cd1_1 and cdelt1 are either the same or one of them non-existent
         if dispersion_delta is not None:
             assert np.testing.assert_almost_equal(dispersion_delta, fits_wcs_information.affine_transform_dict['cdelt1'])
-        dispersion_delta = fits_wcs_information.affine_transform_dict['cdelt'][0]
+        dispersion_delta = fits_wcs_information.affine_transform_dict['cdelt'][spectral_axis]
 
     if dispersion_delta is None:
         raise FITSWCSSpectrum1DError
 
-    if fits_wcs_information.affine_transform_dict['crval'][0] is None:
+    if fits_wcs_information.affine_transform_dict['crval'][spectral_axis] is None:
         raise FITSWCSSpectrum1DError
     else:
-        dispersion_start = fits_wcs_information.affine_transform_dict['crval'][0]
+        dispersion_start = fits_wcs_information.affine_transform_dict['crval'][spectral_axis]
 
-    pixel_offset = fits_wcs_information.affine_transform_dict['crpix'][0] or 1
+    pixel_offset = fits_wcs_information.affine_transform_dict['crpix'][spectral_axis] or 1
     pixel_offset -= 1
 
 
-    dispersion_unit = fits_wcs_information.units[0] or dispersion_unit
+    dispersion_unit = fits_wcs_information.units[spectral_axis] or dispersion_unit
 
 
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
 
-    if dispersion_unit is None:
-        raise FITSWCSSpectrum1DUnitError
     return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
-                                           domain=[pixel_offset, fits_wcs_information.shape[0]],
+                                           domain=[pixel_offset, fits_wcs_information.shape[spectral_axis]],
                                            c0=dispersion_start, c1=dispersion_delta)
 
 
@@ -356,10 +357,6 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
             wcs = fits_wcs(fits_wcs_information, dispersion_unit=dispersion_unit)
         except FITSWCSSpectrum1DError:
             continue
-        except FITSWCSSpectrum1DUnitError:
-            raise specwcs.Spectrum1DWCSUnitError('"{0:s}" can read WCS information in the file, however no dispersion unit'
-                                                 ' was found. Please specify this using the keyword dispersion_unit '
-                                                 '(e.g. dispersion_unit=\'Angstrom\')'.format(fits_wcs.__name__))
         else:
             break
     else:
