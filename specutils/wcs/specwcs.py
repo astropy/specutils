@@ -222,16 +222,7 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
 
 
-# Checking which WCSes
-
-fits_capable_wcs = []
-
-for wcs in BaseSpectrum1DWCS.__subclasses__():
-    if hasattr(wcs, 'from_fits_header') and hasattr(wcs, 'to_fits_header'):
-        fits_capable_wcs.append(wcs)
-
-
-
+@deprecated('0.dev???')
 def _parse_doppler_convention(dc):
     dcd = {'relativistic': u.doppler_relativistic,
            'radio': u.doppler_radio,
