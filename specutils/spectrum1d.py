@@ -28,9 +28,36 @@ class Spectrum1D(NDData):
 
     Parameters
     ----------
-    data: array
-    wcs: wcs
-    unit: unit
+    data : `~numpy.ndarray`
+        flux of the spectrum
+
+    wcs : `spectrum1d.wcs.specwcs.BaseSpectrum1DWCS`-subclass
+        transformation between pixel coordinates and "dispersion" coordinates
+        this carries the unit of the dispersion
+
+    unit : `~astropy.unit.Unit` or None, optional
+        unit of the flux, default=None
+
+    mask : `~numpy.ndarray`, optional
+        Mask for the data, given as a boolean Numpy array with a shape
+        matching that of the data. The values must be ``False`` where
+        the data is *valid* and ``True`` when it is not (like Numpy
+        masked arrays). If `data` is a numpy masked array, providing
+        `mask` here will causes the mask from the masked array to be
+        ignored.
+
+    flags : `~numpy.ndarray` or `~astropy.nddata.FlagCollection`, optional
+        Flags giving information about each pixel. These can be specified
+        either as a Numpy array of any type with a shape matching that of the
+        data, or as a `~astropy.nddata.FlagCollection` instance which has a
+        shape matching that of the data.
+
+    meta : `dict`-like object, optional
+        Metadata for this object.  "Metadata" here means all information that
+        is included with this object but not part of any other attribute
+        of this particular object.  e.g., creation date, unique identifier,
+        simulation parameters, exposure time, telescope name, etc.
+
     """
 
     _wcs_attributes = {'wavelength': {'unit': u.m},
@@ -176,8 +203,10 @@ class Spectrum1D(NDData):
             pass
         raise NotImplementedError('This function is not implemented yet')
 
-    def __init__(self, *args, **kwargs):
-        super(Spectrum1D, self).__init__(*args, **kwargs)
+    def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None, flags=None, meta=None):
+
+        super(Spectrum1D, self).__init__(data=flux, wcs=wcs, unit=unit, uncertainty=uncertainty,
+                   mask=mask, flags=flags, meta=meta)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
         for key in self._wcs_attributes.keys():
