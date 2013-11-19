@@ -7,8 +7,9 @@ import pytest
 
 extinction_models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07']
 
-def test_extinction_shapes():
 
+def test_extinction_shapes():
+    pytest.importorskip("scipy")
     for model in extinction_models:
 
         # single value should work

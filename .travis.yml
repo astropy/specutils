@@ -11,11 +11,11 @@ env:
     # - ASTROPY_VERSION=stable NUMPY_VERSION=1.7.1 SETUP_CMD='test'
     - ASTROPY_VERSION=development NUMPY_VERSION=1.7.1 SETUP_CMD='test'
 
-matrix:
-    include:
-        - python: 2.7
+#matrix:
+#    include:
+#        - python: 2.7
           # opdeps needed because the matplotlib sphinx extension requires them
-          env: ASTROPY_VERSION=development NUMPY_VERSION=1.7.1 SETUP_CMD='build_sphinx -w -n'
+#          env: ASTROPY_VERSION=development NUMPY_VERSION=1.7.1 SETUP_CMD='build_sphinx -w -n'
 
         # try alternate numpy versions with the latest stable astropy
         # - python: 2.7
@@ -42,6 +42,7 @@ install:
    - export PYTHONIOENCODING=UTF8 # just in case
    - pip -q install --upgrade "numpy==$NUMPY_VERSION" --use-mirrors
    - pip -q install --upgrade Cython --use-mirrors
+   - pip -q install --upgrade pytest --use-mirrors
    - if [[ $SETUP_CMD == build_sphinx* ]]; then pip -q install sphinx==1.1.3 --use-mirrors; fi
    - if [[ $SETUP_CMD == build_sphinx* ]]; then pip -q install matplotlib --use-mirrors; fi
 

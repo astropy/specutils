@@ -3,7 +3,7 @@ import re
 
 from astropy.io import fits
 from astropy import units as u
-from collections import OrderedDict
+from astropy.utils import OrderedDict
 
 from specutils.wcs import specwcs
 from specutils import Spectrum1D
