@@ -1,11 +1,13 @@
-import os
-from ..IUE import read_IUE_mxlo
-from ..IUE import ApertureException
-
-
 #already written for astropy, if might not quite fit here
 import pytest
 pytestmark = pytest.mark.skipif(True, reason='tests need to be reimplemented')
+
+
+import os
+#from ..IUE import read_IUE_mxlo
+#from ..IUE import ApertureException
+
+
 
 #marking whole file for skipping (as most of this will be re-implemented using the WCS classes
 

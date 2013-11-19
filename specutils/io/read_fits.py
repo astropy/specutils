@@ -360,9 +360,8 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_
 
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
-
+    dispersion_start += -pixel_offset * dispersion_delta
     return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
-                                           domain=[pixel_offset, fits_wcs_information.shape[spectral_axis]],
                                            c0=dispersion_start, c1=dispersion_delta)
 
 
