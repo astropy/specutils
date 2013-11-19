@@ -5,6 +5,8 @@ import numpy as np
 from specutils.extinction import extinction
 import pytest
 
+pytestmark = pytest.mark.importorskip("scipy")
+
 extinction_models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07']
 
 def test_extinction_shapes():
