@@ -1,5 +1,10 @@
-Spectrum1D
-----------
+Spectrum 1D
+===========
+
+Most commonly, astronomical spectra are recorded with CCDs and the resulting data product is thus a 2 dimensional
+array. Through various data reduction steps (e.g. aperture extraction, IFU data reduction) these can result in one
+to three dimensional data arrays. The `astropy.nddata.NDData`-class is an ideal storage format for this data, as
+it provides the possibility to
 
 The :class:`~specutils.Spectrum1D` class is one of the core classes of the ``specutils`` package. It is a child of the
 :class:`~astropy.nddata.NDData` class. :class:`Spectrum1D` stores the flux and the associated units within the framework

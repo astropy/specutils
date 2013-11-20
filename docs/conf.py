@@ -28,7 +28,7 @@
 # Load all of the global Astropy configuration
 from astropy.sphinx.conf import *
 
-
+extensions += ['sphinx.ext.mathjax']
 # -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
