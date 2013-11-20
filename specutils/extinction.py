@@ -161,7 +161,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
        from mpl_toolkits.axes_grid1 import make_axes_locatable
        from specutils.extinction import extinction
 
-       models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07']
+       models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07','wd01','d03']
        wave = np.logspace(np.log10(910.), np.log10(30000.), 2000)
        a_lambda = {model: extinction(wave, a_v=1., model=model)
                    for model in models}
@@ -192,7 +192,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
        plt.axvspan(wave[0], 1150., fc='0.8', ec='none', zorder=-1000)
        plt.axvspan(1150., 1250., fc='0.9', ec='none', zorder=-1000)
        plt.xlim(wave[0], wave[-1])
-       plt.ylim(ymax=0.4)
+       plt.ylim(ymin=-0.4,ymax=0.4)
        plt.ylabel('residual from f99')
        plt.xlabel('Wavelength ($\AA$)')
 
@@ -483,20 +483,26 @@ def _wd01_like(x, ebv, r_v, model=None):
       normalize this extinction law so that it is equal
       to 1.0 at 5495 angstroms
     """
+
+    from scipy.interpolate import interp1d
+    from astropy.utils import data as apydata
+
     defined_rvs = [3.1,4.0,5.5]
     if np.any(x < 0.001) or np.any(x > 1.e4):
         raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
     if r_v not in defined_rvs:
         raise ValueError('wd01 and d03 only defined for r_v = 3.1, 4.0 & 5.5')
-    from scipy.interpolate import interp1d
 
     if model == 'd03':
         if r_v == 3.1:
-            model_file = 'data/kext_albedo_WD_MW_3.1A_60_D03_all.txt'
+            model_file = apydata.get_pkg_data_filename(
+                        'data/kext_albedo_WD_MW_3.1A_60_D03_all.txt')
         elif r_v == 4.0:
-            model_file = 'data/kext_albedo_WD_MW_4.0A_40_D03_all.txt'
+            model_file = apydata.get_pkg_data_filename(
+                        'data/kext_albedo_WD_MW_4.0A_40_D03_all.txt')
         elif r_v == 5.5:
-            model_file = 'data/kext_albedo_WD_MW_5.5A_30_D03_all.txt'
+            model_file = apydata.get_pkg_data_filename(
+                        'data/kext_albedo_WD_MW_5.5A_30_D03_all.txt')
         #The d03 and w01 data files have different hard-to-parse formats
         dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=67,
               names=['wave','albedo','avg_cos','C_ext','K_abs',
@@ -508,11 +514,14 @@ def _wd01_like(x, ebv, r_v, model=None):
 
     if model == 'wd01':
         if r_v == 3.1:
-            model_file = 'data/kext_albedo_WD_MW_3.1B_60.txt'
+            model_file = apydata.get_pkg_data_filename(
+                        'data/kext_albedo_WD_MW_3.1B_60.txt')
         elif r_v == 4.0:
-            model_file = 'data/kext_albedo_WD_MW_4.0B_40.txt'
+            model_file = apydata.get_pkg_data_filename(
+                        'data/kext_albedo_WD_MW_4.0B_40.txt')
         if r_v == 5.5:
-            model_file = 'data/kext_albedo_WD_MW_5.5B_30.txt'
+            model_file = apydata.get_pkg_data_filename(
+                        'data/kext_albedo_WD_MW_5.5B_30.txt')
 
         dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=51,
                             names=['wave','albedo','avg_cos','C_ext','K_abs'],
