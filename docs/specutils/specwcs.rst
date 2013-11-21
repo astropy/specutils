@@ -13,7 +13,7 @@ as a world coordinate system (WCS) and can be thought of as functions:
 
 where :math:`c_i` represents a parameter for the transform, :math:`x_j` are pixel coordinates and :math:`y_k` are spectral coordinates (e.g. angstrom).
 
-:class:`~astropy.modeling.Model` is essentially a parametrized function and thus is an ideal way to represent WCS transformations.
+:class:`~astropy.modeling.core.Model` is essentially a parametrized function and thus is an ideal way to represent WCS transformations.
 In addition, there are fitters available (link) that can be used to create WCS transforms from calibration data.
 Here's how a simple model (:math:`f(c_0, c_1;\ x_0) = c_0 \exp{(c_1 x_0)}`) would look in python::
 
@@ -78,38 +78,29 @@ In addition, the following WCS models exist as well:
 
 
 
-
-Interpolation
--------------
-
-In the following, we explain interpolation in one-dimension, however the concepts remain the same in n-dimensional space.
-Interpolation means going from the current WCS transform axis(:math:`f_\textrm{WCS}`) to another WCS transform axis (:math:`g_textrm{WCS}`).
-In the first instance, one needs to know what pixel in the new WCS transform axis represents what pixel (and that might often be a fractional one) in the old one:
-For example a simple shift by half a pixel:
-
-.. math::
-
-    \textrm{pixel}_\textrm{new} 0 \mapsto \textrm{pixel}_\textrm{old} 0.5; \dots
-    \textrm{pixel}_\textrm{new} 1 \mapsto \textrm{pixel}_\textrm{old} 1.5\\
-    \Rightarrow h(\textrm{pixel}_\textrm{new}) \mapsto \textrm{pixel}_\textrm{old}
-
-Knowing both transformations (:math:`f_\textrm{WCS}` and :math:`g_\textrm{WCS}`), one can create the function
-:math:`h = g(f^{-1})` and transform represent the new pixel coordinates in the old system and interpolate.
-
-.. warning::
-    This does not currently work and is being developed
-
-
-This example showcases the API. Currently the interpolate method accepts a WCS object or an `~numpy.ndarray`
-(then constructs a `~specutils.wcs.specwcs.Spectrum1DLookupWCS` out of it)::
-
-    >>> from specutils import Spectrum1D
-    >>> from specutils.wcs import specwcs
-    >>> import numpy as np
-    >>> wave = np.arange(6000, 9000) # wavelength
-    >>> flux = np.random.random(3000) # flux
-    >>> myspec = Spectrum1D.from_array(wave, flux, dispersion_unit='angstrom')
-    >>> myspec.interpolate(wave + 0.5)
+.. Interpolation
+    -------------
+    In the following, we explain interpolation in one-dimension, however the concepts remain the same in n-dimensional space.
+    Interpolation means going from the current WCS transform axis(:math:`f_\textrm{WCS}`) to another WCS transform axis (:math:`g_textrm{WCS}`).
+    In the first instance, one needs to know what pixel in the new WCS transform axis represents what pixel (and that might often be a fractional one) in the old one:
+    For example a simple shift by half a pixel:
+    .. math::
+        \textrm{pixel}_\textrm{new} 0 \mapsto \textrm{pixel}_\textrm{old} 0.5; \dots
+        \textrm{pixel}_\textrm{new} 1 \mapsto \textrm{pixel}_\textrm{old} 1.5\\
+        \Rightarrow h(\textrm{pixel}_\textrm{new}) \mapsto \textrm{pixel}_\textrm{old}
+    Knowing both transformations (:math:`f_\textrm{WCS}` and :math:`g_\textrm{WCS}`), one can create the function
+    :math:`h = g(f^{-1})` and transform represent the new pixel coordinates in the old system and interpolate.
+    .. warning::
+        This does not currently work and is being developed
+    This example showcases the API. Currently the interpolate method accepts a WCS object or an `~numpy.ndarray`
+    (then constructs a `~specutils.wcs.specwcs.Spectrum1DLookupWCS` out of it)::
+        >>> from specutils import Spectrum1D
+        >>> from specutils.wcs import specwcs
+        >>> import numpy as np
+        >>> wave = np.arange(6000, 9000) # wavelength
+        >>> flux = np.random.random(3000) # flux
+        >>> myspec = Spectrum1D.from_array(wave, flux, dispersion_unit='angstrom')
+        >>> myspec.interpolate(wave + 0.5)
 
 
 
