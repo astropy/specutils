@@ -54,7 +54,7 @@ the lookup table represents a parameter (:math:`c_0`)::
     >>> lookup_table_wcs = specwcs.Spectrum1DLookupWCS(wave, unit='angstrom') # Creating the wcs
     >>> lookup_table_wcs(0) # doing the transformation for pixel 0
     <Quantity 6000.0 Angstrom>
-    >>> Spectrum1D(data=flux, wcs=lookup_table_wcs)
+    >>> Spectrum1D(flux=flux, wcs=lookup_table_wcs)
     Spectrum1D([ 0.66118716,  0.39584688,  0.81210479, ...,  0.5238203 ,
              0.05986459,  0.11621466])
 
