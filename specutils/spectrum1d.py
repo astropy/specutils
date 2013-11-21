@@ -122,7 +122,7 @@ class Spectrum1D(NDData):
         if copy:
             flux = flux.copy()
 
-        return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
+        return cls(flux=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
     
     @classmethod
