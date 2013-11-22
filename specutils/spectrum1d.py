@@ -194,8 +194,8 @@ class Spectrum1D(NDData):
     @classmethod
     def from_fits(cls, filename):
         """
-        This function is a dummy function and will fail for now. Please use
-
+        This function is a dummy function and will fail for now. Please use the functions provided in
+        `~specutils.io.read_fits` for this task.
         """
 
         raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'

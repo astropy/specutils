@@ -15,7 +15,7 @@ making them available in a simple API. All of the FITS readers use this parser o
 
 .. note::
     FITS keywords can encode two mappings from physical to logical to dispersion. A general approach to logical coordinate
-    systems is in development. Currently, FITS readers ignore this information and might give wrong results.
+    systems is in development. Currently, the FITS readers ignore this information and might give wrong results.
 
 Reading simple linear 1D WCS
 ----------------------------

@@ -3,7 +3,7 @@ Spectral World Coordinate Systems
 
 .. currentmodule:: specutils.wcs.specwcs
 
-In its simplest form a spectrum is a one-dimensional array storing the flux information. In this form pixel indices
+In its simplest representation a spectrum is a one-dimensional array storing the flux information. In this form pixel indices
 form a coordinate system for the spectrum. In most cases, however, the data has been calibrated in a way that
 allows a mapping between pixel coordinates and physical coordinates. These transformations are often referred to
 as a world coordinate system (WCS) and can be thought of as functions:
