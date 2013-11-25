@@ -22,6 +22,17 @@ from astropy.version_helpers import get_git_devstr, generate_version_py
 
 import specutils
 
+# Need a recursive glob to find all package data files if there are
+# subdirectories
+import fnmatch
+def recursive_glob(basedir, pattern):
+    matches = []
+    for root, dirnames, filenames in os.walk(basedir):
+        for filename in fnmatch.filter(filenames, pattern):
+            matches.append(os.path.join(root, filename))
+    return matches
+
+
 # Set affiliated package-specific settings
 PACKAGENAME = 'specutils'
 DESCRIPTION = 'Astropy affiliated package for astronomical spectral operations.'
@@ -65,8 +76,9 @@ from astropy.setup_helpers import get_package_info
 package_info = get_package_info(PACKAGENAME)
 
 # Add the project-global data
-package_info['package_data'][PACKAGENAME] = ['data/*']
-
+data_files = recursive_glob(os.path.join(PACKAGENAME, 'data'), '*')
+data_files = [f[len(PACKAGENAME)+1:] for f in data_files]
+package_info['package_data'][PACKAGENAME] = data_files
 
 setup(name=PACKAGENAME,
       version=VERSION,

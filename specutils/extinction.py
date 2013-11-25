@@ -27,7 +27,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
           wavelengths below 3030 A, otherwise the same as O'Donnell (1994).
           Note that the GCC09 paper has incorrect parameters for the
           2175A bump, and these incorrect parameters **are** used here.
-        * 'f99': Fitzpatrick (1999) model. == DEFAULT ==
+        * 'f99': Fitzpatrick (1999) model. **[DEFAULT]**
         * 'fm07': Fitzpatrick & Massa (2007) model. This model is not
           currently not R dependent, so can only be used with ``r_v=3.1``.
         * 'wd01': Weingartner and Draine (2001) dust model.
@@ -496,13 +496,13 @@ def _wd01_like(x, ebv, r_v, model=None):
     if model == 'd03':
         if r_v == 3.1:
             model_file = apydata.get_pkg_data_filename(
-                        'data/kext_albedo_WD_MW_3.1A_60_D03_all.txt')
+              'data/extinction_models/kext_albedo_WD_MW_3.1A_60_D03_all.txt')
         elif r_v == 4.0:
             model_file = apydata.get_pkg_data_filename(
-                        'data/kext_albedo_WD_MW_4.0A_40_D03_all.txt')
+              'data/extinction_models/kext_albedo_WD_MW_4.0A_40_D03_all.txt')
         elif r_v == 5.5:
             model_file = apydata.get_pkg_data_filename(
-                        'data/kext_albedo_WD_MW_5.5A_30_D03_all.txt')
+              'data/extinction_models/kext_albedo_WD_MW_5.5A_30_D03_all.txt')
         #The d03 and w01 data files have different hard-to-parse formats
         dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=67,
               names=['wave','albedo','avg_cos','C_ext','K_abs',
@@ -515,13 +515,13 @@ def _wd01_like(x, ebv, r_v, model=None):
     if model == 'wd01':
         if r_v == 3.1:
             model_file = apydata.get_pkg_data_filename(
-                        'data/kext_albedo_WD_MW_3.1B_60.txt')
+                'data/extinction_models/kext_albedo_WD_MW_3.1B_60.txt')
         elif r_v == 4.0:
             model_file = apydata.get_pkg_data_filename(
-                        'data/kext_albedo_WD_MW_4.0B_40.txt')
+                'data/extinction_models/kext_albedo_WD_MW_4.0B_40.txt')
         if r_v == 5.5:
             model_file = apydata.get_pkg_data_filename(
-                        'data/kext_albedo_WD_MW_5.5B_30.txt')
+                'data/extinction_models/kext_albedo_WD_MW_5.5B_30.txt')
 
         dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=51,
                             names=['wave','albedo','avg_cos','C_ext','K_abs'],
