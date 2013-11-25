@@ -42,7 +42,7 @@ It would be used in the following way::
 Spectral 1D WCS
 ---------------
 
-The simplest (and most commonly used) WCS for 1D is a lookup table. This is often found in a ascii tables where one column
+The simplest WCS for 1D is a lookup table. This is often found in a ascii tables where one column
 is the lookup table (wavelength array) and one column is the flux array. In terms of the functional transform view:
 the lookup table represents a parameter (:math:`c_0`)::
 
