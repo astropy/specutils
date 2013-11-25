@@ -23,7 +23,7 @@ There are several ways to instantiate a :class:`Spectrum1D` object::
 
 
 The ability to instantiate from any two arrays allows to load from ascii files (see `astropy.io.ascii <http://docs.astropy.org/en/stable/io/ascii/index.html>`_)
-and other data structures like `~np.recarray` and `~astropy.table.Table`.
+and other data structures like `~numpy.recarray` and `~astropy.table.Table`.
 
 Using linear dispersion is another very common way to store dispersion
 (:math:`f(\textrm{pixel}) = c_0 + c_1 \times \textrm{pixel}`). Here a simple example::
