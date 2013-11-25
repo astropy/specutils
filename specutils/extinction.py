@@ -19,7 +19,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         A(V) = R_V * E(B-V).
     r_v : float, optional
         R_V parameter. Default is the standard Milky Way average of 3.1.
-    model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07', 'd03'}, optional
+    model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07', 'wd01', d03'}, optional
         * 'ccm89': Cardelli, Clayton, & Mathis (1989).
         * 'od94': Like 'ccm89' but using the O'Donnell (1994) optical
           coefficients between 3030 A and 9091 A.
