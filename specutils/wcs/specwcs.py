@@ -70,7 +70,9 @@ class BaseSpectrum1DWCS(Model):
     def unit(self, value):
         if value is None:
             warnings.warn('Initializing a Spectrum1D WCS with units set to `None` is not recommended')
-        self._unit = value
+            self._unit = None
+        else:
+            self._unit = u.Unit(value)
 
 
     def reset_equivalencies(self):
@@ -201,7 +203,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1, **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                                                       **params)
-        self.unit = u.Unit(unit)
+        self.unit = unit
 
     def __call__(self, pixel_indices):
         return polynomial.Polynomial1D.__call__(self, pixel_indices) * self.unit
@@ -215,7 +217,7 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
                  **params):
         super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                                                     **params)
-        self.unit = u.Unit(unit)
+        self.unit = unit
 
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit

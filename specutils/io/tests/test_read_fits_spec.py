@@ -31,8 +31,8 @@ def test_multispec_chebyshev():
 
 def test_1dspec_UVES():
     spec = read_fits.read_fits_spectrum1d(data_path('UVES.fits'))
-    iraf = ascii.read(data_path('uves_iraf_read.dat'), names=['wave', 'flux'])
-    assert_almost_equal(spec.dispersion, iraf['wave'])
+    iraf = ascii.read(data_path('uves_iraf_read_truncated.dat'), names=['index', 'wave', 'flux'])
+    assert_almost_equal(spec.dispersion[iraf['index']], iraf['wave'])
 
     assert not hasattr(spec.dispersion, 'unit')
 
