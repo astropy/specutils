@@ -11,10 +11,9 @@ from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
-from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS, Spectrum1DLinearWCS, Spectrum1DWCSFITSError
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
 
 
-from astropy.io import fits
 from astropy import units as u
 
 import numpy as np
@@ -28,9 +27,36 @@ class Spectrum1D(NDData):
 
     Parameters
     ----------
-    data: array
-    wcs: wcs
-    unit: unit
+    data : `~numpy.ndarray`
+        flux of the spectrum
+
+    wcs : `spectrum1d.wcs.specwcs.BaseSpectrum1DWCS`-subclass
+        transformation between pixel coordinates and "dispersion" coordinates
+        this carries the unit of the dispersion
+
+    unit : `~astropy.unit.Unit` or None, optional
+        unit of the flux, default=None
+
+    mask : `~numpy.ndarray`, optional
+        Mask for the data, given as a boolean Numpy array with a shape
+        matching that of the data. The values must be ``False`` where
+        the data is *valid* and ``True`` when it is not (like Numpy
+        masked arrays). If `data` is a numpy masked array, providing
+        `mask` here will causes the mask from the masked array to be
+        ignored.
+
+    flags : `~numpy.ndarray` or `~astropy.nddata.FlagCollection`, optional
+        Flags giving information about each pixel. These can be specified
+        either as a Numpy array of any type with a shape matching that of the
+        data, or as a `~astropy.nddata.FlagCollection` instance which has a
+        shape matching that of the data.
+
+    meta : `dict`-like object, optional
+        Metadata for this object.  "Metadata" here means all information that
+        is included with this object but not part of any other attribute
+        of this particular object.  e.g., creation date, unique identifier,
+        simulation parameters, exposure time, telescope name, etc.
+
     """
 
     _wcs_attributes = {'wavelength': {'unit': u.m},
@@ -96,7 +122,7 @@ class Spectrum1D(NDData):
         if copy:
             flux = flux.copy()
 
-        return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
+        return cls(flux=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
     
     @classmethod
@@ -166,18 +192,19 @@ class Spectrum1D(NDData):
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
-    def from_fits(cls, filename, uncertainty=None):
-        """This is an example function to demonstrate how
-        classmethods are a clean way to instantiate Spectrum1D objects"""
-        header = fits.getheader(filename)
-        try:
-            cls.dispersion = Spectrum1DLinearWCS.from_header(header)
-        except:
-            pass
-        raise NotImplementedError('This function is not implemented yet')
+    def from_fits(cls, filename):
+        """
+        This function is a dummy function and will fail for now. Please use the functions provided in
+        `~specutils.io.read_fits` for this task.
+        """
 
-    def __init__(self, *args, **kwargs):
-        super(Spectrum1D, self).__init__(*args, **kwargs)
+        raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
+                                  ' documentation')
+
+    def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None, flags=None, meta=None):
+
+        super(Spectrum1D, self).__init__(data=flux, wcs=wcs, unit=unit, uncertainty=uncertainty,
+                   mask=mask, flags=flags, meta=meta)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
         for key in self._wcs_attributes.keys():
@@ -335,7 +362,7 @@ class Spectrum1D(NDData):
         --------
         See `~Spectrum1D.slice_index`
         """
-        
+        raise NotImplementedError('Waiting for slicing implementation in WCS and NDData')
         # Transform the dispersion end points to index space
         start_index, stop_index = self.wcs([start, stop])
         
@@ -371,27 +398,3 @@ class Spectrum1D(NDData):
         raise NotImplementedError('Will presumeably implemented in core NDDATA,'
                                   'though this is just trivial indexing.')
         return self[start:stop]
-
-    def to_fits(self, filename):
-        """
-        Write to fits file
-
-        Parameters
-        ----------
-
-        filename : `str`
-            file name to write the current spectrum to in FITS format
-
-        Notes
-        -----
-
-
-        """
-        fits_file = fits.PrimaryHDU(self.data)
-        try:
-            self.wcs.to_fits_header(fits_file.header)
-        except AttributeError:
-            raise Spectrum1DWCSFITSError('Current WCS does not support writing to FITS files - interpolate to one that '
-                                         'does')
-
-        fits_file.writeto(filename)

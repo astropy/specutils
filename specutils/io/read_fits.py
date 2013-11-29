@@ -23,6 +23,8 @@ class FITSWCSSpectrum1DUnitError(FITSWCSError):
 
 
 
+#keywords as described in http://iraf.net/irafdocs/specwcs.php
+
 fits_wcs_spec_func_type = {1:'chebyshev',
                            2:'legendre',
                            3:'cubicspline',
@@ -34,7 +36,6 @@ wcs_attributes_function_parameters = {'chebyshev': ['order', 'pmin', 'pmax'],
                                 'legendre' : ['order', 'pmin', 'pmax']}
 
 
-#keywords as described in http://iraf.net/irafdocs/specwcs.php
 wcs_attributes_general_keywords = OrderedDict([('aperture', int), ('beam', int), ('dispersion_type', int),
                                                ('dispersion0', float), ('average_dispersion_delta', float),
                                                ('no_valid_pixels', int), ('doppler_factor', float),
@@ -126,7 +127,16 @@ def _parse_multispec_dict(multispec_dict):
 
 
 class FITSWCSSpectrum(object):
-    """
+    """This class is designed to extract all known spectroscopic WCS keywords from a FITS keyword header.
+     The resulting keywords can then be validated (several keywords will encode the same information). Other keywords
+     come in pairs (e.g. CRVAL1, CRVAL2) and will be available as a list (e.g. `.affine_transform_dict['crval']`).
+     Several FITS readers make use of this object.
+
+    Parameters
+    ----------
+
+    fits_header: dict-like object (e.g. `~astropy.io.fits.Header`)
+        FITS Header to be read
 
     """
 
@@ -234,10 +244,13 @@ class FITSWCSSpectrum(object):
         """
         Reading WCS attribute information in WAT0_001-like keywords
 
-        Paramaters:
-            axis: int
-                specifying which axis to read (e.g axis=2 will read WAT2_???).
+        Parameters
+        ----------
+
+        axis: int
+            specifying which axis to read (e.g axis=2 will read WAT2_???).
         """
+
         wcs_attributes = self.fits_header['wat{0:d}_???'.format(axis)]
         if len(wcs_attributes) == 0:
             raise FITSWCSError
@@ -254,8 +267,13 @@ class FITSWCSSpectrum(object):
         return wat_dictionary
 
     def get_multispec_wcs(self, dispersion_unit=None):
-        """
-            get multispec_wcs out of the existing information
+        """Extracting multispec information out of WAT header keywords and building WCS with it
+
+        Parameters
+        ----------
+
+        dispersion_unit : astropy.unit.Unit, optional
+            specify a unit for the dispersion if none exists or overwrite, default=None
         """
 
         assert self.naxis == 2
@@ -294,9 +312,23 @@ class FITSWCSSpectrum(object):
 
 
 def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_axis=0):
+    """Read very a very simple 1D WCS mainly comprising of CRVAL, CRPIX, ... from a FITS WCS Information container
+    This function will enforce one-dimensionality
+
+    Parameters
+    ----------
+
+    fits_wcs_information : ~specutils.io.read_fits.FITSWCSSpectrum
+        object compiling WCS information to be used in these readers
+
+    """
 
     #for the 1D reader setting the spectral_axis to anything else than 0 seems to be strange
-    assert spectral_axis == 0
+    try:
+        assert spectral_axis == 0
+        assert fits_wcs_information.naxis == 1
+    except AssertionError:
+        raise FITSWCSError('Only 1-dimensional files can be read with this function')
 
     dispersion_unit = dispersion_unit
 
@@ -331,9 +363,8 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_
 
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
-
+    dispersion_start += -pixel_offset * dispersion_delta
     return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
-                                           domain=[pixel_offset, fits_wcs_information.shape[spectral_axis]],
                                            c0=dispersion_start, c1=dispersion_delta)
 
 
@@ -343,7 +374,25 @@ spectrum1d_wcs_readers = [read_fits_wcs_linear1d]
 
 
 def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
+    """
+    Simple 1D reader for spectra in FITS format. This simple reader just uses the primary extension in a FITS
+    file and reads the data and header from that. Multiple different FITS readers then try to construct a WCS
+    out of the existing information.
 
+    Parameters
+    ----------
+
+    filename : str
+        FITS filename
+
+    dispersion_unit : ~astropy.unit.Unit, optional
+        unit of the dispersion axis - will overwrite possible information given in the FITS keywords
+        default = None
+
+    flux_unit : ~astropy.unit.Unit, optional
+        unit of the flux
+
+    """
     if dispersion_unit:
         dispersion_unit = u.Unit(dispersion_unit)
 
@@ -367,7 +416,21 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
 
 
 def read_fits_multispec_to_list(filename, dispersion_unit=None, flux_unit=None):
+    """This function reads FITS files in multispec-format and returns a list of Spectrum1D-objects
 
+    Parameters
+    ----------
+
+    filename : str
+        FITS filename
+
+    dispersion_unit : ~astropy.unit.Unit, optional
+        unit of the dispersion axis - will overwrite possible information given in the FITS keywords
+        default = None
+
+    flux_unit : ~astropy.unit.Unit, optional
+        unit of the flux
+    """
     if dispersion_unit:
         dispersion_unit = u.Unit(dispersion_unit)
 
@@ -382,6 +445,6 @@ def read_fits_multispec_to_list(filename, dispersion_unit=None, flux_unit=None):
 
     multispec = []
     for spectrum_data, spectrum_wcs in zip(data, multispec_wcs.values()):
-        multispec.append(Spectrum1D(spectrum_data, wcs=spectrum_wcs))
+        multispec.append(Spectrum1D(spectrum_data, wcs=spectrum_wcs, unit=flux_unit))
 
     return multispec
