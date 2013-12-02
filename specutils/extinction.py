@@ -2,9 +2,11 @@
 """Extinction law functions."""
 
 from __future__ import division
+from os import path
 import numpy as np
 import warnings
 from astropy.io import ascii
+from astropy.utils import data as apydata
 
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     """Return extinction in magnitudes at given wavelength(s).
@@ -474,6 +476,18 @@ def _f99_like(x, ebv, r_v, model='f99'):
 
     return ebv * (k + r_v)
 
+
+d = path.join('data', 'extinction_models')
+_wd01_like_fnames = {
+    ('wd01', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1B_60.txt'), 
+    ('wd01', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0B_40.txt'),
+    ('wd01', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5B_30.txt'),
+    ('d03', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1A_60_D03_all.txt'),
+    ('d03', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0A_40_D03_all.txt'),
+    ('d03', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5A_30_D03_all.txt')}
+del d
+_wd01_like_cache = {}
+
 def _wd01_like(x, ebv, r_v, model=None):
     """
       Read in the dust model, interpolate and normalize
@@ -485,58 +499,59 @@ def _wd01_like(x, ebv, r_v, model=None):
     """
 
     from scipy.interpolate import interp1d
-    from astropy.utils import data as apydata
 
-    defined_rvs = [3.1,4.0,5.5]
     if np.any(x < 0.001) or np.any(x > 1.e4):
         raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
-    if r_v not in defined_rvs:
-        raise ValueError('wd01 and d03 only defined for r_v = 3.1, 4.0 & 5.5')
 
+    # If we already read the model in and created a spline, use the cache
+    if (model, r_v) in _wd01_like_cache:
+        return ebv * _wd01_like_cache[(model, r_v)](x)
+
+    # Get the path to the model file
+    try:
+        relative_path = _wd01_like_fnames[(model, r_v)]
+    except KeyError:
+        if model not in ['wd01', 'd03']:
+            raise ValueError("model must be 'wd01' or 'd03'")
+        else:
+            raise ValueError("models only defined for r_v in [3.1, 4.0, 5.5]")
+    model_file = apydata.get_pkg_data_filename(relative_path)
+
+    # The d03 and w01 data files have different hard-to-parse formats
     if model == 'd03':
-        if r_v == 3.1:
-            model_file = apydata.get_pkg_data_filename(
-              'data/extinction_models/kext_albedo_WD_MW_3.1A_60_D03_all.txt')
-        elif r_v == 4.0:
-            model_file = apydata.get_pkg_data_filename(
-              'data/extinction_models/kext_albedo_WD_MW_4.0A_40_D03_all.txt')
-        elif r_v == 5.5:
-            model_file = apydata.get_pkg_data_filename(
-              'data/extinction_models/kext_albedo_WD_MW_5.5A_30_D03_all.txt')
-        #The d03 and w01 data files have different hard-to-parse formats
-        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=67,
-              names=['wave','albedo','avg_cos','C_ext','K_abs',
-              'avg_cos_sq','comment'],
-              col_starts=[0 ,12,20,27,37,47,55],
-                col_ends=[11,19,26,36,46,54,80],guess=False)
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
+                                data_start=67,
+                                names=['wave','albedo','avg_cos','C_ext',
+                                       'K_abs','avg_cos_sq','comment'],
+                                col_starts=[0,12,20,27,37,47,55],
+                                col_ends=[11,19,26,36,46,54,80],guess=False)
         waves = np.array(dust_table['wave'])
         c_vals = np.array(dust_table['C_ext'])
 
     if model == 'wd01':
-        if r_v == 3.1:
-            model_file = apydata.get_pkg_data_filename(
-                'data/extinction_models/kext_albedo_WD_MW_3.1B_60.txt')
-        elif r_v == 4.0:
-            model_file = apydata.get_pkg_data_filename(
-                'data/extinction_models/kext_albedo_WD_MW_4.0B_40.txt')
-        if r_v == 5.5:
-            model_file = apydata.get_pkg_data_filename(
-                'data/extinction_models/kext_albedo_WD_MW_5.5B_30.txt')
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
+                                data_start=51,
+                                names=['wave','albedo','avg_cos','C_ext',
+                                       'K_abs'],
+                                col_starts=[0,10,18,25,35],
+                                col_ends=  [9,17,24,34,42],guess=False)
 
-        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,data_start=51,
-                            names=['wave','albedo','avg_cos','C_ext','K_abs'],
-                            col_starts=[0,10,18,25,35],
-                            col_ends=  [9,17,24,34,42],guess=False)
         #We have to reverse the entries for wd01
         waves = np.array(dust_table['wave'])[::-1]
         c_vals = np.array(dust_table['C_ext'])[::-1]
 
     #Put waves into inverse microns
     waves_ang = 1./waves
-    c_vals = c_vals
+
+    # Create a spline to get normalization at effective V band
     ext_spline = interp1d(waves_ang,c_vals)
-    #Evaluate at effective V band.
     normalization = ext_spline(1.e4/5495.)
-    k = ext_spline(x)/normalization
-    return(k)
+    
+    # Normalize to ebv=1. and create a new spline with the normalized values
+    c_vals /= normalization * r_v
+    ext_spline = interp1d(waves_ang, c_vals)
+    _wd01_like_cache[(model, r_v)] = ext_spline  # cache the spline
+    
+    return ebv * ext_spline(x)
+
 
