@@ -2,8 +2,11 @@
 """Extinction law functions."""
 
 from __future__ import division
+from os import path
 import numpy as np
 import warnings
+from astropy.io import ascii
+from astropy.utils import data as apydata
 
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     """Return extinction in magnitudes at given wavelength(s).
@@ -18,7 +21,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         A(V) = R_V * E(B-V).
     r_v : float, optional
         R_V parameter. Default is the standard Milky Way average of 3.1.
-    model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07'}, optional
+    model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07', 'wd01', d03'}, optional
         * 'ccm89': Cardelli, Clayton, & Mathis (1989).
         * 'od94': Like 'ccm89' but using the O'Donnell (1994) optical
           coefficients between 3030 A and 9091 A.
@@ -26,9 +29,12 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
           wavelengths below 3030 A, otherwise the same as O'Donnell (1994).
           Note that the GCC09 paper has incorrect parameters for the
           2175A bump, and these incorrect parameters **are** used here.
-        * 'f99': Fitzpatrick (1999) model.
+        * 'f99': Fitzpatrick (1999) model. **[DEFAULT]**
         * 'fm07': Fitzpatrick & Massa (2007) model. This model is not
           currently not R dependent, so can only be used with ``r_v=3.1``.
+        * 'wd01': Weingartner and Draine (2001) dust model.
+        * 'd03': Draine (2003) model. Like the 'wd01' but with lower
+          PAH C abundance relative to H.
 
     Returns
     -------
@@ -69,7 +75,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
       A to 6 microns, but note the claimed validity goes down only to
       1150 A. The optical spline points are not taken from F99 Table
       4, but rather updated versions from E. Fitzpatrick (this matches
-      the Goddard IDL astrolib routine FM_UNRED).
+      the Goddard IDL astrolib routine FM_UNRED). This model is the
+      DEFAULT extinction law used.
 
     * **'fm07'** The Fitzpatrick & Massa (2007) [6]_ model, which has
       a slightly different functional form from 'f99'. Fitzpatrick &
@@ -77,11 +84,34 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
       signficantly so (Gordon et al. 2009). Defined from 910 A to 6
       microns.
 
+    * **'wd01'** The Weingartner & Draine (2001) [10]_ dust model.
+      This model is a calculation of the interstellar extinction
+      using a dust model of carbonaceous grains and amorphous 
+      silicate grains. The carbonaceous grains are like PAHs when 
+      small and like graphite when large. This model is evaluated
+      at discrete wavelengths and interpolated between these 
+      wavelengths. Grid goes from 1 A to 1000 microns. The model 
+      has been calculated for three different grain size 
+      distributions which produce interstellar exinctions that 
+      look like 'ccm89' at Rv = 3.1, Rv = 4.0 and Rv = 5.5.
+      No interpolation to other Rv values is performed, so this 
+      model can be evaluated only for these values.
+
+    * **'d03'** The Draine (2003) [11]_ update to 'wd01' where the 
+      carbon/PAH abundances relative to 'wd01' have been reduced by a 
+      factor of 0.93. 
+
     .. warning :: The 'gcc09' model currently does the 2175 Angstrom bump
                   incorrectly.
 
     .. warning :: The 'fm07' model is not properly R dependent. A ValueError
                   is raised if r_v values other than 3.1 are used.
+
+    .. warning :: The 'wd01' and 'd03' models are not analytic 
+                  functions of R. Only r_v = 3.1, r_v = 4.0 and
+                  r_v = 5.5 are accepted. Otherwise a ValueError
+                  is raised.
+
 
     **ccm89, od94 & gcc09 models**
 
@@ -133,7 +163,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
        from mpl_toolkits.axes_grid1 import make_axes_locatable
        from specutils.extinction import extinction
 
-       models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07']
+       models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07','wd01','d03']
        wave = np.logspace(np.log10(910.), np.log10(30000.), 2000)
        a_lambda = {model: extinction(wave, a_v=1., model=model)
                    for model in models}
@@ -164,7 +194,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
        plt.axvspan(wave[0], 1150., fc='0.8', ec='none', zorder=-1000)
        plt.axvspan(1150., 1250., fc='0.9', ec='none', zorder=-1000)
        plt.xlim(wave[0], wave[-1])
-       plt.ylim(ymax=0.4)
+       plt.ylim(ymin=-0.4,ymax=0.4)
        plt.ylabel('residual from f99')
        plt.xlabel('Wavelength ($\AA$)')
 
@@ -185,6 +215,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     .. [7] Savage & Mathis 1979, ARA&A, 17, 73
     .. [8] Longo et al. 1989, ApJ, 339,474
     .. [9] Valencic et al. 2004, ApJ, 616, 912
+    .. [10] Weingartner, J.C. & Draine, B.T. 2001, ApJ, 548, 296
+    .. [11] Draine, B.T. 2003, ARA&A, 41, 241
 
     Examples
     --------
@@ -241,6 +273,10 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
         a_lambda = _f99_like(x, ebv, r_v, model='f99')
     elif model == 'fm07':
         a_lambda = _f99_like(x, ebv, r_v, model='fm07')
+    elif model == 'wd01':
+        a_lambda = _wd01_like(x, ebv, r_v, model='wd01')
+    elif model == 'd03':
+        a_lambda = _wd01_like(x, ebv, r_v, model='d03')
     else:
         raise ValueError('unknown model: {}'.format(model))
 
@@ -272,6 +308,8 @@ def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
           corrected here.
         * 'f99': Fitzpatrick (1999).
         * 'fm07': Fitzpatrick & Massa (2007). Currently not R dependent.
+        * 'wd01': Weingartner & Draine (2001)
+        * 'd03': Draine (2003)
 
     Returns
     -------
@@ -437,3 +475,83 @@ def _f99_like(x, ebv, r_v, model='f99'):
     k[oir_region] = oir_spline(y)
 
     return ebv * (k + r_v)
+
+
+d = path.join('data', 'extinction_models')
+_wd01_like_fnames = {
+    ('wd01', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1B_60.txt'), 
+    ('wd01', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0B_40.txt'),
+    ('wd01', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5B_30.txt'),
+    ('d03', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1A_60_D03_all.txt'),
+    ('d03', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0A_40_D03_all.txt'),
+    ('d03', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5A_30_D03_all.txt')}
+del d
+_wd01_like_cache = {}
+
+def _wd01_like(x, ebv, r_v, model=None):
+    """
+      Read in the dust model, interpolate and normalize
+
+      The dust model gives the extinction per H nucleon.
+      For consistency with other extinction laws we 
+      normalize this extinction law so that it is equal
+      to 1.0 at 5495 angstroms
+    """
+
+    from scipy.interpolate import interp1d
+
+    if np.any(x < 0.001) or np.any(x > 1.e4):
+        raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
+
+    # If we already read the model in and created a spline, use the cache
+    if (model, r_v) in _wd01_like_cache:
+        return ebv * _wd01_like_cache[(model, r_v)](x)
+
+    # Get the path to the model file
+    try:
+        relative_path = _wd01_like_fnames[(model, r_v)]
+    except KeyError:
+        if model not in ['wd01', 'd03']:
+            raise ValueError("model must be 'wd01' or 'd03'")
+        else:
+            raise ValueError("models only defined for r_v in [3.1, 4.0, 5.5]")
+    model_file = apydata.get_pkg_data_filename(relative_path)
+
+    # The d03 and w01 data files have different hard-to-parse formats
+    if model == 'd03':
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
+                                data_start=67,
+                                names=['wave','albedo','avg_cos','C_ext',
+                                       'K_abs','avg_cos_sq','comment'],
+                                col_starts=[0,12,20,27,37,47,55],
+                                col_ends=[11,19,26,36,46,54,80],guess=False)
+        waves = np.array(dust_table['wave'])
+        c_vals = np.array(dust_table['C_ext'])
+
+    if model == 'wd01':
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
+                                data_start=51,
+                                names=['wave','albedo','avg_cos','C_ext',
+                                       'K_abs'],
+                                col_starts=[0,10,18,25,35],
+                                col_ends=  [9,17,24,34,42],guess=False)
+
+        #We have to reverse the entries for wd01
+        waves = np.array(dust_table['wave'])[::-1]
+        c_vals = np.array(dust_table['C_ext'])[::-1]
+
+    #Put waves into inverse microns
+    waves_ang = 1./waves
+
+    # Create a spline to get normalization at effective V band
+    ext_spline = interp1d(waves_ang,c_vals)
+    normalization = ext_spline(1.e4/5495.)
+    
+    # Normalize to ebv=1. and create a new spline with the normalized values
+    c_vals /= normalization * r_v
+    ext_spline = interp1d(waves_ang, c_vals)
+    _wd01_like_cache[(model, r_v)] = ext_spline  # cache the spline
+    
+    return ebv * ext_spline(x)
+
+
