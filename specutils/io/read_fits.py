@@ -313,7 +313,6 @@ class FITSWCSSpectrum(object):
 
 def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_axis=0):
     """Read very a very simple 1D WCS mainly comprising of CRVAL, CRPIX, ... from a FITS WCS Information container
-    This function will enforce one-dimensionality
 
     Parameters
     ----------
