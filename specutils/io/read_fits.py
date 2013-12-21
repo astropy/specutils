@@ -330,9 +330,6 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_
 
     dispersion_unit = dispersion_unit
 
-    if fits_wcs_information.naxis != 1:
-        raise FITSWCSSpectrum1DError
-
     dispersion_delta = None
     if fits_wcs_information.transform_matrix is not None:
         dispersion_delta = fits_wcs_information.transform_matrix[spectral_axis, spectral_axis]
