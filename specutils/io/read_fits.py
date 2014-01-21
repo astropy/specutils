@@ -313,7 +313,6 @@ class FITSWCSSpectrum(object):
 
 def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_axis=0):
     """Read very a very simple 1D WCS mainly comprising of CRVAL, CRPIX, ... from a FITS WCS Information container
-    This function will enforce one-dimensionality
 
     Parameters
     ----------
@@ -323,17 +322,12 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_
 
     """
 
-    #for the 1D reader setting the spectral_axis to anything else than 0 seems to be strange
-    try:
-        assert spectral_axis == 0
-        assert fits_wcs_information.naxis == 1
-    except AssertionError:
-        raise FITSWCSError('Only 1-dimensional files can be read with this function')
+    # for the 1D reader setting the spectral_axis to anything else than 0 seems
+    # to be strange actually, it's perfectly reasonable IF you want to extract
+    # information from, say, a data cube and you're only interested in the
+    # spectral dimension.  This tool can easily be used for that purpose.
 
     dispersion_unit = dispersion_unit
-
-    if fits_wcs_information.naxis != 1:
-        raise FITSWCSSpectrum1DError
 
     dispersion_delta = None
     if fits_wcs_information.transform_matrix is not None:
