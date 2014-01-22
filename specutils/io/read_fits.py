@@ -320,10 +320,13 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None, spectral_
     fits_wcs_information : ~specutils.io.read_fits.FITSWCSSpectrum
         object compiling WCS information to be used in these readers
 
+    .. TODO: Examine this further.
+
     """
 
     # for the 1D reader setting the spectral_axis to anything else than 0 seems
-    # to be strange actually, it's perfectly reasonable IF you want to extract
+    # to be strange;
+    # actually, it's perfectly reasonable IF you want to extract
     # information from, say, a data cube and you're only interested in the
     # spectral dimension.  This tool can easily be used for that purpose.
 
