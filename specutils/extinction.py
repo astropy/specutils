@@ -8,6 +8,242 @@ import warnings
 from astropy.io import ascii
 from astropy.utils import data as apydata
 
+from . import _extinction
+
+__all__ = ['extinction_ccm89', 'extinction_od94', 'extinction_gcc09',
+           'extinction_f99', 'extinction', 'reddening']
+
+def process_inputs(wave, ebv, a_v, r_v):
+    """Helper function for processing inputs to all extinction_* functions
+
+    Parameters
+    ----------
+    wave : float or list_like
+    ebv, a_v : float or None
+    r_v : float
+
+    Returns
+    -------
+    x : `~numpy.ndarray`, at least 1d
+        1e4 / wave
+    scalar : bool
+        Was input wave a scalar?
+
+    """
+    if (a_v is None) and (ebv is None):
+        raise ValueError('Must specify either a_v or ebv')
+    if (a_v is not None) and (ebv is not None):
+        raise ValueError('Cannot specify both a_v and ebv')
+    if a_v is None:
+        a_v = ebv * r_v
+
+    scalar = np.isscalar(wave)
+    wave = np.atleast_1d(wave)
+    if wave.ndim > 2:
+        raise ValueError("wave cannot be more than 1-d")
+
+    return wave, scalar, a_v
+
+def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 909.09091) | (wave > 33333.33333)):
+        raise ValueError('ccm89 law valid only for wavelengths from '
+                         '909.09091 to 33333.33333 Angstroms.')
+    res = _extinction.ccm89(wave, a_v, r_v)
+    if scalar:
+        return res[0]
+    return res
+
+def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 909.09091) | (wave > 33333.33333)):
+        raise ValueError('od94 law valid only for wavelengths from '
+                         '909.09091 to 33333.33333 Angstroms.')
+    res = _extinction.od94(wave, a_v, r_v)
+    if scalar:
+        return res[0]
+    return res
+
+def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 909.09091) | (wave > 33333.33333)):
+        raise ValueError('gcc09 law valid only for wavelengths from '
+                         '909.09091 to 33333.33333 Angstroms.')
+    res = _extinction.gcc09(wave, a_v, r_v)
+    if scalar:
+        return res[0]
+    return res
+
+def extinction_f99(wave, ebv=None, a_v=None, r_v=3.1):
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 909.09091) | (wave > 33333.33333)):
+        raise ValueError('gcc09 law valid only for wavelengths from '
+                         '909.09091 to 33333.33333 Angstroms.')
+    res = (a_v / r_v) * (_extinction.f99k(wave, r_v) + r_v)
+    if scalar:
+        return res[0]
+    return res
+
+def _fm07_k_uv(x):
+    x0, gamma = 4.592, 0.922
+    c1, c2, c3, c4, c5 = -0.175, 0.807, 2.991, 0.319, 6.097
+    D = x**2 / ((x**2-x0**2)**2 + x**2 * gamma**2)
+    k_uv = np.zeros_like(x)
+    valid = (x <= c5)
+    k_uv[valid] = c1 + c2*x[valid] + c3*D[valid]
+    valid = (x > c5)
+    k_uv[valid] = c1 + c2*x[valid] + c3*D[valid] + c4*(x[valid] - c5)**2
+    return k_uv
+
+def _f99_like(x, ebv, r_v, model='f99'):
+    from scipy.interpolate import interp1d
+
+    if np.any(x < 0.167) or np.any(x > 11.):
+        raise ValueError('Wavelength(s) must be between 910 A and 6 um')
+    if model == 'fm07' and abs(r_v - 3.1) > 0.001:
+        raise ValueError('fm07 model not implementend for r_v != 3.1')
+
+    uvmask = x >= 1.e4 / 2700.
+    oirmask = ~uvmask
+    k = np.zeros_like(x)
+
+    # UV region
+    if model == 'f99':
+        k[uvmask] = _f99_k_uv(x[uvmask], r_v)
+    if model == 'fm07':
+        k[uvmask] = _fm07_k_uv(x[uvmask])
+
+    # Calculate values for UV spline points to anchor OIR fit
+    x_uv_spline = 1.e4 / np.array([2700., 2600.])
+    d = (x_uv_spline**2 /
+         ((x_uv_spline**2 - x0**2)**2 + x_uv_spline**2 * gamma**2))
+    k_uv_spline = c1 + c2 * x_uv_spline + c3 * d
+
+    # Optical / IR region
+    if model == 'f99':
+        anchors_x = 1.e4 / np.array([np.inf, 26500., 12200., 6000., 5470.,
+                                     4670., 4110.])
+
+        # The OIR anchors are from IDL astrolib, not F99.
+        anchors_extinction = np.array(
+            [0.,
+             0.26469 * r_v/3.1,  # IR
+             0.82925 * r_v/3.1,  # IR
+             -0.422809 + 1.00270*r_v + 2.13572e-04*r_v**2,  # optical
+             -5.13540e-02 + 1.00216*r_v - 7.35778e-05*r_v**2,
+             0.700127 + 1.00184*r_v - 3.32598e-05*r_v**2,
+             (1.19456 + 1.01707*r_v - 5.46959e-03*r_v**2 +
+              7.97809e-04 * r_v**3 - 4.45636e-05 * r_v**4)]
+            )
+
+        anchors_x = np.append(anchors_x, x_uv_spline)
+        anchors_k = np.append(anchors_extinction - r_v, k_uv_spline)
+
+    if model == 'fm07':
+        anchors_x_ir = np.array([0., 0.25, 0.50, 0.75, 1.])
+        anchors_k_ir = (-0.83 + 0.63 * r_v) * anchors_x_ir**1.84 - r_v
+        anchors_x_opt = np.array([5530., 4000., 3300.])
+        anchors_k_opt = np.array([0., 1.322, 2.055])
+
+        anchors_x = np.append(anchors_x_ir, anchors_x_opt)
+        anchors_k = np.append(anchors_k_ir, anchors_k_opt)
+
+        anchors_x = np.append(anchors_x, x_uv_spline)
+        anchors_k = np.append(anchors_k, k_uv_spline)
+    
+    # Note that interp1d requires that the input abscissa is monotonically
+    # _increasing_. This is opposite the usual ordering of a spectrum, but
+    # fortunately the _output_ abscissa does not have the same requirement.
+    oir_spline = interp1d(anchors_x, anchors_k, kind='cubic')
+    k[oirmask] = oir_spline(x[oirmask])
+
+    return ebv * (k + r_v)
+
+
+d = path.join('data', 'extinction_models')
+_wd01_like_fnames = {
+    ('wd01', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1B_60.txt'), 
+    ('wd01', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0B_40.txt'),
+    ('wd01', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5B_30.txt'),
+    ('d03', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1A_60_D03_all.txt'),
+    ('d03', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0A_40_D03_all.txt'),
+    ('d03', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5A_30_D03_all.txt')}
+del d
+_wd01_like_cache = {}
+
+def _wd01_like(x, ebv, r_v, model=None):
+    """
+      Read in the dust model, interpolate and normalize
+
+      The dust model gives the extinction per H nucleon.
+      For consistency with other extinction laws we 
+      normalize this extinction law so that it is equal
+      to 1.0 at 5495 angstroms
+    """
+
+    from scipy.interpolate import interp1d
+
+    if np.any(x < 0.001) or np.any(x > 1.e4):
+        raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
+
+    # If we already read the model in and created a spline, use the cache
+    if (model, r_v) in _wd01_like_cache:
+        return ebv * _wd01_like_cache[(model, r_v)](x)
+
+    # Get the path to the model file
+    try:
+        relative_path = _wd01_like_fnames[(model, r_v)]
+    except KeyError:
+        if model not in ['wd01', 'd03']:
+            raise ValueError("model must be 'wd01' or 'd03'")
+        else:
+            raise ValueError("models only defined for r_v in [3.1, 4.0, 5.5]")
+    model_file = apydata.get_pkg_data_filename(relative_path)
+
+    # The d03 and w01 data files have different hard-to-parse formats
+    if model == 'd03':
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
+                                data_start=67,
+                                names=['wave','albedo','avg_cos','C_ext',
+                                       'K_abs','avg_cos_sq','comment'],
+                                col_starts=[0,12,20,27,37,47,55],
+                                col_ends=[11,19,26,36,46,54,80],guess=False)
+        waves = np.array(dust_table['wave'])
+        c_vals = np.array(dust_table['C_ext'])
+
+    if model == 'wd01':
+        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
+                                data_start=51,
+                                names=['wave','albedo','avg_cos','C_ext',
+                                       'K_abs'],
+                                col_starts=[0,10,18,25,35],
+                                col_ends=  [9,17,24,34,42],guess=False)
+
+        #We have to reverse the entries for wd01
+        waves = np.array(dust_table['wave'])[::-1]
+        c_vals = np.array(dust_table['C_ext'])[::-1]
+
+    #Put waves into inverse microns
+    waves_ang = 1./waves
+
+    # Create a spline to get normalization at effective V band
+    ext_spline = interp1d(waves_ang,c_vals)
+    normalization = ext_spline(1.e4/5495.)
+    
+    # Normalize to ebv=1. and create a new spline with the normalized values
+    c_vals /= normalization * r_v
+    ext_spline = interp1d(waves_ang, c_vals)
+    _wd01_like_cache[(model, r_v)] = ext_spline  # cache the spline
+    
+    return ebv * ext_spline(x)
+
+
+
+_extinction_models = {'ccm89': extinction_ccm89,
+                      'od94': extinction_od94,
+                      'gcc09': extinction_gcc09,
+                      'f99': extinction_f99}
+
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     """Return extinction in magnitudes at given wavelength(s).
 
@@ -243,46 +479,10 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     >>> a_lambda = ebv * a_lambda_over_ebv  # relatively fast
 
     """
-
     model = model.lower()
-    if (a_v is None) and (ebv is None):
-        raise ValueError('Must specify either a_v or ebv')
-    if (a_v is not None) and (ebv is not None):
-        raise ValueError('Cannot specify both a_v and ebv')
-    if a_v is not None:
-        ebv = a_v / r_v
-
-    return_scalar = np.isscalar(wave)
-    wave = np.asarray(wave)
-    x = 1.e4 / np.ravel(wave)  # Inverse microns.
-
-    if model == 'ccm89':
-        a_lambda = _ccm89_like(x, ebv, r_v, ccm89_coeffs_a, ccm89_coeffs_b)
-    elif model == 'od94':
-        a_lambda = _ccm89_like(x, ebv, r_v, od94_coeffs_a, od94_coeffs_b)
-    elif model == 'gcc09':
-        uv = (x >= 3.3) & (x < 11)
-        non_uv = ~uv
-        if np.any(uv) and np.any(non_uv):
-            warnings.warn('gcc09 model discontinuous at 3030 A.')
-        a_lambda = np.empty_like(x)
-        a_lambda[uv] = _gcc09(x[uv], ebv, r_v)
-        a_lambda[non_uv] = _ccm89_like(x[non_uv], ebv, r_v, od94_coeffs_a,
-                                       od94_coeffs_b)
-    elif model == 'f99':
-        a_lambda = _f99_like(x, ebv, r_v, model='f99')
-    elif model == 'fm07':
-        a_lambda = _f99_like(x, ebv, r_v, model='fm07')
-    elif model == 'wd01':
-        a_lambda = _wd01_like(x, ebv, r_v, model='wd01')
-    elif model == 'd03':
-        a_lambda = _wd01_like(x, ebv, r_v, model='d03')
-    else:
-        raise ValueError('unknown model: {}'.format(model))
-
-    if return_scalar:
-        return a_lambda[0]
-    return a_lambda
+    if model not in _extinction_models:
+        raise ValueError('unknown model: {0}'.format(model))
+    return _extinction_models[model](wave, ebv=ebv, a_v=a_v, r_v=r_v) 
 
 def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     """Return reddening (inverse of flux transmission fraction) at given
@@ -326,232 +526,3 @@ def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     """
 
     return 10**(0.4 * extinction(wave, ebv=ebv, a_v=a_v, r_v=r_v, model=model))
-
-def _gcc09(x, ebv, r_v):
-    f_a = np.zeros_like(x)
-    f_b = np.zeros_like(x)
-    select = x >= 5.9
-    y = x[select] - 5.9
-    f_a[select] = -0.110 * y**2 - 0.0099 * y**3
-    f_b[select] = 0.537 * y**2 + 0.0530 * y**3
-    a = 1.896 - 0.372 * x - (0.0108 / ((x - 4.57)**2 + 0.0422)) + f_a
-    b = -3.503 + 2.057 * x + (0.718 / ((x - 4.59)**2 + 0.0530 * 3.1)) + f_b
-
-    return  ebv * (r_v * a + b)
-
-# Optical/NIR coefficientsfor ccm89 and od94 models.
-# These are ordered like: c[0] * x^7 + c[1] * x^6 + ... + c[7] * x^0
-# corresponding to numpy.polyval() usage.
-ccm89_coeffs_a = np.array([0.32999, -0.77530, 0.01979, 0.72085, -0.02427,
-                           -0.50447, 0.17699, 1.])
-ccm89_coeffs_b = np.array([-2.09002, 5.30260, -0.62251, -5.38434, 1.07233,
-                            2.28305, 1.41338, 0.])
-od94_coeffs_a = np.array([-0.505, 1.647, -0.827, -1.718, 1.137, 0.701, -0.609,
-                           0.104, 1.])
-od94_coeffs_b = np.array([3.347, -10.805, 5.491, 11.102, -7.985, -3.989, 2.908,
-                          1.952, 0.])
-
-def _ccm89_like(x, ebv, r_v, optical_coeffs_a, optical_coeffs_b):
-    if np.any(x < 0.3) or np.any(x > 11.):
-        raise ValueError('CCM law valid only for wavelengths from '
-                         '910 Angstroms to 3.3 microns')
-
-    a = np.empty_like(x)
-    b = np.empty_like(x)
-
-    # Near Infrared.
-    valid = (0.3 <= x) & (x < 1.1)
-    a[valid] = 0.574 * x[valid]**1.61
-    b[valid] = -0.527 * x[valid]**1.61
-
-    # Optical.
-    valid = (1.1 <= x) & (x < 3.3)
-    y = x[valid] - 1.82
-    a[valid] = np.polyval(optical_coeffs_a, y)
-    b[valid] = np.polyval(optical_coeffs_b, y)
-
-    # Ultraviolet.
-    valid = (3.3 <= x) & (x < 8.)
-    y = x[valid]
-    f_a = np.zeros_like(y)
-    f_b = np.zeros_like(y)
-    select = (y >= 5.9)
-    yselect = y[select] - 5.9
-    f_a[select] = -0.04473 * yselect**2 - 0.009779 * yselect**3
-    f_b[select] = 0.2130 * yselect**2 + 0.1207 * yselect**3
-    a[valid] = 1.752 - 0.316*y - (0.104 / ((y-4.67)**2 + 0.341)) + f_a
-    b[valid] = -3.090 + 1.825*y + (1.206 / ((y-4.62)**2 + 0.263)) + f_b
-
-    # Far-UV (CCM89 extrapolation)
-    valid = (8. <= x) & (x < 11.)
-    if np.any(valid):
-        warnings.warn('ccm89 and od94 models should not be used below 1250 A.')
-    y = x[valid] - 8.
-    coef_a = np.array([-0.070, 0.137, -0.628, -1.073])
-    coef_b = np.array([0.374, -0.420, 4.257, 13.670])
-    a[valid] = np.polyval(coef_a, y)
-    b[valid] = np.polyval(coef_b, y)
-
-    return ebv * (r_v * a + b)
-
-def _f99_like(x, ebv, r_v, model='f99'):
-    from scipy.interpolate import interp1d
-
-    if np.any(x < 0.167) or np.any(x > 11.):
-        raise ValueError('Wavelength(s) must be between 910 A and 6 um')
-    if model == 'fm07' and abs(r_v - 3.1) > 0.001:
-        raise ValueError('fm07 model not implementend for r_v != 3.1')
-
-    k = np.zeros_like(x)
-    uv_region = (x >= 1.e4 / 2700.)
-    oir_region = ~uv_region
-
-    # UV region
-    y = x[uv_region]
-    if model == 'f99':
-        x0, gamma = 4.596, 0.99
-        c3, c4, c5 = 3.23, 0.41, 5.9
-        c2 = -0.824 + 4.717 / r_v
-        c1 = 2.030 - 3.007 * c2
-        d = y**2 / ((y**2 - x0**2)**2 + y**2 * gamma**2)
-        f = np.zeros_like(y)
-        valid = (y >= c5)
-        f[valid] = 0.5392 * (y[valid] - c5)**2 + 0.05644 * (y[valid] - c5)**3
-        k_uv = c1 + c2 * y + c3 * d + c4 * f
-    if model == 'fm07':
-        x0, gamma = 4.592, 0.922
-        c1, c2, c3, c4, c5 = -0.175, 0.807, 2.991, 0.319, 6.097
-        D = y**2 / ((y**2-x0**2)**2 + y**2 * gamma**2)
-        k_uv = np.zeros_like(y)
-        valid = (y <= c5)
-        k_uv[valid] = c1 + c2*y[valid] + c3*D[valid]
-        valid = (y > c5)
-        k_uv[valid] = c1 + c2*y[valid] + c3*D[valid] + c4*(y[valid] - c5)**2
-    k[uv_region] = k_uv
-
-    # Calculate values for UV spline points to anchor OIR fit
-    x_uv_spline = 1.e4 / np.array([2700., 2600.])
-    d = (x_uv_spline**2 /
-         ((x_uv_spline**2 - x0**2)**2 + x_uv_spline**2 * gamma**2))
-    k_uv_spline = c1 + c2 * x_uv_spline + c3 * d
-
-    # Optical / IR region
-    y = x[oir_region]
-    if model == 'f99':
-        anchors_x = 1.e4 / np.array([np.inf, 26500., 12200., 6000., 5470.,
-                                     4670., 4110.])
-
-        # The OIR anchors are from IDL astrolib, not F99.
-        anchors_extinction = np.array(
-            [0.,
-             0.26469 * r_v / 3.1,  # IR
-             0.82925 * r_v / 3.1,  # IR
-             -0.422809 + 1.00270 * r_v + 2.13572e-04 * r_v**2,  # optical
-             -5.13540e-02 + 1.00216 * r_v - 7.35778e-05 * r_v**2,
-             0.700127 + 1.00184 * r_v - 3.32598e-05 * r_v**2,
-             (1.19456 + 1.01707 * r_v - 5.46959e-03 * r_v**2 +
-              7.97809e-04 * r_v**3 - 4.45636e-05 * r_v**4)]
-            )
-
-        anchors_x = np.append(anchors_x, x_uv_spline)
-        anchors_k = np.append(anchors_extinction - r_v, k_uv_spline)
-
-    if model == 'fm07':
-        anchors_x_ir = np.array([0., 0.25, 0.50, 0.75, 1.])
-        anchors_k_ir = (-0.83 + 0.63 * r_v) * anchors_x_ir**1.84 - r_v
-        anchors_x_opt = np.array([5530., 4000., 3300.])
-        anchors_k_opt = np.array([0., 1.322, 2.055])
-
-        anchors_x = np.append(anchors_x_ir, anchors_x_opt)
-        anchors_k = np.append(anchors_k_ir, anchors_k_opt)
-
-        anchors_x = np.append(anchors_x, x_uv_spline)
-        anchors_k = np.append(anchors_k, k_uv_spline)
-    
-    # Note that interp1d requires that the input abscissa is monotonically
-    # _increasing_. This is opposite the usual ordering of a spectrum, but
-    # fortunately the _output_ abscissa does not have the same requirement.
-    oir_spline = interp1d(anchors_x, anchors_k, kind='cubic')
-    k[oir_region] = oir_spline(y)
-
-    return ebv * (k + r_v)
-
-
-d = path.join('data', 'extinction_models')
-_wd01_like_fnames = {
-    ('wd01', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1B_60.txt'), 
-    ('wd01', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0B_40.txt'),
-    ('wd01', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5B_30.txt'),
-    ('d03', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1A_60_D03_all.txt'),
-    ('d03', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0A_40_D03_all.txt'),
-    ('d03', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5A_30_D03_all.txt')}
-del d
-_wd01_like_cache = {}
-
-def _wd01_like(x, ebv, r_v, model=None):
-    """
-      Read in the dust model, interpolate and normalize
-
-      The dust model gives the extinction per H nucleon.
-      For consistency with other extinction laws we 
-      normalize this extinction law so that it is equal
-      to 1.0 at 5495 angstroms
-    """
-
-    from scipy.interpolate import interp1d
-
-    if np.any(x < 0.001) or np.any(x > 1.e4):
-        raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
-
-    # If we already read the model in and created a spline, use the cache
-    if (model, r_v) in _wd01_like_cache:
-        return ebv * _wd01_like_cache[(model, r_v)](x)
-
-    # Get the path to the model file
-    try:
-        relative_path = _wd01_like_fnames[(model, r_v)]
-    except KeyError:
-        if model not in ['wd01', 'd03']:
-            raise ValueError("model must be 'wd01' or 'd03'")
-        else:
-            raise ValueError("models only defined for r_v in [3.1, 4.0, 5.5]")
-    model_file = apydata.get_pkg_data_filename(relative_path)
-
-    # The d03 and w01 data files have different hard-to-parse formats
-    if model == 'd03':
-        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
-                                data_start=67,
-                                names=['wave','albedo','avg_cos','C_ext',
-                                       'K_abs','avg_cos_sq','comment'],
-                                col_starts=[0,12,20,27,37,47,55],
-                                col_ends=[11,19,26,36,46,54,80],guess=False)
-        waves = np.array(dust_table['wave'])
-        c_vals = np.array(dust_table['C_ext'])
-
-    if model == 'wd01':
-        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
-                                data_start=51,
-                                names=['wave','albedo','avg_cos','C_ext',
-                                       'K_abs'],
-                                col_starts=[0,10,18,25,35],
-                                col_ends=  [9,17,24,34,42],guess=False)
-
-        #We have to reverse the entries for wd01
-        waves = np.array(dust_table['wave'])[::-1]
-        c_vals = np.array(dust_table['C_ext'])[::-1]
-
-    #Put waves into inverse microns
-    waves_ang = 1./waves
-
-    # Create a spline to get normalization at effective V band
-    ext_spline = interp1d(waves_ang,c_vals)
-    normalization = ext_spline(1.e4/5495.)
-    
-    # Normalize to ebv=1. and create a new spline with the normalized values
-    c_vals /= normalization * r_v
-    ext_spline = interp1d(waves_ang, c_vals)
-    _wd01_like_cache[(model, r_v)] = ext_spline  # cache the spline
-    
-    return ebv * ext_spline(x)
-
-
