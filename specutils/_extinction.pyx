@@ -167,6 +167,7 @@ DEF FM07_C4 = 0.319
 DEF FM07_C5 = 6.097
 DEF FM07_X02 = FM07_X0 * FM07_X0
 DEF FM07_GAMMA2 = FM07_GAMMA * FM07_GAMMA
+DEF FM07_R_V = 3.1  # Fixed for the time being (used in fm07kknots)
 
 # Used for wave < 2700.
 def fm07uv(double[:] wave, double a_v):
@@ -187,3 +188,22 @@ def fm07uv(double[:] wave, double a_v):
         res[i] = a_v * (1. + k / 3.1)
 
     return res
+
+# This is mainly defined here rather than as a constant in the public module
+# so that we don't have to define the FM07 constants in two places.
+def fm07kknots(double[:] xknots):
+    cdef double d
+    cdef int i, n
+
+    n = xknots.shape[0]
+    kknots = np.empty(n, dtype=np.float)
+    for i in range(0, 5):
+        kknots[i] = (-0.83 + 0.63*FM07_R_V) * xknots[i]**1.84 - FM07_R_V
+    kknots[5] = 0.
+    kknots[6] = 1.322
+    kknots[7] = 2.055
+    for i in range(8, 10):
+        d = xknots[i]**2 / ((xknots[i]**2 - FM07_X02)**2 +
+                            xknots[i]**2 * FM07_GAMMA2)
+        kknots[i] = FM07_C1 + FM07_C2 * xknots[i] + FM07_C3 * d
+    return kknots
