@@ -22,7 +22,7 @@ cdef double ccm89like(double wave, double r_v, double optical_coeffs_a[],
     x = 1.e4 / wave
 
     if x < 1.1:
-        y = x ** 1.61
+        y = x**1.61
         a = 0.574 * y
         b = -0.527 * y
     elif x < 3.3:
@@ -35,8 +35,10 @@ cdef double ccm89like(double wave, double r_v, double optical_coeffs_a[],
             a += optical_coeffs_a[i] * yn
             b += optical_coeffs_b[i] * yn
     elif x < 8.:
-        a = 1.752 - 0.316*x - (0.104 / ((x-4.67)**2 + 0.341))
-        b = -3.090 + 1.825*x + (1.206 / ((x-4.62)**2 + 0.263))
+        y = x - 4.67
+        a = 1.752 - 0.316*x - (0.104 / (y*y + 0.341))
+        y = x - 4.62
+        b = -3.090 + 1.825*x + (1.206 / (y*y + 0.263))
         if x > 5.9:
             y = x - 5.9
             y2 = y * y
@@ -56,8 +58,10 @@ cdef double ccm89like(double wave, double r_v, double optical_coeffs_a[],
 cdef double gcc09uv(double wave, double r_v):
     cdef double x, y, y2, y3, a, b
     x = 1.e4/wave
-    a = 1.896 - 0.372*x - 0.0108 / ((x-4.57)**2 + 0.0422)
-    b = -3.503 + 2.057*x + 0.718 / ((x-4.59)**2 + 0.0530*3.1)
+    y = x - 4.57
+    a = 1.896 - 0.372*x - 0.0108 / (y*y + 0.0422)
+    y = x - 4.59
+    b = -3.503 + 2.057*x + 0.718 / (y*y + 0.0530*3.1)
     if x > 5.9:
         y = x - 5.9
         y2 = y * y
@@ -96,39 +100,46 @@ def gcc09(double[:] wave, double a_v, double r_v):
                                      od94_coeffs_b, od94_coeffs_n)
     return res
 
+# These should be the same as in extinction.py
 DEF F99_X0 = 4.596
 DEF F99_GAMMA = 0.99
 DEF F99_C3 = 3.23
 DEF F99_C4 = 0.41
 DEF F99_C5 = 5.9
-f99_xknots = np.array([0., 1.e4/26500., 1.e4/12200., 1.e4/6000., 1.e4/5470.,
-                       1.e4/4670., 1.e4/4110., 1.e4/2700., 1.e4/2600.])
+DEF F99_X02 = F99_X0 * F99_X0
+DEF F99_GAMMA2 = F99_GAMMA * F99_GAMMA
 
-def f99k(wave, double r_v):
-    cdef double c1, c2, d, x, x2, y, y2, rv2
+# Used for wave < 2700.
+def f99uv(double[:] wave, double a_v, double r_v):
+    cdef double c1, c2, d, x, x2, y, y2, rv2, k
     cdef int i, n
 
     c2 =  -0.824 + 4.717 / r_v
     c1 =  2.030 - 3.007 * c2
 
     n = wave.shape[0]
-    k = np.empty(n, dtype=np.float)
-
-    # UV: analytical function
+    res = np.empty(n, dtype=np.float)
     for i in range(0, n):
-        if wave[i] < 2700.:
-            x = 1.e4 / wave[i]
-            x2 = x * x
-            d = x2 / ((x2 - F99_X0*F99_X0)**2 + x2 * F99_GAMMA*F99_GAMMA)
-            k[i] = c1 + c2 * x + F99_C3 * d
-            if x >= F99_C5:
-                y = x - F99_C5
-                y2 = y * y
-                k[i] += F99_C4 * (0.5392 * y2 + 0.05644 * y2 * y)
+        x = 1.e4 / wave[i]
+        x2 = x * x
+        y = x2 - F99_X02
+        d = x2 / (y * y + x2 * F99_GAMMA2)
+        k = c1 + c2 * x + F99_C3 * d
+        if x >= F99_C5:
+            y = x - F99_C5
+            y2 = y * y
+            k += F99_C4 * (0.5392 * y2 + 0.05644 * y2 * y)
+        res[i] = a_v * (1. + k / r_v)
 
-    # Optical/IR: spline
-    from scipy.interpolate import splmake, spleval
+    return res
+
+def f99kknots(double[:] xknots, double r_v):
+    cdef double c1, c2, d, x, x2, y, rv2
+    cdef int i
+    c2 =  -0.824 + 4.717 / r_v
+    c1 =  2.030 - 3.007 * c2
     rv2 = r_v * r_v
+
     kknots = np.empty(9, dtype=np.float)
     kknots[0] = -r_v
     kknots[1] = 0.26469 * r_v/3.1 - r_v
@@ -139,14 +150,40 @@ def f99k(wave, double r_v):
     kknots[6] = (1.19456 + 1.01707*r_v - 5.46959e-03*rv2 +
                  7.97809e-04 * rv2 * r_v - 4.45636e-05 * rv2*rv2 - r_v)
     for i in range(7,9):
-        x2 = f99_xknots[i] * f99_xknots[i]
-        d = x2 /((x2 - F99_X0*F99_X0)**2 + x2 * F99_GAMMA*F99_GAMMA)
-        kknots[i] = c1 + c2 * f99_xknots[i] + F99_C3 * d
+        x2 = xknots[i] * xknots[i]
+        y = (x2 - F99_X02)
+        d = x2 /(y * y + x2 * F99_GAMMA2)
+        kknots[i] = c1 + c2*xknots[i] + F99_C3 * d
 
-    spline = splmake(f99_xknots, kknots, order=3)
+    return kknots
 
-    mask = wave >= 2700.
-    xarr = 1.e4 / wave[mask]
-    k[mask] = spleval(spline, xarr)
+# These constants should be the same as in extinction.py
+DEF FM07_X0 = 4.592
+DEF FM07_GAMMA = 0.922
+DEF FM07_C1 = -0.175
+DEF FM07_C2 = 0.807
+DEF FM07_C3 = 2.991
+DEF FM07_C4 = 0.319
+DEF FM07_C5 = 6.097
+DEF FM07_X02 = FM07_X0 * FM07_X0
+DEF FM07_GAMMA2 = FM07_GAMMA * FM07_GAMMA
 
-    return k
+# Used for wave < 2700.
+def fm07uv(double[:] wave, double a_v):
+    cdef double d, x, x2, y, k
+    cdef int i, n
+
+    n = wave.shape[0]
+    res = np.empty(n, dtype=np.float)
+    for i in range(0, n):
+        x = 1.e4 / wave[i]
+        x2 = x * x
+        y = x2 - FM07_X02
+        d = x2 / (y*y + x2 * FM07_GAMMA2)
+        k = FM07_C1 + FM07_C2 * x + FM07_C3 * d
+        if x > FM07_C5:
+            y = x - FM07_C5
+            k += FM07_C4 * y * y
+        res[i] = a_v * (1. + k / 3.1)
+
+    return res

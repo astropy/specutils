@@ -11,7 +11,8 @@ from astropy.utils import data as apydata
 from . import _extinction
 
 __all__ = ['extinction_ccm89', 'extinction_od94', 'extinction_gcc09',
-           'extinction_f99', 'extinction', 'reddening']
+           'extinction_f99', 'extinction_fm07', 'extinction_wd01',
+           'extinction_d03', 'extinction', 'reddening']
 
 def process_inputs(wave, ebv, a_v, r_v):
     """Helper function for processing inputs to all extinction_* functions
@@ -24,11 +25,12 @@ def process_inputs(wave, ebv, a_v, r_v):
 
     Returns
     -------
-    x : `~numpy.ndarray`, at least 1d
+    x : 1-d `~numpy.ndarray`
         1e4 / wave
     scalar : bool
-        Was input wave a scalar?
-
+        Was original input wave a scalar?
+    a_v : float
+        Either a_v or ebv * r_v.
     """
     if (a_v is None) and (ebv is None):
         raise ValueError('Must specify either a_v or ebv')
@@ -44,7 +46,29 @@ def process_inputs(wave, ebv, a_v, r_v):
 
     return wave, scalar, a_v
 
+_commondoc = \
+"""
+
+    Parameters
+    ----------
+    wave : float or list_like
+        Wavelength(s) in Angstroms.
+    ebv or a_v : float
+        E(B-V) differential extinction, or A(V) total V band extinction,
+        in magnitudes. Specify exactly one. The two values are related by
+        A(V) = R_V * E(B-V).
+    r_v : float, optional
+        R_V parameter. Default is the standard Milky Way average of 3.1.
+
+    Returns
+    -------
+    extinction : float or `~numpy.ndarray`
+        Extinction in magnitudes at given wavelengths.
+    """
+
 def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
+    """Cardelli, Clayton, & Mathis (1989) extinction law"""
+
     wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
     if np.any((wave < 909.09091) | (wave > 33333.33333)):
         raise ValueError('ccm89 law valid only for wavelengths from '
@@ -53,8 +77,12 @@ def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
     if scalar:
         return res[0]
     return res
+extinction_ccm89.__doc__ += _commondoc
 
 def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
+    """Like 'ccm89' but using the O'Donnell (1994) optical
+    coefficients between 3030 A and 9091 A."""
+
     wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
     if np.any((wave < 909.09091) | (wave > 33333.33333)):
         raise ValueError('od94 law valid only for wavelengths from '
@@ -63,8 +91,15 @@ def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
     if scalar:
         return res[0]
     return res
+extinction_od94.__doc__ += _commondoc
 
 def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
+    """Gordon, Cartledge, & Clayton (2009) model at
+    wavelengths below 3030A, otherwise the same as O'Donnell (1994).
+    
+    The paper has incorrect parameters for the 2175A bump; not yet
+    corrected here."""
+
     wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
     if np.any((wave < 909.09091) | (wave > 33333.33333)):
         raise ValueError('gcc09 law valid only for wavelengths from '
@@ -73,176 +108,191 @@ def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
     if scalar:
         return res[0]
     return res
+extinction_gcc09.__doc__ += _commondoc
 
+# These constants should be the same as in _extinction.pyx
+f99_x0 = 4.596
+f99_gamma = 0.99
+f99_c3 = 3.23
+f99_c4 = 0.41
+f99_c5 = 5.9
+f99_xknots = np.array([0., 1.e4/26500., 1.e4/12200., 1.e4/6000., 1.e4/5470.,
+                       1.e4/4670., 1.e4/4110., 1.e4/2700., 1.e4/2600.])
 def extinction_f99(wave, ebv=None, a_v=None, r_v=3.1):
+    from scipy.interpolate import splmake, spleval
+
     wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
-    if np.any((wave < 909.09091) | (wave > 33333.33333)):
-        raise ValueError('gcc09 law valid only for wavelengths from '
-                         '909.09091 to 33333.33333 Angstroms.')
-    res = (a_v / r_v) * (_extinction.f99k(wave, r_v) + r_v)
+    if np.any((wave < 909.09091) | (wave > 60000.)):
+        raise ValueError('f99 law valid only for wavelengths from '
+                         '909.09091 to 60000.0 Angstroms.')
+    res = np.empty_like(wave)
+
+    # Simple analytic function in the UV
+    uvmask = wave < 2700.
+    if np.any(uvmask):
+        res[uvmask] = _extinction.f99uv(wave[uvmask], a_v, r_v)
+    
+    # Spline in the Optical/IR
+    oirmask = ~uvmask
+    if np.any(oirmask):
+        kknots = _extinction.f99kknots(f99_xknots, r_v)
+        spline = splmake(f99_xknots, kknots, order=3)
+        k = spleval(spline, 1.e4 / wave[oirmask])
+        res[oirmask] = a_v / r_v * (k + r_v)
+
     if scalar:
         return res[0]
     return res
 
-def _fm07_k_uv(x):
-    x0, gamma = 4.592, 0.922
-    c1, c2, c3, c4, c5 = -0.175, 0.807, 2.991, 0.319, 6.097
-    D = x**2 / ((x**2-x0**2)**2 + x**2 * gamma**2)
-    k_uv = np.zeros_like(x)
-    valid = (x <= c5)
-    k_uv[valid] = c1 + c2*x[valid] + c3*D[valid]
-    valid = (x > c5)
-    k_uv[valid] = c1 + c2*x[valid] + c3*D[valid] + c4*(x[valid] - c5)**2
-    return k_uv
+# These constants should be the same as in _extinction.pyx
+fm07_x0 =  4.592
+fm07_gamma = 0.922
+fm07_c1 = -0.175
+fm07_c2 = 0.807
+fm07_c3 = 2.991
+fm07_c4 = 0.319
+fm07_c5 = 6.097
+fm07_r_v = 3.1
 
-def _f99_like(x, ebv, r_v, model='f99'):
-    from scipy.interpolate import interp1d
+# fm07 knots for spline
+fm07_xknots = np.array([0., 0.25, 0.50, 0.75, 1.,
+                        1.e4/5530., 1.e4/4000., 1.e4/3300.,
+                        1.e4/2700., 1.e4/2600.])
+fm07_kknots = np.empty_like(fm07_xknots)
+fm07_kknots[0:5] = (-0.83 + 0.63 * fm07_r_v) * fm07_xknots[0:5]**1.84-fm07_r_v
+fm07_kknots[5:8] = [0., 1.322, 2.055]
+x = fm07_xknots[8:10]
+d = x**2 / ((x**2 - fm07_x0**2)**2 + x**2 * fm07_gamma**2)
+fm07_kknots[8:10] = fm07_c1 + fm07_c2 * x + fm07_c3 * d
 
-    if np.any(x < 0.167) or np.any(x > 11.):
-        raise ValueError('Wavelength(s) must be between 910 A and 6 um')
-    if model == 'fm07' and abs(r_v - 3.1) > 0.001:
-        raise ValueError('fm07 model not implementend for r_v != 3.1')
+def extinction_fm07(wave, ebv=None, a_v=None):
+    from scipy.interpolate import splmake, spleval
 
-    uvmask = x >= 1.e4 / 2700.
+    r_v = 3.1
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 909.09091) | (wave > 60000.)):
+        raise ValueError('fm07 law valid only for wavelengths from '
+                         '909.09091 to 60000.0 Angstroms.')
+    res = np.empty_like(wave)
+
+    # Simple analytic function in the UV
+    uvmask = wave < 2700.
+    if np.any(uvmask):
+        res[uvmask] = _extinction.fm07uv(wave[uvmask], a_v)
+    
+    # Spline in the Optical/IR
     oirmask = ~uvmask
-    k = np.zeros_like(x)
+    if np.any(oirmask):
+        spline = splmake(fm07_xknots, fm07_kknots, order=3)
+        k = spleval(spline, 1.e4 / wave[oirmask])
+        res[oirmask] = a_v / r_v * (k + r_v)
 
-    # UV region
-    if model == 'f99':
-        k[uvmask] = _f99_k_uv(x[uvmask], r_v)
-    if model == 'fm07':
-        k[uvmask] = _fm07_k_uv(x[uvmask])
+    if scalar:
+        return res[0]
+    return res
 
-    # Calculate values for UV spline points to anchor OIR fit
-    x_uv_spline = 1.e4 / np.array([2700., 2600.])
-    d = (x_uv_spline**2 /
-         ((x_uv_spline**2 - x0**2)**2 + x_uv_spline**2 * gamma**2))
-    k_uv_spline = c1 + c2 * x_uv_spline + c3 * d
+prefix = path.join('data', 'extinction_models', 'kext_albedo_WD_MW')
+_wd01_fnames = {3.1: prefix + '_3.1B_60.txt', 
+                4.0: prefix + '_4.0B_40.txt',
+                5.5: prefix + '_5.5B_30.txt'}
+_d03_fnames = {3.1: prefix + '_3.1A_60_D03_all.txt',
+               4.0: prefix + '_4.0A_40_D03_all.txt',
+               5.5: prefix + '_5.5A_30_D03_all.txt'}
+del prefix
 
-    # Optical / IR region
-    if model == 'f99':
-        anchors_x = 1.e4 / np.array([np.inf, 26500., 12200., 6000., 5470.,
-                                     4670., 4110.])
-
-        # The OIR anchors are from IDL astrolib, not F99.
-        anchors_extinction = np.array(
-            [0.,
-             0.26469 * r_v/3.1,  # IR
-             0.82925 * r_v/3.1,  # IR
-             -0.422809 + 1.00270*r_v + 2.13572e-04*r_v**2,  # optical
-             -5.13540e-02 + 1.00216*r_v - 7.35778e-05*r_v**2,
-             0.700127 + 1.00184*r_v - 3.32598e-05*r_v**2,
-             (1.19456 + 1.01707*r_v - 5.46959e-03*r_v**2 +
-              7.97809e-04 * r_v**3 - 4.45636e-05 * r_v**4)]
-            )
-
-        anchors_x = np.append(anchors_x, x_uv_spline)
-        anchors_k = np.append(anchors_extinction - r_v, k_uv_spline)
-
-    if model == 'fm07':
-        anchors_x_ir = np.array([0., 0.25, 0.50, 0.75, 1.])
-        anchors_k_ir = (-0.83 + 0.63 * r_v) * anchors_x_ir**1.84 - r_v
-        anchors_x_opt = np.array([5530., 4000., 3300.])
-        anchors_k_opt = np.array([0., 1.322, 2.055])
-
-        anchors_x = np.append(anchors_x_ir, anchors_x_opt)
-        anchors_k = np.append(anchors_k_ir, anchors_k_opt)
-
-        anchors_x = np.append(anchors_x, x_uv_spline)
-        anchors_k = np.append(anchors_k, k_uv_spline)
-    
-    # Note that interp1d requires that the input abscissa is monotonically
-    # _increasing_. This is opposite the usual ordering of a spectrum, but
-    # fortunately the _output_ abscissa does not have the same requirement.
-    oir_spline = interp1d(anchors_x, anchors_k, kind='cubic')
-    k[oirmask] = oir_spline(x[oirmask])
-
-    return ebv * (k + r_v)
-
-
-d = path.join('data', 'extinction_models')
-_wd01_like_fnames = {
-    ('wd01', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1B_60.txt'), 
-    ('wd01', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0B_40.txt'),
-    ('wd01', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5B_30.txt'),
-    ('d03', 3.1): path.join(d, 'kext_albedo_WD_MW_3.1A_60_D03_all.txt'),
-    ('d03', 4.0): path.join(d, 'kext_albedo_WD_MW_4.0A_40_D03_all.txt'),
-    ('d03', 5.5): path.join(d, 'kext_albedo_WD_MW_5.5A_30_D03_all.txt')}
-del d
-_wd01_like_cache = {}
-
-def _wd01_like(x, ebv, r_v, model=None):
-    """
-      Read in the dust model, interpolate and normalize
-
-      The dust model gives the extinction per H nucleon.
-      For consistency with other extinction laws we 
-      normalize this extinction law so that it is equal
-      to 1.0 at 5495 angstroms
+_wd01_splines = {}
+def extinction_wd01(wave, ebv=None, a_v=None, r_v=3.1):
     """
 
-    from scipy.interpolate import interp1d
+    The dust model gives the extinction per H nucleon.  For
+    consistency with other extinction laws we normalize this
+    extinction law so that it is equal to 1.0 at 5495 angstroms.
+    """
 
-    if np.any(x < 0.001) or np.any(x > 1.e4):
-        raise ValueError('Wavelength(s) must be between 1 A and 1 mm')
+    from scipy.interpolate import splmake, spleval
 
-    # If we already read the model in and created a spline, use the cache
-    if (model, r_v) in _wd01_like_cache:
-        return ebv * _wd01_like_cache[(model, r_v)](x)
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 100.) | (wave > 1.e8)):
+        raise ValueError('wd01 law valid only for wavelengths from '
+                         '100 to 1e8 Angstroms.')
+    x = 1.e4 / wave
 
-    # Get the path to the model file
-    try:
-        relative_path = _wd01_like_fnames[(model, r_v)]
-    except KeyError:
-        if model not in ['wd01', 'd03']:
-            raise ValueError("model must be 'wd01' or 'd03'")
-        else:
-            raise ValueError("models only defined for r_v in [3.1, 4.0, 5.5]")
-    model_file = apydata.get_pkg_data_filename(relative_path)
+    # If we have not yet created a spline for this R_V, create one from data.
+    if r_v not in _wd01_splines:
+        try:
+            fname = _wd01_fnames[r_v]
+        except KeyError:
+            raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
+        fname = apydata.get_pkg_data_filename(fname)
+        data = ascii.read(fname, Reader=ascii.FixedWidth, data_start=51,
+                          names=['wave', 'albedo', 'avg_cos', 'C_ext', 'K_abs'],
+                          col_starts=[0, 10, 18, 25, 35],
+                          col_ends=[9, 17, 24, 34, 42], guess=False)
 
-    # The d03 and w01 data files have different hard-to-parse formats
-    if model == 'd03':
-        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
-                                data_start=67,
-                                names=['wave','albedo','avg_cos','C_ext',
-                                       'K_abs','avg_cos_sq','comment'],
-                                col_starts=[0,12,20,27,37,47,55],
-                                col_ends=[11,19,26,36,46,54,80],guess=False)
-        waves = np.array(dust_table['wave'])
-        c_vals = np.array(dust_table['C_ext'])
+        # Reverse entries so that they ascend in x (needed for the spline).
+        waveknots = np.asarray(data['wave'])[::-1]
+        cknots = np.asarray(data['C_ext'])[::-1]
+        xknots = 1. / waveknots  # Values in inverse microns.
 
-    if model == 'wd01':
-        dust_table = ascii.read(model_file,Reader=ascii.FixedWidth,
-                                data_start=51,
-                                names=['wave','albedo','avg_cos','C_ext',
-                                       'K_abs'],
-                                col_starts=[0,10,18,25,35],
-                                col_ends=  [9,17,24,34,42],guess=False)
+        # Create a spline just to get normalization.
+        spline = interp1d(xknots, cknots, order=3)
+        cknots = cknots / spline(1.e4 / 5495.)  # Normalize to 1 at wave=5495.
+        _wd01_splines[r_v] = interp1d(xknots, cknots, order=3)
 
-        #We have to reverse the entries for wd01
-        waves = np.array(dust_table['wave'])[::-1]
-        c_vals = np.array(dust_table['C_ext'])[::-1]
+    res = a_v * _wd01_splines[r_v](x)
+    if scalar:
+        return res[0]
+    return res
 
-    #Put waves into inverse microns
-    waves_ang = 1./waves
+_d03_splines = {}
+def extinction_d03(wave, ebv=None, a_v=None, r_v=3.1):
+    """
 
-    # Create a spline to get normalization at effective V band
-    ext_spline = interp1d(waves_ang,c_vals)
-    normalization = ext_spline(1.e4/5495.)
-    
-    # Normalize to ebv=1. and create a new spline with the normalized values
-    c_vals /= normalization * r_v
-    ext_spline = interp1d(waves_ang, c_vals)
-    _wd01_like_cache[(model, r_v)] = ext_spline  # cache the spline
-    
-    return ebv * ext_spline(x)
+    The dust model gives the extinction per H nucleon.  For
+    consistency with other extinction laws we normalize this
+    extinction law so that it is equal to 1.0 at 5495 angstroms.
+    """
 
+    from scipy.interpolate import splmake, spleval
 
+    wave, scalar, a_v = process_inputs(wave, ebv, a_v, r_v)
+    if np.any((wave < 100.) | (wave > 1.e8)):
+        raise ValueError('d03 law valid only for wavelengths from '
+                         '100 to 1e8 Angstroms.')
+    x = 1.e4 / wave
+
+    # If we have not yet created a spline for this R_V, create one from data.
+    if r_v not in _d03_splines:
+        try:
+            fname = _d03_fnames[r_v]
+        except KeyError:
+            raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
+        fname = apydata.get_pkg_data_filename(fname)
+        data = ascii.read(fname, Reader=ascii.FixedWidth, data_start=67,
+                          names=['wave', 'albedo', 'avg_cos', 'C_ext',
+                                 'K_abs', 'avg_cos_sq', 'comment'],
+                          col_starts=[0, 12, 20, 27, 37, 47, 55],
+                          col_ends=[11, 19, 26, 36, 46, 54, 80], guess=False)
+        xknots = 1. / np.asarray(data['wave'])
+        cknots = np.asarray(data['C_ext'])
+
+        # Create a spline just to get normalization.
+        spline = interp1d(xknots, cknots, order=3)
+        cknots = cknots / spline(1.e4 / 5495.)  # Normalize to 1 at wave=5495.
+        _d03_splines[r_v] = interp1d(xknots, cknots, order=3)
+
+    res = a_v * _d03_splines[r_v](x)
+    if scalar:
+        return res[0]
+    return res
 
 _extinction_models = {'ccm89': extinction_ccm89,
                       'od94': extinction_od94,
                       'gcc09': extinction_gcc09,
-                      'f99': extinction_f99}
+                      'f99': extinction_f99,
+                      'fm07': extinction_fm07,
+                      'wd01': extinction_wd01,
+                      'd03': extinction_d03}
 
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     """Return extinction in magnitudes at given wavelength(s).
@@ -250,7 +300,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
     Parameters
     ----------
     wave : float or list_like
-        Wavelength(s) in Angstroms at which to evaluate the reddening.
+        Wavelength(s) in Angstroms.
     ebv or a_v : float
         E(B-V) differential extinction, or A(V) total V band extinction,
         in magnitudes. Specify exactly one. The two values are related by
