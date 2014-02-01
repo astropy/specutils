@@ -1,8 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""Extinction law functions.
+"""Extinction models.
 
 Classes are callables representing the corresponding extinction
-function with a fixed R_V. 
+function with a fixed R_V. When calling an extinction function multiple
+times with the same R_V, it will be faster to create a class instance with
+fixed R_V and use that object to evaluate the extinction. See class
+documentation for details.
 """
 
 from __future__ import division
@@ -114,7 +117,27 @@ extinction_gcc09.__doc__ += _commondoc
 f99_xknots = np.array([0., 1.e4/26500., 1.e4/12200., 1.e4/6000., 1.e4/5470.,
                        1.e4/4670., 1.e4/4110., 1.e4/2700., 1.e4/2600.])
 class ExtinctionF99(object):
-    """Fitzpatrick (1999) model with fixed R_V"""
+    """Fitzpatrick (1999) extinction model with fixed R_V.
+
+    Parameters
+    ----------
+    r_v : float
+        Relation between specific and total extinction, A_V = R_V E(B-V).
+
+    Examples
+    --------
+    Create a callable that gives the extinction law for a given R_V:
+    
+    >>> f = ExtinctionF99(3.1)
+    >>> f(3000., a_v=1.)
+    1.7993995521481463
+
+    Arrays are also accepted. ``ebv`` can be specified instead of ``a_v``.
+
+    >>> f([3000., 4000.], ebv=1./3.1)
+    array([ 1.79939955,  1.42338583])
+
+    """
 
     def __init__(self, r_v):
         from scipy.interpolate import splmake
@@ -146,9 +169,10 @@ class ExtinctionF99(object):
         return res
 
 def extinction_f99(wave, ebv=None, a_v=None, r_v=3.1):
-    """Fitzpatrick (1999) model."""
+    """Fitzpatrick (1999) extinction model."""
     f = ExtinctionF99(r_v)
     return f(wave, ebv, a_v)
+
 extinction_f99.__doc__ += _commondoc
 
 # fm07 knots for spline
@@ -164,9 +188,9 @@ except ImportError:
     pass
 
 def extinction_fm07(wave, ebv=None, a_v=None):
-    """Fitzpatrick & Massa (2007) model, corresponding to R_V = 3.1.
+    """Fitzpatrick & Massa (2007) extinction model for R_V = 3.1.
 
-    This model is not currently not R dependent."""
+    This model is not currently R dependent."""
     from scipy.interpolate import splmake, spleval
 
     wave, scalar, a_v = _process_inputs(wave, ebv, a_v, fm07_r_v)
@@ -198,7 +222,7 @@ _d03_fnames = {3.1: prefix + '_3.1A_60_D03_all.txt',
 del prefix
 
 class ExtinctionWD01(object):
-    """Weingartner and Draine (2001) model, fixed R_V."""
+    """Weingartner and Draine (2001) extinction model with fixed R_V."""
     def __init__(self, r_v):
         from scipy.interpolate import interp1d
 
@@ -236,7 +260,7 @@ class ExtinctionWD01(object):
 
 
 def extinction_wd01(wave, ebv=None, a_v=None, r_v=3.1):
-    """Weingartner and Draine (2001) dust model.
+    """Weingartner and Draine (2001) extinction model.
 
     The dust model gives the extinction per H nucleon.  For
     consistency with other extinction laws we normalize this
@@ -248,14 +272,14 @@ def extinction_wd01(wave, ebv=None, a_v=None, r_v=3.1):
 extinction_wd01.__doc__ += _commondoc
 
 class ExtinctionD03(ExtinctionWD01):
-    """Draine (2003) model, fixed R_V."""
+    """Draine (2003) extinction model with fixed R_V."""
 
     def __init__(self, r_v):
-        from scipy.interpolate import splmake, spleval
+        from scipy.interpolate import interp1d
 
         self._r_v = r_v
         try:
-            fname = _wd03_fnames[r_v]
+            fname = _d03_fnames[r_v]
         except KeyError:
             raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
         fname = apydata.get_pkg_data_filename(fname)
@@ -269,13 +293,13 @@ class ExtinctionD03(ExtinctionWD01):
         cknots = np.asarray(data['C_ext'])
 
         # Create a spline just to get normalization.
-        spline = splmake(xknots, cknots, order=3)
-        cknots = cknots / spleval(spline, 1.e4 / 5495.)  # Normalize cknots.
-        self._spline = splmake(xknots, cknots, order=3)
+        spline = interp1d(xknots, cknots)
+        cknots = cknots / spline(1.e4 / 5495.)  # Normalize cknots.
+        self._spline = interp1d(xknots, cknots)
 
 
 def extinction_d03(wave, ebv=None, a_v=None, r_v=3.1):
-    """Draine (2003) model.
+    """Draine (2003) extinction model.
 
     Like Weingartner and Draine (2001) but with lower PAH C abundance
     relative to H.
@@ -298,9 +322,7 @@ _extinction_models = {'ccm89': extinction_ccm89,
                       'd03': extinction_d03}
 
 def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='f99'):
-    """Return extinction in magnitudes at given wavelength(s).
-
-    This is a wrapper for specific extinction functions.
+    """Generic interface for all extinction model functions.
 
     Parameters
     ----------
