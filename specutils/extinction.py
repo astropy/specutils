@@ -14,6 +14,7 @@ import numpy as np
 import warnings
 from astropy.io import ascii
 from astropy.utils import data as apydata
+from astropy import units as u
 
 from . import _extinction
 
@@ -39,8 +40,8 @@ def _process_inputs(wave, ebv, a_v, r_v):
 
 def _check_wave(wave, minwave, maxwave):
     if np.any((wave < minwave) | (wave > maxwave)):
-        raise ValueError('wavelengths must be between {0:.2f} and {1:.2f} '
-                         'Angstroms'.format(minwave, maxwave))
+        raise ValueError('Wavelengths must be between {0:.2f} and {1:.2f} '
+                         'angstroms'.format(minwave, maxwave))
     
 
 def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
@@ -62,9 +63,9 @@ def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
        <A(\lambda)/A_V> = a(x) + b(x) / R_V
 
     where the coefficients a(x) and b(x) are functions of
-    wavelength. At a wavelength of approximately 5494.5 Angstroms (a
+    wavelength. At a wavelength of approximately 5494.5 angstroms (a
     characteristic wavelength for the V band), a(x) = 1 and b(x) = 0,
-    so that A(5494.5 Angstroms) = A_V. This function returns
+    so that A(5494.5 angstroms) = A_V. This function returns
 
     .. math::
 
@@ -77,9 +78,10 @@ def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
     ----------
     .. [1] Cardelli, J. A., Clayton, G. C., & Mathis, J. S. 1989, ApJ, 345, 245
     """
-
+    wave = wave.to('angstrom')
     wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
-    _check_wave(wave, 909.091, 33333.333)
+
+    _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
     res = _extinction.ccm89(wave, a_v, r_v)
     if scalar:
         return res[0]
@@ -118,7 +120,7 @@ def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
     """
 
     wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
-    _check_wave(wave, 909.091, 33333.333)
+    _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
     res = _extinction.od94(wave, a_v, r_v)
     if scalar:
         return res[0]
@@ -136,7 +138,7 @@ def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
     priv. comm.).
 
     .. warning :: Note that the Gordon, Cartledge, & Clayton (2009) paper
-                  has incorrect parameters for the 2175 Angstrom bump that
+                  has incorrect parameters for the 2175 angstrom bump that
                   have not been corrected here.
 
     {0}
@@ -147,7 +149,7 @@ def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
     """
 
     wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
-    _check_wave(wave, 909.091, 33333.333)
+    _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
     res = _extinction.gcc09(wave, a_v, r_v)
     if scalar:
         return res[0]
@@ -190,11 +192,11 @@ class ExtinctionF99(object):
         from scipy.interpolate import spleval
 
         wave, scalar, a_v = _process_inputs(wave, ebv, a_v, self._r_v)
-        _check_wave(wave, 909.091, 60000.)
+        _check_wave(wave, 909.091* u.angstrom, 6. * u.micron)
         res = np.empty(len(wave), dtype=np.float)
 
         # Analytic function in the UV.
-        uvmask = wave < 2700.
+        uvmask = wave < (2700. * u.angstrom)
         if np.any(uvmask):
             res[uvmask] = _extinction.f99uv(wave[uvmask], a_v, self._r_v)
 
@@ -264,11 +266,11 @@ def extinction_fm07(wave, ebv=None, a_v=None):
     from scipy.interpolate import splmake, spleval
 
     wave, scalar, a_v = _process_inputs(wave, ebv, a_v, _fm07_r_v)
-    _check_wave(wave, 909.091, 60000.)
+    _check_wave(wave, 909.091 * u.angstrom, 6.0 * u.micron)
     res = np.empty(len(wave), dtype=np.float)
 
     # Simple analytic function in the UV
-    uvmask = wave < 2700.
+    uvmask = wave < (2700. * u.angstrom)
     if np.any(uvmask):
         res[uvmask] = _extinction.fm07uv(wave[uvmask], a_v)
     
@@ -341,7 +343,7 @@ class ExtinctionWD01(object):
 
     def __call__(self, wave, ebv=None, a_v=None):
         wave, scalar, a_v = _process_inputs(wave, ebv, a_v, self._r_v)
-        _check_wave(wave, 100., 1.e8)
+        _check_wave(wave, 100. * u.angstrom, 1.e8)
         x = 1.e4 / wave
         res = a_v * self._spline(x)
         if scalar:
@@ -475,7 +477,7 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     Parameters
     ----------
     wave : float or list_like
-        Wavelength(s) in Angstroms.
+        Wavelength(s) in angstroms.
     ebv or a_v : float
         E(B-V) differential extinction, or A(V) total V band extinction,
         in magnitudes. Specify exactly one. The two values are related by
@@ -602,7 +604,7 @@ def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     Parameters
     ----------
     wave : float or list_like
-        Wavelength(s) in Angstroms at which to evaluate the reddening.
+        Wavelength(s) in angstroms at which to evaluate the reddening.
     ebv or a_v : float
         E(B-V) differential extinction, or A(V) total V band extinction,
         in magnitudes. Specify exactly one. The two values are related by
@@ -633,7 +635,7 @@ _func_doc = """
     Parameters
     ----------
     wave : float or list_like
-        Wavelength(s) in Angstroms.
+        Wavelength(s) in angstroms.
     ebv or a_v : float
         E(B-V) differential extinction, or A(V) total V band extinction,
         in magnitudes. Specify exactly one. The two values are related by

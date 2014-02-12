@@ -4,6 +4,7 @@
 import numpy as np
 from specutils.extinction import *
 import pytest
+from astropy import units as u
 
 extinction_models = ['ccm89', 'od94', 'gcc09', 'f99', 'fm07', 'wd01', 'd03']
 
@@ -12,11 +13,11 @@ def test_extinction_shapes():
     for model in extinction_models:
 
         # single value should work
-        extinction(1.e4, a_v=1., model=model)
+        extinction(1.e4 * u.angstrom, a_v=1., model=model)
 
         # multiple values should return appropriate shape
-        assert extinction([1.e4], a_v=1., model=model).shape == (1,) 
-        assert extinction([1.e4, 2.e4], a_v=1., model=model).shape == (2,)
+        assert extinction([1.e4] * u.angstrom, a_v=1., model=model).shape == (1,)
+        assert extinction([1.e4, 2.e4] * u.angstrom, a_v=1., model=model).shape == (2,)
 
 # TODO: Test is only to precision of 0.015 because there is a discrepancy
 # of 0.014 for the B band wavelength of unknown origin (and up to 0.002 in
@@ -31,13 +32,13 @@ def test_extinction_shapes():
 def test_extinction_ccm89():
 
     # U, B, V, R, I, J, H, K band effective wavelengths from CCM '89 table 3
-    x_inv_microns = np.array([2.78, 2.27, 1.82, 1.43, 1.11, 0.80, 0.63, 0.46])
+    x_inv_microns = np.array([2.78, 2.27, 1.82, 1.43, 1.11, 0.80, 0.63, 0.46]) / u.micron
 
     # A(lambda)/A(V) for R_V = 3.1 from Table 3 of CCM '89
     ratio_true = np.array([1.569, 1.337, 1.000, 0.751, 0.479, 0.282,
                            0.190, 0.114])
 
-    wave = 1.e4 / x_inv_microns  # wavelengths in Angstroms
+    wave = 1 / x_inv_microns  # wavelengths in Angstroms
     a_lambda_over_a_v = extinction_ccm89(wave, a_v=1., r_v=3.1)
 
     np.testing.assert_allclose(a_lambda_over_a_v, ratio_true, atol=0.015)
@@ -75,7 +76,7 @@ def test_extinction_od94():
                               3546.,4925.,6335.,7799.,9294.,
                               3047.,4711.,5498.,
                               6042.,7068.,8066.,
-                              4814.,6571.,8183.])
+                              4814.,6571.,8183.]) * u.Angstrom
     sfd_filter_names = np.array([
             'Landolt_U', 'Landolt_B', 'Landolt_V', 'Landolt_R', 'Landolt_I',
             'CTIO_U', 'CTIO_B', 'CTIO_V', 'CTIO_R', 'CTIO_I',
