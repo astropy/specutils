@@ -32,13 +32,13 @@ def test_extinction_shapes():
 def test_extinction_ccm89():
 
     # U, B, V, R, I, J, H, K band effective wavelengths from CCM '89 table 3
-    x_inv_microns = np.array([2.78, 2.27, 1.82, 1.43, 1.11, 0.80, 0.63, 0.46]) / u.micron
+    x = np.array([2.78, 2.27, 1.82, 1.43, 1.11, 0.80, 0.63, 0.46]) *  (1 / u.micron)
 
     # A(lambda)/A(V) for R_V = 3.1 from Table 3 of CCM '89
     ratio_true = np.array([1.569, 1.337, 1.000, 0.751, 0.479, 0.282,
                            0.190, 0.114])
 
-    wave = 1 / x_inv_microns  # wavelengths in Angstroms
+    wave = 1 / x  # wavelengths in Angstroms
     a_lambda_over_a_v = extinction_ccm89(wave, a_v=1., r_v=3.1)
 
     np.testing.assert_allclose(a_lambda_over_a_v, ratio_true, atol=0.015)
@@ -102,3 +102,29 @@ def test_extinction_od94():
                                   1.197, 0.811, 0.580])
     od94_alambda = extinction_od94(sfd_eff_waves, a_v=1., r_v=3.1)
     np.testing.assert_allclose(sfd_table_alambda, od94_alambda, atol=0.005)
+
+@pytest.mark.parametrize(('extinction_function'), [extinction_ccm89, extinction_od94])
+@pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
+def test_out_of_range_simple_extinction(extinction_function, wavelength):
+    with pytest.raises(ValueError):
+            x = extinction_function(wavelength)
+
+class TestWD01():
+    def setup(self):
+        self.extinction = ExtinctionWD01(3.1)
+
+
+    @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
+    def test_out_of_range(self, wavelength):
+        with pytest.raises(ValueError):
+            x = self.extinction(wavelength)
+
+class TestD03():
+    def setup(self):
+        self.extinction = ExtinctionD03(3.1)
+
+
+    @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
+    def test_out_of_range(self, wavelength):
+        with pytest.raises(ValueError):
+            x = self.extinction(wavelength)
