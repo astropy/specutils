@@ -343,9 +343,11 @@ class ExtinctionWD01(object):
 
     def __call__(self, wave, ebv=None, a_v=None):
         wave, scalar, a_v = _process_inputs(wave, ebv, a_v, self._r_v)
-        _check_wave(wave, 100. * u.angstrom, 1.e8)
-        x = 1.e4 / wave
+
+        x = (1 / wave).to('1/micron')
+
         res = a_v * self._spline(x)
+
         if scalar:
             return res[0]
         return res
