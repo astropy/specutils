@@ -46,7 +46,7 @@ def generate_1d_header_fromdisparray(arr, cdelt_tolerance=1e-8, reference=None,
 
     if reference is not None:
         restfrq = reference.to(u.Hz, u.spectral())
-        header['RESTFRQ'] = restfrq
+        header['RESTFRQ'] = restfrq.to_string()
 
     header['CRVAL1'] = crval
     header['CDELT1'] = cdelt
