@@ -52,6 +52,6 @@ def generate_1d_header_fromdisparray(arr, cdelt_tolerance=1e-8, reference=None,
     header['CDELT1'] = cdelt
     header['CRPIX1'] = crpix
     header['CUNIT1'] = unit.to_string()
-    header['CTYPE1'] = type_to_ctype(unit.physical_type)
+    header['CTYPE1'] = type_to_ctype[unit.physical_type]
 
     return header
