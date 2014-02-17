@@ -1,4 +1,5 @@
 from .. import IRAF_id_reader
+import os
 
 def data_path(filename):
         data_dir = os.path.join(os.path.dirname(__file__), 'data')
