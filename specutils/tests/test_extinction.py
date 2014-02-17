@@ -47,6 +47,12 @@ def test_extinction_ccm89():
 # TODO: The tabulated values go to 0.001, but the test is only for matching
 # at the 0.005 level, because there is currently a discrepancy up to 0.0047
 # of unknown origin.
+
+def test_extinction_ccm89_nd():
+    wave = np.random.uniform(5000, 6000, (100, 100, 100))
+
+    assert extinction_ccm89(wave, a_v=1., r_v=3.1).shape == (100, 100, 100)
+
 def test_extinction_od94():
     """
     Tests the broadband extinction estimates from O'Donnell 1998
