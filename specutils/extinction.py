@@ -124,7 +124,7 @@ def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
 
     return res.reshape(wave.shape)
 
-def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
+def extinction_gcc09(wave, a_v, r_v=3.1):
     """Gordon, Cartledge, & Clayton (2009) extinction model.
 
     Uses the UV coefficients of Gordon, Cartledge, & Clayton (2009)
@@ -146,12 +146,11 @@ def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
     .. [1] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
     """
 
-    wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
-    res = cextinction.gcc09(wave, a_v, r_v)
-    if scalar:
-        return res[0]
-    return res
+
+    res = cextinction.gcc09(wave.to('angstrom').value.flatten(), a_v, r_v)
+
+    return res.reshape(wave.shape)
 
 _f99_xknots = 1.e4 / np.array([np.inf, 26500., 12200., 6000., 5470.,
                                4670., 4110., 2700., 2600.])
