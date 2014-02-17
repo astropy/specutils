@@ -6,4 +6,6 @@ def data_path(filename):
         return os.path.join(data_dir, filename)
 
 def test_iraf_line_reader():
-    IRAF_id_reader.IRAF_identify_reader(data_path('idexample'))
+    idlines,sections = IRAF_id_reader.IRAF_identify_reader(data_path('idexample'))
+
+    assert len(sections) == len(idlines) == 3
