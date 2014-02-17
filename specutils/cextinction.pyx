@@ -70,10 +70,11 @@ cdef double gcc09uv(double wave, double r_v):
         b += 0.537 * y2 + 0.0530 * y3
     return a + b / r_v
 
-def ccm89(double[:] wave, double a_v, double r_v):
+def ccm89(np.ndarray[double] wave, double a_v, double r_v):
     cdef int n = wave.shape[0]
     cdef int i
-    res = np.empty(n, dtype=np.float)
+
+    res = np.empty(n, dtype=np.float64)
     for i in range(n):
         res[i] = a_v * ccm89like(wave[i], r_v, ccm89_coeffs_a,
                                  ccm89_coeffs_b, ccm89_coeffs_n)
