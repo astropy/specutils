@@ -7,7 +7,7 @@ imre = re.compile('^\s*image\s*.*\[[0-9*]*,([0-9]*)\]')
 featre = re.compile('^\s*features\s*([0-9]*)')
 #	function spline3
 splinere = re.compile("^\s*function\s*spline")
-blankre = re.compile("^\s*$")
+blankre = re.compile("^\s*(#.*)?$")
 # data line:
 # 20.24 14832.9644     14833.   4.0 1 1 0.62
 # should be:
@@ -57,6 +57,3 @@ def IRAF_identify_reader(fn):
                 counter += 1
 
     return idlines, sections
-
-            
-
