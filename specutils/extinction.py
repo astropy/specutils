@@ -11,12 +11,12 @@ documentation for details.
 from __future__ import division
 from os import path
 import numpy as np
-import warnings
+
 from astropy.io import ascii
 from astropy.utils import data as apydata
 from astropy import units as u
 
-from . import _extinction
+from specutils import cextinction
 
 __all__ = ['extinction_ccm89', 'extinction_od94', 'extinction_gcc09',
            'extinction_f99', 'extinction_fm07', 'extinction_wd01',
@@ -44,7 +44,7 @@ def _check_wave(wave, minwave, maxwave):
                          'angstroms'.format(minwave, maxwave))
     
 
-def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
+def extinction_ccm89(wave, a_v, r_v=3.1):
     """Cardelli, Clayton, & Mathis (1989) extinction model.
 
     The parameters given in the original paper [1]_ are used.
@@ -78,14 +78,12 @@ def extinction_ccm89(wave, ebv=None, a_v=None, r_v=3.1):
     ----------
     .. [1] Cardelli, J. A., Clayton, G. C., & Mathis, J. S. 1989, ApJ, 345, 245
     """
-    wave = wave.to('angstrom')
-    wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
-    res = _extinction.ccm89(wave, a_v, r_v)
-    if scalar:
-        return res[0]
-    return res
+
+    res = cextinction.ccm89(wave.to('angstrom').flatten().value, a_v, r_v)
+
+    return res.reshape(wave.shape)
 
 def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
     """O'Donnell (1994) extinction model.
@@ -119,12 +117,12 @@ def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
     .. [5] Valencic et al. 2004, ApJ, 616, 912
     """
 
-    wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
+
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
-    res = _extinction.od94(wave, a_v, r_v)
-    if scalar:
-        return res[0]
-    return res
+
+    res = cextinction.od94(wave.to('angstrom').value.flatten(), a_v, r_v)
+
+    return res.reshape(wave.shape)
 
 def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
     """Gordon, Cartledge, & Clayton (2009) extinction model.
@@ -150,7 +148,7 @@ def extinction_gcc09(wave, ebv=None, a_v=None, r_v=3.1):
 
     wave, scalar, a_v = _process_inputs(wave, ebv, a_v, r_v)
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
-    res = _extinction.gcc09(wave, a_v, r_v)
+    res = cextinction.gcc09(wave, a_v, r_v)
     if scalar:
         return res[0]
     return res
@@ -184,7 +182,7 @@ class ExtinctionF99(object):
     def __init__(self, r_v):
         from scipy.interpolate import splmake
 
-        kknots = _extinction.f99kknots(_f99_xknots, r_v)
+        kknots = cextinction.f99kknots(_f99_xknots, r_v)
         self._r_v = r_v
         self._spline = splmake(_f99_xknots, kknots, order=3)
 
@@ -198,7 +196,7 @@ class ExtinctionF99(object):
         # Analytic function in the UV.
         uvmask = wave < (2700. * u.angstrom)
         if np.any(uvmask):
-            res[uvmask] = _extinction.f99uv(wave[uvmask], a_v, self._r_v)
+            res[uvmask] = cextinction.f99uv(wave[uvmask], a_v, self._r_v)
 
         # Spline in the Optical/IR
         oirmask = ~uvmask
@@ -237,7 +235,7 @@ def extinction_f99(wave, ebv=None, a_v=None, r_v=3.1):
 _fm07_r_v = 3.1
 _fm07_xknots = np.array([0., 0.25, 0.50, 0.75, 1., 1.e4/5530., 1.e4/4000.,
                         1.e4/3300., 1.e4/2700., 1.e4/2600.])
-_fm07_kknots = _extinction.fm07kknots(_fm07_xknots)
+_fm07_kknots = cextinction.fm07kknots(_fm07_xknots)
 try:
     from scipy.interpolate import splmake
     _fm07_spline = splmake(_fm07_xknots, _fm07_kknots, order=3)
@@ -272,7 +270,7 @@ def extinction_fm07(wave, ebv=None, a_v=None):
     # Simple analytic function in the UV
     uvmask = wave < (2700. * u.angstrom)
     if np.any(uvmask):
-        res[uvmask] = _extinction.fm07uv(wave[uvmask], a_v)
+        res[uvmask] = cextinction.fm07uv(wave[uvmask], a_v)
     
     # Spline in the Optical/IR
     oirmask = ~uvmask
@@ -638,16 +636,15 @@ _func_doc = """
     ----------
     wave : float or list_like
         Wavelength(s) in angstroms.
-    ebv or a_v : float
-        E(B-V) differential extinction, or A(V) total V band extinction,
-        in magnitudes. Specify exactly one. The two values are related by
-        A(V) = R_V * E(B-V).
+    a_v : float
+        A(V) total V band extinction,
+        in magnitudes.
     r_v : float, optional
         R_V parameter. Default is the standard Milky Way average of 3.1.
 
     Returns
     -------
-    extinction : float or `~numpy.ndarray`
+    extinction : `~numpy.ndarray`
         Extinction in magnitudes at given wavelengths.
     """
 
