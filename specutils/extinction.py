@@ -15,6 +15,7 @@ import numpy as np
 from astropy.io import ascii
 from astropy.utils import data as apydata
 from astropy import units as u
+from astropy.modeling import Model, Parameter
 
 from specutils import cextinction
 
@@ -22,6 +23,9 @@ __all__ = ['extinction_ccm89', 'extinction_od94', 'extinction_gcc09',
            'extinction_f99', 'extinction_fm07', 'extinction_wd01',
            'extinction_d03', 'extinction', 'reddening',
            'ExtinctionF99', 'ExtinctionD03', 'ExtinctionWD01']
+
+def _process_wave(wave):
+    return wave.to('angstrom').flatten()
 
 def _process_inputs(wave, ebv, a_v, r_v):
     if (a_v is None) and (ebv is None):
@@ -43,6 +47,19 @@ def _check_wave(wave, minwave, maxwave):
         raise ValueError('Wavelengths must be between {0:.2f} and {1:.2f} '
                          'angstroms'.format(minwave, maxwave))
     
+
+class BaseExtinctionModel(Model):
+
+    a_v = Parameter('a_v')
+    r_v = Parameter('r_v', min=0)
+
+    def __init__(self, a_v, r_v):
+        super(BaseExtinctionModel, self).__init__()
+        self.a_v = a_v
+        self.r_v = r_v
+
+
+
 
 def extinction_ccm89(wave, a_v, r_v=3.1):
     """Cardelli, Clayton, & Mathis (1989) extinction model.
@@ -81,11 +98,11 @@ def extinction_ccm89(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.ccm89(wave.to('angstrom').flatten().value, a_v, r_v)
+    res = cextinction.ccm89(_process_wave(wave), a_v, r_v)
 
     return res.reshape(wave.shape)
 
-def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
+def extinction_od94(wave, a_v, r_v=3.1):
     """O'Donnell (1994) extinction model.
     
     Like Cardelli, Clayton, & Mathis (1989) [1]_ but using the O'Donnell
@@ -120,7 +137,7 @@ def extinction_od94(wave, ebv=None, a_v=None, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.od94(wave.to('angstrom').value.flatten(), a_v, r_v)
+    res = cextinction.od94(_process_wave(wave), a_v, r_v)
 
     return res.reshape(wave.shape)
 
@@ -148,13 +165,14 @@ def extinction_gcc09(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.gcc09(wave.to('angstrom').value.flatten(), a_v, r_v)
+    res = cextinction.gcc09(_process_wave(wave), a_v, r_v)
 
     return res.reshape(wave.shape)
 
 _f99_xknots = 1.e4 / np.array([np.inf, 26500., 12200., 6000., 5470.,
                                4670., 4110., 2700., 2600.])
-class ExtinctionF99(object):
+
+class ExtinctionF99(BaseExtinctionModel):
     """Fitzpatrick (1999) extinction model with fixed R_V.
 
     Parameters
@@ -178,36 +196,39 @@ class ExtinctionF99(object):
 
     """
 
-    def __init__(self, r_v):
-        from scipy.interpolate import splmake
+    def __init__(self, a_v, r_v=3.1):
 
-        kknots = cextinction.f99kknots(_f99_xknots, r_v)
-        self._r_v = r_v
+        from scipy.interpolate import splmake
+        super(ExtinctionF99, self).__init__(a_v, r_v)
+
+        kknots = cextinction.f99kknots(_f99_xknots, self.r_v.value)
+
         self._spline = splmake(_f99_xknots, kknots, order=3)
 
-    def __call__(self, wave, ebv=None, a_v=None):
+    def __call__(self, wave):
         from scipy.interpolate import spleval
 
-        wave, scalar, a_v = _process_inputs(wave, ebv, a_v, self._r_v)
+        wave_shape = wave.shape
+        wave = _process_wave(wave)
+
         _check_wave(wave, 909.091* u.angstrom, 6. * u.micron)
-        res = np.empty(len(wave), dtype=np.float)
+
+        res = np.empty_like(wave.__array__(), dtype=np.float64)
 
         # Analytic function in the UV.
         uvmask = wave < (2700. * u.angstrom)
         if np.any(uvmask):
-            res[uvmask] = cextinction.f99uv(wave[uvmask], a_v, self._r_v)
+            res[uvmask] = cextinction.f99uv(wave[uvmask], self.a_v, self.r_v.value)
 
         # Spline in the Optical/IR
         oirmask = ~uvmask
         if np.any(oirmask):
-            k = spleval(self._spline, 1.e4 / wave[oirmask])
-            res[oirmask] = a_v / self._r_v * (k + self._r_v)
+            k = spleval(self._spline, 1. / wave[oirmask].to('micron'))
+            res[oirmask] = self.a_v / self.r_v.value * (k + self.r_v.value)
 
-        if scalar:
-            return res[0]
-        return res
+        return res.reshape(wave_shape)
 
-def extinction_f99(wave, ebv=None, a_v=None, r_v=3.1):
+def extinction_f99(wave, a_v, r_v=3.1):
     """Fitzpatrick (1999) extinction model.
 
     Fitzpatrick (1999) [1]_ model which relies on the parametrization
@@ -226,8 +247,8 @@ def extinction_f99(wave, ebv=None, a_v=None, r_v=3.1):
     .. [2] Fitpatrick, E. L. & Massa, D. 1990, ApJS, 72, 163
     """
 
-    f = ExtinctionF99(r_v)
-    return f(wave, ebv, a_v)
+    f = ExtinctionF99(a_v, r_v)
+    return f(wave)
 
 
 # fm07 knots for spline
@@ -241,7 +262,8 @@ try:
 except ImportError:
     pass
 
-def extinction_fm07(wave, ebv=None, a_v=None):
+
+def extinction_fm07(wave, a_v):
     """Fitzpatrick & Massa (2007) extinction model for R_V = 3.1.
 
     The Fitzpatrick & Massa (2007) [1]_ model, which has a slightly
@@ -260,11 +282,14 @@ def extinction_fm07(wave, ebv=None, a_v=None):
     .. [2] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
     .. [3] Fitzpatrick, E. L. 1999, PASP, 111, 63
     """
-    from scipy.interpolate import splmake, spleval
+    from scipy.interpolate import spleval
 
-    wave, scalar, a_v = _process_inputs(wave, ebv, a_v, _fm07_r_v)
+    wave_shape = wave.shape
+    wave = _process_wave(wave)
+
+
     _check_wave(wave, 909.091 * u.angstrom, 6.0 * u.micron)
-    res = np.empty(len(wave), dtype=np.float)
+    res = np.empty_like(dtype=np.float64)
 
     # Simple analytic function in the UV
     uvmask = wave < (2700. * u.angstrom)
@@ -274,12 +299,10 @@ def extinction_fm07(wave, ebv=None, a_v=None):
     # Spline in the Optical/IR
     oirmask = ~uvmask
     if np.any(oirmask):
-        k = spleval(_fm07_spline, 1.e4 / wave[oirmask])
+        k = spleval(_fm07_spline, 1. / wave[oirmask].to('micron'))
         res[oirmask] = a_v / _fm07_r_v * (k + _fm07_r_v)
 
-    if scalar:
-        return res[0]
-    return res
+    return res.reshape(wave_shape)
 
 
 prefix = path.join('data', 'extinction_models', 'kext_albedo_WD_MW')
@@ -470,7 +493,7 @@ _extinction_models = {'ccm89': extinction_ccm89,
                       'wd01': extinction_wd01,
                       'd03': extinction_d03}
 
-def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
+def extinction(wave, a_v, r_v=3.1, model='od94'):
     """Generic interface for all extinction model functions.
 
     Parameters
@@ -570,9 +593,8 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     >>> extinction(wave, a_v=1., r_v=3.1, model='f99')
     array([ 2.76225609,  2.27590036,  1.79939955])
 
-    The extinction scales linearly with ``a_v`` or ``ebv``. This means
-    that when calculating extinction for multiple values of ``a_v`` or
-    ``ebv``, one can compute extinction ahead of time for a given set of
+    The extinction scales linearly with ``a_v``. This means
+    that when calculating extinction for multiple values of ``a_v``, one can compute extinction ahead of time for a given set of
     wavelengths and then scale by ``a_v`` or ``ebv`` later.  For example:
 
     >>> a_lambda_over_a_v = extinction(wave, a_v=1.)
@@ -593,9 +615,9 @@ def extinction(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     if model == 'fm07':
         if r_v != 3.1:
             raise ValueError('r_v must be 3.1 for fm07 model')
-        return _extinction_models[model](wave, ebv=ebv, a_v=a_v) 
+        return _extinction_models[model](wave, a_v=a_v)
     else:
-        return _extinction_models[model](wave, ebv=ebv, a_v=a_v, r_v=r_v) 
+        return _extinction_models[model](wave, a_v=a_v, r_v=r_v)
 
 def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
     """Inverse of flux transmission fraction at given wavelength(s).
