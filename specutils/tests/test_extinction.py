@@ -49,7 +49,7 @@ def test_extinction_ccm89():
 # of unknown origin.
 
 def test_extinction_ccm89_nd():
-    wave = np.random.uniform(5000, 6000, (100, 100, 100))
+    wave = np.random.uniform(5000, 6000, (100, 100, 100)) * u.angstrom
 
     assert extinction_ccm89(wave, a_v=1., r_v=3.1).shape == (100, 100, 100)
 
@@ -113,7 +113,7 @@ def test_extinction_od94():
 @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
 def test_out_of_range_simple_extinction(extinction_function, wavelength):
     with pytest.raises(ValueError):
-            x = extinction_function(wavelength)
+            x = extinction_function(wavelength, a_v=1.)
 
 class TestWD01():
     def setup(self):
