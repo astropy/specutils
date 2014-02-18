@@ -289,7 +289,7 @@ def extinction_fm07(wave, a_v):
 
 
     _check_wave(wave, 909.091 * u.angstrom, 6.0 * u.micron)
-    res = np.empty_like(dtype=np.float64)
+    res = np.empty_like(wave.__array__(), dtype=np.float64)
 
     # Simple analytic function in the UV
     uvmask = wave < (2700. * u.angstrom)
@@ -299,7 +299,7 @@ def extinction_fm07(wave, a_v):
     # Spline in the Optical/IR
     oirmask = ~uvmask
     if np.any(oirmask):
-        k = spleval(_fm07_spline, 1. / wave[oirmask].to('micron'))
+        k = spleval(_fm07_spline, (1. / wave[oirmask].to('micron')).value)
         res[oirmask] = a_v / _fm07_r_v * (k + _fm07_r_v)
 
     return res.reshape(wave_shape)

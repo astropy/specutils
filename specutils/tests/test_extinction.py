@@ -109,6 +109,17 @@ def test_extinction_od94():
     od94_alambda = extinction_od94(sfd_eff_waves, a_v=1., r_v=3.1)
     np.testing.assert_allclose(sfd_table_alambda, od94_alambda, atol=0.005)
 
+
+def test_extinction_fm07():
+    wave = np.arange(3000, 9000, 1000) * u.angstrom
+    expected_extinction = [ 1.84202329,  1.42645161,  1.13844058,  0.88840962,  0.69220634, 0.54703201]
+
+    calculated_extinction = extinction.extinction_fm07(wave, 1.)
+
+    np.testing.assert_array_almost_equal(expected_extinction, calculated_extinction)
+
+
+
 @pytest.mark.parametrize(('extinction_function'), [extinction_ccm89, extinction_od94])
 @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
 def test_out_of_range_simple_extinction(extinction_function, wavelength):
