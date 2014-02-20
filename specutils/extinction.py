@@ -314,7 +314,7 @@ _d03_fnames = {3.1: prefix + '_3.1A_60_D03_all.txt',
                5.5: prefix + '_5.5A_30_D03_all.txt'}
 del prefix
 
-class ExtinctionWD01(object):
+class ExtinctionWD01(BaseExtinctionModel):
     """Weingartner and Draine (2001) extinction model with fixed R_V.
 
     Parameters
@@ -336,14 +336,17 @@ class ExtinctionWD01(object):
 
     """
 
-    def __init__(self, r_v):
+    def __init__(self, a_v, r_v):
+
+        super(ExtinctionWD01, self).__init__(a_v, r_v)
+
         from scipy.interpolate import interp1d
 
-        self._r_v = r_v
         try:
-            fname = _wd01_fnames[r_v]
+            fname = _wd01_fnames[self.r_v.value]
         except KeyError:
             raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
+
         fname = apydata.get_pkg_data_filename(fname)
         data = ascii.read(fname, Reader=ascii.FixedWidth, data_start=51,
                           names=['wave', 'albedo', 'avg_cos', 'C_ext',
@@ -361,19 +364,19 @@ class ExtinctionWD01(object):
         cknots = cknots / spline(1.e4 / 5495.)  # Normalize cknots.
         self._spline = interp1d(xknots, cknots)
 
-    def __call__(self, wave, ebv=None, a_v=None):
-        wave, scalar, a_v = _process_inputs(wave, ebv, a_v, self._r_v)
+    def __call__(self, wave):
+
+        wave_shape = wave.shape
+        wave = _process_wave(wave)
 
         x = (1 / wave).to('1/micron')
 
-        res = a_v * self._spline(x)
+        res = self.a_v.value * self._spline(x.value)
 
-        if scalar:
-            return res[0]
-        return res
+        return res.reshape(wave_shape)
 
 
-def extinction_wd01(wave, ebv=None, a_v=None, r_v=3.1):
+def extinction_wd01(wave, a_v, r_v=3.1):
     """Weingartner and Draine (2001) extinction model.
 
     The Weingartner & Draine (2001) [1]_ dust model.  This model is a
@@ -411,8 +414,8 @@ def extinction_wd01(wave, ebv=None, a_v=None, r_v=3.1):
 
     """
 
-    f = ExtinctionWD01(r_v)
-    return f(wave, ebv=ebv, a_v=a_v)
+    f = ExtinctionWD01(a_v, r_v)
+    return f(wave)
 
 
 class ExtinctionD03(ExtinctionWD01):
@@ -437,12 +440,13 @@ class ExtinctionD03(ExtinctionWD01):
 
     """
 
-    def __init__(self, r_v):
+    def __init__(self, a_v, r_v):
         from scipy.interpolate import interp1d
 
-        self._r_v = r_v
+        super(ExtinctionD03, self).__init__(a_v, r_v)
+
         try:
-            fname = _d03_fnames[r_v]
+            fname = _d03_fnames[self.r_v.value]
         except KeyError:
             raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
         fname = apydata.get_pkg_data_filename(fname)
@@ -457,11 +461,11 @@ class ExtinctionD03(ExtinctionWD01):
 
         # Create a spline just to get normalization.
         spline = interp1d(xknots, cknots)
-        cknots = cknots / spline(1.e4 / 5495.)  # Normalize cknots.
+        cknots = cknots / spline((1. / (5495. * u.angstrom)).to('1/micron').value)  # Normalize cknots.
         self._spline = interp1d(xknots, cknots)
 
 
-def extinction_d03(wave, ebv=None, a_v=None, r_v=3.1):
+def extinction_d03(wave, a_v, r_v=3.1):
     """Draine (2003) extinction model.
 
     The Draine (2003) [2]_ update to WD01 [1]_ where the 
@@ -482,8 +486,8 @@ def extinction_d03(wave, ebv=None, a_v=None, r_v=3.1):
     .. [1] Weingartner, J.C. & Draine, B.T. 2001, ApJ, 548, 296
     .. [2] Draine, B.T. 2003, ARA&A, 41, 241
     """
-    f = ExtinctionD03(r_v)
-    return f(wave, a_v=a_v)
+    f = ExtinctionD03(a_v, r_v)
+    return f(wave)
 
 _extinction_models = {'ccm89': extinction_ccm89,
                       'od94': extinction_od94,
