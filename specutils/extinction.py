@@ -25,7 +25,7 @@ __all__ = ['extinction_ccm89', 'extinction_od94', 'extinction_gcc09',
            'ExtinctionF99', 'ExtinctionD03', 'ExtinctionWD01']
 
 def _process_wave(wave):
-    return wave.to('angstrom').flatten()
+    return wave.to(u.angstrom).flatten()
 
 def _process_inputs(wave, ebv, a_v, r_v):
     if (a_v is None) and (ebv is None):
