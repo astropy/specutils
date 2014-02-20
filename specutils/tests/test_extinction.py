@@ -3,6 +3,7 @@
 
 import numpy as np
 from specutils.extinction import *
+from specutils import extinction as extinction_module
 import pytest
 from astropy import units as u
 
@@ -124,7 +125,16 @@ def test_extinction_fm07():
 @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
 def test_out_of_range_simple_extinction(extinction_function, wavelength):
     with pytest.raises(ValueError):
-            x = extinction_function(wavelength, a_v=1.)
+        x = extinction_function(wavelength, a_v=1.)
+
+
+@pytest.mark.parametrize(('extinction_model_name'), extinction_models)
+def test_general_extinction_function(extinction_model_name):
+    specific_extinction_function = extinction_module.__getattribute__('extinction_{0}'.format(extinction_model_name))
+
+    wave = 5000 * u.angstrom
+    a_v = 1.
+    assert specific_extinction_function(wave, a_v) == extinction(wave, a_v, model=extinction_model_name)
 
 class TestWD01():
     def setup(self):
