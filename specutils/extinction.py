@@ -483,7 +483,7 @@ def extinction_d03(wave, ebv=None, a_v=None, r_v=3.1):
     .. [2] Draine, B.T. 2003, ARA&A, 41, 241
     """
     f = ExtinctionD03(r_v)
-    return f(wave, ebv=ebv, a_v=a_v)
+    return f(wave, a_v=a_v)
 
 _extinction_models = {'ccm89': extinction_ccm89,
                       'od94': extinction_od94,
@@ -492,6 +492,7 @@ _extinction_models = {'ccm89': extinction_ccm89,
                       'fm07': extinction_fm07,
                       'wd01': extinction_wd01,
                       'd03': extinction_d03}
+
 
 def extinction(wave, a_v, r_v=3.1, model='od94'):
     """Generic interface for all extinction model functions.
@@ -612,6 +613,7 @@ def extinction(wave, a_v, r_v=3.1, model='od94'):
     model = model.lower()
     if model not in _extinction_models:
         raise ValueError('unknown model: {0}'.format(model))
+
     if model == 'fm07':
         if r_v != 3.1:
             raise ValueError('r_v must be 3.1 for fm07 model')
@@ -619,7 +621,7 @@ def extinction(wave, a_v, r_v=3.1, model='od94'):
     else:
         return _extinction_models[model](wave, a_v=a_v, r_v=r_v)
 
-def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
+def reddening(wave, a_v, r_v=3.1, model='od94'):
     """Inverse of flux transmission fraction at given wavelength(s).
 
     Parameters
@@ -648,7 +650,7 @@ def reddening(wave, ebv=None, a_v=None, r_v=3.1, model='od94'):
 
     """
 
-    return 10**(0.4 * extinction(wave, ebv=ebv, a_v=a_v, r_v=r_v, model=model))
+    return 10**(0.4 * extinction(wave, a_v, r_v=r_v, model=model))
 
 
 _func_doc = """
