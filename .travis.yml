@@ -10,7 +10,6 @@ env:
     # try all python versions with the latest stable numpy and astropy
     # - ASTROPY_VERSION=stable NUMPY_VERSION=1.7.1 SETUP_CMD='test'
     - ASTROPY_VERSION=development NUMPY_VERSION=1.7.1 SETUP_CMD='test'
-    - ASTROPY_VERSION=development NUMPY_VERSION=1.7.1 SETUP_CMD='test --coverage'
 
 #matrix:
 #    include:
@@ -50,6 +49,7 @@ install:
    - if [[ $ASTROPY_VERSION == stable ]]; then pip -q install astropy --use-mirrors; fi
    - if [[ $ASTROPY_VERSION == development ]]; then pip -q install git+http://github.com/astropy/astropy.git#egg=astropy --use-mirrors; fi
    - if [[ $SETUP_CMD == 'test --coverage' ]]; then pip -q install coveralls --use-mirrors; fi
+   - if [[ $SETUP_CMD == 'test --coverage' ]]; then pip -q install pytest-cov --use-mirrors; fi
 
 script:
    - python setup.py $SETUP_CMD
