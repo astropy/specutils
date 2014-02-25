@@ -149,6 +149,13 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
             raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
 
+    def min(self):
+        return self.lookup_table_parameter.value.min()
+
+    def max(self):
+        return self.lookup_table_parameter.value.max()
+
+
 class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
     """
     A simple linear wcs
