@@ -22,12 +22,12 @@ class ApertureException(Exception):
 def _find_col_index(ColDefs, colname):
     '''find index for a column with certain name
 
-    This function can be removed or made easier, once fits return a Table object'''
+    This function can be removed or made easier, once astropy.io.fits returns a Table object'''
     ind = (np.array(ColDefs.names) == colname)
     return np.where(ind)[0][0]
 
 def _get_unit(unitstring):
-    '''The only unit I have seen is ERG/CM2/S/A nad that does not parse
+    '''The only unit I have seen is ERG/CM2/S/A and that does not parse
     with astropy. For now, just translate that.'''
     if unitstring == 'ERG/CM2/S/A':
         return 'erg / (cm2 s Angstrom)'
@@ -38,7 +38,7 @@ def read_IUE_mxlo(filename, aperture = ''):
     '''
     Read low resolution IUE spectra in fits format
 
-    IUE spectra are available form MAST in two different formats:
+    IUE spectra are available from MAST in two different formats:
     IUESIPS and NEWSIPS. While the former is an (now obsolete) intrinsic IUE
     format that requires special software to read, NEWSPIS is a fits file.
     This procedure implements a reader for NEWSIPS files.
@@ -58,7 +58,7 @@ def read_IUE_mxlo(filename, aperture = ''):
 
     http://archive.stsci.edu/iue/mdr_help.html?print=1
     
-    sometimes tow or more apertures in one file e.g. swp02283.mxlo
+    Sometimes there are two or more apertures in one file e.g. swp02283.mxlo .
     '''
     hdus = fits.open(filename)
     try:
