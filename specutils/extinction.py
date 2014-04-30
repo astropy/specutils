@@ -19,6 +19,13 @@ from astropy.modeling import Model, Parameter
 
 from specutils import cextinction
 
+try:
+    import scipy
+except ImportError:
+    HAS_SCIPY = False
+else:
+    HAS_SCIPY = True
+
 __all__ = ['extinction_ccm89', 'extinction_od94', 'extinction_gcc09',
            'extinction_f99', 'extinction_fm07', 'extinction_wd01',
            'extinction_d03', 'extinction', 'reddening',
@@ -49,9 +56,20 @@ def _check_wave(wave, minwave, maxwave):
     
 
 class BaseExtinctionModel(Model):
+    """
+    Base model for the extinction calculations.
 
+    Parameters
+    ----------
+
+    a_v: ~float
+    r_v: ~float
+
+    """
     a_v = Parameter('a_v')
     r_v = Parameter('r_v', min=0)
+
+
 
     def __init__(self, a_v, r_v):
         super(BaseExtinctionModel, self).__init__()
@@ -197,6 +215,8 @@ class ExtinctionF99(BaseExtinctionModel):
     """
 
     def __init__(self, a_v, r_v=3.1):
+        if not HAS_SCIPY:
+            raise ImportError('To use this function scipy needs to be installed')
 
         from scipy.interpolate import splmake
         super(ExtinctionF99, self).__init__(a_v, r_v)
@@ -206,6 +226,7 @@ class ExtinctionF99(BaseExtinctionModel):
         self._spline = splmake(_f99_xknots, kknots, order=3)
 
     def __call__(self, wave):
+
         from scipy.interpolate import spleval
 
         wave_shape = wave.shape
@@ -282,6 +303,8 @@ def extinction_fm07(wave, a_v):
     .. [2] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
     .. [3] Fitzpatrick, E. L. 1999, PASP, 111, 63
     """
+    if not HAS_SCIPY:
+        raise ImportError('To use this function scipy needs to be installed')
     from scipy.interpolate import spleval
 
     wave_shape = wave.shape
@@ -306,12 +329,12 @@ def extinction_fm07(wave, a_v):
 
 
 prefix = path.join('data', 'extinction_models', 'kext_albedo_WD_MW')
-_wd01_fnames = {3.1: prefix + '_3.1B_60.txt',
-                4.0: prefix + '_4.0B_40.txt',
-                5.5: prefix + '_5.5B_30.txt'}
-_d03_fnames = {3.1: prefix + '_3.1A_60_D03_all.txt',
-               4.0: prefix + '_4.0A_40_D03_all.txt',
-               5.5: prefix + '_5.5A_30_D03_all.txt'}
+_wd01_fnames = {'3.1': prefix + '_3.1B_60.txt',
+                '4.0': prefix + '_4.0B_40.txt',
+                '5.5': prefix + '_5.5B_30.txt'}
+_d03_fnames = {'3.1': prefix + '_3.1A_60_D03_all.txt',
+               '4.0': prefix + '_4.0A_40_D03_all.txt',
+               '5.5': prefix + '_5.5A_30_D03_all.txt'}
 del prefix
 
 class ExtinctionWD01(BaseExtinctionModel):
@@ -339,6 +362,9 @@ class ExtinctionWD01(BaseExtinctionModel):
     def __init__(self, a_v, r_v):
 
         super(ExtinctionWD01, self).__init__(a_v, r_v)
+
+        if not HAS_SCIPY:
+            raise ImportError('To use this function scipy needs to be installed')
 
         from scipy.interpolate import interp1d
 
@@ -441,6 +467,9 @@ class ExtinctionD03(ExtinctionWD01):
     """
 
     def __init__(self, a_v, r_v):
+        if not HAS_SCIPY:
+            raise ImportError('To use this function scipy needs to be installed')
+
         from scipy.interpolate import interp1d
 
         super(ExtinctionD03, self).__init__(a_v, r_v)
