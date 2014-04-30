@@ -15,7 +15,7 @@ import numpy as np
 from astropy.io import ascii
 from astropy.utils import data as apydata
 from astropy import units as u
-from astropy.modeling import Model, Parameter
+
 
 from specutils import cextinction
 
@@ -54,29 +54,6 @@ def _check_wave(wave, minwave, maxwave):
         raise ValueError('Wavelengths must be between {0:.2f} and {1:.2f} '
                          'angstroms'.format(minwave, maxwave))
     
-
-class BaseExtinctionModel(Model):
-    """
-    Base model for the extinction calculations.
-
-    Parameters
-    ----------
-
-    a_v: ~float
-    r_v: ~float
-
-    """
-    a_v = Parameter('a_v')
-    r_v = Parameter('r_v', min=0)
-
-
-
-    def __init__(self, a_v, r_v):
-        super(BaseExtinctionModel, self).__init__()
-        self.a_v = a_v
-        self.r_v = r_v
-
-
 
 
 def extinction_ccm89(wave, a_v, r_v=3.1):
@@ -190,7 +167,7 @@ def extinction_gcc09(wave, a_v, r_v=3.1):
 _f99_xknots = 1.e4 / np.array([np.inf, 26500., 12200., 6000., 5470.,
                                4670., 4110., 2700., 2600.])
 
-class ExtinctionF99(BaseExtinctionModel):
+class ExtinctionF99(object):
     """Fitzpatrick (1999) extinction model with fixed R_V.
 
     Parameters
@@ -207,11 +184,6 @@ class ExtinctionF99(BaseExtinctionModel):
     >>> f(3000., a_v=1.)
     1.7993995521481463
 
-    Arrays are also accepted and ``ebv`` can be specified instead of ``a_v``:
-
-    >>> f([3000., 4000.], ebv=1./3.1)
-    array([ 1.79939955,  1.42338583])
-
     """
 
     def __init__(self, a_v, r_v=3.1):
@@ -219,13 +191,17 @@ class ExtinctionF99(BaseExtinctionModel):
             raise ImportError('To use this function scipy needs to be installed')
 
         from scipy.interpolate import splmake
-        super(ExtinctionF99, self).__init__(a_v, r_v)
 
-        kknots = cextinction.f99kknots(_f99_xknots, self.r_v.value)
+        self.a_v = a_v
+        self.r_v = r_v
+
+        kknots = cextinction.f99kknots(_f99_xknots, self.r_v)
 
         self._spline = splmake(_f99_xknots, kknots, order=3)
 
     def __call__(self, wave):
+        if not HAS_SCIPY:
+            raise ImportError('To use this function scipy needs to be installed')
 
         from scipy.interpolate import spleval
 
@@ -239,13 +215,13 @@ class ExtinctionF99(BaseExtinctionModel):
         # Analytic function in the UV.
         uvmask = wave < (2700. * u.angstrom)
         if np.any(uvmask):
-            res[uvmask] = cextinction.f99uv(wave[uvmask], self.a_v, self.r_v.value)
+            res[uvmask] = cextinction.f99uv(wave[uvmask], self.a_v, self.r_v)
 
         # Spline in the Optical/IR
         oirmask = ~uvmask
         if np.any(oirmask):
             k = spleval(self._spline, 1. / wave[oirmask].to('micron'))
-            res[oirmask] = self.a_v / self.r_v.value * (k + self.r_v.value)
+            res[oirmask] = self.a_v / self.r_v * (k + self.r_v)
 
         return res.reshape(wave_shape)
 
@@ -337,7 +313,7 @@ _d03_fnames = {'3.1': prefix + '_3.1A_60_D03_all.txt',
                '5.5': prefix + '_5.5A_30_D03_all.txt'}
 del prefix
 
-class ExtinctionWD01(BaseExtinctionModel):
+class ExtinctionWD01(object):
     """Weingartner and Draine (2001) extinction model with fixed R_V.
 
     Parameters
@@ -361,17 +337,25 @@ class ExtinctionWD01(BaseExtinctionModel):
 
     def __init__(self, a_v, r_v):
 
-        super(ExtinctionWD01, self).__init__(a_v, r_v)
-
         if not HAS_SCIPY:
             raise ImportError('To use this function scipy needs to be installed')
 
         from scipy.interpolate import interp1d
 
-        try:
-            fname = _wd01_fnames[self.r_v.value]
-        except KeyError:
+        self.a_v = a_v
+        self.r_v = r_v
+
+        fname_key = [item for item in _wd01_fnames.keys() if np.isclose(
+            float(item), self.r_v)]
+
+        if len(fname_key) == 0:
             raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
+        elif len(fname_key) == 1:
+            fname = _wd01_fnames[fname_key[0]]
+        else:
+            raise ValueError('The given float {0} matches multiple available'
+                             ' r_vs [3.1, 4.0, 5.5] - unexpected code error')
+
 
         fname = apydata.get_pkg_data_filename(fname)
         data = ascii.read(fname, Reader=ascii.FixedWidth, data_start=51,
@@ -397,7 +381,7 @@ class ExtinctionWD01(BaseExtinctionModel):
 
         x = (1 / wave).to('1/micron')
 
-        res = self.a_v.value * self._spline(x.value)
+        res = self.a_v * self._spline(x.value)
 
         return res.reshape(wave_shape)
 
@@ -474,10 +458,17 @@ class ExtinctionD03(ExtinctionWD01):
 
         super(ExtinctionD03, self).__init__(a_v, r_v)
 
-        try:
-            fname = _d03_fnames[self.r_v.value]
-        except KeyError:
+        fname_key = [item for item in _wd01_fnames.keys() if np.isclose(
+            float(item), self.r_v)]
+
+        if len(fname_key) == 0:
             raise ValueError("model only defined for r_v in [3.1, 4.0, 5.5]")
+        elif len(fname_key) == 1:
+            fname = _d03_fnames[fname_key[0]]
+        else:
+            raise ValueError('The given float {0} matches multiple available'
+                             ' r_vs [3.1, 4.0, 5.5] - unexpected code error')
+
         fname = apydata.get_pkg_data_filename(fname)
 
         data = ascii.read(fname, Reader=ascii.FixedWidth, data_start=67,
@@ -635,12 +626,6 @@ def extinction(wave, a_v, r_v=3.1, model='od94'):
     >>> a_v = 0.5
     >>> a_lambda = a_v * a_lambda_over_a_v
 
-    Similarly for ``ebv``:
-
-    >>> a_lambda_over_ebv = extinction(wave, ebv=1.)
-    >>> ebv = 0.1
-    >>> a_lambda = ebv * a_lambda_over_ebv
-
     """
 
     model = model.lower()
@@ -648,7 +633,7 @@ def extinction(wave, a_v, r_v=3.1, model='od94'):
         raise ValueError('unknown model: {0}'.format(model))
 
     if model == 'fm07':
-        if r_v != 3.1:
+        if not np.isclose(r_v, 3.1):
             raise ValueError('r_v must be 3.1 for fm07 model')
         return _extinction_models[model](wave, a_v=a_v)
     else:
