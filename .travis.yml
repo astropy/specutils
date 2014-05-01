@@ -16,7 +16,7 @@ matrix:
           env: ASTROPY_VERSION=development NUMPY_VERSION=1.8.0 SETUP_CMD='test --coverage'
 
         - python: 2.7
-          env: SCIPY_VERSION=0.9.3 ASTROPY_VERSION=development NUMPY_VERSION=1.8.0 SETUP_CMD='test --coverage'
+          env: SCIPY_VERSION=0.13.3 ASTROPY_VERSION=development NUMPY_VERSION=1.8.0 SETUP_CMD='test --coverage'
 
 before_install:
    # We do this to make sure we get the dependencies so pip works below
