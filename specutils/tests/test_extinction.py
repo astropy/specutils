@@ -130,6 +130,7 @@ def test_out_of_range_simple_extinction(extinction_function, wavelength):
 
 @pytest.mark.parametrize(('extinction_model_name'), extinction_models)
 def test_general_extinction_function(extinction_model_name):
+    pytest.importorskip('scipy')
     specific_extinction_function = extinction_module.__getattribute__('extinction_{0}'.format(extinction_model_name))
 
     wave = 5000 * u.angstrom
@@ -143,15 +144,18 @@ class TestWD01():
 
     @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
     def test_out_of_range(self, wavelength):
+        pytest.importorskip('scipy')
         with pytest.raises(ValueError):
             x = self.extinction(wavelength)
 
 class TestD03():
+
     def setup(self):
         self.extinction = ExtinctionD03(1., 3.1)
 
 
     @pytest.mark.parametrize(('wavelength'), [0*u.angstrom, 1*u.m])
     def test_out_of_range(self, wavelength):
+        pytest.importorskip('scipy')
         with pytest.raises(ValueError):
             x = self.extinction(wavelength)

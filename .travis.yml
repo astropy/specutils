@@ -3,7 +3,6 @@ language: python
 python:
     - 2.6
     - 2.7
-    - 3.2
     - 3.3
 
 env:
@@ -15,6 +14,9 @@ matrix:
     include:
         - python: 2.7
           env: ASTROPY_VERSION=development NUMPY_VERSION=1.8.0 SETUP_CMD='test --coverage'
+
+        - python: 2.7
+          env: SCIPY_VERSION=0.9.3 ASTROPY_VERSION=development NUMPY_VERSION=1.8.0 SETUP_CMD='test --coverage'
 
 before_install:
    # We do this to make sure we get the dependencies so pip works below
@@ -30,6 +32,7 @@ install:
    - if [[ $SETUP_CMD == build_sphinx* ]]; then pip -q install sphinx==1.1.3 --use-mirrors; fi
    - if [[ $SETUP_CMD == build_sphinx* ]]; then pip -q install matplotlib --use-mirrors; fi
 
+   - if [[ -n $SCIPY_VERSION]]; then pip -q install "scipy==$SCIPY_VERSION"; fi
    - if [[ $ASTROPY_VERSION == stable ]]; then pip -q install astropy --use-mirrors; fi
    - if [[ $ASTROPY_VERSION == development ]]; then pip -q install git+http://github.com/astropy/astropy.git#egg=astropy --use-mirrors; fi
    - if [[ $SETUP_CMD == 'test --coverage' ]]; then pip -q install coveralls --use-mirrors; fi
