@@ -27,7 +27,7 @@ before_install:
 install:
    - export PYTHONIOENCODING=UTF8 # just in case
    - pip -q install --upgrade "numpy==$NUMPY_VERSION" --use-mirrors
-   - if [[ -n "$SCIPY_VERSION"]]; then pip -q install "scipy==$SCIPY_VERSION"; fi
+   - if [[ -n "${SCIPY_VERSION+1}"]]; then pip -q install "scipy==$SCIPY_VERSION"; fi
    - pip -q install --upgrade Cython --use-mirrors
    - pip -q install --upgrade pytest --use-mirrors
    - if [[ $SETUP_CMD == build_sphinx* ]]; then pip -q install sphinx==1.1.3 --use-mirrors; fi
