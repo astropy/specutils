@@ -139,6 +139,7 @@ def test_general_extinction_function(extinction_model_name):
 
 class TestWD01():
     def setup(self):
+        pytest.importorskip('scipy')
         self.extinction = ExtinctionWD01(1., 3.1)
 
 
@@ -151,6 +152,7 @@ class TestWD01():
 class TestD03():
 
     def setup(self):
+        pytest.importorskip('scipy')
         self.extinction = ExtinctionD03(1., 3.1)
 
 
