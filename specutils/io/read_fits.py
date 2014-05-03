@@ -110,7 +110,7 @@ def _parse_multispec_dict(multispec_dict):
                     key_dtype = wcs_attributes_function_keywords[key_name]
                     single_spec_dict['function'][key_name] = key_dtype(split_single_spec_string.pop(0))
 
-                single_spec_dict['function']['coefficients'] = map(float, split_single_spec_string)
+                single_spec_dict['function']['coefficients'] = list(map(float, split_single_spec_string))
 
             else:
                 raise NotImplementedError
@@ -147,7 +147,7 @@ class FITSWCSSpectrum(object):
 
         self.shape = []
 
-        for i in xrange(self.naxis):
+        for i in range(self.naxis):
             self.shape.append(self.fits_header['naxis{0:d}'.format(i+1)])
 
         try:
@@ -162,7 +162,7 @@ class FITSWCSSpectrum(object):
 
         if self.wcs_dim is not None:
             self.wcs_attributes = []
-            for axis in xrange(self.wcs_dim):
+            for axis in range(self.wcs_dim):
                 self.wcs_attributes.append(self.read_wcs_attributes(axis + 1))
 
 
@@ -184,7 +184,7 @@ class FITSWCSSpectrum(object):
         affine_transform_keywords = ('ctype', 'crpix', 'crval', 'cdelt')
         affine_transform_dict = dict([(key, [None] * wcs_dim) for key in affine_transform_keywords])
 
-        for i in xrange(wcs_dim):
+        for i in range(wcs_dim):
             for key in affine_transform_dict:
                 affine_transform_dict[key][i] = self.fits_header.get('{0:s}{1:d}'.format(key, i+1))
 
@@ -202,7 +202,7 @@ class FITSWCSSpectrum(object):
 
         units = [None] * wcs_dim
 
-        for i in xrange(wcs_dim):
+        for i in range(wcs_dim):
             try:
                 cunit_string = self.fits_header['cunit{0:d}'.format(i+1)]
             except KeyError:
@@ -230,7 +230,7 @@ class FITSWCSSpectrum(object):
                 i, j = map(int, matrix_element_keyword_pattern.match(matrix_element_keyword).groups())
                 transform_matrix[j-1, i-1] = self.fits_header[matrix_element_keyword]
             if cdelt is not None:
-                for i in xrange(matrix_dim):
+                for i in range(matrix_dim):
                     if cdelt[i] is not None:
                         np.testing.assert_almost_equal(cdelt[i], transform_matrix[i,i])
 
