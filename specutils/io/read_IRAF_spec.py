@@ -1,5 +1,4 @@
 # http://iraf.net/irafdocs/specwcs.php
-import string
 import re
 
 import numpy as np

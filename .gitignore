@@ -14,6 +14,7 @@ __pycache__
 
 # Sphinx
 _build
+docs/api
 
 # Packages/installer info
 *.egg
@@ -32,6 +33,9 @@ distribute-*.tar.gz
 # Other
 .*.swp
 *~
+.settings
+.project
+.pydevproject
 
 # Mac OSX
 .DS_Store

@@ -3,6 +3,7 @@
 import warnings
 import numpy as np
 
+from astropy.extern import six
 from astropy.utils import misc
 from astropy.modeling import Model, polynomial
 from astropy.modeling.parameters import Parameter
@@ -183,7 +184,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 
     def __call__(self, pixel_indices):
-        if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, basestring):
+        if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, six.string_types):
             pixel_indices = np.array(pixel_indices)
         return (self.dispersion0 + self.dispersion_delta * (pixel_indices - self.pixel_index)) * self.unit
 
@@ -191,7 +192,7 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
         if not hasattr(dispersion_values, 'unit'):
             raise u.UnitsException('Must give a dispersion value with a valid unit (i.e. quantity 5 * u.Angstrom)')
 
-        if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, basestring):
+        if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, six.string_types):
             dispersion_values = np.array(dispersion_values)
         return float((dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
 

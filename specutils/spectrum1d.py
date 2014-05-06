@@ -6,6 +6,7 @@ from __future__ import print_function, division
 __all__ = ['Spectrum1D']
 
 import copy
+from astropy.extern import six
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
 
@@ -162,7 +163,7 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-        if isinstance(flag_columns, basestring):
+        if isinstance(flag_columns, six.string_types):
             flags = table[flag_columns]
         elif misc.isiterable(flag_columns):
             flags = FlagCollection(shape=flux.shape)
@@ -242,7 +243,7 @@ class Spectrum1D(NDData):
             super(Spectrum1D, self).__setattr__(name, value)
 
     def __dir__(self):
-        return self.__dict__.keys() + self._wcs_attributes.keys() + \
+        return list(self.__dict__.keys()) + list(self._wcs_attributes.keys()) + \
                [item + '_unit' for item in self._wcs_attributes.keys()]
 
     
