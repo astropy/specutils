@@ -61,7 +61,7 @@ def rvshift(wave1, spec1, wave2, spec2, r1 = None, r2 = None,debug=False,
     
     Returns:
     ---------
-    Return an array of [velocity, pixel shift]
+    Return an array of [velocity, pixel shift, logShift]
     """
 
     # make a copy of the input spectra
@@ -193,3 +193,42 @@ def test_rvmeasure():
     pl.plot(wave1,spec2,label='Test Spec')
     pl.plot(wave1,shifted,label='Shifted Fit')
     pl.legend()
+
+def rmcontinuum(wave,flux,order=2,fitRange=None):
+    '''
+    Removes the continuum an normalize a spectrum by fitting a
+    polynomial and dividing the spectrum by it.
+
+    2014-02-20 - T. Do
+    '''
+
+    # only fit points that are finite and not zero
+    if fitRange is None:
+        fitRange = [np.min(wave),np.max(wave)]
+    goodPts = np.where((flux != 0) & np.isfinite(flux) & (wave >= fitRange[0]) & (wave <= fitRange[1]))[0]
+
+    pFit = np.polyfit(wave[goodPts],flux[goodPts],order)
+    
+    return flux/np.polyval(pFit,wave)
+
+def snr(wave, flux, fitRange = None,order=2):
+    '''
+    Return the SNR of a spectrum within a certain spectral range
+
+    Parameters
+    ========
+    wave - input array of wavelengths
+    flux - flux values
+    fitRange - the range in wavelength to compute the SNR (default: None)
+    order - the order of the polynomial used to remove the continuum (default = 2).
+            If order = 0, the continuum will not be removed.
+    '''
+
+    if fitRange is None:
+        fitRange = [np.min(wave), np.max(wave)]
+    good = np.where((wave >= fitRange[0]) & (wave <= fitRange[1]))
+
+    if order > 0:
+        f1 = rmcontinuum(wave[good],flux[good],order=order)
+
+    return np.mean(f1)/np.std(f1)

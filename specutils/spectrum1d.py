@@ -160,14 +160,14 @@ class Spectrum1D(NDData):
 
         # assume that the wavelength is in axis 1
         if 'CDELT1' in header.keys():
-            cdelt = header['CDELT1']
+            cdelt = float(header['CDELT1'])
         elif 'CD1_1' in header.keys():
-            cdelt = header['CD1_1']
+            cdelt = float(header['CD1_1'])
         else:
             cdelt = 1
 
-        crval = header['CRVAL1']
-        crpix = header['CRPIX1']
+        crval = float(header['CRVAL1'])
+        crpix = float(header['CRPIX1'])
         wstart = crval - ((crpix-1.0))*cdelt
         
         wavelengths = np.arange(len(data))*cdelt+wstart
@@ -193,7 +193,14 @@ class Spectrum1D(NDData):
         header['CDELT1'] = cdelt
         hdulist.writeto(filename,clobber=True)
 
-        
+    def to_ascii(self,filename):
+        ''' Basic function to write to a two column text file of dispersion and fluxe
+        '''
+        output = open(filename,'w')
+        for i in np.arange(len(self.dispersion)):
+            output.write('%f\t%f\n' % (self.dispersion[i],self.flux[i]))
+        output.close()
+
     @property
     def flux(self): #returning the flux
         return self.data

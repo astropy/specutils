@@ -65,24 +65,25 @@ def fixgstar(wave,flux,template=None,debug=False,order=3,smooth=1.0,fitRange=Non
         if delta > 1.0:
             if debug:
                 print 'delta: '+str(delta)
-            psf = models.Gaussian1DModel(mean=0.0,stddev=delta,amplitude=1.0)
+            psf = models.Gaussian1D(mean=0.0,stddev=delta,amplitude=1.0)
             psf = psf(np.arange(-np.fix(delta*3.0),np.fix(delta*3)))
             psf = psf/np.sum(psf)
             solFlux = signal.fftconvolve(solFlux,psf,mode='same')
             
-        if debug:
-            clf()
-            subplot(211)
+
 
         goodIn1 = np.where(flux > 0)[0]
         pFit1 = np.polyfit(wave[goodIn1],flux[goodIn1],order)
 
-        # don't it the beginning and end points in case there are convolution artifacts
+        # don't fit the beginning and end points in case there are convolution artifacts
         pFit2 = np.polyfit(solWave[1:-2],solFlux[1:-2],order)
         
         if debug:
-            plot(wave,flux/np.median(flux),label='Orig.')
+            clf()
+            subplot(211)
+            plot(wave,flux/np.polyval(pFit1,wave),label='Orig.')
             plot(solWave,solFlux/np.polyval(pFit2,solWave),label='Ref.')
+            legend()
 
         fluxTemp = flux/np.polyval(pFit1,wave)
         solFluxTemp = solFlux/np.polyval(pFit2,solWave)
@@ -109,6 +110,8 @@ def fixgstar(wave,flux,template=None,debug=False,order=3,smooth=1.0,fitRange=Non
         correctedFlux = correctedFlux/np.median(correctedFlux)
         
         if debug:
+            subplot(212)
+            plot(wave,flux/np.median(flux),label='Orig.')
             plot(wave,solSpec,label='Shift Ref.')
             plot(wave,correctedFlux,label='Final')
             legend()
@@ -121,6 +124,34 @@ def fixgstar(wave,flux,template=None,debug=False,order=3,smooth=1.0,fitRange=Non
         return specObj
     else:
         print 'Template not found: '+template
+
+def fixastar(wave,flux,template=None,**kwargs):
+    '''
+    Has the same keywords as the fixgstar except uses the vega template instead
+    '''
+    template = os.path.join(os.path.dirname(__file__), 'data/vega_all.hdf5')
+    return fixgstar(wave,flux,template=template,**kwargs)
+
+def test_fixastar():
+    outputDir = '/u/tdo/mosdrp/reduced/mercer23/'
+    tellFile = outputDir+'astar_hip98640.fits'
+    outfile = outputDir+'telluric_standard_130902.fits'
+
+    specObj = spectrum1d.Spectrum1D.from_fits(tellFile)
+    flux = specObj.flux
+    wave = specObj.dispersion
+    good = np.where(flux > 0)[0]
+
+    pFit = np.polyfit(wave[good],flux[good],3)
+    print pFit
+    clf()
+    subplot(2,1,1)
+    plot(specObj.dispersion,specObj.flux)
+    plot(specObj.dispersion,np.polyval(pFit,wave))
+    subplot(2,1,2)
+    plot(specObj.dispersion,flux/np.polyval(pFit,wave))
+
+    fixastar(wave,flux,debug=True,smooth=1.0,fitRange=[16200,16800])
 
 def test_fixgstar():
     outputDir = '/u/tdo/mosdrp/reduced/mercer23/'

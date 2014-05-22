@@ -51,7 +51,7 @@ def oplotlines(bandname=None,linelist=None,angstrom=False,color='k',xlim=None,yl
             if label:
                 pl.text(totalLines[i],(ylim[1]-ylim[0])*0.05+ylim[0],totalNames[i],rotation='vertical',size=size,va='bottom')
 
-def oplotskylines(band = 'H', linelist = None, xlim = None, ylim = None, color='k'):
+def oplotskylines(band = 'H', linelist = None, xlim = None, ylim = None, color='k',angstrom=False):
     '''
     Plot OH skylines
     '''
@@ -122,7 +122,9 @@ def oplotskylines(band = 'H', linelist = None, xlim = None, ylim = None, color='
         ##                  22125.5,
         ##                  22312.7])
 
-
+    # default to microns unless angstrom is used. This is to make this consistent with oplotlines
+    if angstrom is False:
+        lines = lines/1e4
 
     if linelist is not None:
         lines = np.loadtxt(linelist)
