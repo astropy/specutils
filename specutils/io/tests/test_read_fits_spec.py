@@ -21,8 +21,6 @@ def test_multispec_legendre():
     assert_almost_equal(iraf['wave'], spec.dispersion.value)
     assert spec.dispersion.unit == u.Angstrom
 
-#expected to fail for now as chebyshev is not implemented
-@pytest.mark.xfail
 def test_multispec_chebyshev():
     iraf = ascii.read(data_path('AAO_11.txt'), data_start = 175, Reader = ascii.NoHeader, names = ['wave', 'flux'])
     spectra = read_fits.read_fits_multispec_to_list(data_path('AAO.fits'))

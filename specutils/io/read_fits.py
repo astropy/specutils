@@ -302,6 +302,17 @@ class FITSWCSSpectrum(object):
                                                                    **coefficients)
 
 
+            elif single_spec_dict['function']['type'] == 'chebyshev':
+                function_dict = single_spec_dict['function']
+                coefficients = dict([('c{:d}'.format(i), function_dict['coefficients'][i])
+                                     for i in range(function_dict['order'])])
+                multispec_wcs_dict[spec_key] = specwcs.Spectrum1DChebyshevWCS(function_dict['order'] - 1,
+                                                                   domain=[function_dict['pmin'],
+                                                                           function_dict['pmax']],
+                                                                   unit=dispersion_unit,
+                                                                   **coefficients)
+
+
             else:
                 raise NotImplementedError
         return multispec_wcs_dict

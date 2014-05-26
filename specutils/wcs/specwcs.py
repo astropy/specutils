@@ -223,6 +223,25 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
 
+class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
+    """
+    WCS for polynomial dispersion using Chebyshev Polynomials. The only added parameter is a unit,
+    otherwise the same as 'astropy.modeling.polynomial.Chebyshev1D'
+
+    See Also
+    --------
+    astropy.modeling.polynomial.Chebyshev1D
+    astropy.modeling.polynomial.Polynomial1D
+    """
+
+    def __init__(self, degree, unit=None, domain=None, window=[-1,1], param_dim=1,
+                 **params):
+        super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
+                                                    **params)
+        self.unit = unit
+
+    def __call__(self, pixel_indices):
+        return polynomial.Chebyshev1D.__call__(self, pixel_indices) * self.unit
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
