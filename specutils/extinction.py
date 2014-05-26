@@ -93,7 +93,7 @@ def extinction_ccm89(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.ccm89(_process_wave(wave), a_v, r_v)
+    res = cextinction.ccm89(_process_wave(wave).value, a_v, r_v) * wave.unit
 
     return res.reshape(wave.shape)
 
@@ -132,7 +132,7 @@ def extinction_od94(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.od94(_process_wave(wave), a_v, r_v)
+    res = cextinction.od94(_process_wave(wave).value, a_v, r_v) * wave.unit
 
     return res.reshape(wave.shape)
 
@@ -160,7 +160,7 @@ def extinction_gcc09(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.gcc09(_process_wave(wave), a_v, r_v)
+    res = cextinction.gcc09(_process_wave(wave).value, a_v, r_v) * wave.unit
 
     return res.reshape(wave.shape)
 
@@ -215,7 +215,7 @@ class ExtinctionF99(object):
         # Analytic function in the UV.
         uvmask = wave < (2700. * u.angstrom)
         if np.any(uvmask):
-            res[uvmask] = cextinction.f99uv(wave[uvmask], self.a_v, self.r_v)
+            res[uvmask] = cextinction.f99uv(wave[uvmask].value, self.a_v, self.r_v) * wave.unit
 
         # Spline in the Optical/IR
         oirmask = ~uvmask
@@ -293,7 +293,7 @@ def extinction_fm07(wave, a_v):
     # Simple analytic function in the UV
     uvmask = wave < (2700. * u.angstrom)
     if np.any(uvmask):
-        res[uvmask] = cextinction.fm07uv(wave[uvmask], a_v)
+        res[uvmask] = cextinction.fm07uv(wave[uvmask].value, a_v) * wave.unit
     
     # Spline in the Optical/IR
     oirmask = ~uvmask
