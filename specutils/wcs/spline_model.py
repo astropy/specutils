@@ -1,8 +1,8 @@
-from astropy.modeling import Model, Parameter
+from astropy.modeling import polynomial, Parameter
 from scipy import interpolate
 import numpy as np
 
-class BSplineModel(Model):
+class BSplineModel(polynomial.PolynomialBase):
     """
     Implements a BSpline representation of 1-D curve.
 
@@ -21,7 +21,6 @@ class BSplineModel(Model):
     ValueError
         If the length of knots and coefficients arrays do not match
     """
-
 
     @classmethod
     def from_data(cls, x, y, degree):
@@ -49,14 +48,14 @@ class BSplineModel(Model):
         #     raise ValueError("Not enough knots ({0})".format(len(knots)))
 
         self.degree = degree
-        self.n_pieces = len(knots) - degree - 1
-        self.param_names = self._generate_param_names(self.n_pieces)
+        self.n_pieces = len(knots)
+        self._param_names = self._generate_param_names(self.n_pieces)
 
         params = {}
         for i in xrange(len(knots)):
-            self.__setattr__("c{:d}".format(i), coefficients[i])
+            params["c{:d}".format(i)] = coefficients[i]
             params["t{:d}".format(i)] = knots[i]
-        super(BSplineModel, self).__init__(self, param_dim=1, **params)
+        super(BSplineModel, self).__init__(param_dim=1, **params)
 
     def _generate_param_names(self, n_pieces):
         names = []
@@ -68,8 +67,8 @@ class BSplineModel(Model):
     def __call__(self, x):
         coefficients, knots = [], []
         for i in xrange(self.n_pieces):
-            coefficients.append(self.__getattr__("c{:d}".format(i)))
-            knots.append(self.__getattr__("t{:d}".format(i)))
+            coefficients.append(self.__getattr__("c{:d}".format(i)).value)
+            knots.append(self.__getattr__("t{:d}".format(i)).value)
         return interpolate.splev(x, (knots, coefficients, self.degree))
 
 # TODO: convert to a test
