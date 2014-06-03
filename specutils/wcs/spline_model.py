@@ -70,17 +70,3 @@ class BSplineModel(polynomial.PolynomialBase):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
         return interpolate.splev(x, (knots, coefficients, self.degree))
-
-# TODO: convert to a test
-if __name__ == "__main__":
-    knots = [0., 0., 0., 0., 2.22222222, 3.33333333, 4.44444444, 5.55555556,
-             6.66666667, 7.77777778, 10., 10., 10., 10.]
-    coefficients = [ -4.94881722e-18,   8.96543619e-01,   1.39407154e+00,
-                    -2.36640266e-01,  -1.18324030e+00,  -8.16301228e-01,
-                    4.57836125e-01,   1.48720677e+00,   1.64338775e-01,
-                    -5.44021111e-01,   0.00000000e+00,   0.00000000e+00,
-                    0.00000000e+00,   0.00000000e+00]
-    degree = 3
-    bs = BSplineModel(degree, knots, coefficients)
-    x = np.linspace(0, 10, 100)
-    print bs(x)
