@@ -7,7 +7,7 @@ from astropy.extern import six
 from astropy.utils import misc
 from astropy.modeling import Model, polynomial
 from astropy.modeling.parameters import Parameter
-
+from ..models.BSplineModel import BSplineModel
 import astropy.units as u
 
 from astropy.utils.misc import deprecated
@@ -242,6 +242,21 @@ class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
 
     def __call__(self, pixel_indices):
         return polynomial.Chebyshev1D.__call__(self, pixel_indices) * self.unit
+
+class Spectrum1DBSplineWCS(BaseSpectrum1DWCS):
+    """
+    WCS for polynomial dispersion using BSpline functions. The only added
+    parameter is a unit.
+    """
+
+    def __init__(self, degree, x, y, npieces, unit=None):
+        self.model = BSplineModel.from_data(x, y, degree)
+        self.unit = unit
+        self.npieces = npieces
+
+    def __call__(self, pixel_indices):
+        s = np.linspace(0, self.npieces, len(pixel_indices))
+        return self.model(s) * self.unit
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):

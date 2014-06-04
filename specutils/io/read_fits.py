@@ -33,7 +33,9 @@ fits_wcs_spec_func_type = {1:'chebyshev',
                            6:'sampledcoordinatearray'}
 
 wcs_attributes_function_parameters = {'chebyshev': ['order', 'pmin', 'pmax'],
-                                'legendre' : ['order', 'pmin', 'pmax']}
+                                'legendre' : ['order', 'pmin', 'pmax'],
+                                'linearspline': ['npieces', 'pmin', 'pmax'],
+                                'cubicspline': ['npieces', 'pmin', 'pmax']}
 
 
 wcs_attributes_general_keywords = OrderedDict([('aperture', int), ('beam', int), ('dispersion_type', int),
@@ -42,7 +44,7 @@ wcs_attributes_general_keywords = OrderedDict([('aperture', int), ('beam', int),
                                                ('aperture_low', float), ('aperture_high', float)])
 
 wcs_attributes_function_keywords = OrderedDict([('weight', float), ('zero_point_offset', float), ('type', int),
-                                               ('order', int), ('pmin', float), ('pmax', float)])
+                                               ('order', int), ('pmin', float), ('pmax', float), ('npieces', int)])
 
 
 
@@ -312,6 +314,20 @@ class FITSWCSSpectrum(object):
                                                                    unit=dispersion_unit,
                                                                    **coefficients)
 
+            elif single_spec_dict['function']['type'] == 'linearspline' \
+                    or single_spec_dict['function']['type'] == 'cubicspline':
+                if single_spec_dict['function']['type'] == 'linearspline':
+                    degree = 1
+                else:
+                    degree = 3
+                function_dict = single_spec_dict['function']
+                npieces = function_dict['npieces']
+                y = [function_dict['coefficients'][i]
+                     for i in range(npieces + degree)]
+                x = np.arange(npieces + degree)
+                multispec_wcs_dict[spec_key] = \
+                    specwcs.Spectrum1DBSplineWCS(degree, x, y, npieces,
+                                                 unit=dispersion_unit)
 
             else:
                 raise NotImplementedError
