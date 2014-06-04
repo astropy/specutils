@@ -1,4 +1,4 @@
-from ..wcs.spline_model import BSplineModel
+from ..BSplineModel import BSplineModel
 import numpy as np
 
 def test_init():
