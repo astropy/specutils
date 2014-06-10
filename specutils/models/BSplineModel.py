@@ -1,6 +1,4 @@
 from astropy.modeling import Model, Parameter
-from scipy import interpolate
-import numpy as np
 
 class BSplineModel(Model):
     """
@@ -35,10 +33,13 @@ class BSplineModel(Model):
         degree: int
             the degree of the spline (e.g. 1 for linear, 3 for cubic)
         """
-        knots, coefficients, _ = interpolate.splrep(x, y, k=degree)
+        from scipy.interpolate import splrep
+
+        knots, coefficients, _ = splrep(x, y, k=degree)
         return cls(degree, knots, coefficients)
 
     def __init__(self, degree, knots, coefficients):
+
         if len(knots) != len(coefficients):
             raise ValueError("Number of knots ({0}) have to be equal to the"
                              "number of coefficients ({1})"
@@ -65,11 +66,13 @@ class BSplineModel(Model):
         return names
 
     def __call__(self, x):
+        from scipy.interpolate import splev
+
         coefficients, knots = [], []
         for i in xrange(self.n_pieces):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
-        return interpolate.splev(x, (knots, coefficients, self.degree))
+        return splev(x, (knots, coefficients, self.degree))
 
     def __getattr__(self, attr):
         if self.param_names and attr in self.param_names:
