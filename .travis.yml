@@ -118,4 +118,4 @@ script:
 
 after_success:
     # Uncomment line below if coveralls.io is set up for this package.
-    # - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls; fi
+    - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls; fi
