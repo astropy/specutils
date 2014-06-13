@@ -11,12 +11,12 @@ from astropy.modeling.parameters import Parameter
 import astropy.units as u
 
 from astropy.utils.misc import deprecated
+from astropy.io import fits
 
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km / u.s, u.m, u.Hz, u.erg]
-
 
 @deprecated('0.dev???', 'using no units is now allowed for WCS')
 def check_valid_unit(unit):
@@ -208,6 +208,19 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
     def __call__(self, pixel_indices):
         return polynomial.Polynomial1D.__call__(self, pixel_indices) * self.unit
+
+    def add_to_header(self, header, spectral_axis=1):
+        header['cdelt{0}'.format(spectral_axis)] = self.c1.value
+        header['cd{0}_{1}'.format(spectral_axis, spectral_axis)] = self.c1.value
+        header['crval{0}'.format(spectral_axis)] = self.c0.value
+        unit_string = self.unit
+        if isinstance(self.unit, u.Unit):
+            if self.unit == u.AA:
+                unit_string = 'angstroms'
+            else:
+                unit_string = self.unit.name
+
+        header['crunit{0}'.format(spectral_axis)] = unit_string
 
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
