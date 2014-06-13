@@ -403,8 +403,9 @@ def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
         #checking that both cd1_1 and cdelt1 are either the same or
         # one of them non-existent
         if dispersion_delta is not None:
-            assert np.testing.assert_almost_equal(
-                dispersion_delta, wcs_info.affine_transform_dict['cdelt1'])
+            np.testing.assert_almost_equal(
+                dispersion_delta,
+                wcs_info.affine_transform_dict['cdelt'][spectral_axis])
         dispersion_delta = wcs_info.affine_transform_dict['cdelt'][spectral_axis]
 
     if dispersion_delta is None:
