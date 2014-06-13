@@ -233,14 +233,15 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         header['cdelt{0}'.format(spectral_axis)] = self.c1.value
         header['cd{0}_{1}'.format(spectral_axis, spectral_axis)] = self.c1.value
         header['crval{0}'.format(spectral_axis)] = self.c0.value
-        unit_string = self.unit
-        if isinstance(self.unit, u.Unit):
-            if self.unit == u.AA:
-                unit_string = 'angstroms'
-            else:
-                unit_string = self.unit.name
+        if self._unit is not None:
+            unit_string = self.unit
+            if isinstance(self.unit, u.UnitBase):
+                if self.unit == u.AA:
+                    unit_string = 'angstroms'
+                else:
+                    unit_string = self.unit.name
 
-        header['crunit{0}'.format(spectral_axis)] = unit_string
+            header['crunit{0}'.format(spectral_axis)] = unit_string
 
 
 class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
