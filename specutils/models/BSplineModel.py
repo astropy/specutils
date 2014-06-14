@@ -20,8 +20,8 @@ class BSplineModel(Model):
         If the length of knots and coefficients arrays do not match
     """
 
-    @classmethod
-    def from_data(cls, x, y, degree):
+    @staticmethod
+    def from_data(x, y, degree):
         """
         Initializes the B-spline representation of 1-D curve.
         Given the set of data points (x[i], y[i]) determines a smooth spline
@@ -36,7 +36,7 @@ class BSplineModel(Model):
         from scipy.interpolate import splrep
 
         knots, coefficients, _ = splrep(x, y, k=degree)
-        return cls(degree, knots, coefficients)
+        return BSplineModel(degree, knots, coefficients)
 
     def __init__(self, degree, knots, coefficients):
 
