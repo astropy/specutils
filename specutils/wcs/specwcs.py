@@ -21,8 +21,10 @@ valid_spectral_units = [u.pix, u.km / u.s, u.m, u.Hz, u.erg]
 @deprecated('0.dev???', 'using no units is now allowed for WCS')
 def check_valid_unit(unit):
     if not any([unit.is_equivalent(x) for x in valid_spectral_units]):
-        raise ValueError("Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
-                         ", ".join([x.to_string() for x in valid_spectral_units]))
+        raise ValueError(
+            "Unit %r is not recognized as a valid spectral unit.  Valid units are: " % unit.to_string() +
+            ", ".join([x.to_string() for x in valid_spectral_units]))
+
 
 #^^^^^^^^^^^^^^^^^
 class Spectrum1DWCSError(Exception):
@@ -70,7 +72,8 @@ class BaseSpectrum1DWCS(Model):
     @unit.setter
     def unit(self, value):
         if value is None:
-            warnings.warn('Initializing a Spectrum1D WCS with units set to `None` is not recommended')
+            warnings.warn(
+                'Initializing a Spectrum1D WCS with units set to `None` is not recommended')
             self._unit = None
         else:
             self._unit = u.Unit(value)
@@ -114,7 +117,8 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     n_outputs = 1
     lookup_table_parameter = Parameter('lookup_table_parameter')
 
-    def __init__(self, lookup_table, unit=None, lookup_table_interpolation_kind='linear'):
+    def __init__(self, lookup_table, unit=None,
+                 lookup_table_interpolation_kind='linear'):
         super(Spectrum1DLookupWCS, self).__init__()
 
         if unit is not None:
@@ -130,24 +134,31 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         assert self.lookup_table_parameter.value.ndim == 1
 
         #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
-        if len(self.lookup_table_parameter.value) != len(np.unique(self.lookup_table_parameter.value)):
-            raise Spectrum1DWCSError('The Lookup Table does not describe a unique transformation')
+        if len(self.lookup_table_parameter.value) != len(
+                np.unique(self.lookup_table_parameter.value)):
+            raise Spectrum1DWCSError(
+                'The Lookup Table does not describe a unique transformation')
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
         if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(pixel_indices, self.pixel_index, self.lookup_table_parameter.value, left=np.nan,
+            return np.interp(pixel_indices, self.pixel_index,
+                             self.lookup_table_parameter.value, left=np.nan,
                              right=np.nan) * self.unit
         else:
-            raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
+            raise NotImplementedError(
+                'Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
 
     def invert(self, dispersion_values):
         if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(dispersion_values, self.lookup_table_parameter.value, self.pixel_index, left=np.nan,
+            return np.interp(dispersion_values,
+                             self.lookup_table_parameter.value,
+                             self.pixel_index, left=np.nan,
                              right=np.nan)
         else:
-            raise NotImplementedError('Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
+            raise NotImplementedError(
+                'Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
 
 
 class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
@@ -184,25 +195,33 @@ class Spectrum1DLinearWCS(BaseSpectrum1DWCS):
 
 
     def __call__(self, pixel_indices):
-        if misc.isiterable(pixel_indices) and not isinstance(pixel_indices, six.string_types):
+        if misc.isiterable(pixel_indices) and not isinstance(pixel_indices,
+                                                             six.string_types):
             pixel_indices = np.array(pixel_indices)
-        return (self.dispersion0 + self.dispersion_delta * (pixel_indices - self.pixel_index)) * self.unit
+        return (self.dispersion0 + self.dispersion_delta * (
+            pixel_indices - self.pixel_index)) * self.unit
 
     def invert(self, dispersion_values):
         if not hasattr(dispersion_values, 'unit'):
-            raise u.UnitsException('Must give a dispersion value with a valid unit (i.e. quantity 5 * u.Angstrom)')
+            raise u.UnitsException(
+                'Must give a dispersion value with a valid unit (i.e. quantity 5 * u.Angstrom)')
 
-        if misc.isiterable(dispersion_values) and not isinstance(dispersion_values, six.string_types):
+        if misc.isiterable(dispersion_values) and not isinstance(
+                dispersion_values, six.string_types):
             dispersion_values = np.array(dispersion_values)
-        return float((dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
+        return float((
+                         dispersion_values - self.dispersion0) / self.dispersion_delta) + self.pixel_index
 
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     __doc__ = 'WCS for polynomial dispersion. The only added parameter is a unit, otherwise the same as ' \
               '`~astropy.modeling.polynomial.Polynomial1D`:\n' + polynomial.Polynomial1D.__doc__
 
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1, **params):
-        super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
+                 param_dim=1, **params):
+        super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
+                                                      window=window,
+                                                      param_dim=param_dim,
                                                       **params)
         self.unit = unit
 
@@ -214,14 +233,18 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     __doc__ = 'WCS for polynomial dispersion using Legendre Polynomials. The only added parameter is a unit, otherwise the same as ' \
               '`~astropy.modeling.polynomial.Legendre1D`:\n' + polynomial.Polynomial1D.__doc__
 
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1,
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
+                 param_dim=1,
                  **params):
-        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
+        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain,
+                                                    window=window,
+                                                    param_dim=param_dim,
                                                     **params)
         self.unit = unit
 
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
+
 
 class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
@@ -234,29 +257,48 @@ class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     astropy.modeling.polynomial.Polynomial1D
     """
 
-    def __init__(self, degree, unit=None, domain=None, window=[-1,1], param_dim=1,
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
+                 param_dim=1,
                  **params):
-        super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
-                                                    **params)
+        super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain,
+                                                     window=window,
+                                                     param_dim=param_dim,
+                                                     **params)
         self.unit = unit
 
     def __call__(self, pixel_indices):
         return polynomial.Chebyshev1D.__call__(self, pixel_indices) * self.unit
 
-class Spectrum1DBSplineWCS(BaseSpectrum1DWCS):
+
+class Spectrum1DBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     """
     WCS for polynomial dispersion using BSpline functions. The only added
     parameter is a unit.
     """
 
-    def __init__(self, degree, x, y, npieces, unit=None):
-        self.model = BSplineModel.from_data(x, y, degree)
+    def __init__(self, degree, x, y, unit=None):
+        super(Spectrum1DBSplineWCS, self).from_data(x, y, degree)
         self.unit = unit
+
+    def __call__(self, pixel_indices):
+        return super(Spectrum1DBSplineWCS, self).__call__(pixel_indices) \
+            * self.unit
+
+
+class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
+    """
+    WCS for polynomial dispersion using BSpline functions with transformation
+    required for processing IRAF specification.
+    """
+
+    def __init__(self, degree, x, y, npieces, unit=None):
+        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, x, y, unit)
         self.npieces = npieces
 
     def __call__(self, pixel_indices):
         s = np.linspace(0, self.npieces, len(pixel_indices))
-        return self.model(s) * self.unit
+        return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
+
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
@@ -265,7 +307,8 @@ def _parse_doppler_convention(dc):
            'optical': u.doppler_optical}
     if dc in dcd:
         return dcd[dc]
-    elif dc in dcd.values(): # allow users to specify the convention directly
+    elif dc in dcd.values():  # allow users to specify the convention directly
         return dc
     else:
-        raise ValueError("Doppler convention must be one of " + ",".join(dcd.keys()))
+        raise ValueError(
+            "Doppler convention must be one of " + ",".join(dcd.keys()))

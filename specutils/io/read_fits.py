@@ -326,7 +326,7 @@ class FITSWCSSpectrum(object):
                      for i in range(npieces + degree)]
                 x = np.arange(npieces + degree)
                 multispec_wcs_dict[spec_key] = \
-                    specwcs.Spectrum1DBSplineWCS(degree, x, y, npieces,
+                    specwcs.Spectrum1DIRAFBSplineWCS(degree, x, y, npieces,
                                                  unit=dispersion_unit)
 
             else:
