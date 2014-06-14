@@ -1,8 +1,6 @@
-from astropy.modeling import polynomial, Parameter
-from scipy import interpolate
-import numpy as np
+from astropy.modeling import Model, Parameter
 
-class BSplineModel(polynomial.PolynomialBase):
+class BSplineModel(Model):
     """
     Implements a BSpline representation of 1-D curve.
 
@@ -35,10 +33,13 @@ class BSplineModel(polynomial.PolynomialBase):
         degree: int
             the degree of the spline (e.g. 1 for linear, 3 for cubic)
         """
-        knots, coefficients, _ = interpolate.splrep(x, y, k=degree)
+        from scipy.interpolate import splrep
+
+        knots, coefficients, _ = splrep(x, y, k=degree)
         return cls(degree, knots, coefficients)
 
     def __init__(self, degree, knots, coefficients):
+
         if len(knots) != len(coefficients):
             raise ValueError("Number of knots ({0}) have to be equal to the"
                              "number of coefficients ({1})"
@@ -49,7 +50,7 @@ class BSplineModel(polynomial.PolynomialBase):
 
         self.degree = degree
         self.n_pieces = len(knots)
-        self._param_names = self._generate_param_names(self.n_pieces)
+        self.param_names = self._generate_param_names(self.n_pieces)
 
         params = {}
         for i in xrange(len(knots)):
@@ -65,8 +66,32 @@ class BSplineModel(polynomial.PolynomialBase):
         return names
 
     def __call__(self, x):
+        from scipy.interpolate import splev
+
         coefficients, knots = [], []
         for i in xrange(self.n_pieces):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
-        return interpolate.splev(x, (knots, coefficients, self.degree))
+        return splev(x, (knots, coefficients, self.degree))
+
+    def __getattr__(self, attr):
+        if self.param_names and attr in self.param_names:
+            return Parameter(attr, default=0.0, model=self)
+        else:
+            return super(BSplineModel, self).__getattr__(attr)
+
+    def __setattr__(self, attr, value):
+        # TODO: Support a means of specifying default values for coefficients
+        # Check for self._ndim first--if it hasn't been defined then the
+        # instance hasn't been initialized yet and self.param_names probably
+        # won't work.
+        # This has to vaguely duplicate the functionality of
+        # Parameter.__set__.
+        # TODO: I wonder if there might be a way around that though...
+        if attr[0] != '_' and self.param_names and attr in self.param_names:
+            param = Parameter(attr, default=0.0, model=self)
+            # This is a little hackish, but we can actually reuse the
+            # Parameter.__set__ method here
+            param.__set__(self, value)
+        else:
+            super(BSplineModel, self).__setattr__(attr, value)

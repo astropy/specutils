@@ -1,7 +1,10 @@
 from ..BSplineModel import BSplineModel
 import numpy as np
+import pytest
+
 
 def test_init():
+    pytest.importorskip("scipy")
     knots = [0., 0., 0., 0., 2.22222222, 3.33333333, 4.44444444, 5.55555556,
              6.66666667, 7.77777778, 10., 10., 10., 10.]
     coefficients = [ -4.94881722e-18,   8.96543619e-01,   1.39407154e+00,
@@ -50,6 +53,7 @@ def test_init():
     np.testing.assert_allclose(y, bs(x), rtol=1.e-4)
 
 def test_from_data():
+    pytest.importorskip("scipy")
     x1 = np.linspace(0, 10, 10)
     y1 = np.sin(x1)
     bs = BSplineModel.from_data(x1, y1, 3)
