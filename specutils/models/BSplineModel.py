@@ -20,8 +20,8 @@ class BSplineModel(Model):
         If the length of knots and coefficients arrays do not match
     """
 
-    @staticmethod
-    def from_data(x, y, degree):
+    @classmethod
+    def from_data(cls, x, y, degree):
         """
         Initializes the B-spline representation of 1-D curve.
         Given the set of data points (x[i], y[i]) determines a smooth spline
@@ -36,7 +36,7 @@ class BSplineModel(Model):
         from scipy.interpolate import splrep
 
         knots, coefficients, _ = splrep(x, y, k=degree)
-        return BSplineModel(degree, knots, coefficients)
+        return cls(degree, knots, coefficients)
 
     def __init__(self, degree, knots, coefficients):
 
@@ -49,8 +49,8 @@ class BSplineModel(Model):
         #     raise ValueError("Not enough knots ({0})".format(len(knots)))
 
         self.degree = degree
-        self.n_pieces = len(knots)
-        self.param_names = self._generate_param_names(self.n_pieces)
+        self.size = len(knots)
+        self.param_names = self._generate_param_names(self.size)
 
         params = {}
         for i in xrange(len(knots)):
@@ -58,9 +58,9 @@ class BSplineModel(Model):
             params["t{:d}".format(i)] = knots[i]
         super(BSplineModel, self).__init__(param_dim=1, **params)
 
-    def _generate_param_names(self, n_pieces):
+    def _generate_param_names(self, size):
         names = []
-        for i in xrange(n_pieces):
+        for i in xrange(size):
             names.append("c{:d}".format(i))
             names.append("t{:d}".format(i))
         return names
@@ -69,7 +69,7 @@ class BSplineModel(Model):
         from scipy.interpolate import splev
 
         coefficients, knots = [], []
-        for i in xrange(self.n_pieces):
+        for i in xrange(self.size):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
         return splev(x, (knots, coefficients, self.degree))
