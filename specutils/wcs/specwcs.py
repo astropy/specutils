@@ -227,18 +227,8 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return polynomial.Polynomial1D.__call__(self, pixel_indices) * self.unit
-
-
-class Spectrum1DIRAFPolynomialWCS(Spectrum1DPolynomialWCS):
-    """
-    WCS for polynomial dispersion with transformation required for processing
-    IRAF specification described at http://iraf.net/irafdocs/specwcs.php
-    """
-
-    def __call__(self, pixel_indices):
-        pixel_indices += 1
-        return super(Spectrum1DIRAFPolynomialWCS, self).__call__(pixel_indices)
+        return super(Spectrum1DPolynomialWCS, self)\
+            .__call__(self, pixel_indices) * self.unit
 
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
@@ -256,7 +246,8 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
+        return super(Spectrum1DLegendreWCS, self).__call__(self, pixel_indices)\
+            * self.unit
 
 
 class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
@@ -316,7 +307,7 @@ class Spectrum1DBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     """
 
     def __init__(self, degree, x, y, unit=None):
-        super(Spectrum1DBSplineWCS, self).from_data(x, y, degree)
+        super(Spectrum1DBSplineWCS, self).__init__(degree, x, y)
         self.unit = unit
 
     def __call__(self, pixel_indices):
@@ -337,9 +328,8 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
         self.pmax = pmax
 
     def __call__(self, pixel_indices):
-        n_pieces = self.size - self.degree - 1
-        length = self.pmax - self.pmin
-        s = (pixel_indices * 1.0 * n_pieces) / length
+        n_pieces = self.length - self.degree - 2
+        s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
 
 

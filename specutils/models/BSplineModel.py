@@ -8,49 +8,42 @@ class BSplineModel(Model):
     -----------
     degree : int
         the degree of the spline (e.g. 1 for linear, 3 for cubic)
-    knots : array_like
-        array of knots of the spline
-    coefficients: array_like
-        coefficients corresponding to the knots, should be
-        the same length as knots
-
+    x : array_like
+        If fitted is False, then x defines the data points defining a curve y
+        = f(x). Otherwise x is an array of knots of the spline
+    y : array_like
+        If fitted is False, then y defines the data points defining a curve y
+        = f(x). Otherwise y is an array of coefficients corresponding to the
+        knots, should be the same length as knots
+    fitted : boolean
+        If fitted is True, then x and y are treated as knots and coefficients
+        respectively. Otherwise, a smooth spline approximation is determined
+        from the given set of data points (x[i], y[i])
     Raises
     --------
     ValueError
-        If the length of knots and coefficients arrays do not match
+        If the length of x (knots) and y (coefficients) arrays do not match
     """
 
-    @classmethod
-    def from_data(cls, x, y, degree):
-        """
-        Initializes the B-spline representation of 1-D curve.
-        Given the set of data points (x[i], y[i]) determines a smooth spline
-        approximation
-        Parameters
-        -----------
-        x, y : array_like
-            The data points defining a curve y = f(x)
-        degree: int
-            the degree of the spline (e.g. 1 for linear, 3 for cubic)
-        """
+    def __init__(self, degree, x, y, fitted=False):
+
         from scipy.interpolate import splrep
-
-        knots, coefficients, _ = splrep(x, y, k=degree)
-        return cls(degree, knots, coefficients)
-
-    def __init__(self, degree, knots, coefficients):
-
-        if len(knots) != len(coefficients):
-            raise ValueError("Number of knots ({0}) have to be equal to the"
-                             "number of coefficients ({1})"
-                             .format(len(knots), len(coefficients)))
+        if len(x) != len(y):
+            raise ValueError("Number of elements in x (knots) ({0}) have to be "
+                             "equal to the number of elements in y "
+                             "(coefficients) ({1})".format(len(x), len(y)))
         # TODO: Scipy does not raise any error in any case, figure out why
         # if len(knots) - degree - 1 <= 1:
         #     raise ValueError("Not enough knots ({0})".format(len(knots)))
 
+        if fitted:
+            knots, coefficients = x, y
+        else:
+            knots, coefficients, _ = splrep(x, y, k=degree)
+
         self.degree = degree
-        self.size = len(knots)
-        self.param_names = self._generate_param_names(self.size)
+        self.length = len(knots)
+        self.param_names = self._generate_param_names()
 
         params = {}
         for i in xrange(len(knots)):
@@ -58,9 +51,9 @@ class BSplineModel(Model):
             params["t{:d}".format(i)] = knots[i]
         super(BSplineModel, self).__init__(param_dim=1, **params)
 
-    def _generate_param_names(self, size):
+    def _generate_param_names(self):
         names = []
-        for i in xrange(size):
+        for i in xrange(self.length):
             names.append("c{:d}".format(i))
             names.append("t{:d}".format(i))
         return names
@@ -69,7 +62,7 @@ class BSplineModel(Model):
         from scipy.interpolate import splev
 
         coefficients, knots = [], []
-        for i in xrange(self.size):
+        for i in xrange(self.length):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
         return splev(x, (knots, coefficients, self.degree))

@@ -342,11 +342,13 @@ class FITSWCSSpectrum(object):
                     degree = 3
                 function_dict = single_spec_dict['function']
                 n_pieces = function_dict['npieces']
+                pmin = function_dict['pmin']
+                pmax = function_dict['pmax']
                 y = [function_dict['coefficients'][i]
                      for i in range(n_pieces + degree)]
                 x = np.arange(n_pieces + degree)
                 multispec_wcs_dict[spec_key] = \
-                    specwcs.Spectrum1DIRAFBSplineWCS(degree, x, y, n_pieces,
+                    specwcs.Spectrum1DIRAFBSplineWCS(degree, x, y, pmin, pmax,
                                                      unit=dispersion_unit)
 
             else:
@@ -413,7 +415,7 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None,
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
     dispersion_start += -pixel_offset * dispersion_delta
-    return specwcs.Spectrum1DIRAFPolynomialWCS(degree=1, unit=dispersion_unit,
+    return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
                                            c0=dispersion_start,
                                            c1=dispersion_delta)
 
