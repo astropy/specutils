@@ -244,6 +244,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
             header['cunit{0}'.format(spectral_axis)] = unit_string
 
+    # can only be implemented, when the reader is in place
     def write_fits_header_multispec(self, header, spectral_axis=1):
         pass
 
