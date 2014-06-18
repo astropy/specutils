@@ -220,7 +220,7 @@ class Spectrum1D(NDData):
         wavelengths = np.arange(len(data))*cdelt+wstart
         hdulist.close()
         
-        return cls.from_array(dispersion=wavelengths, flux=data)
+        return cls.from_array(cls,wavelengths,flux)
 
 
     def to_fits(self, filename, uncertainty=None,extension=0):
