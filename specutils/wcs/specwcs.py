@@ -225,24 +225,47 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
                                                       window=window, **params)
         self.unit = unit
 
+        self.fits_header_writers = {'linear': self.write_fits_header_linear,
+                                    'matrix': self.write_fits_header_matrix,
+                                    'multispec': self.write_fits_header_multispec}
+
     def __call__(self, pixel_indices):
         return super(Spectrum1DPolynomialWCS, self).__call__(
             pixel_indices) * self.unit
 
-    def add_to_header(self, header, spectral_axis=1):
+    def write_fits_header(self, header, spectral_axis=1, method='linear'):
+        self.fits_header_writers[method](header, spectral_axis)
+
+    def write_fits_header_linear(self, header, spectral_axis=1):
         header['cdelt{0}'.format(spectral_axis)] = self.c1.value
-        header['cd{0}_{1}'.format(spectral_axis, spectral_axis)] = self.c1.value
         header['crval{0}'.format(spectral_axis)] = self.c0.value
+
         if self._unit is not None:
             unit_string = self.unit
             if isinstance(self.unit, u.UnitBase):
                 if self.unit == u.AA:
                     unit_string = 'angstroms'
                 else:
-                    unit_string = self.unit.name
+                    unit_string = self.unit.to_string()
 
-            header['crunit{0}'.format(spectral_axis)] = unit_string
+            header['cunit{0}'.format(spectral_axis)] = unit_string
 
+    def write_fits_header_matrix(self, header, spectral_axis=1):
+        header['cd{0}_{1}'.format(spectral_axis, spectral_axis)] = self.c1.value
+        header['crval{0}'.format(spectral_axis)] = self.c0.value
+
+        if self._unit is not None:
+            unit_string = self.unit
+            if isinstance(self.unit, u.UnitBase):
+                if self.unit == u.AA:
+                    unit_string = 'angstroms'
+                else:
+                    unit_string = self.unit.to_string()
+
+            header['cunit{0}'.format(spectral_axis)] = unit_string
+
+    def write_fits_header_multispec(self, header, spectral_axis=1):
+        pass
 
 class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     """
