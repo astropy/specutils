@@ -26,3 +26,4 @@ def test_linear_write2():
     np.testing.assert_allclose(spec.data, test_spec.data)
     np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
 
+# TODO: create tests that utilize all methods to write fits header

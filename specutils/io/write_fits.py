@@ -24,7 +24,7 @@ def write(filename, data, wcs, output_verify='exception', clobber=True,
         for wcs1D in wcs:
             wcs1D.add_to_header(hdu.header)
     else:
-        wcs.add_to_header(hdu.header)
+        wcs.write_fits_header(hdu.header)
 
     hdu.writeto(filename, clobber=clobber, output_verify=output_verify,
                 checksum=checksum)
