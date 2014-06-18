@@ -11,9 +11,13 @@ __pycache__
 
 # Other generated files
 */version.py
+*/cython_version.py
+htmlcov
+.coverage
 
 # Sphinx
 _build
+docs/api
 
 # Packages/installer info
 *.egg
@@ -32,6 +36,14 @@ distribute-*.tar.gz
 # Other
 .*.swp
 *~
+.settings
+.project
+.pydevproject
 
 # Mac OSX
 .DS_Store
+
+#coverage related ignores
+
+htmlcov
+.coverage

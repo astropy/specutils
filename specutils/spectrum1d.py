@@ -3,15 +3,20 @@
 
 from __future__ import print_function, division
 
-__all__ = ['Spectrum1D', 'spec_operation']
+__all__ = ['Spectrum1D']
 
+import copy
+from astropy.extern import six
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
 from astropy.io import fits
 
 from astropy.utils import misc
 
-from .wcs import Spectrum1DLookupWCS, Spectrum1DLinearWCS
+from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
+
+
+from astropy import units as u
 
 import numpy as np
 
@@ -21,25 +26,65 @@ class Spectrum1D(NDData):
     
     This class inherits all the base class functionality from the NDData class
     and is communicative with other Spectrum1D objects in ways which make sense.
+
+    Parameters
+    ----------
+    data : `~numpy.ndarray`
+        flux of the spectrum
+
+    wcs : `spectrum1d.wcs.specwcs.BaseSpectrum1DWCS`-subclass
+        transformation between pixel coordinates and "dispersion" coordinates
+        this carries the unit of the dispersion
+
+    unit : `~astropy.unit.Unit` or None, optional
+        unit of the flux, default=None
+
+    mask : `~numpy.ndarray`, optional
+        Mask for the data, given as a boolean Numpy array with a shape
+        matching that of the data. The values must be ``False`` where
+        the data is *valid* and ``True`` when it is not (like Numpy
+        masked arrays). If `data` is a numpy masked array, providing
+        `mask` here will causes the mask from the masked array to be
+        ignored.
+
+    flags : `~numpy.ndarray` or `~astropy.nddata.FlagCollection`, optional
+        Flags giving information about each pixel. These can be specified
+        either as a Numpy array of any type with a shape matching that of the
+        data, or as a `~astropy.nddata.FlagCollection` instance which has a
+        shape matching that of the data.
+
+    meta : `dict`-like object, optional
+        Metadata for this object.  "Metadata" here means all information that
+        is included with this object but not part of any other attribute
+        of this particular object.  e.g., creation date, unique identifier,
+        simulation parameters, exposure time, telescope name, etc.
+
     """
-    
+
+    _wcs_attributes = {'wavelength': {'unit': u.m},
+                      'frequency': {'unit': u.Hz},
+                      'energy': {'unit': u.J},
+                      'velocity': {'unit': u.m/u.s}}
     
     @classmethod
-    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None, flags=None, meta=None,
-                   unit=None, copy=True):
+    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
+                   flags=None, meta=None, copy=True,
+                   unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
         Parameters:
         -----------
-        dispersion : `~numpy.ndarray`
-            The dispersion for the Spectrum (i.e. an array of wavelength points).
+        dispersion : `~astropy.units.quantity.Quantity` or `~np.array`
+            The dispersion for the Spectrum (e.g. an array of wavelength
+            points). If an array is specified `dispersion_unit` needs to be a spectral unit
         
-        flux : `~numpy.ndarray`
+        flux : `~astropy.units.quantity.Quantity` or `~np.array`
             The flux level for each wavelength point. Should have the same length
-            as `disp`.
+            as `dispersion`.
 
+        dispersion_unit :
         error : `~astropy.nddata.NDError`, optional
-            Errors on the data. 
+            Errors on the data.
 
         mask : `~numpy.ndarray`, optional
             Mask for the data, given as a boolean Numpy array with a shape
@@ -51,16 +96,13 @@ class Spectrum1D(NDData):
             Flags giving information about each pixel. These can be specified
             either as a Numpy array of any type with a shape matching that of the
             data, or as a `~astropy.nddata.FlagCollection` instance which has a
-            shape matching that of the data. 
+            shape matching that of the data.
 
         meta : `dict`-like object, optional
             Metadata for this object. "Metadata here means all information that
             is included with this object but not part of any other attribute
             of this particular object. e.g., creation date, unique identifier,
             simulation parameters, exposure time, telescope name, etc.
-
-        units : undefined, optional
-            The units of the data. See `~NDData` for more current information.
 
         copy : bool, optional
             If True, the array will be *copied* from the provided `data`,
@@ -78,11 +120,16 @@ class Spectrum1D(NDData):
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
             raise ValueError("dispersion and flux need to be one-dimensional Numpy arrays with the same shape")
         spec_wcs = Spectrum1DLookupWCS(dispersion, unit=dispersion_unit)
-        return cls(data=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
+
+        if copy:
+            flux = flux.copy()
+
+        return cls(flux=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
     
     @classmethod
-    def from_table(cls, table, dispersion_column='dispersion', flux_column='flux', uncertainty_column=None,
+    def from_table(cls, table, dispersion_column='dispersion',
+                   flux_column='flux', uncertainty_column=None,
                    flag_columns=None):
         """
         Initializes a `Spectrum1D`-object from an `~astropy.table.Table` object
@@ -117,7 +164,7 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-        if isinstance(flag_columns, basestring):
+        if isinstance(flag_columns, six.string_types):
             flags = table[flag_columns]
         elif misc.isiterable(flag_columns):
             flags = FlagCollection(shape=flux.shape)
@@ -138,8 +185,8 @@ class Spectrum1D(NDData):
                    delimiter=None, converters=None, skiprows=0,
                    usecols=None):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
-                   delimiter=delimiter, converters=converters,
-                   skiprows=skiprows, usecols=usecols, ndmin=2)
+                              delimiter=delimiter, converters=converters,
+                              skiprows=skiprows, usecols=usecols, ndmin=2)
     
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
@@ -213,7 +260,7 @@ class Spectrum1D(NDData):
     def dispersion(self):
         #returning the disp
         if not hasattr(self.wcs, 'lookup_table'):
-            self.wcs.create_lookup_table(np.arange(len(self.flux)))
+            self.wcs.lookup_table = self.wcs(np.arange(len(self.flux)))
 
         return self.wcs.lookup_table
 
@@ -221,17 +268,13 @@ class Spectrum1D(NDData):
     def dispersion_unit(self):
         return self.wcs.unit
 
-    @property
-    def flux_unit(self):
-        return self.unit
-    
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
         """Interpolates onto a new wavelength grid and returns a new `Spectrum1D`-object.
         
         Parameters
         ----------
-        new_disp : `~numpy.ndarray`
+        new_dispersion : `~numpy.ndarray`
             The dispersion array to interpolate the flux on to.
         
         kind : `str` or `int`, optional
@@ -265,53 +308,22 @@ class Spectrum1D(NDData):
         """
         
         # Check for SciPy availability
-        try:
-            from scipy import interpolate
-        except ImportError as e:
-            raise ImportError("Could not import interpolate from scipy; cannot"+
-                              " interpolate to new dispersion map without this"+
-                              " (need scipy.interpolate.interp1d)")
+
+
+        if kind != 'linear':
+            raise ValueError('No other kind but linear supported')
+
+        if not isinstance(new_dispersion, BaseSpectrum1DWCS):
+            new_dispersion = Spectrum1DLookupWCS(np.array(new_dispersion))
+
+
+        new_pixel = self.wcs.invert(new_dispersion.lookup_table)
+
+        new_flux = np.interp(new_pixel, self.wcs.pixel_index, self.flux, left=np.nan, right=np.nan)
         
-        spectrum_interp = interpolate.interp1d(self.dispersion,
-                                               self.flux,
-                                               kind=kind,
-                                               bounds_error=bounds_error,
-                                               fill_value=fill_value)
-        
-        new_flux = spectrum_interp(new_dispersion)
-        
-        # We need to perform error calculation for the new dispersion map
-        if self.uncertainty is None:
-            new_uncertainty = None
-        else:
-            # After having a short think about it, it seems reasonable to me only to
-            # take the nearest uncertainty for each interpolated dispersion point
-            
-            new_uncertainty = interpolate.interp1d(self.dispersion,
-                                             self.flux,
-                                             kind=1, # Nearest
-                                             bounds_error=bounds_error,
-                                             fill_value=fill_value)
-        
-        # The same should also apply for masks
-        if self.mask is None:
-            new_mask = None
-        else:
-            new_mask = interpolate.interp1d(self.dispersion,
-                                            self.flux,
-                                            kind=1, # Nearest
-                                            bounds_error=bounds_error,
-                                            fill_value=fill_value)
-            
-        # As for flags it is not entirely clear to me what the best behaviour is
-        # In the face of uncertainty, for the time being, I am discarding flags
-        
-        return self.__class__.from_array(new_dispersion,
-                                         new_flux,
-                                         uncertainty=new_uncertainty,
-                                         mask=new_mask,
-                                         meta=self.meta)
-        
+
+        return self.__class__(new_flux, wcs=new_dispersion, meta=self.meta)
+
         
     def slice_dispersion(self, start=None, stop=None):
         """Slice the spectrum within a given start and end dispersion value.
@@ -330,32 +342,32 @@ class Spectrum1D(NDData):
         of the dispersion/flux arrays (see :meth:`~Spectrum1D.slice_index` for this
         functionality).
         
-        For example::
+        Examples
+        --------
         
-            >>> from astropy.specutils import Spectrum1D
-            >>> from astropy.units import Units as unit
-            >>> import numpy as np
-            
-            >>> dispersion = np.arange(4000, 5000, 0.12)
-            >>> flux = np.random(len(dispersion))
-            >>> mySpectrum = Spectrum1D.from_array(dispersion,
-                                                   flux,
-                                                   units=unit.Wavelength)
-            
-            >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
-            >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
-            >>> hBeta
-            <hBeta __repr__ #TODO>
+        >>> from specutils import Spectrum1D
+        >>> from astropy import units
+        >>> import numpy as np
+        >>> dispersion = np.arange(4000, 5000, 0.12)
+        >>> flux = np.random.randn(len(dispersion))
+        >>> mySpectrum = Spectrum1D.from_array(dispersion,
+                                               flux,
+                                               dispersion_unit=units.m)
+        
+        >>> # Now say we wanted a slice near H-beta at 4861 Angstroms
+        >>> hBeta = mySpectrum.slice_dispersion(4851.0, 4871.0)
+        >>> hBeta
+        <hBeta __repr__ #TODO>
         
         See Also
         --------
         See `~Spectrum1D.slice_index`
         """
-        
+        raise NotImplementedError('Waiting for slicing implementation in WCS and NDData')
         # Transform the dispersion end points to index space
-        start_index, stop_index = self.wcs.dispersion2pixel([start, stop])
+        start_index, stop_index = self.wcs([start, stop])
         
-        return self.slice_index(start_index, stop_index)
+        #return self.slice_index(start_index, stop_index)
     
     
     def slice_index(self, start=None, stop=None):
@@ -384,5 +396,6 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        raise NotImplemented('Will presumeably implemented in core NDDATA')
-
+        raise NotImplementedError('Will presumeably implemented in core NDDATA,'
+                                  'though this is just trivial indexing.')
+        return self[start:stop]

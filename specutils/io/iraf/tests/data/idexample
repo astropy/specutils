@@ -1,0 +1,94 @@
+# Tue 11:10:04 03-Feb-2009
+begin	identify sample_id_H[*,50]
+	id	sample_id_H
+	task	identify
+	image	sample_id_H[*,50]
+	units	Angstroms
+	features	4
+	        207.84 18118.4981    18118.5   4.0 1 1 0.50
+	        266.14 17994.0157     17994.   4.0 1 1 1.42
+	        319.36 17880.2822    17880.3   4.0 1 1 1.20
+	        416.74 17671.8816    17671.8   4.0 1 1 0.70
+	function spline3
+	order 3
+	sample *
+	naverage 1
+	niterate 0
+	low_reject 3.
+	high_reject 3.
+	grow 0.
+	coefficients	10
+		3.
+		3.
+		1.
+		2048.
+		3333.671272836069
+		3093.715814517963
+		2850.379520446155
+		2604.212260656321
+		2356.473587117847
+		2108.071742438167
+# Tue 18:27:45 03-Feb-2009
+begin	identify sample_id_H[*,60]
+	id	sample_id_H
+	task	identify
+	image	sample_id_H[*,60]
+	units	Angstroms
+	features	5
+	        207.84 18118.5206    18118.5   4.0 1 1 0.50
+	        266.14  17994.018     17994.   4.0 1 1 1.42
+	        319.36 17880.2582    17880.3   4.0 1 1 1.20
+	        416.74 17671.8412    17671.8   4.0 1 1 0.70
+	        425.51 17653.0545    17653.2   4.0 1 1 2.00
+	function spline3
+	order 3
+	sample *
+	naverage 1
+	niterate 0
+	low_reject 3.
+	high_reject 3.
+	grow 0.
+	coefficients	10
+		3.
+		3.
+		1.
+		2048.
+		3334.232217060324
+		3093.660111757437
+		2850.398116154323
+		2604.244761604386
+		2356.460247018455
+		2108.108538294283
+
+begin	identify sample_id_H[*,70]
+	id	sample_id_H
+	task	identify
+	image	sample_id_H[*,70]
+	units	Angstroms
+	features	5
+	        207.84 18118.5206    18118.5   4.0 1 1 0.50
+	        266.14  17994.018     17994.   4.0 1 1 1.42
+	        319.36 17880.2582    17880.3   4.0 1 1 1.20
+	        416.74 17671.8412    17671.8   4.0 1 1 0.70
+	        425.51 17653.0545    17653.2   4.0 1 1 2.00
+	function spline3
+	order 3
+	sample *
+	naverage 1
+	niterate 0
+	low_reject 3.
+	high_reject 3.
+	grow 0.
+	coefficients	10
+		3.
+		3.
+		1.
+		2048.
+		3334.232217060324
+		3093.660111757437
+		2850.398116154323
+		2604.244761604386
+		2356.460247018455
+		2108.108538294283
+
+
