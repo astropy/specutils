@@ -11,12 +11,12 @@ from astropy.modeling.parameters import Parameter
 import astropy.units as u
 
 from astropy.utils.misc import deprecated
+from astropy.io import fits
 
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km / u.s, u.m, u.Hz, u.erg]
-
 
 @deprecated('0.dev???', 'using no units is now allowed for WCS')
 def check_valid_unit(unit):
@@ -97,6 +97,7 @@ class BaseSpectrum1DWCS(Model):
         """
         u.core._normalize_equivalencies(new_equiv)
         self._equivalencies += new_equiv
+
 
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
@@ -206,9 +207,46 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
                                                       **params)
         self.unit = unit
 
+        self.fits_header_writers = {'linear': self.write_fits_header_linear,
+                                    'matrix': self.write_fits_header_matrix,}
+
     def __call__(self, pixel_indices):
         return polynomial.Polynomial1D.__call__(self, pixel_indices) * self.unit
 
+    def write_fits_header(self, header, spectral_axis=1, method='linear'):
+        self.fits_header_writers[method](header, spectral_axis)
+
+    def write_fits_header_linear(self, header, spectral_axis=1):
+        header['cdelt{0}'.format(spectral_axis)] = self.c1.value
+        header['crval{0}'.format(spectral_axis)] = self.c0.value
+
+        if self._unit is not None:
+            unit_string = self.unit
+            if isinstance(self.unit, u.UnitBase):
+                if self.unit == u.AA:
+                    unit_string = 'angstroms'
+                else:
+                    unit_string = self.unit.to_string()
+
+            header['cunit{0}'.format(spectral_axis)] = unit_string
+
+    def write_fits_header_matrix(self, header, spectral_axis=1):
+        header['cd{0}_{1}'.format(spectral_axis, spectral_axis)] = self.c1.value
+        header['crval{0}'.format(spectral_axis)] = self.c0.value
+
+        if self._unit is not None:
+            unit_string = self.unit
+            if isinstance(self.unit, u.UnitBase):
+                if self.unit == u.AA:
+                    unit_string = 'angstroms'
+                else:
+                    unit_string = self.unit.to_string()
+
+            header['cunit{0}'.format(spectral_axis)] = unit_string
+
+    # will be implemented only after the reader is in place
+    def get_fits_spec(self):
+        pass
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     __doc__ = 'WCS for polynomial dispersion using Legendre Polynomials. The only added parameter is a unit, otherwise the same as ' \
@@ -220,8 +258,19 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
                                                     **params)
         self.unit = unit
 
+
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
+
+    def get_fits_spec(self):
+        #specN = ap beam dtype w1 dw nw z aplow aphigh wt_i w0_i ftype_i [parameters] [coefficients]
+        w1 = self.__call__(0)
+        dw = 0
+        spec_string = "0 0 2 {0} {1} {2} {3}"
+
+
+
+
 
 class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
