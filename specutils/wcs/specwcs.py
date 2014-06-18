@@ -99,6 +99,7 @@ class BaseSpectrum1DWCS(Model):
         self._equivalencies += new_equiv
 
 
+
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
     A simple lookup table wcs
@@ -207,8 +208,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.unit = unit
 
         self.fits_header_writers = {'linear': self.write_fits_header_linear,
-                                    'matrix': self.write_fits_header_matrix,
-                                    'multispec': self.write_fits_header_multispec}
+                                    'matrix': self.write_fits_header_matrix,}
 
     def __call__(self, pixel_indices):
         return polynomial.Polynomial1D.__call__(self, pixel_indices) * self.unit
@@ -244,8 +244,8 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
             header['cunit{0}'.format(spectral_axis)] = unit_string
 
-    # can only be implemented, when the reader is in place
-    def write_fits_header_multispec(self, header, spectral_axis=1):
+    # will be implemented only after the reader is in place
+    def get_fits_spec(self):
         pass
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
@@ -258,8 +258,19 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
                                                     **params)
         self.unit = unit
 
+
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
+
+    def get_fits_spec(self):
+        #specN = ap beam dtype w1 dw nw z aplow aphigh wt_i w0_i ftype_i [parameters] [coefficients]
+        w1 = self.__call__(0)
+        dw = 0
+        spec_string = "0 0 2 {0} {1} {2} {3}"
+
+
+
+
 
 class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
