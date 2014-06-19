@@ -306,8 +306,12 @@ class Spectrum1DBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     parameter is a unit.
     """
 
-    def __init__(self, degree, x, y, unit=None):
-        super(Spectrum1DBSplineWCS, self).__init__(degree, x, y)
+    @classmethod
+    def from_data(cls, x, y, degree):
+        return super(Spectrum1DBSplineWCS, cls).from_data(x, y, degree)
+
+    def __init__(self, degree, knots, coefficients, unit=None):
+        super(Spectrum1DBSplineWCS, self).__init__(degree, knots, coefficients)
         self.unit = unit
 
     def __call__(self, pixel_indices):
@@ -322,8 +326,12 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
     http://iraf.net/irafdocs/specwcs.php
     """
 
-    def __init__(self, degree, x, y, pmin, pmax, unit=None):
-        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, x, y, unit)
+    @classmethod
+    def from_data(cls, degree, x, y, pmin, pmax, unit=None):
+        return super(Spectrum1DIRAFBSplineWCS, cls).from_data(x, y, degree)
+
+    def __init__(self, degree, knots, coefficients, pmin, pmax, unit=None):
+        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients, unit)
         self.pmin = pmin
         self.pmax = pmax
 
