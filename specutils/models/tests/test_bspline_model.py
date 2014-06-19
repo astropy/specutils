@@ -13,7 +13,7 @@ def test_init():
                     -5.44021111e-01,   0.00000000e+00,   0.00000000e+00,
                     0.00000000e+00,   0.00000000e+00]
     degree = 3
-    bs = BSplineModel(degree, knots, coefficients, fitted=True)
+    bs = BSplineModel(degree, knots, coefficients)
     x = np.linspace(0, 10, 100)
     y = [-4.94881722e-18,   1.18735992e-01,   2.30357004e-01,
         3.34750430e-01,   4.31803667e-01,   5.21404108e-01,
@@ -56,7 +56,7 @@ def test_from_data():
     pytest.importorskip("scipy")
     x1 = np.linspace(0, 10, 10)
     y1 = np.sin(x1)
-    bs = BSplineModel(3, x1, y1)
+    bs = BSplineModel.from_data(x1, y1, 3)
     x2 = np.linspace(0, 10, 100)
     y2 = [-4.94881722e-18,   1.18735992e-01,   2.30357004e-01,
         3.34750430e-01,   4.31803667e-01,   5.21404108e-01,
