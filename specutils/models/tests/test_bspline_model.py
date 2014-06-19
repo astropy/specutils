@@ -1,9 +1,13 @@
 from ..BSplineModel import BSplineModel
 import numpy as np
 import pytest
+import astropy
 
-# these tests fail with old version of astropy
-# TODO: skip the tests if astropy 0.3.x is being used
+version = astropy.__version__.split('.')
+minversion = pytest.mark.skipif(version[0] == '0' and version[1] < '4',
+                                reason="at least astropy-0.4 required")
+
+@minversion
 def test_init():
     pytest.importorskip("scipy")
     knots = [0., 0., 0., 0., 2.22222222, 3.33333333, 4.44444444, 5.55555556,
@@ -53,6 +57,7 @@ def test_init():
 
     np.testing.assert_allclose(y, bs(x), rtol=1.e-4)
 
+@minversion
 def test_from_data():
     pytest.importorskip("scipy")
     x1 = np.linspace(0, 10, 10)
