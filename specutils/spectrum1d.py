@@ -9,7 +9,6 @@ import copy
 from astropy.extern import six
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
-from astropy.io import fits
 
 from astropy.utils import misc
 
@@ -194,62 +193,63 @@ class Spectrum1D(NDData):
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
     @classmethod
-    def from_fits(cls, filename, uncertainty=None,extension=0):
-        """This is an example function to demonstrate how
-        classmethods are a clean way to instantiate Spectrum1D objects"""
+    def from_fits(cls, filename):
+        """
+        This function is a dummy function and will fail for now. Please use the functions provided in
+        `~specutils.io.read_fits` for this task.
+        """
 
-        
-        # Attempting to implement a basic version that just reads in a
-        # linear FITS WCS
-        hdulist = fits.open(filename)
-        data = hdulist[extension].data
-        header = hdulist[extension].header
+        raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
+                                  ' documentation')
 
-        # assume that the wavelength is in axis 1
-        if 'CDELT1' in header.keys():
-            cdelt = float(header['CDELT1'])
-        elif 'CD1_1' in header.keys():
-            cdelt = float(header['CD1_1'])
+    def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None, flags=None, meta=None):
+
+        super(Spectrum1D, self).__init__(data=flux, wcs=wcs, unit=unit, uncertainty=uncertainty,
+                   mask=mask, flags=flags, meta=meta)
+
+        self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
+        for key in self._wcs_attributes.keys():
+
+            wcs_attribute_unit = self._wcs_attributes[key]['unit']
+
+            try:
+                unit_equivalent = wcs_attribute_unit.is_equivalent(self.wcs.unit, equivalencies=self.wcs.equivalencies)
+            except TypeError:
+                unit_equivalent = False
+
+
+            if not unit_equivalent:
+                #if unit is not convertible to wcs attribute - delete that wcs attribute
+                del self._wcs_attributes[key]
+                continue
+
+            if wcs_attribute_unit.physical_type == self.wcs.unit.physical_type:
+                self._wcs_attributes[key]['unit'] = self.wcs.unit
+
+
+    def __getattr__(self, name):
+        if name in self._wcs_attributes:
+            return self.dispersion.to(self._wcs_attributes[name]['unit'], equivalencies=self.wcs.equivalencies)
+        elif name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
+            return self._wcs_attributes[name[:-5]]['unit']
         else:
-            cdelt = 1
-
-        crval = float(header['CRVAL1'])
-        crpix = float(header['CRPIX1'])
-        wstart = crval - ((crpix-1.0))*cdelt
-        
-        wavelengths = np.arange(len(data))*cdelt+wstart
-        hdulist.close()
-        
-        return cls.from_array(cls,wavelengths,flux)
+            super(Spectrum1D, self).__getattribute__(name)
 
 
-    def to_fits(self, filename, uncertainty=None,extension=0):
-        '''Write the spectrum to a FITS file with a linear FITS WCS,
-        This format should be readable by IRAF
-        '''
+    def __setattr__(self, name, value):
+        if name[:-5] in self._wcs_attributes and name[-5:] == '_unit':
+            self._wcs_attributes[name[:-5]]['unit'] = u.Unit(value)
+        else:
+            super(Spectrum1D, self).__setattr__(name, value)
 
-        hdulist = fits.PrimaryHDU()
-        hdulist.data = self.flux
-        wavelength = self.dispersion
-        cdelt = wavelength[1] - wavelength[0]
-        header = hdulist.header
-        header['CTYPE1'] = 'LINEAR'
-        header['CRPIX1'] = '1'
-        header['CRVAL1'] = wavelength[0]
-        header['CD1_1'] = cdelt
-        header['CDELT1'] = cdelt
-        hdulist.writeto(filename,clobber=True)
+    def __dir__(self):
+        return list(self.__dict__.keys()) + list(self._wcs_attributes.keys()) + \
+               [item + '_unit' for item in self._wcs_attributes.keys()]
 
-    def to_ascii(self,filename):
-        ''' Basic function to write to a two column text file of dispersion and fluxe
-        '''
-        output = open(filename,'w')
-        for i in np.arange(len(self.dispersion)):
-            output.write('%f\t%f\n' % (self.dispersion[i],self.flux[i]))
-        output.close()
-
+    
     @property
-    def flux(self): #returning the flux
+    def flux(self):
+        #returning the flux
         return self.data
         
     @flux.setter
