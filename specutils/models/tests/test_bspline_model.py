@@ -2,7 +2,8 @@ from ..BSplineModel import BSplineModel
 import numpy as np
 import pytest
 
-
+# these tests fail with old version of astropy
+# TODO: skip the tests if astropy 0.3.x is being used
 def test_init():
     pytest.importorskip("scipy")
     knots = [0., 0., 0., 0., 2.22222222, 3.33333333, 4.44444444, 5.55555556,
