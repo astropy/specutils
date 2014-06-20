@@ -1,5 +1,4 @@
 from astropy.modeling import Model, Parameter
-from six.moves import xrange
 
 class BSplineModel(Model):
     """
@@ -54,14 +53,14 @@ class BSplineModel(Model):
         self.param_names = self._generate_param_names(self.n_pieces)
 
         params = {}
-        for i in xrange(len(knots)):
+        for i in range(len(knots)):
             params["c{:d}".format(i)] = coefficients[i]
             params["t{:d}".format(i)] = knots[i]
         super(BSplineModel, self).__init__(param_dim=1, **params)
 
     def _generate_param_names(self, n_pieces):
         names = []
-        for i in xrange(n_pieces):
+        for i in range(n_pieces):
             names.append("c{:d}".format(i))
             names.append("t{:d}".format(i))
         return names
@@ -70,7 +69,7 @@ class BSplineModel(Model):
         from scipy.interpolate import splev
 
         coefficients, knots = [], []
-        for i in xrange(self.n_pieces):
+        for i in range(self.n_pieces):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
         return splev(x, (knots, coefficients, self.degree))
