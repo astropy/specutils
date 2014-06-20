@@ -1,4 +1,5 @@
 from astropy.modeling import Model, Parameter
+from six.moves import xrange
 
 class BSplineModel(Model):
     """
