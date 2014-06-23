@@ -335,7 +335,7 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
 
 
     def __call__(self, pixel_indices):
-        n_pieces = self.num_parameters - self.degree - 2
+        n_pieces = self.n_pieces - self.degree - 2
         s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
 

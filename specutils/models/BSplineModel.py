@@ -49,8 +49,8 @@ class BSplineModel(Model):
         #     raise ValueError("Not enough knots ({0})".format(len(knots)))
 
         self.degree = degree
-        self.num_parameters = len(knots)
-        self.param_names = self._generate_param_names(self.num_parameters)
+        self.n_pieces = len(knots)
+        self.param_names = self._generate_param_names(self.n_pieces)
 
         params = {}
         for i in xrange(len(knots)):
@@ -58,9 +58,9 @@ class BSplineModel(Model):
             params["t{:d}".format(i)] = knots[i]
         super(BSplineModel, self).__init__(param_dim=1, **params)
 
-    def _generate_param_names(self, num_parameters):
+    def _generate_param_names(self, n_pieces):
         names = []
-        for i in xrange(num_parameters):
+        for i in xrange(n_pieces):
             names.append("c{:d}".format(i))
             names.append("t{:d}".format(i))
         return names
@@ -69,7 +69,7 @@ class BSplineModel(Model):
         from scipy.interpolate import splev
 
         coefficients, knots = [], []
-        for i in xrange(self.num_parameters):
+        for i in xrange(self.n_pieces):
             coefficients.append(self.__getattr__("c{:d}".format(i)).value)
             knots.append(self.__getattr__("t{:d}".format(i)).value)
         return splev(x, (knots, coefficients, self.degree))
