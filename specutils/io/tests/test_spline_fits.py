@@ -19,7 +19,8 @@ def test_multispec_linear_spline():
     npieces = 10
     pmin = 1
     pmax = 2304
-    s = np.linspace(0, npieces, pmax - pmin + 1)
+    pixels = np.arange(pmin, pmax + 1) * 1.0
+    s = (pixels - pmin) / (pmax - pmin) * npieces
     j = np.array(map(int, s))
     a = (j + 1) - s
     b = s - j
@@ -37,7 +38,8 @@ def test_multispec_cubic_spline():
     npieces = 10
     pmin = 1
     pmax = 2304
-    s = np.linspace(0, npieces, pmax - pmin + 1)
+    pixels = np.arange(pmin, pmax + 1) * 1.0
+    s = (pixels - pmin) / (pmax - pmin) * npieces
     j = np.array(map(int, s))
     a = (j + 1) - s
     b = s - j
@@ -51,6 +53,6 @@ def test_multispec_cubic_spline():
     x2 = (1 + 3 * b * (1 + a * b))
     x3 = b ** 3
     w2 = np.take(c2, j, mode='clip') * x0 + np.take(c2, 1 + j, mode='clip') * x1 \
-         + np.take(c2, 2 + j, mode='clip') * x2 + np.take(c2, 3 + j,
-                                                          mode='clip') * x3
+        + np.take(c2, 2 + j, mode='clip') * x2 + np.take(c2, 3 + j,
+                                                         mode='clip') * x3
     np.testing.assert_allclose(w2, spectra[1].dispersion.value)

@@ -348,8 +348,8 @@ class FITSWCSSpectrum(object):
                      for i in range(n_pieces + degree)]
                 x = np.arange(n_pieces + degree)
                 multispec_wcs_dict[spec_key] = \
-                    specwcs.Spectrum1DIRAFBSplineWCS.from_data(degree, x, y, pmin, pmax,
-                                                     unit=dispersion_unit)
+                    specwcs.Spectrum1DIRAFBSplineWCS.\
+                        from_data(degree, x, y, pmin, pmax, unit=dispersion_unit)
 
             else:
                 raise NotImplementedError

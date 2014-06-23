@@ -306,10 +306,6 @@ class Spectrum1DBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     parameter is a unit.
     """
 
-    @classmethod
-    def from_data(cls, x, y, degree):
-        return super(Spectrum1DBSplineWCS, cls).from_data(x, y, degree)
-
     def __init__(self, degree, knots, coefficients, unit=None):
         super(Spectrum1DBSplineWCS, self).__init__(degree, knots, coefficients)
         self.unit = unit
@@ -328,15 +324,18 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
 
     @classmethod
     def from_data(cls, degree, x, y, pmin, pmax, unit=None):
-        return super(Spectrum1DIRAFBSplineWCS, cls).from_data(x, y, degree)
+        from scipy.interpolate import splrep
+        knots, coefficients, _ = splrep(x, y, k=degree)
+        return cls(degree, knots, coefficients, pmin, pmax, unit)
 
     def __init__(self, degree, knots, coefficients, pmin, pmax, unit=None):
         super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients, unit)
         self.pmin = pmin
         self.pmax = pmax
 
+
     def __call__(self, pixel_indices):
-        n_pieces = self.length - self.degree - 2
+        n_pieces = self.num_parameters - self.degree - 2
         s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
 
