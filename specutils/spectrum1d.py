@@ -255,7 +255,8 @@ class Spectrum1D(NDData):
     @flux.setter
     def flux_setter(self, flux):
         self.data = flux
-    
+
+    #TODO: let the WCS handle what to do with len(flux)
     @property
     def dispersion(self):
         #returning the disp
