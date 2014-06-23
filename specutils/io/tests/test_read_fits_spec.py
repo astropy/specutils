@@ -17,6 +17,17 @@ def test_multispec_legendre():
     iraf = ascii.read(data_path('TRES.dat'), data_start = 127, Reader = ascii.NoHeader, names = ['wave', 'flux'])
     spectra = read_fits.read_fits_multispec_to_list(data_path('TRES.fits'))
     spec = spectra[10]
+    for specx in spectra:
+        dic = specx.wcs.meta
+        x1 = dic['dispersion0']
+        x2 = specx.wcs(dic['pmin'])
+        # np.testing.assert_allclose(x, y)
+        y1 = dic['average_dispersion_delta']
+        all = specx.wcs(np.arange(dic['pmin'], dic['pmax']+1))
+        y2 = (all[1:] - all[:-1]).mean()
+        kewlness = 100
+        # np.testing.assert_allclose(x, y)
+
     np.testing.assert_allclose(iraf['wave'], spec.dispersion.value)
     assert spec.dispersion.unit == u.Angstrom
 
@@ -24,6 +35,16 @@ def test_multispec_chebyshev():
     iraf = ascii.read(data_path('AAO_11.txt'), data_start = 175, Reader = ascii.NoHeader, names = ['wave', 'flux'])
     spectra = read_fits.read_fits_multispec_to_list(data_path('AAO.fits'))
     spec = spectra[10]
+    for specx in spectra:
+        dic = specx.wcs.meta
+        x1 = dic['dispersion0']
+        x2 = specx.wcs(dic['pmin'])
+        # np.testing.assert_allclose(x, y)
+        y1 = dic['average_dispersion_delta']
+        all = specx.wcs(np.arange(dic['pmin'], dic['pmax']+1))
+        y2 = (all[1:] - all[:-1]).mean()
+        kewlness = 100
+        # np.testing.assert_allclose(x, y)
     np.testing.assert_allclose(iraf['wave'], spec.wavelength.value)
 
 def test_1dspec_UVES():
