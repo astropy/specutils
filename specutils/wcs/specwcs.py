@@ -11,6 +11,7 @@ from astropy.modeling.parameters import Parameter
 import astropy.units as u
 
 from astropy.utils.misc import deprecated
+from astropy.utils import OrderedDict
 
 
 ##### Delete at earliest convenience (currently deprecated)
@@ -214,11 +215,36 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     __doc__ = 'WCS for polynomial dispersion using Legendre Polynomials. The only added parameter is a unit, otherwise the same as ' \
               '`~astropy.modeling.polynomial.Legendre1D`:\n' + polynomial.Polynomial1D.__doc__
 
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1], param_dim=1,
-                 **params):
-        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
+    default_meta = OrderedDict([('aperture', 1), ('beam', 88),
+                            ('dispersion_type', 2), ('dispersion0', None),
+                            ('average_dispersion_delta', None),
+                            ('no_valid_pixels', None), ('doppler_factor', 0.0),
+                            ('aperture_low', 0.0), ('aperture_high', 0.0),
+                            ('weight', 1.0), ('zero_point_offset', 0.0),
+                            ('type', 2), ('order', None), ('pmin', None),
+                            ('pmax', None)])
+
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
+                 param_dim=1, meta=None, **params):
+        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain,
+                                                    window=window,
+                                                    param_dim=param_dim,
                                                     **params)
         self.unit = unit
+        self.meta = Spectrum1DLegendreWCS.default_meta
+        if meta is not None:
+            for key in meta:
+                if key == 'function':
+                    for inner_key in meta[key]:
+                        if inner_key == 'type':
+                            continue
+                        self.meta[inner_key] = meta[key][inner_key]
+                self.meta[key] = meta[key]
+        else:
+            self.meta['order'] = degree
+            self.meta['pmin'], self.meta['pmax'] = domain
+            self.meta['no_valid_pixels'] = domain[1] - domain[0]
+
 
     def __call__(self, pixel_indices):
         return polynomial.Legendre1D.__call__(self, pixel_indices) * self.unit
@@ -234,11 +260,33 @@ class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     astropy.modeling.polynomial.Polynomial1D
     """
 
-    def __init__(self, degree, unit=None, domain=None, window=[-1,1], param_dim=1,
-                 **params):
+    default_meta = OrderedDict([('aperture', 1), ('beam', 88),
+                            ('dispersion_type', 2), ('dispersion0', None),
+                            ('average_dispersion_delta', None),
+                            ('no_valid_pixels', None), ('doppler_factor', 0.0),
+                            ('aperture_low', 0.0), ('aperture_high', 0.0),
+                            ('weight', 1.0), ('zero_point_offset', 0.0),
+                            ('type', 2), ('order', None), ('pmin', None),
+                            ('pmax', None)])
+
+    def __init__(self, degree, unit=None, domain=None, window=[-1,1],
+                 param_dim=1, meta=None, **params):
         super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
                                                     **params)
         self.unit = unit
+        self.meta = Spectrum1DChebyshevWCS.default_meta
+        if meta is not None:
+            for key in meta:
+                if key == 'function':
+                    for inner_key in meta[key]:
+                        if inner_key == 'type':
+                            continue
+                        self.meta[inner_key] = meta[key][inner_key]
+                self.meta[key] = meta[key]
+        else:
+            self.meta['order'] = degree
+            self.meta['pmin'], self.meta['pmax'] = domain
+            self.meta['no_valid_pixels'] = domain[1] - domain[0] + 1
 
     def __call__(self, pixel_indices):
         return polynomial.Chebyshev1D.__call__(self, pixel_indices) * self.unit

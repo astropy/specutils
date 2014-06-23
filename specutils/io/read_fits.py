@@ -299,6 +299,7 @@ class FITSWCSSpectrum(object):
                                                                    domain=[function_dict['pmin'],
                                                                            function_dict['pmax']],
                                                                    unit=dispersion_unit,
+                                                                   meta=single_spec_dict,
                                                                    **coefficients)
 
 
@@ -310,6 +311,7 @@ class FITSWCSSpectrum(object):
                                                                    domain=[function_dict['pmin'],
                                                                            function_dict['pmax']],
                                                                    unit=dispersion_unit,
+                                                                   meta=single_spec_dict,
                                                                    **coefficients)
 
 
