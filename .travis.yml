@@ -46,6 +46,12 @@ matrix:
         - python: 3.3
           env: INSTALL_SCIPY=true SETUP_CMD='test'
 
+        # Try with SciPy and Astropy Development version
+        - python: 2.7
+          env: INSTALL_SCIPY=true ASTROPY_VERSION=development SETUP_CMD='test'
+        - python: 3.3
+          env: INSTALL_SCIPY=true ASTROPY_VERSION=development SETUP_CMD='test'
+
         # Try all python versions with the latest numpy
         - python: 2.6
           env: SETUP_CMD='test'
