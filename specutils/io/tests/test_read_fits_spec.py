@@ -49,7 +49,8 @@ def test_multispec_chebyshev():
 
 def test_1dspec_UVES():
     spec = read_fits.read_fits_spectrum1d(data_path('UVES.fits'))
-    iraf = ascii.read(data_path('uves_iraf_read_truncated.dat'), names=['index', 'wave', 'flux'])
+    iraf = ascii.read(data_path('uves_iraf_read_'
+                                'truncated.dat'), names=['index', 'wave', 'flux'])
     np.testing.assert_allclose(spec.dispersion[iraf['index']], iraf['wave'])
 
     assert not hasattr(spec.dispersion, 'unit')

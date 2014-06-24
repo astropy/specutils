@@ -219,9 +219,9 @@ def wave_multispec(header):
                 elif func == 2:
                     pmin, pmax, thiswave = polynomial(legendre, spec)
                 elif func == 3:
-                    pmin, pmax, thiswave = linear_spline(spec)
-                elif func == 4:
                     pmin, pmax, thiswave = cubic_spline(spec)
+                elif func == 4:
+                    pmin, pmax, thiswave = linear_spline(spec)
                 elif func == 5:
                     # TBD: pixel coordinate array
                     raise NotImplementedError
