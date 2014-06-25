@@ -26,17 +26,17 @@ def gaussian(p, x, normalize = False):
         offset = p[3]
 
     if normalize is True:
-        scaleFactor = 1.0/(p[1]*np.sqrt(2.0*np.pi))
+        scaleFactor = 1.0 / (p[2] * np.sqrt(2.0 * np.pi))
     else:
         scaleFactor = p[0]
-    u = (x - p[1])/p[2]
+    u = (x - p[1]) / p[2]
     
-    return scaleFactor*np.exp(-0.5*u*u) + offset + slope*x
+    return scaleFactor * np.exp(-0.5 * u * u) + offset + slope*x
 
 
 
-def rvshift(wave1, spec1, wave2, spec2, r1 = None, r2 = None,debug=False,
-            oversample=1,fitRange=None,lagRange=[-20,20],nPixFit = 3):
+def rvshift(wave1, spec1, wave2, spec2, r1 = None, r2 = None, debug = False,
+            oversample = 1,fitRange = None,lagRange = [-20,20], nPixFit = 3):
     """Measure the relative radial velocity of two spectra using cross
     correlation. Will return the shift of the 2nd spectrum relative to
     the first.
