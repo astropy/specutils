@@ -388,7 +388,7 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None,
             is not None:
         #checking that both cd1_1 and cdelt1 are either the same or
         # one of them non-existent
-        if dispersion_delta is not None:
+        if (dispersion_delta is not None) and fits_wcs_information.affine_transform_dict.has_key('cdelt1'):
             assert np.testing.assert_almost_equal \
                 (dispersion_delta,
                  fits_wcs_information.affine_transform_dict['cdelt1'])
