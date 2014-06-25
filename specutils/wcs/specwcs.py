@@ -228,8 +228,8 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return super(Spectrum1DPolynomialWCS, self)\
-            .__call__(self, pixel_indices) * self.unit
+        return super(Spectrum1DPolynomialWCS, self).__call__(
+            pixel_indices) * self.unit
 
 
 class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
@@ -237,40 +237,15 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     parameter is a unit, otherwise the same as
     '~astropy.modeling.polynomial.Legendre1D`'
     """
-    default_meta = OrderedDict([('aperture', 1), ('beam', 88),
-                            ('dispersion_type', 2), ('dispersion0', None),
-                            ('average_dispersion_delta', None),
-                            ('no_valid_pixels', None), ('doppler_factor', 0.0),
-                            ('aperture_low', 0.0), ('aperture_high', 0.0),
-                            ('weight', 1.0), ('zero_point_offset', 0.0),
-                            ('type', 2), ('order', None), ('pmin', None),
-                            ('pmax', None)])
 
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 param_dim=1, meta=None, **params):
-        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain,
-                                                    window=window,
-                                                    param_dim=param_dim,
-                                                    **params)
+                 param_dim=1, **params):
+        super(Spectrum1DLegendreWCS, self).__init__(
+            degree, domain=domain, window=window, param_dim=param_dim, **params)
         self.unit = unit
-        self.meta = Spectrum1DLegendreWCS.default_meta
-        if meta is not None:
-            for key in meta:
-                if key == 'function':
-                    for inner_key in meta[key]:
-                        if inner_key == 'type':
-                            continue
-                        self.meta[inner_key] = meta[key][inner_key]
-                self.meta[key] = meta[key]
-        else:
-            self.meta['order'] = degree
-            self.meta['pmin'], self.meta['pmax'] = domain
-            self.meta['no_valid_pixels'] = domain[1] - domain[0]
-
 
     def __call__(self, pixel_indices):
-        return super(Spectrum1DLegendreWCS, self).__call__(self, pixel_indices)\
-            * self.unit
+        return super(Spectrum1DLegendreWCS, self).__call__(pixel_indices)
 
 
 class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
@@ -279,9 +254,14 @@ class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
     transformation required for processing IRAF specification described at
     http://iraf.net/irafdocs/specwcs.php
     """
+    def __init__(self, order, pmin, pmax, unit=None, **coefficients):
+        super(Spectrum1DIRAFLegendreWCS, self).__init__(
+            order-1, domain=[pmin, pmax], unit=unit, **coefficients)
+        self.pmin = pmin
+        self.pmax = pmax
 
     def __call__(self, pixel_indices):
-        pixel_indices += 1
+        pixel_indices += self.pmin
         return super(Spectrum1DIRAFLegendreWCS, self).__call__(pixel_indices)
 
 
@@ -296,37 +276,14 @@ class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     astropy.modeling.polynomial.Chebyshev1D
     astropy.modeling.polynomial.Polynomial1D
     """
-    default_meta = OrderedDict([('aperture', 1), ('beam', 88),
-                            ('dispersion_type', 2), ('dispersion0', None),
-                            ('average_dispersion_delta', None),
-                            ('no_valid_pixels', None), ('doppler_factor', 0.0),
-                            ('aperture_low', 0.0), ('aperture_high', 0.0),
-                            ('weight', 1.0), ('zero_point_offset', 0.0),
-                            ('type', 2), ('order', None), ('pmin', None),
-                            ('pmax', None)])
-
     def __init__(self, degree, unit=None, domain=None, window=[-1,1],
-                 param_dim=1, meta=None, **params):
-        super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain, window=window, param_dim=param_dim,
-                                                    **params)
+                 param_dim=1, **params):
+        super(Spectrum1DChebyshevWCS, self).__init__(
+            degree, domain=domain, window=window, param_dim=param_dim, **params)
         self.unit = unit
-        self.meta = Spectrum1DChebyshevWCS.default_meta
-        if meta is not None:
-            for key in meta:
-                if key == 'function':
-                    for inner_key in meta[key]:
-                        if inner_key == 'type':
-                            continue
-                        self.meta[inner_key] = meta[key][inner_key]
-                self.meta[key] = meta[key]
-        else:
-            self.meta['order'] = degree
-            self.meta['pmin'], self.meta['pmax'] = domain
-            self.meta['no_valid_pixels'] = domain[1] - domain[0] + 1
 
     def __call__(self, pixel_indices):
-        return super(Spectrum1DChebyshevWCS, self).__call__(pixel_indices)\
-            * self.unit
+        return super(Spectrum1DChebyshevWCS, self).__call__(pixel_indices)
 
 
 class Spectrum1DIRAFChebyshevWCS(Spectrum1DChebyshevWCS):
@@ -336,8 +293,14 @@ class Spectrum1DIRAFChebyshevWCS(Spectrum1DChebyshevWCS):
     http://iraf.net/irafdocs/specwcs.php
     """
 
+    def __init__(self, order, pmin, pmax, unit=None, **coefficients):
+        super(Spectrum1DIRAFChebyshevWCS, self).__init__(
+            order-1, domain=[pmin, pmax], unit=unit, **coefficients)
+        self.pmin = pmin
+        self.pmax = pmax
+
     def __call__(self, pixel_indices):
-        pixel_indices += 1
+        pixel_indices += self.pmin
         return super(Spectrum1DIRAFChebyshevWCS, self).__call__(pixel_indices)
 
 
@@ -380,6 +343,32 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
         s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
 
+class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
+    """
+    WCS that combines multiple WCS using their weights, zero index and doppler
+    factor. The formula used is:
+    Dispersion = Sum over all WCS
+        [Weight * (Zero point offset + WCS(pixels)) / (1 + doppler factor)]
+    """
+    def __init__(self, aperture=1, beam=88, aperture_low=0.0, aperture_high=0.0,
+                 doppler_factor=0.0, unit=None):
+        self.wcs_list = []
+        self.aperture = aperture
+        self.beam = beam
+        self.aperture_low = aperture_low
+        self.aperture_high = aperture_high
+        self.doppler_factor = doppler_factor
+        self.unit = unit
+
+    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
+        self.wcs_list.append((wcs, weight, zero_point_offset))
+
+    def __call__(self, pixel_indices):
+        final_dispersion = np.zeros(len(pixel_indices))
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            dispersion = weight * (zero_point_offset + wcs(pixel_indices))
+            final_dispersion += dispersion / (1 + self.doppler_factor)
+        return final_dispersion * self.unit
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):

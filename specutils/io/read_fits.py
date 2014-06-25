@@ -39,8 +39,7 @@ wcs_attributes_function_parameters = {'chebyshev': ['order', 'pmin', 'pmax'],
                                       'legendre': ['order', 'pmin', 'pmax'],
                                       'linearspline': ['npieces', 'pmin',
                                                        'pmax'],
-                                      'cubicspline': ['npieces', 'pmin',
-                                                      'pmax']}
+                                      'cubicspline': ['npieces', 'pmin', 'pmax']}
 
 wcs_attributes_general_keywords = OrderedDict(
     [('aperture', int), ('beam', int), ('dispersion_type', int),
@@ -51,6 +50,23 @@ wcs_attributes_general_keywords = OrderedDict(
 wcs_attributes_function_keywords = OrderedDict(
     [('weight', float), ('zero_point_offset', float), ('type', int),
      ('order', int), ('pmin', float), ('pmax', float), ('npieces', int)])
+
+
+def _get_num_coefficients(function_dict):
+    """
+    Returns the number of coeffecients according to the IRAF fits format defined
+    here: http://iraf.net/irafdocs/specwcs.php
+    """
+    function_type = function_dict["type"]
+
+    if function_type in {"legendre", "chebyshev"}:
+        return function_dict["order"]
+    elif function_type == "linearspline":
+        return function_dict["npieces"] + 1
+    elif function_type == "cubicspline":
+        return function_dict["npieces"] + 3
+    else:
+        return 0
 
 
 def _parse_fits_units(fits_unit_string):
@@ -90,45 +106,40 @@ def _parse_multispec_dict(multispec_dict):
             continue
 
         single_spec_dict = OrderedDict()
-        split_single_spec_string = multispec_dict[spec_key].strip().split()
+        spec_string = multispec_dict[spec_key].strip().split()
         for key_name, key_dtype in wcs_attributes_general_keywords.items():
-            single_spec_dict[key_name] = key_dtype(
-                split_single_spec_string.pop(0))
-
-        if len(split_single_spec_string) > 0:
-
-            #There seems to be a function defined for this spectrum - checking that the dispersion type indicates that:
+            single_spec_dict[key_name] = key_dtype(spec_string.pop(0))
+        single_spec_dict['functions'] = []
+        while len(spec_string) > 0:
+            # There seems to be a function defined for this spectrum -
+            # checking that the dispersion type indicates that:
             assert single_spec_dict['dispersion_type'] == 2
 
-            single_spec_dict['function'] = {}
+            function_dict = {}
             for key_name, key_dtype in wcs_attributes_function_keywords.items():
-                single_spec_dict['function'][key_name] = key_dtype(
-                    split_single_spec_string.pop(0))
+                function_dict[key_name] = key_dtype(spec_string.pop(0))
 
                 #last of the general keywords
                 if key_name == 'type':
-                    single_spec_dict['function']['type'] = \
-                        fits_wcs_spec_func_type[
-                            single_spec_dict['function']['type']]
+                    function_dict['type'] = fits_wcs_spec_func_type[function_dict['type']]
                     break
 
+            # different function types defined in
+            # http://iraf.net/irafdocs/specwcs.php -- see fits_wcs_spec_func_type
 
-            #different function types defined in http://iraf.net/irafdocs/specwcs.php -- see fits_wcs_spec_func_type
-
-            function_type = single_spec_dict['function']['type']
+            function_type = function_dict['type']
             if function_type in wcs_attributes_function_parameters:
-
-                for key_name in wcs_attributes_function_parameters[
-                    function_type]:
+                for key_name in wcs_attributes_function_parameters[function_type]:
                     key_dtype = wcs_attributes_function_keywords[key_name]
-                    single_spec_dict['function'][key_name] = key_dtype(
-                        split_single_spec_string.pop(0))
-
-                single_spec_dict['function']['coefficients'] = list(
-                    map(float, split_single_spec_string))
-
+                    function_dict[key_name] = key_dtype(spec_string.pop(0))
+                num_coefficients = _get_num_coefficients(function_dict)
+                coefficients = spec_string[:num_coefficients]
+                function_dict['coefficients'] = list(map(float, coefficients))
+                spec_string = spec_string[num_coefficients:]
             else:
                 raise NotImplementedError
+
+            single_spec_dict["functions"].append(function_dict)
 
         parsed_multispec_dict[spec_key] = single_spec_dict
 
@@ -281,86 +292,90 @@ class FITSWCSSpectrum(object):
 
         return wat_dictionary
 
-    def get_multispec_wcs(self, dispersion_unit=None):
-        """Extracting multispec information out of WAT header keywords and
-        building WCS with it
+def multispec_wcs_reader(wcs_info, dispersion_unit=None):
+    """Extracting multispec information out of WAT header keywords and
+    building WCS with it
 
-        Parameters
-        ----------
+    Parameters
+    ----------
 
-        dispersion_unit : astropy.unit.Unit, optional
-            specify a unit for the dispersion if none exists or overwrite,
-            default=None
-        """
+    dispersion_unit : astropy.unit.Unit, optional
+        specify a unit for the dispersion if none exists or overwrite,
+        default=None
+    """
 
-        assert self.naxis == 2
-        assert self.global_wcs_attributes['system'] == 'multispec'
-        assert self.wcs_attributes[1]['wtype'] == 'multispec'
+    assert wcs_info.naxis == 2
+    assert wcs_info.global_wcs_attributes['system'] == 'multispec'
+    assert wcs_info.wcs_attributes[1]['wtype'] == 'multispec'
 
-        if dispersion_unit is None:
-            dispersion_unit = self.wcs_attributes[0]['units']
+    if dispersion_unit is None:
+        dispersion_unit = wcs_info.wcs_attributes[0]['units']
 
-        multispec_dict = _parse_multispec_dict(self.wcs_attributes[1])
-        multispec_wcs_dict = OrderedDict()
-        for spec_key in multispec_dict:
-            single_spec_dict = multispec_dict[spec_key]
+    multispec_dict = _parse_multispec_dict(wcs_info.wcs_attributes[1])
+    wcs_dict = OrderedDict()
+    for spec_key in multispec_dict:
+        single_spec_dict = multispec_dict[spec_key]
+        if single_spec_dict['dispersion_type'] in {0, 1}:
+            raise NotImplementedError("Linear and log-linear WCS for "
+                                      "multispec format not implemented")
+        # single_spec_dict['dispersion_type'] == 2
+        combined_wcs = specwcs.Spectrum1DIRAFCombinationWCS(
+            aperture=single_spec_dict["aperture"],
+            beam=single_spec_dict["beam"],
+            aperture_low=single_spec_dict["aperture_low"],
+            aperture_high=single_spec_dict["aperture_high"],
+            doppler_factor=single_spec_dict["doppler_factor"],
+            unit=dispersion_unit)
 
-            if single_spec_dict['function']['type'] == 'legendre':
-                function_dict = single_spec_dict['function']
-
+        for function_dict in single_spec_dict["functions"]:
+            if function_dict['type'] == 'legendre':
                 ##### @embray can you figure out if that's the only way to
                 ##  instantiate a polynomial (with c0=xx, c1=xx, ...)?
 
                 coefficients = dict([('c{:d}'.format(i),
                                       function_dict['coefficients'][i])
-                                     for i in range(function_dict['order'])])
+                                      for i in range(function_dict['order'])])
 
-                multispec_wcs_dict[spec_key] = specwcs \
-                    .Spectrum1DIRAFLegendreWCS(function_dict['order'] - 1,
-                                               domain=[function_dict['pmin'],
-                                                       function_dict['pmax']],
-                                               unit=dispersion_unit,
-                                               **coefficients)
+                wcs = specwcs.Spectrum1DIRAFLegendreWCS(
+                    function_dict['order'], function_dict['pmin'],
+                    function_dict['pmax'], unit=dispersion_unit,
+                    **coefficients)
 
-
-
-            elif single_spec_dict['function']['type'] == 'chebyshev':
-                function_dict = single_spec_dict['function']
+            elif function_dict['type'] == 'chebyshev':
                 coefficients = dict([('c{:d}'.format(i),
                                       function_dict['coefficients'][i])
                                      for i in range(function_dict['order'])])
 
-                multispec_wcs_dict[spec_key] = specwcs \
-                    .Spectrum1DIRAFChebyshevWCS(function_dict['order'] - 1,
-                                                domain=[function_dict['pmin'],
-                                                        function_dict['pmax']],
-                                                unit=dispersion_unit,
-                                                **coefficients)
+                wcs = specwcs.Spectrum1DIRAFChebyshevWCS(
+                    function_dict['order'], function_dict['pmin'],
+                    function_dict['pmax'], unit=dispersion_unit,
+                    **coefficients)
 
-            elif single_spec_dict['function']['type'] == 'linearspline' \
-                    or single_spec_dict['function']['type'] == 'cubicspline':
-                if single_spec_dict['function']['type'] == 'linearspline':
+            elif function_dict['type'] in {'linearspline', 'cubicspline'}:
+                if function_dict['type'] == 'linearspline':
                     degree = 1
                 else:
                     degree = 3
-                function_dict = single_spec_dict['function']
                 n_pieces = function_dict['npieces']
                 pmin = function_dict['pmin']
                 pmax = function_dict['pmax']
                 y = [function_dict['coefficients'][i]
                      for i in range(n_pieces + degree)]
                 x = np.arange(n_pieces + degree)
-                multispec_wcs_dict[spec_key] = \
-                    specwcs.Spectrum1DIRAFBSplineWCS.\
-                        from_data(degree, x, y, pmin, pmax, unit=dispersion_unit)
-
+                wcs = specwcs.Spectrum1DIRAFBSplineWCS.from_data(
+                    degree, x, y, pmin, pmax, unit=dispersion_unit)
             else:
                 raise NotImplementedError
-        return multispec_wcs_dict
+
+            combined_wcs.add_WCS(
+                wcs, weight=function_dict["weight"],
+                zero_point_offset=function_dict["zero_point_offset"])
+
+        wcs_dict[spec_key] = combined_wcs
+    return wcs_dict
 
 
-def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None,
-                           spectral_axis=0):
+def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
     """Read very a very simple 1D WCS mainly comprising of CRVAL, CRPIX, ...
     from a FITS WCS Information container
 
@@ -383,37 +398,29 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None,
     dispersion_unit = dispersion_unit
 
     dispersion_delta = None
-    if fits_wcs_information.transform_matrix is not None:
-        dispersion_delta = fits_wcs_information.transform_matrix[spectral_axis,
-                                                                 spectral_axis]
+    if wcs_info.transform_matrix is not None:
+        dispersion_delta = wcs_info.transform_matrix[spectral_axis, spectral_axis]
 
-    if fits_wcs_information.affine_transform_dict['cdelt'][spectral_axis] \
-            is not None:
+    if wcs_info.affine_transform_dict['cdelt'][spectral_axis] is not None:
         #checking that both cd1_1 and cdelt1 are either the same or
         # one of them non-existent
         if dispersion_delta is not None:
-            assert np.testing.assert_almost_equal \
-                (dispersion_delta,
-                 fits_wcs_information.affine_transform_dict['cdelt1'])
-        dispersion_delta = fits_wcs_information. \
-            affine_transform_dict['cdelt'][spectral_axis]
+            assert np.testing.assert_almost_equal(
+                dispersion_delta, wcs_info.affine_transform_dict['cdelt1'])
+        dispersion_delta = wcs_info.affine_transform_dict['cdelt'][spectral_axis]
 
     if dispersion_delta is None:
         raise FITSWCSSpectrum1DError
 
-    if fits_wcs_information.affine_transform_dict['crval'][
-        spectral_axis] is None:
+    if wcs_info.affine_transform_dict['crval'][spectral_axis] is None:
         raise FITSWCSSpectrum1DError
     else:
-        dispersion_start = fits_wcs_information.affine_transform_dict['crval'][
-            spectral_axis]
+        dispersion_start = wcs_info.affine_transform_dict['crval'][spectral_axis]
 
-    pixel_offset = fits_wcs_information.affine_transform_dict['crpix'][
-                       spectral_axis] or 1
+    pixel_offset = wcs_info.affine_transform_dict['crpix'][spectral_axis] or 1
     pixel_offset -= 1
 
-    dispersion_unit = fits_wcs_information.units[
-                          spectral_axis] or dispersion_unit
+    dispersion_unit = wcs_info.units[spectral_axis] or dispersion_unit
 
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
@@ -422,16 +429,13 @@ def read_fits_wcs_linear1d(fits_wcs_information, dispersion_unit=None,
                                            c0=dispersion_start,
                                            c1=dispersion_delta)
 
-
-spectrum1d_wcs_readers = [read_fits_wcs_linear1d]
-
-
 def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
     """
-    Simple 1D reader for spectra in FITS format. This simple reader just uses
-    the primary extension in a FITS file and reads the data and header from
-    that. Multiple different FITS readers then try to construct a WCS out of
-    the existing information.
+    1D reader for spectra in FITS format. This function determines what format
+    the FITS file is in, and attempts to read the Spectrum. This reader just
+    uses the primary extension in a FITS file and reads the data and header from
+    that. It will return a Spectrum1D object if the data is linear, or a list of
+    Spectrum1D objects if the data format is multi-spec
 
     Parameters
     ----------
@@ -447,6 +451,10 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
     flux_unit : ~astropy.unit.Unit, optional
         unit of the flux
 
+    Raises
+    --------
+    NotImplementedError
+        If the format can't be read currently
     """
     if dispersion_unit:
         dispersion_unit = u.Unit(dispersion_unit)
@@ -454,53 +462,20 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
     data = fits.getdata(filename)
     header = fits.getheader(filename)
 
-    fits_wcs_information = FITSWCSSpectrum(header)
+    wcs_info = FITSWCSSpectrum(header)
 
-    for fits_wcs in spectrum1d_wcs_readers:
-        try:
-            wcs = fits_wcs(fits_wcs_information,
-                           dispersion_unit=dispersion_unit)
-        except FITSWCSSpectrum1DError:
-            continue
-        else:
-            break
+    if wcs_info.naxis == 1:
+        wcs = read_fits_wcs_linear1d(wcs_info, dispersion_unit=dispersion_unit)
+        return Spectrum1D(data, wcs=wcs, unit=flux_unit)
+    elif wcs_info.naxis == 2 and \
+            wcs_info.affine_transform_dict['ctype'] == ["MULTISPE", "MULTISPE"]:
+        multi_wcs = multispec_wcs_reader(wcs_info, dispersion_unit=dispersion_unit)
+        multispec = []
+        for spectrum_data, spectrum_wcs in zip(data, multi_wcs.values()):
+            multispec.append(
+                Spectrum1D(spectrum_data, wcs=spectrum_wcs, unit=flux_unit))
+        return multispec
     else:
-        raise specwcs.Spectrum1DWCSError(
-            'File {0:s} does not contain a spectrum1d readable WCS'.format(
-                filename))
+        raise NotImplementedError("Either the FITS file does not represent a 1D"
+                                  " spectrum or the format isn't supported yet")
 
-    return Spectrum1D(data, wcs=wcs, unit=flux_unit)
-
-
-def read_fits_multispec_to_list(filename, dispersion_unit=None, flux_unit=None):
-    """This function reads FITS files in multispec-format and returns a list of Spectrum1D-objects
-
-    Parameters
-    ----------
-
-    filename : str
-        FITS filename
-
-    dispersion_unit : ~astropy.unit.Unit, optional
-        unit of the dispersion axis - will overwrite possible information given in the FITS keywords
-        default = None
-
-    flux_unit : ~astropy.unit.Unit, optional
-        unit of the flux
-    """
-    if dispersion_unit:
-        dispersion_unit = u.Unit(dispersion_unit)
-
-    data = fits.getdata(filename)
-    header = fits.getheader(filename)
-
-    fits_wcs_information = FITSWCSSpectrum(header)
-
-    multispec_wcs = fits_wcs_information.get_multispec_wcs(dispersion_unit)
-
-    multispec = []
-    for spectrum_data, spectrum_wcs in zip(data, multispec_wcs.values()):
-        multispec.append(
-            Spectrum1D(spectrum_data, wcs=spectrum_wcs, unit=flux_unit))
-
-    return multispec
