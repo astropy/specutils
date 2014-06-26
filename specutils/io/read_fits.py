@@ -59,7 +59,7 @@ def _get_num_coefficients(function_dict):
     """
     function_type = function_dict["type"]
 
-    if function_type in {"legendre", "chebyshev"}:
+    if function_type in ["legendre", "chebyshev"]:
         return function_dict["order"]
     elif function_type == "linearspline":
         return function_dict["npieces"] + 1
@@ -315,7 +315,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
     wcs_dict = OrderedDict()
     for spec_key in multispec_dict:
         single_spec_dict = multispec_dict[spec_key]
-        if single_spec_dict['dispersion_type'] in {0, 1}:
+        if single_spec_dict['dispersion_type'] in [0, 1]:
             raise NotImplementedError("Linear and log-linear WCS for "
                                       "multispec format not implemented")
         # single_spec_dict['dispersion_type'] == 2
@@ -351,7 +351,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
                     function_dict['pmax'], unit=dispersion_unit,
                     **coefficients)
 
-            elif function_dict['type'] in {'linearspline', 'cubicspline'}:
+            elif function_dict['type'] in ['linearspline', 'cubicspline']:
                 if function_dict['type'] == 'linearspline':
                     degree = 1
                 else:
