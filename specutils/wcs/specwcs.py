@@ -222,7 +222,6 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
                  param_dim=1, **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
                                                       window=window,
-                                                      param_dim=param_dim,
                                                       **params)
         self.unit = unit
 
@@ -237,11 +236,9 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     '~astropy.modeling.polynomial.Legendre1D`'
     """
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 param_dim=1,
                  **params):
         super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain,
                                                     window=window,
-                                                    param_dim=param_dim,
                                                     **params)
         self.unit = unit
 
@@ -275,11 +272,9 @@ class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
 
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 param_dim=1,
                  **params):
         super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain,
                                                      window=window,
-                                                     param_dim=param_dim,
                                                      **params)
         self.unit = unit
 
