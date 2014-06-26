@@ -245,7 +245,8 @@ class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return super(Spectrum1DLegendreWCS, self).__call__(pixel_indices)
+        return super(Spectrum1DLegendreWCS, self).__call__(pixel_indices)\
+            * self.unit
 
 
 class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
