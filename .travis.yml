@@ -1,11 +1,8 @@
 language: python
 
 python:
-    - 2.6
     - 2.7
-    - 3.2
     - 3.3
-    - 3.4
     # This is just for "egg_info".  All other builds are explicitly given in the matrix
 env:
     global:
@@ -13,7 +10,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - NUMPY_VERSION=1.8
-        - ASTROPY_VERSION=stable
+        - ASTROPY_VERSION=development
         - CONDA_INSTALL='conda install -c astropy-ci-extras --yes'
         - PIP_INSTALL='pip install'
         - INSTALL_SCIPY=false
@@ -34,11 +31,6 @@ matrix:
         # - python: 2.7
         #   env: SETUP_CMD='build_sphinx -w'
 
-        # Try Astropy development version
-        - python: 2.7
-          env: ASTROPY_VERSION=development SETUP_CMD='test'
-        - python: 3.3
-          env: ASTROPY_VERSION=development SETUP_CMD='test'
 
         # Try with SciPy
         - python: 2.7
@@ -46,33 +38,11 @@ matrix:
         - python: 3.3
           env: INSTALL_SCIPY=true SETUP_CMD='test'
 
-        # Try with SciPy and Astropy Development version
-        - python: 2.7
-          env: INSTALL_SCIPY=true ASTROPY_VERSION=development SETUP_CMD='test'
-        - python: 3.3
-          env: INSTALL_SCIPY=true ASTROPY_VERSION=development SETUP_CMD='test'
-
         # Try all python versions with the latest numpy
-        - python: 2.6
-          env: SETUP_CMD='test'
         - python: 2.7
-          env: SETUP_CMD='test'
-        - python: 3.2
           env: SETUP_CMD='test'
         - python: 3.3
           env: SETUP_CMD='test'
-        - python: 3.4
-          env: SETUP_CMD='test'
-
-        # Try older numpy versions
-        - python: 3.2
-          env: NUMPY_VERSION=1.6 SETUP_CMD='test'
-        - python: 2.7
-          env: NUMPY_VERSION=1.7 SETUP_CMD='test'
-        - python: 2.7
-          env: NUMPY_VERSION=1.6 SETUP_CMD='test'
-        - python: 2.7
-          env: NUMPY_VERSION=1.5 SETUP_CMD='test'
 
 before_install:
 
