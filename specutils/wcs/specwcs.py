@@ -220,11 +220,9 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
     """
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 param_dim=1, **params):
+                 **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
-                                                      window=window,
-                                                      param_dim=param_dim,
-                                                      **params)
+                                                      window=window, **params)
         self.unit = unit
 
     def __call__(self, pixel_indices):
