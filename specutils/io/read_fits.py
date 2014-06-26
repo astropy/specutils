@@ -338,8 +338,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
 
                 wcs = specwcs.Spectrum1DIRAFLegendreWCS(
                     function_dict['order'], function_dict['pmin'],
-                    function_dict['pmax'], unit=dispersion_unit,
-                    **coefficients)
+                    function_dict['pmax'], **coefficients)
 
             elif function_dict['type'] == 'chebyshev':
                 coefficients = dict([('c{:d}'.format(i),
@@ -348,8 +347,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
 
                 wcs = specwcs.Spectrum1DIRAFChebyshevWCS(
                     function_dict['order'], function_dict['pmin'],
-                    function_dict['pmax'], unit=dispersion_unit,
-                    **coefficients)
+                    function_dict['pmax'], **coefficients)
 
             elif function_dict['type'] in ['linearspline', 'cubicspline']:
                 if function_dict['type'] == 'linearspline':
@@ -363,7 +361,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
                      for i in range(n_pieces + degree)]
                 x = np.arange(n_pieces + degree)
                 wcs = specwcs.Spectrum1DIRAFBSplineWCS.from_data(
-                    degree, x, y, pmin, pmax, unit=dispersion_unit)
+                    degree, x, y, pmin, pmax)
             else:
                 raise NotImplementedError
 

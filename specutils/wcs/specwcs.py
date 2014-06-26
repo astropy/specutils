@@ -232,32 +232,15 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
             pixel_indices) * self.unit
 
 
-class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
-    """WCS for polynomial dispersion using Legendre Polynomials. The only added
-    parameter is a unit, otherwise the same as
-    '~astropy.modeling.polynomial.Legendre1D`'
-    """
-
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 param_dim=1, **params):
-        super(Spectrum1DLegendreWCS, self).__init__(
-            degree, domain=domain, window=window, param_dim=param_dim, **params)
-        self.unit = unit
-
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DLegendreWCS, self).__call__(pixel_indices)\
-            * self.unit
-
-
-class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
+class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     """
     WCS for polynomial dispersion using Legendre polynomials with
     transformation required for processing IRAF specification described at
     http://iraf.net/irafdocs/specwcs.php
     """
-    def __init__(self, order, pmin, pmax, unit=None, **coefficients):
+    def __init__(self, order, pmin, pmax, **coefficients):
         super(Spectrum1DIRAFLegendreWCS, self).__init__(
-            order-1, domain=[pmin, pmax], unit=unit, **coefficients)
+            order-1, domain=[pmin, pmax], **coefficients)
         self.pmin = pmin
         self.pmax = pmax
 
@@ -266,37 +249,21 @@ class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
         return super(Spectrum1DIRAFLegendreWCS, self).__call__(pixel_indices)
 
 
-class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
+class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
-    WCS for polynomial dispersion using Chebyshev Polynomials. The only added
-    parameter is a unit, otherwise the same as
-    'astropy.modeling.polynomial.Chebyshev1D'
+    WCS for polynomial dispersion using Chebyshev polynomials with
+    transformation required for processing IRAF specification described at
+    http://iraf.net/irafdocs/specwcs.php
 
     See Also
     --------
     astropy.modeling.polynomial.Chebyshev1D
     astropy.modeling.polynomial.Polynomial1D
     """
-    def __init__(self, degree, unit=None, domain=None, window=[-1,1],
-                 param_dim=1, **params):
-        super(Spectrum1DChebyshevWCS, self).__init__(
-            degree, domain=domain, window=window, param_dim=param_dim, **params)
-        self.unit = unit
 
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DChebyshevWCS, self).__call__(pixel_indices)
-
-
-class Spectrum1DIRAFChebyshevWCS(Spectrum1DChebyshevWCS):
-    """
-    WCS for polynomial dispersion using Chebyshev polynomials with
-    transformation required for processing IRAF specification described at
-    http://iraf.net/irafdocs/specwcs.php
-    """
-
-    def __init__(self, order, pmin, pmax, unit=None, **coefficients):
+    def __init__(self, order, pmin, pmax, **coefficients):
         super(Spectrum1DIRAFChebyshevWCS, self).__init__(
-            order-1, domain=[pmin, pmax], unit=unit, **coefficients)
+            order-1, domain=[pmin, pmax], **coefficients)
         self.pmin = pmin
         self.pmax = pmax
 
@@ -305,22 +272,7 @@ class Spectrum1DIRAFChebyshevWCS(Spectrum1DChebyshevWCS):
         return super(Spectrum1DIRAFChebyshevWCS, self).__call__(pixel_indices)
 
 
-class Spectrum1DBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
-    """
-    WCS for polynomial dispersion using BSpline functions. The only added
-    parameter is a unit.
-    """
-
-    def __init__(self, degree, knots, coefficients, unit=None):
-        super(Spectrum1DBSplineWCS, self).__init__(degree, knots, coefficients)
-        self.unit = unit
-
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DBSplineWCS, self).__call__(pixel_indices) \
-               * self.unit
-
-
-class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
+class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     """
     WCS for polynomial dispersion using BSpline functions with transformation
     required for processing IRAF specification described at
@@ -328,13 +280,13 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
     """
 
     @classmethod
-    def from_data(cls, degree, x, y, pmin, pmax, unit=None):
+    def from_data(cls, degree, x, y, pmin, pmax):
         from scipy.interpolate import splrep
         knots, coefficients, _ = splrep(x, y, k=degree)
-        return cls(degree, knots, coefficients, pmin, pmax, unit)
+        return cls(degree, knots, coefficients, pmin, pmax)
 
-    def __init__(self, degree, knots, coefficients, pmin, pmax, unit=None):
-        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients, unit)
+    def __init__(self, degree, knots, coefficients, pmin, pmax):
+        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients)
         self.pmin = pmin
         self.pmax = pmax
 
@@ -343,6 +295,7 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
         n_pieces = self.n_pieces - self.degree - 2
         s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
+
 
 class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
     """
