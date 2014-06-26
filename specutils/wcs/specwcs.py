@@ -245,8 +245,8 @@ class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         self.pmax = pmax
 
     def __call__(self, pixel_indices):
-        pixel_indices += self.pmin
-        return super(Spectrum1DIRAFLegendreWCS, self).__call__(pixel_indices)
+        transformed = pixel_indices + self.pmin
+        return super(Spectrum1DIRAFLegendreWCS, self).__call__(transformed)
 
 
 class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
@@ -268,8 +268,8 @@ class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
         self.pmax = pmax
 
     def __call__(self, pixel_indices):
-        pixel_indices += self.pmin
-        return super(Spectrum1DIRAFChebyshevWCS, self).__call__(pixel_indices)
+        transformed = pixel_indices + self.pmin
+        return super(Spectrum1DIRAFChebyshevWCS, self).__call__(transformed)
 
 
 class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
@@ -323,6 +323,10 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
             dispersion = weight * (zero_point_offset + wcs(pixel_indices))
             final_dispersion += dispersion / (1 + self.doppler_factor)
         return final_dispersion * self.unit
+    # Computing dispersion0 and avg dispersion delta: (for writing)
+    # x2 = specx.wcs(dic['pmin'])
+    # all = specx.wcs(np.arange(dic['pmin'], dic['pmax']+1))
+    # y2 = (all[1:] - all[:-1]).mean()
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
