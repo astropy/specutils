@@ -235,7 +235,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
-
+        
     def write_fits_header_linear(self, header, spectral_axis=1):
         header['cdelt{0}'.format(spectral_axis)] = self.c1.value
         header['crval{0}'.format(spectral_axis)] = self.c0.value
@@ -267,6 +267,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     # can only be implemented, when the reader is in place
     def write_fits_header_multispec(self, header, spectral_axis=1):
         pass
+
 
 class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     """
