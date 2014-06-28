@@ -208,7 +208,7 @@ class Spectrum1D(NDData):
                    mask=mask, flags=flags, meta=meta)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
-        for key in self._wcs_attributes.keys():
+        for key in list(self._wcs_attributes):
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
 

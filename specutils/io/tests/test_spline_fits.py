@@ -21,7 +21,7 @@ def test_multispec_linear_spline():
     pmax = 2304
     pixels = np.arange(pmin, pmax + 1) * 1.0
     s = (pixels - pmin) / (pmax - pmin) * npieces
-    j = np.array(map(int, s))
+    j = s.astype(int)
     a = (j + 1) - s
     b = s - j
     w1 = np.take(c1, j, mode='clip') * a + np.take(c1, 1 + j, mode='clip') * b
