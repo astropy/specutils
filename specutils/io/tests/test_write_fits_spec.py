@@ -8,22 +8,18 @@ def data_path(filename):
 
 def test_linear_write1():
     spec = read_fits.read_fits_spectrum1d(data_path('UVES.fits'))
-    data = spec.data
-    wcs = spec.wcs
 
-    write_fits.write(data_path('test.fits'), data, wcs)
-    test_spec = read_fits.read_fits_spectrum1d(data_path('test.fits'))
+    write_fits.write(spec, 'test.fits')
+    test_spec = read_fits.read_fits_spectrum1d('test.fits')
     np.testing.assert_allclose(spec.data, test_spec.data)
     np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
 
 def test_linear_write2():
     spec = read_fits.read_fits_spectrum1d(data_path('gbt_1d.fits'))
-    data = spec.data
-    wcs = spec.wcs
-
-    write_fits.write(data_path('test.fits'), data, wcs)
-    test_spec = read_fits.read_fits_spectrum1d(data_path('test.fits'))
+    write_fits.write(spec, 'test.fits')
+    test_spec = read_fits.read_fits_spectrum1d('test.fits')
     np.testing.assert_allclose(spec.data, test_spec.data)
     np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
 
 # TODO: create tests that utilize all methods to write fits header
+# TODO: check if WCS and units match
