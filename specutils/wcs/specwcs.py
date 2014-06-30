@@ -302,11 +302,12 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
     Dispersion = Sum over all WCS
         [Weight * (Zero point offset + WCS(pixels)) / (1 + doppler factor)]
     """
-    def __init__(self, aperture=1, beam=88, aperture_low=0.0, aperture_high=0.0,
-                 doppler_factor=0.0, unit=None):
+    def __init__(self, num_pixels, aperture=1, beam=88, aperture_low=0.0,
+                 aperture_high=0.0, doppler_factor=0.0, unit=None):
         self.wcs_list = []
         self.aperture = aperture
         self.beam = beam
+        self.num_pixels = num_pixels
         self.aperture_low = aperture_low
         self.aperture_high = aperture_high
         self.doppler_factor = doppler_factor

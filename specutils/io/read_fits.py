@@ -320,6 +320,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
                                       "multispec format not implemented")
         # single_spec_dict['dispersion_type'] == 2
         combined_wcs = specwcs.Spectrum1DIRAFCombinationWCS(
+            single_spec_dict["no_valid_pixels"],
             aperture=single_spec_dict["aperture"],
             beam=single_spec_dict["beam"],
             aperture_low=single_spec_dict["aperture_low"],
