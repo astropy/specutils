@@ -21,5 +21,37 @@ def test_linear_write2():
     np.testing.assert_allclose(spec.data, test_spec.data)
     np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
 
+def test_multispec_legendre():
+    spectra = read_fits.read_fits_spectrum1d(data_path('TRES.fits'))
+    write_fits.write(spectra, 'test.fits')
+    test_spectra = read_fits.read_fits_spectrum1d('test.fits')
+    for spec, test_spec in zip(spectra, test_spectra):
+        np.testing.assert_allclose(spec.data, test_spec.data)
+        np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
+
+def test_multispec_chebyshev():
+    spectra = read_fits.read_fits_spectrum1d(data_path('AAO.fits'))
+    write_fits.write(spectra, 'test.fits')
+    test_spectra = read_fits.read_fits_spectrum1d('test.fits')
+    for spec, test_spec in zip(spectra, test_spectra):
+        np.testing.assert_allclose(spec.data, test_spec.data)
+        np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
+
+def test_multispec_combined():
+    spectra = read_fits.read_fits_spectrum1d(data_path('Combined.fits'))
+    write_fits.write(spectra, 'test.fits')
+    test_spectra = read_fits.read_fits_spectrum1d('test.fits')
+    for spec, test_spec in zip(spectra, test_spectra):
+        np.testing.assert_allclose(spec.data, test_spec.data)
+        np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
+
+def test_multispec_spline():
+    spectra = read_fits.read_fits_spectrum1d(data_path('spline.fits'))
+    write_fits.write(spectra, 'test.fits')
+    test_spectra = read_fits.read_fits_spectrum1d('test.fits')
+    for spec, test_spec in zip(spectra, test_spectra):
+        np.testing.assert_allclose(spec.data, test_spec.data)
+        np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
+
 # TODO: create tests that utilize all methods to write fits header
 # TODO: check if WCS and units match

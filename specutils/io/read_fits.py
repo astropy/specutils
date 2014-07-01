@@ -360,9 +360,8 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
                 pmax = function_dict['pmax']
                 y = [function_dict['coefficients'][i]
                      for i in range(n_pieces + degree)]
-                x = np.arange(n_pieces + degree)
-                wcs = specwcs.Spectrum1DIRAFBSplineWCS.from_data(
-                    degree, x, y, pmin, pmax)
+                wcs = specwcs.Spectrum1DIRAFBSplineWCS(degree, n_pieces, y,
+                                                       pmin, pmax)
             else:
                 raise NotImplementedError
 
