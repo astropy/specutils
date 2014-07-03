@@ -11,6 +11,7 @@ from ..models.BSplineModel import BSplineModel
 import astropy.units as u
 
 from astropy.utils.misc import deprecated
+from astropy.utils import OrderedDict
 
 
 ##### Delete at earliest convenience (currently deprecated)
@@ -119,7 +120,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
     def __init__(self, lookup_table, unit=None,
                  lookup_table_interpolation_kind='linear'):
-        super(Spectrum1DLookupWCS, self).__init__(lookup_table_parameter=lookup_table)
+        super(Spectrum1DLookupWCS, self).__init__()
 
         if unit is not None:
             self.lookup_table_parameter = u.Quantity(lookup_table, unit)
@@ -221,49 +222,36 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
                  **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
-                                                      window=window,
-                                                      **params)
+                                                      window=window, **params)
         self.unit = unit
 
     def __call__(self, pixel_indices):
-        return (super(Spectrum1DPolynomialWCS, self).
-                __call__(pixel_indices)) * self.unit
+        return super(Spectrum1DPolynomialWCS, self).__call__(
+            pixel_indices) * self.unit
 
 
-class Spectrum1DLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
-    """WCS for polynomial dispersion using Legendre Polynomials. The only added
-    parameter is a unit, otherwise the same as
-    '~astropy.modeling.polynomial.Legendre1D`'
-    """
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 **params):
-        super(Spectrum1DLegendreWCS, self).__init__(degree, domain=domain,
-                                                    window=window,
-                                                    **params)
-        self.unit = unit
-
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DLegendreWCS, self).__call__(pixel_indices)\
-            * self.unit
-
-
-class Spectrum1DIRAFLegendreWCS(Spectrum1DLegendreWCS):
+class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     """
     WCS for polynomial dispersion using Legendre polynomials with
     transformation required for processing IRAF specification described at
     http://iraf.net/irafdocs/specwcs.php
     """
+    def __init__(self, order, pmin, pmax, **coefficients):
+        super(Spectrum1DIRAFLegendreWCS, self).__init__(
+            order-1, domain=[pmin, pmax], **coefficients)
+        self.pmin = pmin
+        self.pmax = pmax
 
     def __call__(self, pixel_indices):
-        pixel_indices += 1
-        return super(Spectrum1DIRAFLegendreWCS, self).__call__(pixel_indices)
+        transformed = pixel_indices + self.pmin
+        return super(Spectrum1DIRAFLegendreWCS, self).__call__(transformed)
 
 
-class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
+class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
-    WCS for polynomial dispersion using Chebyshev Polynomials. The only added
-    parameter is a unit, otherwise the same as
-    'astropy.modeling.polynomial.Chebyshev1D'
+    WCS for polynomial dispersion using Chebyshev polynomials with
+    transformation required for processing IRAF specification described at
+    http://iraf.net/irafdocs/specwcs.php
 
     See Also
     --------
@@ -271,46 +259,18 @@ class Spectrum1DChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     astropy.modeling.polynomial.Polynomial1D
     """
 
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
-                 **params):
-        super(Spectrum1DChebyshevWCS, self).__init__(degree, domain=domain,
-                                                     window=window,
-                                                     **params)
-        self.unit = unit
+    def __init__(self, order, pmin, pmax, **coefficients):
+        super(Spectrum1DIRAFChebyshevWCS, self).__init__(
+            order-1, domain=[pmin, pmax], **coefficients)
+        self.pmin = pmin
+        self.pmax = pmax
 
     def __call__(self, pixel_indices):
-        return super(Spectrum1DChebyshevWCS, self).__call__(pixel_indices) \
-            * self.unit
+        transformed = pixel_indices + self.pmin
+        return super(Spectrum1DIRAFChebyshevWCS, self).__call__(transformed)
 
 
-class Spectrum1DIRAFChebyshevWCS(Spectrum1DChebyshevWCS):
-    """
-    WCS for polynomial dispersion using Chebyshev polynomials with
-    transformation required for processing IRAF specification described at
-    http://iraf.net/irafdocs/specwcs.php
-    """
-
-    def __call__(self, pixel_indices):
-        pixel_indices += 1
-        return super(Spectrum1DIRAFChebyshevWCS, self).__call__(pixel_indices)
-
-
-class Spectrum1DBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
-    """
-    WCS for polynomial dispersion using BSpline functions. The only added
-    parameter is a unit.
-    """
-
-    def __init__(self, degree, knots, coefficients, unit=None):
-        super(Spectrum1DBSplineWCS, self).__init__(degree, knots, coefficients)
-        self.unit = unit
-
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DBSplineWCS, self).__call__(pixel_indices) \
-               * self.unit
-
-
-class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
+class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     """
     WCS for polynomial dispersion using BSpline functions with transformation
     required for processing IRAF specification described at
@@ -318,13 +278,13 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
     """
 
     @classmethod
-    def from_data(cls, degree, x, y, pmin, pmax, unit=None):
+    def from_data(cls, degree, x, y, pmin, pmax):
         from scipy.interpolate import splrep
         knots, coefficients, _ = splrep(x, y, k=degree)
-        return cls(degree, knots, coefficients, pmin, pmax, unit)
+        return cls(degree, knots, coefficients, pmin, pmax)
 
-    def __init__(self, degree, knots, coefficients, pmin, pmax, unit=None):
-        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients, unit)
+    def __init__(self, degree, knots, coefficients, pmin, pmax):
+        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients)
         self.pmin = pmin
         self.pmax = pmax
 
@@ -334,6 +294,38 @@ class Spectrum1DIRAFBSplineWCS(Spectrum1DBSplineWCS):
         s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
 
+
+class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
+    """
+    WCS that combines multiple WCS using their weights, zero index and doppler
+    factor. The formula used is:
+    Dispersion = Sum over all WCS
+        [Weight * (Zero point offset + WCS(pixels)) / (1 + doppler factor)]
+    """
+    def __init__(self, num_pixels, aperture=1, beam=88, aperture_low=0.0,
+                 aperture_high=0.0, doppler_factor=0.0, unit=None):
+        self.wcs_list = []
+        self.aperture = aperture
+        self.beam = beam
+        self.num_pixels = num_pixels
+        self.aperture_low = aperture_low
+        self.aperture_high = aperture_high
+        self.doppler_factor = doppler_factor
+        self.unit = unit
+
+    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
+        self.wcs_list.append((wcs, weight, zero_point_offset))
+
+    def __call__(self, pixel_indices):
+        final_dispersion = np.zeros(len(pixel_indices))
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            dispersion = weight * (zero_point_offset + wcs(pixel_indices))
+            final_dispersion += dispersion / (1 + self.doppler_factor)
+        return final_dispersion * self.unit
+    # Computing dispersion0 and avg dispersion delta: (for writing)
+    # x2 = specx.wcs(dic['pmin'])
+    # all = specx.wcs(np.arange(dic['pmin'], dic['pmax']+1))
+    # y2 = (all[1:] - all[:-1]).mean()
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
