@@ -1,6 +1,7 @@
 import os
 from specutils.io import read_fits, write_fits
 import numpy as np
+import pytest
 
 def data_path(filename):
     data_dir = os.path.join(os.path.dirname(__file__), 'files')
@@ -8,7 +9,6 @@ def data_path(filename):
 
 def test_linear_write1():
     spec = read_fits.read_fits_spectrum1d(data_path('UVES.fits'))
-
     write_fits.write(spec, 'test.fits')
     test_spec = read_fits.read_fits_spectrum1d('test.fits')
     np.testing.assert_allclose(spec.data, test_spec.data)
@@ -46,6 +46,7 @@ def test_multispec_combined():
         np.testing.assert_allclose(spec.dispersion, test_spec.dispersion)
 
 def test_multispec_spline():
+    pytest.importorskip("scipy")
     spectra = read_fits.read_fits_spectrum1d(data_path('spline.fits'))
     write_fits.write(spectra, 'test.fits')
     test_spectra = read_fits.read_fits_spectrum1d('test.fits')
