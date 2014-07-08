@@ -315,19 +315,34 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
     wcs_dict = OrderedDict()
     for spec_key in multispec_dict:
         single_spec_dict = multispec_dict[spec_key]
-        if single_spec_dict['dispersion_type'] in [0, 1]:
-            raise NotImplementedError("Linear and log-linear WCS for "
-                                      "multispec format not implemented")
-        # single_spec_dict['dispersion_type'] == 2
+        doppler_factor = single_spec_dict["doppler_factor"]
         combined_wcs = specwcs.Spectrum1DIRAFCombinationWCS(
             single_spec_dict["no_valid_pixels"],
+            single_spec_dict["dispersion_type"],
             aperture=single_spec_dict["aperture"],
             beam=single_spec_dict["beam"],
             aperture_low=single_spec_dict["aperture_low"],
             aperture_high=single_spec_dict["aperture_high"],
-            doppler_factor=single_spec_dict["doppler_factor"],
             unit=dispersion_unit)
+        if single_spec_dict['dispersion_type'] in [0, 1]:
+            #linear or log-linear dispersion
+            linear_wcs = specwcs.Spectrum1DPolynomialWCS(
+                degree=1, c0=single_spec_dict["dispersion0"],
+                c1=single_spec_dict["average_dispersion_delta"])
+            combined_wcs.add_WCS(linear_wcs)
+            doppler_wcs = specwcs.DopplerWCS(single_spec_dict["doppler_factor"],
+                                             combined_wcs)
+            if single_spec_dict['dispersion_type'] == 1:
+                #log-linear dispersion
+                final_wcs = specwcs.LogWCS(10, doppler_wcs)
+            else:
+                # linear dispersion
+                final_wcs = doppler_wcs
 
+            wcs_dict[spec_key] = final_wcs
+            continue
+
+        # single_spec_dict['dispersion_type'] == 2
         for function_dict in single_spec_dict["functions"]:
             if function_dict['type'] == 'legendre':
                 ##### @embray can you figure out if that's the only way to
@@ -369,7 +384,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
                 wcs, weight=function_dict["weight"],
                 zero_point_offset=function_dict["zero_point_offset"])
 
-        wcs_dict[spec_key] = combined_wcs
+        wcs_dict[spec_key] = specwcs.DopplerWCS(doppler_factor, combined_wcs)
     return wcs_dict
 
 
