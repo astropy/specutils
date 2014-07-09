@@ -12,12 +12,12 @@ import astropy.units as u
 
 from astropy.utils.misc import deprecated
 from astropy.utils import OrderedDict
+from astropy.io import fits
 
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km / u.s, u.m, u.Hz, u.erg]
-
 
 @deprecated('0.dev???', 'using no units is now allowed for WCS')
 def check_valid_unit(unit):
@@ -225,9 +225,48 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
                                                       window=window, **params)
         self.unit = unit
 
+        self.fits_header_writers = {'linear': self._write_fits_header_linear,
+                                    'matrix': self._write_fits_header_matrix,
+                                    'multispec': self._write_fits_header_multispec}
+
     def __call__(self, pixel_indices):
         return super(Spectrum1DPolynomialWCS, self).__call__(
             pixel_indices) * self.unit
+
+    def write_fits_header(self, header, spectral_axis=1, method='linear'):
+        self.fits_header_writers[method](header, spectral_axis)
+
+    def _write_fits_header_linear(self, header, spectral_axis=1):
+        header['cdelt{0}'.format(spectral_axis)] = self.c1.value
+        header['crval{0}'.format(spectral_axis)] = self.c0.value
+
+        if self._unit is not None:
+            unit_string = self.unit
+            if isinstance(self.unit, u.UnitBase):
+                if self.unit == u.AA:
+                    unit_string = 'angstroms'
+                else:
+                    unit_string = self.unit.to_string()
+
+            header['cunit{0}'.format(spectral_axis)] = unit_string
+
+    def _write_fits_header_matrix(self, header, spectral_axis=1):
+        header['cd{0}_{1}'.format(spectral_axis, spectral_axis)] = self.c1.value
+        header['crval{0}'.format(spectral_axis)] = self.c0.value
+
+        if self._unit is not None:
+            unit_string = self.unit
+            if isinstance(self.unit, u.UnitBase):
+                if self.unit == u.AA:
+                    unit_string = 'angstroms'
+                else:
+                    unit_string = self.unit.to_string()
+
+            header['cunit{0}'.format(spectral_axis)] = unit_string
+
+    # can only be implemented, when the reader is in place
+    def _write_fits_header_multispec(self, header, spectral_axis=1):
+        pass
 
 
 class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
@@ -246,6 +285,12 @@ class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         transformed = pixel_indices + self.pmin
         return super(Spectrum1DIRAFLegendreWCS, self).__call__(transformed)
 
+    def get_fits_spec(self):
+        func_type = 2
+        order = self.degree + 1
+        coefficients = [self.__getattr__('c{0}'.format(i)).value
+                        for i in range(order)]
+        return [func_type, order, self.pmin, self.pmax] + coefficients
 
 class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     """
@@ -269,6 +314,12 @@ class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
         transformed = pixel_indices + self.pmin
         return super(Spectrum1DIRAFChebyshevWCS, self).__call__(transformed)
 
+    def get_fits_spec(self):
+        func_type = 1
+        order = self.degree + 1
+        coefficients = [self.__getattr__('c{0}'.format(i)).value
+                        for i in range(order)]
+        return [func_type, order, self.pmin, self.pmax] + coefficients
 
 class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     """
@@ -277,22 +328,31 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
     http://iraf.net/irafdocs/specwcs.php
     """
 
-    @classmethod
-    def from_data(cls, degree, x, y, pmin, pmax):
+    def __init__(self, degree, npieces, y, pmin, pmax):
         from scipy.interpolate import splrep
-        knots, coefficients, _ = splrep(x, y, k=degree)
-        return cls(degree, knots, coefficients, pmin, pmax)
-
-    def __init__(self, degree, knots, coefficients, pmin, pmax):
-        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots, coefficients)
         self.pmin = pmin
         self.pmax = pmax
+        self.npieces = npieces
+        self.y = y
 
+        x = np.arange(npieces + degree)
+        knots, coefficients, _ = splrep(x, y, k=degree)
+        super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots,
+                                                       coefficients)
 
     def __call__(self, pixel_indices):
-        n_pieces = self.n_pieces - self.degree - 2
-        s = (pixel_indices * 1.0 * n_pieces) / (self.pmax - self.pmin)
+        s = (pixel_indices * 1.0 * self.npieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
+
+    def get_fits_spec(self):
+        if self.degree == 1:
+            func_type = 4
+        elif self.degree == 3:
+            func_type = 3
+        else:
+            raise Spectrum1DWCSFITSError("Fits spec undefined for degree = "
+                                         "{0}".format(self.degree))
+        return [func_type, self.npieces, self.pmin, self.pmax] + self.y
 
 
 class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
@@ -313,6 +373,7 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
         self.doppler_factor = doppler_factor
         self.unit = unit
 
+
     def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
         self.wcs_list.append((wcs, weight, zero_point_offset))
 
@@ -322,10 +383,21 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
             dispersion = weight * (zero_point_offset + wcs(pixel_indices))
             final_dispersion += dispersion / (1 + self.doppler_factor)
         return final_dispersion * self.unit
-    # Computing dispersion0 and avg dispersion delta: (for writing)
-    # x2 = specx.wcs(dic['pmin'])
-    # all = specx.wcs(np.arange(dic['pmin'], dic['pmax']+1))
-    # y2 = (all[1:] - all[:-1]).mean()
+
+    def get_fits_spec(self):
+        disp_type = 2
+        dispersion0 = self.__call__(np.zeros(1))[0].value
+        dispersion = self.__call__(np.arange(self.num_pixels)).value
+        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
+        spec = [self.aperture, self.beam, disp_type, dispersion0,
+                avg_disp_delta, self.num_pixels, self.doppler_factor,
+                self.aperture_low, self.aperture_high]
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            spec.extend([weight, zero_point_offset])
+            spec.extend(wcs.get_fits_spec())
+
+        return " ".join(map(str, spec))
+
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
