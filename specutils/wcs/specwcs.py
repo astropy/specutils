@@ -399,6 +399,81 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
         return " ".join(map(str, spec))
 
 
+class DopplerWCS(Model):
+    """
+    Applies doppler shift to the output of a WCS applied to the input. Returns:
+                        wcs(input) / (1 + doppler factor)
+    Parameters
+    -----------
+    doppler_factor : int
+        the doppler factor
+    wcs : `astropy.modelling.Model`-subclass
+        The WCS to be called before applying doppler factor on it. Consider
+        using IdentityWCS if no WCS needs to be applied.
+    Raises
+    --------
+    ValueError
+        If the WCS is not a subclass of Model
+    """
+    def __init__(self, doppler_factor, wcs):
+        if not issubclass(wcs, Model):
+            raise ValueError("WCS should be subclass of Model")
+
+        self.doppler_factor = doppler_factor
+        self.wcs = wcs
+
+    def __call__(self, input):
+        return self.wcs(input) / (1 + self.doppler_factor)
+
+    def get_fits_spec(self):
+        spec = self.wcs.get_fits_spec()
+        spec[6] = self.doppler_factor
+        return spec
+
+    def __getattr__(self, item):
+        return self.wcs.__getattribute__(item)
+
+
+class LogWCS(Model):
+    """
+    Applies log inversion to the output of a WCS applied to the input at the
+    given base. Returns:
+                                base ** wcs(input)
+    Parameters
+    -----------
+    base : int
+        the base of the log
+    wcs : `astropy.modelling.Model`-subclass
+        The WCS to be called before applying doppler factor on it. Consider
+        using IdentityWCS if no WCS needs to be applied.
+    Raises
+    --------
+    ValueError
+        If the WCS is not a subclass of Model
+    """
+    def __init__(self, base, wcs):
+        if not issubclass(wcs, Model):
+            raise ValueError("WCS should be subclass of Model")
+
+        self.base = base
+        self.wcs = wcs
+
+    def __call__(self, input):
+        return self.base ** self.wcs(input)
+
+    def __getattr__(self, item):
+        return self.wcs.__getattribute__(item)
+
+class IdentityWCS(Model):
+    """
+    Returns the value itself when called. Some models need a WCS to work on, as
+    they don't work on values directly. This WCS provides a solution to the
+    problem. It should called in the beginning of the WCS call chain, with other
+    WCS working on top of this.
+    """
+    def __call__(self, input):
+        return input
+
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
     dcd = {'relativistic': u.doppler_relativistic,
