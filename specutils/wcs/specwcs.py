@@ -315,52 +315,6 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
         return [func_type, self.npieces, self.pmin, self.pmax] + self.y
 
 
-class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
-    """
-    WCS that combines multiple WCS using their weights, zero index and doppler
-    factor. The formula used is:
-    Dispersion = Sum over all WCS
-        [Weight * (Zero point offset + WCS(pixels))]
-    """
-    def __init__(self, num_pixels, dispersion_type, aperture=1, beam=88,
-                 aperture_low=0.0, aperture_high=0.0, unit=None):
-        self.wcs_list = []
-        self.aperture = aperture
-        self.beam = beam
-        self.dispersion_type = dispersion_type
-        self.num_pixels = num_pixels
-        self.aperture_low = aperture_low
-        self.aperture_high = aperture_high
-        self.unit = unit
-
-
-    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
-        self.wcs_list.append((wcs, weight, zero_point_offset))
-
-    def __call__(self, pixel_indices):
-        final_dispersion = np.zeros(len(pixel_indices))
-        for wcs, weight, zero_point_offset in self.wcs_list:
-            dispersion = weight * (zero_point_offset + wcs(pixel_indices))
-            final_dispersion += dispersion
-        return final_dispersion * self.unit
-
-    def get_fits_spec(self):
-        if self.dispersion_type in [0, 1]:
-            assert len(self.wcs_list) == 1
-        dispersion0 = self.__call__(np.zeros(1))[0].value
-        dispersion = self.__call__(np.arange(self.num_pixels)).value
-        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
-        default_doppler_factor = 0.0
-        spec = [self.aperture, self.beam, self.dispersion_type, dispersion0,
-                avg_disp_delta, self.num_pixels, default_doppler_factor,
-                self.aperture_low, self.aperture_high]
-        for wcs, weight, zero_point_offset in self.wcs_list:
-            if hasattr(wcs, "get_fits_spec"):
-                spec.extend([weight, zero_point_offset])
-                spec.extend(wcs.get_fits_spec())
-        return spec
-
-
 class WeightedCombinationWCS(Model):
     """
     A weighted combination WCS model. This model combines multiple WCS using a
@@ -551,3 +505,57 @@ class DopplerShift(Model):
     def doppler_factor(self):
         return math.sqrt((1 + self.beta)/(1 - self.beta))
 
+class MultispecIRAFCompositeWCS(BaseSpectrum1DWCS, CompositeWCS):
+    """
+    A specialized composite WCS model for IRAF FITS multispec specification.
+    This model adds applies doppler adjustment and log (if applicable) to the
+    dispersion WCS. The dispersion WCS may be a linear WCS or a weighted
+    combination WCS. This model stores FITS metadata and also provides a method
+    to generate the  multispec string for the FITS header.
+    """
+
+    def __init__(self, dispersion_wcs, doppler_wcs, num_pixels, log_wcs=None,
+                 aperture=1, beam=88, aperture_low=0.0, aperture_high=0.0,
+                 unit=None):
+        super(MultispecIRAFCompositeWCS, self).__init__()
+        self.aperture = aperture
+        self.beam = beam
+        self.num_pixels = num_pixels
+        self.aperture_low = aperture_low
+        self.aperture_high = aperture_high
+        self.unit = unit
+        self.add_WCS(dispersion_wcs)
+        self.add_WCS(doppler_wcs)
+        if log_wcs is not None:
+            self.add_WCS(log_wcs)
+
+    def __call__(self, pixel_indices):
+        dispersion = super(MultispecIRAFCompositeWCS,
+                           self).__call__(pixel_indices)
+        return dispersion * self.unit
+
+    def get_fits_spec(self):
+        if len(self.wcs_list) == 2:
+            dispersion_wcs, doppler_wcs = self.wcs_list
+            if isinstance(dispersion_wcs, WeightedCombinationWCS):
+                dispersion_type = 2
+            else:
+                # dispersion_type instanceof Spectrum1DPolynomialWCS
+                dispersion_type = 0
+        else:
+            # len(self.wcs_list) = 3
+            dispersion_wcs, doppler_wcs, log_wcs = self.wcs_list
+            dispersion_type = 1
+        dispersion0 = self.__call__(np.zeros(1))[0].value
+        dispersion = self.__call__(np.arange(self.num_pixels)).value
+        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
+        doppler_factor = doppler_wcs.doppler_factor
+        spec = [self.aperture, self.beam, dispersion_type, dispersion0,
+                avg_disp_delta, self.num_pixels, doppler_factor,
+                self.aperture_low, self.aperture_high]
+        if isinstance(dispersion_wcs, WeightedCombinationWCS):
+            # add the parameters of the functions to the spec string
+            for wcs, weight, zero_point_offset in dispersion_wcs.wcs_list:
+                spec.extend([weight, zero_point_offset])
+                spec.extend(wcs.get_fits_spec())
+        return spec
