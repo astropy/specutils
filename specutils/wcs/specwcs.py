@@ -13,7 +13,7 @@ import astropy.units as u
 from astropy.utils.misc import deprecated
 from astropy.utils import OrderedDict
 from astropy.io import fits
-
+import copy
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
@@ -399,39 +399,64 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
         return " ".join(map(str, spec))
 
 
-class DopplerWCS(Model):
+class WeightedCombinationWCS(Model):
     """
-    Applies doppler shift to the output of a WCS applied to the input. Returns:
-                        wcs(input) / (1 + doppler factor)
-    Parameters
-    -----------
-    doppler_factor : int
-        the doppler factor
-    wcs : `astropy.modelling.Model`-subclass
-        The WCS to be called before applying doppler factor on it. Consider
-        using IdentityWCS if no WCS needs to be applied.
-    Raises
-    --------
-    ValueError
-        If the WCS is not a subclass of Model
+    A weighted combination WCS model. This model combines multiple WCS using a
+    weight and a zero point offset. Suppose there are n WCS'es. When called with
+    an input, this WCS returns the following:
+            Sum over i = 1 to n
+                [weight_i * (zero_point_offset_i + WCS_i(input))
+    WCS can be added using the add_wcs method, along with it's weight and zero
+    point offset.
     """
-    def __init__(self, doppler_factor, wcs):
-        if not issubclass(wcs, Model):
-            raise ValueError("WCS should be subclass of Model")
+    def __init__(self):
+        self.wcs_list = []
 
-        self.doppler_factor = doppler_factor
-        self.wcs = wcs
+    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
+        self.wcs_list.append((wcs, weight, zero_point_offset))
 
     def __call__(self, input):
-        return self.wcs(input) / (1 + self.doppler_factor)
+        output = np.zeros(len(input))
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            output += weight * (zero_point_offset + wcs(input))
+        return output
 
-    def get_fits_spec(self):
-        spec = self.wcs.get_fits_spec()
-        spec[6] = self.doppler_factor
-        return spec
 
-    def __getattr__(self, item):
-        return self.wcs.__getattribute__(item)
+class CompositeWCS(Model):
+    """
+    A composite WCS model. This model applies multiple WCS in-order to a
+    particular input. Suppose there are 4 WCS'es, When called, this WCS returns
+    the following:
+                        wcs_4(wcs_3(wcs_2(wcs_1(input))))
+    The WCS which is added first is applied first. WCS'es can be added using
+    the add_wcs method.
+    """
+    def __init__(self):
+        self.wcs_list = []
+
+    def add_WCS(self, wcs):
+        self.wcs_list.append(wcs)
+
+    def __call__(self, input):
+        output = copy.deepcopy(input)
+        for wcs in self.wcs_list:
+            output = wcs(output)
+        return output
+
+class DopplerWCS(Model):
+    """
+    Applies doppler shift to the input. Returns:
+                        input / (1 + doppler factor)
+    Parameters
+    -----------
+    doppler_factor : float
+        the doppler factor
+    """
+    def __init__(self, doppler_factor):
+        self.doppler_factor = doppler_factor
+
+    def __call__(self, input):
+        return input / (1 + self.doppler_factor)
 
 
 class LogWCS(Model):
@@ -443,36 +468,13 @@ class LogWCS(Model):
     -----------
     base : int
         the base of the log
-    wcs : `astropy.modelling.Model`-subclass
-        The WCS to be called before applying doppler factor on it. Consider
-        using IdentityWCS if no WCS needs to be applied.
-    Raises
-    --------
-    ValueError
-        If the WCS is not a subclass of Model
     """
-    def __init__(self, base, wcs):
-        if not issubclass(wcs, Model):
-            raise ValueError("WCS should be subclass of Model")
-
+    def __init__(self, base):
         self.base = base
-        self.wcs = wcs
 
     def __call__(self, input):
-        return self.base ** self.wcs(input)
+        return self.base ** input
 
-    def __getattr__(self, item):
-        return self.wcs.__getattribute__(item)
-
-class IdentityWCS(Model):
-    """
-    Returns the value itself when called. Some models need a WCS to work on, as
-    they don't work on values directly. This WCS provides a solution to the
-    problem. It should called in the beginning of the WCS call chain, with other
-    WCS working on top of this.
-    """
-    def __call__(self, input):
-        return input
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
