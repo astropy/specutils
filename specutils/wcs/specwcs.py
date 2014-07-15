@@ -14,6 +14,8 @@ from astropy.utils.misc import deprecated
 from astropy.utils import OrderedDict
 from astropy.io import fits
 import copy
+from astropy import constants
+import math
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
@@ -452,6 +454,16 @@ class DopplerWCS(Model):
     doppler_factor : float
         the doppler factor
     """
+    @classmethod
+    def from_velocity(cls, velocity):
+        beta = velocity/constants.c
+        doppler_factor = math.sqrt((1+beta)/(1-beta))
+        return cls(doppler_factor)
+
+    @classmethod
+    def from_z(cls, z):
+       return cls(z+1)
+
     def __init__(self, doppler_factor):
         self.doppler_factor = doppler_factor
 
