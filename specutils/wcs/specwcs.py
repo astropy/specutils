@@ -113,14 +113,15 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     lookup_table : ~np.ndarray or ~astropy.units.Quantity
         lookup table for the array
     """
-     
+
     n_inputs = 1
     n_outputs = 1
     lookup_table_parameter = Parameter('lookup_table_parameter')
 
     def __init__(self, lookup_table, unit=None,
                  lookup_table_interpolation_kind='linear'):
-        super(Spectrum1DLookupWCS, self).__init__()
+        super(Spectrum1DLookupWCS, self).__init__(
+            lookup_table_parameter=lookup_table)
 
         if unit is not None:
             self.lookup_table_parameter = u.Quantity(lookup_table, unit)
