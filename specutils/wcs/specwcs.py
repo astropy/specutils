@@ -113,7 +113,7 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     lookup_table : ~np.ndarray or ~astropy.units.Quantity
         lookup table for the array
     """
-
+     
     n_inputs = 1
     n_outputs = 1
     lookup_table_parameter = Parameter('lookup_table_parameter')
