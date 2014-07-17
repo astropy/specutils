@@ -410,14 +410,45 @@ class WeightedCombinationWCS(Model):
                 [weight_i * (zero_point_offset_i + WCS_i(input))
     WCS can be added using the add_wcs method, along with it's weight and zero
     point offset.
+
+    Parameters
+    -----------
+    wcs_list : list of callable objects, optional
+        The object's wcs_list will be instantiated using wcs from this list
     """
-    def __init__(self):
+    def __init__(self, wcs_list=[]):
         self.wcs_list = []
+        for wcs in wcs_list:
+            wcs_list.append(wcs)
 
     def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
+        """
+        Add a WCS/function pointer to be evaluated when this WCS is called. The
+        results of calling this WCS on the input will be added to the overall
+        result, after applying the weight and the ero point offset.
+
+        Parameters
+        -----------
+        wcs : callable
+            The WCS to be added
+        weight: float, optional
+            The weight of the WCS in this model
+        zero_point: float, optional
+            The output of the WCS will be offset by this value before being
+            multiplied by the weight
+        """
         self.wcs_list.append((wcs, weight, zero_point_offset))
 
     def __call__(self, input):
+        """
+        Applies the WCS'es and functions to the input and returns the
+        weighted sum of all the results
+
+        Parameters
+        -----------
+        input : array_like
+            The input to the composite WCS
+        """
         output = np.zeros(len(input))
         for wcs, weight, zero_point_offset in self.wcs_list:
             output += weight * (zero_point_offset + wcs(input))
@@ -432,20 +463,45 @@ class CompositeWCS(Model):
                         wcs_4(wcs_3(wcs_2(wcs_1(input))))
     The WCS which is added first is applied first. WCS'es can be added using
     the add_wcs method.
+
+    Parameters
+    -----------
+    wcs_list : list of callable objects, optional
+        The object's wcs_list will be instantiated using wcs from this list
     """
-    def __init__(self):
+    def __init__(self, wcs_list=[]):
         self.wcs_list = []
+        for wcs in wcs_list:
+            wcs_list.append(wcs)
 
     def add_WCS(self, wcs):
+        """
+        Add a WCS/function pointer on top of the current transformation. This
+        will be called after the previous items in the list
+
+        Parameters
+        -----------
+        wcs : callable
+            The WCS to be added
+        """
         self.wcs_list.append(wcs)
 
     def __call__(self, input):
-        output = copy.deepcopy(input)
+        """
+        Applies the chain of WCS'es and functions to the input and returns the
+        result
+
+        Parameters
+        -----------
+        input : array_like
+            The input to the composite WCS
+        """
+        output = input
         for wcs in self.wcs_list:
             output = wcs(output)
         return output
 
-class DopplerWCS(Model):
+class DopplerShift(Model):
     """
     Applies doppler shift to the input. Returns:
                         input / (1 + doppler factor)
@@ -454,38 +510,44 @@ class DopplerWCS(Model):
     doppler_factor : float
         the doppler factor
     """
+
     @classmethod
     def from_velocity(cls, velocity):
+        """
+        Instantiates the doppler shift model from the velocity (v) given, the
+        doppler factor is computed and stored using the following formula:
+                   doppler factor = sqrt((1 + v/c)/(1 - v/c))
+        where c is the speed of light
+
+        Parameters
+        -----------
+        velocity : float
+            the relative velocity between the observer and the source
+        """
         beta = velocity/constants.c
         doppler_factor = math.sqrt((1+beta)/(1-beta))
         return cls(doppler_factor)
 
     @classmethod
     def from_z(cls, z):
-       return cls(z+1)
+        """
+        Instantiates the doppler shift model from redshift (z).
+        """
+        return cls(z+1)
 
     def __init__(self, doppler_factor):
         self.doppler_factor = doppler_factor
 
     def __call__(self, input):
+        """
+        Applies the doppler shift to the input, and returns the result
+
+        Parameters
+        -----------
+        input : array_like
+            The input to be shifted
+        """
         return input / (1 + self.doppler_factor)
-
-
-class LogWCS(Model):
-    """
-    Applies log inversion to the output of a WCS applied to the input at the
-    given base. Returns:
-                                base ** wcs(input)
-    Parameters
-    -----------
-    base : int
-        the base of the log
-    """
-    def __init__(self, base):
-        self.base = base
-
-    def __call__(self, input):
-        return self.base ** input
 
 
 @deprecated('0.dev???')
