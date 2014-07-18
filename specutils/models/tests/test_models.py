@@ -13,7 +13,7 @@ def test_doppler():
     doppler_factor = 1.38
     wcs = specwcs.DopplerShift(doppler_factor)
     x = np.array([1.25, 4.3])
-    y = x/(1+doppler_factor)
+    y = x* doppler_factor
     np.testing.assert_allclose(y, wcs(x))
 
 def test_doppler_velocity():
@@ -22,7 +22,7 @@ def test_doppler_velocity():
     x = np.array([1.25, 4.3])
     beta = velocity / constants.c
     doppler_factor = ((1 + beta)/(1-beta)) ** 0.5
-    y = x/(1+doppler_factor)
+    y = x * doppler_factor
     np.testing.assert_allclose(y, wcs(x))
 
 def test_composite_wcs():

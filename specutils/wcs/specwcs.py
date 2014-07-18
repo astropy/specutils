@@ -505,12 +505,22 @@ class CompositeWCS(Model):
 class DopplerShift(Model):
     """
     Applies doppler shift to the input. Returns:
-                        input / (1 + doppler factor)
+                    input * doppler factor
     Parameters
     -----------
     doppler_factor : float
         the doppler factor
     """
+
+    @classmethod
+    def from_IRAF_factor(cls, iraf_doppler_factor):
+        """
+        Instantiates the doppler shift model from the doppler factor provided
+        in IRAF FITS files. The actual doppler factor is computed using the
+        following formula:
+                    doppler factor = 1 / (1 + iraf_doppler_factor)
+        """
+        return cls(1 / (1 + iraf_doppler_factor))
 
     @classmethod
     def from_velocity(cls, velocity):
@@ -526,7 +536,7 @@ class DopplerShift(Model):
             the relative velocity between the observer and the source
         """
         beta = velocity/constants.c
-        doppler_factor = math.sqrt((1+beta)/(1-beta))
+        doppler_factor = math.sqrt((1 + beta)/(1 - beta))
         return cls(doppler_factor)
 
     @classmethod
@@ -534,7 +544,7 @@ class DopplerShift(Model):
         """
         Instantiates the doppler shift model from redshift (z).
         """
-        return cls(z+1)
+        return cls(1 + z)
 
     def __init__(self, doppler_factor):
         self.doppler_factor = doppler_factor
@@ -548,7 +558,7 @@ class DopplerShift(Model):
         input : numpy array
             The input to be shifted
         """
-        return input / (1 + self.doppler_factor)
+        return input * self.doppler_factor
 
 
 @deprecated('0.dev???')
