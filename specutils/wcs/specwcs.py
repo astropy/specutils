@@ -513,16 +513,6 @@ class DopplerShift(Model):
     """
 
     @classmethod
-    def from_IRAF_factor(cls, iraf_doppler_factor):
-        """
-        Instantiates the doppler shift model from the doppler factor provided
-        in IRAF FITS files. The actual doppler factor is computed using the
-        following formula:
-                    doppler factor = 1 / (1 + iraf_doppler_factor)
-        """
-        return cls(1 / (1 + iraf_doppler_factor))
-
-    @classmethod
     def from_velocity(cls, velocity):
         """
         Instantiates the doppler shift model from the velocity (v) given, the
@@ -560,6 +550,16 @@ class DopplerShift(Model):
         """
         return input * self.doppler_factor
 
+    def inverse(self, input):
+        """
+        Applies doppler de-shift to the input, and returns the result. 
+
+        Parameters
+        -----------
+        input : numpy array
+            The input to be shifted
+        """
+        return input / self.doppler_factor
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
