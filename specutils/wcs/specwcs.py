@@ -504,40 +504,50 @@ class CompositeWCS(Model):
 
 class DopplerShift(Model):
     """
-    Applies doppler shift to the input. Returns:
-                    input * doppler factor
+    This model applies doppler shift to the input. Instantiates the doppler
+    shift model from the velocity (v). The doppler factor is computed
+    using the following formula:
+                    doppler factor = sqrt((1 + v/c)/(1 - v/c))
+    where c is the speed of light
+    When the model is called on an input, input * doppler_factor is returned.
+    The inverse of this model can also be called, which divides the input by
+    the doppler factor.
+
     Parameters
     -----------
-    doppler_factor : float
-        the doppler factor
+    velocity : float
+        the relative velocity between the observer and the source
     """
+    velocity = Parameter()
 
     @classmethod
-    def from_velocity(cls, velocity):
+    def from_redshift(cls, z):
         """
-        Instantiates the doppler shift model from the velocity (v) given, the
-        doppler factor is computed and stored using the following formula:
-                   doppler factor = sqrt((1 + v/c)/(1 - v/c))
-        where c is the speed of light
+        Instantiates the doppler shift model from redshift (z).
 
         Parameters
         -----------
-        velocity : float
-            the relative velocity between the observer and the source
+        z : float
+            the redshift
         """
-        beta = velocity/constants.c
-        doppler_factor = math.sqrt((1 + beta)/(1 - beta))
-        return cls(doppler_factor)
+        velocity = constants.c * ((z**2 + 2*z)/(2 + z**2 + 2*z))
+        return cls(velocity)
 
     @classmethod
-    def from_z(cls, z):
+    def from_doppler_factor(cls, doppler_factor):
         """
-        Instantiates the doppler shift model from redshift (z).
-        """
-        return cls(1 + z)
+        Instantiates the doppler shift model from the doppler factor.
 
-    def __init__(self, doppler_factor):
-        self.doppler_factor = doppler_factor
+        Parameters
+        -----------
+        doppler_factor : float
+            the doppler factor
+        """
+        z = doppler_factor - 1
+        return cls.from_redshift(z)
+
+    def __init__(self, velocity):
+        self.velocity = velocity
 
     def __call__(self, input):
         """
@@ -552,7 +562,7 @@ class DopplerShift(Model):
 
     def inverse(self, input):
         """
-        Applies doppler de-shift to the input, and returns the result. 
+        Applies doppler de-shift to the input, and returns the result.
 
         Parameters
         -----------
@@ -560,6 +570,15 @@ class DopplerShift(Model):
             The input to be shifted
         """
         return input / self.doppler_factor
+
+    @property
+    def beta(self):
+        return self.velocity / constants.c
+
+    @property
+    def doppler_factor(self):
+        return math.sqrt((1 + self.beta)/(1 - self.beta))
+
 
 @deprecated('0.dev???')
 def _parse_doppler_convention(dc):
