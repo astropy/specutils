@@ -414,12 +414,13 @@ class WeightedCombinationWCS(Model):
     Parameters
     -----------
     wcs_list : list of callable objects, optional
-        The object's wcs_list will be instantiated using wcs from this list
+        The object's wcs_list will be instantiated using wcs from this list,
+        with weight as 1.0, and zero point offset as 0.0
     """
     def __init__(self, wcs_list=[]):
         self.wcs_list = []
         for wcs in wcs_list:
-            wcs_list.append(wcs)
+            self.add_WCS(wcs)
 
     def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
         """
@@ -446,7 +447,7 @@ class WeightedCombinationWCS(Model):
 
         Parameters
         -----------
-        input : array_like
+        input : numpy array
             The input to the composite WCS
         """
         output = np.zeros(len(input))
@@ -472,7 +473,7 @@ class CompositeWCS(Model):
     def __init__(self, wcs_list=[]):
         self.wcs_list = []
         for wcs in wcs_list:
-            wcs_list.append(wcs)
+            self.add_WCS(wcs)
 
     def add_WCS(self, wcs):
         """
@@ -493,7 +494,7 @@ class CompositeWCS(Model):
 
         Parameters
         -----------
-        input : array_like
+        input : numpy array
             The input to the composite WCS
         """
         output = input
@@ -544,7 +545,7 @@ class DopplerShift(Model):
 
         Parameters
         -----------
-        input : array_like
+        input : numpy array
             The input to be shifted
         """
         return input / (1 + self.doppler_factor)
