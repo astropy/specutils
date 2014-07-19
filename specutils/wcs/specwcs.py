@@ -13,7 +13,9 @@ import astropy.units as u
 from astropy.utils.misc import deprecated
 from astropy.utils import OrderedDict
 from astropy.io import fits
-
+import copy
+from astropy import constants
+import math
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
@@ -398,6 +400,181 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
             spec.extend(wcs.get_fits_spec())
 
         return " ".join(map(str, spec))
+
+
+class WeightedCombinationWCS(Model):
+    """
+    A weighted combination WCS model. This model combines multiple WCS using a
+    weight and a zero point offset. Suppose there are n WCS'es. When called with
+    an input, this WCS returns the following:
+            Sum over i = 1 to n
+                [weight_i * (zero_point_offset_i + WCS_i(input))
+    WCS can be added using the add_wcs method, along with it's weight and zero
+    point offset.
+
+    Parameters
+    -----------
+    wcs_list : list of callable objects, optional
+        The object's wcs_list will be instantiated using wcs from this list,
+        with weight as 1.0, and zero point offset as 0.0
+    """
+    def __init__(self, wcs_list=[]):
+        self.wcs_list = []
+        for wcs in wcs_list:
+            self.add_WCS(wcs)
+
+    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
+        """
+        Add a WCS/function pointer to be evaluated when this WCS is called. The
+        results of calling this WCS on the input will be added to the overall
+        result, after applying the weight and the ero point offset.
+
+        Parameters
+        -----------
+        wcs : callable
+            The WCS to be added
+        weight: float, optional
+            The weight of the WCS in this model
+        zero_point: float, optional
+            The output of the WCS will be offset by this value before being
+            multiplied by the weight
+        """
+        self.wcs_list.append((wcs, weight, zero_point_offset))
+
+    def __call__(self, input):
+        """
+        Applies the WCS'es and functions to the input and returns the
+        weighted sum of all the results
+
+        Parameters
+        -----------
+        input : numpy array
+            The input to the composite WCS
+        """
+        output = np.zeros(len(input))
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            output += weight * (zero_point_offset + wcs(input))
+        return output
+
+
+class CompositeWCS(Model):
+    """
+    A composite WCS model. This model applies multiple WCS in-order to a
+    particular input. Suppose there are 4 WCS'es, When called, this WCS returns
+    the following:
+                        wcs_4(wcs_3(wcs_2(wcs_1(input))))
+    The WCS which is added first is applied first. WCS'es can be added using
+    the add_wcs method.
+
+    Parameters
+    -----------
+    wcs_list : list of callable objects, optional
+        The object's wcs_list will be instantiated using wcs from this list
+    """
+    def __init__(self, wcs_list=[]):
+        self.wcs_list = []
+        for wcs in wcs_list:
+            self.add_WCS(wcs)
+
+    def add_WCS(self, wcs):
+        """
+        Add a WCS/function pointer on top of the current transformation. This
+        will be called after the previous items in the list
+
+        Parameters
+        -----------
+        wcs : callable
+            The WCS to be added
+        """
+        self.wcs_list.append(wcs)
+
+    def __call__(self, input):
+        """
+        Applies the chain of WCS'es and functions to the input and returns the
+        result
+
+        Parameters
+        -----------
+        input : numpy array
+            The input to the composite WCS
+        """
+        output = input
+        for wcs in self.wcs_list:
+            output = wcs(output)
+        return output
+
+class DopplerShift(Model):
+    """
+    This model applies doppler shift to the input. Instantiates the doppler
+    shift model from the velocity (v). The doppler factor is computed
+    using the following formula:
+                    doppler factor = sqrt((1 + v/c)/(1 - v/c))
+    where c is the speed of light
+    When the model is called on an input, input * doppler_factor is returned.
+    The inverse of this model can also be called, which divides the input by
+    the doppler factor.
+
+    Parameters
+    -----------
+    velocity : float
+        the relative velocity between the observer and the source
+    """
+
+
+    @classmethod
+    def from_redshift(cls, z):
+        """
+        Instantiates the doppler shift model from redshift (z).
+
+        Parameters
+        -----------
+        z : float
+            the redshift
+        """
+        doppler_factor = z + 1
+        return cls.from_doppler_factor(doppler_factor)
+
+    @classmethod
+    def from_doppler_factor(cls, doppler_factor):
+        """
+        Instantiates the doppler shift model from the doppler factor.
+
+        Parameters
+        -----------
+        doppler_factor : float
+            the doppler factor
+        """
+        velocity = constants.c*((doppler_factor**2 - 1)/(doppler_factor**2 + 1))
+        return cls(velocity)
+
+    def __init__(self, velocity):
+        self.velocity = velocity
+
+    def __call__(self, input):
+        """
+        Applies the doppler shift to the input, and returns the result
+
+        Parameters
+        -----------
+        input : numpy array
+            The input to be shifted
+        """
+        return input * self.doppler_factor
+
+    def inverse(self):
+        """
+        Returns a new Doppler shift model, inverse of this doppler shift model.
+        Basically, it instantiates the new doppler shift model with -velocity.
+        """
+        return DopplerShift(-self.velocity)
+
+    @property
+    def beta(self):
+        return self.velocity / constants.c
+
+    @property
+    def doppler_factor(self):
+        return math.sqrt((1 + self.beta)/(1 - self.beta))
 
 
 @deprecated('0.dev???')
