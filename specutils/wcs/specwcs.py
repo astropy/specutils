@@ -518,7 +518,7 @@ class DopplerShift(Model):
     velocity : float
         the relative velocity between the observer and the source
     """
-    velocity = Parameter()
+
 
     @classmethod
     def from_redshift(cls, z):
@@ -530,8 +530,8 @@ class DopplerShift(Model):
         z : float
             the redshift
         """
-        velocity = constants.c * ((z**2 + 2*z)/(2 + z**2 + 2*z))
-        return cls(velocity)
+        doppler_factor = z + 1
+        return cls.from_doppler_factor(doppler_factor)
 
     @classmethod
     def from_doppler_factor(cls, doppler_factor):
@@ -543,8 +543,8 @@ class DopplerShift(Model):
         doppler_factor : float
             the doppler factor
         """
-        z = doppler_factor - 1
-        return cls.from_redshift(z)
+        velocity = constants.c*((doppler_factor**2 - 1)/(doppler_factor**2 + 1))
+        return cls(velocity)
 
     def __init__(self, velocity):
         self.velocity = velocity
@@ -560,16 +560,12 @@ class DopplerShift(Model):
         """
         return input * self.doppler_factor
 
-    def inverse(self, input):
+    def inverse(self):
         """
-        Applies doppler de-shift to the input, and returns the result.
-
-        Parameters
-        -----------
-        input : numpy array
-            The input to be shifted
+        Returns a new Doppler shift model, inverse of this doppler shift model.
+        Basically, it instantiates the new doppler shift model with -velocity.
         """
-        return input / self.doppler_factor
+        return DopplerShift(-self.velocity)
 
     @property
     def beta(self):
