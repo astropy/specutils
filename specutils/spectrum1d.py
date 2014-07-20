@@ -9,7 +9,9 @@ import copy
 from astropy.extern import six
 from astropy import log
 from astropy.nddata import NDData, FlagCollection
-
+from astropy.io.fits import convenience, PrimaryHDU
+import numpy as np
+from astropy.io import fits
 from astropy.utils import misc
 
 from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
@@ -19,8 +21,78 @@ from astropy import units as u
 
 import numpy as np
 
+def _make_hdu(data, header=None):
+    hdu = convenience._makehdu(data, header=header)
+    if hdu.is_image and not isinstance(hdu, PrimaryHDU):
+        hdu = PrimaryHDU(data, header=header)
+    return hdu
 
-class Spectrum1D(NDData):
+
+class BaseSpectrum1D(NDData):
+
+    @classmethod
+    def from_fits(cls, filename, dispersion_unit=None, flux_unit=None):
+        """
+        1D reader for spectra in FITS format. This function determines what
+        format the FITS file is in, and attempts to read the Spectrum. This
+        reader just uses the primary extension in a FITS file and reads the data
+        and header from that. It will return a Spectrum1D object if the data is
+        linear, or a list of Spectrum1D objects if the data format is multi-spec
+
+        Parameters
+        ----------
+
+        filename : str
+            FITS filename
+
+        dispersion_unit : ~astropy.unit.Unit, optional
+            unit of the dispersion axis - will overwrite possible information
+            given in the FITS keywords
+            default = None
+
+        flux_unit : ~astropy.unit.Unit, optional
+            unit of the flux
+
+        Raises
+        --------
+        NotImplementedError
+            If the format can't be read currently
+        """
+        if dispersion_unit:
+            dispersion_unit = u.Unit(dispersion_unit)
+
+        data = fits.getdata(filename)
+        header = fits.getheader(filename)
+
+        # wcs_info = FITSWCSSpectrum(header)
+        #
+        # if wcs_info.naxis == 1:
+        #     wcs = read_fits_wcs_linear1d(wcs_info, dispersion_unit=dispersion_unit)
+        #     return Spectrum1D(data, wcs=wcs, unit=flux_unit)
+        # elif wcs_info.naxis == 2 and \
+        #         wcs_info.affine_transform_dict['ctype'] == ["MULTISPE", "MULTISPE"]:
+        #     multi_wcs = multispec_wcs_reader(wcs_info, dispersion_unit=dispersion_unit)
+        #     multispec = []
+        #     for spectrum_data, spectrum_wcs in zip(data, multi_wcs.values()):
+        #         multispec.append(
+        #             Spectrum1D(spectrum_data, wcs=spectrum_wcs, unit=flux_unit))
+        #     return multispec
+        # else:
+        #     raise NotImplementedError("Either the FITS file does not represent a 1D"
+        #                               " spectrum or the format isn't supported yet")
+
+
+    @property
+    def flux(self):
+        #returning the flux
+        return self.data
+
+    @flux.setter
+    def flux_setter(self, flux):
+        self.data = flux
+
+
+class Spectrum1D(BaseSpectrum1D):
     """A subclass of `NDData` for a one dimensional spectrum in Astropy.
     
     This class inherits all the base class functionality from the NDData class
@@ -192,15 +264,11 @@ class Spectrum1D(NDData):
         
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
         
-    @classmethod
-    def from_fits(cls, filename):
-        """
-        This function is a dummy function and will fail for now. Please use the functions provided in
-        `~specutils.io.read_fits` for this task.
-        """
 
-        raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
-                                  ' documentation')
+    @classmethod
+    def from_data(cls, wcs_info, dispersion_unit=None):
+        pass
+
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None, flags=None, meta=None):
 
@@ -246,17 +314,7 @@ class Spectrum1D(NDData):
         return list(self.__dict__.keys()) + list(self._wcs_attributes.keys()) + \
                [item + '_unit' for item in self._wcs_attributes.keys()]
 
-    
-    @property
-    def flux(self):
-        #returning the flux
-        return self.data
-        
-    @flux.setter
-    def flux_setter(self, flux):
-        self.data = flux
 
-    #TODO: let the WCS handle what to do with len(flux)
     @property
     def dispersion(self):
         #returning the disp
@@ -400,3 +458,50 @@ class Spectrum1D(NDData):
         raise NotImplementedError('Will presumeably implemented in core NDDATA,'
                                   'though this is just trivial indexing.')
         return self[start:stop]
+
+class MultispecSpectrum1D(BaseSpectrum1D):
+
+    def __init__(self, data, wcs_list, unit=None):
+        self.data = data
+        self.spectra = []
+        self.unit = unit
+        for spectrum_data, spectrum_wcs in zip(data, wcs_list):
+            self.spectra.append(
+                Spectrum1D(spectrum_data, wcs=spectrum_wcs, unit=unit))
+
+    def to_fits(self, filename, clobber=True):
+        hdu = _make_hdu(self.data)
+        hdu.header['CTYPE1'] = 'MULTISPE'
+        hdu.header['CTYPE2'] = 'MULTISPE'
+        hdu.header['WCSDIM'] = 2
+        hdu.header['WAT0_001'] = "system=multispec"
+        unit_string = self.unit.to_string()
+        if unit_string == "Angstrom":
+            unit_string = "angstroms"
+        label_string = "Wavelength"
+        hdu.header['WAT1_001'] = "wtype=multispec label={0} units={1}".\
+                                    format(label_string, unit_string)
+        spec_string = "wtype=multispec"
+        for i, spectra in enumerate(self.spectra):
+            spec = " ".join(map(str, spectra.wcs.get_fits_spec()))
+            spec_string += ' spec{0} = "{1}"'.format(i + 1, spec)
+        wat_num = 1
+        chars = 68
+        for i in range(0, len(spec_string), chars):
+            hdu.header["WAT2_{0:03d}".format(wat_num)] = spec_string[i: i+chars]
+            wat_num += 1
+
+        hdu.writeto(filename, clobber=clobber)
+
+
+    def __delitem__(self, key):
+        self.spectra.__delitem__(key)
+
+    def __getitem__(self, key):
+        return self.spectra[key]
+
+    def __setitem__(self, key, value):
+        if not isinstance(value, Spectrum1D):
+            raise ValueError("type(value) is " + str(type(value)) + ", should"
+                             " be of type Spectrum1D")
+        self.spectra[key] = value
