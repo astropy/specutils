@@ -315,12 +315,11 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
     wcs_dict = OrderedDict()
     for spec_key in multispec_dict:
         single_spec_dict = multispec_dict[spec_key]
-        doppler_wcs = specwcs.DopplerWCS(single_spec_dict["doppler_factor"])
         if single_spec_dict['dispersion_type'] == 1:
             #log-linear dispersion
-            log_wcs = specwcs.LogWCS(10)
+            log = True
         else:
-            log_wcs = None
+            log = False
 
         if single_spec_dict['dispersion_type'] in [0, 1]:
             #linear or log-linear dispersion
@@ -372,10 +371,10 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
                     zero_point_offset=function_dict["zero_point_offset"])
 
         composite_wcs = specwcs.MultispecIRAFCompositeWCS(
-            dispersion_wcs, doppler_wcs, single_spec_dict["no_valid_pixels"],
-            log_wcs=log_wcs, aperture=single_spec_dict["aperture"],
-            beam=single_spec_dict["beam"],
-            aperture_low=single_spec_dict["aperture_low"],
+            dispersion_wcs, single_spec_dict["no_valid_pixels"],
+            z=single_spec_dict["doppler_factor"], log=log,
+            aperture=single_spec_dict["aperture"], beam=single_spec_dict["beam"]
+            , aperture_low=single_spec_dict["aperture_low"],
             aperture_high=single_spec_dict["aperture_high"],
             unit=dispersion_unit)
         wcs_dict[spec_key] = composite_wcs
