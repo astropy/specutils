@@ -44,6 +44,10 @@ class BaseSpectrum1DWCS(Model):
 
     _default_equivalencies = u.spectral()
 
+    def __init__(self, *args, **kwargs):
+        super(BaseSpectrum1DWCS, self).__init__(*args, **kwargs)
+        self.slice = slice(0)
+
     @property
     def equivalencies(self):
         """Equivalencies for spectral axes include spectral equivalencies and doppler"""
@@ -96,6 +100,46 @@ class BaseSpectrum1DWCS(Model):
         u.core._normalize_equivalencies(new_equiv)
         self._equivalencies += new_equiv
 
+    def _parse_slice(self, slice_item):
+        if slice_item.start is None:
+            start = 0
+        else:
+            start = slice_item.start
+        if slice_item.stop is None:
+            stop = self.__len__()
+        else:
+            stop = slice_item.stop
+        if slice_item.step is None:
+            step = 1
+        else:
+            step = slice_item.step
+        return start, stop, step
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            start, stop, step = self._parse_slice(item)
+            c_start, c_stop, c_step = self._parse_slice(self.slice)
+            n_start = c_start + start*c_step
+            n_stop = min(c_stop, c_start + stop*c_step)
+            n_step = c_step * step
+            n_self = copy.deepcopy(self)
+            n_self.slice = slice(n_start, n_stop, n_step)
+            return n_self
+        else:
+            raise TypeError("Indexing not supported (slicing is permitted)")
+
+    def __getattribute__(self, name):
+        attr = Model.__getattribute__(self, name)
+        if name == '__call__':
+            def sliceShift(input):
+                n_input = (input + self.slice.start) * self.slice.step
+                if (n_input >= self.slice.stop).any():
+                    raise IndexError("Index out of bounds")
+                result = attr(input)
+                return result
+            return sliceShift
+        else:
+            return attr
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
@@ -176,8 +220,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.unit = unit
 
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
-                                    'matrix': self._write_fits_header_matrix,
-                                    'multispec': self._write_fits_header_multispec}
+                                    'matrix': self._write_fits_header_matrix}
 
     def __call__(self, *inputs, **kwargs):
         inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
@@ -225,10 +268,6 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
             header['cunit{0}'.format(spectral_axis)] = unit_string
 
-    # can only be implemented, when the reader is in place
-    def _write_fits_header_multispec(self, header, spectral_axis=1):
-        pass
-
 
 class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     """
@@ -245,6 +284,9 @@ class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     def __call__(self, pixel_indices):
         transformed = pixel_indices + self.pmin
         return super(Spectrum1DIRAFLegendreWCS, self).__call__(transformed)
+
+    def __len__(self):
+        return self.pmax - self.pmin + 1
 
     def get_fits_spec(self):
         func_type = 2
@@ -274,6 +316,9 @@ class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
     def __call__(self, pixel_indices):
         transformed = pixel_indices + self.pmin
         return super(Spectrum1DIRAFChebyshevWCS, self).__call__(transformed)
+
+    def __len__(self):
+        return self.pmax - self.pmin + 1
 
     def get_fits_spec(self):
         func_type = 1
@@ -305,6 +350,9 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
         s = (pixel_indices * 1.0 * self.npieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
 
+    def __len__(self):
+        return self.pmax - self.pmin + 1
+
     def get_fits_spec(self):
         if self.degree == 1:
             func_type = 4
@@ -314,6 +362,53 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
             raise Spectrum1DWCSFITSError("Fits spec undefined for degree = "
                                          "{0}".format(self.degree))
         return [func_type, self.npieces, self.pmin, self.pmax] + self.y
+
+
+class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
+    """
+    WCS that combines multiple WCS using their weights, zero index and doppler
+    factor. The formula used is:
+    Dispersion = Sum over all WCS
+        [Weight * (Zero point offset + WCS(pixels)) / (1 + doppler factor)]
+    """
+    def __init__(self, num_pixels, aperture=1, beam=88, aperture_low=0.0,
+                 aperture_high=0.0, doppler_factor=0.0, unit=None):
+        self.wcs_list = []
+        self.aperture = aperture
+        self.beam = beam
+        self.num_pixels = num_pixels
+        self.aperture_low = aperture_low
+        self.aperture_high = aperture_high
+        self.doppler_factor = doppler_factor
+        self.unit = unit
+
+
+    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
+        self.wcs_list.append((wcs, weight, zero_point_offset))
+
+    def __call__(self, pixel_indices):
+        final_dispersion = np.zeros(len(pixel_indices))
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            dispersion = weight * (zero_point_offset + wcs(pixel_indices))
+            final_dispersion += dispersion / (1 + self.doppler_factor)
+        return final_dispersion * self.unit
+
+    def __len__(self):
+        return self.num_pixels
+
+    def get_fits_spec(self):
+        disp_type = 2
+        dispersion0 = self.__call__(np.zeros(1))[0].value
+        dispersion = self.__call__(np.arange(self.num_pixels)).value
+        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
+        spec = [self.aperture, self.beam, disp_type, dispersion0,
+                avg_disp_delta, self.num_pixels, self.doppler_factor,
+                self.aperture_low, self.aperture_high]
+        for wcs, weight, zero_point_offset in self.wcs_list:
+            spec.extend([weight, zero_point_offset])
+            spec.extend(wcs.get_fits_spec())
+
+        return " ".join(map(str, spec))
 
 
 class WeightedCombinationWCS(Model):
@@ -342,7 +437,7 @@ class WeightedCombinationWCS(Model):
         """
         Add a WCS/function pointer to be evaluated when this WCS is called. The
         results of calling this WCS on the input will be added to the overall
-        result, after applying the weight and the ero point offset.
+        result, after applying the weight and the zero point offset.
 
         Parameters
         -----------
