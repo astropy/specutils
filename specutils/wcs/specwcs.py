@@ -10,6 +10,7 @@ from astropy.modeling.parameters import Parameter
 from ..models.BSplineModel import BSplineModel
 import astropy.units as u
 
+from astropy.utils.misc import deprecated
 from astropy.utils import OrderedDict
 from astropy.io import fits
 import copy
@@ -20,6 +21,7 @@ import itertools
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km / u.s, u.m, u.Hz, u.erg]
+
 
 #^^^^^^^^^^^^^^^^^
 class Spectrum1DWCSError(Exception):
@@ -46,7 +48,6 @@ class BaseSpectrum1DWCS(Model):
 
     def __init__(self, *args, **kwargs):
         super(BaseSpectrum1DWCS, self).__init__(*args, **kwargs)
-        self.slice = slice(0)
 
     @property
     def equivalencies(self):
@@ -77,7 +78,6 @@ class BaseSpectrum1DWCS(Model):
         else:
             self._unit = u.Unit(value)
 
-
     def reset_equivalencies(self):
         """
         Reset the equivalencies to the defaults (probably u.spectral())
@@ -100,46 +100,6 @@ class BaseSpectrum1DWCS(Model):
         u.core._normalize_equivalencies(new_equiv)
         self._equivalencies += new_equiv
 
-    def _parse_slice(self, slice_item):
-        if slice_item.start is None:
-            start = 0
-        else:
-            start = slice_item.start
-        if slice_item.stop is None:
-            stop = self.__len__()
-        else:
-            stop = slice_item.stop
-        if slice_item.step is None:
-            step = 1
-        else:
-            step = slice_item.step
-        return start, stop, step
-
-    def __getitem__(self, item):
-        if isinstance(item, slice):
-            start, stop, step = self._parse_slice(item)
-            c_start, c_stop, c_step = self._parse_slice(self.slice)
-            n_start = c_start + start*c_step
-            n_stop = min(c_stop, c_start + stop*c_step)
-            n_step = c_step * step
-            n_self = copy.deepcopy(self)
-            n_self.slice = slice(n_start, n_stop, n_step)
-            return n_self
-        else:
-            raise TypeError("Indexing not supported (slicing is permitted)")
-
-    def __getattribute__(self, name):
-        attr = Model.__getattribute__(self, name)
-        if name == '__call__':
-            def sliceShift(input):
-                n_input = (input + self.slice.start) * self.slice.step
-                if (n_input >= self.slice.stop).any():
-                    raise IndexError("Index out of bounds")
-                result = attr(input)
-                return result
-            return sliceShift
-        else:
-            return attr
 
 class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
     """
@@ -285,10 +245,10 @@ class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         transformed = pixel_indices + self.pmin
         return super(Spectrum1DIRAFLegendreWCS, self).__call__(transformed)
 
-    def __len__(self):
-        return self.pmax - self.pmin + 1
-
     def get_fits_spec(self):
+        # if abs(self.indexer.step) != 1:
+        #     raise Spectrum1DWCSFITSError("WCS with indexer step greater than 1"
+        #                                  "cannot be written")
         func_type = 2
         order = self.degree + 1
         coefficients = [self.__getattr__('c{0}'.format(i)).value
@@ -317,10 +277,10 @@ class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
         transformed = pixel_indices + self.pmin
         return super(Spectrum1DIRAFChebyshevWCS, self).__call__(transformed)
 
-    def __len__(self):
-        return self.pmax - self.pmin + 1
-
     def get_fits_spec(self):
+        # if abs(self.indexer.step) != 1:
+        #     raise Spectrum1DWCSFITSError("WCS with indexer step greater than 1"
+        #                                  "cannot be written")
         func_type = 1
         order = self.degree + 1
         coefficients = [self.__getattr__('c{0}'.format(i)).value
@@ -336,8 +296,6 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
 
     def __init__(self, degree, npieces, y, pmin, pmax):
         from scipy.interpolate import splrep
-        self.pmin = pmin
-        self.pmax = pmax
         self.npieces = npieces
         self.y = y
 
@@ -345,13 +303,12 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
         knots, coefficients, _ = splrep(x, y, k=degree)
         super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots,
                                                        coefficients)
+        self.pmin = pmin
+        self.pmax = pmax
 
     def __call__(self, pixel_indices):
         s = (pixel_indices * 1.0 * self.npieces) / (self.pmax - self.pmin)
         return super(Spectrum1DIRAFBSplineWCS, self).__call__(s)
-
-    def __len__(self):
-        return self.pmax - self.pmin + 1
 
     def get_fits_spec(self):
         if self.degree == 1:
@@ -373,6 +330,7 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
     """
     def __init__(self, num_pixels, aperture=1, beam=88, aperture_low=0.0,
                  aperture_high=0.0, doppler_factor=0.0, unit=None):
+        super(Spectrum1DIRAFCombinationWCS, self).__init__()
         self.wcs_list = []
         self.aperture = aperture
         self.beam = beam
@@ -392,9 +350,6 @@ class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
             dispersion = weight * (zero_point_offset + wcs(pixel_indices))
             final_dispersion += dispersion / (1 + self.doppler_factor)
         return final_dispersion * self.unit
-
-    def __len__(self):
-        return self.num_pixels
 
     def get_fits_spec(self):
         disp_type = 2
