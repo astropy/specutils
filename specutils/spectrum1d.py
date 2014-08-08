@@ -2,6 +2,7 @@
 # This module implements the Spectrum1D class.
 
 from __future__ import print_function, division
+from specutils.models.Indexer import Indexer
 
 __all__ = ['Spectrum1D']
 
@@ -208,6 +209,7 @@ class Spectrum1D(NDData):
                    mask=mask, flags=flags, meta=meta)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
+        self.indexer = Indexer(0, len(flux))
         for key in list(self._wcs_attributes):
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
@@ -261,7 +263,8 @@ class Spectrum1D(NDData):
     def dispersion(self):
         #returning the disp
         if not hasattr(self.wcs, 'lookup_table'):
-            self.wcs.lookup_table = self.wcs(np.arange(len(self.flux)))
+            pixel_indices = np.arange(len(self.flux))
+            self.wcs.lookup_table = self.wcs(self.indexer(pixel_indices))
 
         return self.wcs.lookup_table
 
