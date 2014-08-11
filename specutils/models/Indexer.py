@@ -4,7 +4,27 @@ import numpy as np
 
 class Indexer(Model):
     """
-    indexer class
+    Indexer class provides an alternate slicing mechanism for WCS'es. As WCS'es
+    are defined for negative integers as well, this indexer class can be
+    initialized with negative indices. Unlike python slice objects, a
+    negative index is the same as a positive index. However, this is only true
+    for initialization. Once initialized, the indexer can be used like normal
+    python slicing, with negative index pointing to length - index.
+
+    Parameters
+    --------------
+    start: int
+        the start point of the indexer, can be any integer
+    stop: int
+        the point up to which (not including) the index is valid, can be any
+        integer
+    step: int, optional
+        the jump between two indices
+
+    Raises
+    -----------
+    ValueError
+        if step is given as zero
     """
     def __init__(self, start, stop, step=1):
         if step == 0:
@@ -14,6 +34,10 @@ class Indexer(Model):
         self.step = step
 
     def _parse_slice(self, slice):
+        """
+        Internal method to extract the start, stop and stop from the given slice
+        object
+        """
         if slice.step == 0:
             raise ValueError("slice step cannot be zero")
         step = slice.step if slice.step is not None else 1
@@ -55,8 +79,8 @@ class Indexer(Model):
     def __call__(self, indices=None):
         """
         Transforms the input indices to the correct indices represented by the
-        indexer, removes those indexes which are greater than the max possible
-        index (i.e. greater than self.stop)
+        indexer, removes those indexes which are not in range (i.e. beyond, and
+        including self.stop)
 
         Parameters
         -----------
