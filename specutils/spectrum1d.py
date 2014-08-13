@@ -65,7 +65,7 @@ class Spectrum1D(NDData):
                       'frequency': {'unit': u.Hz},
                       'energy': {'unit': u.J},
                       'velocity': {'unit': u.m/u.s}}
-    
+
     @classmethod
     def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
                    flags=None, meta=None, copy=True,
@@ -203,13 +203,17 @@ class Spectrum1D(NDData):
         raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
                                   ' documentation')
 
-    def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None, flags=None, meta=None):
+    def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None,
+                 flags=None, meta=None, indexer=None):
 
-        super(Spectrum1D, self).__init__(data=flux, wcs=wcs, unit=unit, uncertainty=uncertainty,
+        super(Spectrum1D, self).__init__(data=flux, unit=unit, wcs=wcs, uncertainty=uncertainty,
                    mask=mask, flags=flags, meta=meta)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
-        self.indexer = Indexer(0, len(flux))
+        if indexer is None:
+            self.indexer = Indexer(0, len(flux))
+        else:
+            self.indexer = indexer
         for key in list(self._wcs_attributes):
 
             wcs_attribute_unit = self._wcs_attributes[key]['unit']
@@ -248,7 +252,15 @@ class Spectrum1D(NDData):
         return list(self.__dict__.keys()) + list(self._wcs_attributes.keys()) + \
                [item + '_unit' for item in self._wcs_attributes.keys()]
 
-    
+
+    def __getitem__(self, d_slice):
+        n_indexer = self.indexer.__getitem__(d_slice)
+        n_super = super(Spectrum1D, self).__getitem__(d_slice)
+        return Spectrum1D(n_super.data, self.wcs, unit=n_super.unit,
+                          uncertainty=n_super.uncertainty, mask=n_super.mask,
+                          flags=n_super.flags, meta=n_super.meta,
+                          indexer=n_indexer)
+
     @property
     def flux(self):
         #returning the flux

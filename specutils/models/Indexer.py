@@ -1,6 +1,7 @@
 from astropy.modeling import Model
 import math
 import numpy as np
+from astropy.modeling.parameters import Parameter
 
 class Indexer(Model):
     """
@@ -26,7 +27,14 @@ class Indexer(Model):
     ValueError
         if step is given as zero
     """
+    # start = Parameter()
+    # stop = Parameter()
+    # step = Parameter()
+    # length = Parameter()
+
     def __init__(self, start, stop, step=1):
+        self._n_models = 1
+        # self.param_names = ["start", "stop", "step", "length"]
         if step == 0:
             raise ValueError("slice step cannot be zero")
         self.start = start

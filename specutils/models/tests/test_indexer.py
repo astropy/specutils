@@ -1,6 +1,24 @@
 from specutils.models.Indexer import Indexer
 import numpy as np
+import astropy.io.ascii as ascii
+from astropy import units as u
+import os
+from specutils.io import read_fits
 
+
+def data_path(filename):
+    data_dir = os.path.join(os.path.dirname(__file__), 'files')
+    return os.path.join(data_dir, filename)
+
+def test_spectrum():
+    iraf = ascii.read(data_path('gbt_1d_iraf_read.dat'), names=['wave', 'flux'])
+    spec = read_fits.read_fits_spectrum1d(data_path('gbt_1d.fits'))
+    np.testing.assert_allclose(spec.dispersion.value, iraf['wave'])
+    np.testing.assert_allclose(spec.flux, iraf['flux'])
+    indexed = spec[:10]
+    np.testing.assert_allclose(indexed.dispersion.value, iraf["wave"][:10])
+    np.testing.assert_allclose(indexed.flux, iraf["flux"][:10])
+    np.testing.assert_allclose(spec.dispersion.value, iraf['wave'])
 
 def test_length():
     ind = Indexer(2, 5, 2)
