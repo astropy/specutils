@@ -253,14 +253,6 @@ class Spectrum1D(NDData):
                [item + '_unit' for item in self._wcs_attributes.keys()]
 
 
-    def __getitem__(self, d_slice):
-        n_indexer = self.indexer.__getitem__(d_slice)
-        n_super = super(Spectrum1D, self).__getitem__(d_slice)
-        return Spectrum1D(n_super.data, self.wcs, unit=n_super.unit,
-                          uncertainty=n_super.uncertainty, mask=n_super.mask,
-                          flags=n_super.flags, meta=n_super.meta,
-                          indexer=n_indexer)
-
     @property
     def flux(self):
         #returning the flux
@@ -274,11 +266,8 @@ class Spectrum1D(NDData):
     @property
     def dispersion(self):
         #returning the disp
-        if not hasattr(self.wcs, 'lookup_table'):
-            pixel_indices = np.arange(len(self.flux))
-            self.wcs.lookup_table = self.wcs(self.indexer(pixel_indices))
-
-        return self.wcs.lookup_table
+        pixel_indices = np.arange(len(self.flux))
+        return self.wcs(self.indexer(pixel_indices))
 
     @property
     def dispersion_unit(self):
@@ -386,7 +375,7 @@ class Spectrum1D(NDData):
         #return self.slice_index(start_index, stop_index)
     
     
-    def slice_index(self, start=None, stop=None):
+    def slice_index(self, start=None, stop=None, step=None):
         """Slice the spectrum within a given start and end index.
         
         Parameters
@@ -412,6 +401,37 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
-        raise NotImplementedError('Will presumeably implemented in core NDDATA,'
-                                  'though this is just trivial indexing.')
-        return self[start:stop]
+        item = slice(start, stop, step)
+        new_data = self.data[item]
+
+        if self.uncertainty is not None:
+            new_uncertainty = self.uncertainty[item]
+        else:
+            new_uncertainty = None
+
+        if self.mask is not None:
+            new_mask = self.mask[item]
+            # mask setter expects an array, always
+            if new_mask.shape == ():
+                new_mask = np.array(new_mask)
+        else:
+            new_mask = None
+
+        if self.flags is not None:
+            if isinstance(self.flags, np.ndarray):
+                new_flags = self.flags[item]
+                # flags setter expects an array, always
+                if new_flags.shape == ():
+                    new_flags = np.array(new_flags)
+            elif isinstance(self.flags, FlagCollection):
+                raise NotImplementedError('Slicing complex Flags is currently not implemented')
+        else:
+            new_flags = None
+
+        new_indexer = self.indexer.__getitem__(item)
+
+        return self.__class__(new_data, self.wcs, meta=self.meta, unit=self.unit
+                              , uncertainty=new_uncertainty, mask=new_mask,
+                              flags=new_flags, indexer=new_indexer)
+
+
