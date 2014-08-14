@@ -380,11 +380,12 @@ class Spectrum1D(NDData):
         
         Parameters
         ----------
-        start : `float`
+        start : int
             Starting slice point.
-        stop : `float`
+        stop : int
             Stopping slice point.
-        
+        step : int
+            Slice step
         Notes
         -----
         Often it is useful to slice out a portion of a `Spectrum1D` objects
@@ -401,6 +402,8 @@ class Spectrum1D(NDData):
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
+        # At this time, that function raises an error if WCS is not None, so it
+        # cannot be used
         item = slice(start, stop, step)
         new_data = self.data[item]
 
