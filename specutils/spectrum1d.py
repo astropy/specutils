@@ -432,8 +432,9 @@ class Spectrum1D(NDData):
             new_flags = None
 
         new_indexer = self.indexer.__getitem__(item)
+        new_wcs = self.wcs
 
-        return self.__class__(new_data, self.wcs, meta=self.meta, unit=self.unit
+        return self.__class__(new_data, new_wcs, meta=self.meta, unit=self.unit
                               , uncertainty=new_uncertainty, mask=new_mask,
                               flags=new_flags, indexer=new_indexer)
 
