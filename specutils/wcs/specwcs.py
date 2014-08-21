@@ -375,10 +375,11 @@ class WeightedCombinationWCS(Model):
         The object's wcs_list will be instantiated using wcs from this list,
         with weight as 1.0, and zero point offset as 0.0
     """
-    def __init__(self, wcs_list=[]):
+    def __init__(self, wcs_list=None):
         self.wcs_list = []
-        for wcs in wcs_list:
-            self.add_WCS(wcs)
+        if wcs_list is not None:
+            for wcs in wcs_list:
+                self.add_WCS(wcs)
 
     def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
         """
@@ -408,10 +409,15 @@ class WeightedCombinationWCS(Model):
         input : numpy array
             The input to the composite WCS
         """
-        output = np.zeros(len(input))
-        for wcs, weight, zero_point_offset in self.wcs_list:
+        return self.__class__.evaluate(input, self.wcs_list)
+
+    @classmethod
+    def evaluate(cls, input, wcs_list):
+        output = np.zeros(len(input) if hasattr(input, "__len__") else 1)
+        for wcs, weight, zero_point_offset in wcs_list:
             output += weight * (zero_point_offset + wcs(input))
         return output
+
 
 
 class CompositeWCS(Model):
@@ -428,10 +434,11 @@ class CompositeWCS(Model):
     wcs_list : list of callable objects, optional
         The object's wcs_list will be instantiated using wcs from this list
     """
-    def __init__(self, wcs_list=[]):
+    def __init__(self, wcs_list=None):
         self.wcs_list = []
-        for wcs in wcs_list:
-            self.add_WCS(wcs)
+        if wcs_list is not None:
+            for wcs in wcs_list:
+                self.add_WCS(wcs)
 
     def add_WCS(self, wcs):
         """
@@ -455,10 +462,15 @@ class CompositeWCS(Model):
         input : numpy array
             The input to the composite WCS
         """
+        return self.__class__.evaluate(input, self.wcs_list)
+
+    @classmethod
+    def evaluate(cls, input, wcs_list):
         output = input
-        for wcs in self.wcs_list:
+        for wcs in wcs_list:
             output = wcs(output)
         return output
+
 
 class DopplerShift(Model):
     """
@@ -516,7 +528,11 @@ class DopplerShift(Model):
         input : numpy array
             The input to be shifted
         """
-        return input * self.doppler_factor
+        return self.__class__.evaluate(input, self.doppler_factor)
+
+    @classmethod
+    def evaluate(cls, input, doppler_factor):
+        return input * doppler_factor
 
     def inverse(self):
         """
