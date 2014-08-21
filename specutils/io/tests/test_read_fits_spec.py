@@ -13,7 +13,8 @@ def data_path(filename):
     return os.path.join(data_dir, filename)
 
 def test_multispec_linear():
-    iraf = ascii.read(data_path('multispec-linear-log.fits.0001.dat'), Reader=ascii.NoHeader, names = ['wave', 'flux'])
+    iraf = ascii.read(data_path('multispec-linear-log.fits.0001.dat'),
+                      Reader=ascii.NoHeader, names=['wave', 'flux'])
     spectra = read_fits.read_fits_spectrum1d(data_path('multispec-linear-log.fits'))
     spec = spectra[0]
     np.testing.assert_allclose(iraf['wave'], spec.dispersion.value)
