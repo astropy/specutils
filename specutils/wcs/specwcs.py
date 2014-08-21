@@ -15,6 +15,7 @@ from astropy.io import fits
 import copy
 from astropy import constants
 import math
+import itertools
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
@@ -136,13 +137,20 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
-        if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(pixel_indices, self.pixel_index,
-                             self.lookup_table_parameter.value, left=np.nan,
-                             right=np.nan) * self.unit
+        return self.__class__.evaluate(pixel_indices,
+                                       self.lookup_table_parameter.value,
+                                       kind=self.lookup_table_interpolation_kind
+                                       , unit=self.unit)
+
+    @classmethod
+    def evaluate(cls, pixel_indices, lookup_table, kind='linear', unit=None):
+        pixel_index = np.arange(len(lookup_table))
+        if kind == 'linear':
+            return np.interp(pixel_indices, pixel_index, lookup_table,
+                             left=np.nan, right=np.nan) * unit
         else:
             raise NotImplementedError(
-                'Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
+                'Interpolation type %s is not implemented' % kind)
 
 
     def invert(self, dispersion_values):
@@ -171,9 +179,19 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
                                     'matrix': self._write_fits_header_matrix,
                                     'multispec': self._write_fits_header_multispec}
 
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DPolynomialWCS, self).__call__(
-            pixel_indices) * self.unit
+    def __call__(self, *inputs, **kwargs):
+        inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
+        outputs = self.evaluate(*itertools.chain(inputs, [self.unit],
+                                                 self.param_sets))
+
+        if self.n_outputs == 1:
+            outputs = (outputs,)
+
+        return self.prepare_outputs(format_info, *outputs, **kwargs)
+    @classmethod
+    def evaluate(cls, pixel_indices, unit=None, *coeffs):
+        return super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
+                                                            *coeffs) * unit
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
@@ -357,10 +375,11 @@ class WeightedCombinationWCS(Model):
         The object's wcs_list will be instantiated using wcs from this list,
         with weight as 1.0, and zero point offset as 0.0
     """
-    def __init__(self, wcs_list=[]):
+    def __init__(self, wcs_list=None):
         self.wcs_list = []
-        for wcs in wcs_list:
-            self.add_WCS(wcs)
+        if wcs_list is not None:
+            for wcs in wcs_list:
+                self.add_WCS(wcs)
 
     def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
         """
@@ -390,10 +409,15 @@ class WeightedCombinationWCS(Model):
         input : numpy array
             The input to the composite WCS
         """
-        output = np.zeros(len(input))
-        for wcs, weight, zero_point_offset in self.wcs_list:
+        return self.__class__.evaluate(input, self.wcs_list)
+
+    @classmethod
+    def evaluate(cls, input, wcs_list):
+        output = np.zeros(len(input) if hasattr(input, "__len__") else 1)
+        for wcs, weight, zero_point_offset in wcs_list:
             output += weight * (zero_point_offset + wcs(input))
         return output
+
 
 
 class CompositeWCS(Model):
@@ -410,10 +434,11 @@ class CompositeWCS(Model):
     wcs_list : list of callable objects, optional
         The object's wcs_list will be instantiated using wcs from this list
     """
-    def __init__(self, wcs_list=[]):
+    def __init__(self, wcs_list=None):
         self.wcs_list = []
-        for wcs in wcs_list:
-            self.add_WCS(wcs)
+        if wcs_list is not None:
+            for wcs in wcs_list:
+                self.add_WCS(wcs)
 
     def add_WCS(self, wcs):
         """
@@ -437,10 +462,15 @@ class CompositeWCS(Model):
         input : numpy array
             The input to the composite WCS
         """
+        return self.__class__.evaluate(input, self.wcs_list)
+
+    @classmethod
+    def evaluate(cls, input, wcs_list):
         output = input
-        for wcs in self.wcs_list:
+        for wcs in wcs_list:
             output = wcs(output)
         return output
+
 
 class DopplerShift(Model):
     """
@@ -498,7 +528,11 @@ class DopplerShift(Model):
         input : numpy array
             The input to be shifted
         """
-        return input * self.doppler_factor
+        return self.__class__.evaluate(input, self.doppler_factor)
+
+    @classmethod
+    def evaluate(cls, input, doppler_factor):
+        return input * doppler_factor
 
     def inverse(self):
         """
