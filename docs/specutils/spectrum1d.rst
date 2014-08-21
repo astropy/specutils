@@ -54,6 +54,25 @@ Once a spectrum is instantiated, one can access the `flux`, `wavelength`, `frequ
     array([ 0.34272852,  0.92834782,  0.64680224, ...,  0.03348069,
             0.10291822,  0.33614334])
 
+A spectrum1D object can also be sliced using `slice_index` method. This method accepts the start, stop and step for
+a slice. This slice works similar to the python-like slicing for lists:
+
+    >>> alternate_spec1d = spec1d.slice_index(step=2)
+    >>> alternate_spec1d.dispersion
+    array([ 6000.,  6002.,  6004., ...,  8994.,  8996.,  8998.])
+    >>> alternate_spec1d.flux
+    array([ 0.53091768,  0.81469917,  0.85442559, ...,  0.74203082, 0.453299,  0.21887765])
+    >>> reverse_spec1d = spec1d.slice_index(step=-1)
+    >>> reverse_spec1d.dispersion
+    array([ 8999.,  8998.,  8997., ...,  6002.,  6001.,  6000.])
+    >>> mixed_spec1d = reverse_spec1d.slice_index(start=101, stop=2500, step=2)
+    >>> mixed_spec1d.dispersion
+    array([ 8898.,  8896.,  8894., ...,  6504.,  6502.,  6500.])
+    
+If not provided, this method makes the same assumptions about start, stop and step as slicing for python lists. `slice_index` is used to
+slice a spectrum from its indices. The start, stop and step represent indices at which dispersion, flux and other quantities are computed.
+In future, it might be possible to slice at a particular dispersion or flux value, thus the distinction.
+
 To learn more about the WCS transforms please go to :doc:`the WCS documentation page <specwcs>`. In many cases, spectra are stored in FITS files.
 FITS readers are documented at :doc:`the FITS WCS documentation page <fits_wcs>`.
 
