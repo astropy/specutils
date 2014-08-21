@@ -188,6 +188,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
             outputs = (outputs,)
 
         return self.prepare_outputs(format_info, *outputs, **kwargs)
+
     @classmethod
     def evaluate(cls, pixel_indices, unit=None, *coeffs):
         return super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
