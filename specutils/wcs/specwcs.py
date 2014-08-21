@@ -15,6 +15,7 @@ from astropy.io import fits
 import copy
 from astropy import constants
 import math
+import itertools
 
 ##### Delete at earliest convenience (currently deprecated)
 #### VVVVVVVVVV
@@ -136,13 +137,20 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
-        if self.lookup_table_interpolation_kind == 'linear':
-            return np.interp(pixel_indices, self.pixel_index,
-                             self.lookup_table_parameter.value, left=np.nan,
-                             right=np.nan) * self.unit
+        return self.__class__.evaluate(pixel_indices,
+                                       self.lookup_table_parameter.value,
+                                       kind=self.lookup_table_interpolation_kind
+                                       , unit=self.unit)
+
+    @classmethod
+    def evaluate(cls, pixel_indices, lookup_table, kind='linear', unit=None):
+        pixel_index = np.arange(len(lookup_table))
+        if kind == 'linear':
+            return np.interp(pixel_indices, pixel_index, lookup_table,
+                             left=np.nan, right=np.nan) * unit
         else:
             raise NotImplementedError(
-                'Interpolation type %s is not implemented' % self.lookup_table_interpolation_kind)
+                'Interpolation type %s is not implemented' % kind)
 
 
     def invert(self, dispersion_values):
@@ -171,9 +179,19 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
                                     'matrix': self._write_fits_header_matrix,
                                     'multispec': self._write_fits_header_multispec}
 
-    def __call__(self, pixel_indices):
-        return super(Spectrum1DPolynomialWCS, self).__call__(
-            pixel_indices) * self.unit
+    def __call__(self, *inputs, **kwargs):
+        inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
+        outputs = self.evaluate(*itertools.chain(inputs, [self.unit],
+                                                 self.param_sets))
+
+        if self.n_outputs == 1:
+            outputs = (outputs,)
+
+        return self.prepare_outputs(format_info, *outputs, **kwargs)
+    @classmethod
+    def evaluate(cls, pixel_indices, unit=None, *coeffs):
+        return super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
+                                                            *coeffs) * unit
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)

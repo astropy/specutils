@@ -65,8 +65,8 @@ class BSplineModel(Model):
             names.append("t{:d}".format(i))
         return names
 
-    @staticmethod
-    def evaluate(input, degree, knots, coefficients):
+    @classmethod
+    def evaluate(cls, input, degree, knots, coefficients):
         from scipy.interpolate import splev
 
         return splev(input, (knots, coefficients, degree))
