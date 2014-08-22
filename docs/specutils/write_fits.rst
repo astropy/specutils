@@ -16,25 +16,13 @@ multispec spectra objects (which are stored as a list of spectra). `write_fits.w
 
    >>> from specutils.io import read_fits, write_fits
    >>> myspec = read_fits.read_fits_spectrum1d('myfile.fits')
-   >>> write_fits.write(myspec, 'nynewfile.fits')
+   >>> write_fits.write(myspec, 'mynewfile.fits')
 
 Writing to a file in multispec FITS format is similar::
 
    >>> from specutils.io import read_fits, write_fits
-   >>> myspec = read_fits.read_fits_spectrum1d('myfile.fits')
-   >>> write_fits.write(myspec, 'mymultispec.fits')
-
-
-
-Reading FITS "multispec" format WCS
-------------------------------------
-
-The multispec format holds multiple one-dimensional spectra in a single file. The current 1-D readers can be used to read
-such a file. A list of spectra is returned whenever the input file is a multispec file.
-Here is an example of reading a simple FITS multispec format::
-
-    >>> from specutils.io import read_fits
-    >>> read_fits.read_fits_spectrum1d('mymultispec.fits')
+   >>> spectra_list = read_fits.read_fits_spectrum1d('mymultispec.fits')
+   >>> write_fits.write(spectra_list, 'mynewmultispec.fits')
 
 The multispec format supports various functions to map the pixel indices to dispersion. Currently the following multispec formats
 are supported:
@@ -46,6 +34,9 @@ are supported:
  * Linear Spline Dispersion Function
  * Cubic Spline Polynomial Dispersion Function
 
+Currently, modifications to the spectrum1D objects may not be correctly reflected in the output. In future, this will be fixed. Also
+it will be possible to write sliced spectrum based on index or dispersion, as well as spectrum which has been transformed from
+another kind of WCS.
 
 Reference/API
 -------------

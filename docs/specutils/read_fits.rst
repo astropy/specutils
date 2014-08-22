@@ -62,6 +62,12 @@ Here is an example of reading a simple FITS multispec format::
 
     >>> from specutils.io import read_fits
     >>> spectra_list = read_fits.read_fits_spectrum1d('mymultispec.fits')
+    >>> spectra_list[0]
+    Spectrum1D([ 338.06109619,  395.59234619,  326.0012207 , ...,
+                 660.0098877 ,  686.54498291,  689.58374023])
+    >>> spectra_list[1].dispersion
+    <Quantity [ 8293.44875263, 8293.40459999, 8293.36044556,...,
+                8166.53073537, 8166.48250242, 8166.43426803] Angstrom>
 
 The multispec format supports various functions to map the pixel indices to dispersion. Currently the following multispec formats
 are supported:
