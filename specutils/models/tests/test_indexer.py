@@ -26,7 +26,6 @@ def test_spectrum_slicing():
     np.testing.assert_allclose(sliced.flux, iraf["flux"][99::-1])
 
 
-
 def test_length():
     ind = Indexer(2, 5, 2)
     assert ind.length == 2
