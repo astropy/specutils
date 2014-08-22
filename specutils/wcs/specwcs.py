@@ -577,27 +577,30 @@ class MultispecIRAFCompositeWCS(BaseSpectrum1DWCS, CompositeWCS):
         Returns the list of spec parameters that represent this model in the
         order they are supposed to be stored in FITS files
         """
-        if len(self.wcs_list) == 2:
-            dispersion_wcs, doppler_wcs = self.wcs_list
-            if isinstance(dispersion_wcs, WeightedCombinationWCS):
-                dispersion_type = 2
-            else:
-                # dispersion_type instanceof Spectrum1DPolynomialWCS
-                dispersion_type = 0
-        else:
-            # len(self.wcs_list) = 3
-            dispersion_wcs, doppler_wcs, log_wcs = self.wcs_list
+        if len(self.wcs_list) == 3:
+            # we don't need to compute the log of dispersion while writing
+            log_wcs = self.wcs_list.pop()
             dispersion_type = 1
-        dispersion0 = self.__call__(np.zeros(1))[0].value
+        else:
+            log_wcs = None
+            dispersion_type = 0
+        dispersion_wcs, doppler_wcs = self.wcs_list
+        if isinstance(dispersion_wcs, WeightedCombinationWCS):
+            dispersion_type = 2
+        # else dispersion_wcs instance of Spectrum1DPolynomialWCS
         dispersion = self.__call__(np.arange(self.num_pixels)).value
         avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
         z = doppler_wcs.redshift
-        spec = [self.aperture, self.beam, dispersion_type, dispersion0,
+        spec = [self.aperture, self.beam, dispersion_type, dispersion[0],
                 avg_disp_delta, self.num_pixels, z,
                 self.aperture_low, self.aperture_high]
-        if isinstance(dispersion_wcs, WeightedCombinationWCS):
+        if dispersion_type == 2:
             # add the parameters of the functions to the spec string
             for wcs, weight, zero_point_offset in dispersion_wcs.wcs_list:
                 spec.extend([weight, zero_point_offset])
                 spec.extend(wcs.get_fits_spec())
+        if dispersion_type == 1:
+            # add the log_wcs back
+            self.add_WCS(log_wcs)
+
         return spec

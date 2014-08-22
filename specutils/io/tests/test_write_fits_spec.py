@@ -67,7 +67,8 @@ def test_multispec_spline():
         assert spec.dispersion.unit == test_spec.dispersion.unit
 
 def test_multispec_linear():
-    spectra = read_fits.read_fits_spectrum1d(data_path('evega.0039.rs.ec.dispcor.fits'))
+    spectra = read_fits.read_fits_spectrum1d(data_path(
+                                                'multispec-linear-log.fits'))
     write_fits.write(spectra, 'test.fits')
     test_spectra = read_fits.read_fits_spectrum1d('test.fits')
     for spec, test_spec in zip(spectra, test_spectra):
