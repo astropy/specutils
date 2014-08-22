@@ -188,6 +188,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
             outputs = (outputs,)
 
         return self.prepare_outputs(format_info, *outputs, **kwargs)
+
     @classmethod
     def evaluate(cls, pixel_indices, unit=None, *coeffs):
         return super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
@@ -313,50 +314,6 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
             raise Spectrum1DWCSFITSError("Fits spec undefined for degree = "
                                          "{0}".format(self.degree))
         return [func_type, self.npieces, self.pmin, self.pmax] + self.y
-
-
-class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
-    """
-    WCS that combines multiple WCS using their weights, zero index and doppler
-    factor. The formula used is:
-    Dispersion = Sum over all WCS
-        [Weight * (Zero point offset + WCS(pixels)) / (1 + doppler factor)]
-    """
-    def __init__(self, num_pixels, aperture=1, beam=88, aperture_low=0.0,
-                 aperture_high=0.0, doppler_factor=0.0, unit=None):
-        self.wcs_list = []
-        self.aperture = aperture
-        self.beam = beam
-        self.num_pixels = num_pixels
-        self.aperture_low = aperture_low
-        self.aperture_high = aperture_high
-        self.doppler_factor = doppler_factor
-        self.unit = unit
-
-
-    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
-        self.wcs_list.append((wcs, weight, zero_point_offset))
-
-    def __call__(self, pixel_indices):
-        final_dispersion = np.zeros(len(pixel_indices))
-        for wcs, weight, zero_point_offset in self.wcs_list:
-            dispersion = weight * (zero_point_offset + wcs(pixel_indices))
-            final_dispersion += dispersion / (1 + self.doppler_factor)
-        return final_dispersion * self.unit
-
-    def get_fits_spec(self):
-        disp_type = 2
-        dispersion0 = self.__call__(np.zeros(1))[0].value
-        dispersion = self.__call__(np.arange(self.num_pixels)).value
-        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
-        spec = [self.aperture, self.beam, disp_type, dispersion0,
-                avg_disp_delta, self.num_pixels, self.doppler_factor,
-                self.aperture_low, self.aperture_high]
-        for wcs, weight, zero_point_offset in self.wcs_list:
-            spec.extend([weight, zero_point_offset])
-            spec.extend(wcs.get_fits_spec())
-
-        return " ".join(map(str, spec))
 
 
 class WeightedCombinationWCS(Model):
@@ -549,3 +506,101 @@ class DopplerShift(Model):
     def doppler_factor(self):
         return math.sqrt((1 + self.beta)/(1 - self.beta))
 
+    @property
+    def redshift(self):
+        return self.doppler_factor - 1
+
+
+class MultispecIRAFCompositeWCS(BaseSpectrum1DWCS, CompositeWCS):
+    """
+    A specialized composite WCS model for IRAF FITS multispec specification.
+    This model adds applies doppler adjustment and log (if applicable) to the
+    dispersion WCS. The dispersion WCS may be a linear WCS or a weighted
+    combination WCS. This model stores FITS metadata and also provides a method
+    to generate the  multispec string for the FITS header.
+
+    Parameters
+    -----------
+    dispersion_wcs : Model
+        the wcs that returns the raw dispersion when passed the pixel
+        coordinates. There is no doppler shift applied to this dispersion
+    num_pixels : int
+        the number of valid pixels
+    z : float, optional
+        the redshift, used to determine the doppler shift needed to correct the
+        dispersion. Th default value indictes there is no shift
+    log : bool, optional
+        whether log correction needs to be applied to the dispersion
+    aperture : int, optional
+        the aperture number
+    beam : int, optional
+        the beam number
+    aperture_low : float, optional
+        the lower aperture limit
+    aperture_high : float, optional
+        the higher aperture limit
+    unit: astropy.unit, optional
+        the unit of the dispersion
+    """
+
+    def __init__(self, dispersion_wcs, num_pixels, z=1.0, log=False,
+                 aperture=1, beam=88, aperture_low=0.0, aperture_high=0.0,
+                 unit=None):
+        doppler_wcs = DopplerShift.from_redshift(z).inverse()
+        super(MultispecIRAFCompositeWCS, self).__init__([dispersion_wcs,
+                                                         doppler_wcs])
+        self.aperture = aperture
+        self.beam = beam
+        self.num_pixels = num_pixels
+        self.aperture_low = aperture_low
+        self.aperture_high = aperture_high
+        self.unit = unit
+        if log:
+            self.add_WCS(lambda x: 10 ** x)
+
+    def __call__(self, pixel_indices):
+        """
+        Applies the model to the pixel coordinates, to produce the dispersion
+        at those pixels
+
+        Parameters
+        -----------
+        pixel_indices : numpy array
+            the pixel coordinates on which dispersion needs to be computed
+        """
+        dispersion = super(MultispecIRAFCompositeWCS,
+                           self).__call__(pixel_indices)
+        return dispersion * self.unit
+
+    def get_fits_spec(self):
+        """
+        Returns the list of spec parameters that represent this model in the
+        order they are supposed to be stored in FITS files
+        """
+        if len(self.wcs_list) == 3:
+            # we don't need to compute the log of dispersion while writing
+            log_wcs = self.wcs_list.pop()
+            dispersion_type = 1
+        else:
+            log_wcs = None
+            dispersion_type = 0
+        dispersion_wcs, doppler_wcs = self.wcs_list
+        if isinstance(dispersion_wcs, WeightedCombinationWCS):
+            dispersion_type = 2
+        # else dispersion_wcs instance of Spectrum1DPolynomialWCS
+        dispersion = self.__call__(np.arange(self.num_pixels)).value
+        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
+        z = doppler_wcs.redshift
+        spec = [self.aperture, self.beam, dispersion_type, dispersion[0],
+                avg_disp_delta, self.num_pixels, z,
+                self.aperture_low, self.aperture_high]
+        if dispersion_type == 2:
+            # add the parameters of the functions to the spec string
+            for wcs, weight, zero_point_offset in dispersion_wcs.wcs_list:
+                spec.extend([weight, zero_point_offset])
+                spec.extend(wcs.get_fits_spec())
+        if dispersion_type == 1:
+            # add the log_wcs back
+            self.add_WCS(log_wcs)
+
+        return spec

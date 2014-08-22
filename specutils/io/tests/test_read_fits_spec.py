@@ -8,10 +8,24 @@ import numpy as np
 from specutils.io import read_fits
 
 
-
 def data_path(filename):
     data_dir = os.path.join(os.path.dirname(__file__), 'files')
     return os.path.join(data_dir, filename)
+
+def test_multispec_linear():
+    iraf = ascii.read(data_path('multispec-linear-log.fits.0001.dat'),
+                      Reader=ascii.NoHeader, names=['wave', 'flux'])
+    spectra = read_fits.read_fits_spectrum1d(data_path('multispec-linear-log.fits'))
+    spec = spectra[0]
+    np.testing.assert_allclose(iraf['wave'], spec.dispersion.value)
+    assert spec.dispersion.unit == u.Angstrom
+
+def test_multispec_log_linear():
+    iraf = ascii.read(data_path('log-linear.dat'), Reader=ascii.NoHeader, names = ['wave', 'flux'])
+    spectra = read_fits.read_fits_spectrum1d(data_path('multispec-linear-log.fits'))
+    spec = spectra[1]
+    np.testing.assert_allclose(iraf['wave'], spec.dispersion.value)
+    assert spec.dispersion.unit == u.Angstrom
 
 def test_1d_multispec_combined():
     legendre = read_fits.read_fits_spectrum1d(data_path('TRES.fits'))[0]

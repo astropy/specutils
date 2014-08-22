@@ -20,7 +20,7 @@ def write(spectrum, filename, clobber=True):
     if isinstance(spectrum, list):
         # assuming this list represents a mutispec system, with each wcs an
         # IRAF combination WCS
-        data = np.array([spec.data for spec in spectrum])
+        data = np.array([spectra.data for spectra in spectrum])
         hdu = _make_hdu(data)
         hdu.header['CTYPE1'] = 'MULTISPE'
         hdu.header['CTYPE2'] = 'MULTISPE'
@@ -33,9 +33,9 @@ def write(spectrum, filename, clobber=True):
         hdu.header['WAT1_001'] = "wtype=multispec label={0} units={1}".\
                                     format(label_string, unit_string)
         spec_string = "wtype=multispec"
-        for i, spec in enumerate(spectrum):
-            spec_string += ' spec{0} = "{1}"'.format(i + 1,
-                                                     spec.wcs.get_fits_spec())
+        for i, spectra in enumerate(spectrum):
+            spec = " ".join(map(str, spectra.wcs.get_fits_spec()))
+            spec_string += ' spec{0} = "{1}"'.format(i + 1, spec)
         wat_num = 1
         chars = 68
         for i in range(0, len(spec_string), chars):

@@ -315,61 +315,69 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
     wcs_dict = OrderedDict()
     for spec_key in multispec_dict:
         single_spec_dict = multispec_dict[spec_key]
+        if single_spec_dict['dispersion_type'] == 1:
+            #log-linear dispersion
+            log = True
+        else:
+            log = False
+
         if single_spec_dict['dispersion_type'] in [0, 1]:
-            raise NotImplementedError("Linear and log-linear WCS for "
-                                      "multispec format not implemented")
-        # single_spec_dict['dispersion_type'] == 2
-        combined_wcs = specwcs.Spectrum1DIRAFCombinationWCS(
-            single_spec_dict["no_valid_pixels"],
-            aperture=single_spec_dict["aperture"],
-            beam=single_spec_dict["beam"],
-            aperture_low=single_spec_dict["aperture_low"],
-            aperture_high=single_spec_dict["aperture_high"],
-            doppler_factor=single_spec_dict["doppler_factor"],
-            unit=dispersion_unit)
+            #linear or log-linear dispersion
+            dispersion_wcs = specwcs.Spectrum1DPolynomialWCS(
+                degree=1, c0=single_spec_dict["dispersion0"],
+                c1=single_spec_dict["average_dispersion_delta"])
 
-        for function_dict in single_spec_dict["functions"]:
-            if function_dict['type'] == 'legendre':
-                ##### @embray can you figure out if that's the only way to
-                ##  instantiate a polynomial (with c0=xx, c1=xx, ...)?
+        else:
+            # single_spec_dict['dispersion_type'] == 2
+            dispersion_wcs = specwcs.WeightedCombinationWCS()
+            for function_dict in single_spec_dict["functions"]:
+                if function_dict['type'] == 'legendre':
+                    ##### @embray can you figure out if that's the only way to
+                    ##  instantiate a polynomial (with c0=xx, c1=xx, ...)?
 
-                coefficients = dict([('c{:d}'.format(i),
-                                      function_dict['coefficients'][i])
-                                      for i in range(function_dict['order'])])
+                    coefficients = dict([('c{:d}'.format(i),
+                                        function_dict['coefficients'][i])
+                                        for i in range(function_dict['order'])])
 
-                wcs = specwcs.Spectrum1DIRAFLegendreWCS(
-                    function_dict['order'], function_dict['pmin'],
-                    function_dict['pmax'], **coefficients)
+                    wcs = specwcs.Spectrum1DIRAFLegendreWCS(
+                        function_dict['order'], function_dict['pmin'],
+                        function_dict['pmax'], **coefficients)
 
-            elif function_dict['type'] == 'chebyshev':
-                coefficients = dict([('c{:d}'.format(i),
-                                      function_dict['coefficients'][i])
-                                     for i in range(function_dict['order'])])
+                elif function_dict['type'] == 'chebyshev':
+                    coefficients = dict([('c{:d}'.format(i),
+                                        function_dict['coefficients'][i])
+                                        for i in range(function_dict['order'])])
 
-                wcs = specwcs.Spectrum1DIRAFChebyshevWCS(
-                    function_dict['order'], function_dict['pmin'],
-                    function_dict['pmax'], **coefficients)
+                    wcs = specwcs.Spectrum1DIRAFChebyshevWCS(
+                        function_dict['order'], function_dict['pmin'],
+                        function_dict['pmax'], **coefficients)
 
-            elif function_dict['type'] in ['linearspline', 'cubicspline']:
-                if function_dict['type'] == 'linearspline':
-                    degree = 1
+                elif function_dict['type'] in ['linearspline', 'cubicspline']:
+                    if function_dict['type'] == 'linearspline':
+                        degree = 1
+                    else:
+                        degree = 3
+                    n_pieces = function_dict['npieces']
+                    pmin = function_dict['pmin']
+                    pmax = function_dict['pmax']
+                    y = [function_dict['coefficients'][i]
+                         for i in range(n_pieces + degree)]
+                    wcs = specwcs.Spectrum1DIRAFBSplineWCS(degree, n_pieces, y,
+                                                           pmin, pmax)
                 else:
-                    degree = 3
-                n_pieces = function_dict['npieces']
-                pmin = function_dict['pmin']
-                pmax = function_dict['pmax']
-                y = [function_dict['coefficients'][i]
-                     for i in range(n_pieces + degree)]
-                wcs = specwcs.Spectrum1DIRAFBSplineWCS(degree, n_pieces, y,
-                                                       pmin, pmax)
-            else:
-                raise NotImplementedError
+                    raise NotImplementedError
+                dispersion_wcs.add_WCS(
+                    wcs, weight=function_dict["weight"],
+                    zero_point_offset=function_dict["zero_point_offset"])
 
-            combined_wcs.add_WCS(
-                wcs, weight=function_dict["weight"],
-                zero_point_offset=function_dict["zero_point_offset"])
-
-        wcs_dict[spec_key] = combined_wcs
+        composite_wcs = specwcs.MultispecIRAFCompositeWCS(
+            dispersion_wcs, single_spec_dict["no_valid_pixels"],
+            z=single_spec_dict["doppler_factor"], log=log,
+            aperture=single_spec_dict["aperture"], beam=single_spec_dict["beam"]
+            , aperture_low=single_spec_dict["aperture_low"],
+            aperture_high=single_spec_dict["aperture_high"],
+            unit=dispersion_unit)
+        wcs_dict[spec_key] = composite_wcs
     return wcs_dict
 
 
