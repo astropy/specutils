@@ -27,6 +27,7 @@ One of the most common and simple ways that dispersion is encoded in FITS files 
     CDELT1  =      1.3060348033905
     CUNIT1  = 'Angstrom'
 
+
 One can easily create a simple wcs file from this information::
 
     >>> from specutils.wcs import specwcs
@@ -39,18 +40,14 @@ One can easily create a simple wcs file from this information::
     >>> flux = fits.getdata('myfile.fits')
     >>> myspec = Spectrum1D(flux=flux, wcs=linear_wcs)
 
-As this is such a common format, there is a WCS reader available which generates a linear_wcs::
-
-    >>> from astropy.io import fits
-    >>> from specutils.io import read_fits
-    >>> fits_wcs_info = read_fits.FITSWCSSpectrum(fits.getheader('myfile.fits')) # parsing the FITS WCS information
-    >>> linear_wcs = read_fits_wcs_linear1d(fits_wcs_info)
-
-Finally, there exists a reader that generates a Spectrum1D object from a fits file. The reader will iterate over the
-available FITS 1D WCS readers until a matching one is found::
+However, this process requires too much code for the user. As this is such a common format, there exists a reader that generates a
+Spectrum1D object from a fits file directly ::
 
    >>> from specutils.io import read_fits
-   >>> myspec = read_fits.read_fits_spectrum1d('myfile.fits'):
+   >>> myspec = read_fits.read_fits_spectrum1d('myfile.fits')
+
+`read_fits_spectrum1d` is the only method required to read various types of FITS formats listed in `this page <http://iraf.net/irafdocs/specwcs.php>`_.
+This method detects the type of WCS, and uses the correct reader accordingly.
 
 Currently only linear one-dimensional WCS is implemented, but the examples should give a guide to implement more complex
 or WCS created from different keywords.
@@ -59,14 +56,26 @@ or WCS created from different keywords.
 Reading FITS "multispec" format WCS
 ------------------------------------
 
-Here is an example of reading a simple FITS multispec format. The output will not be a two-dimensional Spectrum, but
-a list of `~specutils.Spectrum1D` objects::
+The multispec format holds multiple one-dimensional spectra in a single file. The current 1-D readers can be used to read
+such a file. A list of spectra is returned whenever the input file is a multispec file.
+Here is an example of reading a simple FITS multispec format::
 
     >>> from specutils.io import read_fits
-    >>> read_fits.read_fits_multispec_to_list('mymultispec.fits')
+    >>> spectra_list = read_fits.read_fits_spectrum1d('mymultispec.fits')
 
-Internally, the function again uses the `~FITSWCSSpectrum` parser object.
+The multispec format supports various functions to map the pixel indices to dispersion. Currently the following multispec formats
+are supported:
 
+ * Linear Dispersion Function
+ * Log-linear Dispersion Function
+ * Legendre Polynomial Dispersion Function
+ * Chebyshev Polynomial Dispersion Function
+ * Linear Spline Dispersion Function
+ * Cubic Spline Polynomial Dispersion Function
+
+.. warning::
+    Linear and cubic spline functions implementations haven't been tested due to lack of test
+    files. If you have one of these files, please post at `astropy-dev<https://groups.google.com/forum/#!forum/astropy-dev>`_.
 
 
 Reference/API

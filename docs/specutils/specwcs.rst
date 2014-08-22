@@ -71,7 +71,7 @@ For linear dispersion we are using the general `Spectrum1DPolynomialWCS` WCS::
 There are also a couple of models which can be useful to combine different WCS. These are the `CompositeWCS` and
 `WeightedCombinationWCS` models.
 
-When there is a need to apply more than one WCS in a particular order to the input, `CompositeWCS` should be used:
+When there is a need to apply more than one WCS in a particular order to the input, `CompositeWCS` should be used::
 
     >>> import math
     >>> from specutils.wcs import specwcs
@@ -95,7 +95,7 @@ returns the following:
 wcs_n(wcs_n-1\dots(wcs_2(wcs_1(input))\dots))
 
 The `WeightedCombinationWCS` model provides another way of combines different WCS. In this model, each WCS gets the
-same input. The output from each WCS is added together using a weight and a zero point offset:
+same input. The output from each WCS is added together using a weight and a zero point offset::
 
     >>> import math
     >>> from specutils.wcs import specwcs
@@ -125,7 +125,8 @@ When the model is called on an input, input * doppler_factor is returned. The in
 obtained, which divides the input by the doppler factor. The Doppler shift model can also be instantiated from
 redshift(z) and the Doppler factor itself.
 
-For more information about reading and writing WCS transformations to the FITS File format see `FITS and WCS <fitswcs>`.
+For more information about reading and writing WCS transformations to the FITS File format see :doc:`FITS reader <read_fits>`
+ and :doc:`FITS writer <write_fits>`.
 
 In addition, the following WCS models exist as well:
 

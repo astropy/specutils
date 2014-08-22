@@ -55,7 +55,7 @@ Once a spectrum is instantiated, one can access the `flux`, `wavelength`, `frequ
             0.10291822,  0.33614334])
 
 A spectrum1D object can also be sliced using `slice_index` method. This method accepts the start, stop and step for
-a slice. This slice works similar to the python-like slicing for lists:
+a slice. This slice works similar to the python-like slicing for lists::
 
     >>> alternate_spec1d = spec1d.slice_index(step=2)
     >>> alternate_spec1d.dispersion
@@ -73,8 +73,8 @@ If not provided, this method makes the same assumptions about start, stop and st
 slice a spectrum from its indices. The start, stop and step represent indices at which dispersion, flux and other quantities are computed.
 In future, it might be possible to slice at a particular dispersion or flux value, thus the distinction.
 
-To learn more about the WCS transforms please go to :doc:`the WCS documentation page <specwcs>`. In many cases, spectra are stored in FITS files.
-FITS readers are documented at :doc:`the FITS WCS documentation page <fits_wcs>`.
+To learn more about the WCS transformations please go to :doc:`the WCS documentation page <specwcs>`. In many cases, spectra are stored in FITS files.
+FITS readers and writers are documented at :doc:`FITS reader docs<read_fits>` and :doc:`FITS writer docs<write_fits>`..
 
 .. automodapi:: specutils
     :no-inheritance-diagram:
