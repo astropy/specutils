@@ -320,51 +320,6 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
         return [func_type, self.npieces, self.pmin, self.pmax] + self.y
 
 
-class Spectrum1DIRAFCombinationWCS(BaseSpectrum1DWCS):
-    """
-    WCS that combines multiple WCS using their weights, zero index and doppler
-    factor. The formula used is:
-    Dispersion = Sum over all WCS
-        [Weight * (Zero point offset + WCS(pixels)) / (1 + doppler factor)]
-    """
-    def __init__(self, num_pixels, aperture=1, beam=88, aperture_low=0.0,
-                 aperture_high=0.0, doppler_factor=0.0, unit=None):
-        super(Spectrum1DIRAFCombinationWCS, self).__init__()
-        self.wcs_list = []
-        self.aperture = aperture
-        self.beam = beam
-        self.num_pixels = num_pixels
-        self.aperture_low = aperture_low
-        self.aperture_high = aperture_high
-        self.doppler_factor = doppler_factor
-        self.unit = unit
-
-
-    def add_WCS(self, wcs, weight=1.0, zero_point_offset=0.0):
-        self.wcs_list.append((wcs, weight, zero_point_offset))
-
-    def __call__(self, pixel_indices):
-        final_dispersion = np.zeros(len(pixel_indices))
-        for wcs, weight, zero_point_offset in self.wcs_list:
-            dispersion = weight * (zero_point_offset + wcs(pixel_indices))
-            final_dispersion += dispersion / (1 + self.doppler_factor)
-        return final_dispersion * self.unit
-
-    def get_fits_spec(self):
-        disp_type = 2
-        dispersion0 = self.__call__(np.zeros(1))[0].value
-        dispersion = self.__call__(np.arange(self.num_pixels)).value
-        avg_disp_delta = (dispersion[1:] - dispersion[:-1]).mean()
-        spec = [self.aperture, self.beam, disp_type, dispersion0,
-                avg_disp_delta, self.num_pixels, self.doppler_factor,
-                self.aperture_low, self.aperture_high]
-        for wcs, weight, zero_point_offset in self.wcs_list:
-            spec.extend([weight, zero_point_offset])
-            spec.extend(wcs.get_fits_spec())
-
-        return " ".join(map(str, spec))
-
-
 class WeightedCombinationWCS(Model):
     """
     A weighted combination WCS model. This model combines multiple WCS using a

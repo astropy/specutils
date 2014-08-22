@@ -97,11 +97,16 @@ class Indexer(Model):
         """
         if indices is None:
             indices = np.arange(self.length)
-        n_indices = indices * self.step + self.start
-        if self.step > 0:
-            to_delete = np.where(n_indices >= self.stop)
+        return self.__class__.evaluate(indices, self.start,
+                                       self.stop, self.step)
+
+    @classmethod
+    def evaluate(cls, indices, start, stop, step):
+        n_indices = indices * step + start
+        if step > 0:
+            to_delete = np.where(n_indices >= stop)
         else:
-            to_delete = np.where(n_indices <= self.stop)
+            to_delete = np.where(n_indices <= stop)
         n_indices = np.delete(n_indices, to_delete)
         return n_indices
 
