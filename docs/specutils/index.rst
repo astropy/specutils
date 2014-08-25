@@ -33,7 +33,10 @@ physical coordinates (World Coordinate System - WCS).
 
 * :doc:`Spectral World Coordinate Systems <specwcs>`
 
+**I/O**
 
+* :doc:`Reading spectra from FITS files <read_fits>`
+* :doc:`Writing spectra to FITS files <write_fits>`
 
 **Spectral Tools and Utilities**
 

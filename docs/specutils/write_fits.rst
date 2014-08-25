@@ -5,14 +5,14 @@ Writing Spectra to a FITS file
 
 .. warning::
     FITS writer doesn't work well after spectral slicing yet. In addition, reading fits files and writing the
-     same files again might not give the exact same files, although the intended spectra will remain the same.
+    same files again might not give the exact same files, although the intended spectra will remain the same.
 
 This page explains how to write spectra to FITS format. For more information on reading spectra and FITs in general, go to
 the :doc:`FITS reader documentation page<read_fits>`.
 
 Currently the FITS writer only works with 1-D spectra objects. These objects include the linear spectra objects, or the
 multispec spectra objects (which are stored as a list of spectra). `write_fits.write` method deciphers the type of object passed
- automatically and writes spectra to the given file in FITS format. An example to write a simple linear FITS file::
+automatically and writes spectra to the given file in FITS format. An example to write a simple linear FITS file::
 
    >>> from specutils.io import read_fits, write_fits
    >>> myspec = read_fits.read_fits_spectrum1d('myfile.fits')

@@ -91,8 +91,9 @@ The above code applies two WCS to the input. First, it applies the polynomial WC
 of the output. As illustrated, one can also add user defined functions to this composite WCS. The `add_WCS` method
 can also be used apart from the init function to add more WCS to the composite WCS. In general, the `CompositeWCS`
 returns the following:
+
 .. math::
-wcs_n(wcs_n-1\dots(wcs_2(wcs_1(input))\dots))
+    wcs_n(wcs_n-1\dots(wcs_2(wcs_1(input))\dots))
 
 The `WeightedCombinationWCS` model provides another way of combines different WCS. In this model, each WCS gets the
 same input. The output from each WCS is added together using a weight and a zero point offset::
@@ -112,13 +113,16 @@ same input. The output from each WCS is added together using a weight and a zero
 The order of WCS does not matter in this case. The weight and the zero point offset are the parameters stored with
 each WCS, and are evaluated as shown in the above example. In general the `WeightedCombinationWCS` returns the
 following:
+
 .. math::
-\sum\limits_{i=1}^n weight_i * (zero\textunderscore point\textunderscore offset_i + WCS_i(input))
+    \sum\limits_{i=1}^n weight_i * (zero\_point\_offset_i + WCS_i(input))
 
 Another important model available is the `DopplerShift` model. This model is specifically for calculating the doppler
 shift from velocity (v). The doppler factor is computed using the following formula:
+
 .. math::
-doppler factor = \sqrt{\frac{1 + \frac{v}{c}{1 - \frac{v}{c}}}
+    doppler\_factor = \sqrt{\frac{1 + \frac{v}{c}}{1 - \frac{v}{c}}}
+
 ,where c is the speed of light
 
 When the model is called on an input, input * doppler_factor is returned. The inverse of this model can also be
@@ -126,7 +130,7 @@ obtained, which divides the input by the doppler factor. The Doppler shift model
 redshift(z) and the Doppler factor itself.
 
 For more information about reading and writing WCS transformations to the FITS File format see :doc:`FITS reader <read_fits>`
- and :doc:`FITS writer <write_fits>`.
+and :doc:`FITS writer <write_fits>`.
 
 In addition, the following WCS models exist as well:
 
