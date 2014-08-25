@@ -21,6 +21,7 @@ import itertools
 #### VVVVVVVVVV
 valid_spectral_units = [u.pix, u.km / u.s, u.m, u.Hz, u.erg]
 
+
 #^^^^^^^^^^^^^^^^^
 class Spectrum1DWCSError(Exception):
     pass
@@ -43,6 +44,9 @@ class BaseSpectrum1DWCS(Model):
     n_outputs = 1
 
     _default_equivalencies = u.spectral()
+
+    def __init__(self, *args, **kwargs):
+        super(BaseSpectrum1DWCS, self).__init__(*args, **kwargs)
 
     @property
     def equivalencies(self):
@@ -72,7 +76,6 @@ class BaseSpectrum1DWCS(Model):
             self._unit = None
         else:
             self._unit = u.Unit(value)
-
 
     def reset_equivalencies(self):
         """
@@ -176,8 +179,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.unit = unit
 
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
-                                    'matrix': self._write_fits_header_matrix,
-                                    'multispec': self._write_fits_header_multispec}
+                                    'matrix': self._write_fits_header_matrix}
 
     def __call__(self, *inputs, **kwargs):
         inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
@@ -225,10 +227,6 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
             header['cunit{0}'.format(spectral_axis)] = unit_string
 
-    # can only be implemented, when the reader is in place
-    def _write_fits_header_multispec(self, header, spectral_axis=1):
-        pass
-
 
 class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
     """
@@ -247,6 +245,9 @@ class Spectrum1DIRAFLegendreWCS(BaseSpectrum1DWCS, polynomial.Legendre1D):
         return super(Spectrum1DIRAFLegendreWCS, self).__call__(transformed)
 
     def get_fits_spec(self):
+        # if abs(self.indexer.step) != 1:
+        #     raise Spectrum1DWCSFITSError("WCS with indexer step greater than 1"
+        #                                  "cannot be written")
         func_type = 2
         order = self.degree + 1
         coefficients = [self.__getattr__('c{0}'.format(i)).value
@@ -276,6 +277,9 @@ class Spectrum1DIRAFChebyshevWCS(BaseSpectrum1DWCS, polynomial.Chebyshev1D):
         return super(Spectrum1DIRAFChebyshevWCS, self).__call__(transformed)
 
     def get_fits_spec(self):
+        # if abs(self.indexer.step) != 1:
+        #     raise Spectrum1DWCSFITSError("WCS with indexer step greater than 1"
+        #                                  "cannot be written")
         func_type = 1
         order = self.degree + 1
         coefficients = [self.__getattr__('c{0}'.format(i)).value
@@ -291,8 +295,6 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
 
     def __init__(self, degree, npieces, y, pmin, pmax):
         from scipy.interpolate import splrep
-        self.pmin = pmin
-        self.pmax = pmax
         self.npieces = npieces
         self.y = y
 
@@ -300,6 +302,8 @@ class Spectrum1DIRAFBSplineWCS(BaseSpectrum1DWCS, BSplineModel):
         knots, coefficients, _ = splrep(x, y, k=degree)
         super(Spectrum1DIRAFBSplineWCS, self).__init__(degree, knots,
                                                        coefficients)
+        self.pmin = pmin
+        self.pmax = pmax
 
     def __call__(self, pixel_indices):
         s = (pixel_indices * 1.0 * self.npieces) / (self.pmax - self.pmin)
@@ -342,7 +346,7 @@ class WeightedCombinationWCS(Model):
         """
         Add a WCS/function pointer to be evaluated when this WCS is called. The
         results of calling this WCS on the input will be added to the overall
-        result, after applying the weight and the ero point offset.
+        result, after applying the weight and the zero point offset.
 
         Parameters
         -----------
