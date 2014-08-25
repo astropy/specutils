@@ -68,12 +68,75 @@ For linear dispersion we are using the general `Spectrum1DPolynomialWCS` WCS::
     >>> linear_wcs(1.5)
     <Quantity 6001.5 Angstrom>
 
+There are also a couple of models which can be useful to combine different WCS. These are the `CompositeWCS` and
+`WeightedCombinationWCS` models.
 
-For more information about reading and writing WCS transformations to the FITS File format see `FITS and WCS <fitswcs>`.
+When there is a need to apply more than one WCS in a particular order to the input, `CompositeWCS` should be used::
+
+    >>> import math
+    >>> from specutils.wcs import specwcs
+    >>> linear_wcs = specwcs.Spectrum1DPolynomialWCS(degree=1, c0=6000, c1=1.)
+    >>> log = lambda x: math.log(x, 10)
+    >>> composite_wcs = specwcs.CompositeWCS([linear_wcs, log])
+    >>> composite_wcs(1.5)
+    3.778259810434678
+    >>> math.log(linear_wcs(1.5), 10)
+    3.778259810434678
+    >>> add_one = lambda x: x+1
+    >>> composite_wcs.add_WCS(add_one)
+    >>> composite_wcs(1.5)
+    4.778259810434678
+
+The above code applies two WCS to the input. First, it applies the polynomial WCS, and then returns the logarithm
+of the output. As illustrated, one can also add user defined functions to this composite WCS. The `add_WCS` method
+can also be used apart from the init function to add more WCS to the composite WCS. In general, the `CompositeWCS`
+returns the following:
+.. math::
+wcs_n(wcs_n-1\dots(wcs_2(wcs_1(input))\dots))
+
+The `WeightedCombinationWCS` model provides another way of combines different WCS. In this model, each WCS gets the
+same input. The output from each WCS is added together using a weight and a zero point offset::
+
+    >>> import math
+    >>> from specutils.wcs import specwcs
+    >>> linear_wcs1 = specwcs.Spectrum1DPolynomialWCS(degree=1, c0=6000, c1=1.)
+    >>> linear_wcs2 = specwcs.Spectrum1DPolynomialWCS(degree=1, c0=1000, c1=-1.)
+    >>> combination_wcs = specwcs.WeightedCombinationWCS()
+    >>> combination_wcs.add_WCS(linear_wcs1, weight=0.5)
+    >>> combination_wcs.add_WCS(linear_wcs2, weight=1.2, zero_point_offset=1000)
+    >>> combination_wcs([1.5, 2])
+    array([ 5398.95,  5398.6 ])
+    >>> 0.5 * linear_wcs1([1.5, 2]) + 1.2 * (1000 + linear_wcs2([1.5, 2]))
+    array([ 5398.95,  5398.6 ])
+
+The order of WCS does not matter in this case. The weight and the zero point offset are the parameters stored with
+each WCS, and are evaluated as shown in the above example. In general the `WeightedCombinationWCS` returns the
+following:
+.. math::
+\sum\limits_{i=1}^n weight_i * (zero\textunderscore point\textunderscore offset_i + WCS_i(input))
+
+Another important model available is the `DopplerShift` model. This model is specifically for calculating the doppler
+shift from velocity (v). The doppler factor is computed using the following formula:
+.. math::
+doppler factor = \sqrt{\frac{1 + \frac{v}{c}{1 - \frac{v}{c}}}
+,where c is the speed of light
+
+When the model is called on an input, input * doppler_factor is returned. The inverse of this model can also be
+obtained, which divides the input by the doppler factor. The Doppler shift model can also be instantiated from
+redshift(z) and the Doppler factor itself.
+
+For more information about reading and writing WCS transformations to the FITS File format see :doc:`FITS reader <read_fits>`
+ and :doc:`FITS writer <write_fits>`.
 
 In addition, the following WCS models exist as well:
 
- * `~specutils.wcs.specwcs.Spectrum1DLegendreWCS`
+ * `~specutils.wcs.specwcs.Spectrum1DIRAFLegendreWCS`
+ * `~specutils.wcs.specwcs.Spectrum1DIRAFChebyshevWCS`
+ * `~specutils.wcs.specwcs.Spectrum1DIRAFBSplineWCS`
+ * `~specutils.wcs.specwcs.MultispecIRAFCompositeWCS`
+
+ These models are just IRAF extensions of already existing models. This extensions enable the user to read and write
+ from IRAF FITS files. 
 
 
 
