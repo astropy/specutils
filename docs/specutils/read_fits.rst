@@ -81,7 +81,7 @@ are supported:
 
 .. warning::
     Linear and cubic spline functions implementations haven't been tested due to lack of test
-    files. If you have one of these files, please post at `astropy-dev<https://groups.google.com/forum/#!forum/astropy-dev>`_.
+    files. If you have one of these files, please post at `astropy-dev <https://groups.google.com/forum/#!forum/astropy-dev>`_.
 
 
 Reference/API

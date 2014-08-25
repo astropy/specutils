@@ -115,13 +115,13 @@ each WCS, and are evaluated as shown in the above example. In general the `Weigh
 following:
 
 .. math::
-    \sum\limits_{i=1}^n weight_i * (zeroPointOffset_i + WCS_i(input))
+    \sum\limits_{i=1}^n weight_i * (zero\_point\_offset_i + WCS_i(input))
 
 Another important model available is the `DopplerShift` model. This model is specifically for calculating the doppler
 shift from velocity (v). The doppler factor is computed using the following formula:
 
 .. math::
-    dopplerFactor = \sqrt{\frac{1 + \frac{v}{c}}{1 - \frac{v}{c}}}
+    doppler\_factor = \sqrt{\frac{1 + \frac{v}{c}}{1 - \frac{v}{c}}}
 
 ,where c is the speed of light
 
@@ -130,7 +130,7 @@ obtained, which divides the input by the doppler factor. The Doppler shift model
 redshift(z) and the Doppler factor itself.
 
 For more information about reading and writing WCS transformations to the FITS File format see :doc:`FITS reader <read_fits>`
- and :doc:`FITS writer <write_fits>`.
+and :doc:`FITS writer <write_fits>`.
 
 In addition, the following WCS models exist as well:
 
