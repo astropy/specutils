@@ -118,7 +118,17 @@ class Spectrum1D(NDData):
         """
         
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
-            raise ValueError("dispersion and flux need to be one-dimensional Numpy arrays with the same shape")
+            raise ValueError("dispersion and flux need to be one-dimensional "
+                             "Numpy arrays with the same shape")
+
+        if hasattr(dispersion, 'unit'):
+            if dispersion_unit is not None:
+                dispersion = dispersion.to(dispersion_unit).value
+            else:
+                dispersion_unit = dispersion.unit
+                dispersion = dispersion.value
+
+
         spec_wcs = Spectrum1DLookupWCS(dispersion, unit=dispersion_unit)
 
         if copy:
