@@ -266,7 +266,7 @@ class Spectrum1D(NDData):
     @property
     def flux(self):
         #returning the flux
-        return self.data
+        return u.Quantity(self.data, self.unit)
         
     @flux.setter
     def flux_setter(self, flux):
