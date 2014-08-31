@@ -243,6 +243,23 @@ class Spectrum1D(NDData):
                 self._wcs_attributes[key]['unit'] = self.wcs.unit
 
 
+    def flux_getter(self):
+        #returning the flux
+        return u.Quantity(self.data, self.unit)
+
+    def flux_setter(self, flux):
+        if hasattr(flux, 'unit'):
+            if self.unit is not None:
+                flux = flux.to(self.unit).value
+            else:
+                raise ValueError('Attempting to set a new unit for this object'
+                                 'this is not allowed by Spectrum1D')
+
+        self.data = flux
+
+
+    flux = property(flux_getter, flux_setter)
+
     def __getattr__(self, name):
         if name in self._wcs_attributes:
             return self.dispersion.to(self._wcs_attributes[name]['unit'], equivalencies=self.wcs.equivalencies)
@@ -263,14 +280,7 @@ class Spectrum1D(NDData):
                [item + '_unit' for item in self._wcs_attributes.keys()]
 
 
-    @property
-    def flux(self):
-        #returning the flux
-        return u.Quantity(self.data, self.unit)
-        
-    @flux.setter
-    def flux_setter(self, flux):
-        self.data = flux
+
 
     #TODO: let the WCS handle what to do with len(flux)
     @property
