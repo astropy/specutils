@@ -18,9 +18,13 @@ There are several ways to instantiate a :class:`Spectrum1D` object::
     >>> from astropy import units as u
     >>> import numpy as np
     >>> wave = np.arange(6000, 9000) * u.Angstrom
-    >>> flux = np.random.random(3000) # due to current limitations in NDData, a quantity can not be given
-    >>> spec1d = Spectrum1D.from_array(wave, flux, unit='W m-2 angstrom-1 sr-1')
-
+    >>> flux = np.random.random(3000) * u.Unit('W m-2 angstrom-1 sr-1')
+    >>> spec1d = Spectrum1D.from_array(wave, flux)
+    >>> spec1d.wavelength
+    <Quantity [ 6000., 6001., 6002.,...,  8997., 8998., 8999.] Angstrom>
+    >>> spec1d.flux
+    <Quantity [ 0.75639906, 0.23677036, 0.08408417,...,  0.82740303,
+            0.38345114, 0.77815595] W / (Angstrom m2 sr)>
 
 The ability to instantiate from any two arrays allows to load from ascii files (see `astropy.io.ascii <http://docs.astropy.org/en/stable/io/ascii/index.html>`_)
 and other data structures like `~numpy.recarray` and `~astropy.table.Table`.
