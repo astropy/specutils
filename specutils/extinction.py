@@ -241,7 +241,7 @@ def extinction_f99(wave, a_v, r_v=3.1):
     References
     ----------
     .. [1] Fitzpatrick, E. L. 1999, PASP, 111, 63
-    .. [2] Fitpatrick, E. L. & Massa, D. 1990, ApJS, 72, 163
+    .. [2] Fitzpatrick, E. L. & Massa, D. 1990, ApJS, 72, 163
     """
 
     f = ExtinctionF99(a_v, r_v)
@@ -275,7 +275,7 @@ def extinction_fm07(wave, a_v):
 
     References
     ----------
-    .. [1] Fitpatrick, E. L. & Massa, D. 2007, ApJ, 663, 320
+    .. [1] Fitzpatrick, E. L. & Massa, D. 2007, ApJ, 663, 320
     .. [2] Gordon, K. D., Cartledge, S., & Clayton, G. C. 2009, ApJ, 705, 1320
     .. [3] Fitzpatrick, E. L. 1999, PASP, 111, 63
     """
