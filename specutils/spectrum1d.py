@@ -245,7 +245,7 @@ class Spectrum1D(NDData):
 
     def flux_getter(self):
         #returning the flux
-        return u.Quantity(self.data, self.unit)
+        return u.Quantity(self.data, self.unit, copy=False)
 
     def flux_setter(self, flux):
         if hasattr(flux, 'unit'):
