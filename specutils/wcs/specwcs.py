@@ -550,7 +550,7 @@ class MultispecIRAFCompositeWCS(BaseSpectrum1DWCS, CompositeWCS):
     def __init__(self, dispersion_wcs, num_pixels, z=1.0, log=False,
                  aperture=1, beam=88, aperture_low=0.0, aperture_high=0.0,
                  unit=None):
-        doppler_wcs = DopplerShift.from_redshift(z).inverse()
+        doppler_wcs = DopplerShift.from_redshift(z).inverse
         super(MultispecIRAFCompositeWCS, self).__init__([dispersion_wcs,
                                                          doppler_wcs])
         self.aperture = aperture
