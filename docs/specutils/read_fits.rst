@@ -36,7 +36,8 @@ One can easily create a simple wcs file from this information::
     >>> header = fits.getheader('myfile.fits')
     >>> dispersion_start = header['CRVAL1'] - (header['CRPIX1'] - 1) * header['CDELT1']
     >>> linear_wcs = specwcs.Spectrum1DPolynomialWCS(degree=1, c0=dispersion_start,
-                                                        c1=header['CDELT1'], unit=u.Unit(header['CUNIT1']))
+    >>>                                              c1=header['CDELT1'],
+    >>>                                              unit=u.Unit(header['CUNIT1']))
     >>> flux = fits.getdata('myfile.fits')
     >>> myspec = Spectrum1D(flux=flux, wcs=linear_wcs)
 
