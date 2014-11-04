@@ -22,9 +22,9 @@ Reading simple linear 1D WCS
 
 One of the most common and simple ways that dispersion is encoded in FITS files is linear dispersion using four keywords::
 
-    CRVAL1  =    4402.538203477947
-    CRPIX1  =                    1
-    CDELT1  =      1.3060348033905
+    CRVAL1  =    4402.538203477947 # Dispersion at reference pixel
+    CRPIX1  =                    1 # Reference pixel
+    CDELT1  =      1.3060348033905 # Dispersion by pixel
     CUNIT1  = 'Angstrom'
 
 
