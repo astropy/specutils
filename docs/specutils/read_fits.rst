@@ -34,7 +34,7 @@ One can easily create a simple wcs file from this information::
     >>> from astropy.io import fits
     >>> from astropy import units as u
     >>> header = fits.getheader('myfile.fits')
-    >>> dispersion_start = dispersion_start - (header['CRPIX1'] - 1)  * dispersion_delta
+    >>> dispersion_start = header['CRVAL1'] - (header['CRPIX1'] - 1) * header['CDELT1']
     >>> linear_wcs = specwcs.Spectrum1DPolynomialWCS(degree=1, c0=dispersion_start,
                                                         c1=header['CDELT1'], unit=u.Unit(header['CUNIT1']))
     >>> flux = fits.getdata('myfile.fits')
