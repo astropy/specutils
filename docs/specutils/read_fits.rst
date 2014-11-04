@@ -22,9 +22,9 @@ Reading simple linear 1D WCS
 
 One of the most common and simple ways that dispersion is encoded in FITS files is linear dispersion using four keywords::
 
-    CRVAL1  =    4402.538203477947
-    CRPIX1  =                    1
-    CDELT1  =      1.3060348033905
+    CRVAL1  =    4402.538203477947 # Dispersion at reference pixel
+    CRPIX1  =                    1 # Reference pixel
+    CDELT1  =      1.3060348033905 # Dispersion by pixel
     CUNIT1  = 'Angstrom'
 
 
@@ -34,9 +34,10 @@ One can easily create a simple wcs file from this information::
     >>> from astropy.io import fits
     >>> from astropy import units as u
     >>> header = fits.getheader('myfile.fits')
-    >>> dispersion_start = dispersion_start - (header['CRPIX1'] - 1)  * dispersion_delta
+    >>> dispersion_start = header['CRVAL1'] - (header['CRPIX1'] - 1) * header['CDELT1']
     >>> linear_wcs = specwcs.Spectrum1DPolynomialWCS(degree=1, c0=dispersion_start,
-                                                        c1=header['CDELT1'], unit=u.Unit(header['CUNIT1']))
+    >>>                                              c1=header['CDELT1'],
+    >>>                                              unit=u.Unit(header['CUNIT1']))
     >>> flux = fits.getdata('myfile.fits')
     >>> myspec = Spectrum1D(flux=flux, wcs=linear_wcs)
 
