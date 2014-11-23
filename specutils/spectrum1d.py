@@ -83,8 +83,8 @@ class Spectrum1D(NDData):
             as `dispersion`.
 
         dispersion_unit :
-        error : `~astropy.nddata.NDError`, optional
-            Errors on the data.
+        uncertainty : `~astropy.nddata.NDUncertainty`, optional
+            Errors on the data. Might be inverse variance
 
         mask : `~numpy.ndarray`, optional
             Mask for the data, given as a boolean Numpy array with a shape

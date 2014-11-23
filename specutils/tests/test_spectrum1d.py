@@ -51,3 +51,4 @@ def test_spectrum1d_flux2():
         test_spec.flux[1000] = 1000 * u.erg/u.s
 
         nptesting.assert_allclose(test_spec.flux[1000], 1000 * u.erg/u.s)
+

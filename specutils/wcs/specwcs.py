@@ -172,18 +172,19 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     WCS for polynomial dispersion. The only added parameter is a unit,
     otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
     """
-    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
+    def __init__(self, degree, unit=None, dc_flag=None, domain=None, window=[-1, 1],
                  **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
                                                       window=window, **params)
         self.unit = unit
-
+        self.dc_flag = dc_flag
+        
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
                                     'matrix': self._write_fits_header_matrix}
 
     def __call__(self, *inputs, **kwargs):
         inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
-        outputs = self.evaluate(*itertools.chain(inputs, [self.unit],
+        outputs = self.evaluate(*itertools.chain(inputs, [self.unit], [self.dc_flag],
                                                  self.param_sets))
 
         if self.n_outputs == 1:
@@ -192,9 +193,12 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         return self.prepare_outputs(format_info, *outputs, **kwargs)
 
     @classmethod
-    def evaluate(cls, pixel_indices, unit=None, *coeffs):
-        return super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
-                                                            *coeffs) * unit
+    def evaluate(cls, pixel_indices, unit=None, dc_flag=None, *coeffs):
+        val = super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
+                                                            *coeffs) 
+        # DC-FLAG (log-linear)?
+        if dc_flag == 1: val = 10.**val
+        return val * unit
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
