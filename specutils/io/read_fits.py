@@ -194,8 +194,6 @@ class FITSWCSSpectrum(object):
             self.dc_flag = None
         # Units
         self.units = self.read_wcs_units()
-        from xastropy.xutils import xdebug as xdb
-
 
     def read_affine_transforms(self, wcs_dim=None):
 
@@ -493,7 +491,8 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None, efil=No
     if efil != None:
         sig=fits.getdata(efil) - bzero
         uncertainty = StdDevUncertainty(sig)
-    else: uncertainty = None
+    else:
+        uncertainty = None
 
     wcs_info = FITSWCSSpectrum(header)
 
