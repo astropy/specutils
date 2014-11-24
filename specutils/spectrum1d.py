@@ -1,7 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # This module implements the Spectrum1D class.
 
-from __future__ import print_function, division
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 from specutils.models.Indexer import Indexer
 
 __all__ = ['Spectrum1D']
@@ -12,6 +13,7 @@ from astropy import log
 from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
+from astropy.nddata.nduncertainty import StdDevUncertainty
 
 from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
 
@@ -458,4 +460,12 @@ class Spectrum1D(NDData):
                               , uncertainty=new_uncertainty, mask=new_mask,
                               flags=new_flags, indexer=new_indexer)
 
+    @property
+    def sig(self):
+        ''' Return a standard 1sigma error array
+        '''
+        if isinstance(self.uncertainty,StdDevUncertainty):
+            return self.uncertainty.array
+        else:
+            return None
 
