@@ -295,6 +295,15 @@ class Spectrum1D(NDData):
     def dispersion_unit(self):
         return self.wcs.unit
 
+    @property
+    def sig(self):
+        ''' Return a standard 1sigma error array
+        '''
+        if isinstance(self.uncertainty,StdDevUncertainty):
+            return self.uncertainty.array
+        else:
+            return None
+
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
         """Interpolates onto a new wavelength grid and returns a new `Spectrum1D`-object.
@@ -459,13 +468,4 @@ class Spectrum1D(NDData):
         return self.__class__(new_data, new_wcs, meta=self.meta, unit=self.unit
                               , uncertainty=new_uncertainty, mask=new_mask,
                               flags=new_flags, indexer=new_indexer)
-
-    @property
-    def sig(self):
-        ''' Return a standard 1sigma error array
-        '''
-        if isinstance(self.uncertainty,StdDevUncertainty):
-            return self.uncertainty.array
-        else:
-            return None
 
