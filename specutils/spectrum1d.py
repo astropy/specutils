@@ -16,6 +16,7 @@ from astropy.utils import misc
 from astropy.nddata.nduncertainty import StdDevUncertainty
 
 from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
+from specutils.utils import funcs
 
 
 from astropy import units as u
@@ -469,3 +470,36 @@ class Spectrum1D(NDData):
                               , uncertainty=new_uncertainty, mask=new_mask,
                               flags=new_flags, indexer=new_indexer)
 
+    def gauss_smooth(self, npix=4., vfwhm=None, dv_const=True):
+        """
+        Convolve with a Gaussian assuming a fixed FWHM in km/s
+        Error array untouched (for now)
+
+        Parameters
+        ----------
+        npix : float (4.0)
+            Pixels to smooth over. FWHM
+        vfwhm : float 
+            FWHM in km/s
+        dv_const : Bool (True)
+            Specifies whether the wavelength array had constant velocity 
+        """
+        if dv_const:
+            if vfwhm is not None: # Set npix
+                dv = np.median( (self.dispersion - np.roll(self.dispersion,1))
+                                /self.dispersion * 3e5 )
+                npix = vfwhm / dv
+            # Convolve
+            self.flux = funcs.convolve_constant_dv(self.dispersion, self.flux,
+                                                   npix=npix, dv_const=True)
+        else:
+            self.flux = funcs.convolve_constant_dv(self.dispersion, self.flux,
+                                                   npix=npix, vfwhm=vfwhm)
+
+    def qck_plot(self, show=True, **kargs):
+        """
+        Generate a quick plot of the spectrum
+        """
+        import matplotlib.pyplot as plt
+        plt.plot(self.dispersion, self.flux, **kargs)
+        if show is True: plt.show()
