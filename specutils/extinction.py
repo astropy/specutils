@@ -93,7 +93,7 @@ def extinction_ccm89(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.ccm89(_process_wave(wave).value, a_v, r_v) * wave.unit
+    res = cextinction.ccm89(_process_wave(wave).value, a_v, r_v)
 
     return res.reshape(wave.shape)
 
@@ -132,7 +132,7 @@ def extinction_od94(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.od94(_process_wave(wave).value, a_v, r_v) * wave.unit
+    res = cextinction.od94(_process_wave(wave).value, a_v, r_v)
 
     return res.reshape(wave.shape)
 
@@ -160,7 +160,7 @@ def extinction_gcc09(wave, a_v, r_v=3.1):
 
     _check_wave(wave, 909.091 * u.angstrom, 33333.333 * u.angstrom)
 
-    res = cextinction.gcc09(_process_wave(wave).value, a_v, r_v) * wave.unit
+    res = cextinction.gcc09(_process_wave(wave).value, a_v, r_v)
 
     return res.reshape(wave.shape)
 
@@ -525,10 +525,8 @@ def extinction(wave, a_v, r_v=3.1, model='od94'):
     ----------
     wave : float or list_like
         Wavelength(s) in angstroms.
-    ebv or a_v : float
-        E(B-V) differential extinction, or A(V) total V band extinction,
-        in magnitudes. Specify exactly one. The two values are related by
-        A(V) = R_V * E(B-V).
+    a_v : float
+        Total V band extinction A(V), in magnitudes. A(V) = R_V * E(B-V).
     r_v : float, optional
         R_V parameter. Default is the standard Milky Way average of 3.1.
     model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07', 'wd01', d03'}, optional
@@ -646,10 +644,8 @@ def reddening(wave, a_v, r_v=3.1, model='od94'):
     ----------
     wave : float or list_like
         Wavelength(s) in angstroms at which to evaluate the reddening.
-    ebv or a_v : float
-        E(B-V) differential extinction, or A(V) total V band extinction,
-        in magnitudes. Specify exactly one. The two values are related by
-        A(V) = R_V * E(B-V).
+    a_v : float
+        Total V band extinction, in magnitudes. A(V) = R_V * E(B-V).
     r_v : float, optional
         R_V parameter. Default is the standard Milky Way average of 3.1.
     model : {'ccm89', 'od94', 'gcc09', 'f99', 'fm07'}, optional
