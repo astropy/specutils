@@ -215,7 +215,7 @@ class ExtinctionF99(object):
         # Analytic function in the UV.
         uvmask = wave < (2700. * u.angstrom)
         if np.any(uvmask):
-            res[uvmask] = cextinction.f99uv(wave[uvmask].value, self.a_v, self.r_v) * wave.unit
+            res[uvmask] = cextinction.f99uv(wave[uvmask].value, self.a_v, self.r_v)
 
         # Spline in the Optical/IR
         oirmask = ~uvmask
@@ -293,7 +293,7 @@ def extinction_fm07(wave, a_v):
     # Simple analytic function in the UV
     uvmask = wave < (2700. * u.angstrom)
     if np.any(uvmask):
-        res[uvmask] = cextinction.fm07uv(wave[uvmask].value, a_v) * wave.unit
+        res[uvmask] = cextinction.fm07uv(wave[uvmask].value, a_v)
     
     # Spline in the Optical/IR
     oirmask = ~uvmask
