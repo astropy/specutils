@@ -4,6 +4,7 @@ import re
 from astropy.io import fits
 from astropy import units as u
 from astropy.utils import OrderedDict
+from astropy.nddata import StdDevUncertainty
 
 from specutils.wcs import specwcs
 from specutils import Spectrum1D
@@ -185,9 +186,14 @@ class FITSWCSSpectrum(object):
             for axis in range(self.wcs_dim):
                 self.wcs_attributes.append(self.read_wcs_attributes(axis + 1))
 
+        # Affine
         self.affine_transform_dict, self.transform_matrix = self.read_affine_transforms()
+        try:
+            self.dc_flag = self.fits_header['DC-FLAG']
+        except KeyError:
+            self.dc_flag = None
+        # Units
         self.units = self.read_wcs_units()
-
 
     def read_affine_transforms(self, wcs_dim=None):
 
@@ -382,7 +388,7 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
 
 
 def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
-    """Read very a very simple 1D WCS mainly comprising of CRVAL, CRPIX, ...
+    """Read a very simple 1D WCS mainly comprising of CRVAL, CRPIX, ...
     from a FITS WCS Information container
 
     Parameters
@@ -434,9 +440,10 @@ def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
     dispersion_start += -pixel_offset * dispersion_delta
     return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
                                            c0=dispersion_start,
-                                           c1=dispersion_delta)
+                                           c1=dispersion_delta,
+                                           dc_flag=wcs_info.dc_flag)
 
-def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
+def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None, efil=None):
     """
     1D reader for spectra in FITS format. This function determines what format
     the FITS file is in, and attempts to read the Spectrum. This reader just
@@ -458,6 +465,9 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
     flux_unit : ~astropy.unit.Unit, optional
         unit of the flux
 
+    efil : str, optional
+        FITS filename for the sigma array
+
     Raises
     --------
     NotImplementedError
@@ -466,16 +476,35 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
     if dispersion_unit:
         dispersion_unit = u.Unit(dispersion_unit)
 
-    data = fits.getdata(filename)
-    header = fits.getheader(filename)
+    #data = fits.getdata(filename)
+    #header = fits.getheader(filename)
+    hdulist = fits.open(filename)
+    header = hdulist[0].header
+    # BZERO -- This has to happen before reading the data!
+    try:
+        bzero = header['BZERO']
+    except KeyError:
+        bzero = 0.
+    data = hdulist[0].data 
+
+    # Error file
+    if efil != None:
+        sig=fits.getdata(efil) - bzero
+        uncertainty = StdDevUncertainty(sig)
+    else:
+        uncertainty = None
 
     wcs_info = FITSWCSSpectrum(header)
 
     if wcs_info.naxis == 1:
+        # One spectrum
         wcs = read_fits_wcs_linear1d(wcs_info, dispersion_unit=dispersion_unit)
-        return Spectrum1D(data, wcs=wcs, unit=flux_unit)
+        # Flatten + bzero
+        data = data.flatten() - bzero
+        return Spectrum1D(data, wcs=wcs, unit=flux_unit, uncertainty=uncertainty)
     elif wcs_info.naxis == 2 and \
             wcs_info.affine_transform_dict['ctype'] == ["MULTISPE", "MULTISPE"]:
+        # MULTI
         multi_wcs = multispec_wcs_reader(wcs_info, dispersion_unit=dispersion_unit)
         multispec = []
         for spectrum_data, spectrum_wcs in zip(data, multi_wcs.values()):
