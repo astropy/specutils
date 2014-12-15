@@ -13,6 +13,7 @@ from astropy import log
 from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
+from astropy import constants as const
 from astropy.nddata.nduncertainty import StdDevUncertainty
 
 from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
@@ -304,6 +305,19 @@ class Spectrum1D(NDData):
             return self.uncertainty.array
         else:
             return None
+
+    def relative_vel(self, wv_obs):
+        ''' Return a velocity array relative to an input wavelength
+        Should consider adding a velocity array to this Class, i.e. self.velo
+
+        Parameters
+        ----------
+        wv_obs : float
+          Wavelength to set the zero of the velocity array.
+          Often (1+z)*wrest
+        '''
+        spl = const.c.to('km/s').value 
+        return  (self.dispersion-wv_obs)*spl/wv_obs
 
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
