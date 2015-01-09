@@ -249,7 +249,7 @@ def baryvel(dje):
 # Similarly lon/lat/alt/jd could be replaced with a single astropy.units.Time
 # class.
 
-def helcorr(lon, lat, alt, ra, dec, jd):
+def helcorr(lon, lat, alt, ra, dec, mjd):
     """
     Calculate the heliocentric radial velocity corrections for an astronomical 
     source.
@@ -269,8 +269,8 @@ def helcorr(lon, lat, alt, ra, dec, jd):
         Right ascension of the object for epoch J2000 (if float, in degrees).
     dec : `~astropy.coordinates.Angle` or float
         Declination of the object for epoch J2000 (if float, in degrees).
-    jd : float
-        Julian date for the middle of exposure.
+    mjd : float
+        The modified Julian date for the middle of exposure.
 
     Returns
     -------
@@ -295,7 +295,7 @@ def helcorr(lon, lat, alt, ra, dec, jd):
 
     # Here we specify the location so that we can easily calculate the mean
     # local siderial time later on
-    time = astropy.time.Time(2.4e6 + jd, format="jd", location=(lon, lat, alt))
+    time = astropy.time.Time(2.4e6 + mjd, format="jd", location=(lon, lat, alt))
     epoch = time.datetime.year + time.datetime.month/12. \
         + time.datetime.day/365.
 
