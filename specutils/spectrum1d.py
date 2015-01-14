@@ -233,7 +233,7 @@ class Spectrum1D(NDData):
                 raise ValueError('Attempting to set a new unit for this object'
                                  'this is not allowed by Spectrum1D')
 
-        self.data = flux
+        self._data = flux
 
 
     flux = property(flux_getter, flux_setter)
