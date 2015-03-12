@@ -47,12 +47,6 @@ class Spectrum1D(NDData):
         `mask` here will causes the mask from the masked array to be
         ignored.
 
-    flags : `~numpy.ndarray` or `~astropy.nddata.FlagCollection`, optional
-        Flags giving information about each pixel. These can be specified
-        either as a Numpy array of any type with a shape matching that of the
-        data, or as a `~astropy.nddata.FlagCollection` instance which has a
-        shape matching that of the data.
-
     meta : `dict`-like object, optional
         Metadata for this object.  "Metadata" here means all information that
         is included with this object but not part of any other attribute
@@ -67,8 +61,8 @@ class Spectrum1D(NDData):
                       'velocity': {'unit': u.m/u.s}}
 
     @classmethod
-    def from_array(cls, dispersion, flux, dispersion_unit=None, uncertainty=None, mask=None,
-                   flags=None, meta=None, copy=True,
+    def from_array(cls, dispersion, flux, dispersion_unit=None,
+                   uncertainty=None, mask=None, meta=None, copy=True,
                    unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
         
@@ -91,12 +85,6 @@ class Spectrum1D(NDData):
             matching that of the data. The values should be ``False`` where the
             data is *valid* and ``True`` when it is not (as for Numpy masked
             arrays).
-
-        flags : `~numpy.ndarray` or `~astropy.nddata.FlagCollection`, optional
-            Flags giving information about each pixel. These can be specified
-            either as a Numpy array of any type with a shape matching that of the
-            data, or as a `~astropy.nddata.FlagCollection` instance which has a
-            shape matching that of the data.
 
         meta : `dict`-like object, optional
             Metadata for this object. "Metadata here means all information that
@@ -135,7 +123,7 @@ class Spectrum1D(NDData):
             flux = flux.copy()
 
         return cls(flux=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
-                   mask=mask, flags=flags, meta=meta)
+                   mask=mask, meta=meta)
     
     @classmethod
     def from_table(cls, table, dispersion_column='dispersion',
@@ -174,19 +162,9 @@ class Spectrum1D(NDData):
         else:
             uncertainty = None
 
-        if isinstance(flag_columns, six.string_types):
-            flags = table[flag_columns]
-        elif misc.isiterable(flag_columns):
-            flags = FlagCollection(shape=flux.shape)
-            for flag_column in flag_columns:
-                flags[flag_column] = table[flag_column]
-        else:
-            raise ValueError('flag_columns should either be a string or a list (or iterable) of strings')
-
         return cls.from_array(flux=flux.data, dispersion=dispersion.data,
                               uncertainty=uncertainty, dispersion_unit=dispersion.units,
-                              unit=flux.units, mask=table.mask, flags=flags,
-                              meta=table.meta)
+                              unit=flux.units, mask=table.mask, meta=table.meta)
         
     
     
@@ -214,10 +192,10 @@ class Spectrum1D(NDData):
                                   ' documentation')
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None,
-                 flags=None, meta=None, indexer=None):
+                 meta=None, indexer=None):
 
         super(Spectrum1D, self).__init__(data=flux, unit=unit, wcs=wcs, uncertainty=uncertainty,
-                   mask=mask, flags=flags, meta=meta)
+                   mask=mask, meta=meta)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
         if indexer is None:
@@ -255,7 +233,7 @@ class Spectrum1D(NDData):
                 raise ValueError('Attempting to set a new unit for this object'
                                  'this is not allowed by Spectrum1D')
 
-        self.data = flux
+        self._data = flux
 
 
     flux = property(flux_getter, flux_setter)
@@ -418,7 +396,7 @@ class Spectrum1D(NDData):
         """
         
         # We need to slice the following items:
-        # >> disp, flux, error, mask, and flags
+        # >> disp, flux, error, and mask
         # Which are all common NDData objects, therefore I am (perhaps
         # reasonably) assuming that __slice__ will be a NDData base function
         # which we will inherit.
@@ -440,22 +418,11 @@ class Spectrum1D(NDData):
         else:
             new_mask = None
 
-        if self.flags is not None:
-            if isinstance(self.flags, np.ndarray):
-                new_flags = self.flags[item]
-                # flags setter expects an array, always
-                if new_flags.shape == ():
-                    new_flags = np.array(new_flags)
-            elif isinstance(self.flags, FlagCollection):
-                raise NotImplementedError('Slicing complex Flags is currently not implemented')
-        else:
-            new_flags = None
-
         new_indexer = self.indexer.__getitem__(item)
         new_wcs = self.wcs
 
         return self.__class__(new_data, new_wcs, meta=self.meta, unit=self.unit
                               , uncertainty=new_uncertainty, mask=new_mask,
-                              flags=new_flags, indexer=new_indexer)
+                              indexer=new_indexer)
 
 

@@ -41,7 +41,8 @@ def test_extinction_ccm89():
 
     wave = 1 / x  # wavelengths in Angstroms
     a_lambda_over_a_v = extinction_ccm89(wave, a_v=1., r_v=3.1)
-
+    assert (u.Quantity(a_lambda_over_a_v, unit=u.dimensionless_unscaled).unit ==
+            u.dimensionless_unscaled)
     np.testing.assert_allclose(a_lambda_over_a_v, ratio_true, atol=0.015)
     
 
