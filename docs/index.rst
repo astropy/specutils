@@ -27,7 +27,8 @@ and then call the **from_array** method:
   spec1d.wavelength
   <Quantity [ 6000., 6001., 6002.,...,  8997., 8998., 8999.] Angstrom>
   spec1d.flux
-  <Quantity [ 0.75639906, 0.23677036, 0.08408417,...,  0.82740303, 0.38345114, 0.77815595] W / (Angstrom m2 sr)>
+  <Quantity [ 0.75639906, 0.23677036, 0.08408417,...,  0.82740303, 0.38345114,
+              0.77815595] W / (Angstrom m2 sr)>
 
 Or you can read a Spectrum from a .fits file with the **read_fits** method:
 
@@ -60,7 +61,7 @@ the Spectrum1D.dispersion will be an array:
   
   myspec.dispersion
   array([ 3732.05623192,  3732.0858853 ,  3732.11553869, ...,  4999.67906915,
-        4999.70872253,  4999.73837591])
+          4999.70872253,  4999.73837591])
 
 and thus the Spectrum1D's wavelength, energy and frequency will not be available.
 In order to be convertible, the dispersion must be an astropy Quantity, which will happen if the FITS header has specified the units or if you specify them manually like this:
@@ -70,16 +71,16 @@ In order to be convertible, the dispersion must be an astropy Quantity, which wi
   myspec = read_fits.read_fits_spectrum1d('specutils/io/tests/files/UVES.fits', dispersion_unit='angstrom')
   myspec.dispersion
   <Quantity [ 3732.05623192, 3732.0858853 , 3732.11553869,...,
-  4999.67906915, 4999.70872253, 4999.73837591] Angstrom>
+              4999.67906915, 4999.70872253, 4999.73837591] Angstrom>
   myspec.wavelength
   <Quantity [ 3732.05623192, 3732.0858853 , 3732.11553869,...,
-  4999.67906915, 4999.70872253, 4999.73837591] Angstrom> 
+              4999.67906915, 4999.70872253, 4999.73837591] Angstrom> 
   myspec.energy
-  <Quantity [  5.32265743e-19,  5.32261514e-19,  5.32257285e-19,...,
-  3.97314639e-19,  3.97312282e-19,  3.97309926e-19] J>
+  <Quantity [ 5.32265743e-19,  5.32261514e-19,  5.32257285e-19,...,
+              3.97314639e-19,  3.97312282e-19,  3.97309926e-19] J>
   myspec.frequency
-  <Quantity [  8.03290303e+14,  8.03283920e+14,  8.03277538e+14,...,
-  5.99623404e+14,  5.99619847e+14,  5.99616291e+14] Hz>
+  <Quantity [ 8.03290303e+14,  8.03283920e+14,  8.03277538e+14,...,
+              5.99623404e+14,  5.99619847e+14,  5.99616291e+14] Hz>
 
 You can easily make a plot of the Spectrum using matplotlib in ipython with the --pylab flag and calling:
 
@@ -101,7 +102,7 @@ The simplest WCS for 1D is a lookup table. This is often found in a ascii tables
   <Quantity 6000.0 Angstrom>
   Spectrum1D(flux=flux, wcs=lookup_table_wcs)
   Spectrum1D([ 0.66118716,  0.39584688,  0.81210479, ...,  0.5238203 ,
-                 0.05986459,  0.11621466])
+               0.05986459,  0.11621466])
 
 Another common WCS is the **linear dispersion** and commonly serialized (encoded) to FITS keyword headers. For linear dispersion we are using the general `Spectrum1DPolynomialWCS`_ WCS.
 
