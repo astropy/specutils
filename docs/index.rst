@@ -89,37 +89,6 @@ You can easily make a plot of the Spectrum using matplotlib in ipython with the 
   plot(myspec.wavelength, myspec.flux)
 
 .. plot:: pyplots/plotting_example.py
-  
-World Coordinate System
-=========================
-* Spectral 1D WCS
-The simplest WCS for 1D is a lookup table. This is often found in a ascii tables where one column is the lookup table (wavelength array) and one column is the flux array. In terms of the functional transform view: the lookup table represents a parameter (c0):
-
-.. code-block:: python
-
-  lookup_table_wcs = specwcs.Spectrum1DLookupWCS(wave, unit='angstrom') # create the wcs
-  lookup_table_wcs(0) # doing the transformation for pixel 0
-  <Quantity 6000.0 Angstrom>
-  Spectrum1D(flux=flux, wcs=lookup_table_wcs)
-  Spectrum1D([ 0.66118716,  0.39584688,  0.81210479, ...,  0.5238203 ,
-               0.05986459,  0.11621466])
-
-Another common WCS is the **linear dispersion** and commonly serialized (encoded) to FITS keyword headers. For linear dispersion we are using the general `Spectrum1DPolynomialWCS`_ WCS.
-
-The `CompositeWCS`_ and `WeightedCombinationWCS`_ models can be useful to combine different WCS.
-Another important model available is the `DopplerShift`_ model. This model is specifically for calculating the doppler shift from velocity (v).
-
-In addition, the following WCS models exist as well:
-    * `Spectrum1DIRAFLegendreWCS`_
-    * `Spectrum1DIRAFChebyshevWCS`_
-    * `Spectrum1DIRAFBSplineWCS`_
-    * `MultispecIRAFCompositeWCS`_
-These models are just IRAF extensions of already existing models. This extensions enable the user to read and write from IRAF FITS files.
-
-Spectral Tools and Utilities
-================================
-* Interstellar Extinction calculations
-This module contains extinction law functions. See the documentation for individual functions.
 
 `Full Documentation`_ 
 
