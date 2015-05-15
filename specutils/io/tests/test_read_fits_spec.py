@@ -67,3 +67,15 @@ def test_1dspec_vrad():
     np.testing.assert_allclose(iraf['wave'], spec.dispersion.value)
     assert spec.dispersion.unit == u.Unit('km/s')
 
+def test_dcflag_loglinear():
+    mage = ascii.read(data_path('UM669_read.dat'), names=['flux', 'wave'])
+    spec = read_fits.read_fits_spectrum1d(data_path('UM669_nF.fits'))
+    np.testing.assert_allclose(mage['wave'], spec.dispersion)
+    assert not hasattr(spec.dispersion, 'unit')
+
+'''
+# Command line execution
+if __name__ == '__main__':
+
+    test_dcflag_loglinear()
+'''
