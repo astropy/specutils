@@ -169,23 +169,36 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     """
-    WCS for polynomial dispersion. The only added parameter is a unit,
-    otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
+    WCS for polynomial dispersion. The only added parameters are a unit,
+    and dc_flag for Log/Linear dispersion.
+    Otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
     """
+<<<<<<< HEAD
     def __init__(self, degree, unit=None, dc_flag=None, domain=None, window=[-1, 1],
+=======
+    def __init__(self, degree, unit=None, dc_flag=0, domain=None, window=[-1, 1],
+>>>>>>> d6df54db6c40fc75b72b37a452251c225dbbbe5a
                  **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
                                                       window=window, **params)
         self.unit = unit
         self.dc_flag = dc_flag
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> d6df54db6c40fc75b72b37a452251c225dbbbe5a
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
                                     'matrix': self._write_fits_header_matrix}
 
     def __call__(self, *inputs, **kwargs):
         inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
         outputs = self.evaluate(*itertools.chain(inputs, [self.unit], [self.dc_flag],
+<<<<<<< HEAD
                                                  self.param_sets))
+=======
+                                                 self.param_sets, ))
+>>>>>>> d6df54db6c40fc75b72b37a452251c225dbbbe5a
 
         if self.n_outputs == 1:
             outputs = (outputs,)
@@ -193,12 +206,22 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         return self.prepare_outputs(format_info, *outputs, **kwargs)
 
     @classmethod
+<<<<<<< HEAD
     def evaluate(cls, pixel_indices, unit=None, dc_flag=None, *coeffs):
         val = super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
                                                             *coeffs) 
         # DC-FLAG (log-linear)?
         if dc_flag == 1: val = 10.**val
         return val * unit
+=======
+    def evaluate(cls, pixel_indices, unit=None, dc_flag=0, *coeffs):
+        val = super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
+                                                            *coeffs)
+        # Log/Linear
+        if dc_flag == 1:
+            val = 10.**val
+        return val*unit
+>>>>>>> d6df54db6c40fc75b72b37a452251c225dbbbe5a
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)

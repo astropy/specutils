@@ -215,6 +215,12 @@ class FITSWCSSpectrum(object):
         transform_matrix = self.read_transform_matrix(wcs_dim, cdelt=
         affine_transform_dict['cdelt'])
 
+        # DC-FLAG (IRAF standard, e.g. http://iraf.net/irafdocs/specwcs.php)
+        try:
+            affine_transform_dict['DC-FLAG'] = self.fits_header['DC-FLAG']
+        except KeyError:
+            affine_transform_dict['DC-FLAG'] = 0
+
         return affine_transform_dict, transform_matrix
 
     def read_wcs_units(self, wcs_dim=None):
@@ -438,7 +444,8 @@ def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
     if None in [dispersion_start, dispersion_delta, pixel_offset]:
         raise FITSWCSSpectrum1DError
     dispersion_start += -pixel_offset * dispersion_delta
-    return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit,
+    dc_flag = wcs_info.affine_transform_dict['DC-FLAG'] # Log/Linear
+    return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit, dc_flag=dc_flag,
                                            c0=dispersion_start,
                                            c1=dispersion_delta,
                                            dc_flag=wcs_info.dc_flag)
