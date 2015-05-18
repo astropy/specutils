@@ -210,10 +210,7 @@ class FITSWCSSpectrum(object):
         affine_transform_dict['cdelt'])
 
         # DC-FLAG (IRAF standard, e.g. http://iraf.net/irafdocs/specwcs.php)
-        try:
-            affine_transform_dict['DC-FLAG'] = self.fits_header['DC-FLAG']
-        except KeyError:
-            affine_transform_dict['DC-FLAG'] = 0
+        affine_transform_dict['DC-FLAG'] = self.fits_header.get('DC-FLAG', 0)
 
         return affine_transform_dict, transform_matrix
 
@@ -439,8 +436,7 @@ def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
         raise FITSWCSSpectrum1DError
     dispersion_start += -pixel_offset * dispersion_delta
     # Log/Linear?
-    dc_flag = wcs_info.affine_transform_dict['DC-FLAG'] 
-    if dc_flag == 1: # Log
+    if wcs_info.affine_transform_dict['DC-FLAG'] == 1: # Log
         # Generate a Composite WCS with Logarithmic 
         polywcs= specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit, 
             c0=dispersion_start, c1=dispersion_delta)

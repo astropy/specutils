@@ -72,10 +72,3 @@ def test_dcflag_loglinear():
     spec = read_fits.read_fits_spectrum1d(data_path('UM669_nF.fits'))
     np.testing.assert_allclose(mage['wave'], spec.dispersion)
     assert not hasattr(spec.dispersion, 'unit')
-
-'''
-# Command line execution
-if __name__ == '__main__':
-
-    test_dcflag_loglinear()
-'''
