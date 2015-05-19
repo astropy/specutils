@@ -447,8 +447,7 @@ def read_fits_wcs_linear1d(wcs_info, dispersion_unit=None, spectral_axis=0):
     dc_flag = wcs_info.affine_transform_dict['DC-FLAG'] # Log/Linear
     return specwcs.Spectrum1DPolynomialWCS(degree=1, unit=dispersion_unit, dc_flag=dc_flag,
                                            c0=dispersion_start,
-                                           c1=dispersion_delta,
-                                           dc_flag=wcs_info.dc_flag)
+                                           c1=dispersion_delta)
 
 def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None, efil=None):
     """
