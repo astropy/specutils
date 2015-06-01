@@ -336,6 +336,7 @@ class WeightedCombinationWCS(Model):
         The object's wcs_list will be instantiated using wcs from this list,
         with weight as 1.0, and zero point offset as 0.0
     """
+    
     def __init__(self, wcs_list=None):
         self.wcs_list = []
         if wcs_list is not None:
