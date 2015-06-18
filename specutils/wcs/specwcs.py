@@ -140,13 +140,11 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
     def __call__(self, pixel_indices):
-        return self.__class__.evaluate(pixel_indices,
-                                       self.lookup_table_parameter.value,
-                                       kind=self.lookup_table_interpolation_kind
-                                       , unit=self.unit)
+        return self.__class__.evaluate(
+            pixel_indices, self.lookup_table_parameter.value,
+            kind=self.lookup_table_interpolation_kind, unit=self.unit)
 
-    @classmethod
-    def evaluate(cls, pixel_indices, lookup_table, kind='linear', unit=None):
+    def evaluate(self, pixel_indices, lookup_table, kind='linear', unit=None):
         pixel_index = np.arange(len(lookup_table))
         if kind == 'linear':
             return np.interp(pixel_indices, pixel_index, lookup_table,
@@ -191,8 +189,8 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
         return self.prepare_outputs(format_info, *outputs, **kwargs)
 
-    @classmethod
-    def evaluate(cls, pixel_indices, unit=None, *coeffs):
+
+    def evaluate(self, pixel_indices, unit=None, *coeffs):
         return super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
                                                             *coeffs) * unit
 
@@ -336,7 +334,7 @@ class WeightedCombinationWCS(Model):
         The object's wcs_list will be instantiated using wcs from this list,
         with weight as 1.0, and zero point offset as 0.0
     """
-    
+
     def __init__(self, wcs_list=None):
         self.wcs_list = []
         if wcs_list is not None:
