@@ -7,9 +7,8 @@ from numpy import testing as nptesting
 def test_spectrum1d_fromarray_quantity():
     test_spec = Spectrum1D.from_array(np.arange(3000, 9000) * u.angstrom,
                           np.random.random(6000))
-
+    wavelength = test_spec.wavelength
     assert hasattr(test_spec, 'wavelength')
-
     assert test_spec.dispersion_unit == u.angstrom
 
 def test_spectrum1d_fromarray_quantity2():
