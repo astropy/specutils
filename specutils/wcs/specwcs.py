@@ -164,15 +164,19 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     """
-    WCS for polynomial dispersion. The only added parameters are a unit,
-    and dc_flag for Log/Linear dispersion.
+    WCS for polynomial dispersion. The only added parameters are a unit.
     Otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
     """
+<<<<<<< HEAD
     def __init__(self, degree, unit=None, dc_flag=None, domain=None, window=[-1, 1],
+=======
+    def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
+>>>>>>> 813d01ad2b53af8154f9cdc1c5b76f699b418ec0
                  **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
                                                       window=window, **params)
         self.unit = unit
+<<<<<<< HEAD
         self.dc_flag = dc_flag
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
                                     'matrix': self._write_fits_header_matrix}
@@ -181,6 +185,26 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     def evaluate(self, pixel_indices, *coeffs):
         return super(Spectrum1DPolynomialWCS, self).evaluate(pixel_indices,
                                                             *coeffs) * self.unit
+=======
+
+        self.fits_header_writers = {'linear': self._write_fits_header_linear,
+                                    'matrix': self._write_fits_header_matrix}
+
+    def __call__(self, *inputs, **kwargs):
+        inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
+        outputs = self.evaluate(*itertools.chain(inputs, [self.unit], self.param_sets, ))
+
+        if self.n_outputs == 1:
+            outputs = (outputs,)
+
+        return self.prepare_outputs(format_info, *outputs, **kwargs)
+
+    @classmethod
+    def evaluate(cls, pixel_indices, unit=None, *coeffs):
+        val = super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
+                                                            *coeffs)
+        return val*unit
+>>>>>>> 813d01ad2b53af8154f9cdc1c5b76f699b418ec0
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
@@ -382,11 +406,40 @@ class CompositeWCS(Model):
     wcs_list : list of callable objects, optional
         The object's wcs_list will be instantiated using wcs from this list
     """
-    def __init__(self, wcs_list=None):
+    _default_equivalencies = u.spectral()
+
+
+    def __init__(self, wcs_list=None, unit=None):
+        self._unit = None
+
         self.wcs_list = []
         if wcs_list is not None:
             for wcs in wcs_list:
                 self.add_WCS(wcs)
+
+    @property
+    def unit(self):
+        if self._unit is None:
+            return 1.0
+        else:
+            return self._unit
+
+    @unit.setter
+    def unit(self, value):
+        if value is None:
+            warnings.warn(
+                'Initializing a Spectrum1D WCS with units set to `None` is not recommended')
+            self._unit = None
+        else:
+            self._unit = u.Unit(value)
+
+    @property
+    def equivalencies(self):
+        """Equivalencies for spectral axes include spectral equivalencies and doppler"""
+        if hasattr(self, '_equivalencies'):
+            return self._equivalencies
+        else:
+            return self._default_equivalencies
 
     def add_WCS(self, wcs):
         """
@@ -410,14 +463,14 @@ class CompositeWCS(Model):
         input : numpy array
             The input to the composite WCS
         """
-        return self.__class__.evaluate(input, self.wcs_list)
+        return self.__class__.evaluate(input, self.wcs_list, unit=self.unit)
 
     @classmethod
-    def evaluate(cls, input, wcs_list):
+    def evaluate(cls, input, wcs_list, unit=None):
         output = input
         for wcs in wcs_list:
             output = wcs(output)
-        return output
+        return output*unit
 
 
 class DopplerShift(Model):
