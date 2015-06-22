@@ -132,29 +132,24 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
         #Making sure that 1d transformations are sensible
         assert self.lookup_table_parameter.value.ndim == 1
 
-        #check that array gives a bijective transformation (that forwards and backwards transformations are unique)
+        #check that array gives a bijective transformation (that forwards and
+        # backwards transformations are unique)
         if len(self.lookup_table_parameter.value) != len(
                 np.unique(self.lookup_table_parameter.value)):
             raise Spectrum1DWCSError(
-                'The Lookup Table does not describe a unique transformation')
+                'The lookup table does not describe a unique transformation')
         self.pixel_index = np.arange(len(self.lookup_table_parameter.value))
 
-    def __call__(self, pixel_indices):
-        return self.__class__.evaluate(pixel_indices,
-                                       self.lookup_table_parameter.value,
-                                       kind=self.lookup_table_interpolation_kind
-                                       , unit=self.unit)
-
-    @classmethod
-    def evaluate(cls, pixel_indices, lookup_table, kind='linear', unit=None):
+    def evaluate(self, pixel_indices, lookup_table):
+        lookup_table = np.squeeze(lookup_table)
         pixel_index = np.arange(len(lookup_table))
-        if kind == 'linear':
+        if self.lookup_table_interpolation_kind == 'linear':
             return np.interp(pixel_indices, pixel_index, lookup_table,
-                             left=np.nan, right=np.nan) * unit
+                             left=np.nan, right=np.nan) * self.unit
         else:
             raise NotImplementedError(
-                'Interpolation type %s is not implemented' % kind)
-
+                'Interpolation type {0} is not implemented'.format(
+                    self.lookup_table_interpolation_kindkind))
 
     def invert(self, dispersion_values):
         if self.lookup_table_interpolation_kind == 'linear':
@@ -181,20 +176,8 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
                                     'matrix': self._write_fits_header_matrix}
 
-    def __call__(self, *inputs, **kwargs):
-        inputs, format_info = self.prepare_inputs(*inputs, **kwargs)
-        outputs = self.evaluate(*itertools.chain(inputs, [self.unit], self.param_sets, ))
-
-        if self.n_outputs == 1:
-            outputs = (outputs,)
-
-        return self.prepare_outputs(format_info, *outputs, **kwargs)
-
-    @classmethod
-    def evaluate(cls, pixel_indices, unit=None, *coeffs):
-        val = super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
-                                                            *coeffs)
-        return val*unit
+    def evaluate(self, pixel_indices, *coeffs):
+        return super(Spectrum1DPolynomialWCS, self).evaluate(pixel_indices,
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
@@ -336,6 +319,7 @@ class WeightedCombinationWCS(Model):
         The object's wcs_list will be instantiated using wcs from this list,
         with weight as 1.0, and zero point offset as 0.0
     """
+
     def __init__(self, wcs_list=None):
         self.wcs_list = []
         if wcs_list is not None:
