@@ -178,6 +178,7 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
     def evaluate(self, pixel_indices, *coeffs):
         return super(Spectrum1DPolynomialWCS, self).evaluate(pixel_indices,
+                                                            *coeffs) * self.unit
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
