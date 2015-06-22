@@ -167,25 +167,11 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     WCS for polynomial dispersion. The only added parameters are a unit.
     Otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
     """
-<<<<<<< HEAD
-    def __init__(self, degree, unit=None, dc_flag=None, domain=None, window=[-1, 1],
-=======
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
->>>>>>> 813d01ad2b53af8154f9cdc1c5b76f699b418ec0
                  **params):
         super(Spectrum1DPolynomialWCS, self).__init__(degree, domain=domain,
                                                       window=window, **params)
         self.unit = unit
-<<<<<<< HEAD
-        self.dc_flag = dc_flag
-        self.fits_header_writers = {'linear': self._write_fits_header_linear,
-                                    'matrix': self._write_fits_header_matrix}
-
-
-    def evaluate(self, pixel_indices, *coeffs):
-        return super(Spectrum1DPolynomialWCS, self).evaluate(pixel_indices,
-                                                            *coeffs) * self.unit
-=======
 
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
                                     'matrix': self._write_fits_header_matrix}
@@ -204,7 +190,6 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
         val = super(Spectrum1DPolynomialWCS, cls).evaluate(pixel_indices,
                                                             *coeffs)
         return val*unit
->>>>>>> 813d01ad2b53af8154f9cdc1c5b76f699b418ec0
 
     def write_fits_header(self, header, spectral_axis=1, method='linear'):
         self.fits_header_writers[method](header, spectral_axis)
