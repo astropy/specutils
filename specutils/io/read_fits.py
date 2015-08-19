@@ -482,6 +482,28 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
             multispec.append(
                 Spectrum1D(spectrum_data, wcs=spectrum_wcs, unit=flux_unit))
         return multispec
+
+    elif wcs_info.naxis == 3 and \
+            wcs_info.affine_transform_dict['ctype'] == ["LINEAR","LINEAR","LINEAR"]:
+        wcs = read_fits_wcs_linear1d(wcs_info, dispersion_unit=dispersion_unit)
+        equispec = []
+        for i in range(data.shape[0]):
+            equispec.append(
+                Spectrum1D(data[i][0], wcs=wcs, unit=flux_unit))
+        return equispec
+        
+    elif wcs_info.naxis == 3 and \
+            wcs_info.affine_transform_dict['ctype'] == ["MULTISPE", "MULTISPE","LINEAR"]:
+        multi_wcs = multispec_wcs_reader(wcs_info, dispersion_unit=dispersion_unit)
+        multispec = []
+        for j in range(data.shape[1]):
+            equispec = []
+            for i in range(data.shape[0]):
+                equispec.append(
+                    Spectrum1D(data[i][j], wcs=multi_wcs.values()[j], unit=flux_unit))
+            multispec.append(equispec)
+        return multispec
+
     else:
         raise NotImplementedError("Either the FITS file does not represent a 1D"
                                   " spectrum or the format isn't supported yet")
