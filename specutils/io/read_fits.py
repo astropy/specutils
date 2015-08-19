@@ -304,7 +304,6 @@ def multispec_wcs_reader(wcs_info, dispersion_unit=None):
         default=None
     """
 
-    assert wcs_info.naxis == 2
     assert wcs_info.global_wcs_attributes['system'] == 'multispec'
     assert wcs_info.wcs_attributes[1]['wtype'] == 'multispec'
 
