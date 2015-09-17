@@ -499,7 +499,7 @@ def read_fits_spectrum1d(filename, dispersion_unit=None, flux_unit=None):
             equispec = []
             for i in range(data.shape[0]):
                 equispec.append(
-                    Spectrum1D(data[i][j], wcs=multi_wcs.values()[j], unit=flux_unit))
+                    Spectrum1D(data[i][j], wcs=list(multi_wcs.values())[j], unit=flux_unit))
             multispec.append(equispec)
         return multispec
 
