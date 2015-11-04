@@ -49,11 +49,15 @@ before_install:
     # Use utf8 encoding. Should be default, but this is insurance against
     # future changes
     - export PYTHONIOENCODING=UTF8
-    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-    - chmod +x miniconda.sh
-    - ./miniconda.sh -b
-    - export PATH=/home/travis/miniconda/bin:$PATH
-    - conda update --yes conda
+
+    # http://conda.pydata.org/docs/travis.html#the-travis-yml-file
+    - wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
 
     # DOCUMENTATION DEPENDENCIES
     - if [[ $SETUP_CMD == build_sphinx* ]]; then sudo apt-get install graphviz texlive-latex-extra dvipng; fi
@@ -75,7 +79,7 @@ install:
     # OPTIONAL DEPENDENCIES
     # Here you can add any dependencies your package may have. You can use
     # conda for packages available through conda, or pip for any other
-    # packages. You should leave the `numpy=$NUMPY_VERSION` in the `conda` 
+    # packages. You should leave the `numpy=$NUMPY_VERSION` in the `conda`
     # install since this ensures Numpy does not get automatically upgraded.
     - if [[ $SETUP_CMD != egg_info ]] && $INSTALL_SCIPY; then $CONDA_INSTALL numpy=$NUMPY_VERSION scipy ; fi
     # - if [[ $SETUP_CMD != egg_info ]]; then $PIP_INSTALL ...; fi
