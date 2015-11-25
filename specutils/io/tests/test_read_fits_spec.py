@@ -27,6 +27,24 @@ def test_multispec_log_linear():
     np.testing.assert_allclose(iraf['wave'], spec.dispersion.value)
     assert spec.dispersion.unit == u.Angstrom
 
+def test_multispec_equispec_linear():
+    iraf11 = ascii.read(data_path('multispec_equispec.11.dat'),
+                      Reader=ascii.NoHeader, names=['wave', 'flux'])
+    iraf12 = ascii.read(data_path('multispec_equispec.12.dat'),
+                      Reader=ascii.NoHeader, names=['wave', 'flux'])
+    iraf21 = ascii.read(data_path('multispec_equispec.21.dat'),
+                      Reader=ascii.NoHeader, names=['wave', 'flux'])
+    iraf22 = ascii.read(data_path('multispec_equispec.22.dat'),
+                      Reader=ascii.NoHeader, names=['wave', 'flux'])
+    spectra = read_fits.read_fits_spectrum1d(data_path('multispec_equispec.fits'))
+
+    np.testing.assert_allclose(iraf11['wave'], spectra[0][0].dispersion.value)
+    np.testing.assert_allclose(iraf12['wave'], spectra[0][1].dispersion.value)
+    np.testing.assert_allclose(iraf21['wave'], spectra[1][0].dispersion.value)
+    np.testing.assert_allclose(iraf22['wave'], spectra[1][1].dispersion.value)
+    spec = spectra[0][0]
+    assert spec.dispersion.unit == u.Angstrom
+
 def test_1d_multispec_combined():
     legendre = read_fits.read_fits_spectrum1d(data_path('TRES.fits'))[0]
     combined, chebyshev = read_fits.read_fits_spectrum1d(
