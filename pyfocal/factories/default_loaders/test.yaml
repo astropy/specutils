@@ -1,0 +1,11 @@
+name: NIRspec Spectra
+format: fits
+data:
+  hdu: 0
+uncertainty:
+  hdu: 1
+  type: 'ivar'
+mask:
+  hdu: 2
+meta:
+  author: Nicholas Earl
