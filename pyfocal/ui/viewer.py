@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 from qtpy.QtGui import *
+from qtpy.QtCore import *
 from .qt.mainwindow import Ui_MainWindow
 from .qt.spectrasubwindow import Ui_SpectraSubWindow
 
@@ -18,4 +19,15 @@ class Viewer(QMainWindow):
         ui_spectra_sub_window = Ui_SpectraSubWindow()
         ui_spectra_sub_window.setupUi(wgt_sub_window)
         new_sub_window = self.main_window.mdiArea.addSubWindow(wgt_sub_window)
-        return new_sub_window, ui_spectra_sub_window.webView
+        return new_sub_window
+
+    def open_file_dialog(self, filters):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setNameFilters(
+            [x for x in filters]
+        )
+
+        if dialog.exec_():
+            file_names = dialog.selectedFiles()
+            return file_names

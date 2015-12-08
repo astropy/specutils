@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+from ..factories.registries import loader_factory
 
 
 class Controller(object):
@@ -6,19 +7,16 @@ class Controller(object):
         self._viewer = viewer
 
     def create_sub_window(self):
-        from bokeh.plotting import figure, output_file, show
-        from bokeh.resources import CDN
-        from bokeh.embed import file_html
 
-        # output to static HTML file
-        output_file("line.html")
+        new_sub_window = self._viewer.add_sub_window()
 
-        p = figure(plot_width=400, plot_height=400, responsive=True)
+        self._setup_connections()
 
-        # add a circle renderer with a size, color, and alpha
-        p.circle([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], size=20, color="navy", alpha=0.5)
+    def _setup_connections(self):
+        self._viewer.main_window.actionOpen.triggered.connect(self.open_file)
 
-        html = file_html(p, CDN, "my plot")
+    def open_file(self):
+        file_name = self._viewer.open_file_dialog(loader_factory.filters)
 
-        new_sub_window, web_view = self._viewer.add_sub_window()
-        web_view.setHtml(html)
+
+

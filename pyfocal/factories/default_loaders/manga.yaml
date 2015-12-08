@@ -1,6 +1,6 @@
 --- !CustomLoader
-name: NIRspec Spectra
-extension: fits
+name: MaNGA IFU
+extension: [fits, mits]
 data:
   hdu: 0
 uncertainty:

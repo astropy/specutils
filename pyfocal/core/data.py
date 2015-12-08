@@ -1,4 +1,5 @@
 from astropy.nddata import NDData, NDDataBase, NDArithmeticMixin, NDIOMixin
+from ..factories.loaders import registry
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -8,6 +9,8 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
     """
+    read = classmethod(registry.read)
+    write = registry.write
 
 
 class Layer(NDArithmeticMixin, NDDataBase):

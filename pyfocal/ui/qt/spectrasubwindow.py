@@ -30,10 +30,6 @@ class Ui_SpectraSubWindow(object):
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.gridLayout = QtGui.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
-        self.webView = QtWebKit.QWebView(self.centralwidget)
-        self.webView.setUrl(QtCore.QUrl(_fromUtf8("about:blank")))
-        self.webView.setObjectName(_fromUtf8("webView"))
-        self.gridLayout.addWidget(self.webView, 0, 0, 1, 1)
         SpectraSubWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtGui.QStatusBar(SpectraSubWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -99,5 +95,4 @@ class Ui_SpectraSubWindow(object):
         self.actionChange_Top_Axis.setText(_translate("SpectraSubWindow", "Change Top Axis", None))
         self.actionChange_Units.setText(_translate("SpectraSubWindow", "Change Units", None))
 
-from PyQt4 import QtWebKit
 import icon_resource_rc

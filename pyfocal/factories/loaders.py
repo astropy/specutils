@@ -32,7 +32,7 @@ def fits_reader(filename, filter, **kwargs):
     uncertainty = hdulist[ref.uncertainty['hdu']].data
     mask = hdulist[ref.mask['hdu']].data if ref.mask['hdu'] is not None else np.zeros(shape=data.shape)
 
-    return Data(data=)
+    return Data(data=data, uncertainty=uncertainty, mask=mask, wcs=wcs)
 
 
 def fits_identify(origin, *args, **kwargs):

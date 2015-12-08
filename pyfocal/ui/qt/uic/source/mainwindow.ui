@@ -35,9 +35,9 @@
       <property name="background">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>24</red>
-         <green>24</green>
-         <blue>24</blue>
+         <red>200</red>
+         <green>200</green>
+         <blue>200</blue>
         </color>
        </brush>
       </property>
@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -193,8 +193,8 @@
          <widget class="QPushButton" name="pushButton">
           <property name="maximumSize">
            <size>
-            <width>35</width>
-            <height>16777215</height>
+            <width>25</width>
+            <height>25</height>
            </size>
           </property>
           <property name="text">
@@ -213,6 +213,9 @@
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QTreeWidget" name="treeWidget">
+          <attribute name="headerVisible">
+           <bool>false</bool>
+          </attribute>
           <column>
            <property name="text">
             <string notr="true">1</string>
