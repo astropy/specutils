@@ -1,5 +1,5 @@
 from astropy.nddata import NDData, NDDataBase, NDArithmeticMixin, NDIOMixin
-from ..factories.loaders import registry
+from ..interfaces.registries import io_registry
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -9,8 +9,12 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
     """
-    read = classmethod(registry.read)
-    write = registry.write
+    read = classmethod(io_registry.read)
+    write = io_registry.write
+
+    def __init__(self, *args, **kwargs):
+        super(Data, self).__init__(*args, **kwargs)
+        self.name = "New Data Object"
 
 
 class Layer(NDArithmeticMixin, NDDataBase):

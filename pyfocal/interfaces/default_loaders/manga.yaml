@@ -1,8 +1,10 @@
 --- !CustomLoader
 name: MaNGA IFU
 extension: [fits, mits]
-data:
+wcs:
   hdu: 0
+data:
+  hdu: 1
 uncertainty:
   hdu: 1
   type: 'ivar'

@@ -224,23 +224,23 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
-          <property name="text">
-           <string>Update Parameters</string>
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="title">
+           <string>Arithmetic Behavior</string>
           </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QLineEdit" name="lineEdit"/>
+           </item>
+          </layout>
          </widget>
         </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="groupBox_4">
-       <property name="title">
-        <string>Arithmetic Behavior</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QPushButton" name="pushButton_2">
+          <property name="text">
+           <string>Update</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

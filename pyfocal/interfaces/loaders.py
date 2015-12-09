@@ -4,28 +4,19 @@ import os
 import numpy as np
 
 from ..core.data import Data
-from .registries import loader_factory
-from astropy.io import registry, fits
+from .registries import loader_registry
+from astropy.io import fits
 from astropy.wcs import WCS
 
 
 def fits_reader(filename, filter, **kwargs):
     """
-    This generic function will query the loader factory which has already loaded the yaml configuration files in an
-    attempt to parse the associated fits file.
-
-    Parameters
-    ----------
-    filename
-    filter
-    kwargs
-
-    Returns
-    -------
-
+    This generic function will query the loader factory which has already
+    loaded the yaml configuration files in an attempt to parse the
+    associated fits file.
     """
     hdulist = fits.open(filename, **kwargs)
-    ref = loader_factory.get(filter)
+    ref = loader_registry.get(filter)
 
     wcs = WCS(hdulist[ref.wcs['hdu']].header)
     data = hdulist[ref.data['hdu']].data
@@ -39,6 +30,3 @@ def fits_identify(origin, *args, **kwargs):
     return isinstance(args[0], basestring) and \
            args[0].lower().split('.')[-1] in ['fits', 'fit']
 
-
-registry.register_reader('fits', Data, fits_reader)
-registry.register_identifier('fits', Data, fits_identify)
