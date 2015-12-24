@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
-from ..core.data import Data
+from ..core.data import Data, Layer
+import numpy as np
 
 
 class Factory(object):
@@ -20,3 +21,11 @@ class DataFactory(Factory):
     def from_file(path, filter):
         new_data = Data.read(path, filter)
         return new_data
+
+    @staticmethod
+    def create_layer(data, mask=None, parent=None):
+        if mask is None:
+            mask = np.ones(data.data.shape, dtype=bool)
+
+        new_layer = Layer(data, mask, parent)
+        return new_layer

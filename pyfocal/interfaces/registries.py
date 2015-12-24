@@ -29,7 +29,7 @@ class CustomLoaderRegistry(Registry):
 
         for file_name in os.listdir(cur_path):
             f_path = os.path.join(cur_path, file_name)
-            custom_loader = yaml.load(file(f_path, 'r'))
+            custom_loader = yaml.load(open(f_path, 'r'))
             custom_loader.set_filter()
 
             self._members.append(custom_loader)
@@ -79,6 +79,9 @@ def fits_reader(filename, filter, **kwargs):
 
     wcs = WCS(hdulist[ref.wcs['hdu']].header)
     data = hdulist[ref.data['hdu']].data
+
+    if ref.data.get('col') is not None:
+        data = data[data.columns[ref.data['col']].name]
 
     uncertainty = hdulist[ref.uncertainty['hdu']].data
     uncertainty_type = ref.uncertainty.get('type') or 'var'

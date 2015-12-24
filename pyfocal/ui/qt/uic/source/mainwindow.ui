@@ -95,21 +95,22 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionNew_Window"/>
-   <addaction name="actionAdd_to_Window"/>
-   <addaction name="actionRemove_from_Window"/>
    <addaction name="separator"/>
+   <addaction name="actionOpen"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
     <size>
-     <width>150</width>
+     <width>176</width>
      <height>267</height>
     </size>
    </property>
+   <property name="floating">
+    <bool>false</bool>
+   </property>
    <property name="windowTitle">
-    <string notr="true"/>
+    <string notr="true">Data</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -118,6 +119,77 @@
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
       <widget class="QListWidget" name="listWidget"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QToolButton" name="toolButton_3">
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normalon>:/Template-50.png</normalon>
+          </iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButton_2">
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normalon>:/Change Theme-50.png</normalon>
+          </iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButton">
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normalon>:/Remove Image-50.png</normalon>
+          </iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
     </layout>
    </widget>
@@ -160,6 +232,9 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_3">
+   <property name="windowTitle">
+    <string>Layers</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
@@ -167,6 +242,44 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QListWidget" name="listWidget_2"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QToolButton" name="toolButton_6">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButton_5">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButton_4">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
     </layout>
    </widget>
@@ -268,6 +381,10 @@
    </widget>
   </widget>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="icon_resource.qrc">
+     <normaloff>:/Open Folder-24.png</normaloff>:/Open Folder-24.png</iconset>
+   </property>
    <property name="text">
     <string>Open</string>
    </property>
@@ -275,42 +392,6 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
-   </property>
-  </action>
-  <action name="actionNew_Window">
-   <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Template-50.png</normaloff>:/Template-50.png</iconset>
-   </property>
-   <property name="text">
-    <string>New Window</string>
-   </property>
-   <property name="toolTip">
-    <string>Create a new graph window</string>
-   </property>
-  </action>
-  <action name="actionAdd_to_Window">
-   <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Change Theme-50.png</normaloff>:/Change Theme-50.png</iconset>
-   </property>
-   <property name="text">
-    <string>Add to Window</string>
-   </property>
-   <property name="toolTip">
-    <string>Add selected data to current graph window</string>
-   </property>
-  </action>
-  <action name="actionRemove_from_Window">
-   <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Remove Image-50.png</normaloff>:/Remove Image-50.png</iconset>
-   </property>
-   <property name="text">
-    <string>Remove from Window</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove data from current graph window</string>
    </property>
   </action>
  </widget>

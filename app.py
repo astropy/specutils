@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 from PyQt4.QtGui import *
+# from PyQt5.QtWidgets import *
 
 # import qdarkstyle
 from pyfocal.ui.viewer import Viewer
@@ -22,6 +23,7 @@ class App(object):
 
 def main():
     qapp = QApplication(sys.argv)
+    qapp.setGraphicsSystem('native')
 
     # setup stylesheet
     # qapp.setStyleSheet(qdarkstyle.load_stylesheet())

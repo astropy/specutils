@@ -5,6 +5,7 @@ wcs:
   hdu: 0
 data:
   hdu: 1
+  col: 1
 uncertainty:
   hdu: 1
   type: 'ivar'

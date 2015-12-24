@@ -15,6 +15,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     def __init__(self, *args, **kwargs):
         super(Data, self).__init__(*args, **kwargs)
         self.name = "New Data Object"
+        self._layers = []
 
 
 class Layer(NDArithmeticMixin, NDDataBase):
@@ -29,10 +30,12 @@ class Layer(NDArithmeticMixin, NDDataBase):
     :class:`astropy.nddata.NDArithmeticMixin` mixin, it is also possible to
     do arithmetic operations on layers.
     """
-    def __init__(self, source, mask):
+    def __init__(self, source, mask, parent=None):
         super(Layer, self).__init__()
         self._source = source
         self._mask = mask
+        self._parent = parent
+        self.name = self._source.name + " Layer"
 
     @property
     def data(self):
