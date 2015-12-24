@@ -37,7 +37,7 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def new(self, data, mask, sub_window=None):
+    def new(self, data, mask=None, sub_window=None):
         new_layer = DataFactory.create_layer(data, mask, sub_window)
         self._members.append(new_layer)
         return new_layer

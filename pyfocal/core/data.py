@@ -1,5 +1,7 @@
+from __future__ import absolute_import, division, print_function
+
 from astropy.nddata import NDData, NDDataBase, NDArithmeticMixin, NDIOMixin
-from ..interfaces.registries import io_registry
+from .events import EventHook
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -9,13 +11,16 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
     """
-    read = classmethod(io_registry.read)
-    write = io_registry.write
-
     def __init__(self, *args, **kwargs):
         super(Data, self).__init__(*args, **kwargs)
         self.name = "New Data Object"
         self._layers = []
+
+    @classmethod
+    def read(cls, *args, **kwargs):
+        from ..interfaces.registries import io_registry
+
+        return io_registry.read(cls, *args, **kwargs)
 
 
 class Layer(NDArithmeticMixin, NDDataBase):
@@ -23,7 +28,8 @@ class Layer(NDArithmeticMixin, NDDataBase):
     Base class to handle layers in Pyfocal.
 
     A layer is a "view" into a :class:`pyfocal.core.data.Data` object. It does
-    not hold any data itself, but instead contains a special `mask` object.
+    not hold any data itself, but instead contains a special `mask` object
+    and reference to the original data.
 
     Since :class:`pyfocal.core.data.Layer` inherits from
     :class:`astropy.nddata.NDDataBase` and provides the

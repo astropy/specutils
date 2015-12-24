@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, print_function
 
-from ..interfaces.registries import loader_registry
-from ..interfaces.managers import data_manager, layer_manager
-from .widgets.baseplot import BasePlot
-
 from PyQt4.QtCore import *
+
+from pyfocal.ui.widgets.plots.plot import Plot
+from ..interfaces.managers import data_manager, layer_manager
+from ..interfaces.registries import loader_registry
 
 
 class Controller(object):
@@ -17,7 +17,7 @@ class Controller(object):
     def _setup_connections(self):
         self._viewer.main_window.actionOpen.triggered.connect(self.open_file)
         self._viewer.main_window.toolButton_3.clicked.connect(
-            self.create_sub_window)
+            self.create_new_plot)
 
     def open_file(self):
         file_name, selected_filter = self._viewer.open_file_dialog(
@@ -42,7 +42,7 @@ class Controller(object):
         ROIs existing on the plot.
         """
         # Create the main layer for this sub window
-        layer = layer_manager.new(data, sub_window)
+        layer = layer_manager.new(data, sub_window=sub_window)
         self._viewer.add_layer_item(layer)
 
         return layer
@@ -55,10 +55,9 @@ class Controller(object):
         current_data = self._viewer.current_data()
 
         # Generate new data layer
-        self.create_new_layer(current_data, wgt_sub_window)
+        layer = self.create_new_layer(current_data, wgt_sub_window)
 
-        wgt_profile_plot = BasePlot(current_data, parent=wgt_sub_window)
+        wgt_profile_plot = Plot(layer, parent=wgt_sub_window)
         wgt_sub_window.gridLayout.addWidget(wgt_profile_plot)
         new_sub_window.show()
-
 

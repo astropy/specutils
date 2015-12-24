@@ -24,8 +24,6 @@ class DataFactory(Factory):
 
     @staticmethod
     def create_layer(data, mask=None, parent=None):
-        if mask is None:
-            mask = np.ones(data.data.shape, dtype=bool)
-
+        mask = mask or np.ones(data.data.shape, dtype=bool)
         new_layer = Layer(data, mask, parent)
         return new_layer

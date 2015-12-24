@@ -9,6 +9,7 @@ class BasePlot(pg.PlotWidget):
     def __init__(self, data=None, parent=None, *args, **kwargs):
         super(BasePlot, self).__init__(*args, **kwargs)
         self.parent = parent
+        self._containers = []
 
         # Cache plot item
         self._plot_item = self.getPlotItem()
@@ -16,10 +17,11 @@ class BasePlot(pg.PlotWidget):
         # Create roi container
         self._rois = []
 
-        if data is not None:
-            self._plot_item.plot(data.data)
-
         self._setup_connections()
+
+        # Add data
+        if data is not None:
+            self.add_data(data)
 
     def _setup_connections(self):
         self.parent.actionInsert_ROI.triggered.connect(self.add_roi)
@@ -45,3 +47,9 @@ class BasePlot(pg.PlotWidget):
 
         # Let everyone know, ROI is ready for use.
         roi.sigRegionChangeFinished.emit(self)
+
+    def add_data(self, data):
+        raise NotImplemented()
+
+    def update(self):
+        raise NotImplemented()
