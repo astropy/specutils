@@ -42,6 +42,12 @@ class LayerManager(Manager):
         self._members.append(new_layer)
         return new_layer
 
+    def get_sub_window_layers(self, sub_window):
+        """
+        Retrieve all children of the `SubWindow` object.
+        """
+        return [x for x in self._members if x._parent == sub_window]
+
 
 data_manager = DataManager()
 layer_manager = LayerManager()

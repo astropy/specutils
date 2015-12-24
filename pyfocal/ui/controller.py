@@ -19,6 +19,11 @@ class Controller(object):
         self._viewer.main_window.toolButton_3.clicked.connect(
             self.create_new_plot)
 
+        # Listen for subwindow selection events, update layer
+        # list on selection
+        self._viewer.main_window.mdiArea.subWindowActivated.connect(
+            self.update_layer_list)
+
     def open_file(self):
         file_name, selected_filter = self._viewer.open_file_dialog(
             loader_registry.filters)
@@ -48,6 +53,9 @@ class Controller(object):
         return layer
 
     def create_new_plot(self):
+        """
+        Creates a new plot widget to display in the MDI area.
+        """
         # Generate new sub window
         new_sub_window, wgt_sub_window = self.create_sub_window()
 
@@ -55,9 +63,18 @@ class Controller(object):
         current_data = self._viewer.current_data()
 
         # Generate new data layer
-        layer = self.create_new_layer(current_data, wgt_sub_window)
+        layer = self.create_new_layer(current_data, new_sub_window)
 
         wgt_profile_plot = Plot(layer, parent=wgt_sub_window)
         wgt_sub_window.gridLayout.addWidget(wgt_profile_plot)
         new_sub_window.show()
 
+    def update_layer_list(self):
+        current_window = self._viewer.main_window.mdiArea.activeSubWindow()
+
+        layers = layer_manager.get_sub_window_layers(current_window)
+
+        self._viewer.clear_layer_widget()
+
+        for layer in layers:
+            self._viewer.add_layer_item(layer)

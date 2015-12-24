@@ -90,6 +90,9 @@ class Viewer(QMainWindow):
         new_item = QListWidgetItem(layer.name, self.wgt_layer_list)
         new_item.setData(Qt.UserRole, layer)
 
+    def clear_layer_widget(self):
+        self.wgt_layer_list.clear()
+
     def current_data(self):
         """
         Returns the currently selected data object from the data list widget.

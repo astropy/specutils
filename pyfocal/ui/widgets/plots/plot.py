@@ -25,9 +25,11 @@ class Plot(BasePlot):
         plot_container.plot = plot
 
         self._containers.append(plot_container)
+        self.set_labels()
 
     def change_unit(self, new_unit):
         for plot_container in self._containers:
             plot_container.change_unit(new_unit)
 
+    def set_labels(self):
         self._plot_item.setLabels(bottom=str(self._containers[0].unit))
