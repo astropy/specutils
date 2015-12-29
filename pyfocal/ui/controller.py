@@ -7,12 +7,14 @@ from ..interfaces.managers import data_manager, layer_manager
 from ..interfaces.registries import loader_registry
 
 
+
 class Controller(object):
 
     def __init__(self, viewer):
         self._viewer = viewer
 
         self._setup_connections()
+        self._setup_model_fitting()
 
     def _setup_connections(self):
         self._viewer.main_window.actionOpen.triggered.connect(self.open_file)
@@ -23,6 +25,10 @@ class Controller(object):
         # list on selection
         self._viewer.main_window.mdiArea.subWindowActivated.connect(
             self.update_layer_list)
+
+    def _setup_model_fitting(self):
+        # Populate model dropdown
+
 
     def open_file(self):
         file_name, selected_filter = self._viewer.open_file_dialog(

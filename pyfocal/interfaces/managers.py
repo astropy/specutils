@@ -1,6 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from .factories import DataFactory
+from .factories import DataFactory, ModelFactory
+from ..core.events import EventHook
+
+from py_expression_eval import Parser
 
 
 class Manager(object):
@@ -42,6 +45,17 @@ class LayerManager(Manager):
         self._members.append(new_layer)
         return new_layer
 
+    def remove(self, layer):
+        """
+        Remove specified layer from the manager.
+
+        Parameters
+        ----------
+        layer : pyfocal.core.data.Layer
+            Layer object to be removed.
+        """
+        self._members.remove(layer)
+
     def get_sub_window_layers(self, sub_window):
         """
         Retrieve all children of the `SubWindow` object.
@@ -49,5 +63,43 @@ class LayerManager(Manager):
         return [x for x in self._members if x._parent == sub_window]
 
 
+class ModelManager(Manager):
+    """
+    Manages a set of model objects.
+    """
+    on_add_model = EventHook()
+    on_remove_model = EventHook()
+
+    def __init__(self):
+        super(ModelManager, self).__init__()
+        self._members = {}
+
+    def add(self, layer, name):
+        model = ModelFactory.create_model(name)
+
+        if layer not in self._members:
+            self._members[layer] = [model]
+        else:
+            self._members[layer].append(model)
+
+        self.on_add_model.emit(layer, model)
+
+    def remove(self, layer, index):
+        model = self._members[layer].pop(index)
+
+        self.on_remove_model.emit(layer, model)
+
+    def evaluate(self, layer, formula):
+        parser = Parser()
+        expr = parser.parse(formula)
+        vars = expr.variables()
+        mdls = self._members[layer]
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in zip(vars, mdls)))
+
+        return result
+
+
 data_manager = DataManager()
 layer_manager = LayerManager()
+model_manager = ModelManager()
