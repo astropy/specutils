@@ -23,7 +23,7 @@ class App(object):
 
 def main():
     qapp = QApplication(sys.argv)
-    qapp.setGraphicsSystem('native')
+    # qapp.setGraphicsSystem('opengl')
 
     # setup stylesheet
     # qapp.setStyleSheet(qdarkstyle.load_stylesheet())

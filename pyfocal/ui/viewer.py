@@ -19,6 +19,7 @@ class Viewer(QMainWindow):
         self.main_window.setupUi(self)
         self.wgt_data_list = self.main_window.listWidget
         self.wgt_layer_list = self.main_window.listWidget_2
+        self.wgt_model_list = self.main_window.treeWidget
 
     def add_sub_window(self):
         """
@@ -90,8 +91,29 @@ class Viewer(QMainWindow):
         new_item = QListWidgetItem(layer.name, self.wgt_layer_list)
         new_item.setData(Qt.UserRole, layer)
 
+    def add_model_item(self, model, name):
+        """
+        Adds an `astropy.modeling.Model` to the loaded model tree widget.
+
+        Parameters
+        ----------
+        model : `astropy.modeling.Model`
+            Model to add to the tree widget.
+        """
+        new_item = QTreeWidgetItem(self.wgt_model_list)
+        new_item.setText(0, name)
+        new_item.setData(0, Qt.UserRole, model)
+
+        for i, para in enumerate(model.param_names):
+            new_para_item = QTreeWidgetItem(new_item)
+            new_para_item.setText(0, para)
+            new_para_item.setData(1, Qt.UserRole, model.parameters[i])
+
     def clear_layer_widget(self):
         self.wgt_layer_list.clear()
+
+    def clear_model_widget(self):
+        self.wgt_model_list.clear()
 
     def current_data(self):
         """
@@ -104,6 +126,34 @@ class Viewer(QMainWindow):
 
         """
         data_item = self.wgt_data_list.currentItem()
-        data = data_item.data(Qt.UserRole).toPyObject()
 
-        return data
+        if data_item is not None:
+            data = data_item.data(Qt.UserRole).toPyObject()
+            return data
+
+    def current_layer(self):
+        """
+        Returns the currently selected layer object form the layer list widget.
+
+        Returns
+        -------
+        layer : pyfocal.core.data.Layer
+            The `Layer` object of the currently selected row.
+        """
+        layer_item = self.wgt_layer_list.currentItem()
+
+        if layer_item is not None:
+            layer = layer_item.data(Qt.UserRole).toPyObject()
+
+            return layer
+
+    def current_sub_window(self):
+        """
+        Returns the currently active `QMdiSubWindow` object.
+
+        Returns
+        -------
+        sub_window : QMdiSubWindow
+            The currently active `QMdiSubWindow` object.
+        """
+        return self.main_window.mdiArea.activeSubWindow()

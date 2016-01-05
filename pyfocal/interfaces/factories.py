@@ -33,14 +33,16 @@ class DataFactory(Factory):
 
 class ModelFactory(Factory):
     all_models = {
-        "Gaussian": models.Gaussian1D,
-        "Linear": models.Linear1D,
-        "Constant": models.Const1D
+        "Gaussian1D": models.Gaussian1D,
+        "Linear1D": models.Linear1D,
+        "Const1D": models.Const1D
     }
 
     @classmethod
     def create_model(cls, name):
-        if name not in cls.all_models:
-            print("No such model.")
+        name = str(name)
 
-        return cls.all_models[name]
+        if name in cls.all_models:
+            return cls.all_models[name]
+
+        print("No such model {}".format(name))

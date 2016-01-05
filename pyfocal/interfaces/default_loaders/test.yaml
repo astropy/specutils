@@ -1,8 +1,11 @@
 --- !CustomLoader
-name: NIRspec Spectra
-extension: fits
+name: Default
+extension: [fits, mits]
+wcs:
+  hdu: 0
 data:
   hdu: 0
+  col: 1
 uncertainty:
   hdu: 1
   type: 'ivar'

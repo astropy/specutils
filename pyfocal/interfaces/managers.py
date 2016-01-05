@@ -73,9 +73,10 @@ class ModelManager(Manager):
     def __init__(self):
         super(ModelManager, self).__init__()
         self._members = {}
+        self.all_models = ModelFactory.all_models.keys()
 
     def add(self, layer, name):
-        model = ModelFactory.create_model(name)
+        model = ModelFactory.create_model(name)()
 
         if layer not in self._members:
             self._members[layer] = [model]
@@ -83,6 +84,8 @@ class ModelManager(Manager):
             self._members[layer].append(model)
 
         self.on_add_model.emit(layer, model)
+
+        return model
 
     def remove(self, layer, index):
         model = self._members[layer].pop(index)
@@ -98,6 +101,9 @@ class ModelManager(Manager):
                                  dict(pair for pair in zip(vars, mdls)))
 
         return result
+
+    def get_layer_models(self, layer):
+        return self._members.get(layer, [])
 
 
 data_manager = DataManager()

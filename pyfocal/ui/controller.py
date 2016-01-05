@@ -2,40 +2,53 @@ from __future__ import absolute_import, division, print_function
 
 from PyQt4.QtCore import *
 
-from pyfocal.ui.widgets.plots.plot import Plot
-from ..interfaces.managers import data_manager, layer_manager
+from pyfocal.ui.widgets.plots.plotwindow import PlotWindow
+from ..interfaces.managers import data_manager, layer_manager, model_manager
 from ..interfaces.registries import loader_registry
-
 
 
 class Controller(object):
 
     def __init__(self, viewer):
-        self._viewer = viewer
+        self.viewer = viewer
+
+        # May change in the future: ask the controller to maintain a mapping of
+        # sub windows and plots
+        self.active_plots = {}
 
         self._setup_connections()
         self._setup_model_fitting()
 
     def _setup_connections(self):
-        self._viewer.main_window.actionOpen.triggered.connect(self.open_file)
-        self._viewer.main_window.toolButton_3.clicked.connect(
-            self.create_new_plot)
+        self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
+        self.viewer.main_window.toolButton_3.clicked.connect(
+            self.create_plot_window)
 
-        # Listen for subwindow selection events, update layer
-        # list on selection
-        self._viewer.main_window.mdiArea.subWindowActivated.connect(
+        # Listen for subwindow selection events, update layer list on selection
+        self.viewer.main_window.mdiArea.subWindowActivated.connect(
             self.update_layer_list)
+
+        self.viewer.main_window.mdiArea.subWindowActivated.connect(
+            self.update_model_list)
+
+        # Listen for layer selection events, update model tree on selection
+        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
+            self.update_model_list)
 
     def _setup_model_fitting(self):
         # Populate model dropdown
+        self.viewer.main_window.comboBox.addItems(model_manager.all_models)
 
+        # Attach the add button
+        self.viewer.main_window.pushButton.clicked.connect(
+            self.create_new_model)
 
     def open_file(self):
-        file_name, selected_filter = self._viewer.open_file_dialog(
+        file_name, selected_filter = self.viewer.open_file_dialog(
             loader_registry.filters)
 
         data = data_manager.load(str(file_name), str(selected_filter))
-        self._viewer.add_data_item(data)
+        self.viewer.add_data_item(data)
 
     def create_sub_window(self):
         """
@@ -43,7 +56,7 @@ class Controller(object):
         currently selected data list.
         """
         # Create sub window
-        new_sub_window, wgt_sub_window = self._viewer.add_sub_window()
+        new_sub_window, wgt_sub_window = self.viewer.add_sub_window()
 
         return new_sub_window, wgt_sub_window
 
@@ -54,11 +67,12 @@ class Controller(object):
         """
         # Create the main layer for this sub window
         layer = layer_manager.new(data, sub_window=sub_window)
-        self._viewer.add_layer_item(layer)
+        self.viewer.add_layer_item(layer)
+        self.update_layer_list()
 
         return layer
 
-    def create_new_plot(self):
+    def create_plot_window(self):
         """
         Creates a new plot widget to display in the MDI area.
         """
@@ -66,21 +80,55 @@ class Controller(object):
         new_sub_window, wgt_sub_window = self.create_sub_window()
 
         # Grab data from list widget
-        current_data = self._viewer.current_data()
+        current_data = self.viewer.current_data()
 
         # Generate new data layer
         layer = self.create_new_layer(current_data, new_sub_window)
 
-        wgt_profile_plot = Plot(layer, parent=wgt_sub_window)
+        wgt_profile_plot = PlotWindow(layer, parent=wgt_sub_window)
         wgt_sub_window.gridLayout.addWidget(wgt_profile_plot)
         new_sub_window.show()
 
+        # Archive the association of plot window and sub window
+        self.active_plots[new_sub_window] = wgt_profile_plot
+
+    def create_new_model(self):
+        """
+        Creates a new model for the selected layer.
+        """
+        # Create a new model for the layer
+        current_layer = self.viewer.current_layer()
+        current_model_name = self.viewer.main_window.comboBox.currentText()
+        model = model_manager.add(current_layer, current_model_name)
+        self.viewer.add_model_item(model, current_model_name)
+
     def update_layer_list(self):
-        current_window = self._viewer.main_window.mdiArea.activeSubWindow()
+        current_window = self.viewer.main_window.mdiArea.activeSubWindow()
 
         layers = layer_manager.get_sub_window_layers(current_window)
 
-        self._viewer.clear_layer_widget()
+        self.viewer.clear_layer_widget()
 
         for layer in layers:
-            self._viewer.add_layer_item(layer)
+            self.viewer.add_layer_item(layer)
+
+        if len(layers) > 0:
+            self.viewer.wgt_layer_list.setCurrentRow(0)
+
+    def update_model_list(self):
+        current_layer = self.viewer.current_layer()
+        models = model_manager.get_layer_models(current_layer)
+
+        self.viewer.clear_model_widget()
+
+        for model in models:
+            self.viewer.add_model_item(model, model.__class__.__name__)
+
+    def get_roi_data(self):
+        current_layer = self.viewer.current_layer()
+        current_sub_window = self.viewer.current_sub_window()
+        current_plot = self.active_plots[current_sub_window]
+
+        roi_data = current_plot.get_roi_get(current_layer)
+
+

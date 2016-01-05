@@ -4,7 +4,7 @@ from .base_plot import BasePlot
 from pyfocal.core.containers import PlotContainer
 
 
-class Plot(BasePlot):
+class PlotWindow(BasePlot):
     """
     One-dimensional representation of a set of data.
     """

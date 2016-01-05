@@ -1,5 +1,7 @@
 import pyqtgraph as pg
 
+import numpy as np
+
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
@@ -53,3 +55,37 @@ class BasePlot(pg.PlotWidget):
 
     def update(self):
         raise NotImplemented()
+
+    def get_roi_mask(self, layer):
+        data = self.get_container(layer).data
+
+        mask_holder = []
+
+        for roi in self._rois:
+            roi_shape = roi.parentBounds()
+            x1, y1, x2, y2 = roi_shape.getCoords()
+
+            mask_holder.append((x_data.value >= x1) & (x_data.value <= x2) &
+                               (y_data.value >= y1) & (y_data.value <= y2))
+        else:
+            mask_holder.append(np.ones(shape=x_data.value.shape, dtype=bool))
+
+        # mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        mask = reduce(np.logical_or, mask_holder)
+
+        return mask
+
+    def get_container(self, layer):
+        """
+        Retrieve the container of the specified layer.
+
+        Parameters
+        ----------
+        layer : pyfocal.core.data.Layer
+            The layer for which to get the container.
+        """
+        for container in self._containers:
+            if container.layer == layer:
+                return layer
+
+        return None

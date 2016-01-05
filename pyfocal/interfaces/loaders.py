@@ -27,10 +27,17 @@ def fits_reader(filename, filter, **kwargs):
     if ref.data.get('col') is not None:
         data = data[data.columns[ref.data['col']].name]
 
-    uncertainty = hdulist[ref.uncertainty['hdu']].data
-    uncertainty_type = ref.uncertainty.get('type') or 'var'
+    uncertainty = StdDevUncertainty
 
-    uncertainty = StdDevUncertainty(uncertainty)
+    try:
+        if ref.uncertainty.get('hdu') is not None:
+            uncertainty = hdulist[ref.uncertainty['hdu']].data
+            uncertainty_type = ref.uncertainty.get('type') or 'var'
+
+            # This will be dictated by the type of the uncertainty
+            uncertainty = StdDevUncertainty(uncertainty)
+    except IndexError:
+        logging.warning("Incorrect uncertainty HDU; ignoring.")
 
     mask = np.zeros(shape=data.shape)
 

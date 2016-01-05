@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from astropy.nddata import NDData, NDDataBase, NDArithmeticMixin, NDIOMixin
 from .events import EventHook
+import numpy as np
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -42,6 +43,7 @@ class Layer(NDArithmeticMixin, NDDataBase):
         self._mask = mask
         self._parent = parent
         self.name = self._source.name + " Layer"
+        self._dispersion = None
 
     @property
     def data(self):
@@ -62,3 +64,13 @@ class Layer(NDArithmeticMixin, NDDataBase):
     @property
     def meta(self):
         return self._source.meta
+
+    @@property
+    def dispersion(self):
+        if self._dispersion is None:
+            crval = self.meta['CRVAL1']
+            cdelt = self.meta['CDELT1']
+            end = self._source.shape[0] * cdelt + crval
+            self._dispersion = np.arange(crval, end, cdelt)
+
+        return self._dispersion
