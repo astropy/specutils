@@ -1,7 +1,6 @@
-from __future__ import absolute_import, division, print_function
-
-from PySide.QtGui import *
-from PySide.QtCore import *
+from qtpy.QtGui import *
+from qtpy.QtCore import *
+from qtpy.QtWidgets import *
 # from PyQt5.QtWidgets import *
 from .qt.mainwindow import Ui_MainWindow
 from .qt.spectrasubwindow import Ui_SpectraSubWindow
@@ -63,7 +62,7 @@ class Viewer(QMainWindow):
 
         if dialog.exec_():
             file_names = dialog.selectedFiles()
-            selected_filter = dialog.selectedFilter()
+            selected_filter = dialog.selectedNameFilter()
 
             return file_names[0], selected_filter
 

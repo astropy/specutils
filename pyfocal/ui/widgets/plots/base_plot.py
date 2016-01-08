@@ -1,7 +1,6 @@
-from __future__ import absolute_import, division, print_function
-
 import pyqtgraph as pg
 import numpy as np
+from functools import reduce
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')

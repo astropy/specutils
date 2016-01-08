@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .registries import loader_registry
 from .registries import io_registry
 
@@ -54,7 +52,7 @@ def fits_reader(filename, filter, **kwargs):
 
 
 def fits_identify(origin, *args, **kwargs):
-    return isinstance(args[0], basestring) and \
+    return isinstance(args[0], str) and \
            args[0].lower().split('.')[-1] in ['fits', 'fit']
 
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .factories import DataFactory, ModelFactory
 from ..core.events import EventHook
 

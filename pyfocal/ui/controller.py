@@ -1,6 +1,4 @@
-from __future__ import absolute_import, division, print_function
-
-from PySide.QtCore import *
+from qtpy.QtCore import *
 
 from pyfocal.ui.widgets.plots.plot_window import PlotWindow
 from ..interfaces.managers import data_manager, layer_manager, model_manager
