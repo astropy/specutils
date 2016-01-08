@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PySide.QtGui import *
+from PySide.QtCore import *
 # from PyQt5.QtWidgets import *
 from .qt.mainwindow import Ui_MainWindow
 from .qt.spectrasubwindow import Ui_SpectraSubWindow
@@ -128,7 +128,7 @@ class Viewer(QMainWindow):
         data_item = self.wgt_data_list.currentItem()
 
         if data_item is not None:
-            data = data_item.data(Qt.UserRole).toPyObject()
+            data = data_item.data(Qt.UserRole)
             return data
 
     def current_layer(self):
@@ -143,7 +143,7 @@ class Viewer(QMainWindow):
         layer_item = self.wgt_layer_list.currentItem()
 
         if layer_item is not None:
-            layer = layer_item.data(Qt.UserRole).toPyObject()
+            layer = layer_item.data(Qt.UserRole)
 
             return layer
 

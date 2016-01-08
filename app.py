@@ -6,8 +6,7 @@ This script will start the GUI.
 from __future__ import absolute_import, division, print_function
 
 import sys
-from PyQt4.QtGui import *
-# from PyQt5.QtWidgets import *
+from PySide.QtGui import *
 
 # import qdarkstyle
 from pyfocal.ui.viewer import Viewer
@@ -23,7 +22,7 @@ class App(object):
 
 def main():
     qapp = QApplication(sys.argv)
-    # qapp.setGraphicsSystem('opengl')
+    # qapp.setGraphicsSystem('native')
 
     # setup stylesheet
     # qapp.setStyleSheet(qdarkstyle.load_stylesheet())

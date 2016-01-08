@@ -3,6 +3,9 @@ from __future__ import absolute_import, division, print_function
 from .base_plot import BasePlot
 from pyfocal.core.containers import PlotContainer
 
+import pyqtgraph as pg
+import random
+
 
 class PlotWindow(BasePlot):
     """
@@ -19,10 +22,15 @@ class PlotWindow(BasePlot):
         layer : pyfocal.core.data.Layer
             Layer object from which the plot will retrieve data.
         """
-        plot_container = PlotContainer(layer=layer, unit=unit or layer.unit,
-                                       visible=visible, style=style, pen=pen)
-        plot = self._plot_item.plot(plot_container.data)
+
+        plot_container = PlotContainer(layer=layer, visible=visible,
+                                       style=style, pen=pen)
+        plot = self._plot_item.plot(
+                plot_container.dispersion.value,
+                plot_container.data.value)
         plot_container.plot = plot
+
+        plot.setPen(pg.mkPen(random.sample(['g', 'b', 'k', 'y', 'm'], 1)[0]))
 
         self._containers.append(plot_container)
         self.set_labels()
@@ -32,4 +40,4 @@ class PlotWindow(BasePlot):
             plot_container.change_unit(new_unit)
 
     def set_labels(self):
-        self._plot_item.setLabels(bottom=str(self._containers[0].unit))
+        self._plot_item.setLabels(bottom=str(self._containers[0].units[0]))

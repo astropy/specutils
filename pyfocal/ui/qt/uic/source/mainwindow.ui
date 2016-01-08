@@ -132,12 +132,6 @@
            <normalon>:/Template-50.png</normalon>
           </iconset>
          </property>
-         <property name="iconSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
         </widget>
        </item>
        <item>
@@ -150,12 +144,6 @@
            <normalon>:/Change Theme-50.png</normalon>
           </iconset>
          </property>
-         <property name="iconSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
         </widget>
        </item>
        <item>
@@ -167,12 +155,6 @@
           <iconset>
            <normalon>:/Remove Image-50.png</normalon>
           </iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
          </property>
         </widget>
        </item>

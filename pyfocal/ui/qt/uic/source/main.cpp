@@ -14,9 +14,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-        f.open(QFile::ReadOnly | QFile::Text);
-        QTextStream ts(&f);
-        a.setStyleSheet(ts.readAll());
+//        f.open(QFile::ReadOnly | QFile::Text);
+//        QTextStream ts(&f);
+//        a.setStyleSheet(ts.readAll());
     }
 
     MainWindow w;

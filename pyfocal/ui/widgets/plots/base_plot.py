@@ -1,5 +1,6 @@
-import pyqtgraph as pg
+from __future__ import absolute_import, division, print_function
 
+import pyqtgraph as pg
 import numpy as np
 
 pg.setConfigOption('background', 'w')
@@ -10,7 +11,7 @@ pg.setConfigOptions(antialias=False)
 class BasePlot(pg.PlotWidget):
     def __init__(self, data=None, parent=None, *args, **kwargs):
         super(BasePlot, self).__init__(*args, **kwargs)
-        self.parent = parent
+        self._parent = parent
         self._containers = []
 
         # Cache plot item
@@ -26,7 +27,7 @@ class BasePlot(pg.PlotWidget):
             self.add_data(data)
 
     def _setup_connections(self):
-        self.parent.actionInsert_ROI.triggered.connect(self.add_roi)
+        self._parent.actionInsert_ROI.triggered.connect(self.add_roi)
 
     def add_roi(self):
         view_range = self.viewRange()
@@ -57,7 +58,7 @@ class BasePlot(pg.PlotWidget):
         raise NotImplemented()
 
     def get_roi_mask(self, layer):
-        data = self.get_container(layer).data
+        cnt = self.get_container(layer)
 
         mask_holder = []
 
@@ -65,14 +66,17 @@ class BasePlot(pg.PlotWidget):
             roi_shape = roi.parentBounds()
             x1, y1, x2, y2 = roi_shape.getCoords()
 
-            mask_holder.append((x_data.value >= x1) & (x_data.value <= x2) &
-                               (y_data.value >= y1) & (y_data.value <= y2))
-        else:
-            mask_holder.append(np.ones(shape=x_data.value.shape, dtype=bool))
+            mask_holder.append((cnt.dispersion.value >= x1) &
+                               (cnt.dispersion.value <= x2) &
+                               (cnt.data.value >= y1) &
+                               (cnt.data.value <= y2))
+
+        if len(mask_holder) == 0:
+            mask_holder.append(np.ones(shape=cnt.dispersion.value.shape,
+                                       dtype=bool))
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
         mask = reduce(np.logical_or, mask_holder)
-
         return mask
 
     def get_container(self, layer):

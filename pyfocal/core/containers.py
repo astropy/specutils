@@ -3,9 +3,8 @@ from astropy.units import Unit, Quantity
 
 
 class PlotContainer(object):
-    def __init__(self, layer, unit=None, visible=True, style='line', pen=None):
+    def __init__(self, layer, visible=True, style='line', pen=None):
         self.layer = layer
-        self.unit = unit or Unit("")
         self.visible = visible
         self.style = style
         self.pen = pen
@@ -16,8 +15,9 @@ class PlotContainer(object):
         self.on_visibility_change = EventHook()
         self.on_pen_change = EventHook()
 
-    def change_unit(self, new_unit):
-        self.unit = Unit(new_unit)
+    def change_unit(self, x, y=None, z=None):
+        self.layer.layer_units = (x, y or self.layer.layer_units[1],
+                                  z or self.layer.layer_units[2])
 
     def change_visible(self, visible_state):
         self.visible = visible_state
@@ -27,4 +27,12 @@ class PlotContainer(object):
 
     @property
     def data(self):
-        return Quantity(self.layer.data).to(self.unit).value
+        return self.layer.data
+
+    @property
+    def dispersion(self):
+        return self.layer.dispersion
+
+    @property
+    def units(self):
+        return self.layer.layer_units

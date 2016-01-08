@@ -1,14 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
-from PyQt4.QtCore import *
+from PySide.QtCore import *
 
-from pyfocal.ui.widgets.plots.plotwindow import PlotWindow
+from pyfocal.ui.widgets.plots.plot_window import PlotWindow
 from ..interfaces.managers import data_manager, layer_manager, model_manager
 from ..interfaces.registries import loader_registry
 
 
 class Controller(object):
-
     def __init__(self, viewer):
         self.viewer = viewer
 
@@ -35,6 +34,11 @@ class Controller(object):
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             self.update_model_list)
 
+        self.viewer.main_window.toolButton_6.clicked.connect(
+                lambda: self.add_roi_layer(self.viewer.current_layer(),
+                                           self.get_roi_mask(),
+                                           self.viewer.current_sub_window()))
+
     def _setup_model_fitting(self):
         # Populate model dropdown
         self.viewer.main_window.comboBox.addItems(model_manager.all_models)
@@ -60,17 +64,42 @@ class Controller(object):
 
         return new_sub_window, wgt_sub_window
 
-    def create_new_layer(self, data, sub_window):
+    def create_new_layer(self, data, mask=None, sub_window=None):
         """
         Creates a new layer from the selected data along with any current
         ROIs existing on the plot.
         """
         # Create the main layer for this sub window
-        layer = layer_manager.new(data, sub_window=sub_window)
+        layer = layer_manager.new(data, mask=mask, sub_window=sub_window)
         self.viewer.add_layer_item(layer)
         self.update_layer_list()
 
         return layer
+
+    def add_roi_layer(self, layer, mask=None, sub_window=None):
+        """
+        Creates a layer object from the current ROIs of the active plot layer.
+
+        Parameters
+        ----------
+        layer : pyfocal.core.data.Layer
+            The current active layer of the active plot.
+        sub_window : QtGui.QMdiSubWindow
+            The parent object within which the plot window resides.
+        mask : ndarray
+            Boolean mask.
+
+        """
+        roi_mask = mask if mask is not None else self.get_roi_mask()
+        layer = self.create_new_layer(layer._source, mask=roi_mask,
+                                      sub_window=sub_window)
+        self.add_plot(layer)
+
+    def add_plot(self, layer):
+        current_sub_window = self.viewer.current_sub_window()
+        current_plot_window = self.active_plots[current_sub_window]
+
+        current_plot_window.add_data(layer, visible=True)
 
     def create_plot_window(self):
         """
@@ -83,7 +112,8 @@ class Controller(object):
         current_data = self.viewer.current_data()
 
         # Generate new data layer
-        layer = self.create_new_layer(current_data, new_sub_window)
+        layer = self.create_new_layer(current_data,
+                                      sub_window=new_sub_window)
 
         wgt_profile_plot = PlotWindow(layer, parent=wgt_sub_window)
         wgt_sub_window.gridLayout.addWidget(wgt_profile_plot)
@@ -124,11 +154,13 @@ class Controller(object):
         for model in models:
             self.viewer.add_model_item(model, model.__class__.__name__)
 
-    def get_roi_data(self):
+    def get_roi_mask(self):
         current_layer = self.viewer.current_layer()
         current_sub_window = self.viewer.current_sub_window()
         current_plot = self.active_plots[current_sub_window]
 
-        roi_data = current_plot.get_roi_get(current_layer)
+        roi_mask = current_plot.get_roi_mask(current_layer)
+
+        return roi_mask
 
 

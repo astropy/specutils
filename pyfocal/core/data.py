@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function
 from astropy.nddata import NDData, NDDataBase, NDArithmeticMixin, NDIOMixin
 from .events import EventHook
 import numpy as np
+import logging
+from astropy.units import Unit, Quantity
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -14,6 +16,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     """
     def __init__(self, *args, **kwargs):
         super(Data, self).__init__(*args, **kwargs)
+        self._dispersion = None
         self.name = "New Data Object"
         self._layers = []
 
@@ -23,8 +26,33 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
         return io_registry.read(cls, *args, **kwargs)
 
+    @property
+    def dispersion(self):
+        if self._dispersion is None:
+            self._dispersion = np.arange(self.data.size)
 
-class Layer(NDArithmeticMixin, NDDataBase):
+            try:
+                crval = self.wcs.wcs.crval[0]
+                cdelt = self.wcs.wcs.cdelt[0]
+                end = self._source.shape[0] * cdelt + crval
+                self._dispersion = np.arange(crval, end, cdelt)
+            except:
+                logging.warning("Invalid FITS headers; constructing default "
+                                "dispersion array.")
+
+        return self._dispersion
+
+    @property
+    def dispersion_unit(self):
+        try:
+            return self.wcs.cunit[0]
+        except AttributeError:
+            logging.warning("No dispersion unit information in WCS.")
+
+        return Unit("")
+
+
+class Layer(object):
     """
     Base class to handle layers in Pyfocal.
 
@@ -43,19 +71,23 @@ class Layer(NDArithmeticMixin, NDDataBase):
         self._mask = mask
         self._parent = parent
         self.name = self._source.name + " Layer"
-        self._dispersion = None
+        self.layer_units = (self._source.unit, self._source.dispersion_unit)
 
     @property
     def data(self):
-        return self._source.data[self._mask]
+        return Quantity(self._source.data[self._mask],
+                        unit=self._source.unit).to(
+                self.layer_units[1])
+
+    @property
+    def dispersion(self):
+        return Quantity(self._source.dispersion[self._mask],
+                        unit=self._source.dispersion_unit).to(
+                self.layer_units[0])
 
     @property
     def mask(self):
         return self._source.mask[self._mask]
-
-    @property
-    def unit(self):
-        return self._source.unit
 
     @property
     def wcs(self):
@@ -64,13 +96,3 @@ class Layer(NDArithmeticMixin, NDDataBase):
     @property
     def meta(self):
         return self._source.meta
-
-    @@property
-    def dispersion(self):
-        if self._dispersion is None:
-            crval = self.meta['CRVAL1']
-            cdelt = self.meta['CDELT1']
-            end = self._source.shape[0] * cdelt + crval
-            self._dispersion = np.arange(crval, end, cdelt)
-
-        return self._dispersion
