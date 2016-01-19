@@ -1,7 +1,7 @@
-
-
 from ..core.data import Data, Layer
+from ..core.containers import PlotContainer
 
+import pyqtgraph as pg
 import numpy as np
 from astropy.modeling import models
 
@@ -22,6 +22,11 @@ class DataFactory(Factory):
     @staticmethod
     def from_file(path, filter):
         new_data = Data.read(path, filter)
+        return new_data
+
+    @staticmethod
+    def from_array(array):
+        new_data = Data(array)
         return new_data
 
     @staticmethod
@@ -47,3 +52,22 @@ class ModelFactory(Factory):
             return cls.all_models[name]
 
         print("No such model {}".format(name))
+
+
+class PlotFactory(Factory):
+    """
+    Produces plot container objects.
+    """
+
+    @classmethod
+    def create_line_plot(cls, layer, unit=None, visible=False, style='line',
+                         pen=None):
+        plot_container = PlotContainer(layer=layer, visible=visible,
+                                       style=style, pen=pen)
+
+        plot_data_item = pg.PlotDataItem(plot_container.dispersion.value,
+                                         plot_container.data.value)
+        print("Creating plot")
+        plot_container.plot = plot_data_item
+
+        return plot_container

@@ -68,20 +68,25 @@ class Layer(object):
         self._source = source
         self._mask = mask
         self._parent = parent
+        self._model = None
         self.name = self._source.name + " Layer"
-        self.layer_units = (self._source.unit, self._source.dispersion_unit)
+        self.units = (self._source.dispersion_unit,
+                      self._source.unit if self._source.unit is not None else "")
 
     @property
     def data(self):
-        return Quantity(self._source.data[self._mask],
-                        unit=self._source.unit).to(
-                self.layer_units[1])
+        if self._model is not None:
+            data = self._model(self.dispersion)
+        else:
+            data = self._source.data[self._mask]
+
+        return Quantity(data, unit=self._source.unit).to(self.units[1])
 
     @property
     def dispersion(self):
         return Quantity(self._source.dispersion[self._mask],
                         unit=self._source.dispersion_unit).to(
-                self.layer_units[0])
+                self.units[0])
 
     @property
     def mask(self):
@@ -94,3 +99,6 @@ class Layer(object):
     @property
     def meta(self):
         return self._source.meta
+
+    def set_model(self, model):
+        self._model = model

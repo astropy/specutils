@@ -42,6 +42,7 @@
    <addaction name="separator"/>
    <addaction name="actionGraph_Settings"/>
    <addaction name="actionPlot_Settings"/>
+   <addaction name="actionSelection_Highlight"/>
   </widget>
   <action name="actionInsert_ROI">
    <property name="icon">
@@ -111,6 +112,17 @@
   <action name="actionChange_Units">
    <property name="text">
     <string>Change Units</string>
+   </property>
+  </action>
+  <action name="actionSelection_Highlight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Selection Highlight</string>
+   </property>
+   <property name="toolTip">
+    <string>Enable highlighting of current ROI</string>
    </property>
   </action>
  </widget>

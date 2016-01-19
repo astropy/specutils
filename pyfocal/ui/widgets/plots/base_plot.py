@@ -11,7 +11,6 @@ class BasePlot(pg.PlotWidget):
     def __init__(self, data=None, parent=None, *args, **kwargs):
         super(BasePlot, self).__init__(*args, **kwargs)
         self._parent = parent
-        self._containers = []
 
         # Cache plot item
         self._plot_item = self.getPlotItem()
@@ -26,7 +25,7 @@ class BasePlot(pg.PlotWidget):
             self.add_data(data)
 
     def _setup_connections(self):
-        self._parent.actionInsert_ROI.triggered.connect(self.add_roi)
+        self._parent.action("actionInsert_ROI").triggered.connect(self.add_roi)
 
     def add_roi(self):
         view_range = self.viewRange()
@@ -56,39 +55,22 @@ class BasePlot(pg.PlotWidget):
     def update(self):
         raise NotImplemented()
 
-    def get_roi_mask(self, layer):
-        cnt = self.get_container(layer)
-
+    def get_roi_mask(self, container):
         mask_holder = []
 
         for roi in self._rois:
             roi_shape = roi.parentBounds()
             x1, y1, x2, y2 = roi_shape.getCoords()
 
-            mask_holder.append((cnt.dispersion.value >= x1) &
-                               (cnt.dispersion.value <= x2) &
-                               (cnt.data.value >= y1) &
-                               (cnt.data.value <= y2))
+            mask_holder.append((container.dispersion.value >= x1) &
+                               (container.dispersion.value <= x2) &
+                               (container.data.value >= y1) &
+                               (container.data.value <= y2))
 
         if len(mask_holder) == 0:
-            mask_holder.append(np.ones(shape=cnt.dispersion.value.shape,
+            mask_holder.append(np.ones(shape=container.dispersion.value.shape,
                                        dtype=bool))
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
         mask = reduce(np.logical_or, mask_holder)
         return mask
-
-    def get_container(self, layer):
-        """
-        Retrieve the container of the specified layer.
-
-        Parameters
-        ----------
-        layer : pyfocal.core.data.Layer
-            The layer for which to get the container.
-        """
-        for container in self._containers:
-            if container.layer == layer:
-                return layer
-
-        return None

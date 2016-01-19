@@ -7,9 +7,11 @@ class EventHook(object):
 
     def __iadd__(self, other):
         self.__handlers.append(other)
+        return self
 
     def __isub__(self, other):
         self.__handlers.remove(other)
+        return self
 
     def emit(self, *args, **kwargs):
         for handler in self.__handlers:

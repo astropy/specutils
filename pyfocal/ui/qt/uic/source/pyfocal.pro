@@ -25,3 +25,6 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     icon_resource.qrc \
     qdarkstyle/style.qrc
+
+DISTFILES += \
+    plot_sub_window_plugin.py

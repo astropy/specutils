@@ -9,6 +9,14 @@ class PlotWindow(BasePlot):
     """
     One-dimensional representation of a set of data.
     """
+    inactive_color = pg.mkPen(color=(0, 0, 0, 75))
+    active_color = pg.mkPen(color=(0, 0, 0, 255))
+
+    def __init__(self, *args, **kwargs):
+        super(PlotWindow, self).__init__(*args, **kwargs)
+
+        self.highlight = self._plot_item.plot()
+
     def add_data(self, layer, unit=None, visible=False, style='line',
                  pen=None):
         """
@@ -20,6 +28,9 @@ class PlotWindow(BasePlot):
         layer : pyfocal.core.data.Layer
             Layer object from which the plot will retrieve data.
         """
+        if pen is None:
+            print("Pen is not set.")
+            pen = pg.mkPen()
 
         plot_container = PlotContainer(layer=layer, visible=visible,
                                        style=style, pen=pen)
@@ -27,8 +38,6 @@ class PlotWindow(BasePlot):
                 plot_container.dispersion.value,
                 plot_container.data.value)
         plot_container.plot = plot
-
-        plot.setPen(pg.mkPen(random.sample(['g', 'b', 'k', 'y', 'm'], 1)[0]))
 
         self._containers.append(plot_container)
         self.set_labels()
@@ -39,3 +48,10 @@ class PlotWindow(BasePlot):
 
     def set_labels(self):
         self._plot_item.setLabels(bottom=str(self._containers[0].units[0]))
+
+    def set_active_plot(self, layer):
+        for container in self._containers:
+            if container.layer == layer:
+                container.set_pen(self.active_color)
+            else:
+                container.set_pen(self.inactive_color)

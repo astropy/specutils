@@ -4,6 +4,7 @@ from qtpy.QtWidgets import *
 # from PyQt5.QtWidgets import *
 from .qt.mainwindow import Ui_MainWindow
 from .qt.spectrasubwindow import Ui_SpectraSubWindow
+from .widgets.plot_sub_window import PlotSubWindow
 
 
 class Viewer(QMainWindow):
@@ -19,6 +20,15 @@ class Viewer(QMainWindow):
         self.wgt_data_list = self.main_window.listWidget
         self.wgt_layer_list = self.main_window.listWidget_2
         self.wgt_model_list = self.main_window.treeWidget
+        self.wgt_model_list.setHeaderLabels(["Parameter", "Value"])
+
+        # Connect the validation events
+        self.wgt_model_list.itemChanged.connect(
+                self._model_parameter_validation)
+
+    @property
+    def current_model(self):
+        return self.main_window.comboBox.currentText()
 
     def add_sub_window(self):
         """
@@ -31,12 +41,20 @@ class Viewer(QMainWindow):
         wgt_sub_window : QWidget
             The widget object within the QMdiSubWindow.
         """
-        main_window = QMainWindow()
-        wgt_sub_window = Ui_SpectraSubWindow()
-        wgt_sub_window.setupUi(main_window)
-        new_sub_window = self.main_window.mdiArea.addSubWindow(main_window)
+        # Create new window
+        plot_sub_window = PlotSubWindow()
 
-        return new_sub_window, wgt_sub_window
+        # Populate window with tool bars, status, etc.
+        ui_sub_window = Ui_SpectraSubWindow()
+        ui_sub_window.setupUi(plot_sub_window)
+
+        # Let the sub window do initialization
+        plot_sub_window.initialize()
+
+        new_sub_window = self.main_window.mdiArea.addSubWindow(plot_sub_window)
+        new_sub_window.show()
+
+        return plot_sub_window
 
     def open_file_dialog(self, filters):
         """
@@ -66,6 +84,8 @@ class Viewer(QMainWindow):
 
             return file_names[0], selected_filter
 
+        return None, None
+
     def add_data_item(self, data):
         """
         Adds a `Data` object to the loaded data list widget.
@@ -90,7 +110,13 @@ class Viewer(QMainWindow):
         new_item = QListWidgetItem(layer.name, self.wgt_layer_list)
         new_item.setData(Qt.UserRole, layer)
 
-    def add_model_item(self, model, name):
+    def remove_layer_item(self, layer):
+        for child in self.wgt_layer_list.children():
+            if child.data(Qt.UserRole) == layer:
+                self.wgt_layer_list.removeItemWidget(child)
+                break
+
+    def add_model_item(self, layer, model, name):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
@@ -100,13 +126,58 @@ class Viewer(QMainWindow):
             Model to add to the tree widget.
         """
         new_item = QTreeWidgetItem(self.wgt_model_list)
+        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+
         new_item.setText(0, name)
         new_item.setData(0, Qt.UserRole, model)
 
         for i, para in enumerate(model.param_names):
             new_para_item = QTreeWidgetItem(new_item)
             new_para_item.setText(0, para)
-            new_para_item.setData(1, Qt.UserRole, model.parameters[i])
+            new_para_item.setData(0, Qt.UserRole, model.parameters[i])
+            new_para_item.setText(1, str(model.parameters[i]))
+            new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
+
+    def remove_model_item(self, layer, model):
+        for child in self.wgt_model_list.children():
+            if child.data(Qt.UserRole) == model:
+                self.wgt_model_list.removeItemWidget(child)
+                break
+
+    def _model_parameter_validation(self, item, col):
+        if col == 0:
+            return
+
+        try:
+            item.setText(col, str(float(item.text(col))))
+            item.setData(col, Qt.UserRole, float(item.text(col)))
+        except ValueError:
+            prev_val = item.data(col, Qt.UserRole)
+            item.setText(col, str(prev_val))
+
+    def get_model_inputs(self):
+        """
+        Returns the model and current parameters displayed in the UI.
+
+        Returns
+        -------
+
+        """
+        root = self.wgt_model_list.invisibleRootItem()
+        models = {}
+
+        for model_item in [root.child(j) for j in range(root.childCount())]:
+            model = model_item.data(0, Qt.UserRole)
+            args = []
+
+            for i in range(model_item.childCount()):
+                child_item = model_item.child(i)
+                child = child_item.text(1)
+                args.append(float(child))
+
+            models[model] = args
+
+        return models
 
     def clear_layer_widget(self):
         self.wgt_layer_list.clear()
@@ -155,4 +226,7 @@ class Viewer(QMainWindow):
         sub_window : QMdiSubWindow
             The currently active `QMdiSubWindow` object.
         """
-        return self.main_window.mdiArea.activeSubWindow()
+        sub_window = self.main_window.mdiArea.currentSubWindow()
+
+        if sub_window is not None:
+            return sub_window.widget()
