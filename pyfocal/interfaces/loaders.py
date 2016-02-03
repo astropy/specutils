@@ -17,6 +17,8 @@ def fits_reader(filename, filter, **kwargs):
     loaded the yaml configuration files, in an attempt to parse the
     associated fits file.
     """
+    logging.info("Attempting to open '{}' using filter '{}'.".format(
+            filename, filter))
     hdulist = fits.open(filename, **kwargs)
     ref = loader_registry.get(filter)
 

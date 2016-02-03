@@ -20,7 +20,7 @@ HEADERS  += mainwindow.h \
     spectrasubwindow.h
 
 FORMS    += mainwindow.ui \
-    spectrasubwindow.ui
+    plotsubwindow.ui
 
 RESOURCES += \
     icon_resource.qrc \

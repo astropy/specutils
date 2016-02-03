@@ -21,6 +21,7 @@ class DataFactory(Factory):
 
     @staticmethod
     def from_file(path, filter):
+        print("Creating from file.")
         new_data = Data.read(path, filter)
         return new_data
 

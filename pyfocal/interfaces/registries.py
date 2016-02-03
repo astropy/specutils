@@ -59,3 +59,5 @@ loader_registry = CustomLoaderRegistry()
 
 # Import loaders
 from . import loaders
+
+print("Accessing registries...")

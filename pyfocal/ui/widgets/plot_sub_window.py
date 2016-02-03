@@ -31,6 +31,10 @@ class PlotSubWindow(QMainWindow):
                 container if container is not None else self.get_container(
                         layer))
 
+    def get_roi_data(self, layer=None, container=None):
+        mask = self.get_roi_mask(layer, container)
+        return
+
     def action(self, name):
         # TODO: Revisit this sometime in the future.
         for act in self.findChildren(QAction):
@@ -40,6 +44,10 @@ class PlotSubWindow(QMainWindow):
     def initialize(self):
         self._plot_widget = BasePlot(parent=self)
         self._plot_item = self._plot_widget._plot_item
+
+        # Add grids to the plot
+        self._plot_item.showGrid(True, True)
+
         self.setCentralWidget(self._plot_widget)
 
     def add_container(self, container):

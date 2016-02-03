@@ -21,7 +21,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     @classmethod
     def read(cls, *args, **kwargs):
         from ..interfaces.registries import io_registry
-
+        print("Using the io registry")
         return io_registry.read(cls, *args, **kwargs)
 
     @property
@@ -87,6 +87,10 @@ class Layer(object):
         return Quantity(self._source.dispersion[self._mask],
                         unit=self._source.dispersion_unit).to(
                 self.units[0])
+
+    @dispersion.setter
+    def dispersion(self, value, unit=""):
+        self._source._dispersion = value
 
     @property
     def mask(self):

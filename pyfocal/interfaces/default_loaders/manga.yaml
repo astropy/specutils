@@ -2,7 +2,7 @@
 name: MaNGA IFU
 extension: [fits, mits]
 wcs:
-  hdu: 0
+  hdu: 1
 data:
   hdu: 1
   col: 1

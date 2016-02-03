@@ -1,10 +1,10 @@
 from .factories import DataFactory, ModelFactory, PlotFactory
 from ..core.events import EventHook
 from ..analysis import modeling
-from ..ui.widgets.plots.plot_window import PlotWindow
 
 from py_expression_eval import Parser
 import logging
+import numpy as np
 
 
 class Manager(object):
@@ -45,8 +45,13 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def add(self, data, mask=None, parent=None):
+    def new(self, data, mask=None, parent=None):
         new_layer = DataFactory.create_layer(data, mask, parent)
+
+        return new_layer
+
+    def add(self, data, mask=None, parent=None):
+        new_layer = self.new(data, mask, parent)
         self._members.append(new_layer)
 
         # Emit creation event
@@ -74,7 +79,7 @@ class LayerManager(Manager):
         """
         return [x for x in self._members if x._parent == sub_window]
 
-    def apply_model_layer(self, layer, model, fitter=None):
+    def add_from_model(self, layer, model, fitter=None, mask=None):
         if layer is None:
             logging.error("No layer selected from which to create a model.")
             return
@@ -84,7 +89,8 @@ class LayerManager(Manager):
 
         new_data = DataFactory.from_array(new_model(layer.dispersion.value))
         new_layer = self.add(new_data, parent=layer._parent)
-        new_layer.set_model(new_model)
+        new_layer.dispersion = layer.dispersion.value
+        # new_layer.set_model(new_model)
 
         return new_layer
 
@@ -144,7 +150,8 @@ class ModelManager(Manager):
             models.append(model)
 
         if not formula:
-            result = sum(models) if len(models) > 1 else models[0]
+            print(models)
+            result = np.sum(models) if len(models) > 1 else models[0]
             return result
 
         return self._evaluate(models, formula)

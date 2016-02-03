@@ -3,7 +3,7 @@ from qtpy.QtCore import *
 from qtpy.QtWidgets import *
 # from PyQt5.QtWidgets import *
 from .qt.mainwindow import Ui_MainWindow
-from .qt.spectrasubwindow import Ui_SpectraSubWindow
+from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.plot_sub_window import PlotSubWindow
 
 
@@ -26,9 +26,20 @@ class Viewer(QMainWindow):
         self.wgt_model_list.itemChanged.connect(
                 self._model_parameter_validation)
 
+        # Setup context menus
+        self._setup_context_menus()
+
+    def _setup_context_menus(self):
+        self.wgt_layer_list.customContextMenuRequested.connect(
+                self._layer_context_menu)
+
     @property
     def current_model(self):
         return self.main_window.comboBox.currentText()
+
+    @property
+    def current_model_formula(self):
+        return self.main_window.lineEdit.text()
 
     def add_sub_window(self):
         """
@@ -109,6 +120,8 @@ class Viewer(QMainWindow):
         """
         new_item = QListWidgetItem(layer.name, self.wgt_layer_list)
         new_item.setData(Qt.UserRole, layer)
+
+        self.wgt_layer_list.setCurrentItem(new_item)
 
     def remove_layer_item(self, layer):
         for child in self.wgt_layer_list.children():
@@ -193,7 +206,6 @@ class Viewer(QMainWindow):
         -------
         data : pyfocal.core.data.Data
             The `Data` object of the currently selected row.
-
         """
         data_item = self.wgt_data_list.currentItem()
 
@@ -230,3 +242,16 @@ class Viewer(QMainWindow):
 
         if sub_window is not None:
             return sub_window.widget()
+
+    def update_statistics(self, stat_dict):
+        self.main_window.label_2.setText(stat_dict['mean'])
+        self.main_window.label_4.setText(stat_dict['median'])
+        self.main_window.label_6.setText(stat_dict['stddev'])
+        self.main_window.label_8.setText(stat_dict['total'])
+        self.main_window.label_10.setText(stat_dict['npoints'])
+
+    def _layer_context_menu(self, point):
+        menu = QMenu()
+        menu.addAction(self.main_window.actionChange_Color)
+        menu.addAction(self.main_window.actionRemove)
+        menu.exec_(self.wgt_layer_list.viewport().mapToGlobal(point))

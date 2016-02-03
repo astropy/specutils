@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './source/spectrasubwindow.ui'
+# Form implementation generated from reading ui file './source/plotsubwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.5.1
 #
@@ -12,13 +12,11 @@ class Ui_SpectraSubWindow(object):
     def setupUi(self, SpectraSubWindow):
         SpectraSubWindow.setObjectName("SpectraSubWindow")
         SpectraSubWindow.resize(800, 600)
+        SpectraSubWindow.setWindowTitle("")
         self.centralwidget = QtWidgets.QWidget(SpectraSubWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
-        self.widget = QtWidgets.QWidget(self.centralwidget)
-        self.widget.setObjectName("widget")
-        self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
         SpectraSubWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(SpectraSubWindow)
         self.statusbar.setObjectName("statusbar")
@@ -74,7 +72,6 @@ class Ui_SpectraSubWindow(object):
 
     def retranslateUi(self, SpectraSubWindow):
         _translate = QtCore.QCoreApplication.translate
-        SpectraSubWindow.setWindowTitle(_translate("SpectraSubWindow", "MainWindow"))
         self.toolBar.setWindowTitle(_translate("SpectraSubWindow", "toolBar"))
         self.actionInsert_ROI.setText(_translate("SpectraSubWindow", "Rectangle ROI"))
         self.actionInsert_ROI.setToolTip(_translate("SpectraSubWindow", "Insert a rectangular ROI selection box"))

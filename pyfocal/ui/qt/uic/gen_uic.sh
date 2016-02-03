@@ -16,5 +16,5 @@ case $1 in
 esac
 
 $uic ./source/mainwindow.ui -o ../mainwindow.py
-$uic ./source/spectrasubwindow.ui -o ../spectrasubwindow.py
+$uic ./source/plotsubwindow.ui -o ../plotsubwindow.py
 $rcc ./source/icon_resource.qrc -o ../icon_resource_rc.py

@@ -39,7 +39,8 @@ class BasePlot(pg.PlotWidget):
             self._rois.remove(roi)
 
         roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len * 0.5],
-                         sideScalers=True, removable=True, pen='k')
+                         sideScalers=True, removable=True, pen='k',
+                         hoverPen='r', handlePen='k')
         self._rois.append(roi)
         self.addItem(roi)
 
@@ -47,7 +48,7 @@ class BasePlot(pg.PlotWidget):
         roi.sigRemoveRequested.connect(remove)
 
         # Let everyone know, ROI is ready for use.
-        roi.sigRegionChangeFinished.emit(self)
+        roi.sigRegionChangeFinished.emit(roi)
 
     def add_data(self, data):
         raise NotImplemented()

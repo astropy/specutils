@@ -1,9 +1,9 @@
 from qtpy.QtCore import *
 
-from pyfocal.ui.widgets.plots.plot_window import PlotWindow
 from ..interfaces.managers import data_manager, layer_manager, \
     model_manager, plot_manager
 from ..interfaces.registries import loader_registry
+from ..analysis.statistics import stats
 
 
 class Controller(object):
@@ -26,7 +26,7 @@ class Controller(object):
     def _setup_connections(self):
         self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
         self.viewer.main_window.toolButton_3.clicked.connect(
-            self.new_plot_sub_window)
+            lambda: self.new_plot_sub_window())
 
         # Listen for subwindow selection events, update layer list on selection
         self.viewer.main_window.mdiArea.subWindowActivated.connect(
@@ -65,6 +65,18 @@ class Controller(object):
         # Attach the update button
         self.viewer.main_window.pushButton_2.clicked.connect(
             self.update_model_layer)
+
+    def update_statistics(self):
+        # Grab all available rois
+        current_layer = self.viewer.current_layer()
+        mask = self.get_roi_mask()
+
+        if current_layer is None or mask is None:
+            return
+
+        stat_dict = stats(current_layer.data[mask])
+
+        self.viewer.update_statistics(stat_dict)
 
     def open_file(self):
         """
@@ -151,12 +163,17 @@ class Controller(object):
         if current_layer is None:
             return
 
-        model_inputs = self.viewer.get_model_inputs()
-        compound_model = model_manager.get_compound_model(current_layer,
-                                                          model_inputs)
+        model_layer = layer_manager.new(current_layer._source,
+                                        mask=self.get_roi_mask(),
+                                        parent=current_layer._parent)
 
-        new_layer = layer_manager.apply_model_layer(current_layer,
-                                                    compound_model)
+        model_inputs = self.viewer.get_model_inputs()
+        compound_model = model_manager.get_compound_model(layer=current_layer,
+                                                          model_dict=model_inputs,
+                                                          formula=self.viewer.current_model_formula)
+
+        new_layer = layer_manager.add_from_model(model_layer,
+                                                 compound_model)
         self.add_plot(layer=new_layer)
 
         return new_layer
@@ -217,3 +234,12 @@ class Controller(object):
         roi_mask = current_sub_window.get_roi_mask(layer=current_layer)
 
         return roi_mask
+
+        self.main_window.actionChange_Color.triggered.connect(
+                self._color_dialog)
+
+    def _color_dialog(self):
+        color = QColorDialog.getColor()
+
+        if color.isValid():
+            print(color.name())
