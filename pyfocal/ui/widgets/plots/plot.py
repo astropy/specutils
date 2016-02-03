@@ -71,8 +71,9 @@ class Plot(pg.PlotWidget):
                                (container.layer.data.value <= y2))
 
         if len(mask_holder) == 0:
-            mask_holder.append(np.ones(shape=container.dispersion.value.shape,
-                                       dtype=bool))
+            mask_holder.append(np.ones(
+                shape=container.layer.dispersion.value.shape,
+                dtype=bool))
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
         mask = reduce(np.logical_or, mask_holder)

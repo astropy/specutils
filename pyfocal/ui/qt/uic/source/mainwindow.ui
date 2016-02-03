@@ -481,6 +481,12 @@
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
              <widget class="QTreeWidget" name="treeWidget">
+              <property name="sizeAdjustPolicy">
+               <enum>QAbstractScrollArea::AdjustIgnored</enum>
+              </property>
+              <property name="allColumnsShowFocus">
+               <bool>false</bool>
+              </property>
               <property name="headerHidden">
                <bool>false</bool>
               </property>
@@ -492,6 +498,9 @@
               </attribute>
               <attribute name="headerCascadingSectionResizes">
                <bool>false</bool>
+              </attribute>
+              <attribute name="headerDefaultSectionSize">
+               <number>130</number>
               </attribute>
               <column>
                <property name="text">
@@ -517,45 +526,45 @@
               </layout>
              </widget>
             </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="title">
+            <string>Fitting Routine</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
-             <widget class="QGroupBox" name="groupBox_5">
-              <property name="title">
-               <string>Fitting Routine</string>
-              </property>
-              <layout class="QVBoxLayout" name="verticalLayout_6">
-               <item>
-                <widget class="QComboBox" name="comboBox_2"/>
-               </item>
-               <item>
-                <widget class="QPushButton" name="pushButton_3">
-                 <property name="text">
-                  <string>Perform Fit</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
+             <widget class="QComboBox" name="comboBox_2"/>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <item>
-               <widget class="QPushButton" name="pushButton_4">
-                <property name="text">
-                 <string>Create</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_2">
-                <property name="text">
-                 <string>Update</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <widget class="QPushButton" name="pushButton_3">
+              <property name="text">
+               <string>Perform Fit</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QPushButton" name="pushButton_4">
+             <property name="text">
+              <string>Create</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_2">
+             <property name="text">
+              <string>Update</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
