@@ -3,12 +3,15 @@ from astropy.units import Unit, Quantity
 
 
 class PlotContainer(object):
-    def __init__(self, layer, plot=None, visible=True, style='line', pen=None):
-        self.layer = layer
+    def __init__(self, layer, plot=None, visible=True, style='line',
+                 pen=None, err_pen=None):
+        self._layer = layer
         self.visible = visible
         self.style = style
-        self.pen = pen
+        self._pen = pen
+        self._err_pen = err_pen
         self._plot = plot
+        self.error = None
 
         self.on_unit_change = EventHook()
         self.on_visibility_change = EventHook()
@@ -21,9 +24,6 @@ class PlotContainer(object):
     def change_visible(self, visible_state):
         self.visible = visible_state
 
-    def change_pen(self, new_pen):
-        self.pen = new_pen
-
     @property
     def plot(self):
         return self._plot
@@ -34,17 +34,25 @@ class PlotContainer(object):
         # self._plot.setPen(self.pen)
 
     @property
-    def data(self):
-        return self.layer.data
+    def layer(self):
+        return self._layer
 
     @property
-    def dispersion(self):
-        return self.layer.dispersion
+    def pen(self):
+        return self._pen
+
+    @pen.setter
+    def pen(self, pen):
+        self._pen = pen
+        self.plot.setPen(self._pen)
 
     @property
-    def units(self):
-        return self.layer.units
+    def error_pen(self):
+        return self._err_pen
 
-    def set_pen(self, pen):
-        self.pen = pen
-        self.plot.setPen(pen)
+    @error_pen.setter
+    def error_pen(self, pen):
+        self._err_pen = pen
+
+        # if self.error is not None:
+        #     self.error.setPen(self._err_pen)

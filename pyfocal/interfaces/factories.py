@@ -62,13 +62,32 @@ class PlotFactory(Factory):
 
     @classmethod
     def create_line_plot(cls, layer, unit=None, visible=False, style='line',
-                         pen=None):
+                         pen=None, err_pen=None):
         plot_container = PlotContainer(layer=layer, visible=visible,
-                                       style=style, pen=pen)
+                                       style=style, pen=pen, err_pen=err_pen)
 
-        plot_data_item = pg.PlotDataItem(plot_container.dispersion.value,
-                                         plot_container.data.value)
-        print("Creating plot")
+        plot_data_item = pg.PlotDataItem(plot_container.layer.dispersion.value,
+                                         plot_container.layer.data.value)
+
         plot_container.plot = plot_data_item
+
+        if plot_container.layer.uncertainty is not None:
+            # err_top = pg.PlotDataItem(
+            #     plot_container.layer.dispersion.value,
+            #     plot_container.layer.data.value +
+            #     plot_container.layer.uncertainty.array * 0.5)
+            # err_btm = pg.PlotDataItem(
+            #     plot_container.layer.dispersion.value,
+            #     plot_container.layer.data.value -
+            #     plot_container.layer.uncertainty.array * 0.5)
+
+            # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
+
+            plot_error_item = pg.ErrorBarItem(
+                x=plot_container.layer.dispersion.value,
+                y=plot_container.layer.data.value,
+                height=plot_container.layer.uncertainty.array
+            )
+            plot_container.error = plot_error_item
 
         return plot_container

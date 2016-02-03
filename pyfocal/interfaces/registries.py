@@ -35,14 +35,14 @@ class CustomLoaderRegistry(Registry):
 class YAMLLoader(yaml.YAMLObject):
     yaml_tag = u'!CustomLoader'
 
-    def __init__(self, extension, name, data, uncertainty, mask, meta, wcs):
+    def __init__(self, extension, name, data, uncertainty, mask, wcs, meta):
         self.name = name
         self.extension = extension
         self.data = data
         self.uncertainty = uncertainty
         self.mask = mask
-        self.meta = meta
         self.wcs = wcs
+        self.meta = meta or {}
         self.filter = None
 
     def set_filter(self):
@@ -59,5 +59,3 @@ loader_registry = CustomLoaderRegistry()
 
 # Import loaders
 from . import loaders
-
-print("Accessing registries...")

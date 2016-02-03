@@ -7,9 +7,9 @@ pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
 
 
-class BasePlot(pg.PlotWidget):
+class Plot(pg.PlotWidget):
     def __init__(self, data=None, parent=None, *args, **kwargs):
-        super(BasePlot, self).__init__(*args, **kwargs)
+        super(Plot, self).__init__(*args, **kwargs)
         self._parent = parent
 
         # Cache plot item
@@ -25,7 +25,9 @@ class BasePlot(pg.PlotWidget):
             self.add_data(data)
 
     def _setup_connections(self):
-        self._parent.action("actionInsert_ROI").triggered.connect(self.add_roi)
+        if self._parent is not None:
+            act_insert_roi = self._parent.action("actionInsert_ROI")
+            act_insert_roi.triggered.connect(self.add_roi)
 
     def add_roi(self):
         view_range = self.viewRange()
@@ -63,10 +65,10 @@ class BasePlot(pg.PlotWidget):
             roi_shape = roi.parentBounds()
             x1, y1, x2, y2 = roi_shape.getCoords()
 
-            mask_holder.append((container.dispersion.value >= x1) &
-                               (container.dispersion.value <= x2) &
-                               (container.data.value >= y1) &
-                               (container.data.value <= y2))
+            mask_holder.append((container.layer.dispersion.value >= x1) &
+                               (container.layer.dispersion.value <= x2) &
+                               (container.layer.data.value >= y1) &
+                               (container.layer.data.value <= y2))
 
         if len(mask_holder) == 0:
             mask_holder.append(np.ones(shape=container.dispersion.value.shape,

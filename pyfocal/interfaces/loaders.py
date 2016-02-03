@@ -4,6 +4,7 @@ from .registries import io_registry
 import logging
 from ..core.data import Data
 
+import os
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -19,13 +20,25 @@ def fits_reader(filename, filter, **kwargs):
     """
     logging.info("Attempting to open '{}' using filter '{}'.".format(
             filename, filter))
+
+    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(filename, **kwargs)
     ref = loader_registry.get(filter)
 
+    meta = ref.meta
+    header = dict(hdulist[ref.wcs['hdu']].header)
+    meta['header'] = header
     wcs = WCS(hdulist[ref.wcs['hdu']].header)
     data = hdulist[ref.data['hdu']].data
     uncertainty = None
-    unit = Unit("")
+    uncertainty_type = None
+
+    try:
+        unit = Unit(meta['header'].get('BUNIT', ""))
+    except ValueError as e:
+        logging.warning(e)
+        unit = Unit("")
+
     mask = np.zeros(shape=data.shape)
 
     # Grab the data array, use columns if necessary
@@ -35,22 +48,28 @@ def fits_reader(filename, filter, **kwargs):
         except AttributeError:
             logging.warning("No such columns available.")
 
-    if ref.uncertainty is not None and ref.uncertainty.get('hdu') is \
-            not None:
+    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('hdu') is not None:
         uncertainty = hdulist[ref.uncertainty['hdu']].data
-        uncertainty_type = ref.uncertainty.get('type') or 'var'
+
+        if ref.uncertainty.get('col') is not None:
+            uncertainty = uncertainty[uncertainty.columns[ref.uncertainty[
+                'col']].name]
+
+        uncertainty_type = ref.uncertainty.get('type', 'std')
 
         # This will be dictated by the type of the uncertainty
         uncertainty = StdDevUncertainty(uncertainty)
 
-    if ref.mask is not None and ref.mask.get('hdu') is not None:
+    if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
         try:
             mask = hdulist[ref.mask['hdu']].data
         except IndexError:
             logging.warning("Mask extension not valid.")
 
-    return Data(data=data, uncertainty=uncertainty, mask=mask, wcs=wcs,
-                unit=unit)
+    hdulist.close()
+
+    return Data(name=name, data=data, uncertainty=uncertainty, mask=mask,
+                wcs=wcs, unit=unit)
 
 
 def fits_identify(origin, *args, **kwargs):

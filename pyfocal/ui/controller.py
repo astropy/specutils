@@ -40,8 +40,10 @@ class Controller(object):
             self.update_model_list)
 
         # When a layer is selected, make that line more obvious than the others
-        # self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-        #     self.update_plot_display)
+        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
+            lambda: self.viewer.current_sub_window().set_active_plot(
+                self.viewer.current_layer()
+            ))
 
         # Create a new layer based on any active ROIs
         self.viewer.main_window.toolButton_6.clicked.connect(

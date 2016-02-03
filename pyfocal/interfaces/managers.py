@@ -168,7 +168,7 @@ class PlotManager(Manager):
     def new_line_plot(self, layer, parent, unit=None, visible=False,
                       style='line', pen=None):
         plot_container = PlotFactory.create_line_plot(layer, unit, visible,
-                                                     style, pen)
+                                                      style, pen)
 
         if parent not in self._members:
             self._members[parent] = [plot_container]

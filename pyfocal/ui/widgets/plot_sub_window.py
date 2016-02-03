@@ -1,4 +1,4 @@
-from ..widgets.plots.base_plot import BasePlot
+from ..widgets.plots.plot import Plot
 
 from qtpy.QtWidgets import *
 
@@ -42,7 +42,7 @@ class PlotSubWindow(QMainWindow):
                 return act
 
     def initialize(self):
-        self._plot_widget = BasePlot(parent=self)
+        self._plot_widget = Plot(parent=self)
         self._plot_item = self._plot_widget._plot_item
 
         # Add grids to the plot
@@ -54,7 +54,12 @@ class PlotSubWindow(QMainWindow):
         self._containers.append(container)
 
         self._plot_item.addItem(container.plot)
+
+        if container.error is not None:
+            self._plot_item.addItem(container.error)
+
         self.set_labels()
+        self.set_active_plot(container.layer)
 
     def get_container(self, layer):
         for container in self._containers:
@@ -66,11 +71,17 @@ class PlotSubWindow(QMainWindow):
             plot_container.change_unit(new_unit)
 
     def set_labels(self):
-        self._plot_item.setLabels(bottom=str(self._containers[0].units[0]))
+        self._plot_item.setLabels(
+            left="Flux [{}]".format(str(self._containers[0].layer.units[1])),
+            bottom="Wavelength [{}]".format(str(self._containers[
+                                                    0].layer.units[0])),
+        )
 
     def set_active_plot(self, layer):
         for container in self._containers:
             if container.layer == layer:
-                container.set_pen(self.active_color)
+                container.pen = self.active_color
+                container.error_pen = pg.mkBrush(color=(0, 0, 0, 50))
             else:
-                container.set_pen(self.inactive_color)
+                container.pen = self.inactive_color
+                container.error_pen = None

@@ -12,16 +12,16 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
     """
-    def __init__(self, *args, **kwargs):
-        super(Data, self).__init__(*args, **kwargs)
-        self._dispersion = None
-        self.name = "New Data Object"
+    def __init__(self, data, dispersion=None, name="", *args, **kwargs):
+        super(Data, self).__init__(data, *args, **kwargs)
+        self._dispersion = dispersion
+        self.name = name or "New Data Object"
         self._layers = []
 
     @classmethod
     def read(cls, *args, **kwargs):
         from ..interfaces.registries import io_registry
-        print("Using the io registry")
+
         return io_registry.read(cls, *args, **kwargs)
 
     @property
@@ -29,21 +29,21 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
         if self._dispersion is None:
             self._dispersion = np.arange(self.data.size)
 
-            try:
-                crval = self.wcs.wcs.crval[0]
-                cdelt = self.wcs.wcs.cdelt[0]
-                end = self._source.shape[0] * cdelt + crval
-                self._dispersion = np.arange(crval, end, cdelt)
-            except:
-                logging.warning("Invalid FITS headers; constructing default "
-                                "dispersion array.")
+            # try:
+            crval = self.wcs.wcs.crval[0]
+            cdelt = self.wcs.wcs.cdelt[0]
+            end = self.data.shape[0] * cdelt + crval
+            self._dispersion = np.arange(crval, end, cdelt)
+            # except:
+            #     logging.warning("Invalid FITS headers; constructing default "
+            #                     "dispersion array.")
 
         return self._dispersion
 
     @property
     def dispersion_unit(self):
         try:
-            return self.wcs.cunit[0]
+            return self.wcs.wcs.cunit[0]
         except AttributeError:
             logging.warning("No dispersion unit information in WCS.")
 
@@ -91,6 +91,10 @@ class Layer(object):
     @dispersion.setter
     def dispersion(self, value, unit=""):
         self._source._dispersion = value
+
+    @property
+    def uncertainty(self):
+        return self._source.uncertainty
 
     @property
     def mask(self):

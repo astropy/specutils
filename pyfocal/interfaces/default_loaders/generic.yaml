@@ -1,5 +1,5 @@
 --- !CustomLoader
-name: Default
+name: Generic Fits
 extension: [fits, mits]
 wcs:
   hdu: 0
@@ -8,10 +8,7 @@ data:
   col: 0
 uncertainty:
   hdu: 1
-  col: 2
-  type: 'ivar'
-mask:
-  hdu: 1
-  col: 3
+  col: 1
+  type: 'std'
 meta:
   author: Nicholas Earl
