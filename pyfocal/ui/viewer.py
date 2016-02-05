@@ -4,7 +4,7 @@ from qtpy.QtWidgets import *
 # from PyQt5.QtWidgets import *
 from .qt.mainwindow import Ui_MainWindow
 from .qt.plotsubwindow import Ui_SpectraSubWindow
-from .widgets.plot_sub_window import PlotSubWindow
+from .widgets.plot_window import PlotWindow
 
 
 class Viewer(QMainWindow):
@@ -18,7 +18,7 @@ class Viewer(QMainWindow):
         self.main_window = Ui_MainWindow()
         self.main_window.setupUi(self)
         self.wgt_data_list = self.main_window.listWidget
-        self.wgt_layer_list = self.main_window.listWidget_2
+        self.wgt_layer_list = self.main_window.treeWidget_2
         self.wgt_model_list = self.main_window.treeWidget
         self.wgt_model_list.setHeaderLabels(["Parameter", "Value"])
 
@@ -32,6 +32,19 @@ class Viewer(QMainWindow):
     def _setup_context_menus(self):
         self.wgt_layer_list.customContextMenuRequested.connect(
                 self._layer_context_menu)
+
+    def _set_model_tool_options(self):
+        layer = self.current_layer()
+
+        if layer is None:
+            return
+
+        if layer._parent is None:
+            self.main_window.pushButton_4.show()
+            self.main_window.pushButton_2.hide()
+        else:
+            self.main_window.pushButton_4.hide()
+            self.main_window.pushButton_2.show()
 
     @property
     def current_model(self):
@@ -53,7 +66,7 @@ class Viewer(QMainWindow):
             The widget object within the QMdiSubWindow.
         """
         # Create new window
-        plot_sub_window = PlotSubWindow()
+        plot_sub_window = PlotWindow()
 
         # Populate window with tool bars, status, etc.
         ui_sub_window = Ui_SpectraSubWindow()
@@ -118,10 +131,22 @@ class Viewer(QMainWindow):
         layer : pyfocal.core.data.Layer
             The `Layer` object to add to the list widget.
         """
-        new_item = QListWidgetItem(layer.name, self.wgt_layer_list)
-        new_item.setData(Qt.UserRole, layer)
+        print("Viewer.add_layer_item: {}".format(layer._parent))
+        new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
+                                   self.wgt_layer_list)
+        new_item.setText(0, layer.name)
+        new_item.setData(0, Qt.UserRole, layer)
 
         self.wgt_layer_list.setCurrentItem(new_item)
+
+    def get_layer_item(self, layer):
+        root = self.wgt_layer_list.invisibleRootItem()
+
+        for i in range(root.childCount()):
+            child = root.child(i)
+
+            if child.data(0, Qt.UserRole) == layer:
+                return child
 
     def remove_layer_item(self, layer):
         for child in self.wgt_layer_list.children():
@@ -174,7 +199,9 @@ class Viewer(QMainWindow):
 
         Returns
         -------
-
+        models : dict
+            A dictionary with the model instance as the key and a list of
+            floats as the parameters values.
         """
         root = self.wgt_model_list.invisibleRootItem()
         models = {}
@@ -225,7 +252,7 @@ class Viewer(QMainWindow):
         layer_item = self.wgt_layer_list.currentItem()
 
         if layer_item is not None:
-            layer = layer_item.data(Qt.UserRole)
+            layer = layer_item.data(0, Qt.UserRole)
 
             return layer
 

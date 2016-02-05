@@ -346,10 +346,15 @@
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QListWidget" name="listWidget_2">
-       <property name="contextMenuPolicy">
-        <enum>Qt::CustomContextMenu</enum>
+      <widget class="QTreeWidget" name="treeWidget_2">
+       <property name="headerHidden">
+        <bool>true</bool>
        </property>
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
       </widget>
      </item>
      <item>

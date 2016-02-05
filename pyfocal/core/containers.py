@@ -54,5 +54,7 @@ class PlotContainer(object):
     def error_pen(self, pen):
         self._err_pen = pen
 
-        # if self.error is not None:
-        #     self.error.setPen(self._err_pen)
+        if self.error is not None:
+            # self.error.setPen(self._err_pen)
+            # self.error.setBrush(self._err_pen)
+            self.error.setOpts(pen=pen)

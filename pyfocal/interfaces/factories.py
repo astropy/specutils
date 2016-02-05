@@ -1,4 +1,4 @@
-from ..core.data import Data, Layer
+from ..core.data import Data, Layer, ModelLayer
 from ..core.containers import PlotContainer
 
 import pyqtgraph as pg
@@ -31,11 +31,19 @@ class DataFactory(Factory):
         return new_data
 
     @staticmethod
-    def create_layer(data, mask=None, parent=None):
+    def create_layer(data, mask=None, parent=None, window=None):
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
-        new_layer = Layer(data, mask, parent)
+        new_layer = Layer(data, mask, parent, window)
+        print("DataFactory.create_layer: {}, {}".format(new_layer._parent,
+                                                     parent))
         return new_layer
+
+    @staticmethod
+    def create_model_layer(layer, model, parent=None):
+        new_model_layer = ModelLayer(layer, model, parent)
+
+        return new_model_layer
 
 
 class ModelFactory(Factory):
@@ -80,13 +88,13 @@ class PlotFactory(Factory):
             #     plot_container.layer.dispersion.value,
             #     plot_container.layer.data.value -
             #     plot_container.layer.uncertainty.array * 0.5)
-
+            #
             # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
 
             plot_error_item = pg.ErrorBarItem(
                 x=plot_container.layer.dispersion.value,
                 y=plot_container.layer.data.value,
-                height=plot_container.layer.uncertainty.array
+                height=plot_container.layer.uncertainty.array,
             )
             plot_container.error = plot_error_item
 

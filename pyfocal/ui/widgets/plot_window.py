@@ -5,12 +5,12 @@ from qtpy.QtWidgets import *
 import pyqtgraph as pg
 
 
-class PlotSubWindow(QMainWindow):
+class PlotWindow(QMainWindow):
     inactive_color = pg.mkPen(color=(0, 0, 0, 75))
     active_color = pg.mkPen(color=(0, 0, 0, 255))
 
     def __init__(self, **kwargs):
-        super(PlotSubWindow, self).__init__(**kwargs)
+        super(PlotWindow, self).__init__(**kwargs)
         # Public
         self._plot_widget = None
         self._plot_item = None
@@ -81,7 +81,7 @@ class PlotSubWindow(QMainWindow):
         for container in self._containers:
             if container.layer == layer:
                 container.pen = self.active_color
-                container.error_pen = pg.mkBrush(color=(0, 0, 0, 50))
+                container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
             else:
                 container.pen = self.inactive_color
                 container.error_pen = None

@@ -17,6 +17,7 @@ class Plot(pg.PlotWidget):
 
         # Create roi container
         self._rois = []
+        self._active_roi = None
 
         self._setup_connections()
 
@@ -51,6 +52,12 @@ class Plot(pg.PlotWidget):
 
         # Let everyone know, ROI is ready for use.
         roi.sigRegionChangeFinished.emit(roi)
+
+        # Set the active ROI as the last one interacted with
+        roi.sigRegionChangeFinished.connect(self._set_active_roi)
+
+    def _set_active_roi(self, roi):
+        self._active_roi = roi
 
     def add_data(self, data):
         raise NotImplemented()

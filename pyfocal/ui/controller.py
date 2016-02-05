@@ -41,15 +41,18 @@ class Controller(object):
 
         # When a layer is selected, make that line more obvious than the others
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            lambda: self.viewer.current_sub_window().set_active_plot(
-                self.viewer.current_layer()
-            ))
+            self._set_active_plot)
 
         # Create a new layer based on any active ROIs
         self.viewer.main_window.toolButton_6.clicked.connect(
                 lambda: self.add_roi_layer(self.viewer.current_layer(),
                                            self.get_roi_mask(),
                                            self.viewer.current_sub_window()))
+
+        # When clicking a layer, update the model list to show particular
+        # buttons depending on if the layer is a model layer
+        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
+            self.viewer._set_model_tool_options)
 
     def _setup_model_fitting(self):
         # Populate model dropdown
@@ -67,6 +70,13 @@ class Controller(object):
         # Attach the update button
         self.viewer.main_window.pushButton_2.clicked.connect(
             self.update_model_layer)
+
+    def _set_active_plot(self):
+        current_sub_window = self.viewer.current_sub_window()
+
+        if current_sub_window is not None:
+            current_sub_window.set_active_plot(
+                self.viewer.current_layer())
 
     def update_statistics(self):
         # Grab all available rois
@@ -109,22 +119,25 @@ class Controller(object):
         """
         roi_mask = mask if mask is not None else self.get_roi_mask()
         layer = layer_manager.add(layer._source, mask=roi_mask,
-                                  parent=sub_window)
+                                  window=sub_window)
 
         self.add_plot(layer=layer)
 
-    def new_plot_sub_window(self, data=None, sub_window=None):
+    def new_plot_sub_window(self, data=None, window=None):
         """
         Creates a new plot widget to display in the MDI area. `data` and
         `sub_window` will be retrieved from the viewer if they are not defined.
         """
         data = data if data is not None else self.viewer.current_data()
-        sub_window = sub_window if sub_window is not None else \
+        window = window if window is not None else \
             self.viewer.add_sub_window()
 
-        self.add_plot(data=data, sub_window=sub_window)
+        # Connect the statistics to the roi interactions
 
-    def add_plot(self, data=None, layer=None, sub_window=None):
+
+        self.add_plot(data=data, window=window)
+
+    def add_plot(self, data=None, layer=None, window=None):
         """
         Not defining the `layer` parameter will result in a new `layer`
         being created from the `data` object, and being attached to the
@@ -137,24 +150,24 @@ class Controller(object):
             created.
         layer : pyfocal.core.data.Layer, option
             The `Layer` object from which a new visible plot will be created.
-        sub_window : pyfocal.ui.widgets.plot_sub_window.PlotSubWindow, optional
+        window : pyfocal.ui.widgets.plot_sub_window.PlotSubWindow, optional
             The sub window to which a new layer object will be attached if
             there is no `layer` parameter defined.
 
         """
         if layer is None:
-            if sub_window is None:
+            if window is None:
                 raise AttributeError("Sub window not defined.")
             elif data is None:
                 raise AttributeError("Data is not defined")
 
-            layer = layer_manager.add(data, parent=sub_window)
+            layer = layer_manager.add(data, window=window)
         else:
-            if sub_window is None:
-                sub_window = layer._parent
+            if window is None:
+                window = layer._window
 
-        plot_container = plot_manager.new_line_plot(layer, sub_window)
-        sub_window.add_container(plot_container)
+        plot_container = plot_manager.new_line_plot(layer, window)
+        window.add_container(plot_container)
 
     def new_model_layer(self):
         """
@@ -167,8 +180,9 @@ class Controller(object):
 
         model_layer = layer_manager.new(current_layer._source,
                                         mask=self.get_roi_mask(),
-                                        parent=current_layer._parent)
-
+                                        parent=current_layer,
+                                        window=current_layer._window)
+        print("Controller.new_model_layer: {}".format(model_layer._parent))
         model_inputs = self.viewer.get_model_inputs()
         compound_model = model_manager.get_compound_model(layer=current_layer,
                                                           model_dict=model_inputs,
@@ -176,6 +190,11 @@ class Controller(object):
 
         new_layer = layer_manager.add_from_model(model_layer,
                                                  compound_model)
+
+        # Transfer models from original layer to new model layer
+        model_manager.transfer_models(current_layer, new_layer)
+        self.update_model_list()
+
         self.add_plot(layer=new_layer)
 
         return new_layer
@@ -185,17 +204,21 @@ class Controller(object):
         Updates the current layer with the results of the model.
         """
         current_layer = self.viewer.current_layer()
-        model_inputs = model_manager.get_compound_model(current_layer)
-        layer_manager.update_layer(current_layer, model_inputs)
+        model_inputs = self.viewer.get_model_inputs()
+        compound_model = model_manager.get_compound_model(current_layer,
+                                                          model_dict=model_inputs)
+        layer_manager.update_model_layer(current_layer,
+                                         compound_model)
 
     def update_layer_list(self):
         """
         Clears and repopulates the layer list depending on the currently
         selected sub window.
         """
+        print("Updating layer list")
         current_window = self.viewer.current_sub_window()
 
-        layers = layer_manager.get_sub_window_layers(current_window)
+        layers = layer_manager.get_window_layers(current_window)
 
         self.viewer.clear_layer_widget()
 
@@ -203,7 +226,10 @@ class Controller(object):
             self.viewer.add_layer_item(layer)
 
         if len(layers) > 0:
-            self.viewer.wgt_layer_list.setCurrentRow(0)
+            return
+            self.viewer.wgt_layer_list.setCurrentItem(
+                self.viewer.wgt_layer_list.itemFromIndex(0)
+            )
 
     def update_model_list(self):
         """
