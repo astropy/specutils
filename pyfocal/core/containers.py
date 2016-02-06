@@ -58,3 +58,14 @@ class PlotContainer(object):
             # self.error.setPen(self._err_pen)
             # self.error.setBrush(self._err_pen)
             self.error.setOpts(pen=pen)
+
+    def update(self):
+        print("PlotContainer.update: {}".format(type(self._layer)))
+        self._plot.setData(self._layer.dispersion.value,
+                           self._layer.data.value)
+
+        if self.error is not None:
+            self.error.setData(
+                    x=self._layer.dispersion.value,
+                    y=self._layer.data.value,
+                    height=self._layer.uncertainty.array)

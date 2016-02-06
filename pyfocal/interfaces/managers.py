@@ -110,21 +110,33 @@ class ModelLayerManager(Manager):
     """
     def __init__(self):
         super(ModelLayerManager, self).__init__()
+        # Model layer manager specified events
+        self.on_add_model = EventHook()
+        self.on_remove_model = EventHook()
+
         self._members = {}
         self.all_models = ModelFactory.all_models.keys()
 
-    def add(self, layer, name):
-        model = ModelFactory.create_model(name)()
+    def new_model(self, layer, model_name):
+        model = ModelFactory.create_model(model_name)()
+
+        self.on_add_model.emit(model)
+
+        return model
+
+    def new_model_layer(self, layer, model):
+        print("ModelLayerManager.new_model_layer: {}".format(type(layer)))
         model_layer = DataFactory.create_model_layer(layer, model)
+        print("ModelLayerManager.new_model_layer: {}".format(type(layer)))
 
         if layer not in self._members:
             self._members[layer] = [model_layer]
         else:
             self._members[layer].append(model_layer)
 
-        self.on_add.emit(layer, model_layer, name)
+        self.on_add.emit(model_layer)
 
-        return model
+        return model_layer
 
     def remove(self, layer, index):
         model_layer = self._members[layer].pop(index)
@@ -140,13 +152,19 @@ class ModelLayerManager(Manager):
 
         return result
 
-    def get_layer_models(self, layer):
-        return self._members.get(layer, [])
+    def get_model_layers(self, layer):
+        model_layers = []
 
-    def get_compound_model(self, layer, model_dict, formula=''):
+        for k, v in self._members.items():
+            if k._source == layer:
+                model_layers.append(*v)
+
+        return self._members.get(layer, []) + model_layers
+
+    def get_compound_model(self, model_dict, formula=''):
         models = []
 
-        for model in self._members[layer]:
+        for model in model_dict.keys():
             for i, param_name in enumerate(model.param_names):
                 setattr(model, param_name, model_dict[model][i])
 
@@ -163,6 +181,20 @@ class ModelLayerManager(Manager):
         self._members[new_layer] = mdls
 
         del self._members[old_layer]
+
+    def update_model(self, model_layer, model_dict):
+        print("ModelManager.update_model: {}".format(model_dict))
+        model = model_layer.model
+
+        compound_model_dict = {}
+
+        for i, item in enumerate(model_dict.items()):
+            model, args = item
+
+            for j, param_name in enumerate(model.param_names):
+                if len(model_dict) > 1:
+                    param_name = "{}_{}".format(param_name, i)
+                setattr(model, param_name, args[j])
 
 
 class PlotManager(Manager):
@@ -188,8 +220,13 @@ class PlotManager(Manager):
     def get_plots(self, parent):
         return self._members[parent]
 
+    def update_plots(self, window, layer):
+        for container in self._members[window]:
+            if container.layer == layer:
+                container.update()
+
 
 data_manager = DataManager()
 layer_manager = LayerManager()
-model_manager = ModelLayerManager()
+model_layer_manager = ModelLayerManager()
 plot_manager = PlotManager()

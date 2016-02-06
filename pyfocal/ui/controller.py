@@ -1,27 +1,32 @@
 from qtpy.QtCore import *
 
 from ..interfaces.managers import data_manager, layer_manager, \
-    model_manager, plot_manager
+    model_layer_manager, plot_manager
 from ..interfaces.registries import loader_registry
 from ..analysis.statistics import stats
 
 
 class Controller(object):
     def __init__(self, viewer):
+        # Controller-specific events
+
+
         self.viewer = viewer
 
-        self._setup_events()
+        # self._setup_events()
         self._setup_connections()
         self._setup_model_fitting()
 
-    def _setup_events(self):
-        # Setup layer event calling
-        layer_manager.on_add += self.viewer.add_layer_item
-        layer_manager.on_remove += self.viewer.remove_layer_item
-
-        # Setup model event calling
-        model_manager.on_add += self.viewer.add_model_item
-        model_manager.on_remove += self.viewer.remove_model_item
+    # def _setup_events(self):
+    #     # Setup layer event calling
+    #     layer_manager.on_add += self.viewer.add_layer_item
+    #     layer_manager.on_remove += self.viewer.remove_layer_item
+    #
+    #     # Setup model event calling
+    #     model_layer_manager.on_add += self.viewer.add_layer_item
+    #     model_layer_manager.on_remove += self.viewer.remove_layer_item
+    #     model_layer_manager.on_add_model += self.viewer.add_model_item
+    #     model_layer_manager.on_remove_model += self.viewer.remove_model_item
 
     def _setup_connections(self):
         self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
@@ -56,12 +61,11 @@ class Controller(object):
 
     def _setup_model_fitting(self):
         # Populate model dropdown
-        self.viewer.main_window.comboBox.addItems(model_manager.all_models)
+        self.viewer.main_window.comboBox.addItems(model_layer_manager.all_models)
 
         # Attach the add button
         self.viewer.main_window.pushButton.clicked.connect(
-            lambda: model_manager.add(self.viewer.current_layer(),
-                                      self.viewer.current_model))
+            self.create_new_model)
 
         # Attach the create button
         self.viewer.main_window.pushButton_4.clicked.connect(
@@ -77,6 +81,13 @@ class Controller(object):
         if current_sub_window is not None:
             current_sub_window.set_active_plot(
                 self.viewer.current_layer())
+
+    def create_new_model(self):
+        print("Adding new model")
+        model = model_layer_manager.new_model(self.viewer.current_layer(),
+                                              self.viewer.current_model)
+
+        self.viewer.add_model_item(model)
 
     def update_statistics(self):
         # Grab all available rois
@@ -118,8 +129,8 @@ class Controller(object):
             Boolean mask.
         """
         roi_mask = mask if mask is not None else self.get_roi_mask()
-        layer = layer_manager.add(layer._source, mask=roi_mask,
-                                  window=sub_window)
+        layer = layer_manager.new_model(layer._source, mask=roi_mask,
+                                        window=sub_window)
 
         self.add_plot(layer=layer)
 
@@ -133,7 +144,6 @@ class Controller(object):
             self.viewer.add_sub_window()
 
         # Connect the statistics to the roi interactions
-
 
         self.add_plot(data=data, window=window)
 
@@ -168,6 +178,7 @@ class Controller(object):
 
         plot_container = plot_manager.new_line_plot(layer, window)
         window.add_container(plot_container)
+        self.update_layer_list()
 
     def new_model_layer(self):
         """
@@ -178,24 +189,22 @@ class Controller(object):
         if current_layer is None:
             return
 
-        model_layer = layer_manager.new(current_layer._source,
-                                        mask=self.get_roi_mask(),
-                                        parent=current_layer,
-                                        window=current_layer._window)
-        print("Controller.new_model_layer: {}".format(model_layer._parent))
         model_inputs = self.viewer.get_model_inputs()
-        compound_model = model_manager.get_compound_model(layer=current_layer,
-                                                          model_dict=model_inputs,
-                                                          formula=self.viewer.current_model_formula)
+        compound_model = model_layer_manager.get_compound_model(model_dict=model_inputs,
+                                                                formula=self.viewer.current_model_formula)
 
-        new_layer = layer_manager.add_from_model(model_layer,
-                                                 compound_model)
+        print("Controller.new_model_layer: {}".format(type(current_layer)))
+        new_layer = model_layer_manager.new_model_layer(current_layer,
+                                                        compound_model)
+        self.viewer.add_layer_item(new_layer)
 
         # Transfer models from original layer to new model layer
-        model_manager.transfer_models(current_layer, new_layer)
-        self.update_model_list()
+        model_layer_manager.transfer_models(current_layer, new_layer)
 
         self.add_plot(layer=new_layer)
+
+        self.update_model_list()
+        self.update_layer_list()
 
         return new_layer
 
@@ -204,11 +213,11 @@ class Controller(object):
         Updates the current layer with the results of the model.
         """
         current_layer = self.viewer.current_layer()
+        current_window = self.viewer.current_sub_window()
         model_inputs = self.viewer.get_model_inputs()
-        compound_model = model_manager.get_compound_model(current_layer,
-                                                          model_dict=model_inputs)
-        layer_manager.update_model_layer(current_layer,
-                                         compound_model)
+        model_layer_manager.update_model(current_layer, model_inputs)
+
+        plot_manager.update_plots(current_window, current_layer)
 
     def update_layer_list(self):
         """
@@ -223,7 +232,11 @@ class Controller(object):
         self.viewer.clear_layer_widget()
 
         for layer in layers:
+            print(model_layer_manager.get_model_layers(layer))
             self.viewer.add_layer_item(layer)
+
+            for model_layer in model_layer_manager.get_model_layers(layer):
+                self.viewer.add_layer_item(model_layer)
 
         if len(layers) > 0:
             return
@@ -237,13 +250,13 @@ class Controller(object):
         selected layer list item.
         """
         current_layer = self.viewer.current_layer()
-        models = model_manager.get_layer_models(current_layer)
+        model_layers = model_layer_manager.get_model_layers(current_layer)
+        print(model_layers)
 
         self.viewer.clear_model_widget()
 
-        for model in models:
-            self.viewer.add_model_item(current_layer, model,
-                                       model.__class__.__name__)
+        for model_layer in model_layers:
+            self.viewer.add_model_item(model_layer.model)
 
     def get_roi_mask(self):
         """

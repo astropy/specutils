@@ -39,7 +39,7 @@ class Viewer(QMainWindow):
         if layer is None:
             return
 
-        if layer._parent is None:
+        if not hasattr(layer, 'model'):
             self.main_window.pushButton_4.show()
             self.main_window.pushButton_2.hide()
         else:
@@ -122,7 +122,7 @@ class Viewer(QMainWindow):
         new_item = QListWidgetItem(data.name, self.wgt_data_list)
         new_item.setData(Qt.UserRole, data)
 
-    def add_layer_item(self, layer):
+    def add_layer_item(self, layer, *args):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -131,8 +131,11 @@ class Viewer(QMainWindow):
         layer : pyfocal.core.data.Layer
             The `Layer` object to add to the list widget.
         """
-        print("Viewer.add_layer_item: {}".format(layer._parent))
-        new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
+        print("---")
+        print(type(layer))
+        print(type(layer._source))
+        print(type(self.get_layer_item(layer._source)))
+        new_item = QTreeWidgetItem(self.get_layer_item(layer._source) or
                                    self.wgt_layer_list)
         new_item.setText(0, layer.name)
         new_item.setData(0, Qt.UserRole, layer)
@@ -154,15 +157,14 @@ class Viewer(QMainWindow):
                 self.wgt_layer_list.removeItemWidget(child)
                 break
 
-    def add_model_item(self, layer, model, name):
+    def add_model_item(self, model):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
         Parameters
         ----------
-        model : `astropy.modeling.Model`
-            Model to add to the tree widget.
         """
+        name = model.__class__.__name__
         new_item = QTreeWidgetItem(self.wgt_model_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 
@@ -172,7 +174,8 @@ class Viewer(QMainWindow):
         for i, para in enumerate(model.param_names):
             new_para_item = QTreeWidgetItem(new_item)
             new_para_item.setText(0, para)
-            new_para_item.setData(0, Qt.UserRole, model.parameters[i])
+            new_para_item.setData(0, Qt.UserRole,
+                                  model.parameters[i])
             new_para_item.setText(1, str(model.parameters[i]))
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
 

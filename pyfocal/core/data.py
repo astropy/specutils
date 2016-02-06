@@ -75,12 +75,13 @@ class Layer(object):
 
     @property
     def data(self):
-        if self._model is not None:
-            data = self._model(self.dispersion)
-        else:
-            data = self._source.data[self._mask]
+        data = self._source.data[self._mask]
 
         return Quantity(data, unit=self._source.unit).to(self.units[1])
+
+    @property
+    def unit(self):
+        return self._source.unit
 
     @property
     def dispersion(self):
@@ -114,13 +115,15 @@ class ModelLayer(object):
         self._source = source
         self._model = model
         self._data = None
+        self._window = self._source._window
+        self.name = self._source.name + " Model"
 
     @property
     def data(self):
-        if self._data is None:
-            self._data = self._model(self.data)
+        self._data = self._model(self._source.dispersion.value)
 
-        return self._data
+        return Quantity(self._data,
+                        unit=self._source.unit).to(self._source.units[1])
 
     @property
     def dispersion(self):
@@ -128,7 +131,7 @@ class ModelLayer(object):
 
     @property
     def uncertainty(self):
-        return self._source.uncertainty
+        return None #self._source.uncertainty
 
     @property
     def mask(self):
@@ -150,3 +153,7 @@ class ModelLayer(object):
     def model(self, value):
         self._model = value
         self._data = self._model(self.data)
+
+    @property
+    def layer(self):
+        return self._source
