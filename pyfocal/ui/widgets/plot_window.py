@@ -11,11 +11,9 @@ class PlotWindow(QMainWindow):
 
     def __init__(self, **kwargs):
         super(PlotWindow, self).__init__(**kwargs)
-        # Public
         self._plot_widget = None
         self._plot_item = None
 
-        # Private
         self._containers = []
         self._tool_bar = None
 
@@ -27,9 +25,9 @@ class PlotWindow(QMainWindow):
         return self._tool_bar
 
     def get_roi_mask(self, layer=None, container=None):
-        return self._plot_widget.get_roi_mask(
-                container if container is not None else self.get_container(
-                        layer))
+        if layer is not None or container is not None:
+            return self._plot_widget.get_roi_mask(
+                container or self.get_container(layer))
 
     def get_roi_data(self, layer=None, container=None):
         mask = self.get_roi_mask(layer, container)

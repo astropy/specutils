@@ -44,11 +44,11 @@ def stats(data):
     -------
     statistics: dict
     """
-    return {'mean':    np.mean(flux),
-            'median':  np.median(flux),
-            'stddev':  np.std(flux),
-            'total':   np.trapz(flux),
-            'npoints': len(flux)
+    return {'mean':    np.mean(data),
+            'median':  np.median(data),
+            'stddev':  np.std(data),
+            'total':   np.trapz(data),
+            'npoints': len(data)
             }
 
 

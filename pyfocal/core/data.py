@@ -120,7 +120,8 @@ class ModelLayer(object):
 
     @property
     def data(self):
-        self._data = self._model(self._source.dispersion.value)
+        if self._data is None:
+            self._data = self._model(self._source.dispersion.value)
 
         return Quantity(self._data,
                         unit=self._source.unit).to(self._source.units[1])
@@ -152,7 +153,7 @@ class ModelLayer(object):
     @model.setter
     def model(self, value):
         self._model = value
-        self._data = self._model(self.data)
+        self._data = self._model(self._source.dispersion.value)
 
     @property
     def layer(self):

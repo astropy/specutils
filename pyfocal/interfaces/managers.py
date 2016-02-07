@@ -125,9 +125,7 @@ class ModelLayerManager(Manager):
         return model
 
     def new_model_layer(self, layer, model):
-        print("ModelLayerManager.new_model_layer: {}".format(type(layer)))
         model_layer = DataFactory.create_model_layer(layer, model)
-        print("ModelLayerManager.new_model_layer: {}".format(type(layer)))
 
         if layer not in self._members:
             self._members[layer] = [model_layer]
@@ -180,21 +178,13 @@ class ModelLayerManager(Manager):
         mdls = self._members[old_layer]
         self._members[new_layer] = mdls
 
+        self._members[old_layer] = []
         del self._members[old_layer]
 
-    def update_model(self, model_layer, model_dict):
+    def update_model(self, model_layer, model_dict, formula=''):
         print("ModelManager.update_model: {}".format(model_dict))
-        model = model_layer.model
-
-        compound_model_dict = {}
-
-        for i, item in enumerate(model_dict.items()):
-            model, args = item
-
-            for j, param_name in enumerate(model.param_names):
-                if len(model_dict) > 1:
-                    param_name = "{}_{}".format(param_name, i)
-                setattr(model, param_name, args[j])
+        model = self.get_compound_model(model_dict, formula)
+        model_layer.model = model
 
 
 class PlotManager(Manager):

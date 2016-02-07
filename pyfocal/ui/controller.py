@@ -44,6 +44,10 @@ class Controller(object):
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             self.update_model_list)
 
+        # When a layer is selected, update the statistics for current ROIs
+        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
+            self.update_statistics)
+
         # When a layer is selected, make that line more obvious than the others
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             self._set_active_plot)
@@ -83,15 +87,15 @@ class Controller(object):
                 self.viewer.current_layer())
 
     def create_new_model(self):
-        print("Adding new model")
         model = model_layer_manager.new_model(self.viewer.current_layer(),
                                               self.viewer.current_model)
 
         self.viewer.add_model_item(model)
 
-    def update_statistics(self):
+    def update_statistics(self, *args):
         # Grab all available rois
         current_layer = self.viewer.current_layer()
+
         mask = self.get_roi_mask()
 
         if current_layer is None or mask is None:
@@ -140,8 +144,10 @@ class Controller(object):
         `sub_window` will be retrieved from the viewer if they are not defined.
         """
         data = data if data is not None else self.viewer.current_data()
-        window = window if window is not None else \
-            self.viewer.add_sub_window()
+
+        if window is None:
+            window = self.viewer.add_sub_window()
+            window._plot_widget.on_roi_update += self.update_statistics
 
         # Connect the statistics to the roi interactions
 
@@ -190,8 +196,9 @@ class Controller(object):
             return
 
         model_inputs = self.viewer.get_model_inputs()
-        compound_model = model_layer_manager.get_compound_model(model_dict=model_inputs,
-                                                                formula=self.viewer.current_model_formula)
+        compound_model = model_layer_manager.get_compound_model(
+            model_dict=model_inputs,
+            formula=self.viewer.current_model_formula)
 
         print("Controller.new_model_layer: {}".format(type(current_layer)))
         new_layer = model_layer_manager.new_model_layer(current_layer,
@@ -215,7 +222,8 @@ class Controller(object):
         current_layer = self.viewer.current_layer()
         current_window = self.viewer.current_sub_window()
         model_inputs = self.viewer.get_model_inputs()
-        model_layer_manager.update_model(current_layer, model_inputs)
+        model_layer_manager.update_model(current_layer, model_inputs,
+                                         self.viewer.current_model_formula)
 
         plot_manager.update_plots(current_window, current_layer)
 
@@ -232,17 +240,10 @@ class Controller(object):
         self.viewer.clear_layer_widget()
 
         for layer in layers:
-            print(model_layer_manager.get_model_layers(layer))
             self.viewer.add_layer_item(layer)
 
             for model_layer in model_layer_manager.get_model_layers(layer):
                 self.viewer.add_layer_item(model_layer)
-
-        if len(layers) > 0:
-            return
-            self.viewer.wgt_layer_list.setCurrentItem(
-                self.viewer.wgt_layer_list.itemFromIndex(0)
-            )
 
     def update_model_list(self):
         """
@@ -251,12 +252,15 @@ class Controller(object):
         """
         current_layer = self.viewer.current_layer()
         model_layers = model_layer_manager.get_model_layers(current_layer)
-        print(model_layers)
 
         self.viewer.clear_model_widget()
 
         for model_layer in model_layers:
-            self.viewer.add_model_item(model_layer.model)
+            if hasattr(model_layer.model, "submodel_names"):
+                for i in range(len(model_layer.model.submodel_names)):
+                    self.viewer.add_model_item(model_layer.model[i])
+            else:
+                self.viewer.add_model_item(model_layer.model)
 
     def get_roi_mask(self):
         """

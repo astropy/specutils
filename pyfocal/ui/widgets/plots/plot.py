@@ -1,3 +1,5 @@
+from ....core.events import EventHook
+
 import pyqtgraph as pg
 import numpy as np
 from functools import reduce
@@ -10,6 +12,13 @@ pg.setConfigOptions(antialias=False)
 class Plot(pg.PlotWidget):
     def __init__(self, data=None, parent=None, *args, **kwargs):
         super(Plot, self).__init__(*args, **kwargs)
+        # Events
+        self.on_roi_update = EventHook()
+        self.on_roi_add = EventHook()
+        self.on_roi_remove = EventHook()
+        self.on_roi_change_start = EventHook()
+        self.on_roi_change_end = EventHook()
+
         self._parent = parent
 
         # Cache plot item
@@ -24,6 +33,9 @@ class Plot(pg.PlotWidget):
         # Add data
         if data is not None:
             self.add_data(data)
+
+        # Send a statistics update event
+        self.on_roi_update.emit(None)
 
     def _setup_connections(self):
         if self._parent is not None:
@@ -56,6 +68,14 @@ class Plot(pg.PlotWidget):
         # Set the active ROI as the last one interacted with
         roi.sigRegionChangeFinished.connect(self._set_active_roi)
 
+        # Connect events
+        self.on_roi_update.emit(roi)
+        roi.sigRemoveRequested.connect(lambda: self.on_roi_update.emit(roi))
+        roi.sigRegionChangeFinished.connect(
+            lambda: self.on_roi_update.emit(roi))
+        roi.sigRegionChangeStarted.connect(
+            lambda: self.on_roi_update.emit(roi))
+
     def _set_active_roi(self, roi):
         self._active_roi = roi
 
@@ -66,6 +86,9 @@ class Plot(pg.PlotWidget):
         raise NotImplemented()
 
     def get_roi_mask(self, container):
+        if container is None:
+            return
+
         mask_holder = []
 
         for roi in self._rois:

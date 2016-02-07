@@ -131,10 +131,6 @@ class Viewer(QMainWindow):
         layer : pyfocal.core.data.Layer
             The `Layer` object to add to the list widget.
         """
-        print("---")
-        print(type(layer))
-        print(type(layer._source))
-        print(type(self.get_layer_item(layer._source)))
         new_item = QTreeWidgetItem(self.get_layer_item(layer._source) or
                                    self.wgt_layer_list)
         new_item.setText(0, layer.name)
@@ -274,11 +270,11 @@ class Viewer(QMainWindow):
             return sub_window.widget()
 
     def update_statistics(self, stat_dict):
-        self.main_window.label_2.setText(stat_dict['mean'])
-        self.main_window.label_4.setText(stat_dict['median'])
-        self.main_window.label_6.setText(stat_dict['stddev'])
-        self.main_window.label_8.setText(stat_dict['total'])
-        self.main_window.label_10.setText(stat_dict['npoints'])
+        self.main_window.label_2.setText("{0:0.03f}".format(stat_dict['mean']))
+        self.main_window.label_4.setText("{0:0.03f}".format(stat_dict['median']))
+        self.main_window.label_6.setText("{0:0.03f}".format(stat_dict['stddev']))
+        self.main_window.label_8.setText("{0:0.03f}".format(stat_dict['total']))
+        self.main_window.label_10.setText(str(stat_dict['npoints']))
 
     def _layer_context_menu(self, point):
         menu = QMenu()
