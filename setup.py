@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='pyfocal',
@@ -11,5 +11,11 @@ setup(
     license='',
     author='Nicholas Earl',
     author_email='nmearl@protonmail.com',
-    description='An interactive astronomical analysis tool.'
+    description='An interactive astronomical analysis tool.',
+    include_package_data=True,
+    entry_points={
+        'console_scripts': [
+            'pyfocal = pyfocal.app:main'
+        ]
+    }
 )

@@ -7,8 +7,8 @@ import sys
 from qtpy.QtWidgets import *
 
 # import qdarkstyle
-from pyfocal.ui.viewer import Viewer
-from pyfocal.ui.controller import Controller
+from .ui.viewer import Viewer
+from .ui.controller import Controller
 
 
 class App(object):
