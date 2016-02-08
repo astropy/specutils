@@ -20,7 +20,7 @@ You may also clone the repository directory somewhere on your local machine and 
 Launching from command line
 ---------------------------
 For either way in which you chose to install, you may now launch Pyfocal from anywhere on your system by entering the
- following into your terminal::
+following into your terminal::
 
     $ pyfocal
 

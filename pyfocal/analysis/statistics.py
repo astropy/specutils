@@ -7,7 +7,7 @@ def extract(data, x_range):
     """
     Extracts a region from a spectrum.
 
-    Paramaters
+    Parameters
     ----------
     spectrum_data: SpectrumData
         Contains the spectrum to be extracted.
