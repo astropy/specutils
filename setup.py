@@ -14,10 +14,11 @@ setup(
     description='An interactive astronomical analysis tool.',
     include_package_data=True,
     install_requires=[
-        "qtpy",
         "astropy",
         "numpy",
-        "py_expression_eval"
+        "py_expression_eval",
+        "pyyaml",
+        "qtpy",
     ],
     entry_points={
         'console_scripts': [
