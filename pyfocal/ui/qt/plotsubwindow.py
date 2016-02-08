@@ -56,16 +56,12 @@ class Ui_SpectraSubWindow(object):
         self.actionChange_Top_Axis.setObjectName("actionChange_Top_Axis")
         self.actionChange_Units = QtWidgets.QAction(SpectraSubWindow)
         self.actionChange_Units.setObjectName("actionChange_Units")
-        self.actionSelection_Highlight = QtWidgets.QAction(SpectraSubWindow)
-        self.actionSelection_Highlight.setCheckable(True)
-        self.actionSelection_Highlight.setObjectName("actionSelection_Highlight")
         self.toolBar.addAction(self.actionInsert_ROI)
         self.toolBar.addAction(self.actionInsert_Elliptical_ROI)
         self.toolBar.addAction(self.actionPolygon_ROI)
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.actionGraph_Settings)
         self.toolBar.addAction(self.actionPlot_Settings)
-        self.toolBar.addAction(self.actionSelection_Highlight)
 
         self.retranslateUi(SpectraSubWindow)
         QtCore.QMetaObject.connectSlotsByName(SpectraSubWindow)
@@ -85,7 +81,5 @@ class Ui_SpectraSubWindow(object):
         self.actionPlot_Settings.setToolTip(_translate("SpectraSubWindow", "Edit plot settings"))
         self.actionChange_Top_Axis.setText(_translate("SpectraSubWindow", "Change Top Axis"))
         self.actionChange_Units.setText(_translate("SpectraSubWindow", "Change Units"))
-        self.actionSelection_Highlight.setText(_translate("SpectraSubWindow", "Selection Highlight"))
-        self.actionSelection_Highlight.setToolTip(_translate("SpectraSubWindow", "Enable highlighting of current ROI"))
 
 from . import icon_resource_rc
