@@ -13,6 +13,12 @@ setup(
     author_email='nmearl@protonmail.com',
     description='An interactive astronomical analysis tool.',
     include_package_data=True,
+    install_requires=[
+        "qtpy",
+        "astropy",
+        "numpy",
+        "py_expression_eval"
+    ],
     entry_points={
         'console_scripts': [
             'pyfocal = pyfocal.app:main'
