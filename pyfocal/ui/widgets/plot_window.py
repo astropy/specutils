@@ -31,7 +31,7 @@ class PlotWindow(QMainWindow):
 
     def get_roi_data(self, layer=None, container=None):
         mask = self.get_roi_mask(layer, container)
-        return
+        raise NotImplemented()
 
     def action(self, name):
         # TODO: Revisit this sometime in the future.

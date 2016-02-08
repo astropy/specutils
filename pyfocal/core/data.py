@@ -95,7 +95,7 @@ class Layer(object):
 
     @property
     def uncertainty(self):
-        return self._source.uncertainty
+        return self._source.uncertainty[self._mask]
 
     @property
     def mask(self):

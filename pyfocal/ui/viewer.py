@@ -270,10 +270,11 @@ class Viewer(QMainWindow):
             return sub_window.widget()
 
     def update_statistics(self, stat_dict):
-        self.main_window.label_2.setText("{0:0.03f}".format(stat_dict['mean']))
-        self.main_window.label_4.setText("{0:0.03f}".format(stat_dict['median']))
-        self.main_window.label_6.setText("{0:0.03f}".format(stat_dict['stddev']))
-        self.main_window.label_8.setText("{0:0.03f}".format(stat_dict['total']))
+        self.main_window.label_2.setText("{0:0.03f}".format(stat_dict[
+                                                                'mean'].value))
+        self.main_window.label_4.setText("{0:0.03f}".format(stat_dict['median'].value))
+        self.main_window.label_6.setText("{0:0.03f}".format(stat_dict['stddev'].value))
+        self.main_window.label_8.setText("{0:0.03f}".format(stat_dict['total'].value))
         self.main_window.label_10.setText(str(stat_dict['npoints']))
 
     def _layer_context_menu(self, point):

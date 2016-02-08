@@ -47,7 +47,6 @@ class LayerManager(Manager):
 
     def new(self, data, mask=None, parent=None, window=None):
         new_layer = DataFactory.create_layer(data, mask, parent, window)
-        print("LayerManager.new: {}".format(new_layer._parent))
         return new_layer
 
     def add(self, data, mask=None, parent=None, window=None):
@@ -150,14 +149,34 @@ class ModelLayerManager(Manager):
 
         return result
 
-    def get_model_layers(self, layer):
-        model_layers = []
+    def get_model_layers(self, layer, no_keys=False):
+        """
+        Returns the `ModelLayer` objects associated with `Layer`.
 
-        for k, v in self._members.items():
-            if k._source == layer:
-                model_layers.append(*v)
+        Parameters
+        ----------
+        layer : core.data.Layer
+            The `Layer` object the `ModelLayer`s are associated with.
+        no_keys : bool, optional
+            Whether to exclude top-level `ModelLayer` objects (`True`).
 
-        return self._members.get(layer, []) + model_layers
+        Returns
+        -------
+        result : list
+            List of `ModelLayer` objects.
+        """
+        result = self._members.get(layer, [])
+
+        if not no_keys:
+            model_layers = []
+
+            for k, v in self._members.items():
+                if k._source == layer:
+                    model_layers.append(*v)
+
+            result += model_layers
+
+        return result
 
     def get_compound_model(self, model_dict, formula=''):
         models = []

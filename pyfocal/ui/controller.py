@@ -133,8 +133,8 @@ class Controller(object):
             Boolean mask.
         """
         roi_mask = mask if mask is not None else self.get_roi_mask()
-        layer = layer_manager.new_model(layer._source, mask=roi_mask,
-                                        window=sub_window)
+        layer = layer_manager.add(layer._source, mask=roi_mask,
+                                  window=sub_window)
 
         self.add_plot(layer=layer)
 
@@ -200,20 +200,29 @@ class Controller(object):
             model_dict=model_inputs,
             formula=self.viewer.current_model_formula)
 
-        print("Controller.new_model_layer: {}".format(type(current_layer)))
-        new_layer = model_layer_manager.new_model_layer(current_layer,
-                                                        compound_model)
-        self.viewer.add_layer_item(new_layer)
+        # Create new layer using current ROI masks, if they exist
+        mask = self.get_roi_mask()
+        print(mask.shape, current_layer.data.shape)
+
+        if mask[mask == True].size != current_layer.data.size:
+            current_layer = layer_manager.add(current_layer._source,
+                                              mask=self.get_roi_mask(),
+                                              window=current_layer._window)
+            self.add_plot(layer=current_layer)
+
+        new_model_layer = model_layer_manager.new_model_layer(current_layer,
+                                                              compound_model)
+        self.viewer.add_layer_item(new_model_layer)
 
         # Transfer models from original layer to new model layer
-        model_layer_manager.transfer_models(current_layer, new_layer)
+        model_layer_manager.transfer_models(current_layer, new_model_layer)
 
-        self.add_plot(layer=new_layer)
+        self.add_plot(layer=new_model_layer)
 
         self.update_model_list()
         self.update_layer_list()
 
-        return new_layer
+        return new_model_layer
 
     def update_model_layer(self):
         """
@@ -232,7 +241,6 @@ class Controller(object):
         Clears and repopulates the layer list depending on the currently
         selected sub window.
         """
-        print("Updating layer list")
         current_window = self.viewer.current_sub_window()
 
         layers = layer_manager.get_window_layers(current_window)
@@ -251,7 +259,8 @@ class Controller(object):
         selected layer list item.
         """
         current_layer = self.viewer.current_layer()
-        model_layers = model_layer_manager.get_model_layers(current_layer)
+        model_layers = model_layer_manager.get_model_layers(current_layer,
+                                                            True)
 
         self.viewer.clear_model_widget()
 
