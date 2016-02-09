@@ -1,4 +1,4 @@
 --index-url https://pypi.python.org/simple/
 
-git://github.com/nmearl/pyqtgraph.git#egg=pyqtgraph
+git+git://github.com/nmearl/pyqtgraph.git#egg=pyqtgraph
 -e .
