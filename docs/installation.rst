@@ -15,7 +15,7 @@ with the exception of ``PyQt``/``PySide``.
 * Numpy
 * PyQtGraph
 * py_expression_eval
-* pyqt
+* qtpy
 
 Installing PyQt/PySide
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -30,7 +30,7 @@ recommended PyQt implementation as `Qt4 development and support has ended <http:
 
 Installing from source
 ----------------------
-You may also clone the repository directory somewhere on your local machine and install from there.
+Go ahead and clone the repository somewhere on your system, and install locally using ``pip``.
 
 .. note::
 
@@ -47,8 +47,7 @@ You may also clone the repository directory somewhere on your local machine and 
 
 Launching from command line
 ---------------------------
-For either way in which you chose to install, you may now launch Pyfocal from anywhere on your system by entering the
-following into your terminal::
+Once PyQt/PySide and the other dependencies are installed, Pyfocal can be launched from the command line ::
 
     $ pyfocal
 
