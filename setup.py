@@ -1,7 +1,8 @@
 from setuptools import setup
 
+
 setup(
-    name='pyfocal',
+    name='Pyfocal',
     version='0.1a1',
     packages=['pyfocal', 'pyfocal.ui', 'pyfocal.ui.qt',
               'pyfocal.ui.qt.uic.source.qdarkstyle', 'pyfocal.ui.widgets',
@@ -14,11 +15,11 @@ setup(
     description='An interactive astronomical analysis tool.',
     include_package_data=True,
     install_requires=[
-        "astropy",
-        "numpy",
-        "py_expression_eval",
-        "pyyaml",
-        "qtpy",
+        'astropy>=1.1',
+        'numpy>=1.10',
+        'py-expression-eval>=0.3',
+        'PyYAML>=3.11',
+        'QtPy>=0.1.3'
     ],
     entry_points={
         'console_scripts': [
