@@ -1,22 +1,32 @@
+"""Functions for spectral statistical analysis."""
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+# THIRD-PARTY
 import numpy as np
 
-from pyfocal.core.data import Data
+# LOCAL
+from ..core.data import Data
+
+__all__ = ['extract', 'stats', 'eq_width']
 
 
 def extract(data, x_range):
-    """
-    Extracts a region from a spectrum.
+    """Extract a region from a spectrum.
 
     Parameters
     ----------
-    spectrum_data: SpectrumData
+    data : ``Data``
         Contains the spectrum to be extracted.
-    w_range: tuple
-        A spectral coordinate range as in (wave1, wave2)
+
+    x_range : tuple
+        A spectral coordinate range as in ``(wave1, wave2)``.
 
     Returns
     -------
-        SpectrumData with extracted region.
+    result : ``Data``
+        Spectrum data with extracted region.
+
     """
     x = data.data
     y = data.dispersion
@@ -31,50 +41,49 @@ def extract(data, x_range):
 
 
 def stats(data):
-    """
-    Computes basic statistics for a spectral region
-    contained in a SpectrumData instance.
+    """Compute basic statistics for a spectral region
+    contained in a ``Data`` instance.
 
     Parameters
     ----------
-    spectrum_data: SpectrumData
-        Typically this is returned by the extract() function
+    data : ``Data``
+        Typically this is returned by the :func:`extract` function.
 
     Returns
     -------
-    statistics: dict
+    statistics : dict
+        Statistics results.
+
     """
     return {'mean':    np.mean(data),
             'median':  np.median(data),
             'stddev':  np.std(data),
             'total':   np.trapz(data),
-            'npoints': len(data)
-            }
+            'npoints': len(data)}
 
 
 def eq_width(cont1_stats, cont2_stats, line):
-    """
-    Computes an equivalent width given stats for two continuum
-    regions, and a SpectrumData instance with the extracted
+    """Compute an equivalent width given stats for two continuum
+    regions, and a ``Data`` instance with the extracted
     spectral line region.
 
-    This uses for now a very simple continuum subtraction method:
+    This uses for now a very simple continuum subtraction method; i.e.,
     it just subtracts a constant from the line spectrum, where the
-    constant is (continuum1[mean] + continuum2[mean]) / 2.
+    constant is ``(continuum1[mean] + continuum2[mean]) / 2``.
 
     Parameters
     ----------
-    cont1_stats: dict
-        This is returned by the stats() function
-    cont2_stats: dict
-        This is returned by the stats() function
-    line: SpectrumData
-        This is returned by the extract() function
+    cont1_stats, cont2_stats : dict
+        This is returned by the :func:`stats` function.
+
+    line : ``Data``
+        This is returned by the :func:`extract` function.
 
     Returns
     -------
-    flux, equivalent width: tuple
-        tuple with two floats
+    flux, ew : float
+        Flux and equivalent width values.
+
     """
     # average of 2 continuum regions.
     avg_cont = (cont1_stats['mean'] + cont2_stats['mean']) / 2.0
