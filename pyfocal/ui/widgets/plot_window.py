@@ -1,8 +1,9 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from ..widgets.plots.plot import Plot
-from ...third_party.qtpy.QtWidgets import *
+from .axes import DynamicAxisItem
+
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+
 import pyqtgraph as pg
 
 
@@ -12,11 +13,17 @@ class PlotWindow(QMainWindow):
 
     def __init__(self, **kwargs):
         super(PlotWindow, self).__init__(**kwargs)
+        self._sub_window = None
         self._plot_widget = None
         self._plot_item = None
+        self._dynamic_axis = None
 
         self._containers = []
         self._tool_bar = None
+
+    def set_sub_window(self, sub_window):
+        self._sub_window = sub_window
+        self._setup_toolbar_menus()
 
     @property
     def tool_bar(self):
@@ -27,10 +34,8 @@ class PlotWindow(QMainWindow):
 
     def get_roi_mask(self, layer=None, container=None):
         if layer is not None or container is not None:
-            mask = self._plot_widget.get_roi_mask(
+            return self._plot_widget.get_roi_mask(
                 container or self.get_container(layer))
-
-            return mask
 
     def get_roi_data(self, layer=None, container=None):
         mask = self.get_roi_mask(layer, container)
@@ -43,8 +48,11 @@ class PlotWindow(QMainWindow):
                 return act
 
     def initialize(self):
-        self._plot_widget = Plot(parent=self)
+        self._dynamic_axis = DynamicAxisItem(orientation='top')
+        self._plot_widget = Plot(parent=self, axisItems={'top': self._dynamic_axis})
         self._plot_item = self._plot_widget._plot_item
+
+        self._plot_item.showAxis('top', True)
 
         # Add grids to the plot
         self._plot_item.showGrid(True, True)
@@ -83,6 +91,42 @@ class PlotWindow(QMainWindow):
             if container.layer == layer:
                 container.pen = self.active_color
                 container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
+                self.update_axis(layer=layer)
             else:
                 container.pen = self.inactive_color
-                container.error_pen = pg.mkPen(None)
+                container.error_pen = None
+
+    def update_axis(self, layer=None, mode='', **kwargs):
+        self._dynamic_axis.update_axis(layer, mode, **kwargs)
+
+    def _setup_toolbar_menus(self):
+        # Window menu
+        window_menu = QMenu()
+        window_menu.addAction("Change Top Axis")
+        window_menu.addAction("Change Units")
+
+        icon = QIcon()
+        icon.addPixmap(QPixmap(":/Settings-50.png"), QIcon.Normal, QIcon.Off)
+
+        window_menu_btn = QToolButton(self._sub_window.toolBar)
+        window_menu_btn.setIcon(icon)
+        window_menu_btn.setMenu(window_menu)
+        window_menu_btn.setPopupMode(QToolButton.InstantPopup)
+
+        self._sub_window.toolBar.addWidget(window_menu_btn)
+
+        # Layer menu
+        layer_menu = QMenu()
+        layer_menu.addAction("Color")
+
+        icon = QIcon()
+        icon.addPixmap(QPixmap(":/Settings 3-50.png"), QIcon.Normal,
+                        QIcon.Off)
+
+        layer_menu_btn = QToolButton(self._sub_window.toolBar)
+        layer_menu_btn.setIcon(icon)
+        layer_menu_btn.setMenu(window_menu)
+        layer_menu_btn.setPopupMode(QToolButton.InstantPopup)
+
+        self._sub_window.toolBar.addWidget(layer_menu_btn)
+

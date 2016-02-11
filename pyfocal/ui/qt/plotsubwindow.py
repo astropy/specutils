@@ -61,8 +61,6 @@ class Ui_SpectraSubWindow(object):
         self.toolBar.addAction(self.actionInsert_Elliptical_ROI)
         self.toolBar.addAction(self.actionPolygon_ROI)
         self.toolBar.addSeparator()
-        self.toolBar.addAction(self.actionGraph_Settings)
-        self.toolBar.addAction(self.actionPlot_Settings)
 
         self.retranslateUi(SpectraSubWindow)
         QtCore.QMetaObject.connectSlotsByName(SpectraSubWindow)

@@ -64,14 +64,14 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
         if self._dispersion is None:
             self._dispersion = np.arange(self.data.size)
 
-            # try:
-            crval = self.wcs.wcs.crval[0]
-            cdelt = self.wcs.wcs.cdelt[0]
-            end = self.data.shape[0] * cdelt + crval
-            self._dispersion = np.arange(crval, end, cdelt)
-            # except:
-            #     logging.warning("Invalid FITS headers; constructing default "
-            #                     "dispersion array.")
+            try:
+                crval = self.wcs.wcs.crval[0]
+                cdelt = self.wcs.wcs.cdelt[0]
+                end = self.data.shape[0] * cdelt + crval
+                self._dispersion = np.arange(crval, end, cdelt)
+            except:
+                logging.warning("Invalid FITS headers; constructing default "
+                                "dispersion array.")
 
         return self._dispersion
 

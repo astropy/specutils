@@ -13,8 +13,6 @@ from ..analysis.modeling import apply_model
 class Controller(object):
     def __init__(self, viewer):
         # Controller-specific events
-
-
         self.viewer = viewer
 
         # self._setup_events()
