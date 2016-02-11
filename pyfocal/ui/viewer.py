@@ -1,7 +1,10 @@
-from qtpy.QtGui import *
-from qtpy.QtCore import *
-from qtpy.QtWidgets import *
-# from PyQt5.QtWidgets import *
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+from ..third_party.qtpy.QtGui import *
+from ..third_party.qtpy.QtCore import *
+from ..third_party.qtpy.QtWidgets import *
+
 from .qt.mainwindow import Ui_MainWindow
 from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.plot_window import PlotWindow

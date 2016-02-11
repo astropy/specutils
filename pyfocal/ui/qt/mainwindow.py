@@ -5,8 +5,10 @@
 # Created by: PyQt5 UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+from ...third_party.qtpy import QtCore, QtGui, QtWidgets
 
-from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -245,7 +247,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setSpacing(6)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.treeWidget = QtWidgets.QTreeWidget(self.groupBox_3)
-        self.treeWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
+        if hasattr(self.treeWidget, 'setSizeAdjustPolicy'):
+            self.treeWidget.setSizeAdjustPolicy(
+                QtWidgets.QAbstractScrollArea.AdjustIgnored)
         self.treeWidget.setAllColumnsShowFocus(False)
         self.treeWidget.setHeaderHidden(False)
         self.treeWidget.setColumnCount(2)

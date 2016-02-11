@@ -11,7 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   introduction
    installation
+   model_fitting
+   custom_loaders
 
 
 Indices and tables
@@ -19,5 +22,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
-
