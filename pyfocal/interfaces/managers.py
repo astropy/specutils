@@ -1,8 +1,8 @@
 from .factories import DataFactory, ModelFactory, PlotFactory
 from ..core.events import EventHook
 from ..analysis import modeling
+from ..third_party.py_expression_eval import Parser
 
-from py_expression_eval import Parser
 import logging
 import numpy as np
 

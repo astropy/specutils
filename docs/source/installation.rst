@@ -25,14 +25,14 @@ recommended PyQt implementation as `Qt4 development and support has ended <http:
 
 **For PyQt5**
 
-* `Install using Homebrew <http://brewformulas.org/Pyqt5>`_.
+* `Install using Homebrew for Qt5 <http://brewformulas.org/Pyqt5>`_.
 * PyQt5 is not a core package yet for Anaconda (but they promise by the beginning of 2016, it will be). Currently, to install with Anaconda, you should tap the Spyder-IDE channel::
 
     $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
 
 **For PyQt4**
 
-* `Install using Homebrew <http://brewformulas.org/Pyqt4>`_
+* `Install using Homebrew for Qt4 <http://brewformulas.org/Pyqt4>`_
 * Install using Anaconda: ``conda install pyqt``
 
 Installing from source
