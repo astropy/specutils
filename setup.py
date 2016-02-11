@@ -21,7 +21,8 @@ setup(
         'astropy>=1.1',
         'numpy>=1.10',
         'PyYAML',
-        'pyqtgraph'
+        'pyqtgraph',
+        'scipy'
     ],
     entry_points={
         'console_scripts': [
