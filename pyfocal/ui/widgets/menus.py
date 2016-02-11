@@ -1,4 +1,4 @@
-from qtpy.widgets import *
+from ...third_party.qtpy.widgets import *
 
 
 class LayerItemMenu():

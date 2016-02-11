@@ -1,7 +1,10 @@
-from qtpy.QtCore import *
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from ..interfaces.managers import data_manager, layer_manager, \
-    model_layer_manager, plot_manager
+from ..third_party.qtpy.QtCore import *
+
+from ..interfaces.managers import (data_manager, layer_manager,
+                                   model_layer_manager, plot_manager)
 from ..interfaces.registries import loader_registry
 from ..analysis.statistics import stats
 

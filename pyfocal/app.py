@@ -3,8 +3,12 @@ Pyfocal front-end GUI access point.
 
 This script will start the GUI.
 """
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import sys
-from qtpy.QtWidgets import *
+
+from .third_party.qtpy.QtWidgets import *
 
 from .ui.viewer import Viewer
 from .ui.controller import Controller

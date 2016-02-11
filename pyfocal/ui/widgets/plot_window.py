@@ -1,6 +1,6 @@
 from ..widgets.plots.plot import Plot
 
-from qtpy.QtWidgets import *
+from ...third_party.qtpy.QtWidgets import *
 
 import pyqtgraph as pg
 

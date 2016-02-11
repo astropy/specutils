@@ -8,7 +8,8 @@ setup(
               'pyfocal.ui.qt.uic.source.qdarkstyle', 'pyfocal.ui.widgets',
               'pyfocal.ui.widgets.plots', 'pyfocal.core', 'pyfocal.analysis',
               'pyfocal.interfaces',
-              'pyfocal.third_party.py_expression_eval'],
+              'pyfocal.third_party.py_expression_eval',
+              'pyfocal.third_party.qtpy'],
     url='http://pyfocal.readthedocs.org',
     license='',
     author='Nicholas Earl, Ivo Busko, Pey Lian Lim',
@@ -19,7 +20,7 @@ setup(
         'astropy>=1.1',
         'numpy>=1.10',
         'PyYAML>=3.11',
-        'QtPy>=0.1.3'
+        'pyqtgraph'
     ],
     entry_points={
         'console_scripts': [
