@@ -1,6 +1,5 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from astropy.modeling import models, fitting
 from ..interfaces.factories import FitterFactory
 
 def apply_model(model, x, y_init, fitter_name=None):
@@ -10,4 +9,6 @@ def apply_model(model, x, y_init, fitter_name=None):
     else:
         fitter = FitterFactory.default_fitter()
 
-    return model
+    result = fitter(model, x, y_init)
+
+    return result
