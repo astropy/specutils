@@ -1,7 +1,8 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 from ..widgets.plots.plot import Plot
-
 from ...third_party.qtpy.QtWidgets import *
-
 import pyqtgraph as pg
 
 

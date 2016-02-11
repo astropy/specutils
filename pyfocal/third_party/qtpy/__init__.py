@@ -22,7 +22,7 @@ PyQt5
 
 For PyQt5, you don't have to set anything as it will be used automatically::
 
-    >>> from qtpy import QtGui, QtWidgets, QtCore
+    >>> from . import QtGui, QtWidgets, QtCore
     >>> print(QtWidgets.QWidget)
 
 
@@ -34,7 +34,7 @@ package::
 
     >>> import os
     >>> os.environ['QT_API'] = 'pyqt'
-    >>> from qtpy import QtGui, QtWidgets, QtCore
+    >>> from . import QtGui, QtWidgets, QtCore
     >>> print(QtWidgets.QWidget)
 
 PySide
@@ -45,7 +45,7 @@ packages::
 
     >>> import os
     >>> os.environ['QT_API'] = 'pyside'
-    >>> from qtpy import QtGui, QtWidgets, QtCore
+    >>> from . import QtGui, QtWidgets, QtCore
     >>> print(QtWidgets.QWidget)
 
 """

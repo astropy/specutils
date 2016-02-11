@@ -5,8 +5,11 @@
 # Created by: PyQt5 UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from ...third_party.qtpy import QtCore, QtGui, QtWidgets
+
 
 class Ui_SpectraSubWindow(object):
     def setupUi(self, SpectraSubWindow):

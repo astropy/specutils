@@ -8,6 +8,7 @@ setup(
               'pyfocal.ui.qt.uic.source.qdarkstyle', 'pyfocal.ui.widgets',
               'pyfocal.ui.widgets.plots', 'pyfocal.core', 'pyfocal.analysis',
               'pyfocal.interfaces',
+              'pyfocal.third_party',
               'pyfocal.third_party.py_expression_eval',
               'pyfocal.third_party.qtpy'],
     url='http://pyfocal.readthedocs.org',
@@ -19,7 +20,7 @@ setup(
     install_requires=[
         'astropy>=1.1',
         'numpy>=1.10',
-        'PyYAML>=3.11',
+        'PyYAML',
         'pyqtgraph'
     ],
     entry_points={

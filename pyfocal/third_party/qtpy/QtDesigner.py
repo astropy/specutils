@@ -11,10 +11,10 @@ Provides QtDesigner classes and functions.
 
 import os
 
-from qtpy import QT_API
-from qtpy import PYQT5_API
-from qtpy import PYQT4_API
-from qtpy import PythonQtError
+from . import QT_API
+from . import PYQT5_API
+from . import PYQT4_API
+from . import PythonQtError
 
 
 if os.environ[QT_API] in PYQT5_API:
