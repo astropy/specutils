@@ -1,4 +1,4 @@
-from .factories import DataFactory, ModelFactory, PlotFactory
+from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory
 from ..core.events import EventHook
 from ..analysis import modeling
 
@@ -114,7 +114,8 @@ class ModelLayerManager(Manager):
         self.on_remove_model = EventHook()
 
         self._members = {}
-        self.all_models = ModelFactory.all_models.keys()
+        self.all_models = sorted(ModelFactory.all_models.keys())
+        self.all_fitters = FitterFactory.all_fitters.keys()
 
     def new_model(self, layer, model_name):
         model = ModelFactory.create_model(model_name)()

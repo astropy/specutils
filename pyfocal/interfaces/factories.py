@@ -3,7 +3,7 @@ from ..core.containers import PlotContainer
 
 import pyqtgraph as pg
 import numpy as np
-from astropy.modeling import models
+from astropy.modeling import models, fitting
 
 
 class Factory(object):
@@ -46,11 +46,44 @@ class DataFactory(Factory):
         return new_model_layer
 
 
+#TODO  a base class for Model and Fitter classes might be of help here.
+
 class ModelFactory(Factory):
+
+    # Any reason for just these three?
+    # all_models = {
+    #     "Gaussian1D": models.Gaussian1D,
+    #     "Linear1D": models.Linear1D,
+    #     "Const1D": models.Const1D
+    # }
+
+    # Ideally we should be getting these classes from astropy directly and
+    # transparently, instead of explicitly naming them here. This is basically
+    # a maintenance issue: at each new release of astropy we should check if
+    # new models became available, and existing models got deprecated.
     all_models = {
-        "Gaussian1D": models.Gaussian1D,
-        "Linear1D": models.Linear1D,
-        "Const1D": models.Const1D
+        'Gaussian1D': models.Gaussian1D,
+        'GaussianAbsorption1D': models.GaussianAbsorption1D,
+        'Lorentz1D': models.Lorentz1D,
+        'MexicanHat1D': models.MexicanHat1D,
+        'Trapezoid1D': models.Trapezoid1D,
+        'ExponentialCutoffPowerLaw1D': models.ExponentialCutoffPowerLaw1D,
+        'BrokenPowerLaw1D': models.BrokenPowerLaw1D,
+        'LogParabola1D': models.LogParabola1D,
+        'PowerLaw1D': models.PowerLaw1D,
+        'Linear1D': models.Linear1D,
+        'Const1D': models.Const1D,
+        'Redshift': models.Redshift,
+        'Scale': models.Scale,
+        'Shift': models.Shift,
+        'Sine1D': models.Sine1D,
+        # polynomials have to be handled separately. Their calling sequence
+        # is incompatible with the Fittable1DModel interface, and they run
+        # under a linear minimization algorithm, as opposed to the non-linear
+        # minimization used with Fittable1DModel types.
+        # 'Chebyshev1D': models.Chebyshev1D,
+        # 'Legendre1D': models.Legendre1D,
+        # 'Polynomial1D': models.Polynomial1D,
     }
 
     @classmethod
@@ -61,6 +94,23 @@ class ModelFactory(Factory):
             return cls.all_models[name]
 
         print("No such model {}".format(name))
+
+
+class FitterFactory(Factory):
+    default_fitter = fitting.LevMarLSQFitter
+
+    all_fitters = {
+        'Levenberg-Marquardt': fitting.LevMarLSQFitter,
+    }
+
+    @classmethod
+    def create_fitter(cls, name):
+        name = str(name)
+
+        if name in cls.all_fitters:
+            return cls.all_fitters[name]
+
+        print("No such fitter {}".format(name))
 
 
 class PlotFactory(Factory):

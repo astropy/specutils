@@ -51,6 +51,10 @@ class Viewer(QMainWindow):
         return self.main_window.comboBox.currentText()
 
     @property
+    def current_fitter(self):
+        return self.main_window.comboBox_2.currentText()
+
+    @property
     def current_model_formula(self):
         return self.main_window.lineEdit.text()
 

@@ -4,6 +4,7 @@ from ..interfaces.managers import data_manager, layer_manager, \
     model_layer_manager, plot_manager
 from ..interfaces.registries import loader_registry
 from ..analysis.statistics import stats
+from ..analysis.modeling import apply_model
 
 
 class Controller(object):
@@ -67,9 +68,16 @@ class Controller(object):
         # Populate model dropdown
         self.viewer.main_window.comboBox.addItems(model_layer_manager.all_models)
 
+        # Populate fitting algorithm dropdown
+        self.viewer.main_window.comboBox_2.addItems(model_layer_manager.all_fitters)
+
         # Attach the add button
         self.viewer.main_window.pushButton.clicked.connect(
             self.create_new_model)
+
+        # Attach the fit button
+        self.viewer.main_window.pushButton_3.clicked.connect(
+            self.fit_model)
 
         # Attach the create button
         self.viewer.main_window.pushButton_4.clicked.connect(
@@ -92,16 +100,36 @@ class Controller(object):
 
         self.viewer.add_model_item(model)
 
-    def update_statistics(self, *args):
-        # Grab all available rois
+    def _grab_all_rois(self):
         current_layer = self.viewer.current_layer()
 
         mask = self.get_roi_mask()
 
         if current_layer is None or mask is None:
-            return
+            return None
 
-        stat_dict = stats(current_layer.data[mask])
+        return current_layer.data[mask], current_layer.dispersion[mask]
+
+    def fit_model(self, *args):
+        flux, dispersion = self._grab_all_rois()
+
+        model_dict = self.viewer.get_model_inputs()
+        fitter_name = self.viewer.current_fitter
+        formula = self.viewer.current_model_formula
+        model = model_layer_manager.get_compound_model(model_dict, formula=formula)
+
+        fitted_model = apply_model(model, dispersion, flux, fitter_name=fitter_name)
+
+        pass # anchor for debugger breakpoint
+
+#TODO  here we have to do something with the fit result.
+
+        # self.viewer.update_statistics(fit_dict)
+
+    def update_statistics(self, *args):
+        flux, dispersion = self._grab_all_rois()
+
+        stat_dict = stats(flux)
 
         self.viewer.update_statistics(stat_dict)
 

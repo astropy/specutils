@@ -1,8 +1,12 @@
-from astropy.modeling import models, fitting
+from ..interfaces.factories import FitterFactory
 
+def apply_model(model, x, y_init, fitter_name=None):
 
-def apply_model(model, x, y_init, fitter=None):
-    if fitter is not None:
-        model = fitter(model, x, y_init)
+    if fitter_name:
+        fitter = FitterFactory.all_fitters[fitter_name]()
+    else:
+        fitter = FitterFactory.default_fitter()
 
-    return model
+    result = fitter(model, x, y_init)
+
+    return result
