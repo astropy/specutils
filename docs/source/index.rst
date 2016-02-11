@@ -15,7 +15,7 @@ Contents:
    installation
    model_fitting
    custom_loaders
-
+   api/index
 
 Indices and tables
 ==================

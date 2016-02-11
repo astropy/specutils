@@ -14,6 +14,12 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     :class:`numpy.ndarray`) that is passed around in Pyfocal. It inherits from
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
+
+    Examples
+    --------
+    >>> d = Data.read(
+    ...     'generic_spectra.fits', filter='Generic Fits (*.fits *.mits)')
+
     """
     def __init__(self, data, dispersion=None, name="", *args, **kwargs):
         super(Data, self).__init__(data, *args, **kwargs)
