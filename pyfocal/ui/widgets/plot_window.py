@@ -1,8 +1,11 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 from ..widgets.plots.plot import Plot
 from .axes import DynamicAxisItem
-
-from qtpy.QtWidgets import *
-from qtpy.QtGui import *
+from ...third_party.qtpy.QtWidgets import *
+from ...third_party.qtpy.QtGui import *
+from ..widgets.dialogs import TopAxisDialog
 
 import pyqtgraph as pg
 
@@ -20,6 +23,7 @@ class PlotWindow(QMainWindow):
 
         self._containers = []
         self._tool_bar = None
+        self._top_axis_dialog = TopAxisDialog()
 
     def set_sub_window(self, sub_window):
         self._sub_window = sub_window
@@ -125,8 +129,12 @@ class PlotWindow(QMainWindow):
 
         layer_menu_btn = QToolButton(self._sub_window.toolBar)
         layer_menu_btn.setIcon(icon)
-        layer_menu_btn.setMenu(window_menu)
+        layer_menu_btn.setMenu(layer_menu)
         layer_menu_btn.setPopupMode(QToolButton.InstantPopup)
 
         self._sub_window.toolBar.addWidget(layer_menu_btn)
+
+        # Connections
+        window_menu.actions()[0].triggered.connect(
+            self._top_axis_dialog.exec_)
 

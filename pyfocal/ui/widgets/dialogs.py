@@ -1,5 +1,7 @@
-from qtpy.QtWidgets import *
-from qtpy.QtGui import *
+from ...third_party.qtpy.QtWidgets import *
+from ...third_party.qtpy.QtGui import *
+
+from ..qt.axisdialog import Ui_Dialog
 
 
 class TopAxisDialog(QDialog):
@@ -8,65 +10,29 @@ class TopAxisDialog(QDialog):
         self.ref_wave = 0.0
         self.redshift = 0.0
 
-        self.vb_layout_main = QVBoxLayout()
-        self.setLayout(self.vb_layout_main)
+        # Run the widget setup
+        self.ui_axis_dialog = Ui_Dialog()
+        self.ui_axis_dialog.setupUi(self)
 
-        self._container_list = []
+        # Populate options
+        self.ui_axis_dialog.axisModeComboBox.addItems(['Velocity',
+                                                       'Redshift', 'Channel'])
 
-        self.wgt_display_axis = QComboBox()
-        self.wgt_display_axis.addItems(["Redshifted Wavelength", "Velocity",
-                                        "Channel"])
-        self.wgt_display_axis.currentIndexChanged.connect(self._on_select)
+        # Setup connections
+        self._setup_connections()
 
-        frm_select = QFormLayout()
-        frm_select.addRow("Display axis:", self.wgt_display_axis)
-
-        # Redshift parameters
-        self.grp_redshift = QGroupBox("Redshift Parameters")
-        self.wgt_redshift = QLineEdit()
-        self.wgt_redshift.setValidator(QDoubleValidator())
-        frm_redshift = QFormLayout()
-        self.grp_redshift.setLayout(frm_redshift)
-        frm_redshift.addRow("Amount:", self.wgt_redshift)
-        self._container_list.append(self.grp_redshift)
-
-        # Velocity parameters
-        self.grp_vel = QGroupBox("Velocity Parameters")
-        self.wgt_ref_wave_unit = QLabel("")
-        self.wgt_ref_wave = QLineEdit()
-        hb_ref_wave = QHBoxLayout()
-        hb_ref_wave.addWidget(self.wgt_ref_wave)
-        hb_ref_wave.addWidget(self.wgt_ref_wave_unit)
-        self.wgt_ref_wave.setValidator(QDoubleValidator())
-        frm_vel = QFormLayout()
-        self.grp_vel.setLayout(frm_vel)
-        frm_vel.addRow("Reference Wavelength:", hb_ref_wave)
-        self._container_list.append(self.grp_vel)
-
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok |
-                                      QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self._on_accept)
-        button_box.rejected.connect(self._on_reject)
-
-        self.vb_layout_main.addLayout(frm_select)
-        self.vb_layout_main.addWidget(self.grp_redshift)
-        self.vb_layout_main.addWidget(self.grp_vel)
-        self.vb_layout_main.addWidget(button_box)
-
-        self._on_select(0)
+    def _setup_connections(self):
+        # Show/hide corresponding container when mode is selected
+        self.ui_axis_dialog.axisModeComboBox.currentIndexChanged.connect(self._on_select)
 
     def set_current_unit(self, unit):
         self.wgt_ref_wave_unit.setText(unit)
 
     def _on_select(self, index):
-        for cntr in self._container_list:
-            cntr.hide()
+        pass
 
-        if index < len(self._container_list):
-            self._container_list[index].show()
-
-    def _on_accept(self):
-        self.mode = self.wgt_display_axis.currentIndex()
+    def accept(self):
+        self.mode = self.ui_axis_dialog.axisModeComboBox.currentIndex()
 
         rw_val = str(self.wgt_ref_wave.text())
         self.ref_wave = float(rw_val) if rw_val != '' else self.ref_wave
@@ -75,5 +41,5 @@ class TopAxisDialog(QDialog):
 
         super(TopAxisDialog, self).accept()
 
-    def _on_reject(self):
+    def reject(self):
         super(TopAxisDialog, self).reject()

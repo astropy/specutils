@@ -33,7 +33,7 @@ def setup():
     return qapp, app
 
 
-def ipython():
+def embed():
     """
     Used when launching the application within a shell, and the application
     namespace is still needed.
