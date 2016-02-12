@@ -519,9 +519,6 @@
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
              <widget class="QTreeWidget" name="treeWidget">
-              <property name="sizeAdjustPolicy">
-               <enum>QAbstractScrollArea::AdjustIgnored</enum>
-              </property>
               <property name="allColumnsShowFocus">
                <bool>false</bool>
               </property>
@@ -613,8 +610,8 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Open Folder-24.png</normaloff>:/Open Folder-24.png</iconset>
+    <iconset>
+     <normaloff>:/Open Folder-48.png</normaloff>:/Open Folder-48.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -643,8 +640,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="icon_resource.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

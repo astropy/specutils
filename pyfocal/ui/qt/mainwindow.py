@@ -246,7 +246,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setSpacing(6)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.treeWidget = QtWidgets.QTreeWidget(self.groupBox_3)
-        self.treeWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
         self.treeWidget.setAllColumnsShowFocus(False)
         self.treeWidget.setHeaderHidden(False)
         self.treeWidget.setColumnCount(2)
@@ -298,7 +297,7 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.dockWidget_4)
         self.actionOpen = QtWidgets.QAction(MainWindow)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/Open Folder-24.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(":/Open Folder-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionOpen.setIcon(icon3)
         self.actionOpen.setObjectName("actionOpen")
         self.actionExit = QtWidgets.QAction(MainWindow)
@@ -356,4 +355,3 @@ class Ui_MainWindow(object):
         self.actionChange_Color.setText(_translate("MainWindow", "Change Color"))
         self.actionChange_Color.setToolTip(_translate("MainWindow", "Change the line color selected layer"))
 
-from . import icon_resource_rc
