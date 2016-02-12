@@ -4,8 +4,7 @@ from setuptools import setup
 setup(
     name='Pyfocal',
     version='0.1a1',
-    packages=['pyfocal', 'pyfocal.ui', 'pyfocal.ui.qt',
-              'pyfocal.ui.qt.uic.source.qdarkstyle', 'pyfocal.ui.widgets',
+    packages=['pyfocal', 'pyfocal.ui', 'pyfocal.ui.qt', 'pyfocal.ui.widgets',
               'pyfocal.ui.widgets.plots', 'pyfocal.core', 'pyfocal.analysis',
               'pyfocal.interfaces',
               'pyfocal.third_party',
