@@ -1,1 +1,2 @@
 astropy >= 1.1
+scipy
