@@ -90,6 +90,11 @@ class Controller(object):
         self.viewer.main_window.pushButton_2.clicked.connect(
             self.update_model_layer)
 
+        # Initially, disable fitting controls so as to avoid forbidden states.
+        # These buttons will be re-enabled on demand by the Viewer.
+        self.viewer.main_window.comboBox_2.setEnabled(False)
+        self.viewer.main_window.pushButton_3.setEnabled(False)
+
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window()
 
@@ -103,19 +108,17 @@ class Controller(object):
 
         self.viewer.add_model_item(model)
 
-    def _grab_all_rois(self):
-        current_layer = self.viewer.current_layer()
-
+    def fit_model(self, *args):
+        # when fitting, the selected layer is a ModelLayer, thus
+        # the data to be fitted resides in the parent.
+        current_layer = self.viewer.parent_layer()
         mask = self.get_roi_mask()
 
-        # TODO: There seems to be a data race somewhere, will need to explore
         if current_layer is None or mask is None:
-            return None, None
+            return
 
-        return current_layer.data[mask], current_layer.dispersion[mask]
-
-    def fit_model(self, *args):
-        flux, dispersion = self._grab_all_rois()
+        flux = current_layer.data[mask]
+        dispersion = current_layer.dispersion[mask]
 
         model_dict = self.viewer.get_model_inputs()
         fitter_name = self.viewer.current_fitter
@@ -124,19 +127,31 @@ class Controller(object):
 
         fitted_model = apply_model(model, dispersion, flux, fitter_name=fitter_name)
 
-        pass # anchor for debugger breakpoint
+        # the code below has similarities with code in ModelLayerManager.update_model.
+        # Maybe a bit of refactoring wouldn't hurt.
+        current_layer = self.viewer.current_layer()
+        current_window = self.viewer.current_sub_window()
+        current_layer.model = fitted_model
 
-#TODO  here we have to do something with the fit result.
+        self.update_model_list()
 
-        # self.viewer.update_statistics(fit_dict)
+        plot_manager.update_plots(current_window, current_layer)
+
+        # after model is fitted and plotted, the statistics window should
+        # be refreshed to be consistent with the currently selected layer,
+        # that is, the layer with the model just fitted.
+        self.update_statistics()
 
     def update_statistics(self, *args):
-        flux, dispersion = self._grab_all_rois()
+        current_layer = self.viewer.current_layer()
+        mask = self.get_roi_mask()
 
-        if flux is None or dispersion is None:
+        if current_layer is None or mask is None:
             return
 
-        stat_dict = stats(flux)
+        values = current_layer.data[mask]
+
+        stat_dict = stats(values)
 
         self.viewer.update_statistics(stat_dict)
 
