@@ -13,11 +13,9 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    spectrasubwindow.cpp
+        mainwindow.cpp
 
-HEADERS  += mainwindow.h \
-    spectrasubwindow.h
+HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui \
     plotsubwindow.ui
