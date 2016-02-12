@@ -2,14 +2,12 @@
 
 # Form implementation generated from reading ui file './source/plotsubwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.5.1
+# Created by: ...third_party.qtpy UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
 from ...third_party.qtpy import QtCore, QtGui, QtWidgets
-
 
 class Ui_SpectraSubWindow(object):
     def setupUi(self, SpectraSubWindow):
