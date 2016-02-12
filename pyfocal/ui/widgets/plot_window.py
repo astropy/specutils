@@ -27,8 +27,10 @@ class PlotWindow(QMainWindow):
 
     def get_roi_mask(self, layer=None, container=None):
         if layer is not None or container is not None:
-            return self._plot_widget.get_roi_mask(
+            mask = self._plot_widget.get_roi_mask(
                 container or self.get_container(layer))
+
+            return mask
 
     def get_roi_data(self, layer=None, container=None):
         mask = self.get_roi_mask(layer, container)
@@ -83,4 +85,4 @@ class PlotWindow(QMainWindow):
                 container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
             else:
                 container.pen = self.inactive_color
-                container.error_pen = None
+                container.error_pen = pg.mkPen(None)

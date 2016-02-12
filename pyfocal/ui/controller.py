@@ -108,8 +108,9 @@ class Controller(object):
 
         mask = self.get_roi_mask()
 
+        # TODO: There seems to be a data race somewhere, will need to explore
         if current_layer is None or mask is None:
-            return None
+            return None, None
 
         return current_layer.data[mask], current_layer.dispersion[mask]
 
@@ -131,6 +132,9 @@ class Controller(object):
 
     def update_statistics(self, *args):
         flux, dispersion = self._grab_all_rois()
+
+        if flux is None or dispersion is None:
+            return
 
         stat_dict = stats(flux)
 
@@ -233,7 +237,6 @@ class Controller(object):
 
         # Create new layer using current ROI masks, if they exist
         mask = self.get_roi_mask()
-        print(mask.shape, current_layer.data.shape)
 
         if mask[mask == True].size != current_layer.data.size:
             current_layer = layer_manager.add(current_layer._source,
@@ -319,12 +322,3 @@ class Controller(object):
         roi_mask = current_sub_window.get_roi_mask(layer=current_layer)
 
         return roi_mask
-
-        self.main_window.actionChange_Color.triggered.connect(
-                self._color_dialog)
-
-    def _color_dialog(self):
-        color = QColorDialog.getColor()
-
-        if color.isValid():
-            print(color.name())
