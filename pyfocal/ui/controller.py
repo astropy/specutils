@@ -65,6 +65,10 @@ class Controller(object):
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             self.viewer._set_model_tool_options)
 
+    def _setup_sub_window_connections(self):
+        # When the user changes the top axis
+        pass
+
     def _setup_model_fitting(self):
         # Populate model dropdown
         self.viewer.main_window.comboBox.addItems(model_layer_manager.all_models)
@@ -209,9 +213,12 @@ class Controller(object):
 
         if window is None:
             window = self.viewer.add_sub_window()
+
+            # Connect the statistics to the roi interactions
             window._plot_widget.on_roi_update += self.update_statistics
 
-        # Connect the statistics to the roi interactions
+            # Connect the top axis change events
+            # window._dynamic_axis.
 
         self.add_plot(data=data, window=window)
 

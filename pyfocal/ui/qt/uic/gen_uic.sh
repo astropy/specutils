@@ -15,7 +15,19 @@ case $1 in
     ;;
 esac
 
-$uic ./source/mainwindow.ui -o ../mainwindow.py
-$uic ./source/plotsubwindow.ui -o ../plotsubwindow.py
-$uic ./source/axisdialog.ui -o ../axisdialog.py
-$rcc ./source/icon_resource.qrc -o ../icon_resource_rc.py
+ui_files=('mainwindow' 'plotsubwindow' 'axisdialog')
+rc_files=('icon_resource')
+
+for i in "${ui_files[@]}"
+do
+    $uic ./source/${i}.ui -o ../${i}.py;
+    sed -i '' 's/import icon_resource_rc/from . import icon_resource_rc/g; s/PyQt5/...third_party.qtpy/g' ../${i}.py;
+    sed -i '' '8s/^/from __future__ import (absolute_import, division, print_function,\
+                        unicode_literals)/' ../$i.py
+done
+
+for i in "${rc_files[@]}"
+do
+    $rcc ./source/${i}.qrc -o ../${i}_rc.py;
+    sed -i '' 's/import icon_resource_rc/from . import icon_resource_rc/g; s/PyQt5/...third_party.qtpy/g' ../${i}_rc.py;
+done

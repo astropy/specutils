@@ -245,7 +245,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setSpacing(6)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.treeWidget = QtWidgets.QTreeWidget(self.groupBox_3)
-        self.treeWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
         self.treeWidget.setAllColumnsShowFocus(False)
         self.treeWidget.setHeaderHidden(False)
         self.treeWidget.setColumnCount(2)

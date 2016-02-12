@@ -23,3 +23,10 @@ class EventHook(object):
         Removes all handlers from object.
         """
         self.__handlers = []
+
+
+class Dispatch(object):
+    """
+    Central communications object for all events.
+    """
+
