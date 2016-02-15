@@ -82,7 +82,6 @@ class Viewer(QMainWindow):
         ui_sub_window = Ui_SpectraSubWindow()
         ui_sub_window.setupUi(plot_sub_window)
 
-
         # Let the sub window do initialization
         plot_sub_window.set_sub_window(ui_sub_window)
         plot_sub_window.initialize()

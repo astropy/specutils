@@ -16,18 +16,20 @@ class DynamicAxisItem(pg.AxisItem):
         self.ref_wave = 0.0
 
     def update_axis(self, layer, mode, **kwargs):
-        if mode == 1:
-            self.redshift = kwargs['redshift']
-        elif mode == 0:
+        self.mode = mode or self.mode or 0
+
+        if self.mode == 0:
             self.ref_wave = kwargs['ref_wave']
-        elif mode == 2:
+        elif self.mode == 1:
+            self.redshift = kwargs['redshift']
+        elif self.mode == 2:
             pass
 
         self._layer = layer or self._layer
-        self.mode = self.supported_modes[mode]
+        self.update()
 
     def generateDrawSpecs(self, p):
-        if self.mode == 'channel':
+        if self.mode == 2:
             mn, mx = self.range[0], self.range[1]
             self.setLabel("Channel", None, None)
             data = self._xdata[(self._xdata > mn) & (self._xdata < mx)]
@@ -44,23 +46,24 @@ class DynamicAxisItem(pg.AxisItem):
 
         spatial_unit = self._layer.dispersion.unit
 
-        if self.mode == 'redshift':
+        if self.mode == 1:
             self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
 
             return [v / (1 + self.redshift) * scale for v in values]
 
-        elif self.mode == 'velocity':
-            self.setLabel("Velocity [km/s]", None, None)
-
+        elif self.mode == 0:
             c = const.c.to('{}/s'.format(spatial_unit))
 
             waves = u.Quantity(np.array(values), spatial_unit)
-            waves[np.isnan(waves)] = 0.0
 
             ref_wave = u.Quantity(self.ref_wave, spatial_unit)
 
-            v = (waves - ref_wave) / waves * c
-            v = v.to('km/s').value
+            v_quant = ((waves - ref_wave) / waves * c).to('km/s')
+            v = v_quant.value
             v[np.isnan(v)] = 0.0
 
-            return list(v)
+            self.setLabel("Velocity [{}]".format(v_quant.unit), None, None)
+
+            return ["{:.4E}".format(x) for x in v]
+
+        return super(DynamicAxisItem, self).tickStrings(values, scale, spacing)

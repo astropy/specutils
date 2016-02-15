@@ -13,7 +13,7 @@ setup(
     url='http://pyfocal.readthedocs.org',
     license='',
     author='Nicholas Earl, Ivo Busko, Pey Lian Lim',
-    author_email='nmearl@protonmail.com',
+    author_email='nearl@stsci.edu',
     description='An interactive astronomical analysis tool.',
     include_package_data=True,
     install_requires=[

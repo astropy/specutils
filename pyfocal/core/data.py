@@ -101,13 +101,13 @@ class Layer(object):
     :class:`astropy.nddata.NDArithmeticMixin` mixin, it is also possible to
     do arithmetic operations on layers.
     """
-    def __init__(self, source, mask, parent=None, window=None):
+    def __init__(self, source, mask, parent=None, window=None, name=''):
         super(Layer, self).__init__()
         self._source = source
         self._mask = mask
         self._parent = parent
         self._window = window
-        self.name = self._source.name + " Layer"
+        self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,
                       self._source.unit if self._source.unit is not None else "")
 
@@ -149,12 +149,13 @@ class Layer(object):
 
 
 class ModelLayer(object):
-    def __init__(self, source, model, parent=None):
+    def __init__(self, source, model, parent=None, name=''):
         self._source = source
         self._model = model
         self._data = None
         self._window = self._source._window
-        self.name = self._source.name + " Model"
+        self.name = self._source.name + " Model" if not name else name
+        print(name)
 
     @property
     def data(self):

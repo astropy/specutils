@@ -199,8 +199,10 @@ class Controller(object):
             Boolean mask.
         """
         roi_mask = mask if mask is not None else self.get_roi_mask()
-        layer = layer_manager.add(layer._source, mask=roi_mask,
-                                  window=sub_window)
+        layer = layer_manager.add(layer._source,
+                                  mask=roi_mask,
+                                  window=sub_window,
+                                  name=layer._source.name + " Layer Slice")
 
         self.add_plot(layer=layer)
 
@@ -275,11 +277,13 @@ class Controller(object):
         if mask[mask == True].size != current_layer.data.size:
             current_layer = layer_manager.add(current_layer._source,
                                               mask=self.get_roi_mask(),
-                                              window=current_layer._window)
+                                              window=current_layer._window,
+                                              name=current_layer._source.name + " Layer Slice")
             self.add_plot(layer=current_layer)
 
-        new_model_layer = model_layer_manager.new_model_layer(current_layer,
-                                                              compound_model)
+        new_model_layer = model_layer_manager.new_model_layer(
+            current_layer, compound_model, name="New Model Layer")
+
         self.viewer.add_layer_item(new_model_layer)
 
         # Transfer models from original layer to new model layer

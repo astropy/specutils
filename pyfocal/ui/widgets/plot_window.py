@@ -35,7 +35,7 @@ class PlotWindow(QMainWindow):
         # Add grids to the plot
         self._plot_item.showGrid(True, True)
 
-        # self._setup_connections()
+        self._setup_connections()
 
     def _setup_connections(self):
         # Setup ROI connection
@@ -76,7 +76,6 @@ class PlotWindow(QMainWindow):
     def action(self, name):
         # TODO: Revisit this sometime in the future.
         for act in self.findChildren(QAction):
-            print(act.objectName())
             if act.objectName() == name:
                 return act
 
@@ -90,6 +89,9 @@ class PlotWindow(QMainWindow):
 
         self.set_labels()
         self.set_active_plot(container.layer)
+
+        # Make sure the dynamic axis object has access to a layer
+        self._dynamic_axis._layer = self._containers[0].layer
 
     def get_container(self, layer):
         for container in self._containers:
@@ -116,7 +118,7 @@ class PlotWindow(QMainWindow):
                 container.pen = self.inactive_color
                 container.error_pen = None
 
-    def update_axis(self, layer=None, mode=0, **kwargs):
+    def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
 
     def _setup_toolbar_menus(self):
