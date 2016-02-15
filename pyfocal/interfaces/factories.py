@@ -72,22 +72,22 @@ class ModelFactory(Factory):
     # have to keep picking the spectral relevant types by hand for the time
     # being.
     all_models = {
-        'Gaussian1D': models.Gaussian1D,
-        'GaussianAbsorption1D': models.GaussianAbsorption1D,
-        'Lorentz1D': models.Lorentz1D,
-        'MexicanHat1D': models.MexicanHat1D,
-        'Trapezoid1D': models.Trapezoid1D,
-        'ExponentialCutoffPowerLaw1D': models.ExponentialCutoffPowerLaw1D,
-        'BrokenPowerLaw1D': models.BrokenPowerLaw1D,
-        'LogParabola1D': models.LogParabola1D,
-        'PowerLaw1D': models.PowerLaw1D,
-        'Linear1D': models.Linear1D,
-        'Const1D': models.Const1D,
+        'Gaussian': models.Gaussian1D,
+        'GaussianAbsorption': models.GaussianAbsorption1D,
+        'Lorentz': models.Lorentz1D,
+        'MexicanHat': models.MexicanHat1D,
+        'Trapezoid': models.Trapezoid1D,
+        'ExponentialCutoffPowerLaw': models.ExponentialCutoffPowerLaw1D,
+        'BrokenPowerLaw': models.BrokenPowerLaw1D,
+        'LogParabola': models.LogParabola1D,
+        'PowerLaw': models.PowerLaw1D,
+        'Linear': models.Linear1D,
+        'Const': models.Const1D,
         'Redshift': models.Redshift,
         'Scale': models.Scale,
         'Shift': models.Shift,
-        'Sine1D': models.Sine1D,
-        'Voigt1D': models.Voigt1D,
+        'Sine': models.Sine1D,
+        'Voigt': models.Voigt1D,
 
         # polynomials have to be handled separately. Their calling sequence
         # is incompatible with the Fittable1DModel interface, and they run

@@ -171,6 +171,12 @@ class Viewer(QMainWindow):
         ----------
         """
         name = model.__class__.__name__
+
+        # we want to remove the redundant '1D' suffix from model
+        # names displayed to the user.
+        if name.endswith('1D'):
+            name = name[:-2]
+
         new_item = QTreeWidgetItem(self.wgt_model_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 
