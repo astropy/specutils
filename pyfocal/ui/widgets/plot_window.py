@@ -21,7 +21,11 @@ class PlotWindow(QMainWindow):
         self._containers = []
         self._tool_bar = None
         self._top_axis_dialog = TopAxisDialog()
+        self._dynamic_axis = None
+        self._plot_widget = None
+        self._plot_item = None
 
+    def initialize(self):
         self._dynamic_axis = DynamicAxisItem(orientation='top')
         self._plot_widget = Plot(parent=self, axisItems={'top': self._dynamic_axis})
         self.setCentralWidget(self._plot_widget)
@@ -31,10 +35,23 @@ class PlotWindow(QMainWindow):
         # Add grids to the plot
         self._plot_item.showGrid(True, True)
 
+        # self._setup_connections()
+
     def _setup_connections(self):
         # Setup ROI connection
         act_insert_roi = self.action("actionInsert_ROI")
         act_insert_roi.triggered.connect(self._plot_widget.add_roi)
+
+        # On accept, change the displayed axis
+        self._top_axis_dialog.accepted.connect(lambda:
+            self._dynamic_axis.update_axis(
+                self._containers[0].layer,
+                self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
+                    .currentIndex(),
+                redshift=self._top_axis_dialog.redshift,
+                ref_wave=self._top_axis_dialog.ref_wave
+            )
+        )
 
     def set_sub_window(self, sub_window):
         self._sub_window = sub_window
@@ -58,8 +75,6 @@ class PlotWindow(QMainWindow):
 
     def action(self, name):
         # TODO: Revisit this sometime in the future.
-        print(self.actions())
-        print(self.findChildren(QAction))
         for act in self.findChildren(QAction):
             print(act.objectName())
             if act.objectName() == name:
@@ -100,17 +115,6 @@ class PlotWindow(QMainWindow):
             else:
                 container.pen = self.inactive_color
                 container.error_pen = None
-
-        # On accept, change the displayed axis
-        self._top_axis_dialog.accepted.connect(
-            self._dynamic_axis.update_axis(
-                self._containers[0].layer,
-                self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
-                    .currentIndex(),
-                redshift=self._top_axis_dialog.redshift,
-                ref_wave=float(0.0)
-            )
-        )
 
     def update_axis(self, layer=None, mode=0, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)

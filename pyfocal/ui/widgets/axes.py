@@ -38,6 +38,10 @@ class DynamicAxisItem(pg.AxisItem):
         return super(DynamicAxisItem, self).generateDrawSpecs(p)
 
     def tickStrings(self, values, scale, spacing):
+        if self._layer is None:
+            return super(DynamicAxisItem, self).tickStrings(values, scale,
+                                                            spacing)
+
         spatial_unit = self._layer.dispersion.unit
 
         if self.mode == 'redshift':
