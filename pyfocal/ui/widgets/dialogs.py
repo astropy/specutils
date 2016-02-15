@@ -14,6 +14,12 @@ class TopAxisDialog(QDialog):
         self.ui_axis_dialog = Ui_Dialog()
         self.ui_axis_dialog.setupUi(self)
 
+        # Set validators
+        self.ui_axis_dialog.referenenceWavelengthLineEdit.setValidator(
+            QDoubleValidator())
+        self.ui_axis_dialog.redshiftAmountLineEdit.setValidator(
+            QDoubleValidator())
+
         # Populate options
         self.ui_axis_dialog.axisModeComboBox.addItems(
             ['Velocity', 'Redshift', 'Channel'])
@@ -36,13 +42,16 @@ class TopAxisDialog(QDialog):
         elif index == 1:
             self.ui_axis_dialog.velocityGroupBox.hide()
             self.ui_axis_dialog.redshiftGroupBox.show()
+        else:
+            self.ui_axis_dialog.velocityGroupBox.hide()
+            self.ui_axis_dialog.redshiftGroupBox.hide()
 
     def accept(self):
         self.mode = self.ui_axis_dialog.axisModeComboBox.currentIndex()
 
         rw_val = str(self.ui_axis_dialog.referenenceWavelengthLineEdit.text())
         self.ref_wave = float(rw_val) if rw_val != '' else self.ref_wave
-        rs = str(self.ui_axis_dialog.referenenceWavelengthLineEdit_2.text())
+        rs = str(self.ui_axis_dialog.redshiftAmountLineEdit.text())
         self.redshift = float(rs) if rs != '' else self.redshift
 
         super(TopAxisDialog, self).accept()

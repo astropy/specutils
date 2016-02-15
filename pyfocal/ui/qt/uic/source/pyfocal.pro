@@ -18,7 +18,8 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui \
-    plotsubwindow.ui
+    plotsubwindow.ui \
+    axisdialog.ui
 
 RESOURCES += \
     icon_resource.qrc

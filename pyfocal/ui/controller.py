@@ -275,10 +275,11 @@ class Controller(object):
         mask = self.get_roi_mask()
 
         if mask[mask == True].size != current_layer.data.size:
-            current_layer = layer_manager.add(current_layer._source,
-                                              mask=self.get_roi_mask(),
-                                              window=current_layer._window,
-                                              name=current_layer._source.name + " Layer Slice")
+            current_layer = layer_manager.add(
+                current_layer._source,
+                mask=self.get_roi_mask(),
+                window=current_layer._window,
+                name=current_layer._source.name + " Layer Slice")
             self.add_plot(layer=current_layer)
 
         new_model_layer = model_layer_manager.new_model_layer(

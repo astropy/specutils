@@ -16,7 +16,7 @@ class DynamicAxisItem(pg.AxisItem):
         self.ref_wave = 0.0
 
     def update_axis(self, layer, mode, **kwargs):
-        self.mode = mode or self.mode or 0
+        self.mode = mode
 
         if self.mode == 0:
             self.ref_wave = kwargs['ref_wave']
@@ -28,30 +28,16 @@ class DynamicAxisItem(pg.AxisItem):
         self._layer = layer or self._layer
         self.update()
 
-    def generateDrawSpecs(self, p):
-        if self.mode == 2:
-            mn, mx = self.range[0], self.range[1]
-            self.setLabel("Channel", None, None)
-            data = self._xdata[(self._xdata > mn) & (self._xdata < mx)]
-            self.setTicks([
-                [(v, str(i)) for i, v in enumerate(data)][::len(
-                    data)/10]
-            ])
-        return super(DynamicAxisItem, self).generateDrawSpecs(p)
-
     def tickStrings(self, values, scale, spacing):
         if self._layer is None:
             return super(DynamicAxisItem, self).tickStrings(values, scale,
                                                             spacing)
 
         spatial_unit = self._layer.dispersion.unit
+        dispersion = self._layer.dispersion.value
+        inds = np.arange(dispersion.size, dtype=int)
 
-        if self.mode == 1:
-            self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
-
-            return [v / (1 + self.redshift) * scale for v in values]
-
-        elif self.mode == 0:
+        if self.mode == 0:
             c = const.c.to('{}/s'.format(spatial_unit))
 
             waves = u.Quantity(np.array(values), spatial_unit)
@@ -65,5 +51,15 @@ class DynamicAxisItem(pg.AxisItem):
             self.setLabel("Velocity [{}]".format(v_quant.unit), None, None)
 
             return ["{:.4E}".format(x) for x in v]
+        elif self.mode == 1:
+            self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
+
+            return ["{:0.2f}".format(v / (1 + self.redshift) * scale)
+                    for v in values]
+        elif self.mode == 2:
+            self.setLabel("Channel", None, None)
+            inds = np.searchsorted(dispersion, values)
+
+            return list(inds)
 
         return super(DynamicAxisItem, self).tickStrings(values, scale, spacing)

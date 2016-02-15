@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>224</height>
+    <width>327</width>
+    <height>228</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -66,19 +66,32 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QLabel" name="referenenceWavelengthLabel_2">
+         <widget class="QLabel" name="redshiftAmountLabel">
           <property name="text">
            <string>Amount</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="referenenceWavelengthLineEdit_2"/>
+         <widget class="QLineEdit" name="redshiftAmountLineEdit"/>
         </item>
        </layout>
       </item>
      </layout>
     </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
