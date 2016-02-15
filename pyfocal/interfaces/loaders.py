@@ -9,7 +9,7 @@ from ..core.data import Data
 
 import os
 import numpy as np
-from astropy.io import fits
+from astropy.io import ascii, fits
 from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 from astropy.units import Unit
@@ -76,11 +76,64 @@ def fits_reader(filename, filter, **kwargs):
 
 
 def fits_identify(origin, *args, **kwargs):
-    return isinstance(args[0], str) and \
-           args[0].lower().split('.')[-1] in ['fits', 'fit']
+    """Check whether given filename is FITS."""
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['fits', 'fit'])
+
+
+def ascii_reader(filename, filter, **kwargs):
+    """Parse given ASCII file to spectrum data."""
+    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
+    tab = ascii.read(filename, **kwargs)
+    cols = tab.colnames
+    ref = loader_registry.get(filter)
+
+    meta = ref.meta
+    meta['header'] = {}
+
+    # Only loads KEY=VAL comment entries into header
+    if 'comments' in tab.meta:
+        for s in tab.meta['comments']:
+            if '=' not in s:
+                continue
+            s2 = s.split('=')
+            meta['header'][s2[0]] = s2[1]
+
+    wcs = None
+    wave = tab[cols[ref.dispersion['col']]]
+    dispersion = wave.data
+    disp_unit = wave.unit
+    flux = tab[cols[ref.data['col']]]
+    data = flux.data
+    unit = flux.unit
+    uncertainty = None
+    uncertainty_type = None
+    mask = np.zeros(data.shape)
+
+    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
+        uncertainty = tab[cols[ref.uncertainty['col']]].data
+        uncertainty_type = ref.uncertainty.get('type', 'std')
+
+        # This will be dictated by the type of the uncertainty
+        uncertainty = StdDevUncertainty(uncertainty)
+
+    if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
+        mask = tab[cols[ref.mask['col']]].data
+
+    return Data(name=name, data=data, dispersion=dispersion,
+                uncertainty=uncertainty, mask=mask, wcs=wcs, unit=unit,
+                dispersion_unit=disp_unit)
+
+
+def ascii_identify(origin, *args, **kwargs):
+    """Check whether given filename is ASCII."""
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['txt', 'dat'])
 
 
 # Add IO reader/identifier to io registry
 io_registry.register_reader('fits', Data, fits_reader)
 io_registry.register_identifier('fits', Data, fits_identify)
 
+io_registry.register_reader('ascii', Data, ascii_reader)
+io_registry.register_identifier('ascii', Data, ascii_identify)

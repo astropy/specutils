@@ -1,7 +1,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..third_party.qtpy.QtGui import *
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 
@@ -45,9 +44,13 @@ class Viewer(QMainWindow):
         if not hasattr(layer, 'model'):
             self.main_window.pushButton_4.show()
             self.main_window.pushButton_2.hide()
+            self.main_window.comboBox_2.setEnabled(False)
+            self.main_window.pushButton_3.setEnabled(False)
         else:
             self.main_window.pushButton_4.hide()
             self.main_window.pushButton_2.show()
+            self.main_window.comboBox_2.setEnabled(True)
+            self.main_window.pushButton_3.setEnabled(True)
 
     @property
     def current_model(self):
@@ -168,6 +171,12 @@ class Viewer(QMainWindow):
         ----------
         """
         name = model.__class__.__name__
+
+        # we want to remove the redundant '1D' suffix from model
+        # names displayed to the user.
+        if name.endswith('1D'):
+            name = name[:-2]
+
         new_item = QTreeWidgetItem(self.wgt_model_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 
@@ -259,6 +268,23 @@ class Viewer(QMainWindow):
 
         if layer_item is not None:
             layer = layer_item.data(0, Qt.UserRole)
+
+            return layer
+
+    def parent_layer(self):
+        """
+        Returns the parent of the currently selected layer object
+        form the layer list widget.
+
+        Returns
+        -------
+        layer : pyfocal.core.data.Layer
+            The `Layer` object of the parent of the currently selected row.
+        """
+        parent_item = self.wgt_layer_list.currentItem().parent()
+
+        if parent_item is not None:
+            layer = parent_item.data(0, Qt.UserRole)
 
             return layer
 

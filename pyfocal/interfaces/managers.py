@@ -118,7 +118,7 @@ class ModelLayerManager(Manager):
 
         self._members = {}
         self.all_models = sorted(ModelFactory.all_models.keys())
-        self.all_fitters = FitterFactory.all_fitters.keys()
+        self.all_fitters = sorted(FitterFactory.all_fitters.keys())
 
     def new_model(self, layer, model_name):
         model = ModelFactory.create_model(model_name)()
