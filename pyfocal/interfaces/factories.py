@@ -80,6 +80,7 @@ class ModelFactory(Factory):
         'Scale': models.Scale,
         'Shift': models.Shift,
         'Sine1D': models.Sine1D,
+        'Voigt1D': models.Voigt1D,
         # polynomials have to be handled separately. Their calling sequence
         # is incompatible with the Fittable1DModel interface, and they run
         # under a linear minimization algorithm, as opposed to the non-linear
