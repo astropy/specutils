@@ -9,7 +9,8 @@ Pyfocal: 1D Spectral Visualization Tool
 Pyfocal is a tool for 1-D spectral visualization and analysis of astronomical
 spectrograms. It is written in Python thus can be run anywhere Python is
 supported (see :ref:`doc_installation`).
-Pyfocal is capable of reading data from FITS and ASCII tables.
+Pyfocal is capable of reading data from FITS and ASCII tables
+(see :ref:`doc_custom_loaders`).
 
 Once ingested, data can be plotted and examined with a large selection of
 custom settings. Pyfocal supports instrument-specific data quality handling,
