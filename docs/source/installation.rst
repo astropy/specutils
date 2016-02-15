@@ -1,4 +1,4 @@
-.. _`Installation`:
+.. _doc_installation:
 
 Installation
 ============

@@ -1,4 +1,4 @@
-.. _`Model Fitting`:
+.. _doc_model_fitting:
 
 Model Fitting
 =============
