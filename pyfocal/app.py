@@ -23,12 +23,32 @@ class App(object):
         if len(argv) > 1:
             self.controller.read_FITS(sys.argv[1])
 
-def main():
+def setup():
     qapp = QApplication(sys.argv)
     # qapp.setGraphicsSystem('native')
 
     app = App(sys.argv)
     app.viewer.show()
+
+    return qapp, app
+
+
+def embed():
+    """
+    Used when launching the application within a shell, and the application
+    namespace is still needed.
+    """
+    qapp, app = setup()
+    qapp.exec_()
+
+    return app
+
+
+def main():
+    """
+    Used when launching the application as standalone.
+    """
+    qapp, app = setup()
     sys.exit(qapp.exec_())
 
 

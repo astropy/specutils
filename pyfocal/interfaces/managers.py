@@ -48,12 +48,14 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def new(self, data, mask=None, parent=None, window=None):
-        new_layer = DataFactory.create_layer(data, mask, parent, window)
+    def new(self, data, mask=None, parent=None, window=None, name=''):
+        print("layer manager: {}".format(name))
+        new_layer = DataFactory.create_layer(data, mask, parent, window, name)
         return new_layer
 
-    def add(self, data, mask=None, parent=None, window=None):
-        new_layer = self.new(data, mask, parent, window)
+    def add(self, data, mask=None, parent=None, window=None, name=''):
+        print("layer manager add: {}".format(name))
+        new_layer = self.new(data, mask, parent, window, name)
         self._members.append(new_layer)
 
         # Emit creation event
@@ -127,8 +129,8 @@ class ModelLayerManager(Manager):
 
         return model
 
-    def new_model_layer(self, layer, model):
-        model_layer = DataFactory.create_model_layer(layer, model)
+    def new_model_layer(self, layer, model, name=''):
+        model_layer = DataFactory.create_model_layer(layer, model, name=name)
 
         if layer not in self._members:
             self._members[layer] = [model_layer]

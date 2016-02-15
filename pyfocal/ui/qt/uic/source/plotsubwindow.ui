@@ -40,8 +40,6 @@
    <addaction name="actionInsert_Elliptical_ROI"/>
    <addaction name="actionPolygon_ROI"/>
    <addaction name="separator"/>
-   <addaction name="actionGraph_Settings"/>
-   <addaction name="actionPlot_Settings"/>
   </widget>
   <action name="actionInsert_ROI">
    <property name="icon">

@@ -24,27 +24,28 @@ class DataFactory(Factory):
 
     @staticmethod
     def from_file(path, filter):
-        print("Creating from file.")
         new_data = Data.read(path, filter)
+
         return new_data
 
     @staticmethod
     def from_array(array):
         new_data = Data(array)
+
         return new_data
 
     @staticmethod
-    def create_layer(data, mask=None, parent=None, window=None):
+    def create_layer(data, mask=None, parent=None, window=None, name=''):
+        print("new layer: {}".format(name))
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
-        new_layer = Layer(data, mask, parent, window)
-        print("DataFactory.create_layer: {}, {}".format(new_layer._parent,
-                                                     parent))
+        new_layer = Layer(data, mask, parent, window, name)
+
         return new_layer
 
     @staticmethod
-    def create_model_layer(layer, model, parent=None):
-        new_model_layer = ModelLayer(layer, model, parent)
+    def create_model_layer(layer, model, parent=None, name=''):
+        new_model_layer = ModelLayer(layer, model, parent, name)
 
         return new_model_layer
 

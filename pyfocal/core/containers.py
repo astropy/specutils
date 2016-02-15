@@ -63,7 +63,6 @@ class PlotContainer(object):
             self.error.setOpts(pen=pen)
 
     def update(self):
-        print("PlotContainer.update: {}".format(type(self._layer)))
         self._plot.setData(self._layer.dispersion.value,
                            self._layer.data.value)
 

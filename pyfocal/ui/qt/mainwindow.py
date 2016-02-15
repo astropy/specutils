@@ -2,11 +2,10 @@
 
 # Form implementation generated from reading ui file './source/mainwindow.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5.1
+# Created by: PyQt5 UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+
 from ...third_party.qtpy import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
@@ -355,3 +354,4 @@ class Ui_MainWindow(object):
         self.actionChange_Color.setText(_translate("MainWindow", "Change Color"))
         self.actionChange_Color.setToolTip(_translate("MainWindow", "Change the line color selected layer"))
 
+from . import icon_resource_rc

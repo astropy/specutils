@@ -2,7 +2,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from ..widgets.plots.plot import Plot
+from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
+from ...third_party.qtpy.QtGui import *
+from ..widgets.dialogs import TopAxisDialog
+
 import pyqtgraph as pg
 
 
@@ -12,11 +16,46 @@ class PlotWindow(QMainWindow):
 
     def __init__(self, **kwargs):
         super(PlotWindow, self).__init__(**kwargs)
-        self._plot_widget = None
-        self._plot_item = None
+        self._sub_window = None
 
         self._containers = []
         self._tool_bar = None
+        self._top_axis_dialog = TopAxisDialog()
+        self._dynamic_axis = None
+        self._plot_widget = None
+        self._plot_item = None
+
+    def initialize(self):
+        self._dynamic_axis = DynamicAxisItem(orientation='top')
+        self._plot_widget = Plot(parent=self, axisItems={'top': self._dynamic_axis})
+        self.setCentralWidget(self._plot_widget)
+
+        self._plot_item = self._plot_widget._plot_item
+        self._plot_item.showAxis('top', True)
+        # Add grids to the plot
+        self._plot_item.showGrid(True, True)
+
+        self._setup_connections()
+
+    def _setup_connections(self):
+        # Setup ROI connection
+        act_insert_roi = self.action("actionInsert_ROI")
+        act_insert_roi.triggered.connect(self._plot_widget.add_roi)
+
+        # On accept, change the displayed axis
+        self._top_axis_dialog.accepted.connect(lambda:
+            self._dynamic_axis.update_axis(
+                self._containers[0].layer,
+                self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
+                    .currentIndex(),
+                redshift=self._top_axis_dialog.redshift,
+                ref_wave=self._top_axis_dialog.ref_wave
+            )
+        )
+
+    def set_sub_window(self, sub_window):
+        self._sub_window = sub_window
+        self._setup_toolbar_menus()
 
     @property
     def tool_bar(self):
@@ -27,10 +66,8 @@ class PlotWindow(QMainWindow):
 
     def get_roi_mask(self, layer=None, container=None):
         if layer is not None or container is not None:
-            mask = self._plot_widget.get_roi_mask(
+            return self._plot_widget.get_roi_mask(
                 container or self.get_container(layer))
-
-            return mask
 
     def get_roi_data(self, layer=None, container=None):
         mask = self.get_roi_mask(layer, container)
@@ -42,15 +79,6 @@ class PlotWindow(QMainWindow):
             if act.objectName() == name:
                 return act
 
-    def initialize(self):
-        self._plot_widget = Plot(parent=self)
-        self._plot_item = self._plot_widget._plot_item
-
-        # Add grids to the plot
-        self._plot_item.showGrid(True, True)
-
-        self.setCentralWidget(self._plot_widget)
-
     def add_container(self, container):
         self._containers.append(container)
 
@@ -61,6 +89,9 @@ class PlotWindow(QMainWindow):
 
         self.set_labels()
         self.set_active_plot(container.layer)
+
+        # Make sure the dynamic axis object has access to a layer
+        self._dynamic_axis._layer = self._containers[0].layer
 
     def get_container(self, layer):
         for container in self._containers:
@@ -85,4 +116,43 @@ class PlotWindow(QMainWindow):
                 container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
             else:
                 container.pen = self.inactive_color
-                container.error_pen = pg.mkPen(None)
+                container.error_pen = None
+
+    def update_axis(self, layer=None, mode=None, **kwargs):
+        self._dynamic_axis.update_axis(layer, mode, **kwargs)
+
+    def _setup_toolbar_menus(self):
+        # Window menu
+        window_menu = QMenu()
+        window_menu.addAction("Change Top Axis")
+        window_menu.addAction("Change Units")
+
+        icon = QIcon()
+        icon.addPixmap(QPixmap(":/Settings-50.png"), QIcon.Normal, QIcon.Off)
+
+        window_menu_btn = QToolButton(self._sub_window.toolBar)
+        window_menu_btn.setIcon(icon)
+        window_menu_btn.setMenu(window_menu)
+        window_menu_btn.setPopupMode(QToolButton.InstantPopup)
+
+        self._sub_window.toolBar.addWidget(window_menu_btn)
+
+        # Layer menu
+        layer_menu = QMenu()
+        layer_menu.addAction("Color")
+
+        icon = QIcon()
+        icon.addPixmap(QPixmap(":/Settings 3-50.png"), QIcon.Normal,
+                        QIcon.Off)
+
+        layer_menu_btn = QToolButton(self._sub_window.toolBar)
+        layer_menu_btn.setIcon(icon)
+        layer_menu_btn.setMenu(layer_menu)
+        layer_menu_btn.setPopupMode(QToolButton.InstantPopup)
+
+        self._sub_window.toolBar.addWidget(layer_menu_btn)
+
+        # Connections
+        window_menu.actions()[0].triggered.connect(
+            self._top_axis_dialog.exec_)
+

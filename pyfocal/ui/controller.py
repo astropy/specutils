@@ -13,8 +13,6 @@ from ..analysis.modeling import apply_model
 class Controller(object):
     def __init__(self, viewer):
         # Controller-specific events
-
-
         self.viewer = viewer
 
         # self._setup_events()
@@ -66,6 +64,10 @@ class Controller(object):
         # buttons depending on if the layer is a model layer
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             self.viewer._set_model_tool_options)
+
+    def _setup_sub_window_connections(self):
+        # When the user changes the top axis
+        pass
 
     def _setup_model_fitting(self):
         # Populate model dropdown
@@ -197,8 +199,10 @@ class Controller(object):
             Boolean mask.
         """
         roi_mask = mask if mask is not None else self.get_roi_mask()
-        layer = layer_manager.add(layer._source, mask=roi_mask,
-                                  window=sub_window)
+        layer = layer_manager.add(layer._source,
+                                  mask=roi_mask,
+                                  window=sub_window,
+                                  name=layer._source.name + " Layer Slice")
 
         self.add_plot(layer=layer)
 
@@ -211,9 +215,12 @@ class Controller(object):
 
         if window is None:
             window = self.viewer.add_sub_window()
+
+            # Connect the statistics to the roi interactions
             window._plot_widget.on_roi_update += self.update_statistics
 
-        # Connect the statistics to the roi interactions
+            # Connect the top axis change events
+            # window._dynamic_axis.
 
         self.add_plot(data=data, window=window)
 
@@ -268,13 +275,16 @@ class Controller(object):
         mask = self.get_roi_mask()
 
         if mask[mask == True].size != current_layer.data.size:
-            current_layer = layer_manager.add(current_layer._source,
-                                              mask=self.get_roi_mask(),
-                                              window=current_layer._window)
+            current_layer = layer_manager.add(
+                current_layer._source,
+                mask=self.get_roi_mask(),
+                window=current_layer._window,
+                name=current_layer._source.name + " Layer Slice")
             self.add_plot(layer=current_layer)
 
-        new_model_layer = model_layer_manager.new_model_layer(current_layer,
-                                                              compound_model)
+        new_model_layer = model_layer_manager.new_model_layer(
+            current_layer, compound_model, name="New Model Layer")
+
         self.viewer.add_layer_item(new_model_layer)
 
         # Transfer models from original layer to new model layer

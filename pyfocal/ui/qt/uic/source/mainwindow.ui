@@ -610,7 +610,7 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset>
+    <iconset resource="icon_resource.qrc">
      <normaloff>:/Open Folder-48.png</normaloff>:/Open Folder-48.png</iconset>
    </property>
    <property name="text">
@@ -640,6 +640,8 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="icon_resource.qrc"/>
+ </resources>
  <connections/>
 </ui>
