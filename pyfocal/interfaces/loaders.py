@@ -111,14 +111,21 @@ def ascii_reader(filename, filter, **kwargs):
     mask = np.zeros(data.shape)
 
     if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
-        uncertainty = tab[cols[ref.uncertainty['col']]].data
-        uncertainty_type = ref.uncertainty.get('type', 'std')
+        try:
+            uncertainty = tab[cols[ref.uncertainty['col']]].data
+        except IndexError:
+            pass  # Input has no uncertainty column
+        else:
+            uncertainty_type = ref.uncertainty.get('type', 'std')
 
-        # This will be dictated by the type of the uncertainty
-        uncertainty = StdDevUncertainty(uncertainty)
+            # This will be dictated by the type of the uncertainty
+            uncertainty = StdDevUncertainty(uncertainty)
 
     if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
-        mask = tab[cols[ref.mask['col']]].data
+        try:
+            mask = tab[cols[ref.mask['col']]].data
+        except IndexError:
+            pass  # Input has no mask column
 
     return Data(name=name, data=data, dispersion=dispersion,
                 uncertainty=uncertainty, mask=mask, wcs=wcs, unit=unit,
