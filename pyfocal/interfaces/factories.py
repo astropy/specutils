@@ -64,6 +64,13 @@ class ModelFactory(Factory):
     # transparently, instead of explicitly naming them here. This is basically
     # a maintenance issue: at each new release of astropy we should check if
     # new models became available, and existing models got deprecated.
+    #
+    # This might not be possible unless astropy itself somehow manages to
+    # further subclass its Fittable1DModel class into spectrum-specific and
+    # other types. Right now we have a mix of spectral models, galaxy surface
+    # brightness models, and others, all lumped into a single type. Thus we
+    # have to keep picking the spectral relevant types by hand for the time
+    # being.
     all_models = {
         'Gaussian1D': models.Gaussian1D,
         'GaussianAbsorption1D': models.GaussianAbsorption1D,
@@ -81,6 +88,7 @@ class ModelFactory(Factory):
         'Shift': models.Shift,
         'Sine1D': models.Sine1D,
         'Voigt1D': models.Voigt1D,
+
         # polynomials have to be handled separately. Their calling sequence
         # is incompatible with the Fittable1DModel interface, and they run
         # under a linear minimization algorithm, as opposed to the non-linear
@@ -105,6 +113,8 @@ class FitterFactory(Factory):
 
     all_fitters = {
         'Levenberg-Marquardt': fitting.LevMarLSQFitter,
+        'Simplex': fitting.SimplexLSQFitter,
+        'SLSQP': fitting.SLSQPLSQFitter,
     }
 
     @classmethod
