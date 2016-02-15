@@ -64,8 +64,8 @@ activate pyf_env``.
 ::
 
     $ git clone https://github.com/nmearl/pyfocal.git
-    $ git checkout tags/v0.1rc2
     $ cd pyfocal
+    $ git checkout tags/v0.1rc2
     $ pip install -r requirements.txt
 
 .. note::
