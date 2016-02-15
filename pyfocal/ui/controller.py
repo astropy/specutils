@@ -155,15 +155,29 @@ class Controller(object):
 
         self.viewer.update_statistics(stat_dict)
 
-    def open_file(self):
+    def read_FITS(self, FITS_file_name):
+        """
+        Convenience method that directly reads a spectrum from a FITS file.
+        This exists mostly to facilitate development workflow. In time it
+        could be augmented to support fancier features such as wildcards,
+        file lists, mixed file types, and the like.
+        Note that the filter string is hard coded here; its details might
+        depend on the intrincacies of the registries, loaders, and data
+        classes. In other words, this is brittle code.
+        """
+        data = data_manager.load(str(FITS_file_name), 'Generic Fits (*.fits *.mits)')
+        self.viewer.add_data_item(data)
+
+    def open_file(self, file_name=None):
         """
         Creates a `pyfocal.core.data.Data` object from the `Qt` open file
         dialog, and adds it to the data item list in the UI.
         """
-        file_name, selected_filter = self.viewer.open_file_dialog(
-            loader_registry.filters)
+        if not file_name or file_name is None:
+            file_name, selected_filter = self.viewer.open_file_dialog(
+                loader_registry.filters)
 
-        if file_name is None:
+        if not file_name or file_name is None:
             return
 
         data = data_manager.load(str(file_name), str(selected_filter))
