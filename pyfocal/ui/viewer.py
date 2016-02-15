@@ -84,7 +84,7 @@ class Viewer(QMainWindow):
 
         # Let the sub window do initialization
         plot_sub_window.set_sub_window(ui_sub_window)
-        plot_sub_window.initialize()
+        plot_sub_window._setup_connections()
 
         new_sub_window = self.main_window.mdiArea.addSubWindow(plot_sub_window)
         new_sub_window.show()

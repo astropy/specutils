@@ -31,19 +31,12 @@ class Plot(pg.PlotWidget):
         self._rois = []
         self._active_roi = None
 
-        self._setup_connections()
-
         # Add data
         if data is not None:
             self.add_data(data)
 
         # Send a statistics update event
         self.on_roi_update.emit(None)
-
-    def _setup_connections(self):
-        if self._parent is not None:
-            act_insert_roi = self._parent.action("actionInsert_ROI")
-            act_insert_roi.triggered.connect(self.add_roi)
 
     def add_roi(self):
         view_range = self.viewRange()
