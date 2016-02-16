@@ -1,9 +1,14 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+# STDLIB
+import logging
+
+# LOCAL
 from ..core.data import Data, Layer, ModelLayer
 from ..core.containers import PlotContainer
 
+# THIRD-PARTY
 import pyqtgraph as pg
 import numpy as np
 from astropy.modeling import models, fitting
@@ -36,7 +41,7 @@ class DataFactory(Factory):
 
     @staticmethod
     def create_layer(data, mask=None, parent=None, window=None, name=''):
-        print("new layer: {}".format(name))
+        logging.info("new layer: {}".format(name))
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
         new_layer = Layer(data, mask, parent, window, name)
@@ -106,7 +111,7 @@ class ModelFactory(Factory):
         if name in cls.all_models:
             return cls.all_models[name]
 
-        print("No such model {}".format(name))
+        logging.error("No such model {}".format(name))
 
 
 class FitterFactory(Factory):
@@ -125,7 +130,7 @@ class FitterFactory(Factory):
         if name in cls.all_fitters:
             return cls.all_fitters[name]
 
-        print("No such fitter {}".format(name))
+        logging.error("No such fitter {}".format(name))
 
 
 class PlotFactory(Factory):

@@ -1,8 +1,11 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..third_party.qtpy.QtCore import *
+# STDLIB
+import os
 
+# LOCAL
+from ..third_party.qtpy.QtCore import *
 from ..interfaces.managers import (data_manager, layer_manager,
                                    model_layer_manager, plot_manager)
 from ..interfaces.registries import loader_registry
@@ -11,6 +14,7 @@ from ..analysis.modeling import apply_model
 
 
 class Controller(object):
+    """GUI controller."""
     def __init__(self, viewer):
         # Controller-specific events
         self.viewer = viewer
@@ -157,9 +161,9 @@ class Controller(object):
 
         self.viewer.update_statistics(stat_dict)
 
-    def read_FITS(self, FITS_file_name):
+    def read_file(self, file_name):
         """
-        Convenience method that directly reads a spectrum from a FITS file.
+        Convenience method that directly reads a spectrum from a file.
         This exists mostly to facilitate development workflow. In time it
         could be augmented to support fancier features such as wildcards,
         file lists, mixed file types, and the like.
@@ -167,7 +171,15 @@ class Controller(object):
         depend on the intrincacies of the registries, loaders, and data
         classes. In other words, this is brittle code.
         """
-        data = data_manager.load(str(FITS_file_name), 'Generic Fits (*.fits *.mits)')
+        file_name = str(file_name)
+        file_ext = os.path.splitext(file_name)[-1]
+
+        if file_ext in ('.txt', '.dat'):
+            file_filter = 'ASCII (*.txt *.dat)'
+        else:
+            file_filter = 'Generic Fits (*.fits *.mits)'
+
+        data = data_manager.load(file_name, file_filter)
         self.viewer.add_data_item(data)
 
     def open_file(self, file_name=None):

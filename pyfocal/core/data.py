@@ -1,16 +1,18 @@
+"""This module handles spectrum data objects."""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from astropy.nddata import NDData, NDDataBase, NDArithmeticMixin, NDIOMixin
-from .events import EventHook
-import numpy as np
+# STDLIB
 import logging
+
+# THIRD-PARTY
+import numpy as np
+from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
 from astropy.units import Unit, Quantity
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
-    """
-    Class of the base data container for all data (of type
+    """Class of the base data container for all data (of type
     :class:`numpy.ndarray`) that is passed around in Pyfocal. It inherits from
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
@@ -89,17 +91,34 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
 
 class Layer(object):
-    """
-    Base class to handle layers in Pyfocal.
+    """Base class to handle layers in Pyfocal.
 
-    A layer is a "view" into a :class:`pyfocal.core.data.Data` object. It does
-    not hold any data itself, but instead contains a special `mask` object
+    A layer is a "view" into a :class:`Data` object. It does
+    not hold any data itself, but instead contains a special ``mask`` object
     and reference to the original data.
 
-    Since :class:`pyfocal.core.data.Layer` inherits from
+    Since :class:`Data` inherits from
     :class:`astropy.nddata.NDDataBase` and provides the
     :class:`astropy.nddata.NDArithmeticMixin` mixin, it is also possible to
     do arithmetic operations on layers.
+
+    Parameters
+    ----------
+    source : `Data`
+        Spectrum data object.
+
+    mask : ndarray
+        Mask for the spectrum data.
+
+    parent : obj or `None`
+        GUI parent.
+
+    window : obj or `None`
+        GUI window.
+
+    name : str
+        Short description.
+
     """
     def __init__(self, source, mask, parent=None, window=None, name=''):
         super(Layer, self).__init__()
@@ -113,19 +132,21 @@ class Layer(object):
 
     @property
     def data(self):
+        """Flux quantity with mask applied."""
         data = self._source.data[self._mask]
 
         return Quantity(data, unit=self._source.unit).to(self.units[1])
 
     @property
     def unit(self):
+        """Flux unit."""
         return self._source.unit
 
     @property
     def dispersion(self):
+        """Dispersion quantity with mask applied."""
         return Quantity(self._source.dispersion[self._mask],
-                        unit=self._source.dispersion_unit).to(
-                self.units[0])
+                        unit=self._source.dispersion_unit).to(self.units[0])
 
     @dispersion.setter
     def dispersion(self, value, unit=""):
@@ -133,32 +154,55 @@ class Layer(object):
 
     @property
     def uncertainty(self):
+        """Flux uncertainty with mask applied."""
         return self._source.uncertainty[self._mask]
 
     @property
     def mask(self):
+        """Mask for spectrum data."""
         return self._source.mask[self._mask]
 
     @property
     def wcs(self):
+        """WCS for spectrum data."""
         return self._source.wcs
 
     @property
     def meta(self):
+        """Spectrum metadata."""
         return self._source.meta
 
 
+# TODO: Shouldn't this be a subclass of Layer?
 class ModelLayer(object):
+    """A layer for spectrum with a model applied.
+
+    Parameters
+    ----------
+    source : `Data`
+        Spectrum data object.
+
+    model : obj
+        Astropy model.
+
+    parent : obj or `None`
+        GUI parent.
+
+    name : str
+        Short description.
+
+    """
     def __init__(self, source, model, parent=None, name=''):
         self._source = source
         self._model = model
         self._data = None
         self._window = self._source._window
         self.name = self._source.name + " Model" if not name else name
-        print(name)
+        logging.info('{0} model layer created'.format(name))
 
     @property
     def data(self):
+        """Flux quantity from model."""
         if self._data is None:
             self._data = self._model(self._source.dispersion.value)
 
@@ -167,26 +211,32 @@ class ModelLayer(object):
 
     @property
     def dispersion(self):
+        """Dispersion values."""
         return self._source.dispersion
 
     @property
     def uncertainty(self):
+        """Flux uncertainty."""
         return None #self._source.uncertainty
 
     @property
     def mask(self):
+        """Mask for spectrum data."""
         return self._source.mask
 
     @property
     def wcs(self):
+        """WCS for spectrum data."""
         return self._source.wcs
 
     @property
     def meta(self):
+        """Spectrum metadata."""
         return self._source.meta
 
     @property
     def model(self):
+        """Spectrum model."""
         return self._model
 
     @model.setter
@@ -196,4 +246,5 @@ class ModelLayer(object):
 
     @property
     def layer(self):
+        """Spectrum data object."""
         return self._source

@@ -23,8 +23,8 @@ def fits_reader(filename, filter, **kwargs):
     """
     logging.info("Attempting to open '{}' using filter '{}'.".format(
             filename, filter))
-    print("Attempting to open '{}' using filter '{}'.".format(
-            filename, filter))
+    #print("Attempting to open '{}' using filter '{}'.".format(
+    #        filename, filter))
 
     name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(filename, **kwargs)
@@ -35,8 +35,8 @@ def fits_reader(filename, filter, **kwargs):
     meta['header'] = header
     wcs = WCS(hdulist[ref.wcs['hdu']].header)
     data = hdulist[ref.data['hdu']].data
-    uncertainty = None
-    uncertainty_type = None
+    uncertainty = np.zeros(data.shape)
+    uncertainty_type = 'std'
 
     try:
         unit = Unit(meta['header'].get('BUNIT', ""))
@@ -44,7 +44,7 @@ def fits_reader(filename, filter, **kwargs):
         logging.warning(e)
         unit = Unit("")
 
-    mask = np.zeros(shape=data.shape)
+    mask = np.zeros(data.shape)
 
     # Grab the data array, use columns if necessary
     if ref.data.get('col') is not None:
@@ -54,16 +54,19 @@ def fits_reader(filename, filter, **kwargs):
             logging.warning("No such columns available.")
 
     if hasattr(ref, 'uncertainty') and ref.uncertainty.get('hdu') is not None:
-        uncertainty = hdulist[ref.uncertainty['hdu']].data
+        try:
+            uncertainty = hdulist[ref.uncertainty['hdu']].data
 
-        if ref.uncertainty.get('col') is not None:
-            uncertainty = uncertainty[uncertainty.columns[ref.uncertainty[
-                'col']].name]
+            if ref.uncertainty.get('col') is not None:
+                uncertainty = uncertainty[
+                    uncertainty.columns[ref.uncertainty['col']].name]
+        except AttributeError:
+            pass
 
         uncertainty_type = ref.uncertainty.get('type', 'std')
 
-        # This will be dictated by the type of the uncertainty
-        uncertainty = StdDevUncertainty(uncertainty)
+    # This will be dictated by the type of the uncertainty
+    uncertainty = StdDevUncertainty(uncertainty)
 
     if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
         try:
@@ -104,12 +107,21 @@ def ascii_reader(filename, filter, **kwargs):
     wcs = None
     wave = tab[cols[ref.dispersion['col']]]
     dispersion = wave.data
-    disp_unit = wave.unit
     flux = tab[cols[ref.data['col']]]
     data = flux.data
-    unit = flux.unit
-    uncertainty = None
-    uncertainty_type = None
+    uncertainty = np.zeros(data.shape)
+    uncertainty_type = 'std'
+
+    if flux.unit is None:
+        unit = Unit(ref.data.get('unit', 'erg / (Angstrom cm2 s)'))
+    else:
+        unit = flux.unit
+
+    if wave.unit is None:
+        disp_unit = Unit(ref.dispersion.get('unit', 'Angstrom'))
+    else:
+        disp_unit = wave.unit
+
     mask = np.zeros(data.shape)
 
     if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
@@ -120,8 +132,8 @@ def ascii_reader(filename, filter, **kwargs):
         else:
             uncertainty_type = ref.uncertainty.get('type', 'std')
 
-            # This will be dictated by the type of the uncertainty
-            uncertainty = StdDevUncertainty(uncertainty)
+    # This will be dictated by the type of the uncertainty
+    uncertainty = StdDevUncertainty(uncertainty)
 
     if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
         try:

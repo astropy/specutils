@@ -1,12 +1,16 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+# LOCAL
 from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory
 from ..core.events import EventHook
 from ..analysis import modeling
 from ..third_party.py_expression_eval import Parser
 
+# STDLIB
 import logging
+
+# THIRD-PARTY
 import numpy as np
 
 
@@ -49,12 +53,12 @@ class LayerManager(Manager):
         super(LayerManager, self).__init__()
 
     def new(self, data, mask=None, parent=None, window=None, name=''):
-        print("layer manager: {}".format(name))
+        logging.info("layer manager: {}".format(name))
         new_layer = DataFactory.create_layer(data, mask, parent, window, name)
         return new_layer
 
     def add(self, data, mask=None, parent=None, window=None, name=''):
-        print("layer manager add: {}".format(name))
+        logging.info("layer manager add: {}".format(name))
         new_layer = self.new(data, mask, parent, window, name)
         self._members.append(new_layer)
 
@@ -207,7 +211,7 @@ class ModelLayerManager(Manager):
         del self._members[old_layer]
 
     def update_model(self, model_layer, model_dict, formula=''):
-        print("ModelManager.update_model: {}".format(model_dict))
+        logging.info("ModelManager.update_model: {}".format(model_dict))
         model = self.get_compound_model(model_dict, formula)
         model_layer.model = model
 
