@@ -123,6 +123,7 @@ class Controller(object):
         if current_layer is None or mask is None:
             return
 
+        # fit
         flux = current_layer.data[mask]
         dispersion = current_layer.dispersion[mask]
 
@@ -133,14 +134,15 @@ class Controller(object):
 
         fitted_model = apply_model(model, dispersion, flux, fitter_name=fitter_name)
 
-        # the code below has similarities with code in ModelLayerManager.update_model.
-        # Maybe a bit of refactoring wouldn't hurt.
+        # add fit results to current model layer.
         current_layer = self.viewer.current_layer()
         current_window = self.viewer.current_sub_window()
         current_layer.model = fitted_model
 
+        # update GUI with fit results
         self.update_model_list()
 
+        # plot fitted model
         plot_manager.update_plots(current_window, current_layer)
 
         # after model is fitted and plotted, the statistics window should
