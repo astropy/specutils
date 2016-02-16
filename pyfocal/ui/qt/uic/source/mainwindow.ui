@@ -368,6 +368,9 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTreeWidget" name="treeWidget_2">
+       <property name="animated">
+        <bool>true</bool>
+       </property>
        <property name="headerHidden">
         <bool>true</bool>
        </property>
