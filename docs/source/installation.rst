@@ -96,6 +96,12 @@ launched from the command line::
 Again, if you're using an Anaconda virtual environment, please be sure to
 activate it before launching Pyfocal.
 
+If you only wish to inspect a single FITS or ASCII file using the default
+:ref:`doc_custom_loaders` file formatting, you can also pass in the filename
+as a command line argument, as follows::
+
+    $ pyfocal filename
+
 
 Known Issues
 ------------
