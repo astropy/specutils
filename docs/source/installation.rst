@@ -96,18 +96,27 @@ launched from the command line::
 Again, if you're using an Anaconda virtual environment, please be sure to
 activate it before launching Pyfocal.
 
+If you only wish to inspect a single FITS or ASCII file using the default
+:ref:`doc_custom_loaders` file formatting, you can also pass in the filename
+as a command line argument, as follows::
+
+    $ pyfocal filename
+
 
 Known Issues
 ------------
 
-On a Mac with Qt5, depending on exactly how you have set up Anaconda, you might see the following error after following the above instructions::
+On a Mac with Qt5, depending on exactly how you have set up Anaconda, you might
+see the following error after following the above instructions::
 
     This application failed to start because it could not find or load the Qt platform plugin "cocoa".
 
     Reinstalling the application may fix this problem.
 
-If you see this message, you have encountered an incompatibility between Anaconda's packaging of Qt4 and Qt5.  The workaround is to uninstall Qt4 with the following command::
+If you see this message, you have encountered an incompatibility between
+Anaconda's packaging of Qt4 and Qt5. The workaround is to uninstall Qt4 with the
+following command::
 
     $ conda uninstall pyqt qt
 
-and pyfocal should now happily run.
+and Pyfocal should now happily run.
