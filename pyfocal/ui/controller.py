@@ -281,11 +281,11 @@ class Controller(object):
         Creates a new layer object using the currently defined model.
         """
         current_layer = self.viewer.current_layer()
+        model_inputs = self.viewer.get_model_inputs()
 
-        if current_layer is None:
+        if current_layer is None or not model_inputs:
             return
 
-        model_inputs = self.viewer.get_model_inputs()
         compound_model = model_layer_manager.get_compound_model(
             model_dict=model_inputs,
             formula=self.viewer.current_model_formula)
