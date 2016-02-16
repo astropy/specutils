@@ -116,7 +116,7 @@ class PlotWindow(QMainWindow):
                 container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
             else:
                 container.pen = self.inactive_color
-                container.error_pen = None
+                container.error_pen = pg.mkPen(None)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
