@@ -69,6 +69,11 @@ class Controller(object):
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             self.viewer._set_model_tool_options)
 
+        # When clicking the checkbox next to a layer item, toggle the
+        # visibility of that layer
+        self.viewer.wgt_layer_list.itemClicked.connect(
+            self._set_layer_visibility)
+
     def _setup_sub_window_connections(self):
         # When the user changes the top axis
         pass
@@ -375,3 +380,21 @@ class Controller(object):
         roi_mask = current_sub_window.get_roi_mask(layer=current_layer)
 
         return roi_mask
+
+    def _set_layer_visibility(self, layer_item, col=0):
+        """Toggles the visibility of the plot in the sub window.
+
+        Parameters
+        ----------
+        layer : Layer
+            Layer object to toggle visibility.
+
+        col : int
+            QtTreeWidget data column.
+        """
+        current_plot_window = self.viewer.current_sub_window()
+        layer = layer_item.data(0, Qt.UserRole)
+
+        if layer is not None:
+            current_plot_window.set_visibility(
+                layer, layer_item.checkState(col))

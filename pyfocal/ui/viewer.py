@@ -144,8 +144,10 @@ class Viewer(QMainWindow):
         """
         new_item = QTreeWidgetItem(self.get_layer_item(layer._source) or
                                    self.wgt_layer_list)
+        new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
         new_item.setText(0, layer.name)
         new_item.setData(0, Qt.UserRole, layer)
+        new_item.setCheckState(0, Qt.Checked)
 
         self.wgt_layer_list.setCurrentItem(new_item)
 
