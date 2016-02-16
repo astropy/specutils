@@ -58,7 +58,8 @@ Meanwhile, this build-in YAML definition for ASCII below states that::
   starts from 0). Its unit, if not explicitly defined (e.g., via IPAC header),
   will be set to Angstrom.
 * Flux values (data) are in the second column. Its unit, if not explicitly
-  defined (e.g., via IPAC header), will be set to :math:``.
+  defined (e.g., via IPAC header), will be set to
+  :math:`\textnormal{erg} \; \AA^{-1} \; \textnormal{cm}^{-2} \; \textnormal{s}^{-1}`.
 * Flux uncertainties are in the third column. The values are standard deviation
   (as opposed to variance). Its unit must be the same as flux values.
 * The definition file was written by STScI.

@@ -90,8 +90,9 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
         return self._dispersion_unit
 
 
+# TODO: Rename to DataLayer and subclass BaseLayer.
 class Layer(object):
-    """Base class to handle layers in Pyfocal.
+    """Class to handle data layers in Pyfocal.
 
     A layer is a "view" into a :class:`Data` object. It does
     not hold any data itself, but instead contains a special ``mask`` object
@@ -173,7 +174,7 @@ class Layer(object):
         return self._source.meta
 
 
-# TODO: Shouldn't this be a subclass of Layer?
+# TODO: Subclass BaseLayer.
 class ModelLayer(object):
     """A layer for spectrum with a model applied.
 
