@@ -53,6 +53,7 @@ Using Pyfocal
 .. toctree::
    :maxdepth: 2
 
+   viewer
    model_fitting
    custom_loaders
    api/index
