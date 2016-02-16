@@ -11,9 +11,6 @@ import pyqtgraph as pg
 
 
 class PlotWindow(QMainWindow):
-    inactive_color = pg.mkPen(color=(0, 0, 0, 75))
-    active_color = pg.mkPen(color=(0, 0, 0, 255))
-
     def __init__(self, **kwargs):
         super(PlotWindow, self).__init__(**kwargs)
         self._sub_window = None
@@ -112,21 +109,15 @@ class PlotWindow(QMainWindow):
     def set_active_plot(self, layer):
         for container in self._containers:
             if container.layer == layer:
-                container.pen = self.active_color
-                container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
+                container.set_visibility(True, True)
             else:
-                container.pen = self.inactive_color
-                container.error_pen = pg.mkPen(None)
+                container.set_visibility(True, False)
 
-    def set_visibility(self, layer, show):
+    def set_visibility(self, layer, show, override=False):
         for container in self._containers:
             if container.layer == layer:
-                if show:
-                    container.pen = self.active_color
-                    container.error_pen = pg.mkPen(color=(0, 0, 0, 50))
-                else:
-                    container.pen = pg.mkPen(None)
-                    container.error_pen = pg.mkPen(None)
+                container.set_visibility(show, show, inactive=False,
+                                         override=override)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)

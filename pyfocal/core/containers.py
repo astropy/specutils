@@ -3,18 +3,25 @@ from __future__ import (absolute_import, division, print_function,
 
 from .events import EventHook
 from astropy.units import Unit, Quantity
+import pyqtgraph as pg
 
 
 class PlotContainer(object):
     def __init__(self, layer, plot=None, visible=True, style='line',
                  pen=None, err_pen=None):
         self._layer = layer
-        self.visible = visible
         self.style = style
-        self._pen = pen
-        self._err_pen = err_pen
         self._plot = plot
         self.error = None
+
+        _pen = pen if pen is not None else pg.mkPen(color=(0, 0, 0, 255))
+        _err_pen = err_pen if err_pen is not None else pg.mkPen(color=(0, 0, 0, 50))
+        self._pen_stash = {'pen_on': _pen,
+                           'pen_inactive': pg.mkPen(color=(0, 0, 0, 127)),
+                           'pen_off': pg.mkPen(None),
+                           'error_pen_on': _err_pen,
+                           'error_pen_off': pg.mkPen(None)}
+        self._visibility_state = [True, True, True]
 
         self.on_unit_change = EventHook()
         self.on_visibility_change = EventHook()
@@ -24,8 +31,29 @@ class PlotContainer(object):
         self.layer.units = (x, y or self.layer.layer_units[1],
                             z or self.layer.layer_units[2])
 
-    def change_visible(self, visible_state):
-        self.visible = visible_state
+    def set_visibility(self, pen_show, error_pen_show, inactive=True,
+                       override=False):
+        if override:
+            self._visibility_state = [pen_show, error_pen_show, inactive]
+        else:
+            pen_show, _, inactive = self._visibility_state
+
+        error_pen_show = error_pen_show if pen_show else False
+
+        if pen_show:
+            self.pen = self._pen_stash['pen_on']
+        else:
+            if inactive:
+                self.pen = self._pen_stash['pen_inactive']
+            else:
+                self.plot.setPen(self._pen_stash['pen_off'])
+
+        if error_pen_show:
+            self.error_pen = self._pen_stash['error_pen_on']
+        else:
+            if self.error is not None:
+                self.error.setOpts(pen=self._pen_stash['error_pen_off'])
+
 
     @property
     def plot(self):
@@ -42,24 +70,22 @@ class PlotContainer(object):
 
     @property
     def pen(self):
-        return self._pen
+        return self._pen_stash['pen_on']
 
     @pen.setter
     def pen(self, pen):
-        self._pen = pen
-        self.plot.setPen(self._pen)
+        self._pen_stash['pen_on'] = pen
+        self.plot.setPen(pen)
 
     @property
     def error_pen(self):
-        return self._err_pen
+        return self._pen_stash['error_pen_on']
 
     @error_pen.setter
     def error_pen(self, pen):
-        self._err_pen = pen
+        self._pen_stash['error_pen_on'] = pen
 
         if self.error is not None:
-            # self.error.setPen(self._err_pen)
-            # self.error.setBrush(self._err_pen)
             self.error.setOpts(pen=pen)
 
     def update(self):

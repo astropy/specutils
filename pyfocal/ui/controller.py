@@ -397,4 +397,4 @@ class Controller(object):
 
         if layer is not None:
             current_plot_window.set_visibility(
-                layer, layer_item.checkState(col))
+                layer, layer_item.checkState(col) == Qt.Checked, override=True)
