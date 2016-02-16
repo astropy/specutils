@@ -3,8 +3,10 @@ name: ASCII
 extension: [txt, dat]
 dispersion:
   col: 0
+  unit: 'Angstrom'
 data:
   col: 1
+  unit: 'erg / (Angstrom cm2 s)'
 uncertainty:
   col: 2
   type: 'std'

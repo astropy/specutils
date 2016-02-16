@@ -21,7 +21,7 @@ class App(object):
         self.controller = Controller(self.viewer)
 
         if len(argv) > 1:
-            self.controller.read_FITS(sys.argv[1])
+            self.controller.read_file(sys.argv[1])
 
 def setup():
     qapp = QApplication(sys.argv)
