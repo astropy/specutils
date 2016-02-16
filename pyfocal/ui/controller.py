@@ -317,7 +317,12 @@ class Controller(object):
             self.add_plot(layer=current_layer)
 
         new_model_layer = model_layer_manager.new_model_layer(
-            current_layer, compound_model, name="New Model Layer")
+            compound_model,
+            current_layer._source,
+            current_layer._mask,
+            parent=current_layer,
+            window=current_layer._window,
+            name="New Model Layer")
 
         self.viewer.add_layer_item(new_model_layer)
 

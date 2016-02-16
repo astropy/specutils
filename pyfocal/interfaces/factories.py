@@ -49,8 +49,9 @@ class DataFactory(Factory):
         return new_layer
 
     @staticmethod
-    def create_model_layer(layer, model, parent=None, name=''):
-        new_model_layer = ModelLayer(layer, model, parent, name)
+    def create_model_layer(model, data, mask, parent=None, window=None,
+                           name=''):
+        new_model_layer = ModelLayer(model, data, mask, parent, window, name)
 
         return new_model_layer
 

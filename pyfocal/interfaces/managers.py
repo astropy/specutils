@@ -133,13 +133,16 @@ class ModelLayerManager(Manager):
 
         return model
 
-    def new_model_layer(self, layer, model, name=''):
-        model_layer = DataFactory.create_model_layer(layer, model, name=name)
+    def new_model_layer(self, model, data, mask, parent, window, name=''):
+        model_layer = DataFactory.create_model_layer(model, data, mask,
+                                                     parent=parent,
+                                                     window=window,
+                                                     name=name)
 
-        if layer not in self._members:
-            self._members[layer] = [model_layer]
+        if parent not in self._members:
+            self._members[parent] = [model_layer]
         else:
-            self._members[layer].append(model_layer)
+            self._members[parent].append(model_layer)
 
         self.on_add.emit(model_layer)
 
