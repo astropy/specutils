@@ -55,11 +55,11 @@ To fine-tune model parameters:
 
 #. Select the model layer under "Layers" (left panel) that contains the desired
    model.
-#. If needed, double-click on the model name to rename it. When you see a blinking cursor, enter
-   its new name and press "Enter".
+#. If desired, double-click on the model name to rename it. When you see a
+   blinking cursor, enter its new name and press "Enter".
 #. Expand the model listing under "Current Models".
-#. Double-click on the desired model parameter value in the listing. When you see a blinking
-   cursor, enter the new value and press "Enter".
+#. Double-click on the desired model parameter value in the listing.
+   When you see a blinking cursor, enter the new value and press "Enter".
 #. Scroll down (if needed) and click "Update".
 
 To fit a model:
@@ -67,18 +67,17 @@ To fit a model:
 #. Select the desired fitting routine from its drop-down menu.
 #. Click "Perform Fit".
 
-The "Arithmetic Behavior" text box is used to define the relationship between different models
-for the same layer. If nothing is defined, the default is to add all the models together.
-If you have multiple models of the same name, you must rename them such that they have unique
-names before defining the relationship.
-To describe a non-default model relationship, enter the model names and math operators, as
-shown in the examples below and then press "Create" or "Update" to produce the compound model::
+The "Arithmetic Behavior" text box is used to define the relationship between
+different models for the same layer. If nothing is defined, the default is to
+add all the models together. To describe a non-default model relationship,
+enter the model names and math operators, as shown in the examples below and
+then press "Create" or "Update" to produce the compound model::
 
-    Linear + Gaussian
+    Linear1 + Gaussian1
 
 ::
 
-    Linear * Gaussian
+    Linear1 * Gaussian1
 
 ::
 
