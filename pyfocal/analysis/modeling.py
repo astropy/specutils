@@ -1,5 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
+import logging
+
 from ..interfaces.factories import FitterFactory
 
 
@@ -11,6 +14,13 @@ def apply_model(model, x, y_init, fitter_name=None):
         fitter = FitterFactory.default_fitter()
 
     result = fitter(model, x, y_init)
+
+    if 'message' in fitter.fit_info:
+        # The fitter 'message' should probably be logged at INFO level.
+        # Problem is, info messages do not display in the error console,
+        # and we, ideally, want the user to see the message immediately
+        # after the fit is executed.
+        logging.warning(fitter.fit_info['message'])
 
     return result
 
