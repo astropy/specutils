@@ -277,7 +277,7 @@ class Viewer(QMainWindow):
     def parent_layer(self):
         """
         Returns the parent of the currently selected layer object
-        form the layer list widget.
+        from the layer list widget.
 
         Returns
         -------
