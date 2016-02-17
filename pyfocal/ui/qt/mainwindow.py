@@ -2,10 +2,11 @@
 
 # Form implementation generated from reading ui file './source/mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.5.1
+# Created by: ...third_party.qtpy UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
-
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 from ...third_party.qtpy import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
@@ -175,6 +176,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName("verticalLayout")
         self.treeWidget_2 = QtWidgets.QTreeWidget(self.dockWidgetContents_3)
+        self.treeWidget_2.setAnimated(True)
         self.treeWidget_2.setHeaderHidden(True)
         self.treeWidget_2.setObjectName("treeWidget_2")
         self.treeWidget_2.headerItem().setText(0, "1")

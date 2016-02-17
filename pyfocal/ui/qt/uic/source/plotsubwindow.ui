@@ -37,8 +37,6 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionInsert_ROI"/>
-   <addaction name="actionInsert_Elliptical_ROI"/>
-   <addaction name="actionPolygon_ROI"/>
    <addaction name="separator"/>
   </widget>
   <action name="actionInsert_ROI">

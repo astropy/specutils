@@ -41,17 +41,20 @@ class Plot(pg.PlotWidget):
     def add_roi(self):
         view_range = self.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
-        y_len = (view_range[1][1] - view_range[1][0]) * 0.5
-        x_pos = x_len + view_range[0][0]
-        y_pos = y_len + view_range[1][0]
+        y_len = (view_range[1][1] - view_range[1][0]) * 0.9
+        x_pos = x_len * 0.5 + view_range[0][0]
+        y_pos = y_len * 0.05 + view_range[1][0]
 
         def remove():
             self.removeItem(roi)
             self._rois.remove(roi)
 
-        roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len * 0.5],
-                         sideScalers=True, removable=True, pen='k',
+        roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len],
+                         sideScalers=False, removable=True, pen='k',
                          hoverPen='r', handlePen='k')
+        roi.addScaleHandle([0, 1], [1, 0])
+        roi.addScaleHandle([1, 0], [0, 1])
+        roi.addScaleHandle([0, 0], [1, 1])
         self._rois.append(roi)
         self.addItem(roi)
 
