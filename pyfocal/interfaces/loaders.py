@@ -10,6 +10,7 @@ from ..core.data import Data
 import os
 import numpy as np
 from astropy.io import ascii, fits
+from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 from astropy.units import Unit
@@ -34,32 +35,70 @@ def fits_reader(filename, filter, **kwargs):
     header = dict(hdulist[ref.wcs['hdu']].header)
     meta['header'] = header
     wcs = WCS(hdulist[ref.wcs['hdu']].header)
-    data = hdulist[ref.data['hdu']].data
+
+    # Let Astropy parse the table for us
+    tab = Table.read(hdulist[ref.data['hdu']], format='fits')
+    cols = tab.colnames
+
+    # Read in wavelength column if it exists
+    dispersion = None
+    disp_unit = None
+    if hasattr(ref, 'dispersion') and ref.dispersion.get('hdu') is not None:
+        if ref.dispersion['hdu'] == ref.data['hdu']:
+            wavtab = tab
+            wavcols = cols
+        else:
+            wavtab = Table.read(hdulist[ref.dispersion['hdu']], format='fits')
+            wavcols = wavtab.colnames
+
+        dispersion = wavtab[wavcols[ref.dispersion['col']]]
+        disp_unit = dispersion.unit
+        dispersion = dispersion.data
+        if hasattr(dispersion, 'mask'):
+            dispersion = dispersion.data
+
+    # Read flux column
+    data = tab[cols[ref.data['col']]].data
+    unit = tab[cols[ref.data['col']]].unit
+    if unit is None:
+        try:
+            unit = Unit(meta['header'].get('BUNIT', ""))
+        except ValueError as e:
+            logging.warning(e)
+            unit = Unit("")
+
+    # Read data mask
+    if hasattr(data, 'mask'):
+        mask = data.mask
+        data = data.data
+    else:
+        mask = np.zeros(data.shape)
+        if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
+            try:
+                mask = hdulist[ref.mask['hdu']].data
+            except IndexError:
+                logging.warning("Mask extension not valid.")
+
+    # Read flux uncertainty
     uncertainty = np.zeros(data.shape)
     uncertainty_type = 'std'
-
-    try:
-        unit = Unit(meta['header'].get('BUNIT', ""))
-    except ValueError as e:
-        logging.warning(e)
-        unit = Unit("")
-
-    mask = np.zeros(data.shape)
-
-    # Grab the data array, use columns if necessary
-    if ref.data.get('col') is not None:
-        try:
-            data = data[data.columns[ref.data['col']].name]
-        except AttributeError:
-            logging.warning("No such columns available.")
-
     if hasattr(ref, 'uncertainty') and ref.uncertainty.get('hdu') is not None:
-        try:
-            uncertainty = hdulist[ref.uncertainty['hdu']].data
+        if ref.uncertainty['hdu'] == ref.data['hdu']:
+            errtab = tab
+            errcols = cols
+        else:
+            errtab = Table.read(hdulist[ref.uncertainty['hdu']], format='fits')
+            errcols = errtab.colnames
 
-            if ref.uncertainty.get('col') is not None:
-                uncertainty = uncertainty[
-                    uncertainty.columns[ref.uncertainty['col']].name]
+        try:
+            uncertainty = errtab[errcols[ref.uncertainty['col']]]
+            if (uncertainty.unit is not None and unit != Unit("") and
+                    uncertainty.unit != unit):
+                uncertainty = uncertainty.to(unit).value # TODO: Make this robust
+            else:
+                uncertainty = uncertainty.data
+                if hasattr(uncertainty, 'mask'):
+                    uncertainty = uncertainty.data
         except AttributeError:
             pass
 
@@ -68,16 +107,11 @@ def fits_reader(filename, filter, **kwargs):
     # This will be dictated by the type of the uncertainty
     uncertainty = StdDevUncertainty(uncertainty)
 
-    if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
-        try:
-            mask = hdulist[ref.mask['hdu']].data
-        except IndexError:
-            logging.warning("Mask extension not valid.")
-
     hdulist.close()
 
-    return Data(name=name, data=data, uncertainty=uncertainty, mask=mask,
-                wcs=wcs, unit=unit)
+    return Data(name=name, data=data, unit=unit, uncertainty=uncertainty,
+                mask=mask, wcs=wcs, dispersion=dispersion,
+                dispersion_unit=disp_unit)
 
 
 def fits_identify(origin, *args, **kwargs):
