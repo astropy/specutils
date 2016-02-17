@@ -128,6 +128,7 @@ class Controller(object):
     def fit_model(self, *args):
         # when fitting, the selected layer is a ModelLayer, thus
         # the data to be fitted resides in the parent.
+        # TODO: this will need to be revisited when ModelLayer subclasses Layer
         current_layer = self.viewer.parent_layer()
         mask = self.get_roi_mask(current_layer)
 
