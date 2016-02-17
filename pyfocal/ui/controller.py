@@ -106,6 +106,11 @@ class Controller(object):
         self.viewer.main_window.comboBox_2.setEnabled(False)
         self.viewer.main_window.pushButton_3.setEnabled(False)
 
+        # If the a model item is edited, make sure to save the name
+        self.viewer.wgt_model_list.itemChanged.connect(
+            self._update_model_name
+        )
+
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window()
 
@@ -398,3 +403,9 @@ class Controller(object):
         if layer is not None:
             current_plot_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
+
+    def _update_model_name(self, model_item, col=0):
+        model = model_item.data(0, Qt.UserRole)
+
+        if hasattr(model, '_name'):
+            model._name = model_item.text(0)
