@@ -147,7 +147,7 @@ class Controller(object):
 
         # If the number of parameters is greater than the number of data
         # points, bail
-        if len(model.parameters) < flux.size:
+        if len(model.parameters) > flux.size:
             logging.warning("Unable to perform fit; number of parameters is "
                             "greater than the number of data points.")
             return
