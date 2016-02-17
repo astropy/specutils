@@ -36,10 +36,8 @@ Pyfocal can overplot spectral line identifications taken from a variety of
 line lists.
 
 
-.. _doc_installation:
-
-Installation
-------------
+Installation and Setup
+----------------------
 
 .. toctree::
    :maxdepth: 2
@@ -56,6 +54,14 @@ Using Pyfocal
    viewer
    model_fitting
    custom_loaders
+
+
+References/API
+--------------
+
+.. toctree::
+   :maxdepth: 1
+
    api/index
 
 

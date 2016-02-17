@@ -1,3 +1,8 @@
+.. _doc_installation:
+
+Installation
+============
+
 Dependencies
 ------------
 
@@ -85,24 +90,6 @@ activate it first before installing: ``$ source activate pyf_env``.
    environment.
 
 
-Launching Pyfocal
------------------
-
-Once PyQt/PySide and the other dependencies are installed, Pyfocal can be
-launched from the command line::
-
-    $ pyfocal
-
-Again, if you're using an Anaconda virtual environment, please be sure to
-activate it before launching Pyfocal.
-
-If you only wish to inspect a single FITS or ASCII file using the default
-:ref:`doc_custom_loaders` file formatting, you can also pass in the filename
-as a command line argument, as follows::
-
-    $ pyfocal filename
-
-
 Known Issues
 ------------
 
@@ -120,3 +107,23 @@ following command::
     $ conda uninstall pyqt qt
 
 and Pyfocal should now happily run.
+
+
+.. _doc_launching:
+
+Launching Pyfocal
+=================
+
+Once PyQt/PySide and the other dependencies are installed, Pyfocal can be
+launched from the command line::
+
+    $ pyfocal
+
+Again, if you're using an Anaconda virtual environment, please be sure to
+activate it before launching Pyfocal.
+
+If you only wish to inspect a single FITS or ASCII file using the default
+:ref:`doc_custom_loaders` file formatting, you can also pass in the filename
+as a command line argument, as follows::
+
+    $ pyfocal filename
