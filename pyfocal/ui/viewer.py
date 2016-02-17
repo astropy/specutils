@@ -173,7 +173,7 @@ class Viewer(QMainWindow):
         Parameters
         ----------
         """
-        name = model.__class__.__name__
+        name = model.name or model.__class__.__name__
 
         # we want to remove the redundant '1D' suffix from model
         # names displayed to the user.
@@ -277,7 +277,7 @@ class Viewer(QMainWindow):
     def parent_layer(self):
         """
         Returns the parent of the currently selected layer object
-        form the layer list widget.
+        from the layer list widget.
 
         Returns
         -------

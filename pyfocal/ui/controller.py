@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 # STDLIB
 import os
+import logging
 
 # LOCAL
 from ..third_party.qtpy.QtCore import *
@@ -106,6 +107,11 @@ class Controller(object):
         self.viewer.main_window.comboBox_2.setEnabled(False)
         self.viewer.main_window.pushButton_3.setEnabled(False)
 
+        # If the a model item is edited, make sure to save the name
+        self.viewer.wgt_model_list.itemChanged.connect(
+            self._update_model_name
+        )
+
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window()
 
@@ -122,8 +128,9 @@ class Controller(object):
     def fit_model(self, *args):
         # when fitting, the selected layer is a ModelLayer, thus
         # the data to be fitted resides in the parent.
+        # TODO: this will need to be revisited when ModelLayer subclasses Layer
         current_layer = self.viewer.parent_layer()
-        mask = self.get_roi_mask()
+        mask = self.get_roi_mask(current_layer)
 
         if current_layer is None or mask is None:
             return
@@ -133,9 +140,17 @@ class Controller(object):
         dispersion = current_layer.dispersion[mask]
 
         model_dict = self.viewer.get_model_inputs()
+
         fitter_name = self.viewer.current_fitter
         formula = self.viewer.current_model_formula
         model = model_layer_manager.get_compound_model(model_dict, formula=formula)
+
+        # If the number of parameters is greater than the number of data
+        # points, bail
+        if len(model.parameters) < flux.size:
+            logging.warning("Unable to perform fit; number of parameters is "
+                            "greater than the number of data points.")
+            return
 
         fitted_model = apply_model(model, dispersion, flux, fitter_name=fitter_name)
 
@@ -363,10 +378,16 @@ class Controller(object):
             else:
                 self.viewer.add_model_item(model_layer.model)
 
-    def get_roi_mask(self):
+    def get_roi_mask(self, layer=None):
         """
         Retrieves the array mask depending on the ROIs currently in the
         active plot window.
+
+        Parameters
+        ----------
+        layer : Layer
+            The layer containing the data from which the mask will be
+            constructed.
 
         Returns
         -------
@@ -374,12 +395,13 @@ class Controller(object):
             A boolean array the size of currently selected layer masking
             outside the bounds of the ROIs.
         """
-        current_layer = self.viewer.current_layer()
+        current_layer = layer or self.viewer.current_layer()
         current_sub_window = self.viewer.current_sub_window()
 
-        roi_mask = current_sub_window.get_roi_mask(layer=current_layer)
+        if current_sub_window is not None:
+            roi_mask = current_sub_window.get_roi_mask(layer=current_layer)
 
-        return roi_mask
+            return roi_mask
 
     def _set_layer_visibility(self, layer_item, col=0):
         """Toggles the visibility of the plot in the sub window.
@@ -398,3 +420,9 @@ class Controller(object):
         if layer is not None:
             current_plot_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
+
+    def _update_model_name(self, model_item, col=0):
+        model = model_item.data(0, Qt.UserRole)
+
+        if hasattr(model, 'rename'):
+            model.rename(model_item.text(0))
