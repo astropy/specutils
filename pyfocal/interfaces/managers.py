@@ -153,9 +153,15 @@ class ModelLayerManager(Manager):
     def _evaluate(self, models, formula):
         parser = Parser()
         expr = parser.parse(formula)
+
+        # Extract variables
         vars = expr.variables()
+
+        # List the models in the same order as the variables
+        sorted_models = [m for v in vars for m in models if m.name == v]
+
         result = parser.evaluate(expr.simplify({}).toString(),
-                                 dict(pair for pair in zip(vars, models)))
+                                 dict(pair for pair in zip(vars, sorted_models)))
 
         return result
 
