@@ -16,7 +16,7 @@ def extract(data, x_range):
 
     Parameters
     ----------
-    data : ``Data``
+    data : `~pyfocal.core.data.Data`
         Contains the spectrum to be extracted.
 
     x_range : tuple
@@ -24,7 +24,7 @@ def extract(data, x_range):
 
     Returns
     -------
-    result : ``Data``
+    result : `~pyfocal.core.data.Data`
         Spectrum data with extracted region.
 
     Examples
@@ -49,11 +49,11 @@ def extract(data, x_range):
 
 def stats(data):
     """Compute basic statistics for a spectral region
-    contained in a ``Data`` instance.
+    contained in a `~pyfocal.core.data.Data` instance.
 
     Parameters
     ----------
-    data : ``Data``
+    data : `~pyfocal.core.data.Data`
         Typically this is returned by the :func:`extract` function.
 
     Returns
@@ -81,7 +81,7 @@ def stats(data):
 
 def eq_width(cont1_stats, cont2_stats, line):
     """Compute an equivalent width given stats for two continuum
-    regions, and a ``Data`` instance with the extracted
+    regions, and a `~pyfocal.core.data.Data` instance with the extracted
     spectral line region.
 
     This uses for now a very simple continuum subtraction method; i.e.,
@@ -93,7 +93,7 @@ def eq_width(cont1_stats, cont2_stats, line):
     cont1_stats, cont2_stats : dict
         This is returned by the :func:`stats` function.
 
-    line : ``Data``
+    line : `~pyfocal.core.data.Data`
         This is returned by the :func:`extract` function.
 
     Returns
@@ -137,7 +137,7 @@ def fwzi(cont1_stats, cont2_stats, line):
     cont1_stats, cont2_stats : dict
         This is returned by the :func:`stats` function.
 
-    line : ``Data``
+    line : `~pyfocal.core.data.Data`
         This is returned by the :func:`extract` function.
 
     Returns
@@ -200,7 +200,7 @@ def centroid(data, absorption=False):
 
     Parameters
     ----------
-    data : ``Data``
+    data : `~pyfocal.core.data.Data`
         Extracted spectrum data.
 
     absorption : bool
