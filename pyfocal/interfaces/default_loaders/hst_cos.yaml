@@ -1,14 +1,17 @@
 --- !CustomLoader
-name: Generic Fits
+name: HST/COS Fits
 extension: [fits, mits]
 wcs:
-  hdu: 0
-data:
   hdu: 1
-  col: 0
-uncertainty:
+dispersion:
   hdu: 1
   col: 1
+data:
+  hdu: 1
+  col: 2
+uncertainty:
+  hdu: 1
+  col: 3
   type: 'std'
 meta:
-  author: Nicholas Earl
+  author: STScI
