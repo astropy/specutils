@@ -407,5 +407,5 @@ class Controller(object):
     def _update_model_name(self, model_item, col=0):
         model = model_item.data(0, Qt.UserRole)
 
-        if hasattr(model, '_name'):
-            model._name = model_item.text(0)
+        if hasattr(model, 'rename'):
+            model.rename(model_item.text(0))
