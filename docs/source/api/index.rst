@@ -7,4 +7,5 @@ This section documents the underlying code base to aid Pyfocal developers.
    :maxdepth: 2
 
    data
+   loaders
    statistics
