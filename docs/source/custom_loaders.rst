@@ -77,8 +77,8 @@ file without needing to modify any codes in Pyfocal.
 Creating a custom loader
 ------------------------
 
-To create your own loader, you can use either of the above examples as a template. Change the ``name`` and allowed
-``extension``s keywords for your specific case. Save this file with a name of your choosing (as long as it ends with
+To create your own loader, you can use either of the above examples as a template. Change the ``name`` and
+``extension`` keyword for your specific case. Save this file with a name of your choosing (as long as it ends with
 ``.yaml``) in the ``.pyfocal`` directory in your home directory. If the ``.pyfocal`` directory does not exist, you
 can create the directory yourself::
 
