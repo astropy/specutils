@@ -38,10 +38,12 @@ class CustomLoaderRegistry(Registry):
 class YAMLLoader(yaml.YAMLObject):
     yaml_tag = u'!CustomLoader'
 
-    def __init__(self, extension, name, data, uncertainty, mask, wcs, meta):
+    def __init__(self, extension, name, data, dispersion, uncertainty, mask,
+                 wcs, meta):
         self.name = name
         self.extension = extension
         self.data = data
+        self.dispersion = dispersion
         self.uncertainty = uncertainty
         self.mask = mask
         self.wcs = wcs

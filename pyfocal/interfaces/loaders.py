@@ -24,8 +24,6 @@ def fits_reader(filename, filter, **kwargs):
     """
     logging.info("Attempting to open '{}' using filter '{}'.".format(
             filename, filter))
-    #print("Attempting to open '{}' using filter '{}'.".format(
-    #        filename, filter))
 
     name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(filename, **kwargs)
