@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from ....core.events import EventHook
+from ..region_items import LinearRegionItem
 
 import pyqtgraph as pg
 import numpy as np
@@ -49,12 +50,7 @@ class Plot(pg.PlotWidget):
             self.removeItem(roi)
             self._rois.remove(roi)
 
-        roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len],
-                         sideScalers=False, removable=True, pen='k',
-                         hoverPen='r', handlePen='k')
-        roi.addScaleHandle([0, 1], [1, 0])
-        roi.addScaleHandle([1, 0], [0, 1])
-        roi.addScaleHandle([0, 0], [1, 1])
+        roi = LinearRegionItem(values=[x_pos, x_pos + x_len])
         self._rois.append(roi)
         self.addItem(roi)
 
@@ -72,8 +68,8 @@ class Plot(pg.PlotWidget):
         roi.sigRemoveRequested.connect(lambda: self.on_roi_update.emit(roi))
         roi.sigRegionChangeFinished.connect(
             lambda: self.on_roi_update.emit(roi))
-        roi.sigRegionChangeStarted.connect(
-            lambda: self.on_roi_update.emit(roi))
+        # roi.sigRegionChangeStarted.connect(
+        #     lambda: self.on_roi_update.emit(roi))
 
     def _set_active_roi(self, roi):
         self._active_roi = roi
@@ -91,13 +87,12 @@ class Plot(pg.PlotWidget):
         mask_holder = []
 
         for roi in self._rois:
-            roi_shape = roi.parentBounds()
-            x1, y1, x2, y2 = roi_shape.getCoords()
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            x1, x2 = roi.getRegion()
 
             mask_holder.append((container.layer.dispersion.value >= x1) &
-                               (container.layer.dispersion.value <= x2) &
-                               (container.layer.data.value >= y1) &
-                               (container.layer.data.value <= y2))
+                               (container.layer.dispersion.value <= x2))
 
         if len(mask_holder) == 0:
             mask_holder.append(np.ones(
