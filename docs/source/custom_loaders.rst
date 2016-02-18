@@ -29,11 +29,14 @@ For instance, this built-in YAML definition for Generic FITS below states that::
 * WCS information are in the ``PRIMARY`` (Extension 0) header. They will be
   used to establish dispersion values and unit.
 * Flux values (data) are in Extension 1, the first column (column index starts
-  from 0). Flux unit is defined by ``BUNIT`` keyword in the same header that
-  contains WCS information.
+  from 0). (If flux unit not found in the table column definition, Pyfocal
+  will attempt to get the unit from the ``BUNIT`` keyword in the same header
+  that contains WCS information. If still not found, it is assumed to be
+  :math:`\textnormal{erg} \; \AA^{-1} \; \textnormal{cm}^{-2} \; \textnormal{s}^{-1}`.)
 * Flux uncertainties are also in Extension 1, the second column. The values are
-  standard deviation (as opposed to variance, ``'ivar'``). Its unit must be the
-  same as flux values.
+  standard deviation (as opposed to variance, ``'ivar'``). If unit is present,
+  it will be converted to flux unit. Otherwise, it is assumed to be the same
+  as flux unit.
 * The definition file was written by Nicholas Earl.
 
 Meanwhile, this build-in YAML definition for ASCII below states that::
@@ -56,10 +59,13 @@ Meanwhile, this build-in YAML definition for ASCII below states that::
 * Relevant file extensions are either ``.txt`` or ``.dat``.
 * Dispersion (e.g., wavelength) values are in the first column (column index
   starts from 0). Its unit, if not explicitly defined (e.g., via IPAC header),
-  will be set to Angstrom.
+  will be set to Angstrom, which is also the default unit Pyfocal will use if
+  no unit information is given.
 * Flux values (data) are in the second column. Its unit, if not explicitly
   defined (e.g., via IPAC header), will be set to
-  :math:`\textnormal{erg} \; \AA^{-1} \; \textnormal{cm}^{-2} \; \textnormal{s}^{-1}`.
+  :math:`\textnormal{erg} \; \AA^{-1} \; \textnormal{cm}^{-2} \; \textnormal{s}^{-1}`,
+  which is also the default unit Pyfocal will use if no unit information is
+  given.
 * Flux uncertainties are in the third column. The values are standard deviation
   (as opposed to variance). Its unit must be the same as flux values.
 * The definition file was written by STScI.

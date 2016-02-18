@@ -15,8 +15,6 @@ from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 
 # LOCAL
-from .registries import loader_registry
-from .registries import io_registry
 from ..core.data import Data
 
 __all__ = ['fits_reader', 'fits_identify', 'ascii_reader', 'ascii_identify']
@@ -43,6 +41,8 @@ def fits_reader(filename, filter, **kwargs):
         Keywords for Astropy reader.
 
     """
+    from .registries import loader_registry  # Prevent circular import
+
     logging.info("Attempting to open '{}' using filter '{}'.".format(
             filename, filter))
 
@@ -278,6 +278,8 @@ def fits_identify(origin, *args, **kwargs):
 
 def ascii_reader(filename, filter, **kwargs):
     """Like :func:`fits_reader` but for ASCII file."""
+    from .registries import loader_registry  # Prevent circular import
+
     name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
     tab = ascii.read(filename, **kwargs)
     cols = tab.colnames
@@ -345,9 +347,15 @@ def ascii_identify(origin, *args, **kwargs):
             args[0].lower().split('.')[-1] in ['txt', 'dat'])
 
 
-# Add IO reader/identifier to io registry
-io_registry.register_reader('fits', Data, fits_reader)
-io_registry.register_identifier('fits', Data, fits_identify)
+# NOTE: Need it this way to prevent circular import.
+def register_loaders():
+    """Add IO reader/identifier to io registry."""
+    from .registries import io_registry
 
-io_registry.register_reader('ascii', Data, ascii_reader)
-io_registry.register_identifier('ascii', Data, ascii_identify)
+    # FITS
+    io_registry.register_reader('fits', Data, fits_reader)
+    io_registry.register_identifier('fits', Data, fits_identify)
+
+    # ASCII
+    io_registry.register_reader('ascii', Data, ascii_reader)
+    io_registry.register_identifier('ascii', Data, ascii_identify)
