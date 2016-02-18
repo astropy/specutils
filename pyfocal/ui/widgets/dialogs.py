@@ -2,6 +2,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 
 from ..qt.axisdialog import Ui_Dialog
+from ..qt.layerarithmeticdialog import Ui_LayerArithmeticDialog
 
 
 class TopAxisDialog(QDialog):
@@ -58,3 +59,25 @@ class TopAxisDialog(QDialog):
 
     def reject(self):
         super(TopAxisDialog, self).reject()
+
+
+class LayerArithmeticDialog(QDialog):
+    def __init__(self, parent=None):
+        super(LayerArithmeticDialog, self).__init__(parent)
+
+        # Run the widget setup
+        self.ui_layer_arithmetic_dialog = Ui_LayerArithmeticDialog()
+        self.ui_layer_arithmetic_dialog.setupUi(self)
+
+    def accept(self):
+        self.mode = self.ui_axis_dialog.axisModeComboBox.currentIndex()
+
+        rw_val = str(self.ui_axis_dialog.referenenceWavelengthLineEdit.text())
+        self.ref_wave = float(rw_val) if rw_val != '' else self.ref_wave
+        rs = str(self.ui_axis_dialog.redshiftAmountLineEdit.text())
+        self.redshift = float(rs) if rs != '' else self.redshift
+
+        super(LayerArithmeticDialog, self).accept()
+
+    def reject(self):
+        super(LayerArithmeticDialog, self).reject()
