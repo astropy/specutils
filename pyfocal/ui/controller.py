@@ -127,17 +127,17 @@ class Controller(object):
 
     def fit_model(self, *args):
         # when fitting, the selected layer is a ModelLayer, thus
-        # the data to be fitted resides in the parent.
-        # TODO: this will need to be revisited when ModelLayer subclasses Layer
-        current_layer = self.viewer.parent_layer()
-        mask = self.get_roi_mask(current_layer)
+        # the data to be fitted resides in the parent
+        current_layer = self.viewer.current_layer()
+        parent_layer = current_layer._parent
+        mask = self.get_roi_mask(parent_layer)
 
-        if current_layer is None or mask is None:
+        if parent_layer is None or mask is None:
             return
 
         # fit
-        flux = current_layer.data[mask]
-        dispersion = current_layer.dispersion[mask]
+        flux = parent_layer.data[mask]
+        dispersion = parent_layer.dispersion[mask]
 
         model_dict = self.viewer.get_model_inputs()
 
@@ -155,9 +155,12 @@ class Controller(object):
         fitted_model = apply_model(model, dispersion, flux, fitter_name=fitter_name)
 
         # add fit results to current model layer.
-        current_layer = self.viewer.current_layer()
         current_window = self.viewer.current_sub_window()
+
+        print(current_layer.model.parameters)
         current_layer.model = fitted_model
+        print(fitted_model.parameters)
+        print(current_layer.model.parameters)
 
         # update GUI with fit results
         self.update_model_list()

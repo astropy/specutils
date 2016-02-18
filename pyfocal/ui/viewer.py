@@ -142,7 +142,6 @@ class Viewer(QMainWindow):
         layer : pyfocal.core.data.Layer
             The `Layer` object to add to the list widget.
         """
-        print(type(layer), layer._parent)
         new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
                                    self.wgt_layer_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
@@ -280,6 +279,8 @@ class Viewer(QMainWindow):
 
         if layer_item is not None:
             layer = layer_item.data(0, Qt.UserRole)
+
+            print("Current layer: {}".format(type(layer)))
 
             return layer
 
