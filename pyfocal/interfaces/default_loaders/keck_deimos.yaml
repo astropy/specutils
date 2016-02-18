@@ -6,6 +6,7 @@ wcs:
 dispersion:
   hdu: 1
   col: 1
+  unit: 'Angstrom'
 data:
   hdu: 1
   col: 0

@@ -63,4 +63,5 @@ class YAMLLoader(yaml.YAMLObject):
 loader_registry = CustomLoaderRegistry()
 
 # Import loaders
-from . import loaders
+from .loaders import register_loaders
+register_loaders()
