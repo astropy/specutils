@@ -52,20 +52,31 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def new(self, data, mask=None, parent=None, window=None, name=''):
-        logging.info("layer manager: {}".format(name))
+    def new_layer(self, data, mask=None, parent=None, window=None, name=''):
+        logging.info("Creating new layer: {}".format(name))
         new_layer = DataFactory.create_layer(data, mask, parent, window, name)
-        return new_layer
 
-    def add(self, data, mask=None, parent=None, window=None, name=''):
-        logging.info("layer manager add: {}".format(name))
-        new_layer = self.new(data, mask, parent, window, name)
         self._members.append(new_layer)
 
         # Emit creation event
         self.on_add.emit(new_layer)
 
         return new_layer
+
+    def new_model_layer(self, model, data, mask, parent=None, window=None,
+                        name=''):
+        logging.info("Creating new model layer: {}".format(name))
+        model_layer = DataFactory.create_model_layer(model, data, mask,
+                                                     parent=parent,
+                                                     window=window,
+                                                     name=name)
+
+        self._members.append(model_layer)
+
+        # Emit creation event
+        self.on_add.emit(model_layer)
+
+        return model_layer
 
     def remove(self, layer):
         """
@@ -96,8 +107,8 @@ class LayerManager(Manager):
                                          layer.data, fitter)
 
         new_data = DataFactory.from_array(new_model(layer.dispersion.value))
-        new_layer = self.add(new_data,
-                             parent=layer._parent, window=layer._window)
+        new_layer = self.new_layer(new_data,
+                                   parent=layer._parent, window=layer._window)
         new_layer.dispersion = layer.dispersion.value
         # new_layer.set_model(new_model)
 
@@ -112,12 +123,12 @@ class LayerManager(Manager):
         pass
 
 
-class ModelLayerManager(Manager):
+class ModelManager(Manager):
     """
     Manages a set of model objects.
     """
     def __init__(self):
-        super(ModelLayerManager, self).__init__()
+        super(ModelManager, self).__init__()
         # Model layer manager specified events
         self.on_add_model = EventHook()
         self.on_remove_model = EventHook()
@@ -129,29 +140,31 @@ class ModelLayerManager(Manager):
     def new_model(self, layer, model_name):
         model = ModelFactory.create_model(model_name)()
 
+        self.add(model, layer)
+
         self.on_add_model.emit(model)
 
         return model
 
-    def new_model_layer(self, model, data, mask, parent, window, name=''):
-        model_layer = DataFactory.create_model_layer(model, data, mask,
-                                                     parent=parent,
-                                                     window=window,
-                                                     name=name)
-
-        if parent not in self._members:
-            self._members[parent] = [model_layer]
+    def add(self, model, layer):
+        if layer not in self._members:
+            self._members[layer] = [model]
         else:
-            self._members[parent].append(model_layer)
+            self._members[layer].append(model)
 
-        self.on_add.emit(model_layer)
+        self.on_add.emit(layer, model)
 
-        return model_layer
+        return model
 
-    def remove(self, layer, index):
-        model_layer = self._members[layer].pop(index)
+    def remove(self, layer, index=None):
+        print(self._members.keys(), layer)
+        if index is not None:
+            model_layer = self._members[layer].pop(index)
+        else:
+            del self._members[layer]
+        print(self._members.keys(), layer)
 
-        self.on_remove.emit(layer, model_layer)
+        self.on_remove.emit(layer)
 
     def _evaluate(self, models, formula):
         parser = Parser()
@@ -256,5 +269,5 @@ class PlotManager(Manager):
 
 data_manager = DataManager()
 layer_manager = LayerManager()
-model_layer_manager = ModelLayerManager()
+model_manager = ModelManager()
 plot_manager = PlotManager()

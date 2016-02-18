@@ -8,7 +8,7 @@ import logging
 # LOCAL
 from ..third_party.qtpy.QtCore import *
 from ..interfaces.managers import (data_manager, layer_manager,
-                                   model_layer_manager, plot_manager)
+                                   model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
 from ..analysis.statistics import stats
 from ..analysis.modeling import apply_model
@@ -81,10 +81,10 @@ class Controller(object):
 
     def _setup_model_fitting(self):
         # Populate model dropdown
-        self.viewer.main_window.comboBox.addItems(model_layer_manager.all_models)
+        self.viewer.main_window.comboBox.addItems(model_manager.all_models)
 
         # Populate fitting algorithm dropdown
-        self.viewer.main_window.comboBox_2.addItems(model_layer_manager.all_fitters)
+        self.viewer.main_window.comboBox_2.addItems(model_manager.all_fitters)
 
         # Attach the add button
         self.viewer.main_window.pushButton.clicked.connect(
@@ -120,8 +120,8 @@ class Controller(object):
                 self.viewer.current_layer())
 
     def create_new_model(self):
-        model = model_layer_manager.new_model(self.viewer.current_layer(),
-                                              self.viewer.current_model)
+        model = model_manager.new_model(self.viewer.current_layer(),
+                                        self.viewer.current_model)
 
         self.viewer.add_model_item(model)
 
@@ -143,7 +143,7 @@ class Controller(object):
 
         fitter_name = self.viewer.current_fitter
         formula = self.viewer.current_model_formula
-        model = model_layer_manager.get_compound_model(model_dict, formula=formula)
+        model = model_manager.get_compound_model(model_dict, formula=formula)
 
         # If the number of parameters is greater than the number of data
         # points, bail
@@ -233,10 +233,10 @@ class Controller(object):
             Boolean mask.
         """
         roi_mask = mask if mask is not None else self.get_roi_mask()
-        layer = layer_manager.add(layer._source,
-                                  mask=roi_mask,
-                                  window=sub_window,
-                                  name=layer._source.name + " Layer Slice")
+        layer = layer_manager.new_layer(layer._source,
+                                        mask=roi_mask,
+                                        window=sub_window,
+                                        name=layer._source.name + " Layer Slice")
 
         self.add_plot(layer=layer)
 
@@ -282,7 +282,7 @@ class Controller(object):
             elif data is None:
                 raise AttributeError("Data is not defined")
 
-            layer = layer_manager.add(data, window=window)
+            layer = layer_manager.new_layer(data, window=window)
         else:
             if window is None:
                 window = layer._window
@@ -298,10 +298,13 @@ class Controller(object):
         current_layer = self.viewer.current_layer()
         model_inputs = self.viewer.get_model_inputs()
 
+        # Remove models attached to parent layer
+        model_manager.remove(current_layer)
+
         if current_layer is None or not model_inputs:
             return
 
-        compound_model = model_layer_manager.get_compound_model(
+        compound_model = model_manager.get_compound_model(
             model_dict=model_inputs,
             formula=self.viewer.current_model_formula)
 
@@ -309,14 +312,15 @@ class Controller(object):
         mask = self.get_roi_mask()
 
         if mask[mask == True].size != current_layer.data.size:
-            current_layer = layer_manager.add(
+            current_layer = layer_manager.new_layer(
                 current_layer._source,
                 mask=self.get_roi_mask(),
                 window=current_layer._window,
                 name=current_layer._source.name + " Layer Slice")
+
             self.add_plot(layer=current_layer)
 
-        new_model_layer = model_layer_manager.new_model_layer(
+        new_model_layer = layer_manager.new_model_layer(
             compound_model,
             current_layer._source,
             current_layer._mask,
@@ -324,10 +328,9 @@ class Controller(object):
             window=current_layer._window,
             name="New Model Layer")
 
-        self.viewer.add_layer_item(new_model_layer)
+        model_manager.add(compound_model, new_model_layer)
 
-        # Transfer models from original layer to new model layer
-        model_layer_manager.transfer_models(current_layer, new_model_layer)
+        self.viewer.add_layer_item(new_model_layer)
 
         self.add_plot(layer=new_model_layer)
 
@@ -343,8 +346,8 @@ class Controller(object):
         current_layer = self.viewer.current_layer()
         current_window = self.viewer.current_sub_window()
         model_inputs = self.viewer.get_model_inputs()
-        model_layer_manager.update_model(current_layer, model_inputs,
-                                         self.viewer.current_model_formula)
+        model_manager.update_model(current_layer, model_inputs,
+                                   self.viewer.current_model_formula)
 
         plot_manager.update_plots(current_window, current_layer)
 
@@ -362,26 +365,22 @@ class Controller(object):
         for layer in layers:
             self.viewer.add_layer_item(layer)
 
-            for model_layer in model_layer_manager.get_model_layers(layer):
-                self.viewer.add_layer_item(model_layer)
-
     def update_model_list(self):
         """
         Clears and repopulates the model list depending on the currently
         selected layer list item.
         """
         current_layer = self.viewer.current_layer()
-        model_layers = model_layer_manager.get_model_layers(current_layer,
-                                                            True)
+        models = model_manager.get_model_layers(current_layer, True)
 
         self.viewer.clear_model_widget()
 
-        for model_layer in model_layers:
-            if hasattr(model_layer.model, "submodel_names"):
-                for i in range(len(model_layer.model.submodel_names)):
-                    self.viewer.add_model_item(model_layer.model[i])
+        for model in models:
+            if hasattr(model, "submodel_names"):
+                for i in range(len(model.submodel_names)):
+                    self.viewer.add_model_item(model[i])
             else:
-                self.viewer.add_model_item(model_layer.model)
+                self.viewer.add_model_item(model)
 
     def get_roi_mask(self, layer=None):
         """

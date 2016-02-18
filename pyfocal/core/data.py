@@ -198,21 +198,23 @@ class ModelLayer(Layer):
         self._data = None
         self._model = model
 
-        logging.info('{0} model layer created'.format(name))
+        logging.info('Created ModelLayer object: {0}'.format(name))
 
     @property
     def data(self):
         """Flux quantity from model."""
         if self._data is None:
-            self._data = self._model(self._source.dispersion)
+            self._data = self._model(self.dispersion.value)
 
-        return Quantity(self._data[self._mask],
+        return Quantity(self._data,
                         unit=self._source.unit).to(self.units[1])
 
     @property
     def uncertainty(self):
-        """Flux uncertainty."""
-        return None #self._source.uncertainty
+        """Models do not need to contain uncertainties; override parent
+        class method.
+        """
+        return None
 
     @property
     def model(self):
@@ -222,4 +224,4 @@ class ModelLayer(Layer):
     @model.setter
     def model(self, value):
         self._model = value
-        self._data = self._model(self._source.dispersion.value)
+        self._data = self._model(self.dispersion.value)
