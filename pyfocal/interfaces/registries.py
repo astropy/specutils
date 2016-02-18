@@ -18,10 +18,10 @@ class CustomLoaderRegistry(Registry):
     def __init__(self):
         super(CustomLoaderRegistry, self).__init__()
 
-        check_paths = []
-
         cur_path = os.path.join(os.path.dirname(__file__), 'default_loaders')
         usr_path = os.path.join(os.path.expanduser('~'), '.pyfocal')
+
+        check_paths = [cur_path, usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
