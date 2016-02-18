@@ -157,12 +157,10 @@ class ModelManager(Manager):
         return model
 
     def remove(self, layer, index=None):
-        print(self._members.keys(), layer)
         if index is not None:
             model_layer = self._members[layer].pop(index)
         else:
             del self._members[layer]
-        print(self._members.keys(), layer)
 
         self.on_remove.emit(layer)
 

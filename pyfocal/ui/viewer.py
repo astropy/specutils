@@ -280,8 +280,6 @@ class Viewer(QMainWindow):
         if layer_item is not None:
             layer = layer_item.data(0, Qt.UserRole)
 
-            print("Current layer: {}".format(type(layer)))
-
             return layer
 
     def parent_layer(self):

@@ -157,10 +157,7 @@ class Controller(object):
         # add fit results to current model layer.
         current_window = self.viewer.current_sub_window()
 
-        print(current_layer.model.parameters)
         current_layer.model = fitted_model
-        print(fitted_model.parameters)
-        print(current_layer.model.parameters)
 
         # update GUI with fit results
         self.update_model_list()
@@ -374,16 +371,18 @@ class Controller(object):
         selected layer list item.
         """
         current_layer = self.viewer.current_layer()
-        models = model_manager.get_model_layers(current_layer, True)
+        # models = model_manager.get_model_layers(current_layer, True)
 
         self.viewer.clear_model_widget()
 
-        for model in models:
-            if hasattr(model, "submodel_names"):
-                for i in range(len(model.submodel_names)):
-                    self.viewer.add_model_item(model[i])
-            else:
-                self.viewer.add_model_item(model)
+        if current_layer is None or not hasattr(current_layer, "model"):
+            return
+
+        if hasattr(current_layer.model, "submodel_names"):
+            for i in range(len(current_layer.model.submodel_names)):
+                self.viewer.add_model_item(current_layer.model[i])
+        else:
+            self.viewer.add_model_item(current_layer.model)
 
     def get_roi_mask(self, layer=None):
         """
