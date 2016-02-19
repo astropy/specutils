@@ -72,7 +72,8 @@ class PlotContainer(object):
 
     @property
     def uncertainty(self):
-        return self.layer.uncertainty.to(self._plot_units[1])
+        return Quantity(self.layer.uncertainty.array,
+                        unit=self.layer.units[1]).to(self._plot_units[1])
 
     @property
     def plot(self):
@@ -107,12 +108,12 @@ class PlotContainer(object):
         if self.error is not None:
             self.error.setOpts(pen=pen)
 
-    def update(self):
-        self._plot.setData(self.dispersion,
-                           self.data)
+    def update(self, autoscale=False):
+        self._plot.setData(self.dispersion.value,
+                           self.data.value)
 
         if self.error is not None:
             self.error.setData(
-                    x=self.dispersion,
-                    y=self.data,
-                    height=self._layer.uncertainty.array)
+                    x=self.dispersion.value,
+                    y=self.data.value,
+                    height=self.uncertainty.value)

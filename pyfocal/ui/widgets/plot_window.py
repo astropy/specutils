@@ -24,6 +24,7 @@ class PlotWindow(QMainWindow):
         self._dynamic_axis = None
         self._plot_widget = None
         self._plot_item = None
+        self._plots_units = None
 
     def initialize(self):
         self._dynamic_axis = DynamicAxisItem(orientation='top')
@@ -83,6 +84,8 @@ class PlotWindow(QMainWindow):
         if len(self._containers) == 0:
             self.change_units(container.layer.units[0],
                               container.layer.units[1])
+        else:
+            container.change_units(*self._plot_units)
 
         self._containers.append(container)
         self._plot_item.addItem(container.plot)
@@ -115,15 +118,16 @@ class PlotWindow(QMainWindow):
         for cntr in self._containers:
             cntr.change_units(x, y, z)
 
-        self.set_labels(x_label="Flux [{}]".format(x),
-                        y_label="Wavelength [{}]".format(y))
+        self.set_labels(x_label=x, y_label=y)
+        self._plot_item.enableAutoScale()
+        self._plot_units = [x, y, z]
 
     def set_labels(self, x_label='', y_label=''):
         self._plot_item.setLabels(
-            left="Flux [{}]".format(x_label or
-                                    str(self._containers[0].layer.units[1])),
-            bottom="Wavelength [{}]".format(x_label or
-                                            str(self._containers[0].layer.units[0])))
+            left="Flux [{}]".format(
+                y_label or str(self._containers[0].layer.units[1])),
+            bottom="Wavelength [{}]".format(
+                x_label or str(self._containers[0].layer.units[0])))
 
     def set_active_plot(self, layer):
         for container in self._containers:
@@ -196,9 +200,7 @@ class PlotWindow(QMainWindow):
             except ValueError as e:
                 logging.error(e)
 
-            self.change_units(
-                Unit(x_unit),
-                Unit(y_unit))
+            self.change_units(x_unit, y_unit)
 
             self._plot_item.update()
 
