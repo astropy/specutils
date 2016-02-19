@@ -19,7 +19,8 @@ HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui \
     plotsubwindow.ui \
-    axisdialog.ui
+    axisdialog.ui \
+    layerarithmeticdialog.ui
 
 RESOURCES += \
     icon_resource.qrc

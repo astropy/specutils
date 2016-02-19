@@ -15,7 +15,7 @@ case $1 in
     ;;
 esac
 
-ui_files=('mainwindow' 'plotsubwindow' 'axisdialog')
+ui_files=('mainwindow' 'plotsubwindow' 'axisdialog' 'layerarithmeticdialog')
 rc_files=('icon_resource')
 
 for i in "${ui_files[@]}"

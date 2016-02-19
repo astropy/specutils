@@ -78,6 +78,11 @@ class LayerManager(Manager):
 
         return model_layer
 
+    def add_layer(self, layer):
+        self._members.append(layer)
+
+        self.on_add.emit(layer)
+
     def remove(self, layer):
         """
         Remove specified layer from the manager.
@@ -110,7 +115,6 @@ class LayerManager(Manager):
         new_layer = self.new_layer(new_data,
                                    parent=layer._parent, window=layer._window)
         new_layer.dispersion = layer.dispersion.value
-        # new_layer.set_model(new_model)
 
         return new_layer
 
@@ -121,6 +125,35 @@ class LayerManager(Manager):
 
     def update_model_parameters(self, model, parameters):
         pass
+
+    def _evaluate(self, layers, formula):
+        """
+        Parse a string into an arithmetic expression.
+
+        Parameters
+        ----------
+        layers : list
+            List of `Layer` objects that correspond to the given variables.
+        formula : str
+            A string describing the arithmetic operations to perform.
+        """
+        parser = Parser()
+        expr = parser.parse(formula)
+
+        # Extract variables
+        vars = expr.variables()
+
+        # List the models in the same order as the variables
+        sorted_layers = [l for v in vars for l in layers if l.name == v]
+
+        if len(sorted_layers) != len(vars):
+            logging.error("Incorrect layer arithmetic formula: the number "
+                          "of layers does not match the number of variables.")
+
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in zip(vars, sorted_layers)))
+
+        return result
 
 
 class ModelManager(Manager):
@@ -173,6 +206,10 @@ class ModelManager(Manager):
 
         # List the models in the same order as the variables
         sorted_models = [m for v in vars for m in models if m.name == v]
+
+        if len(sorted_models) != len(vars):
+            logging.error("Incorrect model arithmetic formula: the number "
+                          "of models does not match the number of variables.")
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_models)))
