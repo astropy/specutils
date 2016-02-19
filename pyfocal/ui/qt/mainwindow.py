@@ -176,7 +176,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName("verticalLayout")
         self.treeWidget_2 = QtWidgets.QTreeWidget(self.dockWidgetContents_3)
-        self.treeWidget_2.setAnimated(True)
+        self.treeWidget_2.setAnimated(False)
         self.treeWidget_2.setHeaderHidden(True)
         self.treeWidget_2.setObjectName("treeWidget_2")
         self.treeWidget_2.headerItem().setText(0, "1")
