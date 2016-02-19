@@ -91,7 +91,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
 
 class Layer(object):
-    """Base class to handle layers in Pyfocal.
+    """Class to handle layers in Pyfocal.
 
     A layer is a "view" into a :class:`Data` object. It does
     not hold any data itself, but instead contains a special ``mask`` object
@@ -106,19 +106,14 @@ class Layer(object):
     ----------
     source : `Data`
         Spectrum data object.
-
     mask : ndarray
         Mask for the spectrum data.
-
     parent : obj or `None`
         GUI parent.
-
     window : obj or `None`
         GUI window.
-
     name : str
         Short description.
-
     """
     def __init__(self, source, mask, parent=None, window=None, name=''):
         super(Layer, self).__init__()
@@ -178,18 +173,18 @@ class ModelLayer(Layer):
 
     Parameters
     ----------
-    source : `Data`
-        Spectrum data object.
-
     model : obj
         Astropy model.
-
+    source : `Data`
+        Spectrum data object.
+    mask : ndarray
+        Mask for the spectrum data.
     parent : obj or `None`
         GUI parent.
-
+    window : obj or `None`
+        GUI window.
     name : str
         Short description.
-
     """
     def __init__(self, model, source, mask, parent=None, window=None, name=''):
         name = source.name + " Model Layer" if not name else name
