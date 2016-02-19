@@ -441,6 +441,9 @@ class Controller(object):
             model._name = model_item.text(0)
 
     def _show_arithmetic_dialog(self):
+        logging.warning("Arithmetic has been disabled for now.")
+        return
+
         current_window = self.viewer.current_sub_window()
         layers = layer_manager.get_window_layers(current_window)
 
