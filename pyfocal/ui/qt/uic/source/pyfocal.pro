@@ -20,7 +20,8 @@ HEADERS  += mainwindow.h
 FORMS    += mainwindow.ui \
     plotsubwindow.ui \
     axisdialog.ui \
-    layerarithmeticdialog.ui
+    layerarithmeticdialog.ui \
+    unit_change_dialog.ui
 
 RESOURCES += \
     icon_resource.qrc

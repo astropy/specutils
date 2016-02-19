@@ -13,6 +13,10 @@ class PlotContainer(object):
         self.style = style
         self._plot = plot
         self.error = None
+        self._plot_units = None
+
+        if self._plot is not None:
+            self.change_units(self._layer.units[0], self._layer.units[1])
 
         _pen = pen if pen is not None else pg.mkPen(color=(0, 0, 0, 255))
         _err_pen = err_pen if err_pen is not None else pg.mkPen(color=(0, 0, 0, 50))
@@ -27,9 +31,13 @@ class PlotContainer(object):
         self.on_visibility_change = EventHook()
         self.on_pen_change = EventHook()
 
-    def change_unit(self, x, y=None, z=None):
-        self.layer.units = (x, y or self.layer.layer_units[1],
-                            z or self.layer.layer_units[2])
+    def change_units(self, x, y=None, z=None):
+        self._plot_units = (
+            x or self._plot_units[0] or self.layer.layer_units[0],
+            y or self._plot_units[1] or self.layer.layer_units[1],
+            z)
+
+        self.update()
 
     def set_visibility(self, pen_show, error_pen_show, inactive=True,
                        override=False):
@@ -54,6 +62,17 @@ class PlotContainer(object):
             if self.error is not None:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
 
+    @property
+    def data(self):
+        return self.layer.data.to(self._plot_units[1])
+
+    @property
+    def dispersion(self):
+        return self.layer.dispersion.to(self._plot_units[0])
+
+    @property
+    def uncertainty(self):
+        return self.layer.uncertainty.to(self._plot_units[1])
 
     @property
     def plot(self):
@@ -89,11 +108,11 @@ class PlotContainer(object):
             self.error.setOpts(pen=pen)
 
     def update(self):
-        self._plot.setData(self._layer.dispersion.value,
-                           self._layer.data.value)
+        self._plot.setData(self.dispersion,
+                           self.data)
 
         if self.error is not None:
             self.error.setData(
-                    x=self._layer.dispersion.value,
-                    y=self._layer.data.value,
+                    x=self.dispersion,
+                    y=self.data,
                     height=self._layer.uncertainty.array)

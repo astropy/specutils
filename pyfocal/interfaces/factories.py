@@ -142,13 +142,12 @@ class PlotFactory(Factory):
     @classmethod
     def create_line_plot(cls, layer, unit=None, visible=False, style='line',
                          pen=None, err_pen=None):
-        plot_container = PlotContainer(layer=layer, visible=visible,
-                                       style=style, pen=pen, err_pen=err_pen)
+        plot_data_item = pg.PlotDataItem(layer.dispersion.value,
+                                         layer.data.value)
 
-        plot_data_item = pg.PlotDataItem(plot_container.layer.dispersion.value,
-                                         plot_container.layer.data.value)
-
-        plot_container.plot = plot_data_item
+        plot_container = PlotContainer(layer=layer, plot=plot_data_item,
+                                       visible=visible, style=style,
+                                       pen=pen, err_pen=err_pen)
 
         if plot_container.layer.uncertainty is not None:
             # err_top = pg.PlotDataItem(

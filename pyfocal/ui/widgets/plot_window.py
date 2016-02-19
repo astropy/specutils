@@ -1,13 +1,15 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import logging
+
 from ..widgets.plots.plot import Plot
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
-from ..widgets.dialogs import TopAxisDialog
+from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 
-import pyqtgraph as pg
+from astropy.units import Unit
 
 
 class PlotWindow(QMainWindow):
@@ -18,6 +20,7 @@ class PlotWindow(QMainWindow):
         self._containers = []
         self._tool_bar = None
         self._top_axis_dialog = TopAxisDialog()
+        self._unit_change_dialog = UnitChangeDialog()
         self._dynamic_axis = None
         self._plot_widget = None
         self._plot_item = None
@@ -77,8 +80,11 @@ class PlotWindow(QMainWindow):
                 return act
 
     def add_container(self, container):
-        self._containers.append(container)
+        if len(self._containers) == 0:
+            self.change_units(container.layer.units[0],
+                              container.layer.units[1])
 
+        self._containers.append(container)
         self._plot_item.addItem(container.plot)
 
         if container.error is not None:
@@ -90,21 +96,34 @@ class PlotWindow(QMainWindow):
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._containers[0].layer
 
+    def remove_container(self, layer):
+        for container in [x for x in self._containers]:
+            if container.layer == layer:
+                self._plot_item.removeItem(container.plot)
+
+                if container.error is not None:
+                    self._plot_item.removeItem(container.error)
+
+                self._containers.remove(container)
+
     def get_container(self, layer):
         for container in self._containers:
             if container.layer == layer:
                 return container
 
-    def change_unit(self, new_unit):
-        for plot_container in self._containers:
-            plot_container.change_unit(new_unit)
+    def change_units(self, x=None, y=None, z=None):
+        for cntr in self._containers:
+            cntr.change_units(x, y, z)
 
-    def set_labels(self):
+        self.set_labels(x_label="Flux [{}]".format(x),
+                        y_label="Wavelength [{}]".format(y))
+
+    def set_labels(self, x_label='', y_label=''):
         self._plot_item.setLabels(
-            left="Flux [{}]".format(str(self._containers[0].layer.units[1])),
-            bottom="Wavelength [{}]".format(str(self._containers[
-                                                    0].layer.units[0])),
-        )
+            left="Flux [{}]".format(x_label or
+                                    str(self._containers[0].layer.units[1])),
+            bottom="Wavelength [{}]".format(x_label or
+                                            str(self._containers[0].layer.units[0])))
 
     def set_active_plot(self, layer):
         for container in self._containers:
@@ -156,4 +175,30 @@ class PlotWindow(QMainWindow):
         # Connections
         window_menu.actions()[0].triggered.connect(
             self._top_axis_dialog.exec_)
+
+        window_menu.actions()[1].triggered.connect(
+            self._show_unit_change_dialog)
+
+    def _show_unit_change_dialog(self):
+        if self._unit_change_dialog.exec_():
+            x_text = self._unit_change_dialog.disp_unit
+            y_text = self._unit_change_dialog.flux_unit
+
+            x_unit = y_unit = None
+
+            try:
+                x_unit = Unit(x_text) if x_text else None
+            except ValueError as e:
+                logging.error(e)
+
+            try:
+                y_unit = Unit(y_text) if y_text else None
+            except ValueError as e:
+                logging.error(e)
+
+            self.change_units(
+                Unit(x_unit),
+                Unit(y_unit))
+
+            self._plot_item.update()
 
