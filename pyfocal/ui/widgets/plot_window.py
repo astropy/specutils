@@ -93,7 +93,6 @@ class PlotWindow(QMainWindow):
         if container.error is not None:
             self._plot_item.addItem(container.error)
 
-        self.set_labels()
         self.set_active_plot(container.layer)
 
         # Make sure the dynamic axis object has access to a layer
