@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 
 # STDLIB
 import logging
+import numbers
 
 # THIRD-PARTY
 import numpy as np
@@ -59,6 +60,12 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
         from ..interfaces.registries import io_registry
 
         return io_registry.read(cls, *args, **kwargs)
+
+    def _from_self(self, other):
+        return Data(name=self.name, data=other, unit=self.unit,
+                    uncertainty=self.uncertainty, mask=self.mask,
+                    wcs=self.wcs, dispersion=self.dispersion,
+                    dispersion_unit=self.disp_unit)
 
     @property
     def dispersion(self):
@@ -124,6 +131,70 @@ class Layer(object):
         self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,
                       self._source.unit if self._source.unit is not None else "")
+
+    def __add__(self, other):
+        if not issubclass(type(other), NDData):
+            if isinstance(other, numbers.Number):
+                new = np.empty(shape=self.data.shape)
+                new.fill(other)
+                other = new
+
+            other = self._source._from_self(other)
+        else:
+            other = self._source._from_self(other)
+
+        new_source = self._source.add(other)
+
+        return Layer(new_source, self.mask, self._parent, self._window,
+                     self.name)
+
+    def __sub__(self, other):
+        if not issubclass(type(other), NDData):
+            if isinstance(other, numbers.Number):
+                new = np.empty(shape=self.data.shape)
+                new.fill(other)
+                other = new
+
+            other = self._source._from_self(other)
+        else:
+            other = self._source._from_self(other)
+
+        new_source = self._source.subtract(other)
+
+        return Layer(new_source, self.mask, self._parent, self._window,
+                     self.name)
+
+    def __mul__(self, other):
+        if not issubclass(type(other), NDData):
+            if isinstance(other, numbers.Number):
+                new = np.empty(shape=self.data.shape)
+                new.fill(other)
+                other = new
+
+            other = self._source._from_self(other)
+        else:
+            other = self._source._from_self(other)
+
+        new_source = self._source.multiply(other)
+
+        return Layer(new_source, self.mask, self._parent, self._window,
+                     self.name)
+
+    def __div__(self, other):
+        if not issubclass(type(other), NDData):
+            if isinstance(other, numbers.Number):
+                new = np.empty(shape=self.data.shape)
+                new.fill(other)
+                other = new
+
+            other = self._source._from_self(other)
+        else:
+            other = self._source._from_self(other)
+
+        new_source = self._source.divide(other)
+
+        return Layer(new_source, self.mask, self._parent, self._window,
+                     self.name)
 
     @property
     def data(self):
