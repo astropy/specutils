@@ -188,7 +188,7 @@ class Layer(object):
 
     def __truediv__(self, other):
         new_source = self._arithmetic(self._source.divide, other,
-                                      propagate=True)
+                                      propagate=False)
 
         return Layer(new_source, self._mask, self._parent, self._window,
                      self.name)

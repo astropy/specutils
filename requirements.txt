@@ -1,3 +1,4 @@
 --index-url https://pypi.python.org/simple/
 
+git+https://github.com/nmearl/astropy.git
 -e .

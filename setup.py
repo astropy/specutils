@@ -17,7 +17,7 @@ setup(
     description='An interactive astronomical analysis tool.',
     include_package_data=True,
     install_requires=[
-        'astropy>=1.1',
+        'astropy',
         'numpy>=1.10',
         'PyYAML',
         'pyqtgraph',
