@@ -147,8 +147,8 @@ class LayerManager(Manager):
         sorted_layers = [l for v in vars for l in layers if l.name == v]
 
         if len(sorted_layers) != len(vars):
-            raise ValueError("Incorrect model arithmetic formula: the number "
-                             "of models does not match the number of variables.")
+            logging.error("Incorrect layer arithmetic formula: the number "
+                          "of layers does not match the number of variables.")
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_layers)))
@@ -208,8 +208,8 @@ class ModelManager(Manager):
         sorted_models = [m for v in vars for m in models if m.name == v]
 
         if len(sorted_models) != len(vars):
-            raise ValueError("Incorrect model arithmetic formula: the number "
-                             "of models does not match the number of variables.")
+            logging.error("Incorrect model arithmetic formula: the number "
+                          "of models does not match the number of variables.")
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_models)))

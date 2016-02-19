@@ -9,7 +9,7 @@ import numbers
 # THIRD-PARTY
 import numpy as np
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
-from astropy.nddata.nduncertainty import StdDevUncertainty
+from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
 from astropy.units import Unit, Quantity
 
 
@@ -49,7 +49,13 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     """
     def __init__(self, data, dispersion=None, dispersion_unit=None, name="",
                  *args, **kwargs):
-        super(Data, self).__init__(data, *args, **kwargs)
+        super(Data, self).__init__(data=data, *args, **kwargs)
+
+        # TODO: This is a temporary workaround until astropy releases its
+        # next version which introduces changes to the NDData object
+        if self.uncertainty is not None:
+            self.uncertainty.parent_nddata = self
+
         self._dispersion = dispersion
         self._dispersion_unit = dispersion_unit
         self.name = name or "New Data Object"
@@ -135,7 +141,7 @@ class Layer(object):
                       self._source.unit if self._source.unit is not None
                       else Unit(""))
 
-    def _arithmetic(self, operand, other):
+    def _arithmetic(self, operator, other):
         # The operand is a single number
         if isinstance(other, numbers.Number):
             new = np.empty(shape=self.data.shape)
@@ -145,19 +151,20 @@ class Layer(object):
         elif isinstance(other, np.ndarray) or isinstance(other, list):
             other = self._source._from_self(other)
         elif isinstance(other, Layer) or issubclass(other, ModelLayer):
-            other = self._source._from_self(other.data.value)
+            other = other._source
+
+        if not isinstance(other, Data):
+            raise ValueError("Operand is not of type `Data`.")
 
         if self._source.wcs != other.wcs:
             logging.warning("WCS objects are not equivalent; overriding wcs "
                             "information on 'other'.".format())
             tmp_wcs = other._wcs
             other._wcs = self._source.wcs
-
-            new_source = operand(other)
-
+            new_source = operator(other)
             other._wcs = tmp_wcs
         else:
-            new_source = operand(other)
+            new_source = operator(other)
 
         return new_source
 
@@ -175,8 +182,6 @@ class Layer(object):
 
     def __mul__(self, other):
         new_source = self._arithmetic(self._source.multiply, other)
-
-        new_source = self._source.multiply(other)
 
         return Layer(new_source, self._mask, self._parent, self._window,
                      self.name)
