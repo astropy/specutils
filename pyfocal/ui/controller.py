@@ -256,6 +256,9 @@ class Controller(object):
         """
         data = data if data is not None else self.viewer.current_data()
 
+        if data is None:
+            return
+
         if window is None:
             window = self.viewer.add_sub_window()
 
