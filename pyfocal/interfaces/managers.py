@@ -126,6 +126,35 @@ class LayerManager(Manager):
     def update_model_parameters(self, model, parameters):
         pass
 
+    def _evaluate(self, layers, formula):
+        """
+        Parse a string into an arithmetic expression.
+
+        Parameters
+        ----------
+        layers : list
+            List of `Layer` objects that correspond to the given variables.
+        formula : str
+            A string describing the arithmetic operations to perform.
+        """
+        parser = Parser()
+        expr = parser.parse(formula)
+
+        # Extract variables
+        vars = expr.variables()
+
+        # List the models in the same order as the variables
+        sorted_layers = [l for v in vars for l in layers if l.name == v]
+
+        if len(sorted_layers) != len(vars):
+            raise ValueError("Incorrect model arithmetic formula: the number "
+                             "of models does not match the number of variables.")
+
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in zip(vars, sorted_layers)))
+
+        return result
+
 
 class ModelManager(Manager):
     """
@@ -177,6 +206,10 @@ class ModelManager(Manager):
 
         # List the models in the same order as the variables
         sorted_models = [m for v in vars for m in models if m.name == v]
+
+        if len(sorted_models) != len(vars):
+            raise ValueError("Incorrect model arithmetic formula: the number "
+                             "of models does not match the number of variables.")
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_models)))
