@@ -78,6 +78,11 @@ class LayerManager(Manager):
 
         return model_layer
 
+    def add_layer(self, layer):
+        self._members.append(layer)
+
+        self.on_add.emit(layer)
+
     def remove(self, layer):
         """
         Remove specified layer from the manager.
@@ -110,7 +115,6 @@ class LayerManager(Manager):
         new_layer = self.new_layer(new_data,
                                    parent=layer._parent, window=layer._window)
         new_layer.dispersion = layer.dispersion.value
-        # new_layer.set_model(new_model)
 
         return new_layer
 

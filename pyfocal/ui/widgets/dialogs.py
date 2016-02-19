@@ -64,18 +64,35 @@ class TopAxisDialog(QDialog):
 class LayerArithmeticDialog(QDialog):
     def __init__(self, parent=None):
         super(LayerArithmeticDialog, self).__init__(parent)
+        self.first_layer = None
+        self.second_layer = None
+        self.operator = 0
 
         # Run the widget setup
         self.ui_layer_arithmetic_dialog = Ui_LayerArithmeticDialog()
         self.ui_layer_arithmetic_dialog.setupUi(self)
 
-    def accept(self):
-        self.mode = self.ui_axis_dialog.axisModeComboBox.currentIndex()
+        # Populate operators
+        self.ui_layer_arithmetic_dialog.operatorComboBox.addItems(['+', '-',
+                                                                   '*', '/'])
 
-        rw_val = str(self.ui_axis_dialog.referenenceWavelengthLineEdit.text())
-        self.ref_wave = float(rw_val) if rw_val != '' else self.ref_wave
-        rs = str(self.ui_axis_dialog.redshiftAmountLineEdit.text())
-        self.redshift = float(rs) if rs != '' else self.redshift
+    def populate_layers(self, layers):
+        self.ui_layer_arithmetic_dialog.layer1ComboBox.addItems(
+            [l.name for l in layers])
+        self.ui_layer_arithmetic_dialog.layer2ComboBox.addItems(
+            [l.name for l in layers])
+
+    def clear_layers(self):
+        self.ui_layer_arithmetic_dialog.layer1ComboBox.clear()
+        self.ui_layer_arithmetic_dialog.layer2ComboBox.clear()
+
+    def accept(self):
+        self.first_layer = self.ui_layer_arithmetic_dialog.layer1ComboBox\
+            .currentIndex()
+        self.second_layer = self.ui_layer_arithmetic_dialog.layer2ComboBox\
+            .currentIndex()
+        self.operator = self.ui_layer_arithmetic_dialog.operatorComboBox\
+            .currentIndex()
 
         super(LayerArithmeticDialog, self).accept()
 

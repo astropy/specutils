@@ -75,6 +75,15 @@ class Controller(object):
         self.viewer.wgt_layer_list.itemClicked.connect(
             self._set_layer_visibility)
 
+        # When the arithmetic button is clicked, show math dialog
+        self.viewer.main_window.arithmeticToolButton.clicked.connect(
+            self._show_arithmetic_dialog)
+
+        # If a layer item is edited, make sure to save the name
+        self.viewer.wgt_layer_list.itemChanged.connect(
+            self._update_layer_name
+        )
+
     def _setup_sub_window_connections(self):
         # When the user changes the top axis
         pass
@@ -111,6 +120,7 @@ class Controller(object):
         self.viewer.wgt_model_list.itemChanged.connect(
             self._update_model_name
         )
+
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window()
@@ -414,12 +424,42 @@ class Controller(object):
         current_plot_window = self.viewer.current_sub_window()
         layer = layer_item.data(0, Qt.UserRole)
 
-        if layer is not None:
+        if current_plot_window is not None and layer is not None:
             current_plot_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
+
+    def _update_layer_name(self, layer_item, col=0):
+        layer = layer_item.data(0, Qt.UserRole)
+
+        if hasattr(layer, 'name'):
+            layer.name = layer_item.text(0)
 
     def _update_model_name(self, model_item, col=0):
         model = model_item.data(0, Qt.UserRole)
 
         if hasattr(model, '_name'):
             model._name = model_item.text(0)
+
+    def _show_arithmetic_dialog(self):
+        current_window = self.viewer.current_sub_window()
+        layers = layer_manager.get_window_layers(current_window)
+
+        self.viewer._layer_arithmetic_dialog.clear_layers()
+        self.viewer._layer_arithmetic_dialog.populate_layers(layers)
+
+        if self.viewer._layer_arithmetic_dialog.exec_():
+            ind1 = self.viewer._layer_arithmetic_dialog.first_layer
+            ind2 = self.viewer._layer_arithmetic_dialog.second_layer
+            op = self.viewer._layer_arithmetic_dialog.operator
+
+            if op == 0:
+                new_layer = layers[ind1] + layers[ind2]
+            elif op == 1:
+                new_layer = layers[ind1] - layers[ind2]
+            elif op == 2:
+                new_layer = layers[ind1] * layers[ind2]
+            elif op == 3:
+                new_layer = layers[ind1] / layers[ind2]
+
+            layer_manager.add_layer(new_layer)
+            self.add_plot(layer=new_layer)

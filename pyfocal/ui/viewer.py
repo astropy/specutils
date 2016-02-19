@@ -7,6 +7,7 @@ from ..third_party.qtpy.QtWidgets import *
 from .qt.mainwindow import Ui_MainWindow
 from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.plot_window import PlotWindow
+from .widgets.dialogs import LayerArithmeticDialog
 
 
 class Viewer(QMainWindow):
@@ -30,6 +31,9 @@ class Viewer(QMainWindow):
 
         # Setup context menus
         self._setup_context_menus()
+
+        # Define the layer arithmetic dialog
+        self._layer_arithmetic_dialog = LayerArithmeticDialog()
 
     def _setup_context_menus(self):
         self.wgt_layer_list.customContextMenuRequested.connect(
@@ -131,6 +135,8 @@ class Viewer(QMainWindow):
             The `Data` object to add to the list widget.
         """
         new_item = QListWidgetItem(data.name, self.wgt_data_list)
+        new_item.setFlags(new_item.flags() |  Qt.ItemIsEditable)
+
         new_item.setData(Qt.UserRole, data)
 
     def add_layer_item(self, layer, *args):
@@ -144,7 +150,7 @@ class Viewer(QMainWindow):
         """
         new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
                                    self.wgt_layer_list)
-        new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
+        new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
         new_item.setText(0, layer.name)
         new_item.setData(0, Qt.UserRole, layer)
         new_item.setCheckState(0, Qt.Checked)
