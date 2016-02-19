@@ -81,8 +81,7 @@ class Controller(object):
 
         # If a layer item is edited, make sure to save the name
         self.viewer.wgt_layer_list.itemChanged.connect(
-            self._update_layer_name
-        )
+            self._update_layer_name)
 
     def _setup_sub_window_connections(self):
         # When the user changes the top axis

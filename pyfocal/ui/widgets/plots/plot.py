@@ -91,12 +91,12 @@ class Plot(pg.PlotWidget):
             # x1, y1, x2, y2 = roi_shape.getCoords()
             x1, x2 = roi.getRegion()
 
-            mask_holder.append((container.layer.dispersion.value >= x1) &
-                               (container.layer.dispersion.value <= x2))
+            mask_holder.append((container.dispersion.value >= x1) &
+                               (container.dispersion.value <= x2))
 
         if len(mask_holder) == 0:
             mask_holder.append(np.ones(
-                shape=container.layer.dispersion.value.shape,
+                shape=container.dispersion.value.shape,
                 dtype=bool))
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))

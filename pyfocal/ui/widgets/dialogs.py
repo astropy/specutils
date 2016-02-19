@@ -3,6 +3,7 @@ from ...third_party.qtpy.QtGui import *
 
 from ..qt.axisdialog import Ui_Dialog
 from ..qt.layerarithmeticdialog import Ui_LayerArithmeticDialog
+from ..qt.unit_change_dialog import Ui_UnitChangeDialog
 
 
 class TopAxisDialog(QDialog):
@@ -98,3 +99,25 @@ class LayerArithmeticDialog(QDialog):
 
     def reject(self):
         super(LayerArithmeticDialog, self).reject()
+
+
+class UnitChangeDialog(QDialog):
+    def __init__(self, parent=None):
+        super(UnitChangeDialog, self).__init__(parent)
+
+        self.flux_unit = ''
+        self.disp_unit = ''
+
+        # Run the widget setup
+        self.ui_unit_change_dialog = Ui_UnitChangeDialog()
+        self.ui_unit_change_dialog.setupUi(self)
+
+    def accept(self):
+        self.flux_unit = self.ui_unit_change_dialog.fluxUnitLineEdit.text()
+        self.disp_unit = self.ui_unit_change_dialog.dispersionUnitLineEdit\
+            .text()
+
+        super(UnitChangeDialog, self).accept()
+
+    def reject(self):
+        super(UnitChangeDialog, self).reject()
