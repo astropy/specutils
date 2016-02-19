@@ -311,19 +311,10 @@ class Controller(object):
         # Create new layer using current ROI masks, if they exist
         mask = self.get_roi_mask()
 
-        if mask[mask == True].size != current_layer.data.size:
-            current_layer = layer_manager.new_layer(
-                current_layer._source,
-                mask=self.get_roi_mask(),
-                window=current_layer._window,
-                name=current_layer._source.name + " Layer Slice")
-
-            self.add_plot(layer=current_layer)
-
         new_model_layer = layer_manager.new_model_layer(
-            compound_model,
-            current_layer._source,
-            current_layer._mask,
+            model=compound_model,
+            data=current_layer._source,
+            mask=mask,
             parent=current_layer,
             window=current_layer._window,
             name="New Model Layer")
