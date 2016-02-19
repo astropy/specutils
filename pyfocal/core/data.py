@@ -131,7 +131,6 @@ class Layer(object):
         Short description.
     """
     def __init__(self, source, mask, parent=None, window=None, name=''):
-        super(Layer, self).__init__()
         self._source = source
         self._mask = mask
         self._parent = parent
@@ -141,7 +140,7 @@ class Layer(object):
                       self._source.unit if self._source.unit is not None
                       else Unit(""))
 
-    def _arithmetic(self, operator, other):
+    def _arithmetic(self, operator, other, propagate=True):
         # The operand is a single number
         if isinstance(other, numbers.Number):
             new = np.empty(shape=self.data.shape)
@@ -150,7 +149,7 @@ class Layer(object):
         # The operand is an array
         elif isinstance(other, np.ndarray) or isinstance(other, list):
             other = self._source._from_self(other)
-        elif isinstance(other, Layer) or issubclass(other, ModelLayer):
+        elif isinstance(other, Layer) or isinstance(other, ModelLayer):
             other = other._source
 
         if not isinstance(other, Data):
@@ -161,10 +160,10 @@ class Layer(object):
                             "information on 'other'.".format())
             tmp_wcs = other._wcs
             other._wcs = self._source.wcs
-            new_source = operator(other)
+            new_source = operator(other, propagate_uncertainties=propagate)
             other._wcs = tmp_wcs
         else:
-            new_source = operator(other)
+            new_source = operator(other, propagate_uncertainties=propagate)
 
         return new_source
 
@@ -181,13 +180,15 @@ class Layer(object):
                      self.name)
 
     def __mul__(self, other):
-        new_source = self._arithmetic(self._source.multiply, other)
+        new_source = self._arithmetic(self._source.multiply, other,
+                                      propagate=True)
 
         return Layer(new_source, self._mask, self._parent, self._window,
                      self.name)
 
     def __truediv__(self, other):
-        new_source = self._arithmetic(self._source.divide, other)
+        new_source = self._arithmetic(self._source.divide, other,
+                                      propagate=True)
 
         return Layer(new_source, self._mask, self._parent, self._window,
                      self.name)
