@@ -50,9 +50,7 @@ class PlotWindow(QMainWindow):
                 self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
                     .currentIndex(),
                 redshift=self._top_axis_dialog.redshift,
-                ref_wave=self._top_axis_dialog.ref_wave
-            )
-        )
+                ref_wave=self._top_axis_dialog.ref_wave))
 
     def set_sub_window(self, sub_window):
         self._sub_window = sub_window
@@ -151,7 +149,8 @@ class PlotWindow(QMainWindow):
         window_menu.addAction("Change Units")
 
         icon = QIcon()
-        icon.addPixmap(QPixmap(":/Settings-50.png"), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(":/img/Settings-50.png"), QIcon.Normal,
+                       QIcon.Off)
 
         window_menu_btn = QToolButton(self._sub_window.toolBar)
         window_menu_btn.setIcon(icon)
@@ -165,7 +164,7 @@ class PlotWindow(QMainWindow):
         layer_menu.addAction("Color")
 
         icon = QIcon()
-        icon.addPixmap(QPixmap(":/Settings 3-50.png"), QIcon.Normal,
+        icon.addPixmap(QPixmap(":/img/Settings 3-50.png"), QIcon.Normal,
                         QIcon.Off)
 
         layer_menu_btn = QToolButton(self._sub_window.toolBar)

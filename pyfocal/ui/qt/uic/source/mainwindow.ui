@@ -19,6 +19,9 @@
   <property name="windowTitle">
    <string>Pyfocal</string>
   </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
@@ -137,14 +140,14 @@
        <item>
         <widget class="QToolButton" name="toolButton_3">
          <property name="toolTip">
-          <string extracomment="Create new plot window from data"/>
+          <string>Create new plot window from data</string>
          </property>
          <property name="text">
-          <string>...</string>
+          <string/>
          </property>
          <property name="icon">
           <iconset>
-           <normalon>:/Template-50.png</normalon>
+           <normalon>:/img/Template-50.png</normalon>
           </iconset>
          </property>
          <property name="iconSize">
@@ -158,14 +161,14 @@
        <item>
         <widget class="QToolButton" name="toolButton_2">
          <property name="toolTip">
-          <string extracomment="Add data to current plot window"/>
+          <string>Add data to current plot window</string>
          </property>
          <property name="text">
           <string>...</string>
          </property>
          <property name="icon">
           <iconset>
-           <normalon>:/Change Theme-50.png</normalon>
+           <normalon>:/img/Change Theme-50.png</normalon>
           </iconset>
          </property>
          <property name="iconSize">
@@ -192,14 +195,14 @@
        <item>
         <widget class="QToolButton" name="toolButton">
          <property name="toolTip">
-          <string extracomment="Remove data"/>
+          <string>Remove selected data</string>
          </property>
          <property name="text">
           <string>...</string>
          </property>
          <property name="icon">
           <iconset>
-           <normalon>:/Delete-48.png</normalon>
+           <normalon>:/img/Delete-48.png</normalon>
           </iconset>
          </property>
          <property name="iconSize">
@@ -398,14 +401,14 @@
        <item>
         <widget class="QToolButton" name="toolButton_6">
          <property name="toolTip">
-          <string extracomment="Slice the current layer with active ROIs to create a new layer"/>
+          <string>Slice the current layer with active ROIs to create a new layer</string>
          </property>
          <property name="text">
           <string>Slice</string>
          </property>
          <property name="icon">
           <iconset>
-           <normalon>:/Stanley Knife-48.png</normalon>
+           <normalon>:/img/Stanley Knife-48.png</normalon>
           </iconset>
          </property>
          <property name="iconSize">
@@ -419,14 +422,15 @@
        <item>
         <widget class="QToolButton" name="arithmeticToolButton">
          <property name="toolTip">
-          <string extracomment="Perform layer arithmetic"/>
+          <string>Perform layer arithmetic</string>
          </property>
          <property name="text">
           <string>Layer Arithmetic</string>
          </property>
          <property name="icon">
-          <iconset resource="icon_resource.qrc">
-           <normaloff>:/Math-48.png</normaloff>:/Math-48.png</iconset>
+          <iconset>
+           <normaloff>:/Math-48.png</normaloff>
+           <normalon>:/img/Math-48.png</normalon>:/Math-48.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -452,14 +456,14 @@
        <item>
         <widget class="QToolButton" name="removeLayer">
          <property name="toolTip">
-          <string extracomment="Remove selected layer"/>
+          <string>Remove selected layer</string>
          </property>
          <property name="text">
           <string>Remove Layer</string>
          </property>
          <property name="icon">
           <iconset>
-           <normalon>:/Delete-48.png</normalon>
+           <normalon>:/img/Delete-48.png</normalon>
           </iconset>
          </property>
          <property name="iconSize">
@@ -655,7 +659,7 @@
   <action name="actionOpen">
    <property name="icon">
     <iconset resource="icon_resource.qrc">
-     <normaloff>:/Open Folder-48.png</normaloff>:/Open Folder-48.png</iconset>
+     <normaloff>:/img/Open Folder-48.png</normaloff>:/img/Open Folder-48.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>

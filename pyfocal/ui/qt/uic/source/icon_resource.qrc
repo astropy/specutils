@@ -1,17 +1,17 @@
 <RCC>
     <qresource prefix="/">
-        <file>Ellipse Stroked-50.png</file>
-        <file>Rectangle Stroked-50.png</file>
-        <file>Pentagon-50.png</file>
-        <file>Remove Image-50.png</file>
-        <file>Change Theme-50.png</file>
-        <file>Template-50.png</file>
-        <file>Open in Browser-50.png</file>
-        <file>Settings 3-50.png</file>
-        <file>Settings-50.png</file>
-        <file>Open Folder-48.png</file>
-        <file>Math-48.png</file>
-        <file>Stanley Knife-48.png</file>
-        <file>Delete-48.png</file>
+        <file>img/Change Theme-50.png</file>
+        <file>img/Delete-48.png</file>
+        <file>img/Ellipse Stroked-50.png</file>
+        <file>img/Math-48.png</file>
+        <file>img/Open Folder-48.png</file>
+        <file>img/Open in Browser-50.png</file>
+        <file>img/Pentagon-50.png</file>
+        <file>img/Rectangle Stroked-50.png</file>
+        <file>img/Remove Image-50.png</file>
+        <file>img/Settings 3-50.png</file>
+        <file>img/Settings-50.png</file>
+        <file>img/Stanley Knife-48.png</file>
+        <file>img/Template-50.png</file>
     </qresource>
 </RCC>

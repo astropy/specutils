@@ -42,7 +42,7 @@
   <action name="actionInsert_ROI">
    <property name="icon">
     <iconset resource="icon_resource.qrc">
-     <normaloff>:/Rectangle Stroked-50.png</normaloff>:/Rectangle Stroked-50.png</iconset>
+     <normaloff>:/img/Rectangle Stroked-50.png</normaloff>:/img/Rectangle Stroked-50.png</iconset>
    </property>
    <property name="text">
     <string>Rectangle ROI</string>
@@ -51,46 +51,10 @@
     <string>Insert a rectangular ROI selection box</string>
    </property>
   </action>
-  <action name="actionInsert_Elliptical_ROI">
-   <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Ellipse Stroked-50.png</normaloff>:/Ellipse Stroked-50.png</iconset>
-   </property>
-   <property name="text">
-    <string>Ellipse ROI</string>
-   </property>
-   <property name="toolTip">
-    <string>Insert an elliptical ROI selection box</string>
-   </property>
-  </action>
-  <action name="actionPolygon_ROI">
-   <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Pentagon-50.png</normaloff>:/Pentagon-50.png</iconset>
-   </property>
-   <property name="text">
-    <string>Polygon ROI</string>
-   </property>
-   <property name="toolTip">
-    <string>Insert a polygonal ROI selection box</string>
-   </property>
-  </action>
-  <action name="actionGraph_Settings">
-   <property name="icon">
-    <iconset resource="icon_resource.qrc">
-     <normaloff>:/Settings-50.png</normaloff>:/Settings-50.png</iconset>
-   </property>
-   <property name="text">
-    <string>Graph Settings</string>
-   </property>
-   <property name="toolTip">
-    <string>Edit graph settings</string>
-   </property>
-  </action>
   <action name="actionPlot_Settings">
    <property name="icon">
     <iconset resource="icon_resource.qrc">
-     <normaloff>:/Settings 3-50.png</normaloff>:/Settings 3-50.png</iconset>
+     <normaloff>:/img/Settings 3-50.png</normaloff>:/img/Settings 3-50.png</iconset>
    </property>
    <property name="text">
     <string>Plot Settings</string>
@@ -99,14 +63,16 @@
     <string>Edit plot settings</string>
    </property>
   </action>
-  <action name="actionChange_Top_Axis">
-   <property name="text">
-    <string>Change Top Axis</string>
+  <action name="actionGraph_Settings">
+   <property name="icon">
+    <iconset resource="icon_resource.qrc">
+     <normaloff>:/img/Settings-50.png</normaloff>:/img/Settings-50.png</iconset>
    </property>
-  </action>
-  <action name="actionChange_Units">
    <property name="text">
-    <string>Change Units</string>
+    <string>Graph Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>Edit graph settings</string>
    </property>
   </action>
  </widget>
