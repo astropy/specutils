@@ -205,7 +205,7 @@ class Viewer(QMainWindow):
             new_para_item.setText(0, para)
             new_para_item.setData(0, Qt.UserRole,
                                   model.parameters[i])
-            new_para_item.setText(1, str(model.parameters[i]))
+            new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
 
     def remove_model_item(self, layer, model):
@@ -219,7 +219,8 @@ class Viewer(QMainWindow):
             return
 
         try:
-            item.setText(col, str(float(item.text(col))))
+            txt = "{:4.4g}".format(float(item.text(col)))
+            item.setText(col, txt)
             item.setData(col, Qt.UserRole, float(item.text(col)))
         except ValueError:
             prev_val = item.data(col, Qt.UserRole)
@@ -320,13 +321,13 @@ class Viewer(QMainWindow):
             return sub_window.widget()
 
     def update_statistics(self, stat_dict):
-        self.main_window.label_2.setText("{0:.2e}".format(
+        self.main_window.label_2.setText("{0:4.4g}".format(
             stat_dict['mean'].value))
-        self.main_window.label_4.setText("{0:.2e}".format(
+        self.main_window.label_4.setText("{0:4.4g}".format(
             stat_dict['median'].value))
-        self.main_window.label_6.setText("{0:.2e}".format(
+        self.main_window.label_6.setText("{0:4.4g}".format(
             stat_dict['stddev'].value))
-        self.main_window.label_8.setText("{0:.2e}".format(
+        self.main_window.label_8.setText("{0:4.4g}".format(
             stat_dict['total'].value))
         self.main_window.label_10.setText(str(stat_dict['npoints']))
 
