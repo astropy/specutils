@@ -139,6 +139,8 @@ class Viewer(QMainWindow):
 
         new_item.setData(Qt.UserRole, data)
 
+        self.wgt_data_list.setCurrentItem(new_item)
+
     def add_layer_item(self, layer, *args):
         """
         Adds a `Layer` object to the loaded layer list widget.
