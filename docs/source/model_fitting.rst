@@ -82,3 +82,49 @@ then press "Create" or "Update" to produce the compound model::
 ::
 
     Gaussian1 - Gaussian2
+
+
+Saving models to file
+---------------------
+
+Selecting a model layer under "Layers" will enable the 'Save' button in
+the Model Fitting window. Click on the button to get a file dialog window.
+Type in a file name ended with the suffix '.py'. Click 'Save', or just the
+Return/Enter key.
+
+This will save the current model in the model layer to a file that can be
+directly imported by python. An example using the 'test3.py' file name, and
+a model comprised of a constant and a gaussian:
+
+Python 3.5.1 |Continuum Analytics, Inc.| (default, Dec  7 2015, 11:24:55)
+[GCC 4.2.1 (Apple Inc. build 5577)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import test3
+>>> test3
+<module 'test3' from '/Users/busko/test3.py'>
+>>>
+>>> test3.model1
+<CompoundModel0(amplitude_0=0.297160787184, amplitude_1=2.25396100263, mean_1=15117.1710847, stddev_1=948.493577186)>
+>>>
+>>> print(test3.model1)
+Model: CompoundModel0
+Inputs: ('x',)
+Outputs: ('y',)
+Model set size: 1
+Parameters:
+     amplitude_0    amplitude_1      mean_1       stddev_1
+    -------------- ------------- ------------- -------------
+    0.297160787184 2.25396100263 15117.1710847 948.493577186
+>>>
+
+The file is just a plain text file with the model expressed as a python
+expression. The model is associated to a variable named 'model1'.
+
+The file can be edited at will by the user, e.g. to add bounds, fixed
+flags, and ties to the model parameters. These abilities will come in
+time to the application UI itself.
+
+For now, only the 'write to file' option is implemented. Reading a model
+from file will come soon.
+
+
