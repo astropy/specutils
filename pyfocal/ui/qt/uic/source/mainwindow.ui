@@ -527,7 +527,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>-34</y>
           <width>295</width>
           <height>428</height>
          </rect>
@@ -552,7 +552,7 @@
             <item>
              <widget class="QPushButton" name="pushButton">
               <property name="text">
-               <string>Add</string>
+               <string>Select</string>
               </property>
              </widget>
             </item>
@@ -636,14 +636,14 @@
            <item>
             <widget class="QPushButton" name="pushButton_4">
              <property name="text">
-              <string>Create</string>
+              <string>Create Layer</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_2">
              <property name="text">
-              <string>Update</string>
+              <string>Update Layer</string>
              </property>
             </widget>
            </item>
