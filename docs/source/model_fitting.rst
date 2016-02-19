@@ -97,6 +97,7 @@ directly imported by python. An example using the 'test3.py' file name, and
 a model comprised of a constant and a gaussian:
 
 ::
+
 Python 3.5.1 |Continuum Analytics, Inc.| (default, Dec  7 2015, 11:24:55)
 [GCC 4.2.1 (Apple Inc. build 5577)] on darwin
 Type "help", "copyright", "credits" or "license" for more information.
@@ -117,6 +118,7 @@ Parameters:
     -------------- ------------- ------------- -------------
     0.297160787184 2.25396100263 15117.1710847 948.493577186
 >>>
+
 ::
 
 The file is just a plain text file with the model expressed as a python
