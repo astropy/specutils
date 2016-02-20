@@ -88,8 +88,8 @@ class Controller(object):
             self._update_layer_name)
 
         # Attach the model save/read buttons
-        self.viewer.main_window.pushButton_5.clicked.connect(
-            self.save_model)
+        # self.viewer.main_window.pushButton_5.clicked.connect(
+        #     self.save_model)
         # self.viewer.main_window.pushButton_6.clicked.connect(
         #     self.read_model)
 
@@ -124,8 +124,8 @@ class Controller(object):
         # These buttons will be re-enabled on demand by the Viewer.
         self.viewer.main_window.comboBox_2.setEnabled(False)
         self.viewer.main_window.pushButton_3.setEnabled(False)
-        self.viewer.main_window.pushButton_5.setEnabled(False)
-        self.viewer.main_window.pushButton_6.setEnabled(True)
+        # self.viewer.main_window.pushButton_5.setEnabled(False)
+        # self.viewer.main_window.pushButton_6.setEnabled(True)
 
         # If the a model item is edited, make sure to save the name
         self.viewer.wgt_model_list.itemChanged.connect(

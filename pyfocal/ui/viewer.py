@@ -50,15 +50,15 @@ class Viewer(QMainWindow):
             self.main_window.pushButton_2.hide()
             self.main_window.comboBox_2.setEnabled(False)
             self.main_window.pushButton_3.setEnabled(False)
-            self.main_window.pushButton_5.setEnabled(False)
-            self.main_window.pushButton_6.setEnabled(True)
+            # self.main_window.pushButton_5.setEnabled(False)
+            # self.main_window.pushButton_6.setEnabled(True)
         else:
             self.main_window.pushButton_4.hide()
             self.main_window.pushButton_2.show()
             self.main_window.comboBox_2.setEnabled(True)
             self.main_window.pushButton_3.setEnabled(True)
-            self.main_window.pushButton_5.setEnabled(True)
-            self.main_window.pushButton_6.setEnabled(False)
+            # self.main_window.pushButton_5.setEnabled(True)
+            # self.main_window.pushButton_6.setEnabled(False)
 
     @property
     def current_model(self):
