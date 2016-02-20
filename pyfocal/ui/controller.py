@@ -12,6 +12,7 @@ from ..interfaces.managers import (data_manager, layer_manager,
 from ..interfaces.registries import loader_registry
 from ..analysis.statistics import stats
 from ..analysis.modeling import apply_model
+from ..core.events import Dispatch
 
 
 class Controller(object):
@@ -23,17 +24,6 @@ class Controller(object):
         # self._setup_events()
         self._setup_connections()
         self._setup_model_fitting()
-
-    # def _setup_events(self):
-    #     # Setup layer event calling
-    #     layer_manager.on_add += self.viewer.add_layer_item
-    #     layer_manager.on_remove += self.viewer.remove_layer_item
-    #
-    #     # Setup model event calling
-    #     model_layer_manager.on_add += self.viewer.add_layer_item
-    #     model_layer_manager.on_remove += self.viewer.remove_layer_item
-    #     model_layer_manager.on_add_model += self.viewer.add_model_item
-    #     model_layer_manager.on_remove_model += self.viewer.remove_model_item
 
     def _setup_connections(self):
         self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
@@ -286,7 +276,6 @@ class Controller(object):
         window : pyfocal.ui.widgets.plot_sub_window.PlotSubWindow, optional
             The sub window to which a new layer object will be attached if
             there is no `layer` parameter defined.
-
         """
         if layer is None:
             if window is None:
