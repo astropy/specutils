@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './source/mainwindow.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5.1
+# Created by: ...third_party.qtpy UI code generator 5.5
 #
 # WARNING! All changes made in this file will be lost!
 from __future__ import (absolute_import, division, print_function,
@@ -193,8 +193,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.toolButton_6)
         self.arithmeticToolButton = QtWidgets.QToolButton(self.dockWidgetContents_3)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         icon4.addPixmap(QtGui.QPixmap(":/img/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        icon4.addPixmap(QtGui.QPixmap(":/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.arithmeticToolButton.setIcon(icon4)
         self.arithmeticToolButton.setIconSize(QtCore.QSize(20, 20))
         self.arithmeticToolButton.setObjectName("arithmeticToolButton")
@@ -210,7 +210,7 @@ class Ui_MainWindow(object):
         self.dockWidget_3.setWidget(self.dockWidgetContents_3)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_3)
         self.dockWidget_4 = QtWidgets.QDockWidget(MainWindow)
-        self.dockWidget_4.setMinimumSize(QtCore.QSize(76, 98))
+        self.dockWidget_4.setMinimumSize(QtCore.QSize(77, 99))
         self.dockWidget_4.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
         self.dockWidget_4.setObjectName("dockWidget_4")
         self.dockWidgetContents_4 = QtWidgets.QWidget()
@@ -226,7 +226,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -34, 295, 428))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 310, 461))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_8.setContentsMargins(11, 11, 11, 11)
@@ -277,6 +277,17 @@ class Ui_MainWindow(object):
         self.lineEdit.setObjectName("lineEdit")
         self.verticalLayout_5.addWidget(self.lineEdit)
         self.verticalLayout_4.addWidget(self.groupBox_4)
+        self.groupBox_6 = QtWidgets.QGroupBox(self.groupBox_3)
+        self.groupBox_6.setTitle("")
+        self.groupBox_6.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.groupBox_6.setObjectName("groupBox_6")
+        self.pushButton_5 = QtWidgets.QPushButton(self.groupBox_6)
+        self.pushButton_5.setGeometry(QtCore.QRect(10, 0, 115, 32))
+        self.pushButton_5.setObjectName("pushButton_5")
+        self.pushButton_6 = QtWidgets.QPushButton(self.groupBox_6)
+        self.pushButton_6.setGeometry(QtCore.QRect(130, 0, 115, 32))
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.verticalLayout_4.addWidget(self.groupBox_6)
         self.verticalLayout_8.addWidget(self.groupBox_3)
         self.groupBox_5 = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
         self.groupBox_5.setObjectName("groupBox_5")
@@ -360,6 +371,8 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Select"))
         self.groupBox_3.setTitle(_translate("MainWindow", "Current Models"))
         self.groupBox_4.setTitle(_translate("MainWindow", "Arithmetic Behavior"))
+        self.pushButton_5.setText(_translate("MainWindow", "Save"))
+        self.pushButton_6.setText(_translate("MainWindow", "Read"))
         self.groupBox_5.setTitle(_translate("MainWindow", "Fitting Routine"))
         self.pushButton_3.setText(_translate("MainWindow", "Perform Fit"))
         self.pushButton_4.setText(_translate("MainWindow", "Create Layer"))
