@@ -37,7 +37,7 @@ class Plot(pg.PlotWidget):
             self.add_data(data)
 
         # Send a statistics update event
-        self.on_roi_update.emit(None)
+        # self.on_roi_update.emit(None)
 
     def add_roi(self):
         view_range = self.viewRange()

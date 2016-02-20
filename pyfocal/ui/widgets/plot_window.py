@@ -8,6 +8,7 @@ from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
+from ...core.events import Dispatch
 
 from astropy.units import Unit
 
@@ -126,6 +127,7 @@ class PlotWindow(QMainWindow):
             bottom="Wavelength [{}]".format(
                 x_label or str(self._containers[0].layer.units[0])))
 
+    # @DispatchHandle.register_listener("on_set_plot_active")
     def set_active_plot(self, layer):
         for container in self._containers:
             if container.layer == layer:
@@ -133,12 +135,14 @@ class PlotWindow(QMainWindow):
             else:
                 container.set_visibility(True, False)
 
+    # @Dispatch.register_listener("on_set_plot_visible")
     def set_visibility(self, layer, show, override=False):
         for container in self._containers:
             if container.layer == layer:
                 container.set_visibility(show, show, inactive=False,
                                          override=override)
 
+    # @Dispatch.register_listener("on_update_axis")
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
 

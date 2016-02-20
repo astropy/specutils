@@ -8,6 +8,7 @@ from .qt.mainwindow import Ui_MainWindow
 from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.plot_window import PlotWindow
 from .widgets.dialogs import LayerArithmeticDialog
+from ..core.events import Dispatch, DispatchHandle
 
 
 class Viewer(QMainWindow):
@@ -34,6 +35,9 @@ class Viewer(QMainWindow):
 
         # Define the layer arithmetic dialog
         self._layer_arithmetic_dialog = LayerArithmeticDialog()
+
+        # Setup event handler
+        DispatchHandle.setup(self)
 
     def _setup_context_menus(self):
         self.wgt_layer_list.customContextMenuRequested.connect(
@@ -125,6 +129,7 @@ class Viewer(QMainWindow):
 
         return None, None
 
+    @DispatchHandle.register_listener("on_add_data")
     def add_data_item(self, data):
         """
         Adds a `Data` object to the loaded data list widget.

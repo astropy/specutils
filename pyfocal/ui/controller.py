@@ -32,22 +32,22 @@ class Controller(object):
 
         # Listen for subwindow selection events, update layer list on selection
         self.viewer.main_window.mdiArea.subWindowActivated.connect(
-            self.update_layer_list)
+            Dispatch.on_update_layer.emit)
 
         self.viewer.main_window.mdiArea.subWindowActivated.connect(
-            self.update_model_list)
+            Dispatch.on_update_model.emit)
 
         # Listen for layer selection events, update model tree on selection
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            self.update_model_list)
+            Dispatch.on_update_model.emit)
 
         # When a layer is selected, update the statistics for current ROIs
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            self.update_statistics)
+            Dispatch.on_update_stats.emit)
 
         # When a layer is selected, make that line more obvious than the others
-        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            self._set_active_plot)
+        self.viewer.wgt_layer_list.itemChanged.connect(
+            Dispatch.on_set_plot_active.emit)
 
         # Create a new layer based on any active ROIs
         self.viewer.main_window.toolButton_6.clicked.connect(
@@ -169,6 +169,7 @@ class Controller(object):
         # that is, the layer with the model just fitted.
         self.update_statistics()
 
+    # @Dispatch.register_listener("on_update_stats")
     def update_statistics(self, *args):
         current_layer = self.viewer.current_layer()
         mask = self.get_roi_mask()
@@ -201,7 +202,8 @@ class Controller(object):
             file_filter = 'Generic Fits (*.fits *.mits)'
 
         data = data_manager.load(file_name, file_filter)
-        self.viewer.add_data_item(data)
+        # self.viewer.add_data_item(data)
+        Dispatch.on_add_data.emit(data)
 
     def open_file(self, file_name=None):
         """
@@ -216,7 +218,8 @@ class Controller(object):
             return
 
         data = data_manager.load(str(file_name), str(selected_filter))
-        self.viewer.add_data_item(data)
+        # self.viewer.add_data_item(data)
+        Dispatch.on_add_data.emit(data=data)
 
     def add_roi_layer(self, layer, mask=None, sub_window=None):
         """
@@ -326,11 +329,10 @@ class Controller(object):
 
         self.add_plot(layer=new_model_layer)
 
-        self.update_model_list()
-        self.update_layer_list()
-
+        Dispatch.on_update_layer.emit(new_model_layer)
         return new_model_layer
 
+    # @Dispatch.register_listener("on_update_model")
     def update_model_layer(self):
         """
         Updates the current layer with the results of the model.
@@ -343,6 +345,8 @@ class Controller(object):
 
         plot_manager.update_plots(current_window, current_layer)
 
+    # @Dispatch.register_listener("on_update_layer")
+    # @Dispatch.register_listener("on_update_model")
     def update_layer_list(self):
         """
         Clears and repopulates the layer list depending on the currently
@@ -357,6 +361,7 @@ class Controller(object):
         for layer in layers:
             self.viewer.add_layer_item(layer)
 
+    # @Dispatch.register_listener("on_update_model")
     def update_model_list(self):
         """
         Clears and repopulates the model list depending on the currently
