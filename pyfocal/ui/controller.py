@@ -10,8 +10,12 @@ from ..third_party.qtpy.QtCore import *
 from ..interfaces.managers import (data_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
+from ..interfaces import model_io
 from ..analysis.statistics import stats
 from ..analysis.modeling import apply_model
+
+# To memorize last visited directory.
+_model_directory = os.environ["HOME"]
 
 
 class Controller(object):
@@ -83,6 +87,12 @@ class Controller(object):
         self.viewer.wgt_layer_list.itemChanged.connect(
             self._update_layer_name)
 
+        # Attach the model save/read buttons
+        self.viewer.main_window.pushButton_5.clicked.connect(
+            self.save_model)
+        # self.viewer.main_window.pushButton_6.clicked.connect(
+        #     self.read_model)
+
     def _setup_sub_window_connections(self):
         # When the user changes the top axis
         pass
@@ -114,6 +124,8 @@ class Controller(object):
         # These buttons will be re-enabled on demand by the Viewer.
         self.viewer.main_window.comboBox_2.setEnabled(False)
         self.viewer.main_window.pushButton_3.setEnabled(False)
+        self.viewer.main_window.pushButton_5.setEnabled(False)
+        self.viewer.main_window.pushButton_6.setEnabled(True)
 
         # If the a model item is edited, make sure to save the name
         self.viewer.wgt_model_list.itemChanged.connect(
@@ -178,6 +190,14 @@ class Controller(object):
         # be refreshed to be consistent with the currently selected layer,
         # that is, the layer with the model just fitted.
         self.update_statistics()
+
+    def save_model(self):
+        model_dict = self.viewer.get_model_inputs()
+        formula = self.viewer.current_model_formula
+        model = model_manager.get_compound_model(model_dict, formula=formula)
+
+        global _model_directory
+        model_io.saveModelToFile(self.viewer.main_window.mdiArea, model, _model_directory)
 
     def update_statistics(self, *args):
         current_layer = self.viewer.current_layer()
