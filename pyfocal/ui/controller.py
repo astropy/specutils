@@ -347,17 +347,18 @@ class Controller(object):
         """
         if layer_item is not None:
             current_layer = self.viewer.current_layer
+            self.viewer.clear_model_widget()
 
             if not hasattr(current_layer, 'model'):
                 return
 
-            self.viewer.clear_model_widget()
-
             if hasattr(current_layer.model, "submodel_names"):
                 for i in range(len(current_layer.model.submodel_names)):
-                    self.viewer.add_model_item(current_layer.model[i])
+                    self.viewer.add_model_item(current_layer.model[i],
+                                               current_layer)
             else:
-                self.viewer.add_model_item(current_layer.model)
+                self.viewer.add_model_item(current_layer.model,
+                                           current_layer)
         elif layer is not None:
             current_layer = layer
 

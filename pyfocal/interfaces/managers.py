@@ -332,7 +332,7 @@ class PlotManager(Manager):
 
     @DispatchHandle.register_listener("on_update_plot")
     def update_plots(self, layer):
-        for window, containers in self._members:
+        for containers in self._members.values():
             for container in containers:
                 if container.layer == layer:
                     container.update()

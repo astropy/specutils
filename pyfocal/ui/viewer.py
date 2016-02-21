@@ -234,6 +234,7 @@ class Viewer(QMainWindow):
             if child.data(0, Qt.UserRole) == layer:
                 return child
 
+    @DispatchHandle.register_listener("on_remove_layer")
     def remove_layer_item(self, layer):
         for child in self.wgt_layer_list.children():
             if child.data(Qt.UserRole) == layer:
@@ -277,10 +278,16 @@ class Viewer(QMainWindow):
             new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
 
-    def remove_model_item(self, layer, model):
-        for child in self.wgt_model_list.children():
-            if child.data(Qt.UserRole) == model:
-                self.wgt_model_list.removeItemWidget(child)
+    def remove_model_item(self, model, layer):
+        root = self.wgt_model_list.invisibleRootItem()
+
+        for i in range(root.childCount()):
+            child = root.child(i)
+
+            if model is None:
+                self.wgt_model_list.removeItemWidget(child, 0)
+            elif child.data(0, Qt.UserRole) == model:
+                self.wgt_model_list.removeItemWidget(child, 0)
                 break
 
     def update_model_item(self, model):
