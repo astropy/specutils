@@ -100,8 +100,8 @@ class PlotContainer(object):
 
     @pen.setter
     def pen(self, pen):
-        self._pen_stash['pen_on'] = pen
-        self.plot.setPen(pen)
+        self._pen_stash['pen_on'] = pg.mkPen(pen)
+        self.plot.setPen(pg.mkPen(pen))
 
     @property
     def error_pen(self):
@@ -109,10 +109,10 @@ class PlotContainer(object):
 
     @error_pen.setter
     def error_pen(self, pen):
-        self._pen_stash['error_pen_on'] = pen
+        self._pen_stash['error_pen_on'] = pg.mkPen(pen)
 
         if self.error is not None:
-            self.error.setOpts(pen=pen)
+            self.error.setOpts(pen=pg.mkPen(pen))
 
     def update(self, autoscale=False):
         self._plot.setData(self.dispersion.value,

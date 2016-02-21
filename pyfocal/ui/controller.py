@@ -8,6 +8,7 @@ import logging
 # LOCAL
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
+from ..third_party.qtpy.QtWidgets import *
 from ..interfaces.managers import (data_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
@@ -26,6 +27,7 @@ class Controller(object):
         # self._setup_events()
         self._setup_connections()
         self._setup_communications()
+        self._setup_context_menus()
 
         # Initially, disable fitting controls so as to avoid forbidden states.
         # These buttons will be re-enabled on demand by the Viewer.
@@ -94,6 +96,33 @@ class Controller(object):
         # Attach the update button
         self.viewer.main_window.pushButton_2.clicked.connect(
             self.update_model_layer)
+
+    def _setup_context_menus(self):
+        self.viewer.wgt_layer_list.customContextMenuRequested.connect(
+            self._layer_context_menu)
+
+    def _layer_context_menu(self, point):
+        layer_item = self.viewer.wgt_layer_list.itemAt(point)
+        container = plot_manager.get_plot_from_layer(
+            layer_item.data(0, Qt.UserRole),
+            self.viewer.current_sub_window)
+
+        self.viewer.layer_context_menu.act_change_color.triggered.disconnect()
+        self.viewer.layer_context_menu.act_change_color.triggered.connect(
+            lambda: self._change_plot_color(container)
+        )
+
+        self.viewer.layer_context_menu.exec_(
+            self.viewer.wgt_layer_list.viewport().mapToGlobal(point))
+
+    def _change_plot_color(self, container):
+        col = QColorDialog.getColor(container._pen_stash['pen_on'].color(),
+                                    self.viewer.wgt_layer_list)
+
+        if col.isValid():
+            container.pen = col
+
+            Dispatch.on_update_plot.emit(container)
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window

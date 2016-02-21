@@ -214,7 +214,7 @@ class PlotSubWindow(QMainWindow):
 
         # Layer menu
         layer_menu = QMenu()
-        layer_menu.addAction("Color")
+        # layer_menu.addAction("Color")
 
         icon = QIcon()
         icon.addPixmap(QPixmap(":/img/Settings 3-50.png"), QIcon.Normal,

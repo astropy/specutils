@@ -10,6 +10,7 @@ from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
+from .widgets.menus import LayerContextMenu
 
 
 class Viewer(QMainWindow):
@@ -29,7 +30,12 @@ class Viewer(QMainWindow):
 
         # Setup
         self._setup_connections()
-        self._setup_context_menus()
+
+        # Context menus
+        self.wgt_layer_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.layer_context_menu = LayerContextMenu()
+        self._data_context_menu = None
+        self._model_context_menu = None
 
         # Define the layer arithmetic dialog
         self._layer_arithmetic_dialog = LayerArithmeticDialog()
@@ -46,11 +52,6 @@ class Viewer(QMainWindow):
         # When a user edits the model parameter field, validate the input
         self.wgt_model_list.itemChanged.connect(
                 self._model_parameter_validation)
-
-    def _setup_context_menus(self):
-        # Context menus for the layer list
-        self.wgt_layer_list.customContextMenuRequested.connect(
-                self._layer_context_menu)
 
     def _set_model_tool_options(self):
         layer = self.current_layer
@@ -385,13 +386,3 @@ class Viewer(QMainWindow):
         self.main_window.label_8.setText("{0:4.4g}".format(
             float(stats['total'].value)))
         self.main_window.label_10.setText(str(stats['npoints']))
-
-    def _layer_context_menu(self, point):
-        menu = QMenu()
-        menu.addAction(self.main_window.actionChange_Color)
-        menu.addAction(self.main_window.actionRemove)
-        menu.exec_(self.wgt_layer_list.viewport().mapToGlobal(point))
-
-    # def _show_arithmetic_dialog(self):
-    #     if self.viewer._layer_arithmetic_dialog.exec_():
-    #
