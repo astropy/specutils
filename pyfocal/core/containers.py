@@ -1,10 +1,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from .comms import EventNode
+import random
+
+from ..third_party.qtpy.QtGui import *
+
 from astropy.units import Unit, Quantity
 import pyqtgraph as pg
-import random
 
 
 class PlotContainer(object):
@@ -19,22 +21,27 @@ class PlotContainer(object):
         if self._plot is not None:
             self.change_units(self._layer.units[0], self._layer.units[1])
 
-        rand_pen_color = pg.mkPen(
-            color=(random.randint(0, 25) * 10,
-                   random.randint(0, 25) * 10,
-                   random.randint(0, 25) * 10,
-                   255))
+        r, g, b = (random.randint(0, 25) * 10, random.randint(0, 25) * 10,
+                   random.randint(0, 25) * 10)
 
-        print(rand_pen_color)
+        rand_pen = pg.mkPen(QColor(r, g, b, 255))
 
-        _pen = pen if pen is not None else rand_pen_color
-        _err_pen = err_pen if err_pen is not None else pg.mkPen(color=(0, 0, 0, 50))
-        self._pen_stash = {'pen_on': _pen,
-                           'pen_inactive': pg.mkPen(color=(0, 0, 0, 127)),
+        _pen = pg.mkPen(pen) if pen is not None else rand_pen
+
+        _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
+                                        _pen.color().green(),
+                                        _pen.color().blue(),
+                                        50))
+
+        _err_pen = err_pen if err_pen is not None else pg.mkPen(
+            color=(100, 100, 100, 50))
+
+        self._pen_stash = {'pen_on': pg.mkPen(_pen),
+                           'pen_inactive': pg.mkPen(_inactive_pen),
                            'pen_off': pg.mkPen(None),
                            'error_pen_on': _err_pen,
                            'error_pen_off': pg.mkPen(None)}
-        self._visibility_state = [True, False, True]
+        self._visibility_state = [True, True, False]
         self.set_visibility(*self._visibility_state, override=True)
 
     def change_units(self, x, y=None, z=None):
@@ -50,20 +57,21 @@ class PlotContainer(object):
         if override:
             self._visibility_state = [pen_show, error_pen_show, inactive]
         else:
-            pen_show, _, inactive = self._visibility_state
+            pen_show, _, _ = self._visibility_state
 
         error_pen_show = error_pen_show if pen_show else False
 
         if pen_show:
-            self.pen = self._pen_stash['pen_on']
-        else:
+            self.plot.setPen(self._pen_stash['pen_on'])
+
             if inactive:
-                self.pen = self._pen_stash['pen_inactive']
-            else:
-                self.plot.setPen(self._pen_stash['pen_off'])
+                self.plot.setPen(self._pen_stash['pen_inactive'])
+        else:
+            self.plot.setPen(self._pen_stash['pen_off'])
 
         if error_pen_show:
-            self.error_pen = self._pen_stash['error_pen_on']
+            if self.error is not None:
+                self.error.setOpts(pen=self._pen_stash['error_pen_on'])
         else:
             if self.error is not None:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
@@ -101,7 +109,13 @@ class PlotContainer(object):
     @pen.setter
     def pen(self, pen):
         self._pen_stash['pen_on'] = pg.mkPen(pen)
-        self.plot.setPen(pg.mkPen(pen))
+        _pen = self._pen_stash['pen_on']
+        _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
+                                        _pen.color().green(),
+                                        _pen.color().blue(),
+                                        50))
+        self._pen_stash['pen_inactive'] = _inactive_pen
+        self.set_visibility(*self._visibility_state)
 
     @property
     def error_pen(self):

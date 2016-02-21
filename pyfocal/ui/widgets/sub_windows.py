@@ -161,9 +161,9 @@ class PlotSubWindow(QMainWindow):
     def set_active_plot(self, layer):
         for container in self._containers:
             if container.layer == layer:
-                container.set_visibility(True, True)
+                container.set_visibility(True, True, inactive=False)
             else:
-                container.set_visibility(True, False)
+                container.set_visibility(True, False, inactive=True)
 
     def get_container(self, layer):
         for container in self._containers:
@@ -175,7 +175,7 @@ class PlotSubWindow(QMainWindow):
             cntr.change_units(x, y, z)
 
         self.set_labels(x_label=x, y_label=y)
-        self._plot_item.enableAutoScale()
+        self._plot_item.enableAutoRange()
         self._plot_units = [x, y, z]
 
     def set_labels(self, x_label='', y_label=''):
