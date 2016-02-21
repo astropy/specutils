@@ -264,9 +264,17 @@ class Controller(object):
         Updates the current layer with the results of the model.
         """
         current_layer = self.viewer.current_layer
+        current_window = self.viewer.current_sub_window
         model_inputs = self.viewer.get_model_inputs()
-        model_manager.update_model(current_layer, model_inputs,
-                                   self.viewer.current_model_formula)
+
+        # Update model mask, only if rois exist
+        mask = self.get_roi_mask(layer=current_layer._parent)
+        mask = mask if len(current_window._rois) > 0 else None
+
+        model_manager.update_model(layer=current_layer,
+                                   model_inputs=model_inputs,
+                                   formula=self.viewer.current_model_formula,
+                                   mask=mask)
 
         # plot_manager.update_plots(current_window, current_layer)
         Dispatch.on_update_plot.emit(current_layer)
@@ -345,8 +353,8 @@ class Controller(object):
         Clears and repopulates the model list depending on the currently
         selected layer list item.
         """
-        if layer_item is not None:
-            current_layer = self.viewer.current_layer
+        if layer_item is not None or layer is not None:
+            current_layer = layer or self.viewer.current_layer
             self.viewer.clear_model_widget()
 
             if not hasattr(current_layer, 'model'):
@@ -359,7 +367,7 @@ class Controller(object):
             else:
                 self.viewer.add_model_item(current_layer.model,
                                            current_layer)
-        elif layer is not None:
+        elif model is not None:
             current_layer = layer
 
             self.viewer.update_model_item(model)

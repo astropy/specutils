@@ -258,26 +258,30 @@ class ModelManager(Manager):
         self._members[old_layer] = []
         del self._members[old_layer]
 
-    def update_model(self, model_layer, model_dict, formula=''):
-        model = self.get_compound_model(model_dict, formula)
-        model_layer.model = model
+    def update_model(self, layer, model_inputs, formula='', mask=None):
+        model = self.get_compound_model(model_inputs, formula)
+        layer.model = model
 
-        Dispatch.on_update_model.emit(model=model, layer=model_layer)
+        if mask is not None:
+            layer._mask = mask
+
+        Dispatch.on_update_model.emit(model=model, layer=layer)
 
     def fit_model(self, layer, fitter_name):
         if not hasattr(layer, 'model'):
             logging.warning("This layer has not model to be fit.")
             return
 
-        # when fitting, the selected layer is a ModelLayer, thus
+        # When fitting, the selected layer is a ModelLayer, thus
         # the data to be fitted resides in the parent
         parent_layer = layer._parent
 
         if parent_layer is None:
             return
 
-        flux = parent_layer.data
-        dispersion = parent_layer.dispersion
+        mask = layer._mask
+        flux = parent_layer.data[mask]
+        dispersion = parent_layer.dispersion[mask]
         model = layer.model
 
         # If the number of parameters is greater than the number of data
@@ -290,12 +294,15 @@ class ModelManager(Manager):
         fitted_model = apply_model(model, dispersion, flux,
                                    fitter_name=fitter_name)
 
-        layer.model = fitted_model
+        # Update original model with new values from fitted model
+        for i, param in enumerate(fitted_model.param_names):
+            setattr(model, param, fitted_model.parameters[i])
+        layer.model = model
 
         # update GUI with fit results
-        Dispatch.on_update_model.emit()
+        Dispatch.on_update_model.emit(model=model)
 
-        # plot fitted model
+        # Re-plot layer
         Dispatch.on_update_plot.emit(layer)
 
         return layer
