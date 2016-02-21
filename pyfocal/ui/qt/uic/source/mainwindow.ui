@@ -193,7 +193,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QToolButton" name="toolButton">
+        <widget class="QToolButton" name="dataRemoveButton">
          <property name="toolTip">
           <string>Remove selected data</string>
          </property>
@@ -454,7 +454,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QToolButton" name="removeLayer">
+        <widget class="QToolButton" name="layerRemoveButton">
          <property name="toolTip">
           <string>Remove selected layer</string>
          </property>

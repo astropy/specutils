@@ -179,14 +179,15 @@ class ModelManager(Manager):
 
         return model
 
-    def remove(self, layer, index=None):
+    def remove(self, layer, model=None, index=None):
         if index is not None:
             model = self._members[layer].pop(index)
+        elif model is not None:
+            self._members[layer].remove(model)
         else:
-            model = None
             del self._members[layer]
 
-        Dispatch.on_remove_model.emit(model, layer)
+        Dispatch.on_remove_model.emit(model)
 
     def _evaluate(self, models, formula):
         parser = Parser()
@@ -207,7 +208,7 @@ class ModelManager(Manager):
 
         return result
 
-    def get_model_layers(self, layer, no_keys=False):
+    def get_models(self, layer, no_keys=False):
         """
         Returns the astropy model objects associated with `Layer`.
 

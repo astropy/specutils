@@ -10,7 +10,7 @@ from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
-from .widgets.menus import LayerContextMenu
+from .widgets.menus import LayerContextMenu, ModelContextMenu
 
 
 class Viewer(QMainWindow):
@@ -34,8 +34,9 @@ class Viewer(QMainWindow):
         # Context menus
         self.wgt_layer_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.layer_context_menu = LayerContextMenu()
-        self._data_context_menu = None
-        self._model_context_menu = None
+
+        self.wgt_model_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.model_context_menu = ModelContextMenu()
 
         # Define the layer arithmetic dialog
         self._layer_arithmetic_dialog = LayerArithmeticDialog()
@@ -239,6 +240,12 @@ class Viewer(QMainWindow):
             if child.data(0, Qt.UserRole) == layer:
                 return child
 
+            for j in range(child.childCount()):
+                sec_child = child.child(j)
+
+                if sec_child.data(0, Qt.UserRole) == layer:
+                    return sec_child
+
     @DispatchHandle.register_listener("on_remove_layer")
     def remove_layer_item(self, layer):
         root = self.wgt_layer_list.invisibleRootItem()
@@ -247,8 +254,15 @@ class Viewer(QMainWindow):
             child = root.child(i)
 
             if child.data(0, Qt.UserRole) == layer:
-                self.wgt_layer_list.removeItemWidget(child)
+                root.removeChild(child)
                 break
+
+            for j in range(child.childCount()):
+                sec_child = child.child(j)
+
+                if sec_child.data(0, Qt.UserRole) == layer:
+                    child.removeChild(sec_child)
+                    break
 
     @DispatchHandle.register_listener("on_add_plot", "on_update_plot")
     def update_layer_item(self, container):
@@ -258,7 +272,9 @@ class Viewer(QMainWindow):
         icon = QIcon(pixmap)
 
         layer_item = self.get_layer_item(layer)
-        layer_item.setIcon(0, icon)
+
+        if layer_item is not None:
+            layer_item.setIcon(0, icon)
 
     @DispatchHandle.register_listener("on_add_model")
     def add_model_item(self, model, layer):
@@ -297,16 +313,17 @@ class Viewer(QMainWindow):
             new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
 
-    def remove_model_item(self, model, layer):
+    @DispatchHandle.register_listener("on_remove_model")
+    def remove_model_item(self, model):
         root = self.wgt_model_list.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
 
             if model is None:
-                self.wgt_model_list.removeItemWidget(child, 0)
+                root.removeChild(child)
             elif child.data(0, Qt.UserRole) == model:
-                self.wgt_model_list.removeItemWidget(child, 0)
+                root.removeChild(child)
                 break
 
     def update_model_item(self, model):

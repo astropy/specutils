@@ -146,7 +146,7 @@ class PlotSubWindow(QMainWindow):
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._containers[0].layer
 
-    @DispatchHandle.register_listener("on_remove_plot")
+    @DispatchHandle.register_listener("on_remove_plot", "on_remove_layer")
     def remove_container(self, layer):
         for container in [x for x in self._containers]:
             if container.layer == layer:

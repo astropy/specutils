@@ -7,10 +7,18 @@ class BaseContextMenu(QMenu):
     def __init__(self, *args, **kwargs):
         super(BaseContextMenu, self).__init__(*args, **kwargs)
 
-        self.act_change_color = self.addAction("Change color")
-        self.act_export = self.addAction("Export")
-        self.act_export.setDisabled(True)
 
 class LayerContextMenu(BaseContextMenu):
     def __init__(self, *args, **kwargs):
         super(LayerContextMenu, self).__init__(*args, **kwargs)
+
+        self.act_change_color = self.addAction("Change color")
+        self.act_export = self.addAction("Export")
+        self.act_export.setDisabled(True)
+
+
+class ModelContextMenu(BaseContextMenu):
+    def __init__(self, *args, **kwargs):
+        super(ModelContextMenu, self).__init__(*args, **kwargs)
+
+        self.act_remove = self.addAction("Remove")

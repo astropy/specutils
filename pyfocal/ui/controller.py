@@ -71,6 +71,10 @@ class Controller(object):
 
         self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
 
+        # When the layer list delete button is pressed
+        self.viewer.main_window.layerRemoveButton.clicked.connect(
+            lambda: layer_manager.remove(self.viewer.current_layer))
+
         # When the arithmetic button is clicked, show math dialog
         self.viewer.main_window.arithmeticToolButton.clicked.connect(
             self._show_arithmetic_dialog)
@@ -101,6 +105,9 @@ class Controller(object):
         self.viewer.wgt_layer_list.customContextMenuRequested.connect(
             self._layer_context_menu)
 
+        self.viewer.wgt_model_list.customContextMenuRequested.connect(
+            self._model_context_menu)
+
     def _layer_context_menu(self, point):
         layer_item = self.viewer.wgt_layer_list.itemAt(point)
         container = plot_manager.get_plot_from_layer(
@@ -114,6 +121,19 @@ class Controller(object):
 
         self.viewer.layer_context_menu.exec_(
             self.viewer.wgt_layer_list.viewport().mapToGlobal(point))
+
+    def _model_context_menu(self, point):
+        model_item = self.viewer.wgt_model_list.itemAt(point)
+        model = model_item.data(0, Qt.UserRole)
+        layer = self.viewer.current_layer
+
+        self.viewer.model_context_menu.act_remove.triggered.disconnect()
+        self.viewer.model_context_menu.act_remove.triggered.connect(
+            lambda: model_manager.remove(layer=layer, model=model)
+        )
+
+        self.viewer.model_context_menu.exec_(
+            self.viewer.wgt_model_list.viewport().mapToGlobal(point))
 
     def _change_plot_color(self, container):
         col = QColorDialog.getColor(container._pen_stash['pen_on'].color(),
@@ -239,6 +259,10 @@ class Controller(object):
             window=current_layer._window,
             name="New Model Layer",
             model=compound_model)
+
+        # Add the models to the new model layer
+        for model in model_inputs:
+            model_manager.add(model=model, layer=new_model_layer)
 
         plot_container = plot_manager.new(new_model_layer,
                                           current_layer._window)
@@ -395,13 +419,11 @@ class Controller(object):
             if not hasattr(current_layer, 'model'):
                 return
 
-            if hasattr(current_layer.model, "submodel_names"):
-                for i in range(len(current_layer.model.submodel_names)):
-                    self.viewer.add_model_item(current_layer.model[i],
-                                               current_layer)
-            else:
-                self.viewer.add_model_item(current_layer.model,
-                                           current_layer)
+            models = model_manager.get_models(current_layer)
+
+            for model in models:
+                self.viewer.add_model_item(model=model,
+                                           layer=current_layer)
         elif model is not None:
             current_layer = layer
 
