@@ -255,3 +255,7 @@ class PlotSubWindow(QMainWindow):
 
             self._plot_item.update()
 
+    def closeEvent(self, event):
+        DispatchHandle.tear_down(self)
+        super(PlotSubWindow, self).closeEvent(event)
+

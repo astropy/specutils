@@ -25,6 +25,8 @@ class PlotContainer(object):
                    random.randint(0, 25) * 10,
                    255))
 
+        print(rand_pen_color)
+
         _pen = pen if pen is not None else rand_pen_color
         _err_pen = err_pen if err_pen is not None else pg.mkPen(color=(0, 0, 0, 50))
         self._pen_stash = {'pen_on': _pen,

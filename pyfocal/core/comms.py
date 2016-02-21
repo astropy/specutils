@@ -1,7 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys
+import inspect
+import traceback
 import logging
 from functools import wraps
 
@@ -60,6 +61,14 @@ class Dispatch(object):
             logging.warning("No such event: {}. Event must be registered "
                             "before listeners can be assigned.".format(name))
 
+    @classmethod
+    def unregister_listener(cls, name, func):
+        if hasattr(cls, name):
+            call_func = getattr(cls, name)
+            call_func -= func
+        else:
+            logging.warning("No such event: {}.".format(name))
+
 
 class DispatchHandle(object):
     """
@@ -72,14 +81,24 @@ class DispatchHandle(object):
     @staticmethod
     def setup(inst):
         logging.info("Dispatch is now watching: {}".format(inst))
+        members = inspect.getmembers(inst, predicate=inspect.ismethod)
 
-        for func_name in dir(inst):
-            func = getattr(inst, func_name)
-
+        for func_name, func in members:
             if hasattr(func, 'wrapped'):
                 if func.wrapped:
                     for name in func.event_names:
                         Dispatch.register_listener(name, func)
+
+    @staticmethod
+    def tear_down(inst):
+        logging.info("Dispatch has stopped watching: {}".format(inst))
+        members = inspect.getmembers(inst, predicate=inspect.ismethod)
+
+        for func_name, func in members:
+            if hasattr(func, 'wrapped'):
+                if func.wrapped:
+                    for name in func.event_names:
+                        Dispatch.unregister_listener(name, func)
 
     @staticmethod
     def register_listener(*args):
@@ -92,8 +111,7 @@ class DispatchHandle(object):
                 try:
                     return func(*args, **kwargs)
                 except:
-                    e = sys.exc_info()
-                    logging.error(e)
+                    logging.error(traceback.format_exc())
             return wrapper
         return decorator
 
