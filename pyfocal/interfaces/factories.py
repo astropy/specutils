@@ -40,20 +40,18 @@ class DataFactory(Factory):
         return new_data
 
     @staticmethod
-    def create_layer(data, mask=None, parent=None, window=None, name=''):
-        logging.info("new layer: {}".format(name))
+    def create_layer(data, mask=None, parent=None, window=None, name='',
+                     model=None):
+        logging.info("Create new layer: {}".format(name))
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
-        new_layer = Layer(data, mask, parent, window, name)
+
+        if model is None:
+            new_layer = Layer(data, mask, parent, window, name)
+        else:
+            new_layer = ModelLayer(model, data, mask, parent, window, name)
 
         return new_layer
-
-    @staticmethod
-    def create_model_layer(model, data, mask, parent=None, window=None,
-                           name=''):
-        new_model_layer = ModelLayer(model, data, mask, parent, window, name)
-
-        return new_model_layer
 
 
 #TODO  a base class for Model and Fitter classes might be of help here.

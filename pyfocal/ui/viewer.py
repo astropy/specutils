@@ -6,9 +6,9 @@ from ..third_party.qtpy.QtWidgets import *
 
 from .qt.mainwindow import Ui_MainWindow
 from .qt.plotsubwindow import Ui_SpectraSubWindow
-from .widgets.plot_window import PlotWindow
+from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
-from ..core.events import Dispatch, DispatchHandle
+from ..core.comms import Dispatch, DispatchHandle
 
 
 class Viewer(QMainWindow):
@@ -26,11 +26,8 @@ class Viewer(QMainWindow):
         self.wgt_model_list = self.main_window.treeWidget
         self.wgt_model_list.setHeaderLabels(["Parameter", "Value"])
 
-        # Connect the validation events
-        self.wgt_model_list.itemChanged.connect(
-                self._model_parameter_validation)
-
-        # Setup context menus
+        # Setup
+        self._setup_connections()
         self._setup_context_menus()
 
         # Define the layer arithmetic dialog
@@ -39,12 +36,23 @@ class Viewer(QMainWindow):
         # Setup event handler
         DispatchHandle.setup(self)
 
+    def _setup_connections(self):
+        # When clicking a layer, update the model list to show particular
+        # buttons depending on if the layer is a model layer
+        self.wgt_layer_list.itemSelectionChanged.connect(
+            self._set_model_tool_options)
+
+        # When a user edits the model parameter field, validate the input
+        self.wgt_model_list.itemChanged.connect(
+                self._model_parameter_validation)
+
     def _setup_context_menus(self):
+        # Context menus for the layer list
         self.wgt_layer_list.customContextMenuRequested.connect(
                 self._layer_context_menu)
 
     def _set_model_tool_options(self):
-        layer = self.current_layer()
+        layer = self.current_layer
 
         if layer is None:
             return
@@ -61,6 +69,58 @@ class Viewer(QMainWindow):
             self.main_window.pushButton_3.setEnabled(True)
 
     @property
+    def current_data(self):
+        """
+        Returns the currently selected data object from the data list widget.
+
+        Returns
+        -------
+        data : pyfocal.core.data.Data
+            The `Data` object of the currently selected row.
+        """
+        data_item = self.wgt_data_list.currentItem()
+
+        if data_item is not None:
+            data = data_item.data(Qt.UserRole)
+            return data
+
+    @property
+    def current_layer(self):
+        """
+        Returns the currently selected layer object form the layer list widget.
+
+        Returns
+        -------
+        layer : pyfocal.core.data.Layer
+            The `Layer` object of the currently selected row.
+        """
+        layer_item = self.wgt_layer_list.currentItem()
+
+        if layer_item is not None:
+            layer = layer_item.data(0, Qt.UserRole)
+
+            return layer
+
+    @property
+    def current_layer_item(self):
+        return self.wgt_layer_list.currentItem()
+
+    @property
+    def current_sub_window(self):
+        """
+        Returns the currently active `QMdiSubWindow` object.
+
+        Returns
+        -------
+        sub_window : QMdiSubWindow
+            The currently active `QMdiSubWindow` object.
+        """
+        sub_window = self.main_window.mdiArea.currentSubWindow()
+
+        if sub_window is not None:
+            return sub_window.widget()
+
+    @property
     def current_model(self):
         return self.main_window.comboBox.currentText()
 
@@ -72,7 +132,7 @@ class Viewer(QMainWindow):
     def current_model_formula(self):
         return self.main_window.lineEdit.text()
 
-    def add_sub_window(self):
+    def add_sub_window(self, *args, **kwargs):
         """
         Creates a new sub window instance in the MDI area.
 
@@ -84,7 +144,7 @@ class Viewer(QMainWindow):
             The widget object within the QMdiSubWindow.
         """
         # Create new window
-        plot_sub_window = PlotWindow()
+        plot_sub_window = PlotSubWindow()
 
         # Populate window with tool bars, status, etc.
         ui_sub_window = Ui_SpectraSubWindow()
@@ -146,6 +206,7 @@ class Viewer(QMainWindow):
 
         self.wgt_data_list.setCurrentItem(new_item)
 
+    @DispatchHandle.register_listener("on_add_layer")
     def add_layer_item(self, layer, *args):
         """
         Adds a `Layer` object to the loaded layer list widget.
@@ -179,7 +240,8 @@ class Viewer(QMainWindow):
                 self.wgt_layer_list.removeItemWidget(child)
                 break
 
-    def add_model_item(self, model):
+    @DispatchHandle.register_listener("on_add_model")
+    def add_model_item(self, model, layer):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
@@ -220,6 +282,26 @@ class Viewer(QMainWindow):
             if child.data(Qt.UserRole) == model:
                 self.wgt_model_list.removeItemWidget(child)
                 break
+
+    def update_model_item(self, model):
+        model_item = self.get_model_item(model)
+
+        for i, para in enumerate(model.param_names):
+            for i in range(model_item.childCount()):
+                param_item = model_item.child(i)
+
+                if param_item.text(0) == para:
+                    param_item.setText(1, "{:4.4g}".format(
+                        model.parameters[i]))
+
+    def get_model_item(self, model):
+        root = self.wgt_model_list.invisibleRootItem()
+
+        for i in range(root.childCount()):
+            child = root.child(i)
+
+            if child.data(0, Qt.UserRole) == model:
+                return child
 
     def _model_parameter_validation(self, item, col):
         if col == 0:
@@ -265,81 +347,26 @@ class Viewer(QMainWindow):
     def clear_model_widget(self):
         self.wgt_model_list.clear()
 
-    def current_data(self):
-        """
-        Returns the currently selected data object from the data list widget.
-
-        Returns
-        -------
-        data : pyfocal.core.data.Data
-            The `Data` object of the currently selected row.
-        """
-        data_item = self.wgt_data_list.currentItem()
-
-        if data_item is not None:
-            data = data_item.data(Qt.UserRole)
-            return data
-
-    def current_layer(self):
-        """
-        Returns the currently selected layer object form the layer list widget.
-
-        Returns
-        -------
-        layer : pyfocal.core.data.Layer
-            The `Layer` object of the currently selected row.
-        """
-        layer_item = self.wgt_layer_list.currentItem()
-
-        if layer_item is not None:
-            layer = layer_item.data(0, Qt.UserRole)
-
-            return layer
-
-    def parent_layer(self):
-        """
-        Returns the parent of the currently selected layer object
-        from the layer list widget.
-
-        Returns
-        -------
-        layer : pyfocal.core.data.Layer
-            The `Layer` object of the parent of the currently selected row.
-        """
-        parent_item = self.wgt_layer_list.currentItem().parent()
-
-        if parent_item is not None:
-            layer = parent_item.data(0, Qt.UserRole)
-
-            return layer
-
-    def current_sub_window(self):
-        """
-        Returns the currently active `QMdiSubWindow` object.
-
-        Returns
-        -------
-        sub_window : QMdiSubWindow
-            The currently active `QMdiSubWindow` object.
-        """
-        sub_window = self.main_window.mdiArea.currentSubWindow()
-
-        if sub_window is not None:
-            return sub_window.widget()
-
-    def update_statistics(self, stat_dict):
+    @DispatchHandle.register_listener("on_update_stats")
+    def update_statistics(self, stats, layer):
+        self.main_window.groupBox_2.setTitle(
+            "Current Layer: {}".format(layer.name))
         self.main_window.label_2.setText("{0:4.4g}".format(
-            stat_dict['mean'].value))
+            stats['mean'].value))
         self.main_window.label_4.setText("{0:4.4g}".format(
-            stat_dict['median'].value))
+            stats['median'].value))
         self.main_window.label_6.setText("{0:4.4g}".format(
-            stat_dict['stddev'].value))
+            stats['stddev'].value))
         self.main_window.label_8.setText("{0:4.4g}".format(
-            stat_dict['total'].value))
-        self.main_window.label_10.setText(str(stat_dict['npoints']))
+            float(stats['total'].value)))
+        self.main_window.label_10.setText(str(stats['npoints']))
 
     def _layer_context_menu(self, point):
         menu = QMenu()
         menu.addAction(self.main_window.actionChange_Color)
         menu.addAction(self.main_window.actionRemove)
         menu.exec_(self.wgt_layer_list.viewport().mapToGlobal(point))
+
+    # def _show_arithmetic_dialog(self):
+    #     if self.viewer._layer_arithmetic_dialog.exec_():
+    #

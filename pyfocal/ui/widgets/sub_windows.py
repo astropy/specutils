@@ -2,20 +2,28 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
+from functools import reduce
 
-from ..widgets.plots.plot import Plot
+from ..widgets.plots.widgets import PlotWidget
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
-from ...core.events import Dispatch
+from ...core.comms import Dispatch, DispatchHandle
+from .region_items import LinearRegionItem
 
 from astropy.units import Unit
+import numpy as np
+import pyqtgraph as pg
+
+pg.setConfigOption('background', 'w')
+pg.setConfigOption('foreground', 'k')
+pg.setConfigOptions(antialias=False)
 
 
-class PlotWindow(QMainWindow):
+class PlotSubWindow(QMainWindow):
     def __init__(self, **kwargs):
-        super(PlotWindow, self).__init__(**kwargs)
+        super(PlotSubWindow, self).__init__(**kwargs)
         self._sub_window = None
 
         self._containers = []
@@ -26,13 +34,17 @@ class PlotWindow(QMainWindow):
         self._plot_widget = None
         self._plot_item = None
         self._plots_units = None
+        self._rois = []
+
+        DispatchHandle.setup(self)
 
     def initialize(self):
         self._dynamic_axis = DynamicAxisItem(orientation='top')
-        self._plot_widget = Plot(parent=self, axisItems={'top': self._dynamic_axis})
+        self._plot_widget = pg.PlotWidget(axisItems={'top':
+                                                         self._dynamic_axis})
         self.setCentralWidget(self._plot_widget)
 
-        self._plot_item = self._plot_widget._plot_item
+        self._plot_item = self._plot_widget.getPlotItem()
         self._plot_item.showAxis('top', True)
         # Add grids to the plot
         self._plot_item.showGrid(True, True)
@@ -41,8 +53,8 @@ class PlotWindow(QMainWindow):
 
     def _setup_connections(self):
         # Setup ROI connection
-        act_insert_roi = self.action("actionInsert_ROI")
-        act_insert_roi.triggered.connect(self._plot_widget.add_roi)
+        act_insert_roi = self.tool_bar.actions()[0]
+        act_insert_roi.triggered.connect(self.add_roi)
 
         # On accept, change the displayed axis
         self._top_axis_dialog.accepted.connect(lambda:
@@ -65,20 +77,57 @@ class PlotWindow(QMainWindow):
         return self._tool_bar
 
     def get_roi_mask(self, layer=None, container=None):
-        if layer is not None or container is not None:
-            return self._plot_widget.get_roi_mask(
-                container or self.get_container(layer))
+        if layer is not None:
+            container = self.get_container(layer)
 
-    def get_roi_data(self, layer=None, container=None):
-        mask = self.get_roi_mask(layer, container)
-        raise NotImplemented()
+        if container is None:
+            return
 
-    def action(self, name):
-        # TODO: Revisit this sometime in the future.
-        for act in self.findChildren(QAction):
-            if act.objectName() == name:
-                return act
+        mask_holder = []
 
+        for roi in self._rois:
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            x1, x2 = roi.getRegion()
+
+            mask_holder.append((container.dispersion.value >= x1) &
+                               (container.dispersion.value <= x2))
+
+        if len(mask_holder) == 0:
+            mask_holder.append(np.ones(
+                shape=container.dispersion.value.shape,
+                dtype=bool))
+
+        # mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        mask = reduce(np.logical_or, mask_holder)
+        return mask
+
+    def add_roi(self):
+        view_range = self._plot_item.viewRange()
+        x_len = (view_range[0][1] - view_range[0][0]) * 0.5
+        y_len = (view_range[1][1] - view_range[1][0]) * 0.9
+        x_pos = x_len * 0.5 + view_range[0][0]
+        y_pos = y_len * 0.05 + view_range[1][0]
+
+        def remove():
+            self._plot_item.removeItem(roi)
+            self._rois.remove(roi)
+
+        roi = LinearRegionItem(values=[x_pos, x_pos + x_len])
+        self._rois.append(roi)
+        self._plot_item.addItem(roi)
+
+        # Connect the remove functionality
+        roi.sigRemoveRequested.connect(remove)
+
+        # Connect events
+        Dispatch.on_update_roi.emit(roi=roi)
+        roi.sigRemoveRequested.connect(
+            lambda: Dispatch.on_update_roi.emit(roi=roi))
+        roi.sigRegionChangeFinished.connect(
+            lambda: Dispatch.on_update_roi.emit(roi=roi))
+
+    @DispatchHandle.register_listener("on_add_plot")
     def add_container(self, container):
         if len(self._containers) == 0:
             self.change_units(container.layer.units[0],
@@ -97,6 +146,7 @@ class PlotWindow(QMainWindow):
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._containers[0].layer
 
+    @DispatchHandle.register_listener("on_remove_plot")
     def remove_container(self, layer):
         for container in [x for x in self._containers]:
             if container.layer == layer:
@@ -106,6 +156,14 @@ class PlotWindow(QMainWindow):
                     self._plot_item.removeItem(container.error)
 
                 self._containers.remove(container)
+
+    @DispatchHandle.register_listener("on_select_plot")
+    def set_active_plot(self, layer):
+        for container in self._containers:
+            if container.layer == layer:
+                container.set_visibility(True, True)
+            else:
+                container.set_visibility(True, False)
 
     def get_container(self, layer):
         for container in self._containers:
@@ -127,22 +185,12 @@ class PlotWindow(QMainWindow):
             bottom="Wavelength [{}]".format(
                 x_label or str(self._containers[0].layer.units[0])))
 
-    # @DispatchHandle.register_listener("on_set_plot_active")
-    def set_active_plot(self, layer):
-        for container in self._containers:
-            if container.layer == layer:
-                container.set_visibility(True, True)
-            else:
-                container.set_visibility(True, False)
-
-    # @Dispatch.register_listener("on_set_plot_visible")
     def set_visibility(self, layer, show, override=False):
         for container in self._containers:
             if container.layer == layer:
                 container.set_visibility(show, show, inactive=False,
                                          override=override)
 
-    # @Dispatch.register_listener("on_update_axis")
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
 

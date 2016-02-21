@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from .events import EventHook
+from .comms import EventNode
 from astropy.units import Unit, Quantity
 import pyqtgraph as pg
 
@@ -27,9 +27,9 @@ class PlotContainer(object):
                            'error_pen_off': pg.mkPen(None)}
         self._visibility_state = [True, True, True]
 
-        self.on_unit_change = EventHook()
-        self.on_visibility_change = EventHook()
-        self.on_pen_change = EventHook()
+        self.on_unit_change = EventNode()
+        self.on_visibility_change = EventNode()
+        self.on_pen_change = EventNode()
 
     def change_units(self, x, y=None, z=None):
         self._plot_units = (

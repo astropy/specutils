@@ -266,7 +266,7 @@
         </size>
        </property>
        <property name="title">
-        <string>Current ROI</string>
+        <string>Current Layer</string>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="1" column="0">
@@ -527,7 +527,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-34</y>
+          <y>0</y>
           <width>295</width>
           <height>428</height>
          </rect>
