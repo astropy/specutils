@@ -27,6 +27,8 @@ class DynamicAxisItem(pg.AxisItem):
 
         self._layer = layer or self._layer
         self.update()
+        self.hide()
+        self.show()
 
     def tickStrings(self, values, scale, spacing):
         if self._layer is None:

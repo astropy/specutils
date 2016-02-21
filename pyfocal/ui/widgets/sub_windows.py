@@ -58,7 +58,7 @@ class PlotSubWindow(QMainWindow):
 
         # On accept, change the displayed axis
         self._top_axis_dialog.accepted.connect(lambda:
-            self._dynamic_axis.update_axis(
+            self.update_axis(
                 self._containers[0].layer,
                 self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
                     .currentIndex(),
@@ -193,6 +193,7 @@ class PlotSubWindow(QMainWindow):
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
+        self._plot_widget.update()
 
     def _setup_toolbar_menus(self):
         # Window menu
