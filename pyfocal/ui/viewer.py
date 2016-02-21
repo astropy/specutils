@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
+from ..third_party.qtpy.QtGui import *
 
 from .qt.mainwindow import Ui_MainWindow
 from .qt.plotsubwindow import Ui_SpectraSubWindow
@@ -207,7 +208,7 @@ class Viewer(QMainWindow):
         self.wgt_data_list.setCurrentItem(new_item)
 
     @DispatchHandle.register_listener("on_add_layer")
-    def add_layer_item(self, layer, *args):
+    def add_layer_item(self, layer, icon=None, *args):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -223,6 +224,9 @@ class Viewer(QMainWindow):
         new_item.setData(0, Qt.UserRole, layer)
         new_item.setCheckState(0, Qt.Checked)
 
+        if icon is not None:
+            new_item.setIcon(0, icon)
+
         self.wgt_layer_list.setCurrentItem(new_item)
 
     def get_layer_item(self, layer):
@@ -236,10 +240,24 @@ class Viewer(QMainWindow):
 
     @DispatchHandle.register_listener("on_remove_layer")
     def remove_layer_item(self, layer):
-        for child in self.wgt_layer_list.children():
-            if child.data(Qt.UserRole) == layer:
+        root = self.wgt_layer_list.invisibleRootItem()
+
+        for i in range(root.childCount()):
+            child = root.child(i)
+
+            if child.data(0, Qt.UserRole) == layer:
                 self.wgt_layer_list.removeItemWidget(child)
                 break
+
+    @DispatchHandle.register_listener("on_add_plot", "on_update_plot")
+    def update_layer_item(self, container):
+        layer = container._layer
+        pixmap = QPixmap(10, 10)
+        pixmap.fill(container._pen_stash['pen_on'].color())
+        icon = QIcon(pixmap)
+
+        layer_item = self.get_layer_item(layer)
+        layer_item.setIcon(0, icon)
 
     @DispatchHandle.register_listener("on_add_model")
     def add_model_item(self, model, layer):

@@ -334,15 +334,17 @@ class PlotManager(Manager):
 
         Dispatch.on_add_plot.emit(plot_container)
 
-    def get_plots(self, parent):
-        return self._members[parent]
+    def get_plots(self, window):
+        return self._members[window]
+
+    def get_plot_from_layer(self, layer, window):
+        for container in self._members[window]:
+            if container.layer == layer:
+                return container
 
     @DispatchHandle.register_listener("on_update_plot")
-    def update_plots(self, layer):
-        for containers in self._members.values():
-            for container in containers:
-                if container.layer == layer:
-                    container.update()
+    def update_plots(self, container):
+        container.update()
 
 
 data_manager = DataManager()

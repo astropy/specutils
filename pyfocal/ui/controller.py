@@ -7,6 +7,7 @@ import logging
 
 # LOCAL
 from ..third_party.qtpy.QtCore import *
+from ..third_party.qtpy.QtGui import *
 from ..interfaces.managers import (data_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
@@ -345,7 +346,12 @@ class Controller(object):
         self.viewer.clear_layer_widget()
 
         for layer in layers:
-            self.viewer.add_layer_item(layer)
+            container = plot_manager.get_plot_from_layer(layer=layer,
+                                                         window=current_window)
+            pixmap = QPixmap(10, 10)
+            pixmap.fill(container._pen_stash['pen_on'].color())
+            icon = QIcon(pixmap)
+            self.viewer.add_layer_item(layer, icon=icon)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_model")
     def update_model_list(self, layer_item=None, model=None, layer=None):

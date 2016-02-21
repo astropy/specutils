@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import logging
 from functools import wraps
 
@@ -88,7 +89,11 @@ class DispatchHandle(object):
 
             @wraps(func)
             def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
+                try:
+                    return func(*args, **kwargs)
+                except:
+                    e = sys.exc_info()
+                    logging.error(e)
             return wrapper
         return decorator
 
@@ -104,7 +109,7 @@ Dispatch.register_event("on_remove_model", args=["model", "layer"])
 
 Dispatch.register_event("on_update_layer", args=["layer"])
 Dispatch.register_event("on_update_model", args=["model", "layer"])
-Dispatch.register_event("on_update_plot", args=["layer"])
+Dispatch.register_event("on_update_plot", args=["container"])
 Dispatch.register_event("on_update_roi", args=["roi"])
 Dispatch.register_event("on_update_stats", args=["stats", "layer"])
 

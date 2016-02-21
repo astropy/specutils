@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 from .comms import EventNode
 from astropy.units import Unit, Quantity
 import pyqtgraph as pg
+import random
 
 
 class PlotContainer(object):
@@ -18,18 +19,21 @@ class PlotContainer(object):
         if self._plot is not None:
             self.change_units(self._layer.units[0], self._layer.units[1])
 
-        _pen = pen if pen is not None else pg.mkPen(color=(0, 0, 0, 255))
+        rand_pen_color = pg.mkPen(
+            color=(random.randint(0, 25) * 10,
+                   random.randint(0, 25) * 10,
+                   random.randint(0, 25) * 10,
+                   255))
+
+        _pen = pen if pen is not None else rand_pen_color
         _err_pen = err_pen if err_pen is not None else pg.mkPen(color=(0, 0, 0, 50))
         self._pen_stash = {'pen_on': _pen,
                            'pen_inactive': pg.mkPen(color=(0, 0, 0, 127)),
                            'pen_off': pg.mkPen(None),
                            'error_pen_on': _err_pen,
                            'error_pen_off': pg.mkPen(None)}
-        self._visibility_state = [True, True, True]
-
-        self.on_unit_change = EventNode()
-        self.on_visibility_change = EventNode()
-        self.on_pen_change = EventNode()
+        self._visibility_state = [True, False, True]
+        self.set_visibility(*self._visibility_state, override=True)
 
     def change_units(self, x, y=None, z=None):
         self._plot_units = (
