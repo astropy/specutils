@@ -600,7 +600,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>-114</y>
           <width>306</width>
           <height>428</height>
          </rect>
@@ -710,14 +710,14 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QPushButton" name="pushButton_4">
+            <widget class="QPushButton" name="createModelLayerButton">
              <property name="text">
               <string>Create Layer</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_2">
+            <widget class="QPushButton" name="updateModelLayerButton">
              <property name="text">
               <string>Update Layer</string>
              </property>

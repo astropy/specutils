@@ -9,6 +9,8 @@ from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
+from ..widgets.toolbars import PlotToolBar
+from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
 from .region_items import LinearRegionItem
 
@@ -22,12 +24,20 @@ pg.setConfigOptions(antialias=False)
 
 
 class PlotSubWindow(QMainWindow):
+    """
+    Sub window object responsible for displaying and interacting with plots.
+    """
     def __init__(self, **kwargs):
         super(PlotSubWindow, self).__init__(**kwargs)
-        self._sub_window = None
+        # Setup plot sub window ui
+        self.ui_plot_sub_window = Ui_SpectraSubWindow()
+        self.ui_plot_sub_window.setupUi(self)
+
+        # Setup custom tool bar
+        self._tool_bar = PlotToolBar()
+        self.addToolBar(self._tool_bar)
 
         self._containers = []
-        self._tool_bar = None
         self._top_axis_dialog = TopAxisDialog()
         self._unit_change_dialog = UnitChangeDialog()
         self._dynamic_axis = None
@@ -39,7 +49,6 @@ class PlotSubWindow(QMainWindow):
 
         DispatchHandle.setup(self)
 
-    def initialize(self):
         self._dynamic_axis = DynamicAxisItem(orientation='top')
         self._plot_widget = pg.PlotWidget(axisItems={'top':
                                                          self._dynamic_axis})
@@ -54,8 +63,7 @@ class PlotSubWindow(QMainWindow):
 
     def _setup_connections(self):
         # Setup ROI connection
-        act_insert_roi = self.tool_bar.actions()[0]
-        act_insert_roi.triggered.connect(self.add_roi)
+        self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
 
         # On accept, change the displayed axis
         self._top_axis_dialog.accepted.connect(lambda:
@@ -67,33 +75,48 @@ class PlotSubWindow(QMainWindow):
                 ref_wave=self._top_axis_dialog.ref_wave))
 
         # Setup equivalent width toggle
-        act_equiv_width_mode = self.tool_bar.actions()[2]
-        act_equiv_width_mode.triggered.connect(self._toggle_equiv_width)
+        self.ui_plot_sub_window.actionEquivalent_Width.triggered.connect(
+            self._toggle_equiv_width)
+
+        # Tool bar connections
+        self._tool_bar.atn_change_top_axis.triggered.connect(
+            self._top_axis_dialog.exec_)
+
+        self._tool_bar.atn_change_units.triggered.connect(
+            self._show_unit_change_dialog)
+
+    def _show_unit_change_dialog(self):
+        if self._unit_change_dialog.exec_():
+            x_text = self._unit_change_dialog.disp_unit
+            y_text = self._unit_change_dialog.flux_unit
+
+            x_unit = y_unit = None
+
+            try:
+                x_unit = Unit(x_text) if x_text else None
+            except ValueError as e:
+                logging.error(e)
+
+            try:
+                y_unit = Unit(y_text) if y_text else None
+            except ValueError as e:
+                logging.error(e)
+
+            self.change_units(x_unit, y_unit)
+
+            self._plot_item.update()
 
     def _toggle_equiv_width(self, on):
         if on:
             self.add_equiv_width_rois()
 
             # Disable the ability to add new ROIs
-            act_insert_roi = self.tool_bar.actions()[0]
-            act_insert_roi.setDisabled(True)
+            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(True)
         else:
             self.remove_equiv_width_rois()
 
             # Disable the ability to add new ROIs
-            act_insert_roi = self.tool_bar.actions()[0]
-            act_insert_roi.setDisabled(False)
-
-    def set_sub_window(self, sub_window):
-        self._sub_window = sub_window
-        self._setup_toolbar_menus()
-
-    @property
-    def tool_bar(self):
-        if self._tool_bar is None:
-            self._tool_bar = self.findChild(QToolBar)
-
-        return self._tool_bar
+            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(False)
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
@@ -187,6 +210,40 @@ class PlotSubWindow(QMainWindow):
         for roi in self._rois:
             self._plot_item.addItem(roi)
 
+    def get_container(self, layer):
+        for container in self._containers:
+            if container.layer == layer:
+                return container
+
+    def change_units(self, x=None, y=None, z=None):
+        for cntr in self._containers:
+            cntr.change_units(x, y, z)
+
+        self.set_labels(x_label=x, y_label=y)
+        self._plot_item.enableAutoRange()
+        self._plot_units = [x, y, z]
+
+    def set_labels(self, x_label='', y_label=''):
+        self._plot_item.setLabels(
+            left="Flux [{}]".format(
+                y_label or str(self._containers[0].layer.units[1])),
+            bottom="Wavelength [{}]".format(
+                x_label or str(self._containers[0].layer.units[0])))
+
+    def set_visibility(self, layer, show, override=False):
+        for container in self._containers:
+            if container.layer == layer:
+                container.set_visibility(show, show, inactive=False,
+                                         override=override)
+
+    def update_axis(self, layer=None, mode=None, **kwargs):
+        self._dynamic_axis.update_axis(layer, mode, **kwargs)
+        self._plot_widget.update()
+
+    def closeEvent(self, event):
+        DispatchHandle.tear_down(self)
+        super(PlotSubWindow, self).closeEvent(event)
+
     @DispatchHandle.register_listener("on_add_plot")
     def add_container(self, container):
         if len(self._containers) == 0:
@@ -224,98 +281,4 @@ class PlotSubWindow(QMainWindow):
                 container.set_visibility(True, True, inactive=False)
             else:
                 container.set_visibility(True, False, inactive=True)
-
-    def get_container(self, layer):
-        for container in self._containers:
-            if container.layer == layer:
-                return container
-
-    def change_units(self, x=None, y=None, z=None):
-        for cntr in self._containers:
-            cntr.change_units(x, y, z)
-
-        self.set_labels(x_label=x, y_label=y)
-        self._plot_item.enableAutoRange()
-        self._plot_units = [x, y, z]
-
-    def set_labels(self, x_label='', y_label=''):
-        self._plot_item.setLabels(
-            left="Flux [{}]".format(
-                y_label or str(self._containers[0].layer.units[1])),
-            bottom="Wavelength [{}]".format(
-                x_label or str(self._containers[0].layer.units[0])))
-
-    def set_visibility(self, layer, show, override=False):
-        for container in self._containers:
-            if container.layer == layer:
-                container.set_visibility(show, show, inactive=False,
-                                         override=override)
-
-    def update_axis(self, layer=None, mode=None, **kwargs):
-        self._dynamic_axis.update_axis(layer, mode, **kwargs)
-        self._plot_widget.update()
-
-    def _setup_toolbar_menus(self):
-        # Window menu
-        window_menu = QMenu()
-        window_menu.addAction("Change Top Axis")
-        window_menu.addAction("Change Units")
-
-        icon = QIcon()
-        icon.addPixmap(QPixmap(":/img/Settings-50.png"), QIcon.Normal,
-                       QIcon.Off)
-
-        window_menu_btn = QToolButton(self._sub_window.toolBar)
-        window_menu_btn.setIcon(icon)
-        window_menu_btn.setMenu(window_menu)
-        window_menu_btn.setPopupMode(QToolButton.InstantPopup)
-
-        self._sub_window.toolBar.addWidget(window_menu_btn)
-
-        # Layer menu
-        layer_menu = QMenu()
-        # layer_menu.addAction("Color")
-
-        icon = QIcon()
-        icon.addPixmap(QPixmap(":/img/Settings 3-50.png"), QIcon.Normal,
-                        QIcon.Off)
-
-        layer_menu_btn = QToolButton(self._sub_window.toolBar)
-        layer_menu_btn.setIcon(icon)
-        layer_menu_btn.setMenu(layer_menu)
-        layer_menu_btn.setPopupMode(QToolButton.InstantPopup)
-
-        self._sub_window.toolBar.addWidget(layer_menu_btn)
-
-        # Connections
-        window_menu.actions()[0].triggered.connect(
-            self._top_axis_dialog.exec_)
-
-        window_menu.actions()[1].triggered.connect(
-            self._show_unit_change_dialog)
-
-    def _show_unit_change_dialog(self):
-        if self._unit_change_dialog.exec_():
-            x_text = self._unit_change_dialog.disp_unit
-            y_text = self._unit_change_dialog.flux_unit
-
-            x_unit = y_unit = None
-
-            try:
-                x_unit = Unit(x_text) if x_text else None
-            except ValueError as e:
-                logging.error(e)
-
-            try:
-                y_unit = Unit(y_text) if y_text else None
-            except ValueError as e:
-                logging.error(e)
-
-            self.change_units(x_unit, y_unit)
-
-            self._plot_item.update()
-
-    def closeEvent(self, event):
-        DispatchHandle.tear_down(self)
-        super(PlotSubWindow, self).closeEvent(event)
 

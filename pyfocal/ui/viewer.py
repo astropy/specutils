@@ -6,7 +6,6 @@ from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtGui import *
 
 from .qt.mainwindow import Ui_MainWindow
-from .qt.plotsubwindow import Ui_SpectraSubWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
@@ -148,14 +147,6 @@ class Viewer(QMainWindow):
         """
         # Create new window
         plot_sub_window = PlotSubWindow()
-
-        # Populate window with tool bars, status, etc.
-        ui_sub_window = Ui_SpectraSubWindow()
-        ui_sub_window.setupUi(plot_sub_window)
-
-        # Let the sub window do initialization
-        plot_sub_window.set_sub_window(ui_sub_window)
-        plot_sub_window.initialize()
 
         new_sub_window = self.main_window.mdiArea.addSubWindow(plot_sub_window)
         new_sub_window.show()
