@@ -128,11 +128,11 @@ class Viewer(QMainWindow):
 
     @property
     def current_model(self):
-        return self.main_window.comboBox.currentText()
+        return self.main_window.modelsComboBox.currentText()
 
     @property
     def current_fitter(self):
-        return self.main_window.comboBox_2.currentText()
+        return self.main_window.fittingRoutinesComboBox.currentText()
 
     @property
     def current_model_formula(self):
