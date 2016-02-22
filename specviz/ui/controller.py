@@ -103,11 +103,10 @@ class Controller(object):
             self.update_model_layer)
 
         # Attach the model save/read buttons
-        # self.viewer.main_window.saveModelButton.clicked.connect(
-        #     self.save_model)
-        #
-        # self.viewer.main_window.saveModelButton.clicked.connect(
-        #     self.load_model)
+        self.viewer.main_window.saveModelButton.clicked.connect(
+            self.save_model)
+        self.viewer.main_window.loadModelButton.clicked.connect(
+            self.load_model)
 
     def _setup_context_menus(self):
         self.viewer.wgt_layer_list.customContextMenuRequested.connect(
@@ -175,6 +174,37 @@ class Controller(object):
         global _model_directory
         model_io.saveModelToFile(self.viewer.main_window.mdiArea, model,
                                  _model_directory)
+
+    def load_model(self):
+        global _model_directory
+        fname = QFileDialog.getOpenFileName(self.viewer.main_window.mdiArea, \
+                                            'Read model file', _model_directory)
+
+        compound_model, _model_directory = model_io.buildModelFromFile(fname[0])
+
+        # Put new model in its own sub-layer under current layer.
+        current_layer = self.viewer.current_layer
+
+        if current_layer is None:
+            return
+
+        # Create new model layer using current ROI masks, if they exist
+        mask = self.get_roi_mask(layer=current_layer)
+
+        new_model_layer = layer_manager.new(
+            data=current_layer._source,
+            mask=mask,
+            parent=current_layer,
+            window=current_layer._window,
+            name="New Model Layer",
+            model=compound_model)
+
+        # Add the models from the just read compound model to the new model layer
+        for model in compound_model:
+            model_manager.add(model=model, layer=new_model_layer)
+
+        plot_container = plot_manager.new(new_model_layer,
+                                          current_layer._window)
 
     def read_file(self, file_name):
         """
