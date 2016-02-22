@@ -149,7 +149,7 @@ class Controller(object):
         if col.isValid():
             container.pen = col
 
-            Dispatch.on_update_plot.emit(container)
+            Dispatch.on_update_plot.emit(container=container)
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window
@@ -394,7 +394,7 @@ class Controller(object):
                                    mask=mask)
 
         # plot_manager.update_plots(current_window, current_layer)
-        Dispatch.on_update_plot.emit(current_layer)
+        Dispatch.on_update_plot.emit(layer=current_layer)
 
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):

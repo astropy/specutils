@@ -180,7 +180,8 @@ class PlotSubWindow(QMainWindow):
 
                 roi = LinearRegionItem(values=[x_pos, x_pos + x_len],
                                        brush=pg.mkBrush(
-                                           QColor(152, 251, 152, 50)))
+                                           QColor(152, 251, 152, 50)),
+                                       removable=False)
 
                 if i == 1:
                     roi.setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
