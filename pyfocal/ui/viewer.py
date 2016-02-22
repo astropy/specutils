@@ -392,14 +392,29 @@ class Viewer(QMainWindow):
 
     @DispatchHandle.register_listener("on_update_stats")
     def update_statistics(self, stats, layer):
-        self.main_window.groupBox_2.setTitle(
+        self.main_window.currentLayerLabel.setText(
             "Current Layer: {}".format(layer.name))
-        self.main_window.label_2.setText("{0:4.4g}".format(
-            stats['mean'].value))
-        self.main_window.label_4.setText("{0:4.4g}".format(
-            stats['median'].value))
-        self.main_window.label_6.setText("{0:4.4g}".format(
-            stats['stddev'].value))
-        self.main_window.label_8.setText("{0:4.4g}".format(
-            float(stats['total'].value)))
-        self.main_window.label_10.setText(str(stats['npoints']))
+
+        if 'mean' in stats:
+            self.main_window.meanLineEdit.setText("{0:4.4g}".format(
+                stats['mean'].value))
+
+            self.main_window.medianLineEdit.setText("{0:4.4g}".format(
+                stats['median'].value))
+
+            self.main_window.standardDeviationLineEdit.setText("{0:4.4g}".format(
+                stats['stddev'].value))
+
+            self.main_window.totalLineEdit.setText("{0:4.4g}".format(
+                float(stats['total'].value)))
+
+            self.main_window.dataPointCountLineEdit.setText(
+                str(stats['npoints']))
+
+        if 'eq_width' in stats:
+            self.main_window.equivalentWidthLineEdit.setText("{0:4.4g}".format(
+                float(stats['eq_width'].value)))
+
+        if 'centroid' in stats:
+            self.main_window.equivalentWidthLineEdit.setText("{0:4.4g}".format(
+                float(stats['centroid'].value)))

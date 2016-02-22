@@ -35,6 +35,7 @@ class PlotSubWindow(QMainWindow):
         self._plot_item = None
         self._plots_units = None
         self._rois = []
+        self._equiv_width_rois = []
 
         DispatchHandle.setup(self)
 
@@ -65,6 +66,24 @@ class PlotSubWindow(QMainWindow):
                 redshift=self._top_axis_dialog.redshift,
                 ref_wave=self._top_axis_dialog.ref_wave))
 
+        # Setup equivalent width toggle
+        act_equiv_width_mode = self.tool_bar.actions()[2]
+        act_equiv_width_mode.triggered.connect(self._toggle_equiv_width)
+
+    def _toggle_equiv_width(self, on):
+        if on:
+            self.add_equiv_width_rois()
+
+            # Disable the ability to add new ROIs
+            act_insert_roi = self.tool_bar.actions()[0]
+            act_insert_roi.setDisabled(True)
+        else:
+            self.remove_equiv_width_rois()
+
+            # Disable the ability to add new ROIs
+            act_insert_roi = self.tool_bar.actions()[0]
+            act_insert_roi.setDisabled(False)
+
     def set_sub_window(self, sub_window):
         self._sub_window = sub_window
         self._setup_toolbar_menus()
@@ -76,7 +95,7 @@ class PlotSubWindow(QMainWindow):
 
         return self._tool_bar
 
-    def get_roi_mask(self, layer=None, container=None):
+    def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
             container = self.get_container(layer)
 
@@ -84,8 +103,9 @@ class PlotSubWindow(QMainWindow):
             return
 
         mask_holder = []
+        rois = [roi] if roi is not None else self._rois
 
-        for roi in self._rois:
+        for roi in rois:
             # roi_shape = roi.parentBounds()
             # x1, y1, x2, y2 = roi_shape.getCoords()
             x1, x2 = roi.getRegion()
@@ -105,9 +125,7 @@ class PlotSubWindow(QMainWindow):
     def add_roi(self):
         view_range = self._plot_item.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
-        y_len = (view_range[1][1] - view_range[1][0]) * 0.9
         x_pos = x_len * 0.5 + view_range[0][0]
-        y_pos = y_len * 0.05 + view_range[1][0]
 
         def remove():
             self._plot_item.removeItem(roi)
@@ -126,6 +144,48 @@ class PlotSubWindow(QMainWindow):
             lambda: Dispatch.on_update_roi.emit(roi=roi))
         roi.sigRegionChangeFinished.connect(
             lambda: Dispatch.on_update_roi.emit(roi=roi))
+
+    def add_equiv_width_rois(self):
+        # First, remove existing rois
+        for roi in self._rois:
+            self._plot_item.removeItem(roi)
+
+        if len(self._equiv_width_rois) == 0:
+            for i in range(3):
+                view_range = self._plot_item.viewRange()
+                x_len = (view_range[0][1] - view_range[0][0]) * 0.25
+                x_pos = view_range[0][0] + x_len * i * 1.1
+
+                roi = LinearRegionItem(values=[x_pos, x_pos + x_len],
+                                       brush=pg.mkBrush(
+                                           QColor(152, 251, 152, 50)))
+
+                if i == 1:
+                    roi.setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
+
+                self._equiv_width_rois.append(roi)
+
+            for roi in self._equiv_width_rois:
+                roi.sigRemoveRequested.connect(
+                    lambda: Dispatch.on_update_roi.emit(
+                        measured_rois=self._equiv_width_rois))
+                roi.sigRegionChangeFinished.connect(
+                    lambda: Dispatch.on_update_roi.emit(
+                        measured_rois=self._equiv_width_rois))
+
+            # Connect events
+            Dispatch.on_update_roi.emit(measured_rois=self._equiv_width_rois)
+
+        for roi in self._equiv_width_rois:
+            self._plot_item.addItem(roi)
+
+    def remove_equiv_width_rois(self):
+        for roi in self._equiv_width_rois:
+            self._plot_item.removeItem(roi)
+
+        # Replace rois we removed
+        for roi in self._rois:
+            self._plot_item.addItem(roi)
 
     @DispatchHandle.register_listener("on_add_plot")
     def add_container(self, container):

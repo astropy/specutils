@@ -12,7 +12,7 @@ from ..third_party.qtpy.QtWidgets import *
 from ..interfaces.managers import (data_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
-from ..analysis.statistics import stats
+from ..analysis import statistics
 from ..core.comms import Dispatch, DispatchHandle
 
 
@@ -157,6 +157,8 @@ class Controller(object):
                 .ui_layer_arithmetic_dialog.formulaLineEdit.text()
 
             new_layer = layer_manager.add_from_formula(formula)
+            plot_container = plot_manager.new(new_layer, new_layer._window)
+
 
     def read_file(self, file_name):
         """
@@ -288,7 +290,7 @@ class Controller(object):
             layer=current_layer,
             fitter_name=self.viewer.current_fitter)
 
-    def get_roi_mask(self, layer=None):
+    def get_roi_mask(self, layer=None, roi=None):
         """
         Retrieves the array mask depending on the ROIs currently in the
         active plot window.
@@ -309,7 +311,8 @@ class Controller(object):
         current_sub_window = self.viewer.current_sub_window
 
         if current_sub_window is not None:
-            roi_mask = current_sub_window.get_roi_mask(layer=current_layer)
+            roi_mask = current_sub_window.get_roi_mask(layer=current_layer,
+                                                       roi=roi)
 
             return roi_mask
 
@@ -354,7 +357,7 @@ class Controller(object):
             current_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
 
-    @DispatchHandle.register_listener("on_select_layer")
+    @DispatchHandle.register_listener("on_select_layer", "on_clicked_layer")
     def _update_layer_name(self, layer_item, col=0):
         layer = layer_item.data(0, Qt.UserRole)
 
@@ -372,7 +375,7 @@ class Controller(object):
             model._name = model_item.text(0)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_roi")
-    def update_statistics(self, layer_item=None, roi=None):
+    def update_statistics(self, layer_item=None, roi=None, measured_rois=None):
         if layer_item is not None:
             current_layer = layer_item.data(0, Qt.UserRole)
         else:
@@ -381,10 +384,28 @@ class Controller(object):
         if current_layer is None:
             return
 
-        mask = self.get_roi_mask(layer=current_layer)
+        if measured_rois is not None:
+            cont1_mask = self.get_roi_mask(roi=measured_rois[0])
+            cont1_data = current_layer.data[cont1_mask]
+            cont1_stat_dict = statistics.stats(cont1_data)
 
-        values = current_layer.data[mask]
-        stat_dict = stats(values)
+            cont2_mask = self.get_roi_mask(roi=measured_rois[2])
+            cont2_data = current_layer.data[cont2_mask]
+            cont2_stat_dict = statistics.stats(cont2_data)
+
+            line_mask = self.get_roi_mask(roi=measured_rois[1])
+
+            line = layer_manager.copy(current_layer)
+            line._mask = line_mask
+
+            ew = statistics.eq_width(cont1_stat_dict, cont2_stat_dict, line)[1]
+
+            stat_dict = {"eq_width": ew}
+        else:
+            mask = self.get_roi_mask(layer=current_layer)
+
+            values = current_layer.data[mask]
+            stat_dict = statistics.stats(values)
 
         Dispatch.on_update_stats.emit(stats=stat_dict, layer=current_layer)
 

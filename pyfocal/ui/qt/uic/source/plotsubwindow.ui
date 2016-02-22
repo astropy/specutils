@@ -18,6 +18,9 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="contextMenuPolicy">
     <enum>Qt::ActionsContextMenu</enum>
    </property>
@@ -38,6 +41,9 @@
    </attribute>
    <addaction name="actionInsert_ROI"/>
    <addaction name="separator"/>
+   <addaction name="actionEquivalent_Width"/>
+   <addaction name="actionCentroid"/>
+   <addaction name="separator"/>
   </widget>
   <action name="actionInsert_ROI">
    <property name="icon">
@@ -51,28 +57,34 @@
     <string>Insert a rectangular ROI selection box</string>
    </property>
   </action>
-  <action name="actionPlot_Settings">
+  <action name="actionEquivalent_Width">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="icon_resource.qrc">
-     <normaloff>:/img/Settings 3-50.png</normaloff>:/img/Settings 3-50.png</iconset>
+     <normaloff>:/img/Width-48.png</normaloff>:/img/Width-48.png</iconset>
    </property>
    <property name="text">
-    <string>Plot Settings</string>
+    <string>Equivalent Width</string>
    </property>
    <property name="toolTip">
-    <string>Edit plot settings</string>
+    <string>Toggle mode to select equivalent width</string>
    </property>
   </action>
-  <action name="actionGraph_Settings">
+  <action name="actionCentroid">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="icon_resource.qrc">
-     <normaloff>:/img/Settings-50.png</normaloff>:/img/Settings-50.png</iconset>
+     <normaloff>:/img/Vertical Flag-48.png</normaloff>:/img/Vertical Flag-48.png</iconset>
    </property>
    <property name="text">
-    <string>Graph Settings</string>
+    <string>Centroid</string>
    </property>
    <property name="toolTip">
-    <string>Edit graph settings</string>
+    <string>Measure the centroid of the selected region</string>
    </property>
   </action>
  </widget>

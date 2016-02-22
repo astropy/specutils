@@ -128,7 +128,7 @@ Dispatch.register_event("on_remove_model", args=["model", "layer"])
 Dispatch.register_event("on_update_layer", args=["layer"])
 Dispatch.register_event("on_update_model", args=["model"])
 Dispatch.register_event("on_update_plot", args=["container"])
-Dispatch.register_event("on_update_roi", args=["roi"])
+Dispatch.register_event("on_update_roi", args=["roi", "measured_rois"])
 Dispatch.register_event("on_update_stats", args=["stats", "layer"])
 
 Dispatch.register_event("on_select_plot", args=["layer"])

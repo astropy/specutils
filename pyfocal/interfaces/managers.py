@@ -83,6 +83,12 @@ class LayerManager(Manager):
         # Emit removal event
         Dispatch.on_remove_layer.emit(layer)
 
+    def copy(self, layer):
+        new_layer = DataFactory.create_layer(layer._source)
+        new_layer.dispersion = layer.dispersion
+
+        return new_layer
+
     def get_window_layers(self, window):
         """
         Retrieve all children of the `SubWindow` object.
@@ -117,6 +123,7 @@ class LayerManager(Manager):
             return
 
         new_layer = self._evaluate(self._members, formula)
+        new_layer.name = "Resultant"
         self.add(new_layer)
 
         return new_layer
