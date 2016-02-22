@@ -1,5 +1,5 @@
 statistics
 ==========
 
-.. automodule:: pyfocal.analysis.statistics
+.. automodule:: specviz.analysis.statistics
   :members:

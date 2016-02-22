@@ -1,5 +1,5 @@
 data
 ====
 
-.. automodule:: pyfocal.core.data
+.. automodule:: specviz.core.data
   :members:

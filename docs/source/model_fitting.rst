@@ -3,7 +3,7 @@
 Model Fitting
 =============
 
-Pyfocal utilizes
+SpecViz utilizes
 `Astropy Models and Fitting <http://astropy.readthedocs.org/en/latest/modeling/index.html>`_
 to fit models to its spectra. For example, you can fit one model to the
 continuum, another to an emission line of interest, and yet another to an
@@ -12,7 +12,7 @@ absorption line.
 Currently, the following models are available:
 
 ========================= ==========================================================
-Pyfocal Model Name        Astropy Model Class
+SpecViz Model Name        Astropy Model Class
 ========================= ==========================================================
 BrokenPowerLaw            `~astropy.modeling.powerlaws.BrokenPowerLaw1D`
 Const                     `~astropy.modeling.functional_models.Const1D`
@@ -35,7 +35,7 @@ Voigt                     `~astropy.modeling.functional_models.Voigt1D`
 The models can be fitted with the following fitters:
 
 =================== ============================================
-Pyfocal Fitter Name Astropy Fitter Class
+SpecViz Fitter Name Astropy Fitter Class
 =================== ============================================
 Levenberg-Marquardt `~astropy.modeling.fitting.LevMarLSQFitter`
 Simplex             `~astropy.modeling.fitting.SimplexLSQFitter`

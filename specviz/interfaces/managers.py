@@ -75,7 +75,7 @@ class LayerManager(Manager):
 
         Parameters
         ----------
-        layer : pyfocal.core.data.Layer
+        layer : specviz.core.data.Layer
             Layer object to be removed.
         """
         self._members.remove(layer)

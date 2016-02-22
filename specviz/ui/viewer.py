@@ -81,7 +81,7 @@ class Viewer(QMainWindow):
 
         Returns
         -------
-        data : pyfocal.core.data.Data
+        data : specviz.core.data.Data
             The `Data` object of the currently selected row.
         """
         data_item = self.wgt_data_list.currentItem()
@@ -97,7 +97,7 @@ class Viewer(QMainWindow):
 
         Returns
         -------
-        layer : pyfocal.core.data.Layer
+        layer : specviz.core.data.Layer
             The `Layer` object of the currently selected row.
         """
         layer_item = self.wgt_layer_list.currentItem()
@@ -194,7 +194,7 @@ class Viewer(QMainWindow):
 
         Parameters
         ----------
-        data : pyfocal.core.data.Data
+        data : specviz.core.data.Data
             The `Data` object to add to the list widget.
         """
         new_item = QListWidgetItem(data.name, self.wgt_data_list)
@@ -211,7 +211,7 @@ class Viewer(QMainWindow):
 
         Parameters
         ----------
-        layer : pyfocal.core.data.Layer
+        layer : specviz.core.data.Layer
             The `Layer` object to add to the list widget.
         """
         new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or

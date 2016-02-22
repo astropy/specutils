@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Pyfocal documentation build configuration file, created by
+# SpecViz documentation build configuration file, created by
 # sphinx-quickstart on Mon Feb  8 02:58:02 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -56,7 +56,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Pyfocal'
+project = 'SpecViz'
 copyright = '2016, STScI'
 author = 'Nicholas Earl, Ivo Busko, Pey Lian Lim'
 
@@ -105,7 +105,7 @@ default_role = 'py:obj'
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['pyfocal.']
+modindex_common_prefix = ['specviz.']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
@@ -210,7 +210,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Pyfocaldoc'
+htmlhelp_basename = 'SpecVizdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -232,7 +232,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Pyfocal.tex', 'Pyfocal Documentation',
+    (master_doc, 'SpecViz.tex', 'SpecViz Documentation',
      'STScI', 'manual'),
 ]
 
@@ -262,7 +262,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pyfocal', 'Pyfocal Documentation',
+    (master_doc, 'specviz', 'SpecViz Documentation',
      [author], 1)
 ]
 
@@ -276,8 +276,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Pyfocal', 'Pyfocal Documentation',
-     author, 'Pyfocal', 'One line description of project.',
+    (master_doc, 'SpecViz', 'SpecViz Documentation',
+     author, 'SpecViz', 'One line description of project.',
      'Miscellaneous'),
 ]
 

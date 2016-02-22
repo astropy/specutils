@@ -1,7 +1,7 @@
 API
 ===
 
-This section documents the underlying code base to aid Pyfocal developers.
+This section documents the underlying code base to aid SpecViz developers.
 
 .. toctree::
    :maxdepth: 2

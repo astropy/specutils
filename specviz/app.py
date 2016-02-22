@@ -1,5 +1,5 @@
 """
-Pyfocal front-end GUI access point.
+SpecViz front-end GUI access point.
 
 This script will start the GUI.
 """

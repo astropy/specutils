@@ -2,15 +2,15 @@ from setuptools import setup
 
 
 setup(
-    name='Pyfocal',
+    name='SpecViz',
     version='0.1a1',
-    packages=['pyfocal', 'pyfocal.ui', 'pyfocal.ui.qt', 'pyfocal.ui.widgets',
-              'pyfocal.ui.widgets.plots', 'pyfocal.core', 'pyfocal.analysis',
-              'pyfocal.interfaces',
-              'pyfocal.third_party',
-              'pyfocal.third_party.py_expression_eval',
-              'pyfocal.third_party.qtpy'],
-    url='http://pyfocal.readthedocs.org',
+    packages=['specviz', 'specviz.ui', 'specviz.ui.qt', 'specviz.ui.widgets',
+              'specviz.ui.widgets.plots', 'specviz.core', 'specviz.analysis',
+              'specviz.interfaces',
+              'specviz.third_party',
+              'specviz.third_party.py_expression_eval',
+              'specviz.third_party.qtpy'],
+    url='http://specviz.readthedocs.org',
     license='',
     author='Nicholas Earl, Ivo Busko, Pey Lian Lim',
     author_email='nearl@stsci.edu',
@@ -25,7 +25,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'pyfocal = pyfocal.app:main'
+            'specviz = specviz.app:main'
         ]
     }
 )

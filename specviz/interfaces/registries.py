@@ -19,7 +19,7 @@ class CustomLoaderRegistry(Registry):
         super(CustomLoaderRegistry, self).__init__()
 
         cur_path = os.path.join(os.path.dirname(__file__), 'default_loaders')
-        usr_path = os.path.join(os.path.expanduser('~'), '.pyfocal')
+        usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
 
         check_paths = [cur_path, usr_path]
 

@@ -1,5 +1,5 @@
 loaders
 =======
 
-.. automodule:: pyfocal.interfaces.loaders
+.. automodule:: specviz.interfaces.loaders
   :members:

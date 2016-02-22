@@ -15,7 +15,7 @@ from astropy.units import Unit, Quantity
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
     """Class of the base data container for all data (of type
-    :class:`numpy.ndarray`) that is passed around in Pyfocal. It inherits from
+    :class:`numpy.ndarray`) that is passed around in SpecViz. It inherits from
     :class:`astropy.nddata.NDData` and provides functionality for arithmetic
     operations, I/O, and slicing.
 
@@ -106,7 +106,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
 
 class Layer(object):
-    """Class to handle layers in Pyfocal.
+    """Class to handle layers in SpecViz.
 
     A layer is a "view" into a :class:`Data` object. It does
     not hold any data itself, but instead contains a special ``mask`` object

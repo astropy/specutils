@@ -6,7 +6,7 @@ Installation
 Dependencies
 ------------
 
-In the future, Pyfocal will be distributed through package managers like
+In the future, SpecViz will be distributed through package managers like
 `Anaconda <https://anaconda.org>`_ and `Homebrew <http://brew.sh>`_ that will obviate the need for manual installation from
 source. Most of these will be handled automatically by the setup functions,
 with the exception of ``PyQt``/``PySide``.
@@ -62,17 +62,17 @@ Anaconda
     $ conda install pyqt
 
 
-Installing Pyfocal
+Installing SpecViz
 ------------------
 
-Clone the Pyfocal repository somewhere on your system, and install locally using
+Clone the SpecViz repository somewhere on your system, and install locally using
 ``pip``. If you are using an Anaconda virtual environment, please be sure to
 activate it first before installing: ``$ source activate pyf_env``.
 
 ::
 
-    $ git clone https://github.com/nmearl/pyfocal.git
-    $ cd pyfocal
+    $ git clone https://github.com/nmearl/specviz.git
+    $ cd specviz
     $ git checkout tags/v0.1rc2
     $ pip install -r requirements.txt
 
@@ -106,24 +106,24 @@ following command::
 
     $ conda uninstall pyqt qt
 
-and Pyfocal should now happily run.
+and SpecViz should now happily run.
 
 
 .. _doc_launching:
 
-Launching Pyfocal
+Launching SpecViz
 =================
 
-Once PyQt/PySide and the other dependencies are installed, Pyfocal can be
+Once PyQt/PySide and the other dependencies are installed, SpecViz can be
 launched from the command line::
 
-    $ pyfocal
+    $ specviz
 
 Again, if you're using an Anaconda virtual environment, please be sure to
-activate it before launching Pyfocal.
+activate it before launching SpecViz.
 
 If you only wish to inspect a single FITS or ASCII file using the default
 :ref:`doc_custom_loaders` file formatting, you can also pass in the filename
 as a command line argument, as follows::
 
-    $ pyfocal filename
+    $ specviz filename

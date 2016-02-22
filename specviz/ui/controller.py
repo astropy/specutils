@@ -199,7 +199,7 @@ class Controller(object):
 
     def open_file(self, file_name=None):
         """
-        Creates a `pyfocal.core.data.Data` object from the `Qt` open file
+        Creates a `specviz.core.data.Data` object from the `Qt` open file
         dialog, and adds it to the data item list in the UI.
         """
         if not file_name or file_name is None:
@@ -217,7 +217,7 @@ class Controller(object):
 
         Parameters
         ----------
-        layer : pyfocal.core.data.Layer
+        layer : specviz.core.data.Layer
             The current active layer of the active plot.
         window : QtGui.QMdiSubWindow
             The parent object within which the plot window resides.
@@ -378,6 +378,9 @@ class Controller(object):
 
     @DispatchHandle.register_listener("on_select_layer", "on_clicked_layer")
     def _update_layer_name(self, layer_item, col=0):
+        if layer_item is None:
+            return
+
         layer = layer_item.data(0, Qt.UserRole)
 
         if hasattr(layer, 'name'):
