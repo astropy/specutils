@@ -260,7 +260,10 @@ class Viewer(QMainWindow):
                     break
 
     @DispatchHandle.register_listener("on_add_plot", "on_update_plot")
-    def update_layer_item(self, container):
+    def update_layer_item(self, container=None, *args, **kwargs):
+        if container is None:
+            return
+
         layer = container._layer
         pixmap = QPixmap(10, 10)
         pixmap.fill(container._pen_stash['pen_on'].color())

@@ -273,7 +273,7 @@ class ModelManager(Manager):
         if mask is not None:
             layer._mask = mask
 
-        Dispatch.on_update_model.emit(model=model, layer=layer)
+        Dispatch.on_update_model.emit(model=model)
 
     def fit_model(self, layer, fitter_name):
         if not hasattr(layer, 'model'):
@@ -311,7 +311,7 @@ class ModelManager(Manager):
         Dispatch.on_update_model.emit(model=model)
 
         # Re-plot layer
-        Dispatch.on_update_plot.emit(layer)
+        Dispatch.on_update_plot.emit(layer=layer)
 
         return layer
 
@@ -351,8 +351,14 @@ class PlotManager(Manager):
                 return container
 
     @DispatchHandle.register_listener("on_update_plot")
-    def update_plots(self, container):
-        container.update()
+    def update_plots(self, container=None, layer=None):
+        if container is not None:
+            container.update()
+        elif layer is not None:
+            for container in [y for x in self._members for y in
+                              self._members[x]]:
+                if container._layer == layer:
+                    container.update()
 
 
 data_manager = DataManager()
