@@ -1,5 +1,6 @@
 --index-url https://pypi.python.org/simple/
 
 jinja2
+cython
 git+https://github.com/nmearl/astropy.git
 -e .
