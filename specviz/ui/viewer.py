@@ -57,20 +57,20 @@ class Viewer(QMainWindow):
         layer = self.current_layer
 
         if layer is None:
-            return
+            self.main_window.createModelLayerButton.hide()
+            self.main_window.updateModelLayerButton.hide()
+            self.main_window.fittingRoutinesGroupBox.setEnabled(False)
 
         if not hasattr(layer, 'model'):
             self.main_window.createModelLayerButton.show()
             self.main_window.updateModelLayerButton.hide()
-            self.main_window.fittingRoutinesComboBox.setEnabled(False)
-            self.main_window.fitModelLayerButton.setEnabled(False)
+            self.main_window.fittingRoutinesGroupBox.setEnabled(False)
             self.main_window.saveModelButton.setEnabled(False)
             # self.main_window.loadModelButton.setEnabled(True)
         else:
             self.main_window.createModelLayerButton.hide()
             self.main_window.updateModelLayerButton.show()
-            self.main_window.fittingRoutinesComboBox.setEnabled(True)
-            self.main_window.fitModelLayerButton.setEnabled(True)
+            self.main_window.fittingRoutinesGroupBox.setEnabled(True)
             self.main_window.saveModelButton.setEnabled(True)
             self.main_window.loadModelButton.setEnabled(False)
 

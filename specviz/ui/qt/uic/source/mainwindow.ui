@@ -600,7 +600,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>-152</y>
           <width>306</width>
           <height>476</height>
          </rect>
@@ -707,7 +707,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_5">
+          <widget class="QGroupBox" name="fittingRoutinesGroupBox">
            <property name="enabled">
             <bool>false</bool>
            </property>
