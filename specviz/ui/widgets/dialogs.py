@@ -24,7 +24,7 @@ class TopAxisDialog(QDialog):
 
         # Populate options
         self.ui_axis_dialog.axisModeComboBox.addItems(
-            ['Velocity', 'Redshift', 'Channel'])
+            ['Velocity', 'Redshift', 'Pixel'])
 
         # Setup connections
         self._setup_connections()
