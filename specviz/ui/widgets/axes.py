@@ -9,8 +9,8 @@ class DynamicAxisItem(pg.AxisItem):
     """
     def __init__(self, *args, **kwargs):
         super(DynamicAxisItem, self).__init__(*args, **kwargs)
-        self.mode = 0
-        self.supported_modes = ['velocity', 'redshift', 'channel']
+        self.mode = 2
+        self.supported_modes = ['velocity', 'redshift', 'pixel']
         self._layer = None
         self.redshift = 0.0
         self.ref_wave = 0.0
@@ -59,7 +59,7 @@ class DynamicAxisItem(pg.AxisItem):
             return ["{:0.2f}".format(v / (1 + self.redshift) * scale)
                     for v in values]
         elif self.mode == 2:
-            self.setLabel("Channel", None, None)
+            self.setLabel("Pixel", None, None)
             inds = np.searchsorted(dispersion, values)
 
             return list(inds)
