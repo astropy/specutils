@@ -228,8 +228,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.toolButton_6)
         self.arithmeticToolButton = QtWidgets.QToolButton(self.dockWidgetContents_3)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/img/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.On)
         icon4.addPixmap(QtGui.QPixmap(":/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(QtGui.QPixmap(":/img/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.On)
         self.arithmeticToolButton.setIcon(icon4)
         self.arithmeticToolButton.setIconSize(QtCore.QSize(20, 20))
         self.arithmeticToolButton.setObjectName("arithmeticToolButton")
@@ -381,7 +381,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Pyfocal"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "SpecViz"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuEdit.setTitle(_translate("MainWindow", "Edit"))
         self.menuView.setTitle(_translate("MainWindow", "View"))
