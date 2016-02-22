@@ -23,7 +23,7 @@ do
     $uic ./source/${i}.ui -o ../${i}.py;1
     sed -i '' 's/import icon_resource_rc/from . import icon_resource_rc/g; s/PyQt5/...third_party.qtpy/g' ../${i}.py;
     sed -i '' '8s/^/from __future__ import (absolute_import, division, print_function,\
-                        unicode_literals)/' ../$i.py
+                        unicode_literals)/' ../${i}.py
 done
 
 for i in "${rc_files[@]}"
