@@ -5,7 +5,7 @@ setup(
     name='SpecViz',
     version='0.1a1',
     packages=['specviz', 'specviz.ui', 'specviz.ui.qt', 'specviz.ui.widgets',
-              'specviz.ui.widgets.plots', 'specviz.core', 'specviz.analysis',
+              'specviz.core', 'specviz.analysis',
               'specviz.interfaces',
               'specviz.third_party',
               'specviz.third_party.py_expression_eval',
