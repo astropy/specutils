@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './source/layer_arithmetic_dialog.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5.1
+# Created by: ...third_party.qtpy UI code generator 5.5
 #
 # WARNING! All changes made in this file will be lost!
 from __future__ import (absolute_import, division, print_function,

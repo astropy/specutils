@@ -15,6 +15,9 @@ from ..interfaces.registries import loader_registry
 from ..analysis import statistics
 from ..core.comms import Dispatch, DispatchHandle
 
+# To memorize last visited directory.
+_model_directory = os.environ["HOME"]
+
 
 class Controller(object):
     """
@@ -101,6 +104,10 @@ class Controller(object):
         self.viewer.main_window.pushButton_2.clicked.connect(
             self.update_model_layer)
 
+        # Attach the model save/read buttons
+        self.viewer.main_window.pushButton_5.clicked.connect(
+            self.save_model)
+
     def _setup_context_menus(self):
         self.viewer.wgt_layer_list.customContextMenuRequested.connect(
             self._layer_context_menu)
@@ -159,6 +166,13 @@ class Controller(object):
             new_layer = layer_manager.add_from_formula(formula)
             plot_container = plot_manager.new(new_layer, new_layer._window)
 
+    def save_model(self):
+            model_dict = self.viewer.get_model_inputs()
+            formula = self.viewer.current_model_formula
+            model = model_manager.get_compound_model(model_dict, formula=formula)
+
+            global _model_directory
+            model_io.saveModelToFile(self.viewer.main_window.mdiArea, model, _model_directory)
 
     def read_file(self, file_name):
         """
