@@ -555,8 +555,8 @@
   <widget class="QDockWidget" name="dockWidget_4">
    <property name="minimumSize">
     <size>
-     <width>76</width>
-     <height>98</height>
+     <width>77</width>
+     <height>99</height>
     </size>
    </property>
    <property name="features">
@@ -600,9 +600,9 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-152</y>
-          <width>306</width>
-          <height>476</height>
+          <y>0</y>
+          <width>322</width>
+          <height>477</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -696,6 +696,9 @@
               </item>
               <item>
                <widget class="QPushButton" name="loadModelButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Load</string>
                 </property>
