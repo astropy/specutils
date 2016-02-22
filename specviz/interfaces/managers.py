@@ -303,9 +303,12 @@ class ModelManager(Manager):
                                    fitter_name=fitter_name)
 
         # Update original model with new values from fitted model
-        for i, param in enumerate(fitted_model.param_names):
-            setattr(model, param, fitted_model.parameters[i])
-        layer.model = model
+        if hasattr(fitted_model, '_submodels'):
+            for i in range(len(fitted_model._submodels)):
+                for pname in model._submodels[i].param_names:
+                    value = getattr(fitted_model, "{}_{}".format(pname, i))
+                    setattr(model._submodels[i], pname, value.value)
+                    setattr(model[i], pname, value.value)
 
         # update GUI with fit results
         Dispatch.on_update_model.emit(model=model)
