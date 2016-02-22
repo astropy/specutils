@@ -600,9 +600,9 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-114</y>
+          <y>0</y>
           <width>306</width>
-          <height>428</height>
+          <height>476</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -613,7 +613,7 @@
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
-             <widget class="QComboBox" name="comboBox">
+             <widget class="QComboBox" name="modelsComboBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>1</horstretch>
@@ -623,7 +623,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QPushButton" name="addModelButton">
               <property name="text">
                <string>Select</string>
               </property>
@@ -682,6 +682,27 @@
               </layout>
              </widget>
             </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="QPushButton" name="saveModelButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Save</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="loadModelButton">
+                <property name="text">
+                 <string>Load</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
            </layout>
           </widget>
          </item>
@@ -695,10 +716,10 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
-             <widget class="QComboBox" name="comboBox_2"/>
+             <widget class="QComboBox" name="fittingRoutinesComboBox"/>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_3">
+             <widget class="QPushButton" name="fitModelLayerButton">
               <property name="text">
                <string>Perform Fit</string>
               </property>

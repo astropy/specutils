@@ -4,7 +4,6 @@ from __future__ import (absolute_import, division, print_function,
 import logging
 from functools import reduce
 
-from ..widgets.plots.widgets import PlotWidget
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *

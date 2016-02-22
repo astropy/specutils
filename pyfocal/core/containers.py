@@ -21,8 +21,8 @@ class PlotContainer(object):
         if self._plot is not None:
             self.change_units(self._layer.units[0], self._layer.units[1])
 
-        r, g, b = (random.randint(0, 25) * 10, random.randint(0, 25) * 10,
-                   random.randint(0, 25) * 10)
+        r, g, b = (random.randint(10, 25) * 10, random.randint(10, 25) * 10,
+                   random.randint(10, 25) * 10)
 
         rand_pen = pg.mkPen(QColor(r, g, b, 255))
 

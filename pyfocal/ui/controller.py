@@ -14,6 +14,7 @@ from ..interfaces.managers import (data_manager, layer_manager,
 from ..interfaces.registries import loader_registry
 from ..analysis import statistics
 from ..core.comms import Dispatch, DispatchHandle
+from ..interfaces import model_io
 
 # To memorize last visited directory.
 _model_directory = os.environ["HOME"]
@@ -31,11 +32,6 @@ class Controller(object):
         self._setup_connections()
         self._setup_communications()
         self._setup_context_menus()
-
-        # Initially, disable fitting controls so as to avoid forbidden states.
-        # These buttons will be re-enabled on demand by the Viewer.
-        self.viewer.main_window.comboBox_2.setEnabled(False)
-        self.viewer.main_window.pushButton_3.setEnabled(False)
 
         DispatchHandle.setup(self)
 
@@ -83,30 +79,35 @@ class Controller(object):
             self._show_arithmetic_dialog)
 
         # Populate model dropdown
-        self.viewer.main_window.comboBox.addItems(model_manager.all_models)
+        self.viewer.main_window.modelsComboBox.addItems(
+            model_manager.all_models)
 
         # Populate fitting algorithm dropdown
-        self.viewer.main_window.comboBox_2.addItems(model_manager.all_fitters)
+        self.viewer.main_window.fittingRoutinesComboBox.addItems(
+            model_manager.all_fitters)
 
         # When the add new model button is clicked, create a new model
-        self.viewer.main_window.pushButton.clicked.connect(
+        self.viewer.main_window.addModelButton.clicked.connect(
             self.add_model)
 
         # Attach the fit button
-        self.viewer.main_window.pushButton_3.clicked.connect(
+        self.viewer.main_window.fitModelLayerButton.clicked.connect(
             self.fit_model_layer)
 
         # Attach the create button
-        self.viewer.main_window.pushButton_4.clicked.connect(
+        self.viewer.main_window.createModelLayerButton.clicked.connect(
             self.add_model_layer)
 
         # Attach the update button
-        self.viewer.main_window.pushButton_2.clicked.connect(
+        self.viewer.main_window.updateModelLayerButton.clicked.connect(
             self.update_model_layer)
 
         # Attach the model save/read buttons
-        self.viewer.main_window.pushButton_5.clicked.connect(
-            self.save_model)
+        # self.viewer.main_window.saveModelButton.clicked.connect(
+        #     self.save_model)
+        #
+        # self.viewer.main_window.saveModelButton.clicked.connect(
+        #     self.load_model)
 
     def _setup_context_menus(self):
         self.viewer.wgt_layer_list.customContextMenuRequested.connect(
@@ -167,12 +168,13 @@ class Controller(object):
             plot_container = plot_manager.new(new_layer, new_layer._window)
 
     def save_model(self):
-            model_dict = self.viewer.get_model_inputs()
-            formula = self.viewer.current_model_formula
-            model = model_manager.get_compound_model(model_dict, formula=formula)
+        model_dict = self.viewer.get_model_inputs()
+        formula = self.viewer.current_model_formula
+        model = model_manager.get_compound_model(model_dict, formula=formula)
 
-            global _model_directory
-            model_io.saveModelToFile(self.viewer.main_window.mdiArea, model, _model_directory)
+        global _model_directory
+        model_io.saveModelToFile(self.viewer.main_window.mdiArea, model,
+                                 _model_directory)
 
     def read_file(self, file_name):
         """
@@ -255,11 +257,11 @@ class Controller(object):
         current_layer = self.viewer.current_layer
         model_inputs = self.viewer.get_model_inputs()
 
-        # Remove models attached to parent layer
-        model_manager.remove(current_layer)
-
         if current_layer is None or not model_inputs:
             return
+
+        # Remove models attached to parent layer
+        model_manager.remove(current_layer)
 
         compound_model = model_manager.get_compound_model(
             model_dict=model_inputs,
@@ -337,6 +339,9 @@ class Controller(object):
         current_layer = self.viewer.current_layer
         current_window = self.viewer.current_sub_window
         model_inputs = self.viewer.get_model_inputs()
+
+        if current_layer is None or current_window is None or not model_inputs:
+            return
 
         # Update model mask, only if rois exist
         mask = self.get_roi_mask(layer=current_layer._parent)
