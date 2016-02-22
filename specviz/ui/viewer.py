@@ -330,6 +330,12 @@ class Viewer(QMainWindow):
                 break
 
     def update_model_item(self, model):
+        if hasattr(model, '_submodels'):
+            for sub_model in model._submodels:
+                self.update_model_item(sub_model)
+            else:
+                return
+
         model_item = self.get_model_item(model)
 
         for i, para in enumerate(model.param_names):

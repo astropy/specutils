@@ -509,6 +509,4 @@ class Controller(object):
                 self.viewer.add_model_item(model=model,
                                            layer=current_layer)
         elif model is not None:
-            current_layer = layer
-
             self.viewer.update_model_item(model)
