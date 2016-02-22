@@ -177,10 +177,16 @@ class Controller(object):
 
     def load_model(self):
         global _model_directory
-        fname = QFileDialog.getOpenFileName(self.viewer.main_window.mdiArea, \
-                                            'Read model file', _model_directory)
+        fname = QFileDialog.getOpenFileNames(self.viewer.main_window.mdiArea,
+                                             'Read model file',
+                                             _model_directory,
+                                             "Pyhton files (*.py)")
 
-        compound_model, _model_directory = model_io.buildModelFromFile(fname[0])
+        # File dialog returns a tuple with a list of file names.
+        # We get the first name from the first tuple element.
+        fname = fname[0][0]
+
+        compound_model, _model_directory = model_io.buildModelFromFile(fname)
 
         # Put new model in its own sub-layer under current layer.
         current_layer = self.viewer.current_layer
@@ -199,9 +205,14 @@ class Controller(object):
             name="New Model Layer",
             model=compound_model)
 
-        # Add the models from the just read compound model to the new model layer
-        for model in compound_model:
-            model_manager.add(model=model, layer=new_model_layer)
+        # Add the models from the just read compound model to the new model layer.
+        # Note that a single model component requires a slight different handling
+        # technique, since it is not iterable as a compound model is.
+        if not hasattr(compound_model, '_format_expression'):
+            model_manager.add(model=compound_model, layer=new_model_layer)
+        else:
+            for model in compound_model:
+                model_manager.add(model=model, layer=new_model_layer)
 
         plot_container = plot_manager.new(new_model_layer,
                                           current_layer._window)

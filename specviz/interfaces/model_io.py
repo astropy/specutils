@@ -70,6 +70,10 @@ def _writeToFile(expression_string, model_directory, parent, header):
     fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
 
     if len(fname) > 0:
+        # enforce correct suffix.
+        if not fname.endswith(".py"):
+            fname += ".py"
+
         f = open(fname, 'w')
 
         f.write(header)

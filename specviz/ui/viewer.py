@@ -279,6 +279,9 @@ class Viewer(QMainWindow):
         Parameters
         ----------
         """
+        if model is None:
+            return
+
         name = model.name
 
         if not name:

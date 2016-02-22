@@ -89,7 +89,8 @@ Saving models to file
 
 Selecting a model layer under "Layers" will enable the 'Save' button in
 the Model Fitting window. Click on the button to get a file dialog window.
-Type in a file name ended with the suffix '.py'. Click 'Save', or just the
+Type in a file name. If this file name does not end with the suffix '.py',
+the suffix will automatically be appended. Click 'Save', or just the
 Return/Enter key.
 
 This will save the current model in the model layer to a file that can be
@@ -98,9 +99,6 @@ a model comprised of a constant and a gaussian:
 
 ::
 
- Python 3.5.1 |Continuum Analytics, Inc.| (default, Dec  7 2015, 11:24:55)
- [GCC 4.2.1 (Apple Inc. build 5577)] on darwin
- Type "help", "copyright", "credits" or "license" for more information.
  >>> import test3
  >>> test3
  <module 'test3' from '/Users/busko/test3.py'>
@@ -120,7 +118,6 @@ a model comprised of a constant and a gaussian:
  >>>
 
 
-
 The file is just a plain text file with the model expressed as a python
 expression. The model is associated to a variable named 'model1'.
 
@@ -128,7 +125,18 @@ The file can be edited at will by the user, e.g. to add bounds, fixed
 flags, and ties to the model parameters. These abilities will come in
 time to the application UI itself.
 
-For now, only the 'write to file' option is implemented. Reading a model
-from file will come soon.
+
+Loading models from file
+------------------------
+
+A model file built as above, can be read back into the application as
+a new model layer associated with a data layer in the "Layers" list.
+
+Selecting a data layer under "Layers" will enable the 'Load' button in
+the Model Fitting window. Click on the button to get a file dialog window,
+select the desired file, and either double-click on the name, or select it
+and click Open.
+
+The compound model defined in the file will be stored in a new model layer.
 
 
