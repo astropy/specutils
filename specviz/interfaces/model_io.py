@@ -110,7 +110,7 @@ def _writeCompoundModel(model, model_directory, parent):
     # the import statements go).
     expression_string = ""
     import_module_names = {}
-    for token, component in zip(tokens, model._submodels):
+    for token, component in zip(tokens, iter(model)):
         # clean up astropy-inserted characters
         token = token.replace('[', '')
         token = token.replace(']', '')
