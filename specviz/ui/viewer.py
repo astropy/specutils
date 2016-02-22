@@ -60,6 +60,8 @@ class Viewer(QMainWindow):
             self.main_window.createModelLayerButton.hide()
             self.main_window.updateModelLayerButton.hide()
             self.main_window.fittingRoutinesGroupBox.setEnabled(False)
+            self.main_window.loadModelButton.setEnabled(False)
+            self.main_window.saveModelButton.setEnabled(False)
 
         if not hasattr(layer, 'model'):
             self.main_window.createModelLayerButton.show()
