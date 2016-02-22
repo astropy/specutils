@@ -122,7 +122,7 @@ def eq_width(cont1_stats, cont2_stats, line):
     flux = np.sum(line.data - avg_cont) * avg_dx
 
     #  EW = Sum( (Fc-Fl)/Fc * dw
-    ew =  np.sum((avg_cont - line.data) / avg_cont * avg_dx)
+    ew = np.abs(np.sum((avg_cont - line.data) / avg_cont * avg_dx))
 
     return flux, ew
 

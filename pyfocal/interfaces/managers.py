@@ -3,9 +3,11 @@ from __future__ import (absolute_import, division, print_function,
 
 # LOCAL
 from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory
-from ..core.events import EventHook
+from ..core.comms import EventNode
 from ..analysis import modeling
 from ..third_party.py_expression_eval import Parser
+from ..core.comms import Dispatch, DispatchHandle
+from ..analysis.modeling import apply_model
 
 # STDLIB
 import logging
@@ -20,9 +22,6 @@ class Manager(object):
     """
     def __init__(self):
         self._members = []
-
-        self.on_add = EventHook()
-        self.on_remove = EventHook()
 
 
 class DataManager(Manager):
@@ -41,6 +40,8 @@ class DataManager(Manager):
     def add(self, data):
         self._members.append(data)
 
+        Dispatch.on_add_data.emit(data)
+
     def remove(self, data):
         self._members.remove(data)
 
@@ -52,36 +53,21 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def new_layer(self, data, mask=None, parent=None, window=None, name=''):
+    def new(self, data, mask=None, parent=None, window=None, name='',
+            model=None):
         logging.info("Creating new layer: {}".format(name))
-        new_layer = DataFactory.create_layer(data, mask, parent, window, name)
 
-        self._members.append(new_layer)
-
-        # Emit creation event
-        self.on_add.emit(new_layer)
+        new_layer = DataFactory.create_layer(data, mask, parent, window,
+                                             name, model)
+        self.add(new_layer)
 
         return new_layer
 
-    def new_model_layer(self, model, data, mask, parent=None, window=None,
-                        name=''):
-        logging.info("Creating new model layer: {}".format(name))
-        model_layer = DataFactory.create_model_layer(model, data, mask,
-                                                     parent=parent,
-                                                     window=window,
-                                                     name=name)
-
-        self._members.append(model_layer)
-
-        # Emit creation event
-        self.on_add.emit(model_layer)
-
-        return model_layer
-
-    def add_layer(self, layer):
+    def add(self, layer):
         self._members.append(layer)
 
-        self.on_add.emit(layer)
+        # Emit creation event
+        Dispatch.on_add_layer.emit(layer)
 
     def remove(self, layer):
         """
@@ -95,7 +81,13 @@ class LayerManager(Manager):
         self._members.remove(layer)
 
         # Emit removal event
-        self.on_remove.emit(layer)
+        Dispatch.on_remove_layer.emit(layer)
+
+    def copy(self, layer):
+        new_layer = DataFactory.create_layer(layer._source)
+        new_layer.dispersion = layer.dispersion
+
+        return new_layer
 
     def get_window_layers(self, window):
         """
@@ -112,8 +104,8 @@ class LayerManager(Manager):
                                          layer.data, fitter)
 
         new_data = DataFactory.from_array(new_model(layer.dispersion.value))
-        new_layer = self.new_layer(new_data,
-                                   parent=layer._parent, window=layer._window)
+        new_layer = self.new(new_data, parent=layer._parent,
+                             window=layer._window)
         new_layer.dispersion = layer.dispersion.value
 
         return new_layer
@@ -125,6 +117,16 @@ class LayerManager(Manager):
 
     def update_model_parameters(self, model, parameters):
         pass
+
+    def add_from_formula(self, formula):
+        if not formula:
+            return
+
+        new_layer = self._evaluate(self._members, formula)
+        new_layer.name = "Resultant"
+        self.add(new_layer)
+
+        return new_layer
 
     def _evaluate(self, layers, formula):
         """
@@ -162,20 +164,14 @@ class ModelManager(Manager):
     """
     def __init__(self):
         super(ModelManager, self).__init__()
-        # Model layer manager specified events
-        self.on_add_model = EventHook()
-        self.on_remove_model = EventHook()
-
         self._members = {}
         self.all_models = sorted(ModelFactory.all_models.keys())
         self.all_fitters = sorted(FitterFactory.all_fitters.keys())
 
-    def new_model(self, layer, model_name):
+    def new(self, model_name, layer):
         model = ModelFactory.create_model(model_name)()
 
         self.add(model, layer)
-
-        self.on_add_model.emit(model)
 
         return model
 
@@ -185,17 +181,20 @@ class ModelManager(Manager):
         else:
             self._members[layer].append(model)
 
-        self.on_add.emit(layer, model)
+        # Emit event
+        Dispatch.on_add_model.emit(model, layer)
 
         return model
 
-    def remove(self, layer, index=None):
+    def remove(self, layer, model=None, index=None):
         if index is not None:
-            model_layer = self._members[layer].pop(index)
+            model = self._members[layer].pop(index)
+        elif model is not None:
+            self._members[layer].remove(model)
         else:
             del self._members[layer]
 
-        self.on_remove.emit(layer)
+        Dispatch.on_remove_model.emit(model)
 
     def _evaluate(self, models, formula):
         parser = Parser()
@@ -216,9 +215,9 @@ class ModelManager(Manager):
 
         return result
 
-    def get_model_layers(self, layer, no_keys=False):
+    def get_models(self, layer, no_keys=False):
         """
-        Returns the `ModelLayer` objects associated with `Layer`.
+        Returns the astropy model objects associated with `Layer`.
 
         Parameters
         ----------
@@ -235,13 +234,13 @@ class ModelManager(Manager):
         result = self._members.get(layer, [])
 
         if not no_keys:
-            model_layers = []
+            models = []
 
             for k, v in self._members.items():
                 if k._source == layer:
-                    model_layers.append(*v)
+                    models.append(*v)
 
-            result += model_layers
+            result += models
 
         return result
 
@@ -267,10 +266,54 @@ class ModelManager(Manager):
         self._members[old_layer] = []
         del self._members[old_layer]
 
-    def update_model(self, model_layer, model_dict, formula=''):
-        logging.info("ModelManager.update_model: {}".format(model_dict))
-        model = self.get_compound_model(model_dict, formula)
-        model_layer.model = model
+    def update_model(self, layer, model_inputs, formula='', mask=None):
+        model = self.get_compound_model(model_inputs, formula)
+        layer.model = model
+
+        if mask is not None:
+            layer._mask = mask
+
+        Dispatch.on_update_model.emit(model=model, layer=layer)
+
+    def fit_model(self, layer, fitter_name):
+        if not hasattr(layer, 'model'):
+            logging.warning("This layer has not model to be fit.")
+            return
+
+        # When fitting, the selected layer is a ModelLayer, thus
+        # the data to be fitted resides in the parent
+        parent_layer = layer._parent
+
+        if parent_layer is None:
+            return
+
+        mask = layer._mask
+        flux = parent_layer.data[mask]
+        dispersion = parent_layer.dispersion[mask]
+        model = layer.model
+
+        # If the number of parameters is greater than the number of data
+        # points, bail
+        if len(model.parameters) > flux.size:
+            logging.warning("Unable to perform fit; number of parameters is "
+                            "greater than the number of data points.")
+            return
+
+        fitted_model = apply_model(model, dispersion, flux,
+                                   fitter_name=fitter_name)
+
+        # Update original model with new values from fitted model
+        for i, param in enumerate(fitted_model.param_names):
+            setattr(model, param, fitted_model.parameters[i])
+        layer.model = model
+
+        # update GUI with fit results
+        Dispatch.on_update_model.emit(model=model)
+
+        # Re-plot layer
+        Dispatch.on_update_plot.emit(layer)
+
+        return layer
 
 
 class PlotManager(Manager):
@@ -280,26 +323,36 @@ class PlotManager(Manager):
     def __init__(self):
         super(PlotManager, self).__init__()
         self._members = {}
+        DispatchHandle.setup(self)
 
-    def new_line_plot(self, layer, parent, unit=None, visible=False,
-                      style='line', pen=None):
+    def new(self, layer, window, unit=None, visible=False, style='line',
+            pen=None):
         plot_container = PlotFactory.create_line_plot(layer, unit, visible,
                                                       style, pen)
 
-        if parent not in self._members:
-            self._members[parent] = [plot_container]
-        else:
-            self._members[parent].append(plot_container)
+        self.add(plot_container, layer, window)
 
         return plot_container
 
-    def get_plots(self, parent):
-        return self._members[parent]
+    def add(self, plot_container, layer, window):
+        if window not in self._members:
+            self._members[window] = [plot_container]
+        else:
+            self._members[window].append(plot_container)
 
-    def update_plots(self, window, layer):
+        Dispatch.on_add_plot.emit(plot_container)
+
+    def get_plots(self, window):
+        return self._members[window]
+
+    def get_plot_from_layer(self, layer, window):
         for container in self._members[window]:
             if container.layer == layer:
-                container.update()
+                return container
+
+    @DispatchHandle.register_listener("on_update_plot")
+    def update_plots(self, container):
+        container.update()
 
 
 data_manager = DataManager()

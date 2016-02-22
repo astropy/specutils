@@ -196,9 +196,8 @@ class Layer(object):
     @property
     def data(self):
         """Flux quantity with mask applied."""
-        data = self._source.data[self._mask]
-
-        return Quantity(data, unit=self._source.unit).to(self.units[1])
+        return Quantity(self._source.data[self._mask],
+                        unit=self._source.unit).to(self.units[1])
 
     @property
     def unit(self):
@@ -266,15 +265,15 @@ class ModelLayer(Layer):
     @property
     def data(self):
         """Flux quantity from model."""
-        if self._data is None:
-            self._data = self._model(self.dispersion.value)
+        self._data = self._model(self.dispersion.value)
 
         return Quantity(self._data,
                         unit=self._source.unit).to(self.units[1])
 
     @property
     def uncertainty(self):
-        """Models do not need to contain uncertainties; override parent
+        """
+        Models do not need to contain uncertainties; override parent
         class method.
         """
         return None

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './source/plotsubwindow.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5
+# Created by: ...third_party.qtpy UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
 from __future__ import (absolute_import, division, print_function,
@@ -23,6 +23,7 @@ class Ui_SpectraSubWindow(object):
         self.statusbar.setObjectName("statusbar")
         SpectraSubWindow.setStatusBar(self.statusbar)
         self.toolBar = QtWidgets.QToolBar(SpectraSubWindow)
+        self.toolBar.setEnabled(True)
         self.toolBar.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.toolBar.setMovable(False)
         self.toolBar.setFloatable(False)
@@ -33,17 +34,22 @@ class Ui_SpectraSubWindow(object):
         icon.addPixmap(QtGui.QPixmap(":/img/Rectangle Stroked-50.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionInsert_ROI.setIcon(icon)
         self.actionInsert_ROI.setObjectName("actionInsert_ROI")
-        self.actionPlot_Settings = QtWidgets.QAction(SpectraSubWindow)
+        self.actionEquivalent_Width = QtWidgets.QAction(SpectraSubWindow)
+        self.actionEquivalent_Width.setCheckable(True)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/img/Settings 3-50.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionPlot_Settings.setIcon(icon1)
-        self.actionPlot_Settings.setObjectName("actionPlot_Settings")
-        self.actionGraph_Settings = QtWidgets.QAction(SpectraSubWindow)
+        icon1.addPixmap(QtGui.QPixmap(":/img/Width-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionEquivalent_Width.setIcon(icon1)
+        self.actionEquivalent_Width.setObjectName("actionEquivalent_Width")
+        self.actionCentroid = QtWidgets.QAction(SpectraSubWindow)
+        self.actionCentroid.setEnabled(False)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/img/Settings-50.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionGraph_Settings.setIcon(icon2)
-        self.actionGraph_Settings.setObjectName("actionGraph_Settings")
+        icon2.addPixmap(QtGui.QPixmap(":/img/Vertical Flag-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionCentroid.setIcon(icon2)
+        self.actionCentroid.setObjectName("actionCentroid")
         self.toolBar.addAction(self.actionInsert_ROI)
+        self.toolBar.addSeparator()
+        self.toolBar.addAction(self.actionEquivalent_Width)
+        self.toolBar.addAction(self.actionCentroid)
         self.toolBar.addSeparator()
 
         self.retranslateUi(SpectraSubWindow)
@@ -54,9 +60,9 @@ class Ui_SpectraSubWindow(object):
         self.toolBar.setWindowTitle(_translate("SpectraSubWindow", "toolBar"))
         self.actionInsert_ROI.setText(_translate("SpectraSubWindow", "Rectangle ROI"))
         self.actionInsert_ROI.setToolTip(_translate("SpectraSubWindow", "Insert a rectangular ROI selection box"))
-        self.actionPlot_Settings.setText(_translate("SpectraSubWindow", "Plot Settings"))
-        self.actionPlot_Settings.setToolTip(_translate("SpectraSubWindow", "Edit plot settings"))
-        self.actionGraph_Settings.setText(_translate("SpectraSubWindow", "Graph Settings"))
-        self.actionGraph_Settings.setToolTip(_translate("SpectraSubWindow", "Edit graph settings"))
+        self.actionEquivalent_Width.setText(_translate("SpectraSubWindow", "Equivalent Width"))
+        self.actionEquivalent_Width.setToolTip(_translate("SpectraSubWindow", "Toggle mode to select equivalent width"))
+        self.actionCentroid.setText(_translate("SpectraSubWindow", "Centroid"))
+        self.actionCentroid.setToolTip(_translate("SpectraSubWindow", "Measure the centroid of the selected region"))
 
 from . import icon_resource_rc

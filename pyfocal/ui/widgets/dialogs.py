@@ -2,7 +2,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 
 from ..qt.axisdialog import Ui_Dialog
-from ..qt.layerarithmeticdialog import Ui_LayerArithmeticDialog
+from ..qt.layer_arithmetic_dialog import Ui_LayerArithmeticDialog
 from ..qt.unit_change_dialog import Ui_UnitChangeDialog
 
 
@@ -65,40 +65,9 @@ class TopAxisDialog(QDialog):
 class LayerArithmeticDialog(QDialog):
     def __init__(self, parent=None):
         super(LayerArithmeticDialog, self).__init__(parent)
-        self.first_layer = None
-        self.second_layer = None
-        self.operator = 0
-
         # Run the widget setup
         self.ui_layer_arithmetic_dialog = Ui_LayerArithmeticDialog()
         self.ui_layer_arithmetic_dialog.setupUi(self)
-
-        # Populate operators
-        self.ui_layer_arithmetic_dialog.operatorComboBox.addItems(['+', '-',
-                                                                   '*', '/'])
-
-    def populate_layers(self, layers):
-        self.ui_layer_arithmetic_dialog.layer1ComboBox.addItems(
-            [l.name for l in layers])
-        self.ui_layer_arithmetic_dialog.layer2ComboBox.addItems(
-            [l.name for l in layers])
-
-    def clear_layers(self):
-        self.ui_layer_arithmetic_dialog.layer1ComboBox.clear()
-        self.ui_layer_arithmetic_dialog.layer2ComboBox.clear()
-
-    def accept(self):
-        self.first_layer = self.ui_layer_arithmetic_dialog.layer1ComboBox\
-            .currentIndex()
-        self.second_layer = self.ui_layer_arithmetic_dialog.layer2ComboBox\
-            .currentIndex()
-        self.operator = self.ui_layer_arithmetic_dialog.operatorComboBox\
-            .currentIndex()
-
-        super(LayerArithmeticDialog, self).accept()
-
-    def reject(self):
-        super(LayerArithmeticDialog, self).reject()
 
 
 class UnitChangeDialog(QDialog):

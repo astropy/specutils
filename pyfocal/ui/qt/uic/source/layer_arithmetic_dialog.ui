@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>442</width>
-    <height>133</height>
+    <width>354</width>
+    <height>134</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,35 +19,11 @@
      <item>
       <widget class="QGroupBox" name="layer1GroupBox">
        <property name="title">
-        <string>First Layer</string>
+        <string>Formula</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QComboBox" name="layer1ComboBox"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="operatorGroupBox">
-       <property name="title">
-        <string>Operator</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <widget class="QComboBox" name="operatorComboBox"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="layer2GroupBox">
-       <property name="title">
-        <string>Second Layer</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QComboBox" name="layer2ComboBox"/>
+         <widget class="QLineEdit" name="formulaLineEdit"/>
         </item>
        </layout>
       </widget>
