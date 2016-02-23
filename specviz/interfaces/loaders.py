@@ -252,9 +252,7 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
 
     # Sometimes, Astropy returns masked column.
     if hasattr(data, 'mask'):
-        # TODO: Need to understand why HST/COS mask from file is so weird
-        #mask = ~data.mask
-        mask = None
+        mask = (~data.mask).astype(np.float)
         data = data.data
     else:
         mask = None
