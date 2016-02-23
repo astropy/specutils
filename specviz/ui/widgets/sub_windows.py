@@ -255,11 +255,11 @@ class PlotSubWindow(QMainWindow):
         else:
             container.change_units(*self._plot_units)
 
-        self._containers.append(container)
-        self._plot_item.addItem(container.plot)
-
         if container.error is not None:
             self._plot_item.addItem(container.error)
+
+        self._containers.append(container)
+        self._plot_item.addItem(container.plot)
 
         self.set_active_plot(container.layer)
 
