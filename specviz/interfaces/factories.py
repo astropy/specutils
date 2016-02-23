@@ -58,13 +58,6 @@ class DataFactory(Factory):
 
 class ModelFactory(Factory):
 
-    # Any reason for just these three?
-    # all_models = {
-    #     "Gaussian1D": models.Gaussian1D,
-    #     "Linear1D": models.Linear1D,
-    #     "Const1D": models.Const1D
-    # }
-
     # Ideally we should be getting these classes from astropy directly and
     # transparently, instead of explicitly naming them here. This is basically
     # a maintenance issue: at each new release of astropy we should check if

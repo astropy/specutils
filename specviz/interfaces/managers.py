@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 # LOCAL
 from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory
+from .initializers import initialize
 from ..core.comms import EventNode
 from ..analysis import modeling
 from ..third_party.py_expression_eval import Parser
@@ -171,6 +172,12 @@ class ModelManager(Manager):
     def new(self, model_name, layer):
         model = ModelFactory.create_model(model_name)()
 
+        # initialize model with sensible parameter values.
+        mask = layer._mask
+        flux = layer.data[mask]
+        dispersion = layer.dispersion[mask]
+        initialize(model, dispersion, flux)
+
         self.add(model, layer)
 
         return model
@@ -287,7 +294,7 @@ class ModelManager(Manager):
         if parent_layer is None:
             return
 
-        mask = layer._mask
+        mask = parent_layer._mask
         flux = parent_layer.data[mask]
         dispersion = parent_layer.dispersion[mask]
         model = layer.model
