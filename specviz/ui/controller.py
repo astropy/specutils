@@ -211,9 +211,11 @@ class Controller(object):
             data=current_layer._source,
             mask=mask,
             parent=current_layer,
-            window=current_layer._window,
             name="New Model Layer",
             model=compound_model)
+
+        current_window = self.viewer.current_sub_window
+        window_manager.add(new_model_layer, current_window)
 
         # Add the models from the just read compound model to the new model layer.
         # Note that a single model component requires a slight different handling
@@ -225,7 +227,7 @@ class Controller(object):
                 model_manager.add(model=model, layer=new_model_layer)
 
         plot_container = plot_manager.new(new_model_layer,
-                                          current_layer._window)
+                                          current_window)
 
     def read_file(self, file_name):
         """
