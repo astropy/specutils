@@ -144,32 +144,32 @@ class Layer(object):
         if isinstance(other, numbers.Number):
             new = np.empty(shape=self.data.shape)
             new.fill(other)
-            other = self._source._from_self(new)
+            other = new
         # The operand is an array
         elif isinstance(other, np.ndarray) or isinstance(other, list):
             other = self._source._from_self(other)
         elif isinstance(other, Layer) or isinstance(other, ModelLayer):
             other = other._source
 
-        if not isinstance(other, Data):
-            raise ValueError("Operand is not of type `Data`.")
+        if isinstance(other, Data):
+            if self._source.wcs != other.wcs:
+                logging.warning("WCS objects are not equivalent; overriding "
+                                "wcs information on 'other'.".format())
+                tmp_wcs = other._wcs
+                other._wcs = self._source.wcs
+                new_source = operator(other, propagate_uncertainties=propagate)
+                other._wcs = tmp_wcs
+            else:
+                new_source = operator(other, propagate_uncertainties=propagate)
 
-        if self._source.wcs != other.wcs:
-            logging.warning("WCS objects are not equivalent; overriding wcs "
-                            "information on 'other'.".format())
-            tmp_wcs = other._wcs
-            other._wcs = self._source.wcs
-            new_source = operator(other, propagate_uncertainties=propagate)
-            other._wcs = tmp_wcs
+            if operator.__name__ == 'multiply':
+                new_source._dispersion_unit = self._source.dispersion_unit * \
+                                              other.dispersion_unit
+            elif operator.__name__ == 'divide':
+                new_source._dispersion_unit = self._source.dispersion_unit / \
+                                              other.dispersion_unit
         else:
             new_source = operator(other, propagate_uncertainties=propagate)
-
-        if operator.__name__ == 'multiply':
-            new_source._dispersion_unit = self._source.dispersion_unit * \
-                                          other.dispersion_unit
-        elif operator.__name__ == 'divide':
-            new_source._dispersion_unit = self._source.dispersion_unit / \
-                                          other.dispersion_unit
 
         return new_source
 

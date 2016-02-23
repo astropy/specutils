@@ -172,6 +172,8 @@ class Controller(object):
             if new_layer.data.unit.is_equivalent(current_window._plot_units[1]):
                 self.add_sub_window(layer=new_layer, window=current_window)
             else:
+                print("{} not equivalent to {}.".format(
+                    new_layer.data.unit, current_window._plot_units[1]))
                 self.add_sub_window(layer=new_layer)
 
     def save_model(self):
@@ -291,7 +293,6 @@ class Controller(object):
 
         if window is None:
             window = self.viewer.add_sub_window()
-            print(window)
 
         if layer is None:
             layer = layer_manager.new(data)

@@ -166,13 +166,27 @@ class LayerManager(Manager):
             A string describing the arithmetic operations to perform.
         """
         parser = Parser()
+
+        for layer in layers:
+            formula = formula.replace(layer.name, layer.name.replace(" ", "_"))
+
         expr = parser.parse(formula)
 
         # Extract variables
         vars = expr.variables()
 
         # List the models in the same order as the variables
-        sorted_layers = [l for v in vars for l in layers if l.name == v]
+        # sorted_layers = [next(l for v in vars for l in layers
+        #                       if l.name.replace(" ", "_") == v)]
+        # sorted_layers = [l for v in vars for l in layers
+        #                  if l.name.replace(" ", "_") == v]
+        sorted_layers = []
+
+        for v in vars:
+            for l in layers:
+                if l.name.replace(" ", "_") == v:
+                    sorted_layers.append(l)
+                    break
 
         if len(sorted_layers) != len(vars):
             logging.error("Incorrect layer arithmetic formula: the number "
