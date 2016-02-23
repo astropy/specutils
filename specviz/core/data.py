@@ -130,11 +130,10 @@ class Layer(object):
     name : str
         Short description.
     """
-    def __init__(self, source, mask, parent=None, window=None, name=''):
+    def __init__(self, source, mask, parent=None, name=''):
         self._source = source
         self._mask = mask
         self._parent = parent
-        self._window = window
         self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,
                       self._source.unit if self._source.unit is not None
@@ -165,33 +164,36 @@ class Layer(object):
         else:
             new_source = operator(other, propagate_uncertainties=propagate)
 
+        if operator.__name__ == 'multiply':
+            new_source._dispersion_unit = self._source.dispersion_unit * \
+                                          other.dispersion_unit
+        elif operator.__name__ == 'divide':
+            new_source._dispersion_unit = self._source.dispersion_unit / \
+                                          other.dispersion_unit
+
         return new_source
 
     def __add__(self, other):
         new_source = self._arithmetic(self._source.add, other)
 
-        return Layer(new_source, self._mask, self._parent, self._window,
-                     self.name)
+        return Layer(new_source, self._mask, self._parent, self.name)
 
     def __sub__(self, other):
         new_source = self._arithmetic(self._source.subtract, other)
 
-        return Layer(new_source, self._mask, self._parent, self._window,
-                     self.name)
+        return Layer(new_source, self._mask, self._parent, self.name)
 
     def __mul__(self, other):
         new_source = self._arithmetic(self._source.multiply, other,
                                       propagate=True)
 
-        return Layer(new_source, self._mask, self._parent, self._window,
-                     self.name)
+        return Layer(new_source, self._mask, self._parent, self.name)
 
     def __truediv__(self, other):
         new_source = self._arithmetic(self._source.divide, other,
                                       propagate=False)
 
-        return Layer(new_source, self._mask, self._parent, self._window,
-                     self.name)
+        return Layer(new_source, self._mask, self._parent, self.name)
 
     @property
     def data(self):
@@ -253,9 +255,9 @@ class ModelLayer(Layer):
     name : str
         Short description.
     """
-    def __init__(self, model, source, mask, parent=None, window=None, name=''):
+    def __init__(self, model, source, mask, parent=None, name=''):
         name = source.name + " Model Layer" if not name else name
-        super(ModelLayer, self).__init__(source, mask, parent, window, name)
+        super(ModelLayer, self).__init__(source, mask, parent, name)
 
         self._data = None
         self._model = model

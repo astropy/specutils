@@ -9,7 +9,7 @@ import logging
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..third_party.qtpy.QtWidgets import *
-from ..interfaces.managers import (data_manager, layer_manager,
+from ..interfaces.managers import (data_manager, window_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
 from ..analysis import statistics
@@ -67,8 +67,7 @@ class Controller(object):
     def _setup_connections(self):
         self.viewer.main_window.toolButton_3.clicked.connect(
             lambda: self.add_sub_window(
-                data=self.viewer.current_data,
-                window=None))
+                data=self.viewer.current_data))
 
         self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
 
@@ -171,7 +170,7 @@ class Controller(object):
             # If units match, plot the resultant on the same sub window,
             # otherwise create a new sub window to plot the spectra
             if new_layer.data.unit.is_equivalent(current_window._plot_units[1]):
-                plot_container = plot_manager.new(new_layer, new_layer._window)
+                self.add_sub_window(layer=new_layer, window=current_window)
             else:
                 self.add_sub_window(layer=new_layer)
 
@@ -292,13 +291,12 @@ class Controller(object):
 
         if window is None:
             window = self.viewer.add_sub_window()
+            print(window)
 
         if layer is None:
-            layer = layer_manager.new(data, window=window)
+            layer = layer_manager.new(data)
 
-        layer._window = window
-
-        plot_container = plot_manager.new(layer, window)
+        window_manager.add(layer, window)
 
     def add_model_layer(self):
         """
@@ -421,7 +419,7 @@ class Controller(object):
         layer = layer_item.data(0, Qt.UserRole)
 
         if layer is not None:
-            current_window = layer._window
+            current_window = self.viewer.current_sub_window
 
             current_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
@@ -445,6 +443,18 @@ class Controller(object):
 
         if hasattr(model, '_name'):
             model._name = model_item.text(0)
+
+    @DispatchHandle.register_listener("on_added_layer_to_window")
+    def plot_layer(self, layer=None, window=None):
+        plot_container = plot_manager.new(layer=layer, window=window)
+
+    @DispatchHandle.register_listener("on_remove_layer_from_window")
+    def remove_plot_layer(self, layer=None, window=None):
+        plot_manager.remove(layer=layer, window=window)
+
+    @DispatchHandle.register_listener("on_update_plot")
+    def update_plots(self, container=None, layer=None):
+        plot_manager.update_plots(container, layer)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_roi")
     def update_statistics(self, layer_item=None, roi=None, measured_rois=None):
@@ -481,16 +491,19 @@ class Controller(object):
 
         Dispatch.on_update_stats.emit(stats=stat_dict, layer=current_layer)
 
-    @DispatchHandle.register_listener("on_select_window")
-    def update_layer_list(self, window=None):
+    @DispatchHandle.register_listener("on_select_window",
+                                      "on_added_layer_to_window")
+    def update_layer_list(self, window=None, layer=None):
         """
         Clears and repopulates the layer list depending on the currently
         selected sub window.
         """
         if window is None:
             window = self.viewer.current_sub_window
+        elif isinstance(window, QMdiSubWindow):
+            window = window.widget()
 
-        layers = layer_manager.get_window_layers(window=window)
+        layers = window_manager.get_layers(window)
         self.viewer.clear_layer_widget()
 
         for layer in layers:

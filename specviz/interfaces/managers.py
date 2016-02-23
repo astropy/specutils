@@ -46,6 +46,34 @@ class DataManager(Manager):
         self._members.remove(data)
 
 
+class WindowManager(Manager):
+    """
+    Manages the association of layer objects with sub windows.
+    """
+    def __init__(self):
+        super(WindowManager, self).__init__()
+        self._members = {}
+
+        DispatchHandle.setup(self)
+
+    def add(self, layer, window):
+        if window not in self._members:
+            self._members[window] = [layer]
+        else:
+            self._members[window].append(layer)
+
+        Dispatch.on_added_layer_to_window.emit(layer=layer, window=window)
+
+    def remove(self, layer, window):
+        if window in self._members:
+            if layer in self._members[window]:
+                self._members[window].remove(layer)
+
+        Dispatch.on_remove_layer_from_window.emit(layer=layer, window=window)
+
+    def get_layers(self, window):
+        return self._members.get(window, [])
+
 class LayerManager(Manager):
     """
     Manages a set of layer objects.
@@ -53,12 +81,10 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def new(self, data, mask=None, parent=None, window=None, name='',
-            model=None):
+    def new(self, data, mask=None, parent=None, name='', model=None):
         logging.info("Creating new layer: {}".format(name))
 
-        new_layer = DataFactory.create_layer(data, mask, parent, window,
-                                             name, model)
+        new_layer = DataFactory.create_layer(data, mask, parent, name, model)
         self.add(new_layer)
 
         return new_layer
@@ -104,8 +130,7 @@ class LayerManager(Manager):
                                          layer.data, fitter)
 
         new_data = DataFactory.from_array(new_model(layer.dispersion.value))
-        new_layer = self.new(new_data, parent=layer._parent,
-                             window=layer._window)
+        new_layer = self.new(new_data, parent=layer._parent)
         new_layer.dispersion = layer.dispersion.value
 
         return new_layer
@@ -124,6 +149,7 @@ class LayerManager(Manager):
 
         new_layer = self._evaluate(self._members, formula)
         new_layer.name = "Resultant"
+        new_layer._window = None
         self.add(new_layer)
 
         return new_layer
@@ -326,7 +352,6 @@ class PlotManager(Manager):
     def __init__(self):
         super(PlotManager, self).__init__()
         self._members = {}
-        DispatchHandle.setup(self)
 
     def new(self, layer, window, unit=None, visible=False, style='line',
             pen=None):
@@ -343,7 +368,7 @@ class PlotManager(Manager):
         else:
             self._members[window].append(plot_container)
 
-        Dispatch.on_add_plot.emit(plot_container)
+        Dispatch.on_added_plot.emit(container=plot_container, window=window)
 
     def get_plots(self, window):
         return self._members[window]
@@ -353,7 +378,6 @@ class PlotManager(Manager):
             if container.layer == layer:
                 return container
 
-    @DispatchHandle.register_listener("on_update_plot")
     def update_plots(self, container=None, layer=None):
         if container is not None:
             container.update()
@@ -365,6 +389,7 @@ class PlotManager(Manager):
 
 
 data_manager = DataManager()
+window_manager = WindowManager()
 layer_manager = LayerManager()
 model_manager = ModelManager()
 plot_manager = PlotManager()

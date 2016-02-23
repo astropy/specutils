@@ -244,8 +244,11 @@ class PlotSubWindow(QMainWindow):
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
 
-    @DispatchHandle.register_listener("on_add_plot")
-    def add_container(self, container):
+    @DispatchHandle.register_listener("on_added_plot")
+    def add_container(self, container=None, window=None):
+        if window != self:
+            return
+
         if len(self._containers) == 0:
             self.change_units(container.layer.units[0],
                               container.layer.units[1])
