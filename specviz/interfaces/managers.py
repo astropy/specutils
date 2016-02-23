@@ -172,10 +172,14 @@ class ModelManager(Manager):
     def new(self, model_name, layer):
         model = ModelFactory.create_model(model_name)()
 
+        data_layer = layer
+        if hasattr(layer, 'model'):
+            data_layer = layer._parent
+
         # initialize model with sensible parameter values.
-        mask = layer._mask
-        flux = layer.data[mask]
-        dispersion = layer.dispersion[mask]
+        mask = data_layer._mask
+        flux = data_layer.data[mask]
+        dispersion = data_layer.dispersion[mask]
         initialize(model, dispersion, flux)
 
         self.add(model, layer)
@@ -284,7 +288,7 @@ class ModelManager(Manager):
 
     def fit_model(self, layer, fitter_name):
         if not hasattr(layer, 'model'):
-            logging.warning("This layer has not model to be fit.")
+            logging.warning("This layer has no model to fit.")
             return
 
         # When fitting, the selected layer is a ModelLayer, thus
