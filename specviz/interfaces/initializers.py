@@ -28,12 +28,26 @@ class _Linear1DInitializer(object):
         return instance
 
 
-# Initialization that is specific to the Const1D model.
-class _Const1DInitializer(object):
+# Initialization that is applicable to all "wide band"
+# models, that is, models that have an amplitude and
+# a position in wavelength space where this amplitude
+# is defined.
+class _WideBand1DInitializer(object):
+
+    def __init__(self, factor=1.0):
+        self._factor = factor
 
     def initialize(self, instance, x, y):
-        average = np.mean(y)
-        instance.amplitude.value = average
+
+        y_range = np.mean(y)
+        x_range = x[len(x) - 1] - x[0]
+        position = x_range / 2.0 + x[0]
+
+        name = _get_model_name(instance)
+
+        _setattr(instance, name, 'amplitude', y_range * self._factor)
+        _setattr(instance, name, 'position', position)
+
         return instance
 
 
@@ -78,9 +92,9 @@ def _setattr(instance, mname, pname, value):
 # and roles are the same as in a typical line profile, so they can be
 # initialized in the same way.
 _initializers = {
-    'Beta1D':                     _LineProfile1DInitializer(),
+    'Beta1D':                     _WideBand1DInitializer(),
     'Box1D':                      _LineProfile1DInitializer(),
-    'Const1D':                    _Const1DInitializer(),
+    'Const1D':                    _WideBand1DInitializer(),
     'Gaussian1D':                 _LineProfile1DInitializer(),
     'GaussianAbsorption1D':       _LineProfile1DInitializer(),
     'Linear1D':                   _Linear1DInitializer(),
@@ -88,10 +102,10 @@ _initializers = {
     'Voigt1D':                    _LineProfile1DInitializer(),
     'MexicanHat1D':               _LineProfile1DInitializer(),
     'Trapezoid1D':                _LineProfile1DInitializer(),
-    'PowerLaw1D':                 _LineProfile1DInitializer(factor=0.5),
-    'BrokenPowerLaw1D':           _LineProfile1DInitializer(factor=0.5),
-    'ExponentialCutoffPowerLaw1D':_LineProfile1DInitializer(factor=0.5),
-    'LogParabola1D':              _LineProfile1DInitializer(factor=0.5),
+    'PowerLaw1D':                 _WideBand1DInitializer(),
+    'BrokenPowerLaw1D':           _WideBand1DInitializer(),
+    'ExponentialCutoffPowerLaw1D':_WideBand1DInitializer(),
+    'LogParabola1D':              _WideBand1DInitializer(),
 }
 
 # Models can have parameter names that are similar amongst them, but not quite the same.
@@ -108,6 +122,7 @@ _p_names = {
     'BrokenPowerLaw1D':           {'amplitude': 'amplitude', 'position': 'x_break'},
     'ExponentialCutoffPowerLaw1D':{'amplitude': 'amplitude', 'position': 'x_0'},
     'LogParabola1D':              {'amplitude': 'amplitude', 'position': 'x_0'},
+    'Const1D':                    {'amplitude': 'amplitude'},
     }
 
 
