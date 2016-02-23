@@ -72,6 +72,12 @@ class WindowManager(Manager):
 
         Dispatch.on_remove_layer_from_window.emit(layer=layer, window=window)
 
+    def get(self, layer):
+        for window in self._members:
+            for l in self._members[window]:
+                if layer == l:
+                    return window
+
     def get_layers(self, window):
         return self._members.get(window, [])
 

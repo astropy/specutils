@@ -304,6 +304,7 @@ class Controller(object):
         Creates a new layer object using the currently defined model.
         """
         current_layer = self.viewer.current_layer
+        current_window = self.viewer.current_sub_window
         model_inputs = self.viewer.get_model_inputs()
 
         if current_layer is None or not model_inputs:
@@ -323,9 +324,10 @@ class Controller(object):
             data=current_layer._source,
             mask=mask,
             parent=current_layer,
-            window=current_layer._window,
             name="New Model Layer",
             model=compound_model)
+
+        window_manager.add(new_model_layer, current_window)
 
         # Add the models to the new model layer
         for model in model_inputs:
