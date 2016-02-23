@@ -40,16 +40,15 @@ class DataFactory(Factory):
         return new_data
 
     @staticmethod
-    def create_layer(data, mask=None, parent=None, window=None, name='',
-                     model=None):
+    def create_layer(data, mask=None, parent=None, name='', model=None):
         logging.info("Create new layer: {}".format(name))
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
 
         if model is None:
-            new_layer = Layer(data, mask, parent, window, name)
+            new_layer = Layer(data, mask, parent, name)
         else:
-            new_layer = ModelLayer(model, data, mask, parent, window, name)
+            new_layer = ModelLayer(model, data, mask, parent, name)
 
         return new_layer
 
