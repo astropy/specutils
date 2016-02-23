@@ -12,7 +12,7 @@
 import os, sys, re, dis
 
 from io import StringIO
-from qtpy.QtWidgets import QFileDialog
+from ..third_party.qtpy.QtWidgets import QFileDialog
 
 
 # Helper functions

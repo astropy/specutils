@@ -3,4 +3,5 @@
 jinja2
 cython
 git+https://github.com/nmearl/astropy.git
+git+https://github.com/nmearl/pyqtgraph.git
 -e .

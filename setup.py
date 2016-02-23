@@ -122,5 +122,6 @@ setup(name=PACKAGENAME,
       zip_safe=False,
       use_2to3=True,
       entry_points=entry_points,
+      include_package_data=True,
       **package_info
 )
