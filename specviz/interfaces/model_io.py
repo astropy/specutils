@@ -8,6 +8,13 @@
 #
 # https://github.com/ibusko/specfit
 #
+# In time, we should keep this format only for supporting  an
+# 'Export' UI button. No reading back from .py files should be
+# supported. In order to have the ability to save to file and
+# then read back from the same file, some serialization format
+# will be used. YAML sounds like a good candidate since it is
+# human-readable and human-editable as well.
+
 
 import os, sys, re, dis
 
