@@ -323,8 +323,9 @@ class Controller(object):
         for model in model_inputs:
             model_manager.add(model=model, layer=new_model_layer)
 
+        current_window = self.viewer.current_sub_window
         plot_container = plot_manager.new(new_model_layer,
-                                          current_layer._window)
+                                          current_window)
 
         return new_model_layer
 

@@ -285,6 +285,9 @@
         <layout class="QVBoxLayout" name="verticalLayout_10">
          <item>
           <layout class="QFormLayout" name="formLayout_2">
+           <property name="formAlignment">
+            <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+           </property>
            <property name="leftMargin">
             <number>1</number>
            </property>
@@ -304,24 +307,10 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="meanLineEdit">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
             <widget class="QLabel" name="medianLabel">
              <property name="text">
               <string>Median</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="medianLineEdit">
-             <property name="readOnly">
-              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -332,24 +321,10 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="standardDeviationLineEdit">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
            <item row="3" column="0">
             <widget class="QLabel" name="totalLabel">
              <property name="text">
               <string>Total</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="totalLineEdit">
-             <property name="readOnly">
-              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -362,6 +337,52 @@
            </item>
            <item row="4" column="1">
             <widget class="QLineEdit" name="dataPointCountLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="totalLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="standardDeviationLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="medianLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="meanLineEdit">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
              <property name="readOnly">
               <bool>true</bool>
              </property>
@@ -378,6 +399,9 @@
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <item>
           <layout class="QFormLayout" name="formLayout">
+           <property name="formAlignment">
+            <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
+           </property>
            <property name="leftMargin">
             <number>1</number>
            </property>
@@ -397,13 +421,6 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="equivalentWidthLineEdit">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
             <widget class="QLabel" name="centroidLabel">
              <property name="enabled">
@@ -418,6 +435,19 @@
             <widget class="QLineEdit" name="centroidLineEdit">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="equivalentWidthLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
              </property>
              <property name="readOnly">
               <bool>true</bool>
@@ -601,8 +631,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>322</width>
-          <height>477</height>
+          <width>306</width>
+          <height>476</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
