@@ -47,6 +47,34 @@ class DataManager(Manager):
         self._members.remove(data)
 
 
+class WindowManager(Manager):
+    """
+    Manages the association of layer objects with sub windows.
+    """
+    def __init__(self):
+        super(WindowManager, self).__init__()
+        self._members = {}
+
+        DispatchHandle.setup(self)
+
+    def add(self, layer, window):
+        if window not in self._members:
+            self._members[window] = [layer]
+        else:
+            self._members[window].append(layer)
+
+        Dispatch.on_added_layer_to_window.emit(layer=layer, window=window)
+
+    def remove(self, layer, window):
+        if window in self._members:
+            if layer in self._members[window]:
+                self._members[window].remove(layer)
+
+        Dispatch.on_remove_layer_from_window.emit(layer=layer, window=window)
+
+    def get_layers(self, window):
+        return self._members.get(window, [])
+
 class LayerManager(Manager):
     """
     Manages a set of layer objects.
@@ -54,12 +82,10 @@ class LayerManager(Manager):
     def __init__(self):
         super(LayerManager, self).__init__()
 
-    def new(self, data, mask=None, parent=None, window=None, name='',
-            model=None):
+    def new(self, data, mask=None, parent=None, name='', model=None):
         logging.info("Creating new layer: {}".format(name))
 
-        new_layer = DataFactory.create_layer(data, mask, parent, window,
-                                             name, model)
+        new_layer = DataFactory.create_layer(data, mask, parent, name, model)
         self.add(new_layer)
 
         return new_layer
@@ -105,8 +131,7 @@ class LayerManager(Manager):
                                          layer.data, fitter)
 
         new_data = DataFactory.from_array(new_model(layer.dispersion.value))
-        new_layer = self.new(new_data, parent=layer._parent,
-                             window=layer._window)
+        new_layer = self.new(new_data, parent=layer._parent)
         new_layer.dispersion = layer.dispersion.value
 
         return new_layer
@@ -125,6 +150,7 @@ class LayerManager(Manager):
 
         new_layer = self._evaluate(self._members, formula)
         new_layer.name = "Resultant"
+        new_layer._window = None
         self.add(new_layer)
 
         return new_layer
@@ -141,13 +167,27 @@ class LayerManager(Manager):
             A string describing the arithmetic operations to perform.
         """
         parser = Parser()
+
+        for layer in layers:
+            formula = formula.replace(layer.name, layer.name.replace(" ", "_"))
+
         expr = parser.parse(formula)
 
         # Extract variables
         vars = expr.variables()
 
         # List the models in the same order as the variables
-        sorted_layers = [l for v in vars for l in layers if l.name == v]
+        # sorted_layers = [next(l for v in vars for l in layers
+        #                       if l.name.replace(" ", "_") == v)]
+        # sorted_layers = [l for v in vars for l in layers
+        #                  if l.name.replace(" ", "_") == v]
+        sorted_layers = []
+
+        for v in vars:
+            for l in layers:
+                if l.name.replace(" ", "_") == v:
+                    sorted_layers.append(l)
+                    break
 
         if len(sorted_layers) != len(vars):
             logging.error("Incorrect layer arithmetic formula: the number "
@@ -172,10 +212,14 @@ class ModelManager(Manager):
     def new(self, model_name, layer):
         model = ModelFactory.create_model(model_name)()
 
+        data_layer = layer
+        if hasattr(layer, 'model'):
+            data_layer = layer._parent
+
         # initialize model with sensible parameter values.
-        mask = layer._mask
-        flux = layer.data[mask]
-        dispersion = layer.dispersion[mask]
+        mask = data_layer._mask
+        flux = data_layer.data[mask]
+        dispersion = data_layer.dispersion[mask]
         initialize(model, dispersion, flux)
 
         self.add(model, layer)
@@ -284,7 +328,7 @@ class ModelManager(Manager):
 
     def fit_model(self, layer, fitter_name):
         if not hasattr(layer, 'model'):
-            logging.warning("This layer has not model to be fit.")
+            logging.warning("This layer has no model to fit.")
             return
 
         # When fitting, the selected layer is a ModelLayer, thus
@@ -333,7 +377,6 @@ class PlotManager(Manager):
     def __init__(self):
         super(PlotManager, self).__init__()
         self._members = {}
-        DispatchHandle.setup(self)
 
     def new(self, layer, window, unit=None, visible=False, style='line',
             pen=None):
@@ -350,7 +393,7 @@ class PlotManager(Manager):
         else:
             self._members[window].append(plot_container)
 
-        Dispatch.on_add_plot.emit(plot_container)
+        Dispatch.on_added_plot.emit(container=plot_container, window=window)
 
     def get_plots(self, window):
         return self._members[window]
@@ -360,7 +403,6 @@ class PlotManager(Manager):
             if container.layer == layer:
                 return container
 
-    @DispatchHandle.register_listener("on_update_plot")
     def update_plots(self, container=None, layer=None):
         if container is not None:
             container.update()
@@ -372,6 +414,7 @@ class PlotManager(Manager):
 
 
 data_manager = DataManager()
+window_manager = WindowManager()
 layer_manager = LayerManager()
 model_manager = ModelManager()
 plot_manager = PlotManager()

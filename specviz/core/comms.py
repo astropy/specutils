@@ -118,12 +118,15 @@ class DispatchHandle(object):
 
 Dispatch.register_event("on_add_data", args=["data"])
 Dispatch.register_event("on_add_window", args=["data", "window"])
-Dispatch.register_event("on_add_plot", args=["container"])
+Dispatch.register_event("on_added_plot", args=["container", "window"])
 Dispatch.register_event("on_add_model", args=["model", "layer"])
 Dispatch.register_event("on_add_layer", args=["layer"])
+Dispatch.register_event("on_added_layer_to_window", args=["layer", "window"])
 
 Dispatch.register_event("on_remove_layer", args=["layer"])
 Dispatch.register_event("on_remove_model", args=["model", "layer"])
+Dispatch.register_event("on_remove_layer_from_window", args=["layer",
+                                                             "window"])
 
 Dispatch.register_event("on_update_layer", args=["layer"])
 Dispatch.register_event("on_update_model", args=["model"])
