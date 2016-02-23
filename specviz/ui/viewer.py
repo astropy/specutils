@@ -116,12 +116,12 @@ class Viewer(QMainWindow):
     @property
     def current_sub_window(self):
         """
-        Returns the currently active `QMdiSubWindow` object.
+        Returns the currently active `PlotSubWindow` object.
 
         Returns
         -------
-        sub_window : QMdiSubWindow
-            The currently active `QMdiSubWindow` object.
+        sub_window : PlotSubWindow
+            The currently active `PlotSubWindow` object.
         """
         sub_window = self.main_window.mdiArea.currentSubWindow()
 
@@ -261,7 +261,7 @@ class Viewer(QMainWindow):
                     child.removeChild(sec_child)
                     break
 
-    @DispatchHandle.register_listener("on_add_plot", "on_update_plot")
+    @DispatchHandle.register_listener("on_added_plot", "on_update_plot")
     def update_layer_item(self, container=None, *args, **kwargs):
         if container is None:
             return
