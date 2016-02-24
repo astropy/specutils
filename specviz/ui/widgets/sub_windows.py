@@ -161,11 +161,11 @@ class PlotSubWindow(QMainWindow):
         roi.sigRemoveRequested.connect(remove)
 
         # Connect events
-        Dispatch.on_update_roi.emit(roi=roi)
+        Dispatch.on_updated_roi.emit(roi=roi)
         roi.sigRemoveRequested.connect(
-            lambda: Dispatch.on_update_roi.emit(roi=roi))
+            lambda: Dispatch.on_updated_roi.emit(roi=roi))
         roi.sigRegionChangeFinished.connect(
-            lambda: Dispatch.on_update_roi.emit(roi=roi))
+            lambda: Dispatch.on_updated_roi.emit(roi=roi))
 
     def add_equiv_width_rois(self):
         # First, remove existing rois
@@ -190,14 +190,14 @@ class PlotSubWindow(QMainWindow):
 
             for roi in self._equiv_width_rois:
                 roi.sigRemoveRequested.connect(
-                    lambda: Dispatch.on_update_roi.emit(
+                    lambda: Dispatch.on_updated_roi.emit(
                         measured_rois=self._equiv_width_rois))
                 roi.sigRegionChangeFinished.connect(
-                    lambda: Dispatch.on_update_roi.emit(
+                    lambda: Dispatch.on_updated_roi.emit(
                         measured_rois=self._equiv_width_rois))
 
             # Connect events
-            Dispatch.on_update_roi.emit(measured_rois=self._equiv_width_rois)
+            Dispatch.on_updated_roi.emit(measured_rois=self._equiv_width_rois)
 
         for roi in self._equiv_width_rois:
             self._plot_item.addItem(roi)
@@ -281,7 +281,7 @@ class PlotSubWindow(QMainWindow):
 
                 self._containers.remove(container)
 
-    @DispatchHandle.register_listener("on_select_plot")
+    @DispatchHandle.register_listener("on_selected_plot")
     def set_active_plot(self, layer):
         for container in self._containers:
             if container.layer == layer:

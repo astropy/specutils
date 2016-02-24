@@ -191,7 +191,7 @@ class Viewer(QMainWindow):
 
         return None, None
 
-    @DispatchHandle.register_listener("on_add_data")
+    @DispatchHandle.register_listener("on_added_data")
     def add_data_item(self, data):
         """
         Adds a `Data` object to the loaded data list widget.
@@ -208,8 +208,8 @@ class Viewer(QMainWindow):
 
         self.wgt_data_list.setCurrentItem(new_item)
 
-    @DispatchHandle.register_listener("on_add_layer")
-    def add_layer_item(self, layer, unique=False):
+    @DispatchHandle.register_listener("on_added_layer")
+    def add_layer_item(self, layer, unique=True):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -280,8 +280,8 @@ class Viewer(QMainWindow):
         if layer_item is not None:
             layer_item.setIcon(0, icon)
 
-    @DispatchHandle.register_listener("on_add_model")
-    def add_model_item(self, model, layer):
+    @DispatchHandle.register_listener("on_added_model")
+    def add_model_item(self, model, layer, unique=True):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
@@ -290,6 +290,10 @@ class Viewer(QMainWindow):
         """
         if model is None:
             return
+
+        if unique:
+            if self.get_model_item(model) is not None:
+                return
 
         name = model.name
 
@@ -320,7 +324,7 @@ class Viewer(QMainWindow):
             new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
 
-    @DispatchHandle.register_listener("on_remove_model")
+    @DispatchHandle.register_listener("on_removed_model")
     def remove_model_item(self, model=None, layer=None):
         root = self.wgt_model_list.invisibleRootItem()
 
@@ -402,7 +406,7 @@ class Viewer(QMainWindow):
     def clear_model_widget(self):
         self.wgt_model_list.clear()
 
-    @DispatchHandle.register_listener("on_update_stats")
+    @DispatchHandle.register_listener("on_updated_stats")
     def update_statistics(self, stats, layer):
         self.main_window.currentLayerLabel.setText(
             "Current Layer: {}".format(layer.name))
