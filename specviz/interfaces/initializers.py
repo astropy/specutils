@@ -68,9 +68,6 @@ class _LineProfile1DInitializer(object):
 
     def initialize(self, instance, x, y):
 
-        # amplitude is just the data range in Y
-        y_range = np.max(y) - np.min(y)
-
         # X centroid estimates the position
         centroid = np.sum(x * y) / np.sum(y)
 
@@ -79,9 +76,13 @@ class _LineProfile1DInitializer(object):
         dx = x - np.mean(x)
         width = np.sqrt(np.sum((dx * dx) * y) / np.sum(y))
 
+        # amplitude is derived from area.
+        sum = np.sum(y - np.min(y))
+        height = sum / (width * np.sqrt(2 * np.pi) )
+
         name = _get_model_name(instance)
 
-        _setattr(instance, name, AMPLITUDE, y_range * self._factor)
+        _setattr(instance, name, AMPLITUDE, height * self._factor)
         _setattr(instance, name, POSITION, centroid)
         _setattr(instance, name, WIDTH, width)
 
