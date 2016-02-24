@@ -104,7 +104,7 @@ class Controller(object):
 
         # Attach the update button
         self.viewer.main_window.updateModelLayerButton.clicked.connect(
-            self.update_model_list)
+            self.update_model_layer)
 
         # Attach the model save/read buttons
         self.viewer.main_window.saveModelButton.clicked.connect(
@@ -423,7 +423,7 @@ class Controller(object):
                                    formula=self.viewer.current_model_formula,
                                    mask=mask)
 
-        plot_manager.update_plots(layer=self.viewer.current_layer)
+        plot_manager.update_plots(layer=current_layer)
 
     def remove_layer(self):
         current_layer = self.viewer.current_layer
@@ -548,12 +548,11 @@ class Controller(object):
         """
         if layer_item is not None or layer is not None:
             current_layer = layer or self.viewer.current_layer
-            self.viewer.clear_model_widget()
 
             models = model_manager.get_models(current_layer)
 
             for model in models:
                 self.viewer.add_model_item(model=model,
-                                           layer=current_layer)
+                                           layer=current_layer, unique=True)
         elif model is not None:
             self.viewer.update_model_item(model)

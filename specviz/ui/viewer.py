@@ -209,7 +209,7 @@ class Viewer(QMainWindow):
         self.wgt_data_list.setCurrentItem(new_item)
 
     @DispatchHandle.register_listener("on_added_layer")
-    def add_layer_item(self, layer, unique=False):
+    def add_layer_item(self, layer, unique=True):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -281,7 +281,7 @@ class Viewer(QMainWindow):
             layer_item.setIcon(0, icon)
 
     @DispatchHandle.register_listener("on_added_model")
-    def add_model_item(self, model, layer):
+    def add_model_item(self, model, layer, unique=True):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
@@ -290,6 +290,10 @@ class Viewer(QMainWindow):
         """
         if model is None:
             return
+
+        if unique:
+            if self.get_model_item(model) is not None:
+                return
 
         name = model.name
 
