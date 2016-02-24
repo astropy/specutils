@@ -54,15 +54,14 @@ class Controller(object):
                 layer=self.viewer.current_layer))
 
         # When an interactable widget inside a layer item is clicked
-        self.viewer.wgt_layer_list.itemChanged.connect(
+        self.viewer.wgt_layer_list.itemClicked.connect(
             lambda li, col: Dispatch.on_clicked_layer.emit(
                 layer_item=li))
 
-        # Create a new layer based on any active ROIs
-        self.viewer.main_window.toolButton_6.clicked.connect(
-            lambda: self.add_roi_layer(self.viewer.current_layer,
-                                       self.get_roi_mask(),
-                                       self.viewer.current_sub_window))
+        # When the model items in the model tree change
+        self.viewer.wgt_model_list.currentItemChanged.connect(
+            lambda mi, col: Dispatch.on_changed_model.emit(
+                model_item=mi))
 
     def _setup_connections(self):
         self.viewer.main_window.toolButton_3.clicked.connect(
@@ -73,11 +72,15 @@ class Controller(object):
 
         # When the layer list delete button is pressed
         self.viewer.main_window.layerRemoveButton.clicked.connect(
-            lambda: layer_manager.remove(self.viewer.current_layer))
+            self.remove_layer)
 
         # When the arithmetic button is clicked, show math dialog
         self.viewer.main_window.arithmeticToolButton.clicked.connect(
             self._show_arithmetic_dialog)
+
+        # Create a new layer based on any active ROIs
+        self.viewer.main_window.toolButton_6.clicked.connect(
+            lambda: self.add_roi_layer())
 
         # Populate model dropdown
         self.viewer.main_window.modelsComboBox.addItems(
@@ -101,7 +104,7 @@ class Controller(object):
 
         # Attach the update button
         self.viewer.main_window.updateModelLayerButton.clicked.connect(
-            self.update_model_layer)
+            self.update_model_list)
 
         # Attach the model save/read buttons
         self.viewer.main_window.saveModelButton.clicked.connect(
@@ -150,7 +153,7 @@ class Controller(object):
         if col.isValid():
             container.pen = col
 
-            Dispatch.on_update_plot.emit(container=container)
+            plot_manager.update_plots(container=container)
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window
@@ -264,7 +267,7 @@ class Controller(object):
 
         data = data_manager.load(str(file_name), str(selected_filter))
 
-    def add_roi_layer(self, layer, mask=None, window=None):
+    def add_roi_layer(self, layer=None, mask=None, window=None):
         """
         Creates a layer object from the current ROIs of the active plot layer.
 
@@ -277,13 +280,16 @@ class Controller(object):
         mask : ndarray
             Boolean mask.
         """
+        layer = layer if layer is not None else self.viewer.current_layer
+        window = window if window is not None else self.viewer.current_sub_window
         roi_mask = mask if mask is not None else self.get_roi_mask(layer=layer)
-        layer = layer_manager.new(layer._source,
-                                  mask=roi_mask,
-                                  window=window,
-                                  name=layer._source.name + " Layer Slice")
 
-        plot_container = plot_manager.new(layer, window)
+        new_layer = layer_manager.new(layer._source,
+                                      mask=roi_mask,
+                                      name=layer._source.name + " Layer Slice")
+
+        window_manager.add(new_layer, window)
+        plot_container = plot_manager.new(new_layer, window)
 
     def add_sub_window(self, data=None, window=None, layer=None):
         """
@@ -355,7 +361,7 @@ class Controller(object):
         current_layer = self.viewer.current_layer
 
         # Update the model parameters with those in the gui
-        self.update_model_layer()
+        # self.update_model_layer()
 
         # Create fitted layer
         fitted_layer = model_manager.fit_model(
@@ -388,9 +394,9 @@ class Controller(object):
 
             return roi_mask
 
-    def update_model_layer(self, *args, **kwargs):
+    def update_model_layer(self, model_item=None):
         """
-        Updates the current layer with the results of the model.
+        Updates the values in the model.
         """
         current_layer = self.viewer.current_layer
         current_window = self.viewer.current_sub_window
@@ -408,8 +414,18 @@ class Controller(object):
                                    formula=self.viewer.current_model_formula,
                                    mask=mask)
 
-        # plot_manager.update_plots(current_window, current_layer)
-        Dispatch.on_update_plot.emit(layer=current_layer)
+        plot_manager.update_plots(layer=self.viewer.current_layer)
+
+    def remove_layer(self):
+        current_layer = self.viewer.current_layer
+
+        if current_layer is None:
+            return
+
+        layer_manager.remove(layer=current_layer)
+        window_manager.remove(layer=current_layer)
+        plot_manager.remove(layer=current_layer)
+        model_manager.remove(layer=current_layer)
 
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
@@ -427,7 +443,7 @@ class Controller(object):
         layer = layer_item.data(0, Qt.UserRole)
 
         if layer is not None:
-            current_window = self.viewer.current_sub_window
+            current_window = window_manager.get(layer)
 
             current_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
@@ -452,17 +468,17 @@ class Controller(object):
         if hasattr(model, '_name'):
             model._name = model_item.text(0)
 
-    @DispatchHandle.register_listener("on_added_layer_to_window")
+    @DispatchHandle.register_listener("on_changed_model")
+    def _update_model_parameters(self, *args, **kwargs):
+        current_layer = self.viewer.current_layer
+        model_inputs = self.viewer.get_model_inputs()
+
+        if len(model_inputs) > 0:
+            model_manager.update_model(current_layer, model_inputs)
+
+    @DispatchHandle.register_listener("on_added_to_window")
     def plot_layer(self, layer=None, window=None):
         plot_container = plot_manager.new(layer=layer, window=window)
-
-    @DispatchHandle.register_listener("on_remove_layer_from_window")
-    def remove_plot_layer(self, layer=None, window=None):
-        plot_manager.remove(layer=layer, window=window)
-
-    @DispatchHandle.register_listener("on_update_plot")
-    def update_plots(self, container=None, layer=None):
-        plot_manager.update_plots(container, layer)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_roi")
     def update_statistics(self, layer_item=None, roi=None, measured_rois=None):
@@ -499,8 +515,7 @@ class Controller(object):
 
         Dispatch.on_update_stats.emit(stats=stat_dict, layer=current_layer)
 
-    @DispatchHandle.register_listener("on_select_window",
-                                      "on_added_layer_to_window")
+    @DispatchHandle.register_listener("on_select_window")
     def update_layer_list(self, window=None, layer=None):
         """
         Clears and repopulates the layer list depending on the currently
@@ -512,7 +527,6 @@ class Controller(object):
             window = window.widget()
 
         layers = window_manager.get_layers(window)
-        self.viewer.clear_layer_widget()
 
         for layer in layers:
             container = plot_manager.get_plot_from_layer(layer=layer,
@@ -520,9 +534,10 @@ class Controller(object):
             pixmap = QPixmap(10, 10)
             pixmap.fill(container._pen_stash['pen_on'].color())
             icon = QIcon(pixmap)
-            self.viewer.add_layer_item(layer, icon=icon)
+            self.viewer.add_layer_item(layer, icon=icon, unique=True)
 
-    @DispatchHandle.register_listener("on_select_layer", "on_update_model")
+    @DispatchHandle.register_listener("on_select_layer", "on_update_model",
+                                      "on_removed_layer")
     def update_model_list(self, layer_item=None, model=None, layer=None):
         """
         Clears and repopulates the model list depending on the currently
@@ -531,9 +546,6 @@ class Controller(object):
         if layer_item is not None or layer is not None:
             current_layer = layer or self.viewer.current_layer
             self.viewer.clear_model_widget()
-
-            if not hasattr(current_layer, 'model'):
-                return
 
             models = model_manager.get_models(current_layer)
 
