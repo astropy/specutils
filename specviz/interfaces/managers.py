@@ -253,6 +253,9 @@ class ModelManager(Manager):
         return model
 
     def remove(self, layer, model=None, index=None):
+        if layer not in self._members:
+            return
+
         if index is not None:
             model = self._members[layer].pop(index)
         elif model is not None:
@@ -260,7 +263,7 @@ class ModelManager(Manager):
         else:
             del self._members[layer]
 
-        Dispatch.on_removed_model.emit(model)
+        Dispatch.on_removed_model.emit(model=model, layer=layer)
 
     def _evaluate(self, models, formula):
         parser = Parser()

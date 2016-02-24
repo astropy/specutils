@@ -20,6 +20,8 @@ class Viewer(QMainWindow):
     """
     def __init__(self, parent=None):
         super(Viewer, self).__init__(parent)
+        self._current_sub_window = None
+
         self.main_window = Ui_MainWindow()
         self.main_window.setupUi(self)
         self.wgt_data_list = self.main_window.listWidget
@@ -44,6 +46,10 @@ class Viewer(QMainWindow):
         DispatchHandle.setup(self)
 
     def _setup_connections(self):
+        # Listen for subwindow selection events, update layer list on selection
+        self.main_window.mdiArea.subWindowActivated.connect(
+            self._set_current_sub_window)
+
         # When clicking a layer, update the model list to show particular
         # buttons depending on if the layer is a model layer
         self.wgt_layer_list.itemSelectionChanged.connect(
@@ -75,6 +81,16 @@ class Viewer(QMainWindow):
             self.main_window.fittingRoutinesGroupBox.setEnabled(True)
             self.main_window.saveModelButton.setEnabled(True)
             self.main_window.loadModelButton.setEnabled(False)
+
+    def _set_current_sub_window(self, sub_window):
+        sub_window = sub_window or self.main_window.mdiArea.currentSubWindow()
+
+        if sub_window is None:
+            sub_window = self.main_window.mdiArea.activatePreviousSubWindow()
+
+        if self._current_sub_window != sub_window:
+            self._current_sub_window = sub_window
+            Dispatch.on_selected_window.emit(window=self._current_sub_window)
 
     @property
     def current_data(self):
@@ -123,12 +139,7 @@ class Viewer(QMainWindow):
         sub_window : PlotSubWindow
             The currently active `PlotSubWindow` object.
         """
-        sub_window = self.main_window.mdiArea.currentSubWindow()
-
-        if sub_window is None:
-            sub_window = self.main_window.mdiArea.activatePreviousSubWindow()
-
-        return sub_window.widget()
+        return self._current_sub_window.widget()
 
     @property
     def current_model(self):
@@ -330,6 +341,10 @@ class Viewer(QMainWindow):
 
         for i in range(root.childCount()):
             child = root.child(i)
+
+            if child is None:
+                continue
+
             root.removeChild(child)
 
             if child.data(0, Qt.UserRole) == model:

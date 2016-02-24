@@ -38,11 +38,6 @@ class Controller(object):
         DispatchHandle.setup(self)
 
     def _setup_communications(self):
-        # Listen for subwindow selection events, update layer list on selection
-        self.viewer.main_window.mdiArea.subWindowActivated.connect(
-            lambda sw: Dispatch.on_selected_window.emit(
-                window=sw))
-
         # Listen for layer selection events, update model tree on selection
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
             lambda: Dispatch.on_selected_layer.emit(
@@ -531,6 +526,8 @@ class Controller(object):
         elif isinstance(window, QMdiSubWindow):
             window = window.widget()
 
+        self.viewer.wgt_layer_list.clear()
+
         layers = window_manager.get_layers(window)
 
         for layer in layers:
@@ -539,8 +536,7 @@ class Controller(object):
             self.viewer.add_layer_item(layer, unique=True)
             self.viewer.update_layer_item(container)
 
-    @DispatchHandle.register_listener("on_selected_layer", "on_updated_model",
-                                      "on_removed_layer")
+    @DispatchHandle.register_listener("on_selected_layer", "on_updated_model")
     def update_model_list(self, layer_item=None, model=None, layer=None):
         """
         Clears and repopulates the model list depending on the currently
@@ -548,6 +544,7 @@ class Controller(object):
         """
         if layer_item is not None or layer is not None:
             current_layer = layer or self.viewer.current_layer
+            self.viewer.wgt_model_list.clear()
 
             models = model_manager.get_models(current_layer)
 
