@@ -138,7 +138,7 @@
         <number>1</number>
        </property>
        <item>
-        <widget class="QToolButton" name="toolButton_3">
+        <widget class="QToolButton" name="createSubWindowButton">
          <property name="toolTip">
           <string>Create new plot window from data</string>
          </property>
@@ -159,7 +159,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="toolButton_2">
+        <widget class="QToolButton" name="addToSubWindowButton">
          <property name="toolTip">
           <string>Add data to current plot window</string>
          </property>

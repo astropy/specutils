@@ -137,7 +137,8 @@ class Viewer(QMainWindow):
         sub_window : PlotSubWindow
             The currently active `PlotSubWindow` object.
         """
-        return self._current_sub_window.widget()
+        if self._current_sub_window is not None:
+            return self._current_sub_window.widget()
 
     @property
     def current_model(self):
@@ -216,6 +217,19 @@ class Viewer(QMainWindow):
         new_item.setData(Qt.UserRole, data)
 
         self.wgt_data_list.setCurrentItem(new_item)
+
+    @DispatchHandle.register_listener("on_removed_data")
+    def remove_data_item(self, data):
+        data_item = self.get_data_item(data)
+
+        self.wgt_data_list.removeItemWidget(data_item)
+
+    def get_data_item(self, data):
+        for i in range(self.wgt_data_list.count()):
+            data_item = self.wgt_data_list.item(0)
+
+            if data_item.data(Qt.UserRole) == data:
+                return data_item
 
     @DispatchHandle.register_listener("on_added_layer")
     def add_layer_item(self, layer, unique=True):

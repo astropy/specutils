@@ -46,6 +46,8 @@ class DataManager(Manager):
     def remove(self, data):
         self._members.remove(data)
 
+        Dispatch.on_removed_data.emit(data)
+
 
 class WindowManager(Manager):
     """

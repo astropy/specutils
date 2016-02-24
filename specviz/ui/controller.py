@@ -59,11 +59,20 @@ class Controller(object):
                 model_item=mi))
 
     def _setup_connections(self):
-        self.viewer.main_window.toolButton_3.clicked.connect(
+        self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
+
+        # Connect the create new sub window button
+        self.viewer.main_window.createSubWindowButton.clicked.connect(
             lambda: self.add_sub_window(
                 data=self.viewer.current_data))
 
-        self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
+        # Connect the add to current plot window button
+        self.viewer.main_window.addToSubWindowButton.clicked.connect(
+            lambda: print("Not implemented"))
+
+        # When the layer list delete button is pressed
+        self.viewer.main_window.dataRemoveButton.clicked.connect(
+            self.remove_data)
 
         # When the layer list delete button is pressed
         self.viewer.main_window.layerRemoveButton.clicked.connect(
@@ -420,8 +429,8 @@ class Controller(object):
 
         plot_manager.update_plots(layer=current_layer)
 
-    def remove_layer(self):
-        current_layer = self.viewer.current_layer
+    def remove_layer(self, layer=None):
+        current_layer = layer or self.viewer.current_layer
 
         if current_layer is None:
             return
@@ -430,6 +439,14 @@ class Controller(object):
         window_manager.remove(layer=current_layer)
         plot_manager.remove(layer=current_layer)
         model_manager.remove(layer=current_layer)
+
+    def remove_data(self):
+        current_data = self.viewer.current_data
+
+        if current_data is None:
+            return
+
+        data_manager.remove(data=current_data)
 
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
