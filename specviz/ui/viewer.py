@@ -125,8 +125,10 @@ class Viewer(QMainWindow):
         """
         sub_window = self.main_window.mdiArea.currentSubWindow()
 
-        if sub_window is not None:
-            return sub_window.widget()
+        if sub_window is None:
+            sub_window = self.main_window.mdiArea.activatePreviousSubWindow()
+
+        return sub_window.widget()
 
     @property
     def current_model(self):
@@ -207,7 +209,7 @@ class Viewer(QMainWindow):
         self.wgt_data_list.setCurrentItem(new_item)
 
     @DispatchHandle.register_listener("on_add_layer")
-    def add_layer_item(self, layer, icon=None, unique=False):
+    def add_layer_item(self, layer, unique=False):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -227,9 +229,6 @@ class Viewer(QMainWindow):
         new_item.setText(0, layer.name)
         new_item.setData(0, Qt.UserRole, layer)
         new_item.setCheckState(0, Qt.Checked)
-
-        if icon is not None:
-            new_item.setIcon(0, icon)
 
         self.wgt_layer_list.setCurrentItem(new_item)
 
@@ -266,14 +265,14 @@ class Viewer(QMainWindow):
                     child.removeChild(sec_child)
                     break
 
-    @DispatchHandle.register_listener("on_added_plot", "on_update_plot")
+    @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
     def update_layer_item(self, container=None, *args, **kwargs):
         if container is None:
             return
 
         layer = container._layer
         pixmap = QPixmap(10, 10)
-        pixmap.fill(container._pen_stash['pen_on'].color())
+        pixmap.fill(container.pen.color())
         icon = QIcon(pixmap)
 
         layer_item = self.get_layer_item(layer)

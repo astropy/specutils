@@ -7,6 +7,13 @@ from ..third_party.qtpy.QtGui import *
 
 from astropy.units import Unit, Quantity
 import pyqtgraph as pg
+from itertools import cycle
+
+AVAILABLE_COLORS = cycle([(0, 0, 0), (0, 73, 73), (0, 146, 146),
+                          (255, 109, 182), (255, 182, 219), (73, 0, 146),
+                          (0, 109, 219), (182, 109, 255), (109, 182, 255),
+                          (182, 219, 255), (146, 0, 0), (146, 73, 0),
+                          (219, 209, 0), (36, 255, 36), (255, 255, 109)])
 
 
 class PlotContainer(object):
@@ -21,8 +28,7 @@ class PlotContainer(object):
         if self._plot is not None:
             self.change_units(self._layer.units[0], self._layer.units[1])
 
-        r, g, b = (random.randint(10, 25) * 10, random.randint(10, 25) * 10,
-                   random.randint(10, 25) * 10)
+        r, g, b = next(AVAILABLE_COLORS)
 
         rand_pen = pg.mkPen(QColor(r, g, b, 255))
 
@@ -62,12 +68,12 @@ class PlotContainer(object):
         error_pen_show = error_pen_show if pen_show else False
 
         if pen_show:
-            self.plot.setPen(self._pen_stash['pen_on'])
+            self._plot.setPen(self._pen_stash['pen_on'])
 
             if inactive:
-                self.plot.setPen(self._pen_stash['pen_inactive'])
+                self._plot.setPen(self._pen_stash['pen_inactive'])
         else:
-            self.plot.setPen(self._pen_stash['pen_off'])
+            self._plot.setPen(self._pen_stash['pen_off'])
 
         if error_pen_show:
             if self.error is not None:

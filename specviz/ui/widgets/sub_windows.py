@@ -233,8 +233,9 @@ class PlotSubWindow(QMainWindow):
     def set_visibility(self, layer, show, override=False):
         for container in self._containers:
             if container.layer == layer:
-                container.set_visibility(show, show, inactive=False,
-                                         override=override)
+                if container._visibility_state != [show, show, False]:
+                    container.set_visibility(show, show, inactive=False,
+                                             override=override)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)

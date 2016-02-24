@@ -431,6 +431,9 @@ class PlotManager(Manager):
             if container.layer == layer:
                 return container
 
+        logging.warning("No plots found for layer {} in window {}.".format(
+            layer, window))
+
     def update_plots(self, container=None, layer=None):
         if container is not None:
             container.update()

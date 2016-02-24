@@ -121,6 +121,10 @@ class Controller(object):
 
     def _layer_context_menu(self, point):
         layer_item = self.viewer.wgt_layer_list.itemAt(point)
+
+        if layer_item is None:
+            return
+
         container = plot_manager.get_plot_from_layer(
             layer_item.data(0, Qt.UserRole),
             self.viewer.current_sub_window)
@@ -153,7 +157,9 @@ class Controller(object):
         if col.isValid():
             container.pen = col
 
-            plot_manager.update_plots(container=container)
+            Dispatch.on_updated_plot.emit(container=container)
+        else:
+            logging.warning("Color is not valid.")
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window
@@ -175,7 +181,7 @@ class Controller(object):
             if new_layer.data.unit.is_equivalent(current_window._plot_units[1]):
                 self.add_sub_window(layer=new_layer, window=current_window)
             else:
-                print("{} not equivalent to {}.".format(
+                logging.info("{} not equivalent to {}.".format(
                     new_layer.data.unit, current_window._plot_units[1]))
                 self.add_sub_window(layer=new_layer)
 
@@ -306,6 +312,7 @@ class Controller(object):
             layer = layer_manager.new(data)
 
         window_manager.add(layer, window)
+        plot_container = plot_manager.new(layer, window)
 
     def add_model_layer(self):
         """
@@ -476,10 +483,6 @@ class Controller(object):
         if len(model_inputs) > 0:
             model_manager.update_model(current_layer, model_inputs)
 
-    @DispatchHandle.register_listener("on_added_to_window")
-    def plot_layer(self, layer=None, window=None):
-        plot_container = plot_manager.new(layer=layer, window=window)
-
     @DispatchHandle.register_listener("on_select_layer", "on_update_roi")
     def update_statistics(self, layer_item=None, roi=None, measured_rois=None):
         if layer_item is not None:
@@ -531,10 +534,8 @@ class Controller(object):
         for layer in layers:
             container = plot_manager.get_plot_from_layer(layer=layer,
                                                          window=window)
-            pixmap = QPixmap(10, 10)
-            pixmap.fill(container._pen_stash['pen_on'].color())
-            icon = QIcon(pixmap)
-            self.viewer.add_layer_item(layer, icon=icon, unique=True)
+            self.viewer.add_layer_item(layer, unique=True)
+            self.viewer.update_layer_item(container)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_model",
                                       "on_removed_layer")
