@@ -222,7 +222,7 @@ class Viewer(QMainWindow):
     def remove_data_item(self, data):
         data_item = self.get_data_item(data)
 
-        self.wgt_data_list.removeItemWidget(data_item)
+        self.wgt_data_list.takeItem(self.wgt_data_list.row(data_item))
 
     def get_data_item(self, data):
         for i in range(self.wgt_data_list.count()):
