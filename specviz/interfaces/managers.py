@@ -337,7 +337,9 @@ class ModelManager(Manager):
 
     def update_model(self, layer, model_inputs, formula='', mask=None):
         model = self.get_compound_model(model_inputs, formula)
-        layer.model = model
+
+        if hasattr(layer, '_model'):
+            layer.model = model
 
         if mask is not None:
             layer._mask = mask

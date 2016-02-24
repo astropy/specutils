@@ -50,24 +50,22 @@ class Viewer(QMainWindow):
         self.main_window.mdiArea.subWindowActivated.connect(
             self._set_current_sub_window)
 
-        # When clicking a layer, update the model list to show particular
-        # buttons depending on if the layer is a model layer
-        self.wgt_layer_list.itemSelectionChanged.connect(
-            self._set_model_tool_options)
-
         # When a user edits the model parameter field, validate the input
         self.wgt_model_list.itemChanged.connect(
                 self._model_parameter_validation)
 
-    def _set_model_tool_options(self):
-        layer = self.current_layer
-
-        if layer is None:
+    @DispatchHandle.register_listener("on_selected_layer")
+    def _set_model_tool_options(self, layer_item):
+        if layer_item is None:
             self.main_window.createModelLayerButton.hide()
             self.main_window.updateModelLayerButton.hide()
             self.main_window.fittingRoutinesGroupBox.setEnabled(False)
             self.main_window.loadModelButton.setEnabled(False)
             self.main_window.saveModelButton.setEnabled(False)
+
+            return
+
+        layer = layer_item.data(0, Qt.UserRole)
 
         if not hasattr(layer, 'model'):
             self.main_window.createModelLayerButton.show()
