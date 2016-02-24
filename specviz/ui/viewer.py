@@ -207,7 +207,7 @@ class Viewer(QMainWindow):
         self.wgt_data_list.setCurrentItem(new_item)
 
     @DispatchHandle.register_listener("on_add_layer")
-    def add_layer_item(self, layer, icon=None, *args):
+    def add_layer_item(self, layer, icon=None, unique=False):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -216,6 +216,11 @@ class Viewer(QMainWindow):
         layer : specviz.core.data.Layer
             The `Layer` object to add to the list widget.
         """
+        # Make sure there is only one item per layer object
+        if unique:
+            if self.get_layer_item(layer) is not None:
+                return
+
         new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
                                    self.wgt_layer_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
@@ -243,7 +248,7 @@ class Viewer(QMainWindow):
                 if sec_child.data(0, Qt.UserRole) == layer:
                     return sec_child
 
-    @DispatchHandle.register_listener("on_remove_layer")
+    @DispatchHandle.register_listener("on_removed_layer")
     def remove_layer_item(self, layer):
         root = self.wgt_layer_list.invisibleRootItem()
 
@@ -317,16 +322,14 @@ class Viewer(QMainWindow):
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
 
     @DispatchHandle.register_listener("on_remove_model")
-    def remove_model_item(self, model):
+    def remove_model_item(self, model=None, layer=None):
         root = self.wgt_model_list.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
+            root.removeChild(child)
 
-            if model is None:
-                root.removeChild(child)
-            elif child.data(0, Qt.UserRole) == model:
-                root.removeChild(child)
+            if child.data(0, Qt.UserRole) == model:
                 break
 
     def update_model_item(self, model):
@@ -387,6 +390,7 @@ class Viewer(QMainWindow):
             for i in range(model_item.childCount()):
                 child_item = model_item.child(i)
                 child = child_item.text(1)
+
                 args.append(float(child))
 
             models[model] = args

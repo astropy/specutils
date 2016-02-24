@@ -63,14 +63,19 @@ class WindowManager(Manager):
         else:
             self._members[window].append(layer)
 
-        Dispatch.on_added_layer_to_window.emit(layer=layer, window=window)
+        Dispatch.on_added_to_window.emit(layer=layer, window=window)
 
-    def remove(self, layer, window):
+    def remove(self, layer, window=None):
         if window in self._members:
             if layer in self._members[window]:
                 self._members[window].remove(layer)
+        else:
+            for window in self._members:
+                if layer in self._members[window]:
+                    self._members[window].remove(layer)
+                    break
 
-        Dispatch.on_remove_layer_from_window.emit(layer=layer, window=window)
+        Dispatch.on_removed_from_window.emit(layer=layer, window=window)
 
     def get(self, layer):
         for window in self._members:
@@ -114,7 +119,7 @@ class LayerManager(Manager):
         self._members.remove(layer)
 
         # Emit removal event
-        Dispatch.on_remove_layer.emit(layer)
+        Dispatch.on_removed_layer.emit(layer)
 
     def copy(self, layer):
         new_layer = DataFactory.create_layer(layer._source)
@@ -220,7 +225,8 @@ class ModelManager(Manager):
 
         # if a model layer is selected, get data from its parent layer.
         data_layer = layer
-        if hasattr(layer, 'model'):
+
+        if hasattr(layer, '_model'):
             data_layer = layer._parent
 
         # initialize model with sensible parameter values.
@@ -307,7 +313,7 @@ class ModelManager(Manager):
     def get_compound_model(self, model_dict, formula=''):
         models = []
 
-        for model in model_dict.keys():
+        for model in model_dict:
             for i, param_name in enumerate(model.param_names):
                 setattr(model, param_name, model_dict[model][i])
 
@@ -334,6 +340,10 @@ class ModelManager(Manager):
             layer._mask = mask
 
         Dispatch.on_update_model.emit(model=model)
+
+    def update_model_parameters(self, model, model_inputs):
+        for model in model_inputs:
+            model.parameters = model_inputs[model]
 
     def fit_model(self, layer, fitter_name):
         if not hasattr(layer, 'model'):
@@ -404,6 +414,15 @@ class PlotManager(Manager):
 
         Dispatch.on_added_plot.emit(container=plot_container, window=window)
 
+    def remove(self, layer, window=None):
+        if window is None:
+            for w in self._members:
+                if layer in self._members:
+                    window = w
+                    break
+
+        Dispatch.on_removed_plot.emit(layer=layer, window=window)
+
     def get_plots(self, window):
         return self._members[window]
 
@@ -420,6 +439,8 @@ class PlotManager(Manager):
                               self._members[x]]:
                 if container._layer == layer:
                     container.update()
+
+        Dispatch.on_updated_plot.emit(container=container, layer=layer)
 
 
 data_manager = DataManager()
