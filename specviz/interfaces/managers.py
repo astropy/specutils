@@ -217,15 +217,14 @@ class ModelManager(Manager):
 
     def new(self, model_name, layer):
         model = ModelFactory.create_model(model_name)()
-
         data_layer = layer
+
         if hasattr(layer, 'model'):
             data_layer = layer._parent
 
         # initialize model with sensible parameter values.
-        mask = data_layer._mask
-        flux = data_layer.data[mask]
-        dispersion = data_layer.dispersion[mask]
+        flux = data_layer.data
+        dispersion = data_layer.dispersion
         initialize(model, dispersion, flux)
 
         self.add(model, layer)
@@ -304,7 +303,7 @@ class ModelManager(Manager):
     def get_compound_model(self, model_dict, formula=''):
         models = []
 
-        for model in model_dict.keys():
+        for model in model_dict:
             for i, param_name in enumerate(model.param_names):
                 setattr(model, param_name, model_dict[model][i])
 
@@ -331,6 +330,10 @@ class ModelManager(Manager):
             layer._mask = mask
 
         Dispatch.on_update_model.emit(model=model)
+
+    def update_model_parameters(self, model, model_inputs):
+        for model in model_inputs:
+            model.parameters = model_inputs[model]
 
     def fit_model(self, layer, fitter_name):
         if not hasattr(layer, 'model'):
@@ -417,6 +420,8 @@ class PlotManager(Manager):
                               self._members[x]]:
                 if container._layer == layer:
                     container.update()
+
+        Dispatch.on_updated_plot.emit(container=container, layer=layer)
 
 
 data_manager = DataManager()

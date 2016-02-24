@@ -387,6 +387,7 @@ class Viewer(QMainWindow):
             for i in range(model_item.childCount()):
                 child_item = model_item.child(i)
                 child = child_item.text(1)
+
                 args.append(float(child))
 
             models[model] = args

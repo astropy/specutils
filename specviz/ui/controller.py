@@ -44,9 +44,9 @@ class Controller(object):
                 window=sw))
 
         # Listen for layer selection events, update model tree on selection
-        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_select_layer.emit(
-                layer_item=self.viewer.current_layer_item))
+        self.viewer.wgt_layer_list.currentItemChanged.connect(
+            lambda ci, pi: Dispatch.on_select_layer.emit(
+                layer_item=ci))
 
         # When a layer is selected, make that line more obvious than the others
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
@@ -54,9 +54,14 @@ class Controller(object):
                 layer=self.viewer.current_layer))
 
         # When an interactable widget inside a layer item is clicked
-        self.viewer.wgt_layer_list.itemChanged.connect(
+        self.viewer.wgt_layer_list.itemClicked.connect(
             lambda li, col: Dispatch.on_clicked_layer.emit(
                 layer_item=li))
+
+        # When an interactable widget inside a layer item is clicked
+        self.viewer.wgt_model_list.currentItemChanged.connect(
+            lambda mi, col: Dispatch.on_changed_model.emit(
+                model_item=mi))
 
         # Create a new layer based on any active ROIs
         self.viewer.main_window.toolButton_6.clicked.connect(
@@ -101,7 +106,7 @@ class Controller(object):
 
         # Attach the update button
         self.viewer.main_window.updateModelLayerButton.clicked.connect(
-            self.update_model_layer)
+            self.update_model_list)
 
         # Attach the model save/read buttons
         self.viewer.main_window.saveModelButton.clicked.connect(
@@ -150,7 +155,7 @@ class Controller(object):
         if col.isValid():
             container.pen = col
 
-            Dispatch.on_update_plot.emit(container=container)
+            plot_manager.update_plots(container=container)
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window
@@ -278,9 +283,9 @@ class Controller(object):
         roi_mask = mask if mask is not None else self.get_roi_mask(layer=layer)
         layer = layer_manager.new(layer._source,
                                   mask=roi_mask,
-                                  window=window,
                                   name=layer._source.name + " Layer Slice")
 
+        window_manager.add(layer, window)
         plot_container = plot_manager.new(layer, window)
 
     def add_sub_window(self, data=None, window=None, layer=None):
@@ -342,7 +347,7 @@ class Controller(object):
     def add_model(self):
         model_name = self.viewer.current_model
         layer = self.viewer.current_layer
-
+        print(layer)
         model = model_manager.new(model_name, layer)
 
         return model
@@ -351,7 +356,7 @@ class Controller(object):
         current_layer = self.viewer.current_layer
 
         # Update the model parameters with those in the gui
-        self.update_model_layer()
+        # self.update_model_layer()
 
         # Create fitted layer
         fitted_layer = model_manager.fit_model(
@@ -384,9 +389,9 @@ class Controller(object):
 
             return roi_mask
 
-    def update_model_layer(self, *args, **kwargs):
+    def update_model_layer(self, model_item=None):
         """
-        Updates the current layer with the results of the model.
+        Updates the values in the model.
         """
         current_layer = self.viewer.current_layer
         current_window = self.viewer.current_sub_window
@@ -404,8 +409,7 @@ class Controller(object):
                                    formula=self.viewer.current_model_formula,
                                    mask=mask)
 
-        # plot_manager.update_plots(current_window, current_layer)
-        Dispatch.on_update_plot.emit(layer=current_layer)
+        plot_manager.update_plots(layer=self.viewer.current_layer)
 
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
@@ -448,6 +452,14 @@ class Controller(object):
         if hasattr(model, '_name'):
             model._name = model_item.text(0)
 
+    @DispatchHandle.register_listener("on_changed_model")
+    def _update_model_parameters(self, *args, **kwargs):
+        current_layer = self.viewer.current_layer
+        model_inputs = self.viewer.get_model_inputs()
+
+        if len(model_inputs) > 0:
+            model_manager.update_model(current_layer, model_inputs)
+
     @DispatchHandle.register_listener("on_added_layer_to_window")
     def plot_layer(self, layer=None, window=None):
         plot_container = plot_manager.new(layer=layer, window=window)
@@ -455,10 +467,6 @@ class Controller(object):
     @DispatchHandle.register_listener("on_remove_layer_from_window")
     def remove_plot_layer(self, layer=None, window=None):
         plot_manager.remove(layer=layer, window=window)
-
-    @DispatchHandle.register_listener("on_update_plot")
-    def update_plots(self, container=None, layer=None):
-        plot_manager.update_plots(container, layer)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_roi")
     def update_statistics(self, layer_item=None, roi=None, measured_rois=None):
@@ -527,9 +535,6 @@ class Controller(object):
         if layer_item is not None or layer is not None:
             current_layer = layer or self.viewer.current_layer
             self.viewer.clear_model_widget()
-
-            if not hasattr(current_layer, 'model'):
-                return
 
             models = model_manager.get_models(current_layer)
 

@@ -130,7 +130,7 @@ Dispatch.register_event("on_remove_layer_from_window", args=["layer",
 
 Dispatch.register_event("on_update_layer", args=["layer"])
 Dispatch.register_event("on_update_model", args=["model"])
-Dispatch.register_event("on_update_plot", args=["container", "layer"])
+Dispatch.register_event("on_updated_plot", args=["container", "layer"])
 Dispatch.register_event("on_update_roi", args=["roi", "measured_rois"])
 Dispatch.register_event("on_update_stats", args=["stats", "layer"])
 
@@ -140,3 +140,4 @@ Dispatch.register_event("on_select_layer", args=["layer_item"])
 Dispatch.register_event("on_select_model", args=["model_item"])
 
 Dispatch.register_event("on_clicked_layer", args=["layer_item"])
+Dispatch.register_event("on_changed_model", args=["model_item"])
