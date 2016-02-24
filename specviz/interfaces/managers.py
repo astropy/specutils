@@ -215,16 +215,21 @@ class ModelManager(Manager):
         self.all_models = sorted(ModelFactory.all_models.keys())
         self.all_fitters = sorted(FitterFactory.all_fitters.keys())
 
-    def new(self, model_name, layer):
+    def new(self, model_name, layer, mask):
         model = ModelFactory.create_model(model_name)()
+
+        # if a model layer is selected, get data from its parent layer.
         data_layer = layer
 
         if hasattr(layer, '_model'):
             data_layer = layer._parent
 
         # initialize model with sensible parameter values.
-        flux = data_layer.data
-        dispersion = data_layer.dispersion
+        # mask must be provided by caller, since ROIs may
+        # have been re-defined on the plot since last time
+        # the layer was updated.
+        flux = data_layer.data[mask]
+        dispersion = data_layer.dispersion[mask]
         initialize(model, dispersion, flux)
 
         self.add(model, layer)
