@@ -41,7 +41,7 @@ class DataManager(Manager):
     def add(self, data):
         self._members.append(data)
 
-        Dispatch.on_add_data.emit(data)
+        Dispatch.on_added_data.emit(data)
 
     def remove(self, data):
         self._members.remove(data)
@@ -105,7 +105,7 @@ class LayerManager(Manager):
         self._members.append(layer)
 
         # Emit creation event
-        Dispatch.on_add_layer.emit(layer)
+        Dispatch.on_added_layer.emit(layer)
 
     def remove(self, layer):
         """
@@ -248,7 +248,7 @@ class ModelManager(Manager):
             self._members[layer].append(model)
 
         # Emit event
-        Dispatch.on_add_model.emit(model, layer)
+        Dispatch.on_added_model.emit(model, layer)
 
         return model
 
@@ -260,7 +260,7 @@ class ModelManager(Manager):
         else:
             del self._members[layer]
 
-        Dispatch.on_remove_model.emit(model)
+        Dispatch.on_removed_model.emit(model)
 
     def _evaluate(self, models, formula):
         parser = Parser()
@@ -339,7 +339,7 @@ class ModelManager(Manager):
         if mask is not None:
             layer._mask = mask
 
-        Dispatch.on_update_model.emit(model=model)
+        Dispatch.on_updated_model.emit(model=model)
 
     def update_model_parameters(self, model, model_inputs):
         for model in model_inputs:
@@ -386,7 +386,7 @@ class ModelManager(Manager):
 
 
         # update GUI with fit results
-        Dispatch.on_update_model.emit(model=model)
+        Dispatch.on_updated_model.emit(model=model)
 
         # Re-plot layer
         Dispatch.on_updated_plot.emit(layer=layer)
