@@ -118,7 +118,7 @@ def fits_reader(filename, filter, **kwargs):
     hdulist.close()
 
     return Data(name=name, data=data, unit=unit, uncertainty=uncertainty,
-                mask=mask.astype(bool), wcs=wcs, dispersion=dispersion,
+                mask=mask, wcs=wcs, dispersion=dispersion,
                 dispersion_unit=disp_unit)
 
 
