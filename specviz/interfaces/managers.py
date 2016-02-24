@@ -65,10 +65,15 @@ class WindowManager(Manager):
 
         Dispatch.on_added_layer_to_window.emit(layer=layer, window=window)
 
-    def remove(self, layer, window):
+    def remove(self, layer, window=None):
         if window in self._members:
             if layer in self._members[window]:
                 self._members[window].remove(layer)
+        else:
+            for window in self._members:
+                if layer in self._members[window]:
+                    self._members[window].remove(layer)
+                    break
 
         Dispatch.on_remove_layer_from_window.emit(layer=layer, window=window)
 
@@ -408,6 +413,15 @@ class PlotManager(Manager):
             self._members[window].append(plot_container)
 
         Dispatch.on_added_plot.emit(container=plot_container, window=window)
+
+    def remove(self, layer, window=None):
+        if window is None:
+            for w in self._members:
+                if layer in self._members:
+                    window = w
+                    break
+
+        Dispatch.on_removed_plot.emit(layer=layer, window=window)
 
     def get_plots(self, window):
         return self._members[window]

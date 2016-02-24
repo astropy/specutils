@@ -78,7 +78,7 @@ class Controller(object):
 
         # When the layer list delete button is pressed
         self.viewer.main_window.layerRemoveButton.clicked.connect(
-            lambda: layer_manager.remove(self.viewer.current_layer))
+            self.remove_layer)
 
         # When the arithmetic button is clicked, show math dialog
         self.viewer.main_window.arithmeticToolButton.clicked.connect(
@@ -415,6 +415,13 @@ class Controller(object):
 
         plot_manager.update_plots(layer=self.viewer.current_layer)
 
+    def remove_layer(self):
+        current_layer = self.viewer.current_layer
+
+        layer_manager.remove(layer=current_layer)
+        window_manager.remove(layer=current_layer)
+        plot_manager.remove(layer=current_layer)
+
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
         """
@@ -467,10 +474,6 @@ class Controller(object):
     @DispatchHandle.register_listener("on_added_layer_to_window")
     def plot_layer(self, layer=None, window=None):
         plot_container = plot_manager.new(layer=layer, window=window)
-
-    @DispatchHandle.register_listener("on_remove_layer_from_window")
-    def remove_plot_layer(self, layer=None, window=None):
-        plot_manager.remove(layer=layer, window=window)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_roi")
     def update_statistics(self, layer_item=None, roi=None, measured_rois=None):

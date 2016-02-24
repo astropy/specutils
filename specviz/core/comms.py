@@ -123,6 +123,7 @@ Dispatch.register_event("on_add_model", args=["model", "layer"])
 Dispatch.register_event("on_add_layer", args=["layer"])
 Dispatch.register_event("on_added_layer_to_window", args=["layer", "window"])
 
+Dispatch.register_event("on_removed_plot", args=["layer", "window"])
 Dispatch.register_event("on_remove_layer", args=["layer"])
 Dispatch.register_event("on_remove_model", args=["model", "layer"])
 Dispatch.register_event("on_remove_layer_from_window", args=["layer",
