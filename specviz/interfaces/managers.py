@@ -379,12 +379,17 @@ class ModelManager(Manager):
                     value = getattr(fitted_model, "{}_{}".format(pname, i))
                     setattr(model._submodels[i], pname, value.value)
                     setattr(model[i], pname, value.value)
+        else:
+            for pname in model.param_names:
+                value = getattr(fitted_model, "{}".format(pname))
+                setattr(model, pname, value.value)
+
 
         # update GUI with fit results
         Dispatch.on_update_model.emit(model=model)
 
         # Re-plot layer
-        Dispatch.on_update_plot.emit(layer=layer)
+        Dispatch.on_updated_plot.emit(layer=layer)
 
         return layer
 
