@@ -63,7 +63,7 @@ class WindowManager(Manager):
         else:
             self._members[window].append(layer)
 
-        Dispatch.on_added_layer_to_window.emit(layer=layer, window=window)
+        Dispatch.on_added_to_window.emit(layer=layer, window=window)
 
     def remove(self, layer, window=None):
         if window in self._members:
@@ -75,7 +75,7 @@ class WindowManager(Manager):
                     self._members[window].remove(layer)
                     break
 
-        Dispatch.on_remove_layer_from_window.emit(layer=layer, window=window)
+        Dispatch.on_removed_from_window.emit(layer=layer, window=window)
 
     def get(self, layer):
         for window in self._members:
@@ -119,7 +119,7 @@ class LayerManager(Manager):
         self._members.remove(layer)
 
         # Emit removal event
-        Dispatch.on_remove_layer.emit(layer)
+        Dispatch.on_removed_layer.emit(layer)
 
     def copy(self, layer):
         new_layer = DataFactory.create_layer(layer._source)

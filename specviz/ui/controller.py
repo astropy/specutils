@@ -421,6 +421,9 @@ class Controller(object):
         layer_manager.remove(layer=current_layer)
         window_manager.remove(layer=current_layer)
         plot_manager.remove(layer=current_layer)
+        model_manager.remove(layer=current_layer)
+
+
 
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
@@ -438,7 +441,7 @@ class Controller(object):
         layer = layer_item.data(0, Qt.UserRole)
 
         if layer is not None:
-            current_window = self.viewer.current_sub_window
+            current_window = window_manager.get(layer)
 
             current_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
@@ -471,7 +474,7 @@ class Controller(object):
         if len(model_inputs) > 0:
             model_manager.update_model(current_layer, model_inputs)
 
-    @DispatchHandle.register_listener("on_added_layer_to_window")
+    @DispatchHandle.register_listener("on_added_to_window")
     def plot_layer(self, layer=None, window=None):
         plot_container = plot_manager.new(layer=layer, window=window)
 
@@ -510,8 +513,7 @@ class Controller(object):
 
         Dispatch.on_update_stats.emit(stats=stat_dict, layer=current_layer)
 
-    @DispatchHandle.register_listener("on_select_window",
-                                      "on_added_layer_to_window")
+    @DispatchHandle.register_listener("on_select_window", "on_added_to_window")
     def update_layer_list(self, window=None, layer=None):
         """
         Clears and repopulates the layer list depending on the currently
@@ -533,7 +535,8 @@ class Controller(object):
             icon = QIcon(pixmap)
             self.viewer.add_layer_item(layer, icon=icon)
 
-    @DispatchHandle.register_listener("on_select_layer", "on_update_model")
+    @DispatchHandle.register_listener("on_select_layer", "on_update_model",
+                                      "on_removed_layer")
     def update_model_list(self, layer_item=None, model=None, layer=None):
         """
         Clears and repopulates the model list depending on the currently
