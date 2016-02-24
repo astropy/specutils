@@ -207,7 +207,7 @@ class Viewer(QMainWindow):
         self.wgt_data_list.setCurrentItem(new_item)
 
     @DispatchHandle.register_listener("on_add_layer")
-    def add_layer_item(self, layer, icon=None, *args):
+    def add_layer_item(self, layer, icon=None, unique=False):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -216,6 +216,11 @@ class Viewer(QMainWindow):
         layer : specviz.core.data.Layer
             The `Layer` object to add to the list widget.
         """
+        # Make sure there is only one item per layer object
+        if unique:
+            if self.get_layer_item(layer) is not None:
+                return
+
         new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
                                    self.wgt_layer_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)

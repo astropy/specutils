@@ -44,9 +44,9 @@ class Controller(object):
                 window=sw))
 
         # Listen for layer selection events, update model tree on selection
-        self.viewer.wgt_layer_list.currentItemChanged.connect(
-            lambda ci, pi: Dispatch.on_select_layer.emit(
-                layer_item=ci))
+        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
+            lambda: Dispatch.on_select_layer.emit(
+                layer_item=self.viewer.current_layer_item))
 
         # When a layer is selected, make that line more obvious than the others
         self.viewer.wgt_layer_list.itemSelectionChanged.connect(
@@ -58,16 +58,10 @@ class Controller(object):
             lambda li, col: Dispatch.on_clicked_layer.emit(
                 layer_item=li))
 
-        # When an interactable widget inside a layer item is clicked
+        # When the model items in the model tree change
         self.viewer.wgt_model_list.currentItemChanged.connect(
             lambda mi, col: Dispatch.on_changed_model.emit(
                 model_item=mi))
-
-        # Create a new layer based on any active ROIs
-        self.viewer.main_window.toolButton_6.clicked.connect(
-            lambda: self.add_roi_layer(self.viewer.current_layer,
-                                       self.get_roi_mask(),
-                                       self.viewer.current_sub_window))
 
     def _setup_connections(self):
         self.viewer.main_window.toolButton_3.clicked.connect(
@@ -83,6 +77,10 @@ class Controller(object):
         # When the arithmetic button is clicked, show math dialog
         self.viewer.main_window.arithmeticToolButton.clicked.connect(
             self._show_arithmetic_dialog)
+
+        # Create a new layer based on any active ROIs
+        self.viewer.main_window.toolButton_6.clicked.connect(
+            lambda: self.add_roi_layer())
 
         # Populate model dropdown
         self.viewer.main_window.modelsComboBox.addItems(
@@ -269,7 +267,7 @@ class Controller(object):
 
         data = data_manager.load(str(file_name), str(selected_filter))
 
-    def add_roi_layer(self, layer, mask=None, window=None):
+    def add_roi_layer(self, layer=None, mask=None, window=None):
         """
         Creates a layer object from the current ROIs of the active plot layer.
 
@@ -282,13 +280,16 @@ class Controller(object):
         mask : ndarray
             Boolean mask.
         """
+        layer = layer if layer is not None else self.viewer.current_layer
+        window = window if window is not None else self.viewer.current_sub_window
         roi_mask = mask if mask is not None else self.get_roi_mask(layer=layer)
-        layer = layer_manager.new(layer._source,
-                                  mask=roi_mask,
-                                  name=layer._source.name + " Layer Slice")
 
-        window_manager.add(layer, window)
-        plot_container = plot_manager.new(layer, window)
+        new_layer = layer_manager.new(layer._source,
+                                      mask=roi_mask,
+                                      name=layer._source.name + " Layer Slice")
+
+        window_manager.add(new_layer, window)
+        plot_container = plot_manager.new(new_layer, window)
 
     def add_sub_window(self, data=None, window=None, layer=None):
         """
@@ -423,8 +424,6 @@ class Controller(object):
         plot_manager.remove(layer=current_layer)
         model_manager.remove(layer=current_layer)
 
-
-
     @DispatchHandle.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
         """
@@ -513,7 +512,7 @@ class Controller(object):
 
         Dispatch.on_update_stats.emit(stats=stat_dict, layer=current_layer)
 
-    @DispatchHandle.register_listener("on_select_window", "on_added_to_window")
+    @DispatchHandle.register_listener("on_select_window")
     def update_layer_list(self, window=None, layer=None):
         """
         Clears and repopulates the layer list depending on the currently
@@ -525,7 +524,6 @@ class Controller(object):
             window = window.widget()
 
         layers = window_manager.get_layers(window)
-        self.viewer.clear_layer_widget()
 
         for layer in layers:
             container = plot_manager.get_plot_from_layer(layer=layer,
@@ -533,7 +531,7 @@ class Controller(object):
             pixmap = QPixmap(10, 10)
             pixmap.fill(container._pen_stash['pen_on'].color())
             icon = QIcon(pixmap)
-            self.viewer.add_layer_item(layer, icon=icon)
+            self.viewer.add_layer_item(layer, icon=icon, unique=True)
 
     @DispatchHandle.register_listener("on_select_layer", "on_update_model",
                                       "on_removed_layer")
