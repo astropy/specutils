@@ -419,6 +419,9 @@ class Controller(object):
     def remove_layer(self):
         current_layer = self.viewer.current_layer
 
+        if current_layer is None:
+            return
+
         layer_manager.remove(layer=current_layer)
         window_manager.remove(layer=current_layer)
         plot_manager.remove(layer=current_layer)
