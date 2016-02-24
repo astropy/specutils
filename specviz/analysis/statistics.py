@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 
 # THIRD-PARTY
 import numpy as np
+import scipy as sp
 
 # LOCAL
 from ..core.data import Data
@@ -193,42 +194,32 @@ def fwzi(cont1_stats, cont2_stats, line):
     return vmax - vmin, (vmin, vmax)
 
 
-# TODO: Can this be improved?
-def centroid(data, absorption=False):
-    """Compute centroid for the given spectrum.
-    Calculation assumes input is already cleaned and calibrated.
+def centroid(data):
+    """Compute centroid for the given spectrum. ::
+
+        w_cen = integral(wave*flux) / integral(flux)
 
     Parameters
     ----------
     data : `~specviz.core.data.Data`
         Extracted spectrum data.
 
-    absorption : bool
-        Given flux contains an absorption line.
-        By default, assume to be emission line.
-
     Returns
     -------
     wcen : float
-        Central wavelength.
+        Centroid wavelength.
 
     Examples
     --------
     >>> d = Data(...)
-    >>> emission_line = extract(d, (15000, 20000))
-    >>> wcen_em = centroid(emission_line)
-    >>> absorption_line = extract(d, (4000, 8000))
-    >>> wcen_ab = centroid(absorption_line, absorption=True)
+    >>> line = extract(d, (15000, 20000))
+    >>> wcen_em = centroid(line)
 
     """
     flux = data.data
     wave = data.dispersion
 
-    # NOTE: This only works on well-behaved spectrum!
-    if absorption:
-        fcen = flux.min()
-    else:
-        fcen = flux.max()
-    wcen = np.mean(wave[flux == fcen])
+    wcen = sp.integrate.trapz(wave * flux, wave) / sp.integrate.trapz(flux,
+                                                                      wave)
 
     return wcen
