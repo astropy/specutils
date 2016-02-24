@@ -347,7 +347,7 @@ class Controller(object):
     def add_model(self):
         model_name = self.viewer.current_model
         layer = self.viewer.current_layer
-        print(layer)
+
         model = model_manager.new(model_name, layer)
 
         return model

@@ -219,7 +219,7 @@ class ModelManager(Manager):
         model = ModelFactory.create_model(model_name)()
         data_layer = layer
 
-        if hasattr(layer, 'model'):
+        if hasattr(layer, '_model'):
             data_layer = layer._parent
 
         # initialize model with sensible parameter values.
