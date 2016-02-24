@@ -375,6 +375,8 @@ class Controller(object):
             layer=current_layer,
             fitter_name=self.viewer.current_fitter)
 
+        plot_manager.update_plots(layer=fitted_layer)
+
     def get_roi_mask(self, layer=None, roi=None):
         """
         Retrieves the array mask depending on the ROIs currently in the

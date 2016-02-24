@@ -388,9 +388,6 @@ class ModelManager(Manager):
         # update GUI with fit results
         Dispatch.on_updated_model.emit(model=model)
 
-        # Re-plot layer
-        Dispatch.on_updated_plot.emit(layer=layer)
-
         return layer
 
 
