@@ -129,14 +129,5 @@ time to the application UI itself.
 Loading models from file
 ------------------------
 
-A model file built as above, can be read back into the application as
-a new model layer associated with a data layer in the "Layers" list.
-
-Selecting a data layer under "Layers" will enable the 'Load' button in
-the Model Fitting window. Click on the button to get a file dialog window,
-select the desired file, and either double-click on the name, or select it
-and click Open.
-
-The compound model defined in the file will be stored in a new model layer.
-
+This functionality will be added in a future release.
 
