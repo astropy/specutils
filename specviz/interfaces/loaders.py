@@ -65,7 +65,8 @@ def fits_reader(filename, filter, **kwargs):
     if unit is None:
         unit = _flux_unit_from_header(meta['header'])
 
-    # Get data mask, if not in column
+    # Get data mask, if not in column.
+    # 0 = good data (unlike Layers)
     if mask is None:
         mask = np.zeros(data.shape)
         if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
@@ -118,7 +119,7 @@ def fits_reader(filename, filter, **kwargs):
     hdulist.close()
 
     return Data(name=name, data=data, unit=unit, uncertainty=uncertainty,
-                mask=mask, wcs=wcs, dispersion=dispersion,
+                mask=mask.astype(np.bool), wcs=wcs, dispersion=dispersion,
                 dispersion_unit=disp_unit)
 
 
@@ -252,10 +253,11 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
 
     # Sometimes, Astropy returns masked column.
     if hasattr(data, 'mask'):
-        mask = (~data.mask).astype(np.float).flatten()
-        data = data.data
+        mask = data.mask.flatten()
+        data = data.data.flatten()
     else:
         mask = None
+        data = data.flatten()
 
     # If data has no unit, just assume it is the output unit.
     # Otherwise, perform unit conversion.
@@ -314,6 +316,7 @@ def ascii_reader(filename, filter, **kwargs):
     else:
         disp_unit = wave.unit
 
+    # 0 = good data (unlike Layers)
     mask = np.zeros(data.shape)
 
     if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
@@ -334,8 +337,8 @@ def ascii_reader(filename, filter, **kwargs):
             pass  # Input has no mask column
 
     return Data(name=name, data=data, dispersion=dispersion,
-                uncertainty=uncertainty, mask=mask, wcs=wcs, unit=unit,
-                dispersion_unit=disp_unit)
+                uncertainty=uncertainty, mask=mask.astype(np.bool), wcs=wcs,
+                unit=unit, dispersion_unit=disp_unit)
 
 
 def ascii_identify(origin, *args, **kwargs):
