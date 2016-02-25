@@ -2,21 +2,26 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 # STDLIB
-import os
 import logging
 
 # LOCAL
 from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtGui import *
 from ..third_party.qtpy.QtWidgets import *
 from ..interfaces.managers import (data_manager, window_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
 from ..analysis import statistics
 from ..core.comms import Dispatch, DispatchHandle
-from ..interfaces import model_io
 
-from astropy.units.core import UnitConversionError
+# We pick up the desired format for model files here.
+# In a future release we may want to use both formats,
+# the YAML format to Save and Load models, and the .py
+# format to export models that can be directly imported
+# by scripts elsewhere.
+
+# from ..interfaces.model_io import yaml_model_io as model_io
+from ..interfaces.model_io import py_model_io as model_io
+
 
 # To memorize last visited directory.
 _model_directory = os.environ["HOME"]
@@ -34,6 +39,10 @@ class Controller(object):
         self._setup_connections()
         self._setup_communications()
         self._setup_context_menus()
+
+        # For now, hide the Load button so no .py
+        # files with models can be ingested.
+        self.viewer.main_window.loadModelButton.hide()
 
         DispatchHandle.setup(self)
 
@@ -196,14 +205,14 @@ class Controller(object):
 
         global _model_directory
         model_io.saveModelToFile(self.viewer.main_window.mdiArea, model,
-                                 _model_directory)
+                                 _model_directory, expression=formula)
 
     def load_model(self):
         global _model_directory
         fname = QFileDialog.getOpenFileNames(self.viewer.main_window.mdiArea,
                                              'Read model file',
                                              _model_directory,
-                                             "Pyhton files (*.py)")
+                                             model_io.MODEL_FILE_FILTER)
 
         # File dialog returns a tuple with a list of file names.
         # We get the first name from the first tuple element.
@@ -236,7 +245,7 @@ class Controller(object):
         if not hasattr(compound_model, '_format_expression'):
             model_manager.add(model=compound_model, layer=new_model_layer)
         else:
-            for model in compound_model:
+            for model in compound_model._submodels:
                 model_manager.add(model=model, layer=new_model_layer)
 
         plot_container = plot_manager.new(new_model_layer,

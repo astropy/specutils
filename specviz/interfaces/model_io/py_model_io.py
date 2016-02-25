@@ -2,24 +2,19 @@
 # Functions in this module support the reading and writing
 # of astropy's  spectral compound models from/to file.
 #
-# The format used in these files for now is plain python,
-# directly importable by the user. This format was introduced
-# and is discussed in the specfit project at:
+# The format used in these files is plain python, directly
+# importable by the user. This format was introduced and is
+# discussed in the specfit project at:
 #
 # https://github.com/ibusko/specfit
 #
-# In time, we should keep this format only for supporting  an
-# 'Export' UI button. No reading back from .py files should be
-# supported. In order to have the ability to save to file and
-# then read back from the same file, some serialization format
-# will be used. YAML sounds like a good candidate since it is
-# human-readable and human-editable as well.
-
 
 import os, sys, re, dis
 
 from io import StringIO
-from ..third_party.qtpy.QtWidgets import QFileDialog
+from specviz.third_party.qtpy.QtWidgets import QFileDialog
+
+MODEL_FILE_FILTER = "Pyhton files (*.py)"
 
 
 # Helper functions
@@ -151,7 +146,8 @@ def _writeCompoundModel(model, model_directory, parent):
 # Saves spectral model to file. This is the main entry
 # point for the 'save to file' functionality.
 # parent: optional QWidget used for screen centering.
-def saveModelToFile(parent, model, model_directory):
+# expression: not used for .py files.
+def saveModelToFile(parent, model, model_directory, expression=None):
     if not hasattr(model, '_format_expression'):
         _writeSingleComponentModel(model, model_directory, parent)
     else:
