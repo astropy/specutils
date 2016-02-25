@@ -261,7 +261,8 @@ class ModelManager(Manager):
         if index is not None:
             model = self._members[layer].pop(index)
         elif model is not None:
-            self._members[layer].remove(model)
+            if model in self._members[layer]:
+                self._members[layer].remove(model)
         else:
             del self._members[layer]
 

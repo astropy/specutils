@@ -27,8 +27,9 @@ class CustomLoaderRegistry(Registry):
             os.mkdir(usr_path)
 
         for path in check_paths:
-            for file_name in os.listdir(path):
-                f_path = os.path.join(cur_path, file_name)
+            for file_name in [x for x in os.listdir(path)
+                              if x.endswith('yaml')]:
+                f_path = os.path.join(path, file_name)
                 custom_loader = yaml.load(open(f_path, 'r'))
                 custom_loader.set_filter()
 
