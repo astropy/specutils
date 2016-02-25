@@ -25,12 +25,14 @@ def resample(from_data, to_data, copy=False):
         remat = resample_matrix(from_data.dispersion.value,
                                 to_data.dispersion.value)
         flux = np.dot(remat, from_data.data.value)
-        new_data = from_data._from_self(flux)
     else:
-        pass
+        flux = (to_data.dispersion.value, from_data.dispersion.value,
+                from_data.data.value)
 
+    new_data = from_data._from_self(flux)
 
     return new_data
+
 
 def resample_matrix(self, orig_lamb, fin_lamb):
     """
