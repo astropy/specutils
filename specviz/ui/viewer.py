@@ -459,5 +459,13 @@ class Viewer(QMainWindow):
                 float(stats['eq_width'].value)))
 
         if 'centroid' in stats:
-            self.main_window.centroidLineEdit.setText("{0:4.4g}".format(
+            self.main_window.centroidLineEdit.setText("{0:5.5g}".format(
                 float(stats['centroid'].value)))
+
+        if 'flux' in stats:
+            self.main_window.fluxLineEdit.setText("{0:4.4g}".format(
+                float(stats['flux'].value)))
+
+        if 'avg_cont' in stats:
+            self.main_window.meanContinuumLineEdit.setText("{0:4.4g}".format(
+                float(stats['avg_cont'].value)))

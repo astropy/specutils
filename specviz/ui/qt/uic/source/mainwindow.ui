@@ -276,7 +276,7 @@
      <item>
       <widget class="QTabWidget" name="statsTabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="basicTab">
         <attribute name="title">
@@ -451,6 +451,34 @@
              </property>
              <property name="readOnly">
               <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="fluxLabel">
+             <property name="text">
+              <string>Flux</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="fluxLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="meanContinuumLabel">
+             <property name="text">
+              <string>Mean Continuum</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="meanContinuumLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit{background: #DDDDDD;}</string>
              </property>
             </widget>
            </item>

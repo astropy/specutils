@@ -122,6 +122,7 @@ class Controller(object):
         # Attach the model save/read buttons
         self.viewer.main_window.saveModelButton.clicked.connect(
             self.save_model)
+
         self.viewer.main_window.loadModelButton.clicked.connect(
             self.load_model)
 
@@ -507,8 +508,7 @@ class Controller(object):
             model_manager.update_model(current_layer, model_inputs)
 
     @DispatchHandle.register_listener("on_selected_layer", "on_updated_roi")
-    def update_statistics(self, layer_item=None, roi=None,
-                          eqwidth_rois=None, centroid_roi=None):
+    def update_statistics(self, layer_item=None, roi=None, measure_rois=None):
         if layer_item is not None:
             current_layer = layer_item.data(0, Qt.UserRole)
         else:
@@ -517,34 +517,30 @@ class Controller(object):
         if current_layer is None:
             return
 
-        if eqwidth_rois is not None:
+        if measure_rois is not None:
             # Set the active tab to measured
             self.viewer.main_window.statsTabWidget.setCurrentIndex(1)
 
-            cont1_mask = self.get_roi_mask(roi=eqwidth_rois[0])
+            cont1_mask = self.get_roi_mask(roi=measure_rois[0])
             cont1_data = current_layer.data[cont1_mask]
             cont1_stat_dict = statistics.stats(cont1_data)
 
-            cont2_mask = self.get_roi_mask(roi=eqwidth_rois[2])
+            cont2_mask = self.get_roi_mask(roi=measure_rois[2])
             cont2_data = current_layer.data[cont2_mask]
             cont2_stat_dict = statistics.stats(cont2_data)
 
-            line_mask = self.get_roi_mask(roi=eqwidth_rois[1])
+            line_mask = self.get_roi_mask(roi=measure_rois[1])
 
             line = layer_manager.copy(current_layer)
             line._mask = line_mask
 
-            ew = statistics.eq_width(cont1_stat_dict, cont2_stat_dict, line)[1]
+            flux, ew, avg_cont = statistics.eq_width(cont1_stat_dict,
+                                                     cont2_stat_dict,
+                                                     line)
+            cent = statistics.centroid(line - avg_cont)
 
-            stat_dict = {"eq_width": ew}
-        elif centroid_roi is not None:
-            # Set the active tab to measured
-            self.viewer.main_window.statsTabWidget.setCurrentIndex(1)
-
-            cent_mask = self.get_roi_mask(roi=centroid_roi)
-
-            centroid = statistics.centroid(current_layer, cent_mask)
-            stat_dict = {"centroid": centroid}
+            stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
+                         "avg_cont": avg_cont}
         else:
             # Set the active tab to basic
             self.viewer.main_window.statsTabWidget.setCurrentIndex(0)

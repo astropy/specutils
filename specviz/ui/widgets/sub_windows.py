@@ -44,7 +44,7 @@ class PlotSubWindow(QMainWindow):
         self._plot_item = None
         self._plots_units = None
         self._rois = []
-        self._equiv_width_rois = []
+        self._measure_rois = []
         self._centroid_roi = None
 
         DispatchHandle.setup(self)
@@ -75,12 +75,8 @@ class PlotSubWindow(QMainWindow):
                 ref_wave=self._top_axis_dialog.ref_wave))
 
         # Setup equivalent width toggle
-        self.ui_plot_sub_window.actionEquivalent_Width.triggered.connect(
-            self._toggle_equiv_width)
-
-        # Setup centroid toggle
-        self.ui_plot_sub_window.actionCentroid.triggered.connect(
-            self._toggle_centroid)
+        self.ui_plot_sub_window.actionMeasure.triggered.connect(
+            self._toggle_measure)
 
         # Tool bar connections
         self._tool_bar.atn_change_top_axis.triggered.connect(
@@ -110,33 +106,17 @@ class PlotSubWindow(QMainWindow):
 
             self._plot_item.update()
 
-    def _toggle_equiv_width(self, on):
+    def _toggle_measure(self, on):
         if on:
-            self.add_equiv_width_rois()
+            self.add_measure_rois()
 
             # Disable the ability to add new ROIs
             self.ui_plot_sub_window.actionInsert_ROI.setDisabled(True)
-            self.ui_plot_sub_window.actionCentroid.setDisabled(True)
         else:
-            self.remove_equiv_width_rois()
+            self.remove_measure_rois()
 
             # Enable the ability to add new ROIs
             self.ui_plot_sub_window.actionInsert_ROI.setDisabled(False)
-            self.ui_plot_sub_window.actionCentroid.setDisabled(False)
-
-    def _toggle_centroid(self, on):
-        if on:
-            self.add_centroid_roi()
-
-            # Disable the ability to add new ROIs
-            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(True)
-            self.ui_plot_sub_window.actionEquivalent_Width.setDisabled(True)
-        else:
-            self.remove_centroid_roi()
-
-            # Enable the ability to add new ROIs
-            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(False)
-            self.ui_plot_sub_window.actionEquivalent_Width.setDisabled(False)
 
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
@@ -189,12 +169,12 @@ class PlotSubWindow(QMainWindow):
         roi.sigRegionChangeFinished.connect(
             lambda: Dispatch.on_updated_roi.emit(roi=roi))
 
-    def add_equiv_width_rois(self):
+    def add_measure_rois(self):
         # First, remove existing rois
         for roi in self._rois:
             self._plot_item.removeItem(roi)
 
-        if len(self._equiv_width_rois) == 0:
+        if len(self._measure_rois) == 0:
             for i in range(3):
                 view_range = self._plot_item.viewRange()
                 x_vrange = view_range[0][1] - view_range[0][0]
@@ -209,62 +189,25 @@ class PlotSubWindow(QMainWindow):
                 if i == 1:
                     roi.setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
 
-                self._equiv_width_rois.append(roi)
+                self._measure_rois.append(roi)
 
-            for roi in self._equiv_width_rois:
+            for roi in self._measure_rois:
                 roi.sigRemoveRequested.connect(
                     lambda: Dispatch.on_updated_roi.emit(
-                        eqwidth_rois=self._equiv_width_rois))
+                        measure_rois=self._measure_rois))
                 roi.sigRegionChangeFinished.connect(
                     lambda: Dispatch.on_updated_roi.emit(
-                        eqwidth_rois=self._equiv_width_rois))
+                        measure_rois=self._measure_rois))
 
             # Connect events
-            Dispatch.on_updated_roi.emit(eqwidth_rois=self._equiv_width_rois)
+            Dispatch.on_updated_roi.emit(measure_rois=self._measure_rois)
 
-        for roi in self._equiv_width_rois:
+        for roi in self._measure_rois:
             self._plot_item.addItem(roi)
 
-    def remove_equiv_width_rois(self):
-        for roi in self._equiv_width_rois:
+    def remove_measure_rois(self):
+        for roi in self._measure_rois:
             self._plot_item.removeItem(roi)
-
-        # Replace rois we removed
-        for roi in self._rois:
-            self._plot_item.addItem(roi)
-
-    def add_centroid_roi(self):
-        # First, remove existing rois
-        for roi in self._rois:
-            self._plot_item.removeItem(roi)
-
-        if self._centroid_roi is None:
-            view_range = self._plot_item.viewRange()
-            x_vrange = view_range[0][1] - view_range[0][0]
-            x_len = x_vrange * 0.25
-            x_pos = view_range[0][0] + x_vrange * 0.5 - x_len * 0.5
-
-            roi = LinearRegionItem(values=[x_pos, x_pos + x_len],
-                                   brush=pg.mkBrush(
-                                       QColor(204, 204, 0, 50)),
-                                   removable=False)
-
-            roi.sigRemoveRequested.connect(
-                lambda: Dispatch.on_updated_roi.emit(
-                    centroid_roi=self._centroid_roi))
-            roi.sigRegionChangeFinished.connect(
-                lambda: Dispatch.on_updated_roi.emit(
-                    centroid_roi=self._centroid_roi))
-
-            self._centroid_roi = roi
-
-            # Connect events
-            Dispatch.on_updated_roi.emit(centroid_roi=self._centroid_roi)
-
-        self._plot_item.addItem(self._centroid_roi)
-
-    def remove_centroid_roi(self):
-        self._plot_item.removeItem(self._centroid_roi)
 
         # Replace rois we removed
         for roi in self._rois:

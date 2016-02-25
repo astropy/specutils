@@ -30,6 +30,9 @@
    <property name="movable">
     <bool>false</bool>
    </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonIconOnly</enum>
+   </property>
    <property name="floatable">
     <bool>false</bool>
    </property>
@@ -41,8 +44,7 @@
    </attribute>
    <addaction name="actionInsert_ROI"/>
    <addaction name="separator"/>
-   <addaction name="actionEquivalent_Width"/>
-   <addaction name="actionCentroid"/>
+   <addaction name="actionMeasure"/>
    <addaction name="separator"/>
   </widget>
   <action name="actionInsert_ROI">
@@ -57,7 +59,7 @@
     <string>Insert a rectangular ROI selection box</string>
    </property>
   </action>
-  <action name="actionEquivalent_Width">
+  <action name="actionMeasure">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -66,10 +68,10 @@
      <normaloff>:/img/Width-48.png</normaloff>:/img/Width-48.png</iconset>
    </property>
    <property name="text">
-    <string>Equivalent Width</string>
+    <string>Measure</string>
    </property>
    <property name="toolTip">
-    <string>Toggle mode to select equivalent width</string>
+    <string>Toggle measurement mode to calculate other statistics</string>
    </property>
   </action>
   <action name="actionCentroid">

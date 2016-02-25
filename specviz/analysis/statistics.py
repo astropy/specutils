@@ -99,7 +99,7 @@ def eq_width(cont1_stats, cont2_stats, line):
 
     Returns
     -------
-    flux, ew : float
+    ew, flux, avg_cont : float
         Flux and equivalent width values.
 
     Examples
@@ -125,7 +125,7 @@ def eq_width(cont1_stats, cont2_stats, line):
     #  EW = Sum( (Fc-Fl)/Fc * dw
     ew = np.abs(np.sum((avg_cont - line.data) / avg_cont * avg_dx))
 
-    return flux, ew
+    return ew, flux, avg_cont
 
 
 # TODO: Can this be improved?
