@@ -24,13 +24,15 @@ class _Linear1DInitializer(object):
 
     def initialize(self, instance, x, y):
 
-        y_range = np.max(y) - np.min(y)
-        x_range = x[-1] - x[0]
-        slope = y_range / x_range
-        y0 = y[0]
+        # y_range = np.max(y) - np.min(y)
+        # x_range = x[-1] - x[0]
+        # slope = y_range / x_range
+        # y0 = y[0]
 
-        instance.slope.value = slope
-        instance.intercept.value = y0
+        y_mean = np.mean(y)
+
+        instance.slope.value = 0.0
+        instance.intercept.value = y_mean
 
         return instance
 
