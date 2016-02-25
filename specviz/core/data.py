@@ -83,7 +83,13 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
             try:
                 crval = self.wcs.wcs.crval[0]
-                cdelt = self.wcs.wcs.cdelt[0]
+
+                # RuntimeWarning: cdelt will be ignored since cd is present
+                try:
+                    cdelt = self.wcs.wcs.cd[0][0]
+                except:
+                    cdelt = self.wcs.wcs.cdelt[0]
+
                 end = self.data.shape[0] * cdelt + crval
                 self._dispersion = np.arange(crval, end, cdelt)
             except:
