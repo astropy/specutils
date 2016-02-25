@@ -34,7 +34,7 @@ def resample(from_data, to_data, copy=False):
     return new_data
 
 
-def resample_matrix(self, orig_lamb, fin_lamb):
+def resample_matrix(orig_lamb, fin_lamb):
     """
     Create a resampling matrix to be used in resampling spectra in a way
     that conserves flux. This is adapted from code created by the SEAGal

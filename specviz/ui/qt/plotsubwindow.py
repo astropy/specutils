@@ -41,6 +41,7 @@ class Ui_SpectraSubWindow(object):
         self.actionEquivalent_Width.setIcon(icon1)
         self.actionEquivalent_Width.setObjectName("actionEquivalent_Width")
         self.actionCentroid = QtWidgets.QAction(SpectraSubWindow)
+        self.actionCentroid.setCheckable(True)
         self.actionCentroid.setEnabled(True)
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(":/img/Vertical Flag-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)

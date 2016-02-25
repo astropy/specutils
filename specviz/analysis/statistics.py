@@ -194,7 +194,7 @@ def fwzi(cont1_stats, cont2_stats, line):
     return vmax - vmin, (vmin, vmax)
 
 
-def centroid(data):
+def centroid(data, mask=None):
     """Compute centroid for the given spectrum. ::
 
         w_cen = integral(wave*flux) / integral(flux)
@@ -216,10 +216,13 @@ def centroid(data):
     >>> wcen_em = centroid(line)
 
     """
-    flux = data.data
-    wave = data.dispersion
+    if mask is not None:
+        flux = data.data[mask]
+        wave = data.dispersion[mask]
+    else:
+        flux = data.data
+        wave = data.dispersion
 
-    wcen = sp.integrate.trapz(wave * flux, wave) / sp.integrate.trapz(flux,
-                                                                      wave)
+    wcen = np.trapz(wave * flux, wave) / np.trapz(flux, wave)
 
     return wcen

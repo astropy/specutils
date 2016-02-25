@@ -73,6 +73,9 @@
    </property>
   </action>
   <action name="actionCentroid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="enabled">
     <bool>true</bool>
    </property>

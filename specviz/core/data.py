@@ -93,6 +93,8 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
                 end = self.data.shape[0] * cdelt + crval
                 num = (end - crval) / cdelt
 
+                # TODO: the values for the keywords are not guaranteed to be
+                #  at the first index
                 if hasattr(self.wcs.wcs, 'ctype') and "log" \
                         in self.wcs.wcs.ctype[-1].lower():
                     self._dispersion = np.logspace(crval, end, num)
