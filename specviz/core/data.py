@@ -85,7 +85,13 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
                 crval = self.wcs.wcs.crval[0]
                 cdelt = self.wcs.wcs.cdelt[0]
                 end = self.data.shape[0] * cdelt + crval
-                self._dispersion = np.arange(crval, end, cdelt)
+                num = (end - crval) / cdelt
+
+                if hasattr(self.wcs.wcs, 'ctype') and "log" \
+                        in self.wcs.wcs.ctype[-1].lower():
+                    self._dispersion = np.logspace(crval, end, num)
+                else:
+                    self._dispersion = np.arange(crval, end, cdelt)
             except:
                 logging.warning("Invalid FITS headers; constructing default "
                                 "dispersion array.")
