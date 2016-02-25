@@ -507,7 +507,8 @@ class Controller(object):
             model_manager.update_model(current_layer, model_inputs)
 
     @DispatchHandle.register_listener("on_selected_layer", "on_updated_roi")
-    def update_statistics(self, layer_item=None, roi=None, measured_rois=None):
+    def update_statistics(self, layer_item=None, roi=None,
+                          eqwidth_rois=None, centroid_roi=None):
         if layer_item is not None:
             current_layer = layer_item.data(0, Qt.UserRole)
         else:
@@ -516,16 +517,19 @@ class Controller(object):
         if current_layer is None:
             return
 
-        if measured_rois is not None:
-            cont1_mask = self.get_roi_mask(roi=measured_rois[0])
+        if eqwidth_rois is not None:
+            # Set the active tab to measured
+            self.viewer.main_window.statsTabWidget.setCurrentIndex(1)
+
+            cont1_mask = self.get_roi_mask(roi=eqwidth_rois[0])
             cont1_data = current_layer.data[cont1_mask]
             cont1_stat_dict = statistics.stats(cont1_data)
 
-            cont2_mask = self.get_roi_mask(roi=measured_rois[2])
+            cont2_mask = self.get_roi_mask(roi=eqwidth_rois[2])
             cont2_data = current_layer.data[cont2_mask]
             cont2_stat_dict = statistics.stats(cont2_data)
 
-            line_mask = self.get_roi_mask(roi=measured_rois[1])
+            line_mask = self.get_roi_mask(roi=eqwidth_rois[1])
 
             line = layer_manager.copy(current_layer)
             line._mask = line_mask
@@ -533,7 +537,18 @@ class Controller(object):
             ew = statistics.eq_width(cont1_stat_dict, cont2_stat_dict, line)[1]
 
             stat_dict = {"eq_width": ew}
+        elif centroid_roi is not None:
+            # Set the active tab to measured
+            self.viewer.main_window.statsTabWidget.setCurrentIndex(1)
+
+            cent_mask = self.get_roi_mask(roi=centroid_roi)
+
+            centroid = statistics.centroid(current_layer, cent_mask)
+            stat_dict = {"centroid": centroid}
         else:
+            # Set the active tab to basic
+            self.viewer.main_window.statsTabWidget.setCurrentIndex(0)
+
             mask = self.get_roi_mask(layer=current_layer)
 
             values = current_layer.data[mask]

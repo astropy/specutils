@@ -459,5 +459,5 @@ class Viewer(QMainWindow):
                 float(stats['eq_width'].value)))
 
         if 'centroid' in stats:
-            self.main_window.equivalentWidthLineEdit.setText("{0:4.4g}".format(
+            self.main_window.centroidLineEdit.setText("{0:4.4g}".format(
                 float(stats['centroid'].value)))
