@@ -369,9 +369,8 @@ class ModelManager(Manager):
         if parent_layer is None:
             return
 
-        mask = parent_layer._mask
-        flux = parent_layer.data[mask]
-        dispersion = parent_layer.dispersion[mask]
+        flux = parent_layer.data
+        dispersion = parent_layer.dispersion
         model = layer.model
 
         # If the number of parameters is greater than the number of data
