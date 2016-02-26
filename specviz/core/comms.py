@@ -141,4 +141,5 @@ Dispatch.register_event("on_selected_layer", args=["layer_item"])
 Dispatch.register_event("on_selected_model", args=["model_item"])
 
 Dispatch.register_event("on_clicked_layer", args=["layer_item"])
+Dispatch.register_event("on_changed_layer", args=["layer_item"])
 Dispatch.register_event("on_changed_model", args=["model_item"])

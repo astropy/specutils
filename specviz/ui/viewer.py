@@ -332,6 +332,7 @@ class Viewer(QMainWindow):
                     count += 1
 
             name = model.__class__.__name__.replace('1D', '') + str(count)
+            model._name = name
 
         new_item = QTreeWidgetItem(self.wgt_model_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
@@ -435,8 +436,7 @@ class Viewer(QMainWindow):
 
     @DispatchHandle.register_listener("on_updated_stats")
     def update_statistics(self, stats, layer):
-        self.main_window.currentLayerLabel.setText(
-            "Current Layer: {}".format(layer.name))
+        self.main_window.currentLayerLineEdit.setText("{}".format(layer.name))
 
         if 'mean' in stats:
             self.main_window.meanLineEdit.setText("{0:4.4g}".format(

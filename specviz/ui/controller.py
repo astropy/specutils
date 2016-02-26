@@ -62,6 +62,11 @@ class Controller(object):
             lambda li, col: Dispatch.on_clicked_layer.emit(
                 layer_item=li))
 
+        # When an interactable widget inside a layer item is clicked
+        self.viewer.wgt_layer_list.itemChanged.connect(
+            lambda li, col: Dispatch.on_changed_layer.emit(
+                layer_item=li))
+
         # When the model items in the model tree change
         self.viewer.wgt_model_list.currentItemChanged.connect(
             lambda mi, col: Dispatch.on_changed_model.emit(
@@ -479,7 +484,7 @@ class Controller(object):
             current_window.set_visibility(
                 layer, layer_item.checkState(col) == Qt.Checked, override=True)
 
-    @DispatchHandle.register_listener("on_selected_layer", "on_clicked_layer")
+    @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
     def _update_layer_name(self, layer_item, col=0):
         if layer_item is None:
             return

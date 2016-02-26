@@ -176,12 +176,18 @@ class Layer(object):
             else:
                 new_source = operator(other, propagate_uncertainties=propagate)
 
+            # Force the same dispersion
+            new_source._dispersion = np.copy(self._source._dispersion)
+
+            # Apply arithmetic to the dispersion unit
             if operator.__name__ == 'multiply':
                 new_source._dispersion_unit = self._source.dispersion_unit * \
                                               other.dispersion_unit
             elif operator.__name__ == 'divide':
                 new_source._dispersion_unit = self._source.dispersion_unit / \
                                               other.dispersion_unit
+            else:
+                new_source._dispersion_unit = self._source.dispersion_unit
         else:
             new_source = operator(other, propagate_uncertainties=propagate)
 
