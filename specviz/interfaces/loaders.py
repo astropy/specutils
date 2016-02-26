@@ -167,7 +167,11 @@ def _flux_unit_from_header(header, key='BUNIT'):
         Flux unit. This falls back to default flux unit if look-up failed.
 
     """
-    unitname = header.get(key, default_fluxunit)
+    unitname = header.get(key, default_fluxunit).lower()
+
+    # TODO: A more elegant way is to use astropy.units.def_unit()
+    if unitname == 'electrons/s':
+        unitname = 'electron/s'
 
     try:
         unit = u.Unit(unitname)
