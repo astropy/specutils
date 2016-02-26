@@ -358,9 +358,8 @@ class Viewer(QMainWindow):
             if child is None:
                 continue
 
-            root.removeChild(child)
-
             if child.data(0, Qt.UserRole) == model:
+                root.removeChild(child)
                 break
 
     def update_model_item(self, model):
