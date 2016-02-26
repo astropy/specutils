@@ -281,7 +281,6 @@ class Controller(object):
             file_filter = 'Generic Fits (*.fits *.mits)'
 
         data = data_manager.load(file_name, file_filter)
-        # self.viewer.add_data_item(data)
 
     def open_file(self, file_name=None):
         """
@@ -337,6 +336,7 @@ class Controller(object):
 
         window_manager.add(layer, window)
         plot_container = plot_manager.new(layer, window)
+        self.update_statistics()
 
     def add_model_layer(self):
         """
