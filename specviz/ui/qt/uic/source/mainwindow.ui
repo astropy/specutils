@@ -250,6 +250,15 @@
      </property>
      <item>
       <layout class="QFormLayout" name="formLayout_3">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetNoConstraint</enum>
+       </property>
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::ExpandingFieldsGrow</enum>
+       </property>
+       <property name="formAlignment">
+        <set>Qt::AlignJustify|Qt::AlignTop</set>
+       </property>
        <property name="leftMargin">
         <number>1</number>
        </property>
@@ -271,8 +280,17 @@
        </item>
        <item row="0" column="1">
         <widget class="QLineEdit" name="currentLayerLineEdit">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="styleSheet">
           <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -281,7 +299,7 @@
      <item>
       <widget class="QTabWidget" name="statsTabWidget">
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="basicTab">
         <attribute name="title">
@@ -290,6 +308,9 @@
         <layout class="QVBoxLayout" name="verticalLayout_10">
          <item>
           <layout class="QFormLayout" name="formLayout_2">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::ExpandingFieldsGrow</enum>
+           </property>
            <property name="formAlignment">
             <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
            </property>
@@ -404,6 +425,9 @@
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <item>
           <layout class="QFormLayout" name="formLayout">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::ExpandingFieldsGrow</enum>
+           </property>
            <property name="formAlignment">
             <set>Qt::AlignRight|Qt::AlignTop|Qt::AlignTrailing</set>
            </property>
@@ -471,6 +495,9 @@
              <property name="styleSheet">
               <string notr="true">QLineEdit{background: #DDDDDD;}</string>
              </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item row="3" column="0">
@@ -484,6 +511,9 @@
             <widget class="QLineEdit" name="meanContinuumLineEdit">
              <property name="styleSheet">
               <string notr="true">QLineEdit{background: #DDDDDD;}</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
