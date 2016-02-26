@@ -161,6 +161,9 @@ class Layer(object):
             other = new
         # The operand is an array
         elif isinstance(other, np.ndarray) or isinstance(other, list):
+            if isinstance(other, Quantity):
+                other = other.value
+
             other = self._source._from_self(other)
         elif isinstance(other, Layer) or isinstance(other, ModelLayer):
             other = other._source
