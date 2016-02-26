@@ -61,9 +61,14 @@ def fits_reader(filename, filter, **kwargs):
     # Read flux column
     data, unit, mask = _read_table_column(tab, ref.data['col'])
 
-    # Get flux unit from header, if not in column
+    # Find flux unit, if not in column
     if unit is None:
-        unit = _flux_unit_from_header(meta['header'])
+        # Get flux unit from YAML
+        if ref.data.get('unit') is not None:
+            unit = u.Unit(ref.data['unit'])
+        # Get flux unit from header
+        else:
+            unit = _flux_unit_from_header(meta['header'])
 
     # Get data mask, if not in column.
     # 0 = good data (unlike Layers)
@@ -167,7 +172,7 @@ def _flux_unit_from_header(header, key='BUNIT'):
         Flux unit. This falls back to default flux unit if look-up failed.
 
     """
-    unitname = header.get(key, default_fluxunit).lower()
+    unitname = header.get(key, default_fluxunit.to_string()).lower()
 
     # TODO: A more elegant way is to use astropy.units.def_unit()
     if unitname == 'electrons/s':
