@@ -281,6 +281,7 @@ class ModelManager(Manager):
         if len(sorted_models) != len(vars):
             logging.error("Incorrect model arithmetic formula: the number "
                           "of models does not match the number of variables.")
+            return
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_models)))
@@ -325,11 +326,13 @@ class ModelManager(Manager):
 
             models.append(model)
 
-        if not formula:
-            result = np.sum(models) if len(models) > 1 else models[0]
-            return result
+        if formula:
+            result = self._evaluate(models, formula)
 
-        return self._evaluate(models, formula)
+            if result is not None:
+                return result
+
+        return np.sum(models) if len(models) > 1 else models[0]
 
     def transfer_models(self, old_layer, new_layer):
         mdls = self._members[old_layer]
