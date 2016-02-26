@@ -377,6 +377,9 @@ class Controller(object):
         model_name = self.viewer.current_model
         layer = self.viewer.current_layer
 
+        if layer is None:
+            return
+
         mask = self.get_roi_mask(layer)
 
         model = model_manager.new(model_name, layer, mask)
