@@ -385,7 +385,10 @@ class Controller(object):
         if layer is None:
             return
 
-        mask = self.get_roi_mask(layer)
+        if hasattr(layer, '_model'):
+            mask = self.get_roi_mask(layer._parent)
+        else:
+            mask = self.get_roi_mask(layer)
 
         model = model_manager.new(model_name, layer, mask)
 
