@@ -693,9 +693,9 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-77</y>
+          <y>0</y>
           <width>306</width>
-          <height>470</height>
+          <height>481</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -765,8 +765,26 @@
             </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <property name="leftMargin">
+               <number>1</number>
+              </property>
+              <property name="topMargin">
+               <number>1</number>
+              </property>
+              <property name="rightMargin">
+               <number>1</number>
+              </property>
+              <property name="bottomMargin">
+               <number>12</number>
+              </property>
               <item>
                <widget class="QToolButton" name="saveModelButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>Save current models</string>
+                </property>
                 <property name="text">
                  <string>...</string>
                 </property>
@@ -785,6 +803,12 @@
               </item>
               <item>
                <widget class="QToolButton" name="loadModelButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>Open a previously saved model</string>
+                </property>
                 <property name="text">
                  <string>...</string>
                 </property>
@@ -815,7 +839,10 @@
                </spacer>
               </item>
               <item>
-               <widget class="QToolButton" name="removeModelButton">
+               <widget class="QToolButton" name="modelRemoveButton">
+                <property name="toolTip">
+                 <string>Remove the currently selected model</string>
+                </property>
                 <property name="text">
                  <string>...</string>
                 </property>

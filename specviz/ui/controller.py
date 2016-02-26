@@ -92,6 +92,10 @@ class Controller(object):
         self.viewer.main_window.layerRemoveButton.clicked.connect(
             self.remove_layer)
 
+        # When the model list delete button is pressed
+        self.viewer.main_window.modelRemoveButton.clicked.connect(
+            self.remove_model)
+
         # When the arithmetic button is clicked, show math dialog
         self.viewer.main_window.arithmeticToolButton.clicked.connect(
             self._show_arithmetic_dialog)
@@ -135,9 +139,6 @@ class Controller(object):
         self.viewer.wgt_layer_list.customContextMenuRequested.connect(
             self._layer_context_menu)
 
-        self.viewer.wgt_model_list.customContextMenuRequested.connect(
-            self._model_context_menu)
-
     def _layer_context_menu(self, point):
         layer_item = self.viewer.wgt_layer_list.itemAt(point)
 
@@ -155,19 +156,6 @@ class Controller(object):
 
         self.viewer.layer_context_menu.exec_(
             self.viewer.wgt_layer_list.viewport().mapToGlobal(point))
-
-    def _model_context_menu(self, point):
-        model_item = self.viewer.wgt_model_list.itemAt(point)
-        model = model_item.data(0, Qt.UserRole)
-        layer = self.viewer.current_layer
-
-        self.viewer.model_context_menu.act_remove.triggered.disconnect()
-        self.viewer.model_context_menu.act_remove.triggered.connect(
-            lambda: model_manager.remove(layer=layer, model=model)
-        )
-
-        self.viewer.model_context_menu.exec_(
-            self.viewer.wgt_model_list.viewport().mapToGlobal(point))
 
     def _change_plot_color(self, container):
         col = QColorDialog.getColor(container._pen_stash['pen_on'].color(),
@@ -207,6 +195,10 @@ class Controller(object):
     def save_model(self):
         model_dict = self.viewer.get_model_inputs()
         formula = self.viewer.current_model_formula
+
+        if len(model_dict) == 0:
+            return
+
         model = model_manager.get_compound_model(model_dict, formula=formula)
 
         global _model_directory
@@ -454,6 +446,17 @@ class Controller(object):
                                    mask=mask)
 
         plot_manager.update_plots(layer=current_layer)
+
+    def remove_model(self):
+        model_item = self.viewer.current_model_item
+
+        if model_item is None:
+            return
+
+        model = model_item.data(0, Qt.UserRole)
+        layer = self.viewer.current_layer
+
+        model_manager.remove(layer=layer, model=model)
 
     def remove_layer(self, layer=None):
         current_layer = layer or self.viewer.current_layer

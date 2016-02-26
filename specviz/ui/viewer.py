@@ -9,7 +9,7 @@ from .qt.mainwindow import Ui_MainWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
-from .widgets.menus import LayerContextMenu, ModelContextMenu
+from .widgets.menus import LayerContextMenu
 
 
 class Viewer(QMainWindow):
@@ -37,7 +37,6 @@ class Viewer(QMainWindow):
         self.layer_context_menu = LayerContextMenu()
 
         self.wgt_model_list.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.model_context_menu = ModelContextMenu()
 
         # Define the layer arithmetic dialog
         self._layer_arithmetic_dialog = LayerArithmeticDialog()
@@ -126,6 +125,10 @@ class Viewer(QMainWindow):
     @property
     def current_layer_item(self):
         return self.wgt_layer_list.currentItem()
+
+    @property
+    def current_model_item(self):
+        return self.wgt_model_list.currentItem()
 
     @property
     def current_sub_window(self):

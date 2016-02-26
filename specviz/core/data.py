@@ -187,7 +187,7 @@ class Layer(object):
                 new_source._dispersion_unit = self._source.dispersion_unit / \
                                               other.dispersion_unit
             else:
-                new_source._dispersion_unit = self._source.dispersion_unit
+                new_source._dispersion_unit = self._source._dispersion_unit
         else:
             new_source = operator(other, propagate_uncertainties=propagate)
 
