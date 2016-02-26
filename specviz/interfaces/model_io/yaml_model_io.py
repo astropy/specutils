@@ -19,6 +19,7 @@ from ..managers import ModelManager
 
 MODEL_FILE_FILTER = "YAML files (*.yaml)"
 EXPRESSION_NAME = 'arithmetic behavior'
+MODEL_NAME = 'model'
 
 
 # Helper functions
@@ -88,8 +89,8 @@ def _build_single_model(in_map, model_name=None):
 # models present in the map.
 def _build_additive_model(in_map):
     model = None
-    for model_name in in_map['model']:
-        in_model = _build_single_model(in_map['model'], model_name=model_name)
+    for model_name in in_map[MODEL_NAME]:
+        in_model = _build_single_model(in_map[MODEL_NAME], model_name=model_name)
         if model is None:
             model = in_model
         else:
@@ -101,8 +102,8 @@ def _build_additive_model(in_map):
 # use it to build the compound model
 def _build_compound_model(in_map):
     model_list = []
-    for model_name in in_map['model']:
-        model_list.append(_build_single_model(in_map['model'], model_name=model_name))
+    for model_name in in_map[MODEL_NAME]:
+        model_list.append(_build_single_model(in_map[MODEL_NAME], model_name=model_name))
 
     formula = in_map[EXPRESSION_NAME]
 
@@ -130,7 +131,7 @@ def buildModelFromFile(fname):
 
     expression = ""
 
-    if 'model' in in_map:
+    if MODEL_NAME in in_map:
         # compound model
         if EXPRESSION_NAME in in_map and len(in_map[EXPRESSION_NAME]) > 0:
             model, expression = _build_compound_model(in_map)
@@ -246,10 +247,10 @@ def _writeSingleComponentModel(model, model_directory, parent):
 
 # Handles the case of a compound model
 def _writeCompoundModel(compound_model, model_directory, parent, expression):
-    out_model_dict = {'model':{}}
+    out_model_dict = {MODEL_NAME:{}}
 
     for model in compound_model:
-        out_model_dict['model'][_get_component_name(model)] = \
+        out_model_dict[MODEL_NAME][_get_component_name(model)] = \
             _build_output_dict_compound(model)
 
     out_model_dict[EXPRESSION_NAME] = expression
