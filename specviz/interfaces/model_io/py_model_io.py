@@ -56,12 +56,17 @@ def buildModelFromFile(fname):
                 # This 'if' statement skips the function types, everything that
                 # passes is assumed to be a valid compound model definition.
                 if (str(type(module.__dict__[variable]))).find('astropy.modeling.core._ModelMeta') < 0:
+
                     compound_model = module.__dict__[variable]
-                    return compound_model, directory
-        return None,None
+
+                    # Return an empty string for now, in place of the model expression. This
+                    # needs to be fixed in the unlikely case we ever use this method.
+                    return compound_model, "", directory
+
+        return None,None,None
     except Exception as e:
         print("ERROR: " + str(e))
-        return None,None
+        return None,None,None
 
 
 # Writes a compound model expression to file.  The 'header' string

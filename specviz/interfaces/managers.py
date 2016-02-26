@@ -268,7 +268,8 @@ class ModelManager(Manager):
 
         Dispatch.on_removed_model.emit(model=model, layer=layer)
 
-    def _evaluate(self, models, formula):
+    @classmethod
+    def evaluate(self, models, formula):
         parser = Parser()
         expr = parser.parse(formula)
 
@@ -327,7 +328,7 @@ class ModelManager(Manager):
             models.append(model)
 
         if formula:
-            result = self._evaluate(models, formula)
+            result = self.evaluate(models, formula)
 
             if result is not None:
                 return result

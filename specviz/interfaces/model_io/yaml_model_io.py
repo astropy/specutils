@@ -10,14 +10,15 @@ import dis
 import copy
 import yaml
 
+from io import StringIO
 from ast import literal_eval
 
-from io import StringIO
-from specviz.third_party.qtpy.QtWidgets import QFileDialog
-
-from specviz.interfaces.factories import ModelFactory
+from ...third_party.qtpy.QtWidgets import QFileDialog
+from ...interfaces.factories import ModelFactory
+from ..managers import ModelManager
 
 MODEL_FILE_FILTER = "YAML files (*.yaml)"
+EXPRESSION_NAME = 'arithmetic behavior'
 
 
 # Helper functions
@@ -29,23 +30,23 @@ def _get_component_name(function):
 
 # ----------  From YAML file to model  ------------------------'
 
-def read_constraints(param_dict):
+def _ingest_constraints(param_dict):
+
+    bounds = param_dict['constraints']['bounds']
+    fixed = param_dict['constraints']['fixed']
+    tied = param_dict['constraints']['tied']
+
     # bounds are tuples stored as strings so the user
     # can read and edit the file using a text editor.
     # They need to be converted back to python tuples.
-    bounds = param_dict['constraints']['bounds']
     for name in bounds:
         bound = literal_eval(bounds[name])
         bounds[name] = (bound[0], bound[1])
 
-    # 'fixed' and 'tied' are stored in the file as
-    # strings and need to be converted back to boolean.
     # TODO: re-do this when implementing ties
-    fixed = param_dict['constraints']['fixed']
-    tied = param_dict['constraints']['tied']
-
     # YAML returns different data types depending
-    # on the model type.
+    # on the model type. They need to be properly
+    # converted.
     for name in fixed:
         if isinstance(fixed[name], str):
             fixed[name] = literal_eval(fixed[name])
@@ -54,20 +55,22 @@ def read_constraints(param_dict):
     return bounds, fixed, tied
 
 
-def _YAML_build_input_model(in_map, model_name=None):
+def _build_single_model(in_map, model_name=None):
     if model_name is None:
         model_name = list(in_map.keys())[0]
 
-    # names in ModelFactory do not terminate with a redundant '1D' suffix
+    # model names in ModelFactory do not terminate
+    # with a redundant '1D' suffix; remove it.
     model_cls = ModelFactory.all_models[model_name[:-2]]
 
     param_dict = in_map[model_name]
+    name = param_dict['name']
 
-    bounds, fixed, tied = read_constraints(param_dict)
+    bounds, fixed, tied = _ingest_constraints(param_dict)
 
     # the model constructor call can directly handle
-    # all parameter constraints.
-    model = model_cls(bounds=bounds, fixed=fixed, tied=tied)
+    # all parameter constraints, and the name
+    model = model_cls(name=name, bounds=bounds, fixed=fixed, tied=tied)
 
     # parameter values are top level objects in the model
     # instance, unlike other parameter attributes such as
@@ -80,45 +83,65 @@ def _YAML_build_input_model(in_map, model_name=None):
     return model
 
 
-# Builds a compound model specified in a YAML file.
-# This is the main entry # point for the 'read from
-# file' functionality. The caller is responsible for
-# providing the full-path file name.
-def buildModelFromFile(fname):
+# If no arithmetic behavior expression is know,
+# build a compound model by adding together all
+# models present in the map.
+def _build_additive_model(in_map):
+    model = None
+    for model_name in in_map['model']:
+        in_model = _build_single_model(in_map['model'], model_name=model_name)
+        if model is None:
+            model = in_model
+        else:
+            model += in_model
+    return model
 
+
+# If an arithmetic behavior expression is present,
+# use it to build the compound model
+def _build_compound_model(in_map):
+    model_list = []
+    for model_name in in_map['model']:
+        model_list.append(_build_single_model(in_map['model'], model_name=model_name))
+
+    formula = in_map[EXPRESSION_NAME]
+
+    return ModelManager.evaluate(model_list, formula), formula
+
+
+def buildModelFromFile(fname):
+    """
+    Builds a compound model specified in a YAML file.
+
+    This is the main entry point for the 'read from file'
+    functionality. The caller is responsible for providing
+    the full-path file name.
+
+    Parameters
+    ----------
+    fname: str
+        the ffully qualified file name
+    """
     directory = os.path.dirname(fname)
 
     f = open(fname, "r")
     in_map = yaml.safe_load(f)
     f.close()
 
-    model = None
+    expression = ""
+
     if 'model' in in_map:
-        for model_name in in_map['model']:
-            in_model = _YAML_build_input_model(in_map['model'], model_name=model_name)
-            if model is None:
-                model = in_model
-            else:
-                model += in_model
+        # compound model
+        if EXPRESSION_NAME in in_map and len(in_map[EXPRESSION_NAME]) > 0:
+            model, expression = _build_compound_model(in_map)
+        else:
+            # add all models together if no formula is present
+            model = _build_additive_model(in_map)
     else:
-       model = _YAML_build_input_model(in_map)
+        # single model
+        model = _build_single_model(in_map)
 
-    return model, directory
-
-
-# Writes a dict to YAML file.
-def _writeToFile(out_model_dict, model_directory, parent):
-
-    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
-
-    if len(fname) > 0:
-        # enforce correct suffix.
-        if not fname.endswith(".yaml"):
-            fname += ".yaml"
-
-        f = open(fname, "w")
-        yaml.dump(out_model_dict, f,default_flow_style=False)
-        f.close()
+    return model, expression, directory
 
 
 
@@ -147,7 +170,7 @@ def _build_constraints_dict(model):
 
 
 # From a single model, builds the dict to be output to YAML file.
-def _YAML_build_output_dict_single(model):
+def _build_output_dict_single(model):
     model_name = model.name
 
     param_dict = {}
@@ -165,7 +188,7 @@ def _YAML_build_output_dict_single(model):
 
 
 # From a compound model, builds the dict to be output to YAML file.
-def _YAML_build_output_dict_compound(model, expression):
+def _build_output_dict_compound(model):
     model_name = model.name
 
     param_dict = {}
@@ -188,10 +211,24 @@ def _YAML_build_output_dict_compound(model, expression):
     model_dict = {
         'name': model_name,
         'parameters': param_dict,
-        'constraints': constraints_dict,
-        'expression': str(expression)}
+        'constraints': constraints_dict}
 
     return model_dict
+
+
+# Writes a dict to YAML file.
+def _writeToFile(out_model_dict, model_directory, parent):
+
+    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
+
+    if len(fname) > 0:
+        # enforce correct suffix.
+        if not fname.endswith(".yaml"):
+            fname += ".yaml"
+
+        f = open(fname, "w")
+        yaml.dump(out_model_dict, f,default_flow_style=False)
+        f.close()
 
 
 # Handles the case of a spectral model with a single component. It's
@@ -202,7 +239,7 @@ def _writeSingleComponentModel(model, model_directory, parent):
     out_model_dict = {}
 
     out_model_dict[_get_component_name(model)] = \
-        _YAML_build_output_dict_single(model)
+        _build_output_dict_single(model)
 
     _writeToFile(out_model_dict, model_directory, parent)
 
@@ -213,17 +250,27 @@ def _writeCompoundModel(compound_model, model_directory, parent, expression):
 
     for model in compound_model:
         out_model_dict['model'][_get_component_name(model)] = \
-            _YAML_build_output_dict_compound(model, expression)
+            _build_output_dict_compound(model)
+
+    out_model_dict[EXPRESSION_NAME] = expression
 
     _writeToFile(out_model_dict, model_directory, parent)
 
 
-# Saves spectral model to file. This is the main entry
-# point for the 'save to file' functionality.
-# parent: optional QWidget used for screen centering.
-# expression: the formula associated with the compound model
 def saveModelToFile(parent, model, model_directory, expression=None):
+    """
+    Saves spectral model to file.
 
+    This is the main entry point for the 'save to file'
+    functionality.
+
+    Parameters
+    ----------
+    parent : QWidget or None
+        optional widget used for screen centering.
+    expression: str
+        the formula associated with the compound model
+    """
     if not hasattr(model, '_format_expression'):
         _writeSingleComponentModel(model, model_directory, parent)
     else:

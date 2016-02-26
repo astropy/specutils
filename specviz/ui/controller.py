@@ -222,9 +222,11 @@ class Controller(object):
 
         # File dialog returns a tuple with a list of file names.
         # We get the first name from the first tuple element.
+        if len(fname[0]) < 1:
+            return
         fname = fname[0][0]
 
-        compound_model, _model_directory = model_io.buildModelFromFile(fname)
+        compound_model, formula, _model_directory = model_io.buildModelFromFile(fname)
 
         # Put new model in its own sub-layer under current layer.
         current_layer = self.viewer.current_layer
@@ -256,6 +258,9 @@ class Controller(object):
 
         plot_container = plot_manager.new(new_model_layer,
                                           current_window)
+
+        # put formula in text edit widget
+        self.viewer.main_window.lineEdit.setText(formula)
 
     def read_file(self, file_name):
         """
