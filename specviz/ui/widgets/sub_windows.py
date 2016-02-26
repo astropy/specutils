@@ -50,8 +50,8 @@ class PlotSubWindow(QMainWindow):
         DispatchHandle.setup(self)
 
         self._dynamic_axis = DynamicAxisItem(orientation='top')
-        self._plot_widget = pg.PlotWidget(axisItems={'top':
-                                                         self._dynamic_axis})
+        self._plot_widget = pg.PlotWidget(
+            axisItems={'top': self._dynamic_axis})
         self.setCentralWidget(self._plot_widget)
 
         self._plot_item = self._plot_widget.getPlotItem()

@@ -547,7 +547,7 @@ class Controller(object):
             line = layer_manager.copy(current_layer)
             line._mask = line_mask
 
-            flux, ew, avg_cont = statistics.eq_width(cont1_stat_dict,
+            ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,
                                                      cont2_stat_dict,
                                                      line)
             cent = statistics.centroid(line - avg_cont)

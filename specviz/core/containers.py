@@ -5,7 +5,7 @@ import random
 
 from ..third_party.qtpy.QtGui import *
 
-from astropy.units import Unit, Quantity
+from astropy.units import Unit, Quantity, spectral_density, spectral
 import pyqtgraph as pg
 from itertools import cycle
 
@@ -84,16 +84,21 @@ class PlotContainer(object):
 
     @property
     def data(self):
-        return self.layer.data.to(self._plot_units[1])
+        return self.layer.data.to(self._plot_units[1],
+                                  equivalencies=spectral_density(self.dispersion))
 
     @property
     def dispersion(self):
-        return self.layer.dispersion.to(self._plot_units[0])
+        return self.layer.dispersion.to(self._plot_units[0],
+                                        equivalencies=spectral())
 
     @property
     def uncertainty(self):
-        return Quantity(self.layer.uncertainty.array,
-                        unit=self.layer.units[1]).to(self._plot_units[1])
+        return Quantity(
+            self.layer.uncertainty.array,
+            unit=self.layer.units[1]).to(
+                self._plot_units[1],
+                equivalencies=spectral_density(self.dispersion))
 
     @property
     def plot(self):
