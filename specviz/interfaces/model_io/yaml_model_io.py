@@ -220,7 +220,7 @@ def _build_output_dict_compound(model):
 # Writes a dict to YAML file.
 def _writeToFile(out_model_dict, model_directory, parent):
 
-    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
+    fname = QFileDialog.getSaveFileName(parent, 'Save to file', model_directory)[0]
 
     if len(fname) > 0:
         # enforce correct suffix.

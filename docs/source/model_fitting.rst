@@ -84,18 +84,31 @@ then press "Create" or "Update" to produce the compound model::
     Gaussian1 - Gaussian2
 
 
-Saving models to file
----------------------
+Saving and exporting models to file
+-----------------------------------
 
-Selecting a model layer under "Layers" will enable the 'Save' button in
-the Model Fitting window. Click on the button to get a file dialog window.
-Type in a file name. If this file name does not end with the suffix '.py',
-the suffix will automatically be appended. Click 'Save', or just the
-Return/Enter key.
+Selecting a model layer under "Layers" will enable the 'Save' and 'Export'
+buttons in the Model Fitting window. Saving a model to a file will enable
+specviz to read back that model into a new model layer. Exporting a model
+to a file wil create a Python script in a .py file. This file can be
+directly imported by Python in a command-line session.
 
-This will save the current model in the model layer to a file that can be
-directly imported by python. An example using the 'test3.py' file name, and
-a model comprised of a constant and a gaussian:
+Click on either button to get a file dialog window. Type in a file name.
+If this file name does not end with the correct suffix, the suffix will
+automatically be appended. Click 'Save', or just the Return/Enter key.
+The correct suffix for Exported files is ".py", and for Saved files is
+".yaml".
+
+
+Export
+______
+
+
+This will save the model in the currently selected model layer to a file
+that can be directly imported by Python. The file is just a plain text
+file with the model expressed recorded as a Python expression. The model
+is associated to a variable named 'model1'. An example using the 'test3.py'
+file name, and a model comprised of a constant and a gaussian:
 
 ::
 
@@ -118,16 +131,26 @@ a model comprised of a constant and a gaussian:
  >>>
 
 
-The file is just a plain text file with the model expressed as a python
-expression. The model is associated to a variable named 'model1'.
-
 The file can be edited at will by the user, e.g. to add bounds, fixed
 flags, and ties to the model parameters. These abilities will come in
-time to the application UI itself.
+time to the specviz UI itself.
 
 
-Loading models from file
-------------------------
+Save and Load
+_____________
 
-This functionality will be added in a future release.
+
+Saving the model to a file works in the same way as exporting. The difference
+is that a saved model can be later read back into specviz via the Load button.
+For this button to be enabled, a spectrum layer (not a model layer) must be
+selected in the Layers window. The model just read will be attached to a new
+model layer associated under the current spectrum layer.
+
+The file is writen using the YAML format. Being a plain text file with a
+self-explanatory structure, it can be edited at will by the user, e.g. to add
+bounds, fixed flags, and ties to the model parameters. These abilities will
+come in time to the specviz UI itself.
+
+
+
 

@@ -61,6 +61,7 @@ class Viewer(QMainWindow):
             self.main_window.fittingRoutinesGroupBox.setEnabled(False)
             self.main_window.loadModelButton.setEnabled(False)
             self.main_window.saveModelButton.setEnabled(False)
+            self.main_window.exportModelButton.setEnabled(False)
 
             return
 
@@ -71,12 +72,14 @@ class Viewer(QMainWindow):
             self.main_window.updateModelLayerButton.hide()
             self.main_window.fittingRoutinesGroupBox.setEnabled(False)
             self.main_window.saveModelButton.setEnabled(False)
+            self.main_window.exportModelButton.setEnabled(False)
             self.main_window.loadModelButton.setEnabled(True)
         else:
             self.main_window.createModelLayerButton.hide()
             self.main_window.updateModelLayerButton.show()
             self.main_window.fittingRoutinesGroupBox.setEnabled(True)
             self.main_window.saveModelButton.setEnabled(True)
+            self.main_window.exportModelButton.setEnabled(True)
             self.main_window.loadModelButton.setEnabled(False)
 
     def _set_current_sub_window(self, sub_window):

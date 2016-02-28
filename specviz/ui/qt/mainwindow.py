@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './source/mainwindow.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5.1
+# Created by: ...third_party.qtpy UI code generator 5.5
 #
 # WARNING! All changes made in this file will be lost!
 from __future__ import (absolute_import, division, print_function,
@@ -266,8 +266,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.toolButton_6)
         self.arithmeticToolButton = QtWidgets.QToolButton(self.dockWidgetContents_3)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         icon4.addPixmap(QtGui.QPixmap(":/img/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        icon4.addPixmap(QtGui.QPixmap(":/Math-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.arithmeticToolButton.setIcon(icon4)
         self.arithmeticToolButton.setIconSize(QtCore.QSize(20, 20))
         self.arithmeticToolButton.setObjectName("arithmeticToolButton")
@@ -299,7 +299,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 306, 481))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 322, 482))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_8.setContentsMargins(11, 11, 11, 11)
@@ -360,6 +360,14 @@ class Ui_MainWindow(object):
         self.loadModelButton.setIconSize(QtCore.QSize(20, 20))
         self.loadModelButton.setObjectName("loadModelButton")
         self.horizontalLayout_6.addWidget(self.loadModelButton)
+        self.exportModelButton = QtWidgets.QToolButton(self.groupBox_3)
+        self.exportModelButton.setEnabled(False)
+        icon7 = QtGui.QIcon()
+        icon7.addPixmap(QtGui.QPixmap(":/img/Save-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.exportModelButton.setIcon(icon7)
+        self.exportModelButton.setIconSize(QtCore.QSize(14, 14))
+        self.exportModelButton.setObjectName("exportModelButton")
+        self.horizontalLayout_6.addWidget(self.exportModelButton)
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem2)
         self.modelRemoveButton = QtWidgets.QToolButton(self.groupBox_3)
@@ -409,9 +417,9 @@ class Ui_MainWindow(object):
         self.dockWidget_4.setWidget(self.dockWidgetContents_4)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.dockWidget_4)
         self.actionOpen = QtWidgets.QAction(MainWindow)
-        icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(":/img/Open Folder-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionOpen.setIcon(icon7)
+        icon8 = QtGui.QIcon()
+        icon8.addPixmap(QtGui.QPixmap(":/img/Open Folder-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionOpen.setIcon(icon8)
         self.actionOpen.setObjectName("actionOpen")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
@@ -472,6 +480,8 @@ class Ui_MainWindow(object):
         self.saveModelButton.setText(_translate("MainWindow", "..."))
         self.loadModelButton.setToolTip(_translate("MainWindow", "Open a previously saved model"))
         self.loadModelButton.setText(_translate("MainWindow", "..."))
+        self.exportModelButton.setToolTip(_translate("MainWindow", "Export models to .py file"))
+        self.exportModelButton.setText(_translate("MainWindow", "..."))
         self.modelRemoveButton.setToolTip(_translate("MainWindow", "Remove the currently selected model"))
         self.modelRemoveButton.setText(_translate("MainWindow", "..."))
         self.groupBox_4.setTitle(_translate("MainWindow", "Arithmetic Behavior"))

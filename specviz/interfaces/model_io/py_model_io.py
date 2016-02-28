@@ -74,7 +74,7 @@ def buildModelFromFile(fname):
 # that appear in the expression.
 def _writeToFile(expression_string, model_directory, parent, header):
 
-    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
+    fname = QFileDialog.getSaveFileName(parent, 'Export to .py file', model_directory)[0]
 
     if len(fname) > 0:
         # enforce correct suffix.

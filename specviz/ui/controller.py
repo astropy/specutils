@@ -19,8 +19,8 @@ from ..core.comms import Dispatch, DispatchHandle
 # format to export models that can be directly imported
 # by scripts elsewhere.
 
-# from ..interfaces.model_io import yaml_model_io as model_io
-from ..interfaces.model_io import py_model_io as model_io
+from ..interfaces.model_io import yaml_model_io
+from ..interfaces.model_io import py_model_io
 
 
 # To memorize last visited directory.
@@ -39,10 +39,6 @@ class Controller(object):
         self._setup_connections()
         self._setup_communications()
         self._setup_context_menus()
-
-        # For now, hide the Load button so no .py
-        # files with models can be ingested.
-        self.viewer.main_window.loadModelButton.hide()
 
         DispatchHandle.setup(self)
 
@@ -135,6 +131,9 @@ class Controller(object):
         self.viewer.main_window.loadModelButton.clicked.connect(
             self.load_model)
 
+        self.viewer.main_window.exportModelButton.clicked.connect(
+            self.export_model)
+
     def _setup_context_menus(self):
         self.viewer.wgt_layer_list.customContextMenuRequested.connect(
             self._layer_context_menu)
@@ -192,25 +191,39 @@ class Controller(object):
                     new_layer.data.unit, current_window._plot_units[1]))
                 self.add_sub_window(layer=new_layer)
 
-    def save_model(self):
+    def _prepare_model_for_save(self):
         model_dict = self.viewer.get_model_inputs()
         formula = self.viewer.current_model_formula
 
         if len(model_dict) == 0:
-            return
+            return None, None
 
-        model = model_manager.get_compound_model(model_dict, formula=formula)
+        return model_manager.get_compound_model(model_dict, formula=formula), formula
 
-        global _model_directory
-        model_io.saveModelToFile(self.viewer.main_window.mdiArea, model,
-                                 _model_directory, expression=formula)
+    def save_model(self):
+
+        model, formula = self._prepare_model_for_save()
+
+        if model:
+            global _model_directory
+            yaml_model_io.saveModelToFile(self.viewer.main_window.mdiArea, model,
+                                          _model_directory, expression=formula)
+
+    def export_model(self):
+
+        model, formula = self._prepare_model_for_save()
+
+        if model:
+            global _model_directory
+            py_model_io.saveModelToFile(self.viewer.main_window.mdiArea, model,
+                                          _model_directory, expression=formula)
 
     def load_model(self):
         global _model_directory
         fname = QFileDialog.getOpenFileNames(self.viewer.main_window.mdiArea,
                                              'Read model file',
                                              _model_directory,
-                                             model_io.MODEL_FILE_FILTER)
+                                              yaml_model_io.MODEL_FILE_FILTER)
 
         # File dialog returns a tuple with a list of file names.
         # We get the first name from the first tuple element.
@@ -218,7 +231,7 @@ class Controller(object):
             return
         fname = fname[0][0]
 
-        compound_model, formula, _model_directory = model_io.buildModelFromFile(fname)
+        compound_model, formula, _model_directory = yaml_model_io.buildModelFromFile(fname)
 
         # Put new model in its own sub-layer under current layer.
         current_layer = self.viewer.current_layer
