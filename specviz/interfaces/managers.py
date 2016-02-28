@@ -12,6 +12,7 @@ from ..analysis.modeling import apply_model
 
 # STDLIB
 import logging
+from collections import OrderedDict
 
 # THIRD-PARTY
 import numpy as np
@@ -218,7 +219,7 @@ class ModelManager(Manager):
     """
     def __init__(self):
         super(ModelManager, self).__init__()
-        self._members = {}
+        self._members = OrderedDict()
         self.all_models = sorted(ModelFactory.all_models.keys())
         self.all_fitters = sorted(FitterFactory.all_fitters.keys())
 

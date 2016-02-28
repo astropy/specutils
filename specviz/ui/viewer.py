@@ -340,7 +340,7 @@ class Viewer(QMainWindow):
             name = model.__class__.__name__.replace('1D', '') + str(count)
             model._name = name
 
-        new_item = QTreeWidgetItem(self.wgt_model_list)
+        new_item = QTreeWidgetItem()
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 
         new_item.setText(0, name)
@@ -353,6 +353,8 @@ class Viewer(QMainWindow):
                                   model.parameters[i])
             new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
             new_para_item.setFlags(new_para_item.flags() | Qt.ItemIsEditable)
+
+        self.wgt_model_list.addTopLevelItem(new_item)
 
     @DispatchHandle.register_listener("on_removed_model")
     def remove_model_item(self, model=None, layer=None):

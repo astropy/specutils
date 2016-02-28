@@ -64,7 +64,7 @@ class Controller(object):
                 layer_item=li))
 
         # When the model items in the model tree change
-        self.viewer.wgt_model_list.currentItemChanged.connect(
+        self.viewer.wgt_model_list.itemChanged.connect(
             lambda mi, col: Dispatch.on_changed_model.emit(
                 model_item=mi))
 
@@ -524,8 +524,11 @@ class Controller(object):
         # Alert the statistics container to update the displayed layer name
         Dispatch.on_updated_roi.emit(roi=None)
 
-    @DispatchHandle.register_listener("on_selected_model")
+    @DispatchHandle.register_listener("on_selected_model", "on_changed_model")
     def _update_model_name(self, model_item, col=0):
+        if model_item is None:
+            return
+
         model = model_item.data(0, Qt.UserRole)
 
         if hasattr(model, '_name'):
