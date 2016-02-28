@@ -354,9 +354,6 @@ class Controller(object):
         if current_layer is None or not model_inputs:
             return
 
-        # Remove models attached to parent layer
-        model_manager.remove(current_layer)
-
         compound_model = model_manager.get_compound_model(
             model_dict=model_inputs,
             formula=self.viewer.current_model_formula)
@@ -373,9 +370,8 @@ class Controller(object):
 
         window_manager.add(new_model_layer, current_window)
 
-        # Add the models to the new model layer
-        for model in model_inputs:
-            model_manager.add(model=model, layer=new_model_layer)
+        # Transfer models attached to parent layer
+        model_manager.transfer_models(current_layer, new_model_layer)
 
         current_window = self.viewer.current_sub_window
         plot_container = plot_manager.new(new_model_layer,

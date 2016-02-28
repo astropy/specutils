@@ -343,6 +343,9 @@ class ModelManager(Manager):
         self._members[old_layer] = []
         del self._members[old_layer]
 
+        for model in self._members[new_layer]:
+            Dispatch.on_added_model.emit(model, new_layer)
+
     def update_model(self, layer, model_inputs, formula='', mask=None):
         model = self.get_compound_model(model_inputs, formula)
 
