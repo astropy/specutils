@@ -41,6 +41,9 @@ class DataFactory(Factory):
 
     @staticmethod
     def create_layer(data, mask=None, parent=None, name='', model=None):
+        if not isinstance(data, Data):
+            raise ValueError('Invalid Data object')
+
         logging.info("Create new layer: {}".format(name))
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
@@ -132,6 +135,10 @@ class PlotFactory(Factory):
     @classmethod
     def create_line_plot(cls, layer, unit=None, visible=False, style='line',
                          pen=None, err_pen=None):
+        # User attempts to plot before loading file, do nothing
+        if not isinstance(layer, Layer):
+            return
+
         plot_data_item = pg.PlotDataItem(layer.dispersion.value,
                                          layer.data.value)
 

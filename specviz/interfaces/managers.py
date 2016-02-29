@@ -99,10 +99,13 @@ class LayerManager(Manager):
     def new(self, data, mask=None, parent=None, name='', model=None):
         logging.info("Creating new layer: {}".format(name))
 
-        new_layer = DataFactory.create_layer(data, mask, parent, name, model)
-        self.add(new_layer)
-
-        return new_layer
+        try:
+            new_layer = DataFactory.create_layer(data, mask, parent, name, model)
+        except ValueError:
+            pass  # User attempts to plot before loading file, do nothing
+        else:
+            self.add(new_layer)
+            return new_layer
 
     def add(self, layer):
         self._members.append(layer)
