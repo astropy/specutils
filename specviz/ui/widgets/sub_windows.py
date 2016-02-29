@@ -253,6 +253,10 @@ class PlotSubWindow(QMainWindow):
         if window != self:
             return
 
+        # User tries to plot before loading file, do nothing
+        if not hasattr(container, 'layer'):
+            return
+
         if len(self._containers) == 0:
             self.change_units(container.layer.units[0],
                               container.layer.units[1])
