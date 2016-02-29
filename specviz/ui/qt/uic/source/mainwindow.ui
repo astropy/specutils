@@ -694,8 +694,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>322</width>
-          <height>482</height>
+          <width>306</width>
+          <height>481</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -830,6 +830,9 @@
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::PreventContextMenu</enum>
+                </property>
                 <property name="toolTip">
                  <string>Export models to .py file</string>
                 </property>
@@ -838,12 +841,12 @@
                 </property>
                 <property name="icon">
                  <iconset resource="icon_resource.qrc">
-                  <normaloff>:/img/Save-48.png</normaloff>:/img/Save-48.png</iconset>
+                  <normaloff>:/img/Export-48.png</normaloff>:/img/Export-48.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>14</width>
-                  <height>14</height>
+                  <width>20</width>
+                  <height>20</height>
                  </size>
                 </property>
                </widget>

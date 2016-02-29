@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './source/mainwindow.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5
+# Created by: ...third_party.qtpy UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
 from __future__ import (absolute_import, division, print_function,
@@ -299,7 +299,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 322, 482))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 306, 481))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_8.setContentsMargins(11, 11, 11, 11)
@@ -362,10 +362,11 @@ class Ui_MainWindow(object):
         self.horizontalLayout_6.addWidget(self.loadModelButton)
         self.exportModelButton = QtWidgets.QToolButton(self.groupBox_3)
         self.exportModelButton.setEnabled(False)
+        self.exportModelButton.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(":/img/Save-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon7.addPixmap(QtGui.QPixmap(":/img/Export-48.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.exportModelButton.setIcon(icon7)
-        self.exportModelButton.setIconSize(QtCore.QSize(14, 14))
+        self.exportModelButton.setIconSize(QtCore.QSize(20, 20))
         self.exportModelButton.setObjectName("exportModelButton")
         self.horizontalLayout_6.addWidget(self.exportModelButton)
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
