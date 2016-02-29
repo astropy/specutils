@@ -237,6 +237,13 @@ class Layer(object):
     @property
     def dispersion(self):
         """Dispersion quantity with mask applied."""
+
+        # This is needed to catch improper mask usage by layers.
+        if self._mask.shape != self._source.dispersion.shape:
+            raise ValueError(
+                'Mask shape mismatch, expect {0} but get {1}'.format(
+                    self._source.dispersion.shape, self._mask.shape))
+
         return Quantity(self._source.dispersion[self._mask],
                         unit=self._source.dispersion_unit).to(self.units[0])
 
@@ -295,6 +302,12 @@ class ModelLayer(Layer):
     @property
     def data(self):
         """Flux quantity from model."""
+
+        # TODO: Is this too hacky?
+        # Handle bad mask when fitting goes awry.
+        if self._mask.shape != self._source.dispersion.shape:
+            self._mask = np.ones(self._source.dispersion.shape, dtype=np.bool)
+
         self._data = self._model(self.dispersion.value)
 
         return Quantity(self._data,
