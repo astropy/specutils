@@ -315,6 +315,11 @@ class Controller(object):
             Boolean mask.
         """
         layer = layer if layer is not None else self.viewer.current_layer
+
+        # User attempts to slice before opening a file
+        if layer is None:
+            return
+
         window = window if window is not None else self.viewer.current_sub_window
         roi_mask = mask if mask is not None else self.get_roi_mask(layer=layer)
 
@@ -578,7 +583,11 @@ class Controller(object):
 
             mask = self.get_roi_mask(layer=current_layer)
 
-            values = current_layer.data[mask]
+            if mask is None:
+                values = current_layer.data
+            else:
+                values = current_layer.data[mask]
+
             stat_dict = statistics.stats(values)
 
         Dispatch.on_updated_stats.emit(stats=stat_dict, layer=current_layer)
