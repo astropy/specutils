@@ -373,8 +373,11 @@ class ModelManager(Manager):
         if parent_layer is None:
             return
 
-        flux = parent_layer.data
-        dispersion = parent_layer.dispersion
+        # While the data comes from the parent, the mask from the model
+        # layer is the actual data that needs to be fit
+        mask = layer._mask
+        flux = parent_layer.data[mask]
+        dispersion = parent_layer.dispersion[mask]
         model = layer.model
 
         # If the number of parameters is greater than the number of data

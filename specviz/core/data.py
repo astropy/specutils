@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 
 # STDLIB
 import logging
+logging.basicConfig(level=logging.INFO)
 import numbers
 
 # THIRD-PARTY
