@@ -170,8 +170,14 @@ class Layer(object):
         elif isinstance(other, np.ndarray) or isinstance(other, list):
             other = self._source._from_self(other)
 
-        elif isinstance(other, Layer) or isinstance(other, ModelLayer):
+        elif isinstance(other, Layer):
             other = other._source
+
+        elif isinstance(other, ModelLayer):
+            # This object can potentially be a ModelLayer whose parent data
+            # object is not of interest to the arithmetic. In that case, create
+            # a new data object
+            self_data = self._source._from_self(self.data)
 
         if isinstance(other, Data):
             if self._source.wcs != other.wcs:

@@ -201,7 +201,6 @@ class Controller(object):
         return model_manager.get_compound_model(model_dict, formula=formula), formula
 
     def save_model(self):
-
         model, formula = self._prepare_model_for_save()
 
         if model:
@@ -210,7 +209,6 @@ class Controller(object):
                                           _model_directory, expression=formula)
 
     def export_model(self):
-
         model, formula = self._prepare_model_for_save()
 
         if model:
@@ -453,8 +451,8 @@ class Controller(object):
             return
 
         # Update model mask, only if rois exist
-        mask = self.get_roi_mask(layer=current_layer._parent)
-        mask = mask if len(current_window._rois) > 0 else None
+        mask = self.get_roi_mask(layer=current_layer._parent) \
+               if len(current_window._rois) > 0 else None
 
         model_manager.update_model(layer=current_layer,
                                    model_inputs=model_inputs,
@@ -588,7 +586,7 @@ class Controller(object):
             if mask is None:
                 values = current_layer.data
             else:
-                values = current_layer.data[mask]
+                values = current_layer.data[mask[current_layer._mask]]
 
             stat_dict = statistics.stats(values)
 

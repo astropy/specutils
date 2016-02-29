@@ -44,7 +44,6 @@ class DataFactory(Factory):
         if not isinstance(data, Data):
             raise ValueError('Invalid Data object')
 
-        logging.info("Create new layer: {}".format(name))
         mask = mask if mask is not None else np.ones(data.data.shape,
                                                      dtype=bool)
 

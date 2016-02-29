@@ -93,6 +93,12 @@ class PlotContainer(object):
                                         equivalencies=spectral())
 
     @property
+    def source_dispersion(self):
+        return Quantity(self.layer._source.dispersion,
+                        self.layer.units[0]).to(self._plot_units[0],
+                                                equivalencies=spectral())
+
+    @property
     def uncertainty(self):
         return Quantity(
             self.layer.uncertainty.array,

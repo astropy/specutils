@@ -166,8 +166,9 @@ class LayerManager(Manager):
             return
 
         new_layer = self._evaluate(self._members, formula)
-        new_layer.name = "Resultant"
         new_layer._window = None
+        new_layer._parent = None
+        new_layer.name = "Resultant"
         self.add(new_layer)
 
         return new_layer
@@ -213,6 +214,9 @@ class LayerManager(Manager):
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_layers)))
 
+        print(expr.simplify({}).toString())
+        print(dict(pair for pair in zip(vars, sorted_layers)))
+
         return result
 
 
@@ -239,8 +243,9 @@ class ModelManager(Manager):
         # mask must be provided by caller, since ROIs may
         # have been re-defined on the plot since last time
         # the layer was updated.
-        flux = data_layer.data[mask]
-        dispersion = data_layer.dispersion[mask]
+        flux = data_layer.data[mask[data_layer._mask]]
+        dispersion = data_layer.dispersion[mask[data_layer._mask]]
+
         initialize(model, dispersion, flux)
 
         self.add(model, layer)
