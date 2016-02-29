@@ -338,6 +338,8 @@ class Controller(object):
 
         if layer is None:
             layer = layer_manager.new(data)
+        else:
+            layer_manager.add(layer)
 
         window_manager.add(layer, window)
         plot_container = plot_manager.new(layer, window)
