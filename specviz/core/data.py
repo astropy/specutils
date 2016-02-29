@@ -154,24 +154,28 @@ class Layer(object):
                       else Unit(""))
 
     def _arithmetic(self, operator, other, propagate=True):
+        # Quantity can be scalar or array, but always categorized as ndarray.
+        # We need to extract the value(s) first before further processing.
+        if isinstance(other, Quantity):
+            other = other.value
+
         # The operand is a single number
         if isinstance(other, numbers.Number):
-            new = np.empty(shape=self.data.shape)
+            new = np.empty(shape=self._source.data.shape)
             new.fill(other)
-            other = new
+            other = self._source._from_self(new)
+
         # The operand is an array
         elif isinstance(other, np.ndarray) or isinstance(other, list):
-            if isinstance(other, Quantity):
-                other = other.value
-
             other = self._source._from_self(other)
+
         elif isinstance(other, Layer) or isinstance(other, ModelLayer):
             other = other._source
 
         if isinstance(other, Data):
             if self._source.wcs != other.wcs:
                 logging.warning("WCS objects are not equivalent; overriding "
-                                "wcs information on 'other'.".format())
+                                "wcs information on 'other'.")
                 tmp_wcs = other._wcs
                 other._wcs = self._source.wcs
                 new_source = operator(other, propagate_uncertainties=propagate)
