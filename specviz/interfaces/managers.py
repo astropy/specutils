@@ -214,9 +214,6 @@ class LayerManager(Manager):
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in zip(vars, sorted_layers)))
 
-        print(expr.simplify({}).toString())
-        print(dict(pair for pair in zip(vars, sorted_layers)))
-
         return result
 
 
