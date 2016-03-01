@@ -13,5 +13,8 @@ uncertainty:
   hdu: 1
   col: 3
   type: 'std'
+mask:
+  hdu: 1
+  col: 4
 meta:
   author: STScI

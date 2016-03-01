@@ -71,14 +71,23 @@ def fits_reader(filename, filter, **kwargs):
             unit = _flux_unit_from_header(meta['header'])
 
     # Get data mask, if not in column.
-    # 0 = good data (unlike Layers)
+    # 0/False = good data (unlike Layers)
     if mask is None:
-        mask = np.zeros(data.shape)
-        if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
-            try:
-                mask = hdulist[ref.mask['hdu']].data
-            except IndexError:
-                logging.warning("Mask extension not valid.")
+        mask = np.zeros(data.shape, dtype=np.bool)
+    else:
+        mask = mask.astype(np.bool)
+
+    # Read in DQ column if it exists
+    # 0/False = good (everything else bad)
+    if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
+        if ref.mask['hdu'] == ref.data['hdu']:
+            dqtab = tab
+        else:
+            dqtab = _read_table(
+                hdulist[ref.mask['hdu']], col_idx=ref.mask['col'])
+
+        mask2 = _read_table_column(dqtab, ref.mask['col'])[0]  # Data only
+        mask |= mask2.astype(np.bool) # Combine with existing mask
 
     # Wavelength constructed from WCS by default
     dispersion = None
@@ -124,11 +133,10 @@ def fits_reader(filename, filter, **kwargs):
     hdulist.close()
 
     return Data(name=name, data=data, unit=unit, uncertainty=uncertainty,
-                mask=mask.astype(np.bool), wcs=wcs, dispersion=dispersion,
+                mask=mask, wcs=wcs, dispersion=dispersion,
                 dispersion_unit=disp_unit)
 
 
-# TODO: Is 'ivar' handling correct?
 # NOTE: This is used by both FITS and ASCII.
 def _set_uncertainty(err_array, err_type):
     """Uncertainty is dictated by its type.
@@ -139,7 +147,7 @@ def _set_uncertainty(err_array, err_type):
         Uncertainty values.
 
     err_type : {'ivar', 'std'}
-        Variance or standard deviation.
+        Inverse variance or standard deviation.
 
     Returns
     -------
@@ -148,11 +156,11 @@ def _set_uncertainty(err_array, err_type):
 
     """
     if err_type == 'ivar':
-        uncertainty = StdDevUncertainty(np.sqrt(err_array))
+        err = np.sqrt(1.0 / err_array)
     else:  # 'std'
-        uncertainty = StdDevUncertainty(err_array)
+        err = err_array
 
-    return uncertainty
+    return StdDevUncertainty(err)
 
 
 def _flux_unit_from_header(header, key='BUNIT'):
@@ -325,8 +333,8 @@ def ascii_reader(filename, filter, **kwargs):
     else:
         disp_unit = wave.unit
 
-    # 0 = good data (unlike Layers)
-    mask = np.zeros(data.shape)
+    # 0/False = good data (unlike Layers)
+    mask = np.zeros(data.shape, dtype=np.bool)
 
     if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
         try:
@@ -341,12 +349,12 @@ def ascii_reader(filename, filter, **kwargs):
 
     if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
         try:
-            mask = tab[cols[ref.mask['col']]].data
+            mask = tab[cols[ref.mask['col']]].data.astype(np.bool)
         except IndexError:
             pass  # Input has no mask column
 
     return Data(name=name, data=data, dispersion=dispersion,
-                uncertainty=uncertainty, mask=mask.astype(np.bool), wcs=wcs,
+                uncertainty=uncertainty, mask=mask, wcs=wcs,
                 unit=unit, dispersion_unit=disp_unit)
 
 
