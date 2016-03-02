@@ -47,9 +47,12 @@ To add a model:
 #. Select the desired layer from "Layers" (left panel). For example, you can
    choose the layer containing your emission or absorption line.
    See :ref:`doc_viewer` on how to create a layer for ROI.
-#. Select the desired model name from "Add Model" drop-down box and click "Add".
-#. Scroll down (if needed) and click "Create".
-#. A new model layer will be created under "Layers" (left panel).
+#. Select the desired model name from "Add Model" drop-down box and click
+   "Select" to add it to "Current Models".
+#. If desired, repeat the above step to add additional models.
+#. Scroll down (if needed) and click "Create Layer".
+#. A new model layer will be created under "Layers" (left panel) and it is
+   attached to the selected data layer.
 
 To fine-tune model parameters:
 
@@ -57,21 +60,25 @@ To fine-tune model parameters:
    model.
 #. If desired, double-click on the model name to rename it. When you see a
    blinking cursor, enter its new name and press "Enter".
-#. Expand the model listing under "Current Models".
+#. Expand the model listing under "Current Models" on the right of the viewer.
 #. Double-click on the desired model parameter value in the listing.
    When you see a blinking cursor, enter the new value and press "Enter".
-#. Scroll down (if needed) and click "Update".
+#. Scroll down (if needed) and click "Update Layer".
 
 To fit a model:
 
-#. Select the desired fitting routine from its drop-down menu.
-#. Click "Perform Fit".
+#. Select the model layer under "Layers" that contains the model(s) you wish to
+   fit to your data.
+#. Select the desired fitter from "Fitting Routine" using its drop-down menu.
+#. Click "Perform Fit". This may take up to a few seconds, depending on the
+   complexity of the fit.
+#. The associated model parameters will be adjusted accordingly.
 
 The "Arithmetic Behavior" text box is used to define the relationship between
 different models for the same layer. If nothing is defined, the default is to
 add all the models together. To describe a non-default model relationship,
 enter the model names and math operators, as shown in the examples below and
-then press "Create" or "Update" to produce the compound model::
+then press "Create Layer" or "Update Layer" to produce the compound model::
 
     Linear1 + Gaussian1
 
@@ -83,42 +90,73 @@ then press "Create" or "Update" to produce the compound model::
 
     Gaussian1 - Gaussian2
 
+.. note::
 
-Saving and exporting models to file
+    Model arithmetic is a work in progress.
+
+
+Saving and Exporting Models to File
 -----------------------------------
 
-Selecting a model layer under "Layers" will enable the 'Save' and 'Export'
-buttons in the Model Fitting window. Saving a model to a file will enable
-specviz to read back that model into a new model layer. Exporting a model
-to a file wil create a Python script in a .py file. This file can be
+Selecting a model layer under "Layers" will enable the
+:ref:`Save <doc_model_save>` (the "floppy disk" icon) and
+:ref:`doc_model_export` (the "out the door" icon) buttons under
+"Current Models" on the right of the viewer. Saving a model to a file will
+enable SpecViz to read back that model into a new model layer. Exporting a model
+to a file wil create a Python script in a ``.py`` file. This file can be
 directly imported by Python in a command-line session.
 
 Click on either button to get a file dialog window. Type in a file name.
 If this file name does not end with the correct suffix, the suffix will
-automatically be appended. Click 'Save', or just the Return/Enter key.
-The correct suffix for Exported files is ".py", and for Saved files is
-".yaml".
+automatically be appended. Click "Save", or just the Return/Enter key.
+The correct suffix for saved and exported files are ``.yaml`` and ``.py``,
+respectively.
 
+
+.. _doc_model_save:
+
+Save and Load
+^^^^^^^^^^^^^
+
+Saving the model to a file works in the same way as :ref:`doc_model_export`.
+The difference is that a saved model can be later read back into SpecViz via
+the "Load" button (the "folder" icon), also under "Current Models".
+
+For the "Load" button to be enabled, a data (spectrum) layer (not a model layer)
+must be selected under "Layers" listing. The selected ``.yaml`` model file will
+generate a model that will be attached to a new model layer associated under the
+selected data layer.
+
+The file is writen using the YAML format. Being a plain text file with a
+self-explanatory structure, it can be edited at will by the user, e.g., to add
+bounds, fixed flags, and ties to the model parameters.
+
+.. note::
+
+    YAML format for saved models and usage of advanced features like bounds
+    and fixed flags are work in progress.
+
+
+.. _doc_model_export:
 
 Export
-______
-
+^^^^^^
 
 This will save the model in the currently selected model layer to a file
 that can be directly imported by Python. The file is just a plain text
 file with the model expressed recorded as a Python expression. The model
-is associated to a variable named 'model1'. An example using the 'test3.py'
-file name, and a model comprised of a constant and a gaussian:
+is associated to a variable named ``'model1'``.
 
-::
+The following example uses the ``'test3.py'`` file name, and a model comprised
+of a constant and a gaussian:
+
+.. code-block:: python
 
  >>> import test3
  >>> test3
- <module 'test3' from '/Users/busko/test3.py'>
- >>>
+ <module 'test3' from '/my/saved/models/test3.py'>
  >>> test3.model1
  <CompoundModel0(amplitude_0=0.297160787184, amplitude_1=2.25396100263, mean_1=15117.1710847, stddev_1=948.493577186)>
- >>>
  >>> print(test3.model1)
  Model: CompoundModel0
  Inputs: ('x',)
@@ -128,29 +166,11 @@ file name, and a model comprised of a constant and a gaussian:
       amplitude_0    amplitude_1      mean_1       stddev_1
      -------------- ------------- ------------- -------------
      0.297160787184 2.25396100263 15117.1710847 948.493577186
- >>>
 
+The file can be edited at will by the user, e.g., to add bounds, fixed flags,
+and ties to the model parameters.
 
-The file can be edited at will by the user, e.g. to add bounds, fixed
-flags, and ties to the model parameters. These abilities will come in
-time to the specviz UI itself.
+.. note::
 
-
-Save and Load
-_____________
-
-
-Saving the model to a file works in the same way as exporting. The difference
-is that a saved model can be later read back into specviz via the Load button.
-For this button to be enabled, a spectrum layer (not a model layer) must be
-selected in the Layers window. The model just read will be attached to a new
-model layer associated under the current spectrum layer.
-
-The file is writen using the YAML format. Being a plain text file with a
-self-explanatory structure, it can be edited at will by the user, e.g. to add
-bounds, fixed flags, and ties to the model parameters. These abilities will
-come in time to the specviz UI itself.
-
-
-
-
+    Security issues importing model this way into Python and usage of advanced
+    features like bounds and fixed flags are work in progress.

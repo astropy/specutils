@@ -35,6 +35,8 @@ spectral templates.
 SpecViz can overplot spectral line identifications taken from a variety of
 line lists.
 
+.. note:: Some features are in development and not yet available.
+
 
 Installation and Setup
 ----------------------
