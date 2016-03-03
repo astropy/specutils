@@ -25,6 +25,12 @@ In addition, there are also other custom loaders that come with SpecViz that
 follow the same rules but are modified to load JWST DADF test data, which you
 can also use as a reference.
 
+While using YAML is very flexible, it is also very sensitive to slight changes
+in your file format. For instance, if you have two files from the same
+instrument but processed differently (say, one was extracted using IRAF and
+another one using your own IDL program), they might have different formats
+and will need separate YAML files.
+
 
 .. _doc_ref_fits_loader:
 
