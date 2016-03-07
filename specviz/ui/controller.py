@@ -283,21 +283,27 @@ class Controller(object):
         else:
             file_filter = 'Generic Fits (*.fits *.mits)'
 
-        data = data_manager.load(file_name, file_filter)
+        try:
+            data = data_manager.load(file_name, file_filter)
+        except:
+            logging.error("Incompatible loader for selected data.")
 
     def open_file(self, file_name=None):
         """
         Creates a `specviz.core.data.Data` object from the `Qt` open file
         dialog, and adds it to the data item list in the UI.
         """
-        if not file_name or file_name is None:
+        if file_name is None:
             file_name, selected_filter = self.viewer.open_file_dialog(
                 loader_registry.filters)
 
-        if not file_name or file_name is None:
+        if not file_name:
             return
 
-        data = data_manager.load(str(file_name), str(selected_filter))
+        try:
+            data = data_manager.load(str(file_name), str(selected_filter))
+        except:
+            logging.error("Incompatible loader for selected data.")
 
     def add_roi_layer(self, layer=None, mask=None, window=None):
         """
@@ -568,11 +574,11 @@ class Controller(object):
             line_mask = self.get_roi_mask(roi=measure_rois[1])
 
             line = layer_manager.copy(current_layer)
-            line._mask = line_mask
 
             ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,
                                                      cont2_stat_dict,
-                                                     line)
+                                                     line,
+                                                     mask=line_mask)
             cent = statistics.centroid(line - avg_cont)
 
             stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,

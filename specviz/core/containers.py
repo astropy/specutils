@@ -24,15 +24,16 @@ class PlotContainer(object):
         self._plot = plot
         self.error = None
         self._plot_units = None
+        self.line_width = 1
 
         if self._plot is not None:
             self.change_units(self._layer.units[0], self._layer.units[1])
 
         r, g, b = next(AVAILABLE_COLORS)
 
-        rand_pen = pg.mkPen(QColor(r, g, b, 255))
+        rand_pen = pg.mkPen(QColor(r, g, b, 255), width=self.line_width)
 
-        _pen = pg.mkPen(pen) if pen is not None else rand_pen
+        _pen = pg.mkPen(pen, width=self.line_width) if pen is not None else rand_pen
 
         _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
                                         _pen.color().green(),
@@ -119,7 +120,7 @@ class PlotContainer(object):
 
     @pen.setter
     def pen(self, pen):
-        self._pen_stash['pen_on'] = pg.mkPen(pen)
+        self._pen_stash['pen_on'] = pg.mkPen(pen, width=self.line_width)
         _pen = self._pen_stash['pen_on']
         _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
                                         _pen.color().green(),

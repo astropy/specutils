@@ -80,7 +80,7 @@ def stats(data):
             'npoints': len(y)}
 
 
-def eq_width(cont1_stats, cont2_stats, line):
+def eq_width(cont1_stats, cont2_stats, line, mask=None):
     """Compute an equivalent width given stats for two continuum
     regions, and a `~specviz.core.data.Data` instance with the extracted
     spectral line region.
@@ -96,6 +96,9 @@ def eq_width(cont1_stats, cont2_stats, line):
 
     line : `~specviz.core.data.Data`
         This is returned by the :func:`extract` function.
+
+    mask : ndarray
+        Boolean mask.
 
     Returns
     -------
@@ -113,17 +116,19 @@ def eq_width(cont1_stats, cont2_stats, line):
     >>> flux, ew = eq_width(cont1_stats, cont2_stats, line)
 
     """
+    mask = np.ones(line.data.shape) if mask is None else np.array(mask)
+
     # average of 2 continuum regions.
     avg_cont = (cont1_stats['mean'] + cont2_stats['mean']) / 2.0
 
     # average dispersion in the line region.
-    avg_dx = np.mean(line.dispersion[1:] - line.dispersion[:-1])
+    avg_dx = np.mean(line.dispersion[mask][1:] - line.dispersion[mask][:-1])
 
     # flux
-    flux = np.sum(line.data - avg_cont) * avg_dx
+    flux = np.sum(line.data[mask] - avg_cont) * avg_dx
 
     #  EW = Sum( (Fc-Fl)/Fc * dw
-    ew = np.abs(np.sum((avg_cont - line.data) / avg_cont * avg_dx))
+    ew = np.abs(np.sum((avg_cont - line.data[mask]) / avg_cont * avg_dx))
 
     return ew, flux, avg_cont
 
