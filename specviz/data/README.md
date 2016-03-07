@@ -10,6 +10,6 @@ should be able to create their own YAML files for custom formats.
 | generic_spectra.txt | ASCII (*.txt *.dat) | ascii.yaml | Pey Lian Lim (@pllim) |
 | generic_spectra.fits | Generic Fits (*.fits *.mits) | generic.yaml | Nicholas Earl (@nmearl) |
 | spec1d.1245.066.12004136.fits | Keck/DEIMOS Fits (*.fits *.mits) | keck_deimos.yaml | Susan Kassin (@kassin) |
-| spec1d.gds1312_H0.003.emp26177.fits | Keck/MOSFIRE Fits (*.fits *.mits) | keck_mosfire.yaml | Susan Kassin (@kassin) |
+| spec1d.gds1312_H0.003.emp26177.fits | Keck/MOSFIRE Fits (*.fits *.mits) | keck_mosfire.yaml | Susan Kassin (@kassin) and Raymond Simons (@RaymondSimons)|
 | N/A | HST/COS Fits (*.fits *.mits) | hst_cos.yaml | Gisella de Rosa (@gderosa2004) |
 | N/A | KittPeak/MDM Fits (*.fits *.mits) | kittpeak_mdm.yaml | Gisella de Rosa (@gderosa2004) |

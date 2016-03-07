@@ -7,9 +7,10 @@ Dependencies
 ------------
 
 In the future, SpecViz will be distributed through package managers like
-`Anaconda <https://anaconda.org>`_ and `Homebrew <http://brew.sh>`_ that will obviate the need for manual installation from
-source. Most of these will be handled automatically by the setup functions,
-with the exception of ``PyQt``/``PySide``.
+`Anaconda <https://anaconda.org>`_ that will obviate the need for manual
+installation from source.
+Most of these will be handled automatically by the setup functions,
+with the exception of PyQt/PySide.
 
 * Python 3 (recommended) or Python 2
 * PyQt5 (recommended), PyQt4, or PySide
@@ -46,6 +47,7 @@ Anaconda
     $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
 
 .. note::
+
    PyQt5 **does not** require Python 3. If you wish, you can create your
    virtual environment using Python 2 by specifying the version as shown above
    (e.g. ``python=2.7``).
@@ -71,9 +73,9 @@ activate it first before installing: ``$ source activate pyf_env``.
 
 ::
 
-    $ git clone https://github.com/nmearl/specviz.git
+    $ git clone https://github.com/spacetelescope/specviz.git
     $ cd specviz
-    $ git checkout tags/v0.1rc2
+    $ git checkout tags/v0.1rc3
     $ pip install -r requirements.txt
 
 .. note::
