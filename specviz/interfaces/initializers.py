@@ -6,6 +6,8 @@
 
 import numpy as np
 
+from ..analysis.models import spline
+
 AMPLITUDE = 'amplitude'
 POSITION  = 'position'
 WIDTH     = 'width'
@@ -122,6 +124,7 @@ _initializers = {
     'MexicanHat1D':               _LineProfile1DInitializer,
     'Trapezoid1D':                _LineProfile1DInitializer,
     'Linear1D':                   _Linear1DInitializer,
+    'Spline1D':                   spline.Spline1DInitializer,
 }
 
 # Models can have parameter names that are similar amongst them, but not quite the same.
