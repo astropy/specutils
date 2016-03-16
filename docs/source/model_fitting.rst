@@ -128,9 +128,9 @@ http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.Uni
 
 Note that SpecViz provides access, at this point, to just two of the parameters
 in the scipy implementation of th spline function. Pay special attention to the
-```smooth``` parameter. SpecViz initializes it to the 'best guess' (```len(wavelength)```).
+``smooth`` parameter. SpecViz initializes it to the 'best guess' (``len(wavelength)``).
 Too small of a value in here may cause the spline to enter an infinite loop.
-Change the ``smooth``` value with care, trying to stay close to the default
+Change the ``smooth`` value with care, trying to stay close to the default
 value.
 
 
