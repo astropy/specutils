@@ -29,6 +29,7 @@ Redshift                  `~astropy.modeling.functional_models.Redshift`
 Scale                     `~astropy.modeling.functional_models.Scale`
 Shift                     `~astropy.modeling.functional_models.Shift`
 Sine                      `~astropy.modeling.functional_models.Sine1D`
+Spline                    `~scipy.interpolate.UnivariateSpline`
 Voigt                     `~astropy.modeling.functional_models.Voigt1D`
 ========================= ==========================================================
 
@@ -90,6 +91,49 @@ then press "Create Layer" or "Update Layer" to produce the compound model::
 
     Gaussian1 - Gaussian2
 
+The entity that results from lumping together all the models, and combining them
+either using the arithmetic behavior expression, or just adding them all together,
+is called a "compound model".
+
+
+Spline model
+^^^^^^^^^^^^
+
+Note that the Spline model is of an intrinsically different nature than the
+other models included in the drop down list of models. The Spline model, when
+added to a pre-existing list of models, or when added by itself to an empty
+list, will immediately be fitted to the data within the currently defined
+Regions Of Interest. That is, being a linear model, there is no need to iterate
+in search of a "best fit" spline, it is just computed once and for all, and kept
+as part of the compound model that is built from the models in the list and the
+arithmetic behavior expression.
+
+This implies that, to change the regions of interest that define the spline,
+one has no other way than removing the spline from the list of models. Then,
+redefine the regions of interest, and add a new spline to the list. To change
+a spline parameter, there is no need do discard the spline. Just do it in the
+same way as with other models: just type in the new value for the parameter and
+click on "Update Layer".
+
+Subsequently, when the fitter iterates the compound model in search of a best
+solution, the spline model will act as a constant. That is, it will be used to
+compute the global result of the compound model, but its parameters won't be
+accessed, and varied, by the fitter. Thus, the spline parameters are not fitted,
+they are just a convenient mechanism that enables user access to the parameter's
+values.
+
+The documentation for the spline model cane be seen here:
+
+http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.UnivariateSpline.html
+
+Note that SpecViz provides access, at this point, to just two of the parameters
+in the scipy implementation of th spline function. Pay special attention to the
+```smooth``` parameter. SpecViz initializes it to the 'best guess' (```len(wavelength)```).
+Too small of a value in here may cause the spline to enter an infinite loop.
+Change the ``smooth``` value with care, trying to stay close to the default
+value.
+
+
 .. note::
 
     Model arithmetic is a work in progress.
@@ -129,7 +173,11 @@ selected data layer.
 
 The file is writen using the YAML format. Being a plain text file with a
 self-explanatory structure, it can be edited at will by the user, e.g., to add
-bounds, fixed flags, and ties to the model parameters.
+bounds, fixed flags, and ties to the model parameters. Note that these extra,
+user-defined attributes, won't be accessible from SpecViz's user interface.
+They will however, be accessible by the fitter when a fit is run on the
+model. They will also be written ou correctly, either when saving or exporting
+the model.
 
 .. note::
 
@@ -174,3 +222,4 @@ and ties to the model parameters.
 
     Security issues importing model this way into Python and usage of advanced
     features like bounds and fixed flags are work in progress.
+
