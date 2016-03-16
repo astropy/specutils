@@ -69,7 +69,8 @@ class Controller(object):
                 model_item=mi))
 
     def _setup_connections(self):
-        self.viewer.main_window.actionOpen.triggered.connect(self.open_file)
+        self.viewer.main_window.actionOpen.triggered.connect(
+            lambda: self.open_file())
 
         # Connect the create new sub window button
         self.viewer.main_window.createSubWindowButton.clicked.connect(
@@ -175,6 +176,9 @@ class Controller(object):
                 self.viewer.current_layer)
 
     def _show_arithmetic_dialog(self):
+        if self.viewer.current_layer is None:
+            return
+
         if self.viewer._layer_arithmetic_dialog.exec_():
             formula = self.viewer._layer_arithmetic_dialog\
                 .ui_layer_arithmetic_dialog.formulaLineEdit.text()

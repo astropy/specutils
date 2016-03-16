@@ -2,6 +2,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+from ..analysis.utils import resample
+
 # STDLIB
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -180,6 +182,11 @@ class Layer(object):
             self_data = self._source._from_self(self.data)
 
         if isinstance(other, Data):
+            # Resample the array if the sizes are different
+            new_source = resample(self._source, other)
+
+            operator = getattr(new_source, operator.__name__)
+
             if self._source.wcs != other.wcs:
                 logging.warning("WCS objects are not equivalent; overriding "
                                 "wcs information on 'other'.")

@@ -1,7 +1,5 @@
 import numpy as np
 
-from ..core.data import Data
-
 
 def resample(from_data, to_data, copy=False):
     """
@@ -21,24 +19,32 @@ def resample(from_data, to_data, copy=False):
     new_data : :class:`Data` or :class:`Layer`
         New data object.
     """
+    new_source = from_data
+
     if from_data.dispersion.size > to_data.dispersion.size:
-        remat = resample_matrix(from_data.dispersion.value,
-                                to_data.dispersion.value)
-        flux = np.dot(remat, from_data.data.value)
-    else:
-        flux = (to_data.dispersion.value, from_data.dispersion.value,
-                from_data.data.value)
+        remat = resample_matrix(from_data.dispersion,
+                                to_data.dispersion)
 
-    new_data = from_data._from_self(flux)
+        flux = np.dot(remat, from_data.data)
 
-    return new_data
+        new_source = from_data._from_self(flux)
+    elif from_data.dispersion.size < to_data.dispersion.size:
+        remat = resample_matrix(to_data.dispersion,
+                                from_data.dispersion)
+
+        flux = np.dot(remat, to_data.data)
+
+        new_source = to_data._from_self(flux)
+
+    return new_source
 
 
 def resample_matrix(orig_lamb, fin_lamb):
     """
     Create a resampling matrix to be used in resampling spectra in a way
     that conserves flux. This is adapted from code created by the SEAGal
-    Group.
+    Group. Implementation borrowed with permission from Spectacle (
+    nearl@stsci.edu).
 
     .. note:: This method assumes uniform grids.
 
