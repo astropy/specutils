@@ -7,6 +7,7 @@ import logging
 # LOCAL
 from ..core.data import Data, Layer, ModelLayer
 from ..core.containers import PlotContainer
+from ..analysis.models.spline import Spline1D
 
 # THIRD-PARTY
 import pyqtgraph as pg
@@ -87,6 +88,7 @@ class ModelFactory(Factory):
         'Shift': models.Shift,
         'Sine': models.Sine1D,
         'Voigt': models.Voigt1D,
+        'Spline': Spline1D,
 
         # polynomials have to be handled separately. Their calling sequence
         # is incompatible with the Fittable1DModel interface, and they run
