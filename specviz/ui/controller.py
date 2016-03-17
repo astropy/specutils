@@ -183,8 +183,10 @@ class Controller(object):
             formula = self.viewer._layer_arithmetic_dialog\
                 .ui_layer_arithmetic_dialog.formulaLineEdit.text()
 
-            new_layer = layer_manager.add_from_formula(formula)
             current_window = self.viewer.current_sub_window
+            current_layers = window_manager.get_layers(current_window)
+            new_layer = layer_manager.add_from_formula(formula,
+                                                       layers=current_layers)
 
             # If units match, plot the resultant on the same sub window,
             # otherwise create a new sub window to plot the spectra

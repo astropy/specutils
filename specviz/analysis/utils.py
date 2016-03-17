@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def resample(from_data, to_data, copy=False):
+def resample(orig_flux, orig_lambda, fin_lambda, copy=False):
     """
     A function to resample a give `Data` or `Layer` object.
 
@@ -19,24 +19,11 @@ def resample(from_data, to_data, copy=False):
     new_data : :class:`Data` or :class:`Layer`
         New data object.
     """
-    new_source = from_data
+    remat = resample_matrix(orig_lambda, fin_lambda)
 
-    if from_data.dispersion.size > to_data.dispersion.size:
-        remat = resample_matrix(from_data.dispersion,
-                                to_data.dispersion)
+    flux = np.dot(remat, orig_flux)
 
-        flux = np.dot(remat, from_data.data)
-
-        new_source = from_data._from_self(flux)
-    elif from_data.dispersion.size < to_data.dispersion.size:
-        remat = resample_matrix(to_data.dispersion,
-                                from_data.dispersion)
-
-        flux = np.dot(remat, to_data.data)
-
-        new_source = to_data._from_self(flux)
-
-    return new_source
+    return flux
 
 
 def resample_matrix(orig_lamb, fin_lamb):

@@ -353,7 +353,7 @@ def ascii_reader(filename, filter, **kwargs):
         except IndexError:
             pass  # Input has no mask column
 
-    return Data(name=name, data=data, dispersion=dispersion,
+    return Data(name=str(name), data=data, dispersion=dispersion,
                 uncertainty=uncertainty, mask=mask, wcs=wcs,
                 unit=unit, dispersion_unit=disp_unit)
 

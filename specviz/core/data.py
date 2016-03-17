@@ -13,7 +13,7 @@ import numbers
 import numpy as np
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
 from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
-from astropy.units import Unit, Quantity
+from astropy.units import Unit, Quantity, spectral, spectral_density
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -71,11 +71,14 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
         return io_registry.read(cls, *args, **kwargs)
 
-    def _from_self(self, other):
+    def _from_self(self, other, mask=None):
         """Create a new `Data` object using current property values."""
-        return Data(name=self.name, data=other, unit=self.unit,
-                    uncertainty=StdDevUncertainty(self.uncertainty),
-                    mask=self.mask, wcs=self.wcs, dispersion=self.dispersion,
+        if mask is None:
+            mask = np.ones(other.shape, dtype=bool)
+
+        return Data(name=self.name, data=other[mask], unit=self.unit,
+                    uncertainty=StdDevUncertainty(self.uncertainty[mask]),
+                    mask=self.mask[mask], wcs=self.wcs,
                     dispersion_unit=self.dispersion_unit)
 
     @property
@@ -116,8 +119,9 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
             try:
                 self._dispersion_unit = self.wcs.wcs.cunit[0]
             except AttributeError:
-                logging.warning("No dispersion unit information in WCS.")
-                self._dispersion_unit = Unit("")
+                logging.warning("No dispersion unit information in WCS. "
+                                "Assuming `Angstrom`.")
+                self._dispersion_unit = Unit("Angstrom")
 
         return self._dispersion_unit
 
@@ -142,21 +146,84 @@ class Layer(object):
         Mask for the spectrum data.
     parent : obj or `None`
         GUI parent.
-    window : obj or `None`
-        GUI window.
     name : str
         Short description.
     """
     def __init__(self, source, mask, parent=None, name=''):
         self._source = source
-        self._mask = mask
+        self._mask = mask.astype(bool)
         self._parent = parent
         self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,
                       self._source.unit if self._source.unit is not None
                       else Unit(""))
 
+    @classmethod
+    def new(cls, data, mask=None):
+        new_data = Data(data)
+        return Layer(new_data, mask)
+
     def _arithmetic(self, operator, other, propagate=True):
+        # Make sure units are compatible, default to using this object's unit
+        if not other.data.unit.is_equivalent(self.data.unit,
+                                             equivalencies=spectral_density(
+                                                 other.dispersion)):
+            logging.error("Spectral data objects have incompatible units.")
+            return
+
+        # Create a mask from the dispersion so we know we're performing the
+        # operation on parts of the arrays with data
+        this_disp_arr = Quantity(self._source.dispersion,
+                                 self._source.dispersion_unit)
+        this_data_arr = Quantity(self._source.data, self._source.unit)
+
+        other_disp_arr = Quantity(other._source.dispersion,
+                                  other._source.dispersion_unit).to(
+                                                          this_disp_arr.unit)
+        other_data_arr = Quantity(other._source.data, other._source.unit)
+
+        disp_min = max(self.dispersion.value[0], other.dispersion.value[0])
+        disp_max = min(self.dispersion.value[-1], other.dispersion.value[-1])
+
+        this_mask = ((this_disp_arr.value >= disp_min) &
+                     (this_disp_arr.value <= disp_max))
+        other_mask = ((other_disp_arr.value >= disp_min) &
+                      (other_disp_arr.value <= disp_max))
+
+        # print(this_mask.shape, this_disp_arr.value.shape)
+        # print(other_mask.shape, other_disp_arr.value.shape, other_mask[
+        #     other_mask].size)
+
+        # Check sampling; re-sample if incompatible
+        if (self.dispersion[1] - self.dispersion[0]) != \
+                (other.dispersion[1] - other.dispersion[0]):
+            other_data_val = resample(other_data_arr.value[other_mask],
+                                      other_disp_arr.value[other_mask],
+                                      this_disp_arr.value[this_mask])
+            temp_data_val = other_data_arr.value
+            temp_data_val[other_mask] = other_data_val
+            other_data_val = temp_data_val
+            other_mask = this_mask
+        else:
+            other_data_val = other_data_arr.value
+
+        # print("fin", other_mask.shape, other_data_val.shape)
+
+        this_data = self._source._from_self(this_data_arr.value)
+        other_data = other._source._from_self(other_data_val)
+
+        # Perform arithmetic operation
+        operator = getattr(this_data, operator)
+        result_source = operator(other_data)
+
+        # print("mask", other_mask)
+
+        result_layer = Layer(result_source, other_mask, self._parent,
+                             self.name)
+
+        return result_layer
+
+    def _arithmetic_old(self, operator, other, propagate=True):
         # Quantity can be scalar or array, but always categorized as ndarray.
         # We need to extract the value(s) first before further processing.
         if isinstance(other, Quantity):
@@ -164,41 +231,51 @@ class Layer(object):
 
         # The operand is a single number
         if isinstance(other, numbers.Number):
-            new = np.empty(shape=self._source.data.shape)
-            new.fill(other)
-            other = self._source._from_self(new)
+            new_other = np.empty(shape=self._source.data.shape)
+            new_other.fill(other)
+            other = Layer.new(new_other)
 
         # The operand is an array
         elif isinstance(other, np.ndarray) or isinstance(other, list):
-            other = self._source._from_self(other)
-
-        elif isinstance(other, Layer):
-            other = other._source
+            other = Layer.new(other)
 
         elif isinstance(other, ModelLayer):
             # This object can potentially be a ModelLayer whose parent data
             # object is not of interest to the arithmetic. In that case, create
             # a new data object
             self_data = self._source._from_self(self.data)
+            other = Layer.new(self_data, other._mask)
 
-        if isinstance(other, Data):
-            # Resample the array if the sizes are different
-            new_source = resample(self._source, other)
+        # At this point, the operands should both be `Layer` objects
+        # Re-sample the array if the sizes are different
+        if self.dispersion.size > other.dispersion.size:
+            # Re-sample to `other`
+            new_source = resample(self, other)
+            new_mask = other._mask
+        elif self.dispersion.size < other.dispersion.size:
+            # Re-sample to `self`
+            new_source = resample(other, self)
+            new_mask = self._mask
+        else:
+            new_source = other
+            new_mask = other._mask
 
-            operator = getattr(new_source, operator.__name__)
+        # Create a new layer from the new source object
+        new_layer = Layer.new(new_source, mask=new_mask)
+        operator = getattr(new_source, operator.__name__)
 
-            if self._source.wcs != other.wcs:
-                logging.warning("WCS objects are not equivalent; overriding "
-                                "wcs information on 'other'.")
-                tmp_wcs = other._wcs
-                other._wcs = self._source.wcs
-                new_source = operator(other, propagate_uncertainties=propagate)
-                other._wcs = tmp_wcs
-            else:
-                new_source = operator(other, propagate_uncertainties=propagate)
+        if new_layer._source.wcs != other.wcs:
+            logging.warning("WCS objects are not equivalent; overriding "
+                            "wcs information on 'other'.")
+            tmp_wcs = other._wcs
+            other._wcs = self._source.wcs
+            new_source = operator(other, propagate_uncertainties=propagate)
+            other._wcs = tmp_wcs
+        else:
+            new_source = operator(other, propagate_uncertainties=propagate)
 
             # Force the same dispersion
-            new_source._dispersion = np.copy(self._source._dispersion)
+            # new_source._dispersion = np.copy(self._source._dispersion)
 
             # Apply arithmetic to the dispersion unit
             if operator.__name__ == 'multiply':
@@ -209,32 +286,30 @@ class Layer(object):
                                               other.dispersion_unit
             else:
                 new_source._dispersion_unit = self._source._dispersion_unit
-        else:
-            new_source = operator(other, propagate_uncertainties=propagate)
+        # else:
+        #     new_source = operator(other, propagate_uncertainties=propagate)
 
         return new_source
 
     def __add__(self, other):
-        new_source = self._arithmetic(self._source.add, other)
+        new_layer = self._arithmetic("add", other)
 
-        return Layer(new_source, self._mask, self._parent, self.name)
+        return new_layer
 
     def __sub__(self, other):
-        new_source = self._arithmetic(self._source.subtract, other)
+        new_layer = self._arithmetic("subtract", other)
 
-        return Layer(new_source, self._mask, self._parent, self.name)
+        return new_layer
 
     def __mul__(self, other):
-        new_source = self._arithmetic(self._source.multiply, other,
-                                      propagate=True)
+        new_layer = self._arithmetic("multiply", other, propagate=True)
 
-        return Layer(new_source, self._mask, self._parent, self.name)
+        return new_layer
 
     def __truediv__(self, other):
-        new_source = self._arithmetic(self._source.divide, other,
-                                      propagate=False)
+        new_layer = self._arithmetic("divide", other, propagate=True)
 
-        return Layer(new_source, self._mask, self._parent, self.name)
+        return new_layer
 
     @property
     def data(self):

@@ -4,7 +4,6 @@ from __future__ import (absolute_import, division, print_function,
 # LOCAL
 from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory
 from .initializers import initialize
-from ..core.comms import EventNode
 from ..analysis import modeling
 from ..third_party.py_expression_eval import Parser
 from ..core.comms import Dispatch, DispatchHandle
@@ -81,6 +80,7 @@ class WindowManager(Manager):
         Dispatch.on_removed_from_window.emit(layer=layer, window=window)
 
     def get(self, layer):
+        """Returns the window to which the selected layer is attached."""
         for window in self._members:
             for l in self._members[window]:
                 if layer == l:
@@ -161,11 +161,16 @@ class LayerManager(Manager):
     def update_model_parameters(self, model, parameters):
         pass
 
-    def add_from_formula(self, formula):
+    def add_from_formula(self, formula, layers=None):
         if not formula:
             return
 
-        new_layer = self._evaluate(self._members, formula)
+        layers = layers or self._members
+        new_layer = self._evaluate(layers, formula)
+
+        if new_layer is None:
+            return
+
         new_layer._window = None
         new_layer._parent = None
         new_layer.name = "Resultant"
@@ -189,7 +194,11 @@ class LayerManager(Manager):
         for layer in layers:
             formula = formula.replace(layer.name, layer.name.replace(" ", "_"))
 
-        expr = parser.parse(formula)
+        try:
+            expr = parser.parse(formula)
+        except Exception as e:
+            logging.error(e)
+            return
 
         # Extract variables
         vars = expr.variables()

@@ -141,9 +141,7 @@ class PlotSubWindow(QMainWindow):
             mask_holder.append(layer_mask)
 
         if len(mask_holder) == 0:
-            mask_holder.append(np.ones(
-                shape=container.dispersion.value.shape,
-                dtype=bool))
+            mask_holder.append(container.layer._mask)
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
         mask = reduce(np.logical_or, mask_holder)
