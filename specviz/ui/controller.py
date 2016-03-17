@@ -82,7 +82,7 @@ class Controller(object):
 
         # Connect the add to current plot window button
         self.viewer.main_window.addToSubWindowButton.clicked.connect(
-            lambda: print("Not implemented"))
+            lambda: self.add_to_sub_window())
 
         # When the layer list delete button is pressed
         self.viewer.main_window.dataRemoveButton.clicked.connect(
@@ -359,6 +359,22 @@ class Controller(object):
 
         if window is None:
             window = self.viewer.add_sub_window()
+
+        if layer is None:
+            layer = layer_manager.new(data)
+        else:
+            layer_manager.add(layer)
+
+        window_manager.add(layer, window)
+        plot_container = plot_manager.new(layer, window)
+        self.update_statistics()
+
+    def add_to_sub_window(self, data=None, window=None, layer=None):
+        """
+        Adds the selected data set to the currently active sub window.
+        """
+        data = data or self.viewer.current_data
+        window = window or self.viewer.current_sub_window
 
         if layer is None:
             layer = layer_manager.new(data)

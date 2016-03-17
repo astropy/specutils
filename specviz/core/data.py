@@ -186,8 +186,10 @@ class Layer(object):
                       (other_disp_arr.value <= disp_max))
 
         # Check sampling; re-sample if incompatible
-        if (self.dispersion[1] - self.dispersion[0]) != \
-                (other.dispersion[1] - other.dispersion[0]):
+        this_step = self.dispersion[1] - self.dispersion[0]
+        other_step = other.dispersion[1] - other.dispersion[0]
+
+        if this_step != other_step:
             other_data_val = resample(other_data_arr.value[other_mask],
                                       other_disp_arr.value[other_mask],
                                       this_disp_arr.value[this_mask])
