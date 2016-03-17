@@ -23,7 +23,7 @@ MODEL_NAME = 'model'
 
 
 # Helper functions
-def _get_component_name(function):
+def _get_model_class_name(function):
     class_string = str(function.__class__)
     return class_string.split('\'>')[0].split(".")[-1]
 
@@ -58,13 +58,17 @@ def _ingest_constraints(param_dict):
 
 def _build_single_model(in_map, model_name=None):
     if model_name is None:
-        model_name = list(in_map.keys())[0]
+        entry_name = list(in_map.keys())[0]
+    else:
+        entry_name = model_name
+
+    model_name = in_map[entry_name]['class']
 
     # model names in ModelFactory do not terminate
     # with a redundant '1D' suffix; remove it.
     model_cls = ModelFactory.all_models[model_name[:-2]]
 
-    param_dict = in_map[model_name]
+    param_dict = in_map[entry_name]
     name = param_dict['name']
 
     bounds, fixed, tied = _ingest_constraints(param_dict)
@@ -182,10 +186,11 @@ def _build_output_dict_single(model):
 
     model_dict = {
         'name': model_name,
+        'class': _get_model_class_name(model),
         'parameters': param_dict,
         'constraints': constraints}
 
-    return model_dict
+    return model_name, model_dict
 
 
 # From a compound model, builds the dict to be output to YAML file.
@@ -211,10 +216,11 @@ def _build_output_dict_compound(model):
 
     model_dict = {
         'name': model_name,
+        'class': _get_model_class_name(model),
         'parameters': param_dict,
         'constraints': constraints_dict}
 
-    return model_dict
+    return model_name, model_dict
 
 
 # Writes a dict to YAML file.
@@ -239,8 +245,8 @@ def _writeToFile(out_model_dict, model_directory, parent):
 def _writeSingleComponentModel(model, model_directory, parent):
     out_model_dict = {}
 
-    out_model_dict[_get_component_name(model)] = \
-        _build_output_dict_single(model)
+    model_name, model_dict = _build_output_dict_single(model)
+    out_model_dict[model_name] = model_dict
 
     _writeToFile(out_model_dict, model_directory, parent)
 
@@ -250,8 +256,8 @@ def _writeCompoundModel(compound_model, model_directory, parent, expression):
     out_model_dict = {MODEL_NAME:{}}
 
     for model in compound_model:
-        out_model_dict[MODEL_NAME][_get_component_name(model)] = \
-            _build_output_dict_compound(model)
+        model_name, model_dict = _build_output_dict_compound(model)
+        out_model_dict[MODEL_NAME][model_name] = model_dict
 
     out_model_dict[EXPRESSION_NAME] = expression
 

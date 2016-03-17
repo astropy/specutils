@@ -45,41 +45,41 @@ SLSQP               `~astropy.modeling.fitting.SLSQPLSQFitter`
 
 To add a model:
 
-#. Select the desired layer from "Layers" (left panel). For example, you can
+#. Select the desired layer from ``Layers`` (left panel). For example, you can
    choose the layer containing your emission or absorption line.
    See :ref:`doc_viewer` on how to create a layer for ROI.
-#. Select the desired model name from "Add Model" drop-down box and click
-   "Select" to add it to "Current Models".
+#. Select the desired model name from the ``Add Model`` drop-down box and click
+   ``Select`` to add it to ``Current Models``.
 #. If desired, repeat the above step to add additional models.
-#. Scroll down (if needed) and click "Create Layer".
-#. A new model layer will be created under "Layers" (left panel) and it is
+#. Scroll down (if needed) and click ``Create Layer``.
+#. A new model layer will be created under ``Layers`` (left panel) and it is
    attached to the selected data layer.
 
 To fine-tune model parameters:
 
-#. Select the model layer under "Layers" (left panel) that contains the desired
+#. Select the model layer under ``Layers`` (left panel) that contains the desired
    model.
 #. If desired, double-click on the model name to rename it. When you see a
    blinking cursor, enter its new name and press "Enter".
-#. Expand the model listing under "Current Models" on the right of the viewer.
+#. Expand the model listing under ``Current Models`` on the right of the viewer.
 #. Double-click on the desired model parameter value in the listing.
-   When you see a blinking cursor, enter the new value and press "Enter".
-#. Scroll down (if needed) and click "Update Layer".
+   When you see a blinking cursor, enter the new value and press ``Enter``.
+#. Scroll down (if needed) and click ``Update Layer``.
 
 To fit a model:
 
-#. Select the model layer under "Layers" that contains the model(s) you wish to
+#. Select the model layer under ``Layers`` that contains the model(s) you wish to
    fit to your data.
-#. Select the desired fitter from "Fitting Routine" using its drop-down menu.
-#. Click "Perform Fit". This may take up to a few seconds, depending on the
+#. Select the desired fitter from ``Fitting Routine`` using its drop-down menu.
+#. Click ``Perform Fit``. This may take up to a few seconds, depending on the
    complexity of the fit.
 #. The associated model parameters will be adjusted accordingly.
 
-The "Arithmetic Behavior" text box is used to define the relationship between
+The ``Arithmetic Behavior`` text box is used to define the relationship between
 different models for the same layer. If nothing is defined, the default is to
 add all the models together. To describe a non-default model relationship,
 enter the model names and math operators, as shown in the examples below and
-then press "Create Layer" or "Update Layer" to produce the compound model::
+then press ``Create Layer`` or ``Update Layer`` to produce the compound model::
 
     Linear1 + Gaussian1
 
@@ -96,6 +96,21 @@ either using the arithmetic behavior expression, or just adding them all togethe
 is called a "compound model".
 
 
+Model names
+^^^^^^^^^^^
+
+When added to the ``Current Models`` list, a model will receive a default name
+that is generated from the model type (as listed in the drop down model selector)
+plus a running numerical suffix.
+
+These names can be re-defined by clicking on the default name and typing a new
+name. Note that re-defining names will require that any eventual expression in
+the ``Arithmetic Behavior`` text box should be edited accordingly.
+
+For now, we are limited to only alphanumeric characters (and no white spaces) when
+re-naming models.
+
+
 Spline model
 ^^^^^^^^^^^^
 
@@ -104,7 +119,7 @@ other models included in the drop down list of models. The Spline model, when
 added to a pre-existing list of models, or when added by itself to an empty
 list, will immediately be fitted to the data within the currently defined
 Regions Of Interest. That is, being a linear model, there is no need to iterate
-in search of a "best fit" spline, it is just computed once and for all, and kept
+in search of a "best fit" spline. It is just computed once and for all, and kept
 as part of the compound model that is built from the models in the list and the
 arithmetic behavior expression.
 
@@ -113,7 +128,7 @@ one has no other way than removing the spline from the list of models. Then,
 redefine the regions of interest, and add a new spline to the list. To change
 a spline parameter, there is no need do discard the spline. Just do it in the
 same way as with other models: just type in the new value for the parameter and
-click on "Update Layer".
+click on ``Update Layer``.
 
 Subsequently, when the fitter iterates the compound model in search of a best
 solution, the spline model will act as a constant. That is, it will be used to
@@ -128,7 +143,7 @@ http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.Uni
 
 Note that SpecViz provides access, at this point, to just two of the parameters
 in the scipy implementation of th spline function. Pay special attention to the
-``smooth`` parameter. SpecViz initializes it to the 'best guess' (``len(wavelength)``).
+``smooth`` parameter. SpecViz initializes it to a 'best guess' (``len(wavelength)``).
 Too small of a value in here may cause the spline to enter an infinite loop.
 Change the ``smooth`` value with care, trying to stay close to the default
 value.
