@@ -220,12 +220,12 @@ class LayerManager(Manager):
             logging.error("Incorrect layer arithmetic formula: the number "
                           "of layers does not match the number of variables.")
 
-        try:
-            result = parser.evaluate(expr.simplify({}).toString(),
-                                     dict(pair for pair in zip(vars, sorted_layers)))
-        except Exception as e:
-            logging.error(e)
-            return
+        # try:
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in zip(vars, sorted_layers)))
+        # except Exception as e:
+        #     logging.error("While evaluating formula: {}".format(e))
+        #     return
 
         return result
 

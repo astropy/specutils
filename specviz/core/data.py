@@ -117,6 +117,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
                 self._dispersion_unit = self.wcs.wcs.cunit[0]
             except AttributeError:
                 logging.warning("No dispersion unit information in WCS.")
+                self._dispersion_unit = Unit("")
 
         return self._dispersion_unit
 
@@ -159,6 +160,7 @@ class Layer(object):
         return Layer(new_data, mask)
 
     def _arithmetic(self, operator, other, propagate=True):
+        print(self._source.dispersion_unit)
         if isinstance(other, Layer):
             # Make sure units are compatible
             if not other.data.unit.is_equivalent(
@@ -223,7 +225,14 @@ class Layer(object):
             this_data = self._source
             new_other = np.empty(shape=this_data.data.shape)
             new_other.fill(float(other))
-            other_data = this_data._from_self(new_other)
+            other_data = Data(new_other)
+            other_data._dispersion_unit = this_data.dispersion_unit
+
+            # If the operation is addition/subtraction, the units have to
+            # match for arithmetic, otherwise unit should be nothing
+            if operator in ['add', 'subtract']:
+                other_data._unit = this_data.unit
+
             other_mask = self._mask
 
         # Perform arithmetic operation
@@ -244,79 +253,14 @@ class Layer(object):
         # dispersion array
         result_source._dispersion = other_data.dispersion
 
+        if result_source.dispersion_unit.is_unity():
+            result_source._dispersion_unit = other_data.dispersion_unit
+
         # Create a layer from the source data object
         result_layer = Layer(result_source, other_mask, self._parent,
                              self.name)
 
         return result_layer
-
-    def _arithmetic_old(self, operator, other, propagate=True):
-        # Quantity can be scalar or array, but always categorized as ndarray.
-        # We need to extract the value(s) first before further processing.
-        if isinstance(other, Quantity):
-            other = other.value
-
-        # The operand is a single number
-        if isinstance(other, numbers.Number):
-            new_other = np.empty(shape=self._source.data.shape)
-            new_other.fill(other)
-            other = Layer.new(new_other)
-
-        # The operand is an array
-        elif isinstance(other, np.ndarray) or isinstance(other, list):
-            other = Layer.new(other)
-
-        elif isinstance(other, ModelLayer):
-            # This object can potentially be a ModelLayer whose parent data
-            # object is not of interest to the arithmetic. In that case, create
-            # a new data object
-            self_data = self._source._from_self(self.data)
-            other = Layer.new(self_data, other._mask)
-
-        # At this point, the operands should both be `Layer` objects
-        # Re-sample the array if the sizes are different
-        if self.dispersion.size > other.dispersion.size:
-            # Re-sample to `other`
-            new_source = resample(self, other)
-            new_mask = other._mask
-        elif self.dispersion.size < other.dispersion.size:
-            # Re-sample to `self`
-            new_source = resample(other, self)
-            new_mask = self._mask
-        else:
-            new_source = other
-            new_mask = other._mask
-
-        # Create a new layer from the new source object
-        new_layer = Layer.new(new_source, mask=new_mask)
-        operator = getattr(new_source, operator.__name__)
-
-        if new_layer._source.wcs != other.wcs:
-            logging.warning("WCS objects are not equivalent; overriding "
-                            "wcs information on 'other'.")
-            tmp_wcs = other._wcs
-            other._wcs = self._source.wcs
-            new_source = operator(other, propagate_uncertainties=propagate)
-            other._wcs = tmp_wcs
-        else:
-            new_source = operator(other, propagate_uncertainties=propagate)
-
-            # Force the same dispersion
-            # new_source._dispersion = np.copy(self._source._dispersion)
-
-            # Apply arithmetic to the dispersion unit
-            if operator.__name__ == 'multiply':
-                new_source._dispersion_unit = self._source.dispersion_unit * \
-                                              other.dispersion_unit
-            elif operator.__name__ == 'divide':
-                new_source._dispersion_unit = self._source.dispersion_unit / \
-                                              other.dispersion_unit
-            else:
-                new_source._dispersion_unit = self._source._dispersion_unit
-        # else:
-        #     new_source = operator(other, propagate_uncertainties=propagate)
-
-        return new_source
 
     def __add__(self, other):
         new_layer = self._arithmetic("add", other)
