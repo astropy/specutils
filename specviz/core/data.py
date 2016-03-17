@@ -14,6 +14,7 @@ import numpy as np
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
 from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
 from astropy.units import Unit, Quantity, spectral, spectral_density
+from astropy.wcs import WCS
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -53,7 +54,6 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     def __init__(self, data, dispersion=None, dispersion_unit=None, name="",
                  *args, **kwargs):
         super(Data, self).__init__(data=data, *args, **kwargs)
-
         # TODO: This is a temporary workaround until astropy releases its
         # next version which introduces changes to the NDData object
         if self.uncertainty is not None:
@@ -146,7 +146,7 @@ class Layer(object):
     """
     def __init__(self, source, mask, parent=None, name=''):
         self._source = source
-        self._mask = mask.astype(bool)
+        self._mask = mask.astype(bool) if mask is not None else mask
         self._parent = parent
         self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,
@@ -159,59 +159,78 @@ class Layer(object):
         return Layer(new_data, mask)
 
     def _arithmetic(self, operator, other, propagate=True):
-        # Make sure units are compatible, default to using this object's unit
-        if not other.data.unit.is_equivalent(self.data.unit,
-                                             equivalencies=spectral_density(
-                                                 other.dispersion)):
-            logging.error("Spectral data objects have incompatible units.")
-            return
+        if isinstance(other, Layer):
+            # Make sure units are compatible
+            if not other.data.unit.is_equivalent(
+                    self.data.unit,
+                    equivalencies=spectral_density(other.dispersion)):
+                logging.error("Spectral data objects have incompatible units.")
+                return
 
-        # Create a mask from the dispersion so we know we're performing the
-        # operation on parts of the arrays with data
-        this_disp_arr = Quantity(self._source.dispersion,
-                                 self._source.dispersion_unit)
-        this_data_arr = Quantity(self._source.data, self._source.unit)
+            # Create a mask from the dispersion so we know we're performing the
+            # operation on parts of the arrays with data
+            this_disp_arr = Quantity(self._source.dispersion,
+                                     self._source.dispersion_unit)
+            this_data_arr = Quantity(self._source.data, self._source.unit)
 
-        other_disp_arr = Quantity(other._source.dispersion,
-                                  other._source.dispersion_unit).to(
-                                                          this_disp_arr.unit)
-        other_data_arr = Quantity(other._source.data, other._source.unit)
+            other_disp_arr = Quantity(other._source.dispersion,
+                                      other._source.dispersion_unit).to(
+                this_disp_arr.unit)
+            other_data_arr = Quantity(other._source.data, other._source.unit)
 
-        disp_min = max(self.dispersion.value[0], other.dispersion.value[0])
-        disp_max = min(self.dispersion.value[-1], other.dispersion.value[-1])
+            disp_min = max(self.dispersion.value[0], other.dispersion.value[0])
+            disp_max = min(self.dispersion.value[-1], other.dispersion.value[-1])
 
-        this_mask = ((this_disp_arr.value >= disp_min) &
-                     (this_disp_arr.value <= disp_max))
-        other_mask = ((other_disp_arr.value >= disp_min) &
-                      (other_disp_arr.value <= disp_max))
+            this_mask = ((this_disp_arr.value >= disp_min) &
+                         (this_disp_arr.value <= disp_max))
+            other_mask = ((other_disp_arr.value >= disp_min) &
+                          (other_disp_arr.value <= disp_max))
 
-        # Check sampling; re-sample if incompatible
-        this_step = self.dispersion[1] - self.dispersion[0]
-        other_step = other.dispersion[1] - other.dispersion[0]
+            # Check sampling; re-sample if incompatible
+            this_step = self.dispersion[1] - self.dispersion[0]
+            other_step = other.dispersion[1] - other.dispersion[0]
 
-        if this_step != other_step:
-            other_data_val = resample(other_data_arr.value[other_mask],
-                                      other_disp_arr.value[other_mask],
-                                      this_disp_arr.value[this_mask])
-            temp_data_val = other_data_arr.value
-            temp_data_val[other_mask] = other_data_val
-            other_data_val = temp_data_val
-            other_mask = this_mask
+            if this_step != other_step:
+                other_data_val = resample(other_data_arr.value[other_mask],
+                                          other_disp_arr.value[other_mask],
+                                          this_disp_arr.value[this_mask])
+                temp_data_val = other_data_arr.value
+                temp_data_val[other_mask] = other_data_val
+                other_data_val = temp_data_val
+                other_mask = this_mask
+            else:
+                other_data_val = other_data_arr.value
+
+            this_data = self._source._from_self(this_data_arr.value)
+            other_data = other._source._from_self(other_data_val,
+                                                  copy_dispersion=True)
+        # Assume that the operand is a single number
         else:
-            other_data_val = other_data_arr.value
-
-        this_data = self._source._from_self(this_data_arr.value)
-        other_data = other._source._from_self(other_data_val,
-                                              copy_dispersion=True)
+            this_data = self._source
+            new_other = np.empty(shape=this_data.data.shape)
+            new_other.fill(float(other))
+            other_data = this_data._from_self(new_other)
+            other_mask = self._mask
 
         # Perform arithmetic operation
         operator = getattr(this_data, operator)
-        result_source = operator(other_data)
 
-        # The returned object from the NDArithmetic operation is a regular
-        # NDData object. Convert it to a real Data object that SpecViz knowns.
+        # Check for WCS incompatibility
+        if this_data.wcs != other_data.wcs:
+            logging.warning("WCS objects are not equivalent; overriding "
+                            "wcs information on 'other'.")
+            tmp_wcs = other_data._wcs
+            other_data._wcs = this_data.wcs
+            result_source = operator(other_data, propagate_uncertainties=propagate)
+            other_data._wcs = tmp_wcs
+        else:
+            result_source = operator(other_data, propagate_uncertainties=propagate)
+
+        # Create a source object
         result_source = other_data._from_self(result_source.data,
                                               copy_dispersion=True)
+
+        # Create a layer from the source data object
         result_layer = Layer(result_source, other_mask, self._parent,
                              self.name)
 
