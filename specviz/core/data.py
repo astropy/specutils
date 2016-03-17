@@ -62,7 +62,6 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
         self._dispersion = dispersion
         self._dispersion_unit = dispersion_unit
         self.name = name or "New Data Object"
-        self._layers = []
 
     # NOTE: Cannot have docstring here or Astropy will throw error!
     @classmethod
@@ -71,14 +70,12 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
         return io_registry.read(cls, *args, **kwargs)
 
-    def _from_self(self, other, mask=None):
+    def _from_self(self, other, copy_dispersion=False):
         """Create a new `Data` object using current property values."""
-        if mask is None:
-            mask = np.ones(other.shape, dtype=bool)
-
-        return Data(name=self.name, data=other[mask], unit=self.unit,
-                    uncertainty=StdDevUncertainty(self.uncertainty[mask]),
-                    mask=self.mask[mask], wcs=self.wcs,
+        return Data(name=self.name, data=other, unit=self.unit,
+                    uncertainty=StdDevUncertainty(self.uncertainty),
+                    mask=self.mask, wcs=self.wcs,
+                    dispersion=self.dispersion if copy_dispersion else None,
                     dispersion_unit=self.dispersion_unit)
 
     @property
@@ -119,9 +116,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
             try:
                 self._dispersion_unit = self.wcs.wcs.cunit[0]
             except AttributeError:
-                logging.warning("No dispersion unit information in WCS. "
-                                "Assuming `Angstrom`.")
-                self._dispersion_unit = Unit("Angstrom")
+                logging.warning("No dispersion unit information in WCS.")
 
         return self._dispersion_unit
 
@@ -190,10 +185,6 @@ class Layer(object):
         other_mask = ((other_disp_arr.value >= disp_min) &
                       (other_disp_arr.value <= disp_max))
 
-        # print(this_mask.shape, this_disp_arr.value.shape)
-        # print(other_mask.shape, other_disp_arr.value.shape, other_mask[
-        #     other_mask].size)
-
         # Check sampling; re-sample if incompatible
         if (self.dispersion[1] - self.dispersion[0]) != \
                 (other.dispersion[1] - other.dispersion[0]):
@@ -207,17 +198,18 @@ class Layer(object):
         else:
             other_data_val = other_data_arr.value
 
-        # print("fin", other_mask.shape, other_data_val.shape)
-
         this_data = self._source._from_self(this_data_arr.value)
-        other_data = other._source._from_self(other_data_val)
+        other_data = other._source._from_self(other_data_val,
+                                              copy_dispersion=True)
 
         # Perform arithmetic operation
         operator = getattr(this_data, operator)
         result_source = operator(other_data)
 
-        # print("mask", other_mask)
-
+        # The returned object from the NDArithmetic operation is a regular
+        # NDData object. Convert it to a real Data object that SpecViz knowns.
+        result_source = other_data._from_self(result_source.data,
+                                              copy_dispersion=True)
         result_layer = Layer(result_source, other_mask, self._parent,
                              self.name)
 

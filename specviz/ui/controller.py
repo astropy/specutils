@@ -4,6 +4,9 @@ from __future__ import (absolute_import, division, print_function,
 # STDLIB
 import logging
 
+# Third party
+from astropy.units import spectral_density, spectral
+
 # LOCAL
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
@@ -190,7 +193,13 @@ class Controller(object):
 
             # If units match, plot the resultant on the same sub window,
             # otherwise create a new sub window to plot the spectra
-            if new_layer.data.unit.is_equivalent(current_window._plot_units[1]):
+            data_units_equiv = new_layer.data.unit.is_equivalent(
+                current_window._plot_units[1],
+                equivalencies=spectral_density(new_layer.dispersion))
+            disp_units_equiv = new_layer.dispersion.unit.is_equivalent(
+                current_window._plot_units[0], equivalencies=spectral())
+
+            if data_units_equiv and disp_units_equiv:
                 self.add_sub_window(layer=new_layer, window=current_window)
             else:
                 logging.info("{} not equivalent to {}.".format(
