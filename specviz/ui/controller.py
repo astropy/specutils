@@ -191,6 +191,10 @@ class Controller(object):
             new_layer = layer_manager.add_from_formula(formula,
                                                        layers=current_layers)
 
+            if new_layer is None:
+                logging.warning("Formula not valid.")
+                return
+
             # If units match, plot the resultant on the same sub window,
             # otherwise create a new sub window to plot the spectra
             data_units_equiv = new_layer.data.unit.is_equivalent(
@@ -610,7 +614,9 @@ class Controller(object):
                                                      cont2_stat_dict,
                                                      line,
                                                      mask=line_mask)
-            cent = statistics.centroid(line - avg_cont)
+            cent = statistics.centroid(line - avg_cont, mask=line_mask)
+
+            print(cent)
 
             stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
                          "avg_cont": avg_cont}

@@ -167,16 +167,27 @@ class Layer(object):
                 logging.error("Spectral data objects have incompatible units.")
                 return
 
-            # Create a mask from the dispersion so we know we're performing the
-            # operation on parts of the arrays with data
+            # Create temporary arrays from the source object; this obviates
+            # the need to re-create masks
             this_disp_arr = Quantity(self._source.dispersion,
                                      self._source.dispersion_unit)
             this_data_arr = Quantity(self._source.data, self._source.unit)
 
+            if isinstance(self, ModelLayer):
+                this_disp_arr[self._mask] = self.dispersion
+                this_data_arr[self._mask] = self.data
+
             other_disp_arr = Quantity(other._source.dispersion,
                                       other._source.dispersion_unit).to(
                 this_disp_arr.unit)
-            other_data_arr = Quantity(other._source.data, other._source.unit)
+            other_data_arr = Quantity(other._source.data,
+                                      other._source.unit).astype(
+                other.data.dtype)
+
+            if isinstance(other, ModelLayer):
+                other_disp_arr[other._mask] = other.dispersion.to(
+                    this_disp_arr.unit)
+                other_data_arr[other._mask] = other.data
 
             disp_min = max(self.dispersion.value[0], other.dispersion.value[0])
             disp_max = min(self.dispersion.value[-1], other.dispersion.value[-1])
@@ -206,6 +217,9 @@ class Layer(object):
                                                   copy_dispersion=True)
         # Assume that the operand is a single number
         else:
+            if isinstance(other, Quantity):
+                other = other.value
+
             this_data = self._source
             new_other = np.empty(shape=this_data.data.shape)
             new_other.fill(float(other))
@@ -226,9 +240,9 @@ class Layer(object):
         else:
             result_source = operator(other_data, propagate_uncertainties=propagate)
 
-        # Create a source object
-        result_source = other_data._from_self(result_source.data,
-                                              copy_dispersion=True)
+        # For cases where the dispersion cannot be recalculated, copy the
+        # dispersion array
+        result_source._dispersion = other_data.dispersion
 
         # Create a layer from the source data object
         result_layer = Layer(result_source, other_mask, self._parent,

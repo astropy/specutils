@@ -379,6 +379,9 @@ class Viewer(QMainWindow):
 
         model_item = self.get_model_item(model)
 
+        if model_item is None:
+            return
+
         for i, para in enumerate(model.param_names):
             for i in range(model_item.childCount()):
                 param_item = model_item.child(i)
