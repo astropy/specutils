@@ -14,6 +14,7 @@ Currently, the following models are available:
 ========================= ==========================================================
 SpecViz Model Name        Astropy Model Class
 ========================= ==========================================================
+BlackBody                 `~astropy.analytic_functions.blackbody_(lambda, nu)`
 BrokenPowerLaw            `~astropy.modeling.powerlaws.BrokenPowerLaw1D`
 Const                     `~astropy.modeling.functional_models.Const1D`
 ExponentialCutoffPowerLaw `~astropy.modeling.powerlaws.ExponentialCutoffPowerLaw1D`

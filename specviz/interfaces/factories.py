@@ -8,6 +8,7 @@ import logging
 from ..core.data import Data, Layer, ModelLayer
 from ..core.containers import PlotContainer
 from ..analysis.models.spline import Spline1D
+from ..analysis.models.blackbody import BlackBody
 
 # THIRD-PARTY
 import pyqtgraph as pg
@@ -89,6 +90,7 @@ class ModelFactory(Factory):
         'Sine': models.Sine1D,
         'Voigt': models.Voigt1D,
         'Spline': Spline1D,
+        'BlackBody': BlackBody,
 
         # polynomials have to be handled separately. Their calling sequence
         # is incompatible with the Fittable1DModel interface, and they run
