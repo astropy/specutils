@@ -42,8 +42,8 @@ Anaconda
    the same environment. To work around this, it is strongly suggested you
    simply create a new virtual environment and install PyQt5 there::
 
-    $ conda create -n pyf_env python=3.5
-    $ source activate pyf_env
+    $ conda create -n sviz_env python=3.5
+    $ source activate sviz_env
     $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
 
 .. note::
@@ -69,7 +69,7 @@ Installing SpecViz
 
 Clone the SpecViz repository somewhere on your system, and install locally using
 ``pip``. If you are using an Anaconda virtual environment, please be sure to
-activate it first before installing: ``$ source activate pyf_env``.
+activate it first before installing: ``$ source activate sviz_env``.
 
 ::
 
