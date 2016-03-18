@@ -1,8 +1,10 @@
 import numpy as np
 
+import astropy.units as u
+
 from astropy.modeling import Fittable1DModel
 from astropy.modeling.parameters import Parameter
-from astropy.analytic_functions import blackbody_lambda, blackbody_nu
+from astropy.analytic_functions import blackbody_lambda
 
 __all__ = ['BlackBody']
 
@@ -18,19 +20,12 @@ class BlackBody(Fittable1DModel):
         # astropy's black body functions.
         _x_u = x * self.wave.unit
 
-        # call the Planck function most appropriate
-        # for the flux units being used. Is there a
-        # better way to tell apart flam from fnu?
-        if str(self.flux.unit).lower().index("angstrom") > 0:
-            _flux = blackbody_lambda(_x_u, temp)
-        else:
-            _flux = blackbody_nu(_x_u, temp)
+        # convert result of the Planck function to
+        # flux density in the same units as the data.
+        _flux = (blackbody_lambda(_x_u, temp) * u.sr).to(self.flux.unit)
 
-        # In practice it's not necessary to convert to
-        # flux density (by removing the /sr part from the
-        # unit) since we normalize to the data at hand
-        # anyway. And don't forget to return just the
-        # values so as to conform to the Model API.
+        # normalize and return just the values,
+        # to conform to the Model API.
         return (norm * _flux).value
 
 
