@@ -10,23 +10,23 @@ You can import it like this:
 
 .. code-block:: python
   
-  from specutils import Spectrum1D
+  >>> from specutils import Spectrum1D
 
 To instantiate it you can define a wave and a flux:
 
 .. code-block:: python
   
-  wave = np.arange(6000, 9000) * u.Angstrom
-  flux = np.random.random(3000) * u.Unit('W m-2 angstrom-1 sr-1')
+  >>> wave = np.arange(6000, 9000) * u.Angstrom
+  >>> flux = np.random.random(3000) * u.Unit('W m-2 angstrom-1 sr-1')
 
 and then call the **from_array** method:
 
 .. code-block:: python
 
-  spec1d = Spectrum1D.from_array(wave, flux)
-  spec1d.wavelength
+  >>> spec1d = Spectrum1D.from_array(wave, flux)
+  >>> spec1d.wavelength
   <Quantity [ 6000., 6001., 6002.,...,  8997., 8998., 8999.] Angstrom>
-  spec1d.flux
+  >>> spec1d.flux
   <Quantity [ 0.75639906, 0.23677036, 0.08408417,...,  0.82740303, 0.38345114,
               0.77815595] W / (Angstrom m2 sr)>
 
@@ -34,32 +34,34 @@ Or you can read a Spectrum from a .fits file with the **read_fits** method:
 
 .. code-block:: python
 
-  from specutils.io import read_fits
-  myspec = read_fits.read_fits_spectrum1d('myfile.fits')
+  >>> from specutils.io import read_fits
+  >>> myspec = read_fits.read_fits_spectrum1d('myfile.fits')
 
 It supports the types of FITS formats listed in `this page`_.
+
 **Note:** A list of spectra is returned whenever the input file is a multispec file.
 
 Writing spectra to .fits files works in the same way with the **write_fits** method:
 
 .. code-block:: python
 
-  from specutils.io import write_fits
-  write_fits.write(myspec, 'mynewfile.fits')
+  >>> from specutils.io import write_fits
+  >>> write_fits.write(myspec, 'mynewfile.fits')
+
 **Note:** write_fits.write deciphers the type of object passed and writes spectra to the given file in FITS format.
 
 Reading a Spectrum from a FITS file with no specified units in the header will give the following warning:
 
 .. code-block:: python
 
-  myspec = read_fits.read_fits_spectrum1d('specutils/io/tests/files/UVES.fits')
+  >>> myspec = read_fits.read_fits_spectrum1d('specutils/io/tests/files/UVES.fits')
   UserWarning: Initializing a Spectrum1D WCS with units set to `None` is not recommended
 
 the Spectrum1D.dispersion will be an array:
 
 .. code-block:: python
   
-  myspec.dispersion
+  >>> myspec.dispersion
   array([ 3732.05623192,  3732.0858853 ,  3732.11553869, ...,  4999.67906915,
           4999.70872253,  4999.73837591])
 
@@ -68,17 +70,17 @@ In order to be convertible, the dispersion must be an astropy Quantity, which wi
 
 .. code-block:: python
 
-  myspec = read_fits.read_fits_spectrum1d('specutils/io/tests/files/UVES.fits', dispersion_unit='angstrom')
-  myspec.dispersion
+  >>> myspec = read_fits.read_fits_spectrum1d('specutils/io/tests/files/UVES.fits', dispersion_unit='angstrom')
+  >>> myspec.dispersion
   <Quantity [ 3732.05623192, 3732.0858853 , 3732.11553869,...,
               4999.67906915, 4999.70872253, 4999.73837591] Angstrom>
-  myspec.wavelength
+  >>> myspec.wavelength
   <Quantity [ 3732.05623192, 3732.0858853 , 3732.11553869,...,
               4999.67906915, 4999.70872253, 4999.73837591] Angstrom> 
-  myspec.energy
+  >>> myspec.energy
   <Quantity [ 5.32265743e-19,  5.32261514e-19,  5.32257285e-19,...,
               3.97314639e-19,  3.97312282e-19,  3.97309926e-19] J>
-  myspec.frequency
+  >>> myspec.frequency
   <Quantity [ 8.03290303e+14,  8.03283920e+14,  8.03277538e+14,...,
               5.99623404e+14,  5.99619847e+14,  5.99616291e+14] Hz>
 
@@ -86,7 +88,8 @@ You can easily make a plot of the Spectrum using matplotlib in ipython with the 
 
 .. code-block:: python
 
-  plot(myspec.wavelength, myspec.flux)
+  >>> import pylab as pl
+  >>> pl.plot(myspec.wavelength, myspec.flux)
 
 .. plot:: pyplots/plotting_example.py
 
