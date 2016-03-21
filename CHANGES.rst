@@ -1,7 +1,7 @@
-0.2 (unreleased)
+0.2 (2016-03-21)
 ----------------
 
-- Nothing changed yet.
+- Bugfixes.  Actually works now
 
 
 0.1 (2015-04-22)
