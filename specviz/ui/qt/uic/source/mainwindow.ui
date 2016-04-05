@@ -695,7 +695,7 @@
           <x>0</x>
           <y>0</y>
           <width>306</width>
-          <height>481</height>
+          <height>553</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -733,6 +733,12 @@
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
              <widget class="QTreeWidget" name="treeWidget">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>150</height>
+               </size>
+              </property>
               <property name="allColumnsShowFocus">
                <bool>false</bool>
               </property>

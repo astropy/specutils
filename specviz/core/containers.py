@@ -5,9 +5,11 @@ import random
 
 from ..third_party.qtpy.QtGui import *
 
-from astropy.units import Unit, Quantity, spectral_density, spectral
+from astropy.units import (Unit, Quantity, spectral_density, spectral,
+                           UnitConversionError)
 import pyqtgraph as pg
 from itertools import cycle
+import logging
 
 AVAILABLE_COLORS = cycle([(0, 0, 0), (0, 73, 73), (0, 146, 146),
                           (255, 109, 182), (255, 182, 219), (73, 0, 146),
@@ -52,12 +54,14 @@ class PlotContainer(object):
         self.set_visibility(*self._visibility_state, override=True)
 
     def change_units(self, x, y=None, z=None):
-        self._plot_units = (
-            x or self._plot_units[0] or self.layer.layer_units[0],
-            y or self._plot_units[1] or self.layer.layer_units[1],
-            z)
+        try:
+            new_x_unit = self.layer.layer_units[0].to(x)
+            new_y_unit = self.layer.layer_units[1].to(y)
 
-        self.update()
+            self._plot_units = (x, y, z)
+            self.update()
+        except UnitConversionError:
+            logging.Error("Failed to convert plot units.")
 
     def set_visibility(self, pen_show, error_pen_show, inactive=True,
                        override=False):
