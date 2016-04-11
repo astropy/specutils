@@ -44,9 +44,12 @@ class DataManager(Manager):
         Dispatch.on_added_data.emit(data)
 
     def remove(self, data):
-        self._members.remove(data)
-
-        Dispatch.on_removed_data.emit(data)
+        if data in self._members:
+            self._members.remove(data)
+            Dispatch.on_removed_data.emit(data)
+        else:
+            logging.warning("Attempted to remove `Data` object that does "
+                            "not exist: {}".format(data.name))
 
 
 class WindowManager(Manager):

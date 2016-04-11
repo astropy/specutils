@@ -25,7 +25,7 @@ class PlotContainer(object):
         self.style = style
         self._plot = plot
         self.error = None
-        self._plot_units = None
+        self._plot_units = (self._layer.units[0], self._layer.units[1], None)
         self.line_width = 1
 
         if self._plot is not None:
@@ -54,14 +54,18 @@ class PlotContainer(object):
         self.set_visibility(*self._visibility_state, override=True)
 
     def change_units(self, x, y=None, z=None):
-        try:
-            new_x_unit = self.layer.layer_units[0].to(x)
-            new_y_unit = self.layer.layer_units[1].to(y)
+        if x is None or not self._layer.units[0].is_equivalent(
+                x, equivalencies=spectral()):
+            logging.error("Failed to convert x-axis plot units.")
+            x = self._plot_units[0] or self._layer.units[0]
 
-            self._plot_units = (x, y, z)
-            self.update()
-        except UnitConversionError:
-            logging.Error("Failed to convert plot units.")
+        if y is None or not self._layer.units[1].is_equivalent(
+                y, equivalencies=spectral_density(self.dispersion)):
+            logging.error("Failed to convert y-axis plot units.")
+            y = self._plot_units[1] or self._layer.units[1]
+
+        self._plot_units = (x, y, z)
+        self.update()
 
     def set_visibility(self, pen_show, error_pen_show, inactive=True,
                        override=False):
