@@ -1,0 +1,55 @@
+# Common nebular lines.
+#
+# Copyrigtht (C) 1999-2004 by Christian Buil
+# http://www.astrosurf.com/buil/us/spe2/hresol5.htm
+            3426        [Ne V]
+            3444        OIII
+            3727        [O II]
+            3729        [O II]
+            3760        O III
+            3797        H10
+            3835        H9
+            3868        [Ne III]
+            3889        H8
+            3923        He II
+            3970        He
+            4026        He I
+            4068        [S II]
+            4097        N III
+            4101.748    Hd
+            4143        He I
+            4163        [K V]
+            4199        He II
+            4227        [Fe V]
+            4267        C II
+            4340.475    Hg
+            4363        [O III]
+            4471        He I
+            4541        He II
+            4607        [Fe [III+ III]]
+            4640        N III
+            4686        He II
+            4712        He I + [Ar IV]
+            4740        [Ar IV]
+            4861.342    Hb
+            4959        [O III]
+            5007        [O III]
+            5411        He II
+            5517        [CI III]
+            5537        [CI III]
+            5755        [N II]
+            5876        He I
+            6101        [K IV]
+            6300        [O I]
+            6319        [S III]
+            6393        [Mn V]
+            6406        [He II]
+            6435        [Ar V]
+            6548        [N II]
+            6563        Ha
+            6584        [N II]
+            6678        He I
+            6719        [S II]
+            6730        [S II]
+            7065        He I
+            7136        Ar III
