@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import logging
 from functools import reduce
 
@@ -110,7 +111,24 @@ class PlotSubWindow(QMainWindow):
             self._plot_item.update()
 
     def _show_line_ids_dialog(self):
-        print ('@@@@@@     line: 113  -   HERE!!')
+
+        # find the wavelength range spanned by the spectrum
+        # (or spectra) at hand. The code bellow assumes
+        # increasing dispersion values!
+        amin = sys.float_info.max
+        amax = 0.0
+        for container in self._containers:
+            amin = min(amin, container.dispersion.value[0])
+            amax = max(amax, container.dispersion.value[-1])
+
+        # then, use that range to scan all line lists in the data
+        # directory, to pick up the ones that have some overlap in
+        # wavelength.
+
+        #TODO implement line list input from file
+
+        # finally, display ine lists in a tabbed pane.
+
 
     def _toggle_measure(self, on):
         if on:
