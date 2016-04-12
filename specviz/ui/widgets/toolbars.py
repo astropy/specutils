@@ -17,6 +17,7 @@ class PlotToolBar(QToolBar):
         self.atn_change_top_axis = self.window_menu.addAction(
             "Change Top Axis")
         self.atn_change_units = self.window_menu.addAction("Change Units")
+        self.atn_line_ids = self.window_menu.addAction("Plot Line IDs")
 
         icon = QIcon(QPixmap(":/img/Settings-50.png"))
         self.window_menu_btn = QToolButton(self)

@@ -85,6 +85,9 @@ class PlotSubWindow(QMainWindow):
         self._tool_bar.atn_change_units.triggered.connect(
             self._show_unit_change_dialog)
 
+        self._tool_bar.atn_line_ids.triggered.connect(
+            self._show_line_ids_dialog)
+
     def _show_unit_change_dialog(self):
         if self._unit_change_dialog.exec_():
             x_text = self._unit_change_dialog.disp_unit
@@ -105,6 +108,9 @@ class PlotSubWindow(QMainWindow):
             self.change_units(x_unit, y_unit)
 
             self._plot_item.update()
+
+    def _show_line_ids_dialog(self):
+        print ('@@@@@@     line: 113  -   HERE!!')
 
     def _toggle_measure(self, on):
         if on:
