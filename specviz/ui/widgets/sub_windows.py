@@ -20,6 +20,9 @@ from ...core.comms import Dispatch, DispatchHandle
 from ...core import linelist
 from .region_items import LinearRegionItem
 
+from astropy.units import Unit
+import numpy as np
+import pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
