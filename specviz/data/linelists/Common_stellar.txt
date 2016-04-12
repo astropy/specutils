@@ -1,0 +1,99 @@
+# Common stellar lines.
+#
+# Copyrigtht (C) 1999-2004 by Christian Buil
+# http://www.astrosurf.com/buil/us/spe2/hresol5.htm
+            1215.67     La
+            1238.81     N V
+            1242.80     N V
+            1393.76     Si IV
+            1402.77     Si IV
+            1548.20     C IV
+            1550.77     C IV
+            1640.5      He II
+            1854.72     Al III
+            1909        C III]
+            2795.50     Mg II
+            2802.70     Mg II
+            2851.6      Mg I
+            2881.1      Si I
+            3425.8      [Ne V]
+            3581.21     Fe I
+            3679        H21
+            3721.94     H14
+            3726.0      [O II]
+            3728.8      [O II]
+            3734.37     H13
+            3734.87     Fe I
+            3750.15     H12
+            3770.63     H11
+            3797.90     H10
+            3820.44     Fe I
+            3835.39     H9
+            3868.7      [Ne III]
+            3889.05     H8
+            3933.68     Ca II - K line
+            3967.5      [Ne III]
+            3968.49     Ca  II - H line
+            3970.08     He - (H7)
+            4045.82     Fe I
+            4068.6      [S II]
+            4076.2      [S II]
+            4101.75     Hd - (H6)
+            4226.74     Ca I
+            4300        CH - G band (atmo.)
+            4340.48     Hg - (H5)
+            4358.3      Hg
+            4363.2      [O III]
+            4383.56     Fe I
+            4388        He I
+            4471.6      He I
+            4541.6      He II
+            4685.7      He II
+            4713.3      He I
+            4861.34     Hb - (H4)
+            4891.50     Fe I
+            4920.51     Fe I
+            4922        He I
+            4957.61     Fe I
+            4958.9      [O III]
+            5006.8      [O III]
+            5015        He I
+            5048        He I
+            5167.327    Mg I - b4
+            5172.698    Mg I - b2
+            5183.619    Mg I - b1
+            5198.5      [N I]
+            5200.7      [N I]
+            5250.22     Fe I
+            5269.55     Fe I
+            5328.05     Fe I
+            5411.5      He II
+            5460.7      Hg
+            5528.42     Mg I
+            5577.5      [O I]
+            5769.6      Hg
+            5790.7      Hg
+            5875.65     He I
+            5889.973    Na I - D2
+            5895.940    Na I - D1
+            6102.73     Ca I
+            6122.23     Ca I
+            6162.18     Ca I
+            6388        O2 - C band (atmo.)
+            6300.3      [O I]
+            6302.50     Fe I
+            6363.8      [O I]
+            6548.1      [N II]
+            6562.808    Ha - (H3)
+            6583.4      [N II]
+            6678        He I
+            6716.4      [S II]
+            6730.8      [S II]
+            6884        O2 - B band (atmo.)
+            7065        He I
+            7621        O2 - A band (atmo.)
+            8498.062    Ca II
+            8542.144    Ca II
+            8662.170    Ca II
+            10049.27    Pd
+            10938.10    Pg
