@@ -20,27 +20,41 @@ class Ui_Dialog(object):
         Dialog.setSizePolicy(sizePolicy)
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
+
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.axisModeLabel = QtWidgets.QLabel(Dialog)
+
         self.axisModeLabel.setObjectName("axisModeLabel")
+
         self.horizontalLayout.addWidget(self.axisModeLabel)
+
         self.axisModeComboBox = QtWidgets.QComboBox(Dialog)
         self.axisModeComboBox.setObjectName("axisModeComboBox")
+
         self.horizontalLayout.addWidget(self.axisModeComboBox)
+
         self.verticalLayout.addLayout(self.horizontalLayout)
+
         self.velocityGroupBox = QtWidgets.QGroupBox(Dialog)
         self.velocityGroupBox.setObjectName("velocityGroupBox")
+
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.velocityGroupBox)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
+
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+
         self.referenenceWavelengthLabel = QtWidgets.QLabel(self.velocityGroupBox)
         self.referenenceWavelengthLabel.setObjectName("referenenceWavelengthLabel")
+
         self.horizontalLayout_3.addWidget(self.referenenceWavelengthLabel)
+
         self.referenenceWavelengthLineEdit = QtWidgets.QLineEdit(self.velocityGroupBox)
         self.referenenceWavelengthLineEdit.setObjectName("referenenceWavelengthLineEdit")
+
         self.horizontalLayout_3.addWidget(self.referenenceWavelengthLineEdit)
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.verticalLayout.addWidget(self.velocityGroupBox)
         self.redshiftGroupBox = QtWidgets.QGroupBox(Dialog)

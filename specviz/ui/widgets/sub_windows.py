@@ -69,8 +69,7 @@ class PlotSubWindow(QMainWindow):
         self._top_axis_dialog.accepted.connect(lambda:
             self.update_axis(
                 self._containers[0].layer,
-                self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
-                    .currentIndex(),
+                self._top_axis_dialog.combo_box_axis_mode.currentIndex(),
                 redshift=self._top_axis_dialog.redshift,
                 ref_wave=self._top_axis_dialog.ref_wave))
 
