@@ -184,7 +184,7 @@ class Controller(object):
 
         if self.viewer._layer_arithmetic_dialog.exec_():
             formula = self.viewer._layer_arithmetic_dialog\
-                .ui_layer_arithmetic_dialog.formulaLineEdit.text()
+                .line_edit_formula.text()
 
             current_window = self.viewer.current_sub_window
             current_layers = window_manager.get_layers(current_window)

@@ -2,7 +2,6 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
 
-from ..qt.layer_arithmetic_dialog import Ui_LayerArithmeticDialog
 from ..qt.unit_change_dialog import Ui_UnitChangeDialog
 
 
@@ -68,15 +67,15 @@ class UiTopAxisDialog(QDialog):
         self.layout_vertical.addStretch(1)
 
         # Buttons
-        self.buttonBox = QDialogButtonBox(self)
-        self.buttonBox.setOrientation(Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel
-                                          | QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
-        self.layout_vertical.addWidget(self.buttonBox)
+        self.button_box = QDialogButtonBox(self)
+        self.button_box.setOrientation(Qt.Horizontal)
+        self.button_box.setStandardButtons(QDialogButtonBox.Cancel
+                                           | QDialogButtonBox.Ok)
+        self.button_box.setObjectName("buttonBox")
+        self.layout_vertical.addWidget(self.button_box)
 
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
 
 
 class TopAxisDialog(UiTopAxisDialog):
@@ -131,12 +130,39 @@ class TopAxisDialog(UiTopAxisDialog):
         super(TopAxisDialog, self).reject()
 
 
-class LayerArithmeticDialog(QDialog):
+class UiLayerArithmeticDialog(QDialog):
+    def __init__(self, parent=None):
+        super(UiLayerArithmeticDialog, self).__init__(parent)
+
+        # Dialog settings
+        self.setWindowTitle("Layer Arithmetic")
+        self.resize(354, 134)
+
+        self.layout_vertical = QVBoxLayout(self)
+
+        # Arithmetic group box
+        self.group_box_arithmetic = QGroupBox(self)
+        self.group_box_arithmetic.setTitle("Formula")
+
+        self.line_edit_formula = QLineEdit(self.group_box_arithmetic)
+
+        self.layout_horizontal = QHBoxLayout(self.group_box_arithmetic)
+        self.layout_horizontal.addWidget(self.line_edit_formula)
+        self.layout_vertical.addWidget(self.group_box_arithmetic)
+
+        # Buttons
+        self.button_box = QDialogButtonBox(self)
+        self.button_box.setOrientation(Qt.Horizontal)
+        self.button_box.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        self.layout_vertical.addWidget(self.button_box)
+
+
+class LayerArithmeticDialog(UiLayerArithmeticDialog):
     def __init__(self, parent=None):
         super(LayerArithmeticDialog, self).__init__(parent)
-        # Run the widget setup
-        self.ui_layer_arithmetic_dialog = Ui_LayerArithmeticDialog()
-        self.ui_layer_arithmetic_dialog.setupUi(self)
 
 
 class UnitChangeDialog(QDialog):
