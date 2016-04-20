@@ -165,6 +165,21 @@ class LayerArithmeticDialog(UiLayerArithmeticDialog):
         super(LayerArithmeticDialog, self).__init__(parent)
 
 
+class UiUnitChangeDialog(QDialog):
+    def __init__(self, parent=None):
+        super(UiUnitChangeDialog, self).__init__(parent)
+
+        # Dialog settings
+        self.setWindowTitle("Change Plot Units")
+
+        self.layout_vertical = QVBoxLayout(self)
+
+        # Arithmetic group box
+        self.group_box_arithmetic = QGroupBox(self)
+        self.group_box_arithmetic.setTitle("Formula")
+
+
+
 class UnitChangeDialog(QDialog):
     def __init__(self, parent=None):
         super(UnitChangeDialog, self).__init__(parent)
