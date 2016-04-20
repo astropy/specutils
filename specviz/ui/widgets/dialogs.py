@@ -2,8 +2,6 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
 
-from ..qt.unit_change_dialog import Ui_UnitChangeDialog
-
 
 class UiTopAxisDialog(QDialog):
     """
@@ -153,7 +151,8 @@ class UiLayerArithmeticDialog(QDialog):
         # Buttons
         self.button_box = QDialogButtonBox(self)
         self.button_box.setOrientation(Qt.Horizontal)
-        self.button_box.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+        self.button_box.setStandardButtons(
+            QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
 
@@ -173,27 +172,45 @@ class UiUnitChangeDialog(QDialog):
         self.setWindowTitle("Change Plot Units")
 
         self.layout_vertical = QVBoxLayout(self)
+        self.form_layout = QFormLayout()
+        self.layout_vertical.addLayout(self.form_layout)
 
-        # Arithmetic group box
-        self.group_box_arithmetic = QGroupBox(self)
-        self.group_box_arithmetic.setTitle("Formula")
+        # Flux unit
+        self.label_flux_unit = QLabel(self)
+        self.line_edit_flux_unit = QLineEdit(self)
+
+        self.label_flux_unit.setText("Flux Unit")
+
+        self.form_layout.addRow(self.label_flux_unit, self.line_edit_flux_unit)
+
+        # Dispersion unit
+        self.label_disp_unit = QLabel(self)
+        self.line_edit_disp_unit = QLineEdit(self)
+
+        self.label_disp_unit.setText("Dispersion Unit")
+
+        self.form_layout.addRow(self.label_disp_unit, self.line_edit_disp_unit)
+
+        self.button_box = QDialogButtonBox(self)
+        self.button_box.setOrientation(Qt.Horizontal)
+        self.button_box.setStandardButtons(
+            QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
+        self.layout_vertical.addWidget(self.button_box)
+
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
 
 
-
-class UnitChangeDialog(QDialog):
+class UnitChangeDialog(UiUnitChangeDialog):
     def __init__(self, parent=None):
         super(UnitChangeDialog, self).__init__(parent)
 
         self.flux_unit = ''
         self.disp_unit = ''
 
-        # Run the widget setup
-        self.ui_unit_change_dialog = Ui_UnitChangeDialog()
-        self.ui_unit_change_dialog.setupUi(self)
-
     def accept(self):
-        self.flux_unit = self.ui_unit_change_dialog.fluxUnitLineEdit.text()
-        self.disp_unit = self.ui_unit_change_dialog.dispersionUnitLineEdit.text()
+        self.flux_unit = self.line_edit_flux_unit.text()
+        self.disp_unit = self.line_edit_disp_unit.text()
 
         super(UnitChangeDialog, self).accept()
 
