@@ -11,15 +11,23 @@ from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
 from .widgets.menus import LayerContextMenu
 
+from .widgets.windows import MainWindow
+from ..plugins.data_list_plugin import DataListPlugin
 
-class Viewer(QMainWindow):
+
+class Viewer(object):
     """
     The `Viewer` is the main construction area for all GUI widgets. This
     object does **not** control the interactions between the widgets,
     but only their creation and placement.
     """
-    def __init__(self, parent=None):
-        super(Viewer, self).__init__(parent)
+    def __init__(self):
+        self.main_window = MainWindow()
+        self.data_list_plugin = DataListPlugin(self.main_window)
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.data_list_plugin)
+
+    def old__init__(self, parent=None):
+        super(Viewer, self).__init__()
         self._current_sub_window = None
 
         self.main_window = Ui_MainWindow()
@@ -195,7 +203,7 @@ class Viewer(QMainWindow):
             The chosen filter (this indicates which custom loader from the
             registry to use).
         """
-        dialog = QFileDialog(self)
+        dialog = QFileDialog(self.main_window)
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters([x for x in filters])
 
@@ -206,36 +214,6 @@ class Viewer(QMainWindow):
             return file_names[0], selected_filter
 
         return None, None
-
-    @DispatchHandle.register_listener("on_added_data")
-    def add_data_item(self, data):
-        """
-        Adds a `Data` object to the loaded data list widget.
-
-        Parameters
-        ----------
-        data : specviz.core.data.Data
-            The `Data` object to add to the list widget.
-        """
-        new_item = QListWidgetItem(data.name, self.wgt_data_list)
-        new_item.setFlags(new_item.flags() |  Qt.ItemIsEditable)
-
-        new_item.setData(Qt.UserRole, data)
-
-        self.wgt_data_list.setCurrentItem(new_item)
-
-    @DispatchHandle.register_listener("on_removed_data")
-    def remove_data_item(self, data):
-        data_item = self.get_data_item(data)
-
-        self.wgt_data_list.takeItem(self.wgt_data_list.row(data_item))
-
-    def get_data_item(self, data):
-        for i in range(self.wgt_data_list.count()):
-            data_item = self.wgt_data_list.item(0)
-
-            if data_item.data(Qt.UserRole) == data:
-                return data_item
 
     @DispatchHandle.register_listener("on_added_layer")
     def add_layer_item(self, layer, unique=True):

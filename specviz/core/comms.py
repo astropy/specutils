@@ -143,3 +143,11 @@ Dispatch.register_event("on_selected_model", args=["model_item"])
 Dispatch.register_event("on_clicked_layer", args=["layer_item"])
 Dispatch.register_event("on_changed_layer", args=["layer_item"])
 Dispatch.register_event("on_changed_model", args=["model_item"])
+
+Dispatch.register_event("on_add_window", args=["data"])
+Dispatch.register_event("on_add_to_window", args=["data"])
+
+Dispatch.register_event("on_remove_data", args=["data"])
+
+Dispatch.register_event("on_file_open", args=["file_name"])
+Dispatch.register_event("on_file_read", args=["file_name", "filter"])

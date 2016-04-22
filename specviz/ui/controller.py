@@ -39,9 +39,9 @@ class Controller(object):
         self.viewer = viewer
 
         # self._setup_events()
-        self._setup_connections()
-        self._setup_communications()
-        self._setup_context_menus()
+        # self._setup_connections()
+        # self._setup_communications()
+        # self._setup_context_menus()
 
         DispatchHandle.setup(self)
 
@@ -72,22 +72,6 @@ class Controller(object):
                 model_item=mi))
 
     def _setup_connections(self):
-        self.viewer.main_window.actionOpen.triggered.connect(
-            lambda: self.open_file())
-
-        # Connect the create new sub window button
-        self.viewer.main_window.createSubWindowButton.clicked.connect(
-            lambda: self.add_sub_window(
-                data=self.viewer.current_data))
-
-        # Connect the add to current plot window button
-        self.viewer.main_window.addToSubWindowButton.clicked.connect(
-            lambda: self.add_to_sub_window())
-
-        # When the layer list delete button is pressed
-        self.viewer.main_window.dataRemoveButton.clicked.connect(
-            self.remove_data)
-
         # When the layer list delete button is pressed
         self.viewer.main_window.layerRemoveButton.clicked.connect(
             self.remove_layer)
@@ -284,7 +268,8 @@ class Controller(object):
         # put formula in text edit widget
         self.viewer.main_window.lineEdit.setText(formula)
 
-    def read_file(self, file_name):
+    @DispatchHandle.register_listener("on_file_read")
+    def read_file(self, file_name, file_filter=None):
         """
         Convenience method that directly reads a spectrum from a file.
         This exists mostly to facilitate development workflow. In time it
@@ -297,16 +282,18 @@ class Controller(object):
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 
-        if file_ext in ('.txt', '.dat'):
-            file_filter = 'ASCII (*.txt *.dat)'
-        else:
-            file_filter = 'Generic Fits (*.fits *.mits)'
+        if file_filter is None:
+            if file_ext in ('.txt', '.dat'):
+                file_filter = 'ASCII (*.txt *.dat)'
+            else:
+                file_filter = 'Generic Fits (*.fits *.mits)'
 
         try:
             data = data_manager.load(file_name, file_filter)
         except:
             logging.error("Incompatible loader for selected data.")
 
+    @DispatchHandle.register_listener("on_file_open")
     def open_file(self, file_name=None):
         """
         Creates a `specviz.core.data.Data` object from the `Qt` open file
@@ -316,13 +303,7 @@ class Controller(object):
             file_name, selected_filter = self.viewer.open_file_dialog(
                 loader_registry.filters)
 
-        if not file_name:
-            return
-
-        try:
-            data = data_manager.load(str(file_name), str(selected_filter))
-        except:
-            logging.error("Incompatible loader for selected data.")
+            self.read_file(file_name, file_filter=selected_filter)
 
     def add_roi_layer(self, layer=None, mask=None, window=None):
         """
@@ -353,6 +334,7 @@ class Controller(object):
         window_manager.add(new_layer, window)
         plot_container = plot_manager.new(new_layer, window)
 
+    @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data=None, window=None, layer=None):
         """
         Creates a new plot widget to display in the MDI area. `data` and
@@ -373,6 +355,7 @@ class Controller(object):
         plot_container = plot_manager.new(layer, window)
         self.update_statistics()
 
+    @DispatchHandle.register_listener("on_add_to_window")
     def add_to_sub_window(self, data=None, window=None, layer=None):
         """
         Adds the selected data set to the currently active sub window.
@@ -524,9 +507,8 @@ class Controller(object):
         plot_manager.remove(layer=current_layer)
         model_manager.remove(layer=current_layer)
 
-    def remove_data(self):
-        current_data = self.viewer.current_data
-
+    @DispatchHandle.register_listener("on_remove_data")
+    def remove_data(self, current_data):
         if current_data is None:
             return
 
