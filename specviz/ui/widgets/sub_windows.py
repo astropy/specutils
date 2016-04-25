@@ -249,8 +249,9 @@ class PlotSubWindow(QMainWindow):
         super(PlotSubWindow, self).closeEvent(event)
 
     @DispatchHandle.register_listener("on_added_plot")
-    def add_container(self, container=None, window=None):
+    def add_container(self, container, window):
         if window != self:
+            logging.warning("Attempted to add container to plot, but sub windows do not match.")
             return
 
         # User tries to plot before loading file, do nothing

@@ -335,25 +335,22 @@ class Controller(object):
         plot_container = plot_manager.new(new_layer, window)
 
     @DispatchHandle.register_listener("on_add_window")
-    def add_sub_window(self, data=None, window=None, layer=None):
+    def add_sub_window(self, data, window=None, layer=None):
         """
         Creates a new plot widget to display in the MDI area. `data` and
         `sub_window` will be retrieved from the viewer if they are not defined.
         """
-        if data is None:
-            data = self.viewer.current_data
-
-        if window is None:
-            window = self.viewer.add_sub_window()
-
         if layer is None:
             layer = layer_manager.new(data)
         else:
             layer_manager.add(layer)
 
-        window_manager.add(layer, window)
+        if window is None:
+            window = window_manager.new(layer)
+        else:
+            window_manager.add(layer, window)
+
         plot_container = plot_manager.new(layer, window)
-        self.update_statistics()
 
     @DispatchHandle.register_listener("on_add_to_window")
     def add_to_sub_window(self, data=None, window=None, layer=None):
@@ -370,7 +367,6 @@ class Controller(object):
 
         window_manager.add(layer, window)
         plot_container = plot_manager.new(layer, window)
-        self.update_statistics()
 
     def add_model_layer(self):
         """
@@ -567,13 +563,11 @@ class Controller(object):
             model_manager.update_model(current_layer, model_inputs)
 
     @DispatchHandle.register_listener("on_selected_layer", "on_updated_roi")
-    def update_statistics(self, layer_item=None, roi=None, measure_rois=None):
+    def update_statistics(self, layer_item, roi=None, measure_rois=None):
         if layer_item is not None:
             current_layer = layer_item.data(0, Qt.UserRole)
         else:
-            current_layer = self.viewer.current_layer
-
-        if current_layer is None:
+            logging.warning("No layer item provided; cannot update statistics.")
             return
 
         if measure_rois is not None:

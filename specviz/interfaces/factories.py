@@ -10,6 +10,8 @@ from ..core.containers import PlotContainer
 from ..analysis.models.spline import Spline1D
 from ..analysis.models.blackbody import BlackBody
 
+from ..ui.widgets.sub_windows import PlotSubWindow
+
 # THIRD-PARTY
 import pyqtgraph as pg
 import numpy as np
@@ -128,6 +130,17 @@ class FitterFactory(Factory):
             return cls.all_fitters[name]
 
         logging.error("No such fitter {}".format(name))
+
+
+class WindowFactory(Factory):
+    """
+    Produces sub window objects.
+    """
+    @classmethod
+    def create_window(cls):
+        sub_window = PlotSubWindow()
+
+        return sub_window
 
 
 class PlotFactory(Factory):

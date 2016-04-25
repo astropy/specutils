@@ -76,3 +76,8 @@ class MainWindow(UiMainWindow):
         self.action_open.triggered.connect(
             lambda: Dispatch.on_file_open.emit())
 
+    @DispatchHandle.register_listener("on_added_window")
+    def add_sub_window(self, window=None, *args, **kwargs):
+        if window is not None:
+            mdi_sub_window = self.mdi_area.addSubWindow(window)
+            window.show()

@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 # LOCAL
-from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory
+from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory, WindowFactory
 from .initializers import initialize
 from ..analysis import modeling
 from ..third_party.py_expression_eval import Parser
@@ -62,13 +62,20 @@ class WindowManager(Manager):
 
         DispatchHandle.setup(self)
 
+    def new(self, layer):
+        window = WindowFactory.create_window()
+
+        self.add(layer, window)
+
+        return window
+
     def add(self, layer, window):
         if window not in self._members:
             self._members[window] = [layer]
+            Dispatch.on_added_window.emit(layer=layer, window=window)
         else:
             self._members[window].append(layer)
-
-        Dispatch.on_added_to_window.emit(layer=layer, window=window)
+            Dispatch.on_added_to_window.emit(layer=layer, window=window)
 
     def remove(self, layer, window=None):
         if window in self._members:

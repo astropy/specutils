@@ -166,25 +166,6 @@ class Viewer(object):
     def current_model_formula(self):
         return self.main_window.lineEdit.text()
 
-    def add_sub_window(self, *args, **kwargs):
-        """
-        Creates a new sub window instance in the MDI area.
-
-        Returns
-        -------
-        new_sub_window : QMdiSubWindow
-            The MdiSubWindow Qt instance.
-        wgt_sub_window : QWidget
-            The widget object within the QMdiSubWindow.
-        """
-        # Create new window
-        plot_sub_window = PlotSubWindow()
-
-        new_sub_window = self.main_window.mdiArea.addSubWindow(plot_sub_window)
-        new_sub_window.show()
-
-        return plot_sub_window
-
     def open_file_dialog(self, filters):
         """
         Given a list of filters, prompts the user to select an existing file

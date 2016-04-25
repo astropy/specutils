@@ -26,6 +26,7 @@ class EventNode(object):
             raise ValueError("Unknown keyword in event emit arguments.")
 
         for handler in self.__handlers:
+            logging.info("Sending message from: '{}'".format(handler))
             if hasattr(handler, 'self'):
                 handler(handler.self, *args, **kwargs)
             else:
@@ -111,13 +112,14 @@ class DispatchHandle(object):
                 try:
                     return func(*args, **kwargs)
                 except:
-                    logging.error(traceback.format_exc())
+                    logging.error("Exception in '{}':\n{}".format(func.__name__,
+                                                                  traceback.format_exc()))
             return wrapper
         return decorator
 
 
 Dispatch.register_event("on_added_data", args=["data"])
-Dispatch.register_event("on_added_window", args=["data", "window"])
+Dispatch.register_event("on_added_window", args=["layer", "window"])
 Dispatch.register_event("on_added_plot", args=["container", "window"])
 Dispatch.register_event("on_added_model", args=["model", "layer"])
 Dispatch.register_event("on_added_layer", args=["layer"])
