@@ -123,7 +123,6 @@ Dispatch.register_event("on_added_window", args=["layer", "window"])
 Dispatch.register_event("on_added_plot", args=["container", "window"])
 Dispatch.register_event("on_added_model", args=["model", "layer"])
 Dispatch.register_event("on_added_layer", args=["layer"])
-Dispatch.register_event("on_added_to_window", args=["layer", "window"])
 
 Dispatch.register_event("on_removed_data", args=["data"])
 Dispatch.register_event("on_removed_plot", args=["layer", "window"])
@@ -147,9 +146,10 @@ Dispatch.register_event("on_changed_layer", args=["layer_item"])
 Dispatch.register_event("on_changed_model", args=["model_item"])
 
 Dispatch.register_event("on_add_window", args=["data"])
-Dispatch.register_event("on_add_to_window", args=["data"])
+Dispatch.register_event("on_add_layer", args=["data", "from_roi"])
 
 Dispatch.register_event("on_remove_data", args=["data"])
+Dispatch.register_event("on_remove_layer", args=["layer"])
 
 Dispatch.register_event("on_file_open", args=["file_name"])
 Dispatch.register_event("on_file_read", args=["file_name", "filter"])

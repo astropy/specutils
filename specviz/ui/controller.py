@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function,
 import logging
 
 # Third party
-from astropy.units import spectral_density, spectral
 
 # LOCAL
 from ..third_party.qtpy.QtCore import *
@@ -46,25 +45,6 @@ class Controller(object):
         DispatchHandle.setup(self)
 
     def _setup_communications(self):
-        # Listen for layer selection events, update model tree on selection
-        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_selected_layer.emit(
-                layer_item=self.viewer.current_layer_item))
-
-        # When a layer is selected, make that line more obvious than the others
-        self.viewer.wgt_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_selected_plot.emit(
-                layer=self.viewer.current_layer))
-
-        # When an interactable widget inside a layer item is clicked
-        self.viewer.wgt_layer_list.itemClicked.connect(
-            lambda li, col: Dispatch.on_clicked_layer.emit(
-                layer_item=li))
-
-        # When an interactable widget inside a layer item is clicked
-        self.viewer.wgt_layer_list.itemChanged.connect(
-            lambda li, col: Dispatch.on_changed_layer.emit(
-                layer_item=li))
 
         # When the model items in the model tree change
         self.viewer.wgt_model_list.itemChanged.connect(
@@ -72,21 +52,10 @@ class Controller(object):
                 model_item=mi))
 
     def _setup_connections(self):
-        # When the layer list delete button is pressed
-        self.viewer.main_window.layerRemoveButton.clicked.connect(
-            self.remove_layer)
 
         # When the model list delete button is pressed
         self.viewer.main_window.modelRemoveButton.clicked.connect(
             self.remove_model)
-
-        # When the arithmetic button is clicked, show math dialog
-        self.viewer.main_window.arithmeticToolButton.clicked.connect(
-            self._show_arithmetic_dialog)
-
-        # Create a new layer based on any active ROIs
-        self.viewer.main_window.toolButton_6.clicked.connect(
-            lambda: self.add_roi_layer())
 
         # Populate model dropdown
         self.viewer.main_window.modelsComboBox.addItems(
@@ -161,38 +130,6 @@ class Controller(object):
         if current_sub_window is not None:
             current_sub_window.set_active_plot(
                 self.viewer.current_layer)
-
-    def _show_arithmetic_dialog(self):
-        if self.viewer.current_layer is None:
-            return
-
-        if self.viewer._layer_arithmetic_dialog.exec_():
-            formula = self.viewer._layer_arithmetic_dialog\
-                .line_edit_formula.text()
-
-            current_window = self.viewer.current_sub_window
-            current_layers = window_manager.get_layers(current_window)
-            new_layer = layer_manager.add_from_formula(formula,
-                                                       layers=current_layers)
-
-            if new_layer is None:
-                logging.warning("Formula not valid.")
-                return
-
-            # If units match, plot the resultant on the same sub window,
-            # otherwise create a new sub window to plot the spectra
-            data_units_equiv = new_layer.data.unit.is_equivalent(
-                current_window._plot_units[1],
-                equivalencies=spectral_density(new_layer.dispersion))
-            disp_units_equiv = new_layer.dispersion.unit.is_equivalent(
-                current_window._plot_units[0], equivalencies=spectral())
-
-            if data_units_equiv and disp_units_equiv:
-                self.add_sub_window(layer=new_layer, window=current_window)
-            else:
-                logging.info("{} not equivalent to {}.".format(
-                    new_layer.data.unit, current_window._plot_units[1]))
-                self.add_sub_window(layer=new_layer)
 
     def _prepare_model_for_save(self):
         model_dict = self.viewer.get_model_inputs()
@@ -352,22 +289,6 @@ class Controller(object):
 
         plot_container = plot_manager.new(layer, window)
 
-    @DispatchHandle.register_listener("on_add_to_window")
-    def add_to_sub_window(self, data=None, window=None, layer=None):
-        """
-        Adds the selected data set to the currently active sub window.
-        """
-        data = data or self.viewer.current_data
-        window = window or self.viewer.current_sub_window
-
-        if layer is None:
-            layer = layer_manager.new(data)
-        else:
-            layer_manager.add(layer)
-
-        window_manager.add(layer, window)
-        plot_container = plot_manager.new(layer, window)
-
     def add_model_layer(self):
         """
         Creates a new layer object using the currently defined model.
@@ -492,6 +413,7 @@ class Controller(object):
 
         model_manager.remove(layer=layer, model=model)
 
+    @DispatchHandle.register_listener("on_remove_layer")
     def remove_layer(self, layer=None):
         current_layer = layer or self.viewer.current_layer
 
@@ -563,7 +485,7 @@ class Controller(object):
             model_manager.update_model(current_layer, model_inputs)
 
     @DispatchHandle.register_listener("on_selected_layer", "on_updated_roi")
-    def update_statistics(self, layer_item, roi=None, measure_rois=None):
+    def update_statistics(self, layer_item=None, roi=None, measure_rois=None):
         if layer_item is not None:
             current_layer = layer_item.data(0, Qt.UserRole)
         else:

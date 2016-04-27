@@ -7,12 +7,12 @@ from ..third_party.qtpy.QtGui import *
 
 from .qt.mainwindow import Ui_MainWindow
 from .widgets.sub_windows import PlotSubWindow
-from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
 from .widgets.menus import LayerContextMenu
 
 from .widgets.windows import MainWindow
 from ..plugins.data_list_plugin import DataListPlugin
+from ..plugins.layer_list_plugin import LayerListPlugin
 
 
 class Viewer(object):
@@ -25,6 +25,9 @@ class Viewer(object):
         self.main_window = MainWindow()
         self.data_list_plugin = DataListPlugin(self.main_window)
         self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.data_list_plugin)
+        self.layer_list_plugin = LayerListPlugin(self.main_window)
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
+                                       self.layer_list_plugin)
 
     def old__init__(self, parent=None):
         super(Viewer, self).__init__()
@@ -101,43 +104,6 @@ class Viewer(object):
             Dispatch.on_selected_window.emit(window=self._current_sub_window)
 
     @property
-    def current_data(self):
-        """
-        Returns the currently selected data object from the data list widget.
-
-        Returns
-        -------
-        data : specviz.core.data.Data
-            The `Data` object of the currently selected row.
-        """
-        data_item = self.wgt_data_list.currentItem()
-
-        if data_item is not None:
-            data = data_item.data(Qt.UserRole)
-            return data
-
-    @property
-    def current_layer(self):
-        """
-        Returns the currently selected layer object form the layer list widget.
-
-        Returns
-        -------
-        layer : specviz.core.data.Layer
-            The `Layer` object of the currently selected row.
-        """
-        layer_item = self.wgt_layer_list.currentItem()
-
-        if layer_item is not None:
-            layer = layer_item.data(0, Qt.UserRole)
-
-            return layer
-
-    @property
-    def current_layer_item(self):
-        return self.wgt_layer_list.currentItem()
-
-    @property
     def current_model_item(self):
         return self.wgt_model_list.currentItem()
 
@@ -195,78 +161,6 @@ class Viewer(object):
             return file_names[0], selected_filter
 
         return None, None
-
-    @DispatchHandle.register_listener("on_added_layer")
-    def add_layer_item(self, layer, unique=True):
-        """
-        Adds a `Layer` object to the loaded layer list widget.
-
-        Parameters
-        ----------
-        layer : specviz.core.data.Layer
-            The `Layer` object to add to the list widget.
-        """
-        # Make sure there is only one item per layer object
-        if unique:
-            if self.get_layer_item(layer) is not None:
-                return
-
-        new_item = QTreeWidgetItem(self.get_layer_item(layer._parent) or
-                                   self.wgt_layer_list)
-        new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
-        new_item.setText(0, layer.name)
-        new_item.setData(0, Qt.UserRole, layer)
-        new_item.setCheckState(0, Qt.Checked)
-
-        self.wgt_layer_list.setCurrentItem(new_item)
-
-    def get_layer_item(self, layer):
-        root = self.wgt_layer_list.invisibleRootItem()
-
-        for i in range(root.childCount()):
-            child = root.child(i)
-
-            if child.data(0, Qt.UserRole) == layer:
-                return child
-
-            for j in range(child.childCount()):
-                sec_child = child.child(j)
-
-                if sec_child.data(0, Qt.UserRole) == layer:
-                    return sec_child
-
-    @DispatchHandle.register_listener("on_removed_layer")
-    def remove_layer_item(self, layer):
-        root = self.wgt_layer_list.invisibleRootItem()
-
-        for i in range(root.childCount()):
-            child = root.child(i)
-
-            if child.data(0, Qt.UserRole) == layer:
-                root.removeChild(child)
-                break
-
-            for j in range(child.childCount()):
-                sec_child = child.child(j)
-
-                if sec_child.data(0, Qt.UserRole) == layer:
-                    child.removeChild(sec_child)
-                    break
-
-    @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
-    def update_layer_item(self, container=None, *args, **kwargs):
-        if container is None:
-            return
-
-        layer = container._layer
-        pixmap = QPixmap(10, 10)
-        pixmap.fill(container.pen.color())
-        icon = QIcon(pixmap)
-
-        layer_item = self.get_layer_item(layer)
-
-        if layer_item is not None:
-            layer_item.setIcon(0, icon)
 
     @DispatchHandle.register_listener("on_added_model")
     def add_model_item(self, model, layer, unique=True):
