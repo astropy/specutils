@@ -5,6 +5,12 @@ import sys
 import logging
 from functools import reduce
 
+import numpy as np
+import pyqtgraph as pg
+
+from astropy.units import Unit
+from astropy.io import ascii
+
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
@@ -14,9 +20,6 @@ from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
 from .region_items import LinearRegionItem
 
-from astropy.units import Unit
-import numpy as np
-import pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -124,6 +127,32 @@ class PlotSubWindow(QMainWindow):
         # then, use that range to scan all line lists in the data
         # directory, to pick up the ones that have some overlap in
         # wavelength.
+
+
+        t = ascii.read('/Users/busko/Projects/specviz/specviz/specviz/data/linelists/Common_stellar.txt', \
+                       format = 'fixed_width_no_header',
+                       names = ('Wavelength', 'ID'),
+                       col_starts = (12, 24),
+                       col_ends = (20, 50))
+
+        print (type(t['Wavelength']))
+        print (type(t['ID']))
+
+
+        # Creates a `specviz.core.data.Data` object from the `Qt` open file
+        # dialog, and adds it to the data item list in the UI.
+        if file_name is None:
+            file_name, selected_filter = self.viewer.open_file_dialog(
+                loader_registry.filters)
+
+        if not file_name:
+            return
+
+        try:
+            data = data_manager.load(str(file_name), str(selected_filter))
+        except:
+            logging.error("Incompatible loader for selected data.")
+
 
         #TODO implement line list input from file
 
