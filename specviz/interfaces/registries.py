@@ -74,18 +74,6 @@ class YAMLLoader(yaml.YAMLObject):
             self.filter = "{} (*.{})".format(self.name, self.extension)
 
 
-# class YAMLLineListLoader(yaml.YAMLObject):
-#     yaml_tag = u'!LineListLoader'
-#
-#     def __init__(self, name, line_name, wavelength, meta):
-#         self.name = name
-#         self.line_name = line_name
-#         self.wavelength = wavelength
-#         self.meta = meta or {}
-#         self.filter = None
-#         self.filter = "{}".format(self.name)
-
-
 # Create loader registry instance
 loader_registry = CustomLoaderRegistry()
 
