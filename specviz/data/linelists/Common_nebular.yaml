@@ -1,14 +1,11 @@
 --- !CustomLoader
-name: ASCII
+name: Common_nebular
 extension: [txt, dat]
-dispersion:
+format: 'fixed_width_no_header'
+wavelength:
   col: 0
   unit: 'Angstrom'
-data:
+ids:
   col: 1
-  unit: 'erg / (Angstrom cm2 s)'
-uncertainty:
-  col: 2
-  type: 'std'
 meta:
   author: STScI

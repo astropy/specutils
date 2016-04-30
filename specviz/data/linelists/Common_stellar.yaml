@@ -1,0 +1,11 @@
+--- !CustomLoader
+name: Common_stellar
+extension: [txt, dat]
+format: 'fixed_width_no_header'
+wavelength:
+  col: 0
+  unit: 'Angstrom'
+ids:
+  col: 1
+meta:
+  author: STScI
