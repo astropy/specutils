@@ -16,8 +16,11 @@ from astropy.nddata import StdDevUncertainty
 
 # LOCAL
 from ..core.data import Data
+from ..core.linelist import LineList
 
-__all__ = ['fits_reader', 'fits_identify', 'ascii_reader', 'ascii_identify']
+__all__ = ['fits_reader', 'fits_identify',
+           'ascii_reader', 'ascii_identify',
+           'linelist_reader', 'linelist_identify']
 
 # Loader automatically falls back to these units for some cases
 default_waveunit = u.Unit('Angstrom')
@@ -367,6 +370,89 @@ def ascii_identify(origin, *args, **kwargs):
             args[0].lower().split('.')[-1] in ['txt', 'dat'])
 
 
+def linelist_reader(filename, filter, **kwargs):
+    """Like :func:`fits_reader` but for ASCII file."""
+    from .registries import loader_registry  # Prevent circular import
+
+    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
+
+    ref = loader_registry.get(filter)
+
+    tab = ascii.read(filename,
+                     format = ref.format,
+                     names = ('Wavelength', 'ID'),
+                     col_starts = (12, 24),
+                     col_ends = (20, 50))
+
+
+
+
+
+    # tab = ascii.read(filename, **kwargs)
+    cols = tab.colnames
+    ref = loader_registry.get(filter)
+
+    meta = ref.meta
+    meta['header'] = {}
+
+    # Only loads KEY=VAL comment entries into header
+    if 'comments' in tab.meta:
+        for s in tab.meta['comments']:
+            if '=' not in s:
+                continue
+            s2 = s.split('=')
+            meta['header'][s2[0]] = s2[1]
+
+    wcs = None
+    wave = tab[cols[ref.dispersion['col']]]
+    dispersion = wave.data
+    flux = tab[cols[ref.data['col']]]
+    data = flux.data
+    uncertainty = np.zeros(data.shape)
+    uncertainty_type = 'std'
+
+    if flux.unit is None:
+        unit = u.Unit(ref.data.get('unit', default_fluxunit))
+    else:
+        unit = flux.unit
+
+    if wave.unit is None:
+        disp_unit = u.Unit(ref.dispersion.get('unit', default_waveunit))
+    else:
+        disp_unit = wave.unit
+
+    # 0/False = good data (unlike Layers)
+    mask = np.zeros(data.shape, dtype=np.bool)
+
+    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
+        try:
+            uncertainty = tab[cols[ref.uncertainty['col']]].data
+        except IndexError:
+            pass  # Input has no uncertainty column
+        else:
+            uncertainty_type = ref.uncertainty.get('type', 'std')
+
+    # This is dictated by the type of the uncertainty.
+    uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
+
+    if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
+        try:
+            mask = tab[cols[ref.mask['col']]].data.astype(np.bool)
+        except IndexError:
+            pass  # Input has no mask column
+
+    return Data(name=str(name), data=data, dispersion=dispersion,
+                uncertainty=uncertainty, mask=mask, wcs=wcs,
+                unit=unit, dispersion_unit=disp_unit)
+
+
+def linelist_identify(origin, *args, **kwargs):
+    """Check whether given filename is a line list.
+    """
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['txt', 'dat'])
+
+
 # NOTE: Need it this way to prevent circular import.
 def register_loaders():
     """Add IO reader/identifier to io registry."""
@@ -379,3 +465,7 @@ def register_loaders():
     # ASCII
     io_registry.register_reader('ascii', Data, ascii_reader)
     io_registry.register_identifier('ascii', Data, ascii_identify)
+
+    # line list
+    io_registry.register_reader('ascii', LineList, linelist_reader)
+    io_registry.register_identifier('ascii', LineList, linelist_identify)
