@@ -10,6 +10,7 @@ import pyqtgraph as pg
 
 from astropy.units import Unit
 from astropy.io import ascii
+from astropy.table import Table
 
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
@@ -18,6 +19,7 @@ from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.toolbars import PlotToolBar
 from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
+from ...core import linelist
 from .region_items import LinearRegionItem
 
 
@@ -128,15 +130,10 @@ class PlotSubWindow(QMainWindow):
         # directory, to pick up the ones that have some overlap in
         # wavelength.
 
+        # use this one file for now.
+        path = '/Users/busko/Projects/specviz/specviz/specviz/data/linelists/Common_stellar.txt'
+        new_data = linelist.LineList.read(path, 'Common_stellar (*.txt *.dat)')
 
-        t = ascii.read('/Users/busko/Projects/specviz/specviz/specviz/data/linelists/Common_stellar.txt', \
-                       format = 'fixed_width_no_header',
-                       names = ('Wavelength', 'ID'),
-                       col_starts = (12, 24),
-                       col_ends = (20, 50))
-
-        print (type(t['Wavelength']))
-        print (type(t['ID']))
 
 
         # Creates a `specviz.core.data.Data` object from the `Qt` open file
