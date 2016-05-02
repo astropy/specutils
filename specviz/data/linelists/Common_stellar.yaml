@@ -7,7 +7,7 @@ columns:
     index: 0
     start: 12
     end: 20
-    unit: 'Angstrom'
+    units: 'Angstrom'
   - name: 'ids'
     index: 1
     start: 24
