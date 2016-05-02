@@ -23,6 +23,8 @@ class LineList(Table):
         wavelengths = self[WAVELENGTH_COLUMN].quantity
         new_wavelengths = wavelengths.to(wmin.unit)
 
-        indices = np.where(wavelengths.all() >= wmin and wavelengths.all() <= wmax)
+        indices = np.where(new_wavelengths.value.any() >= wmin.value and
+                           new_wavelengths.value.any() <= wmax.value)
 
-        print("@@@@@@  file linelist.py; line 26 - ",  wmin, wmax, wavelengths.unit, indices)
+        print("@@@@@@  file linelist.py; line 26 - ",  wmin, wmax, new_wavelengths.unit, indices)
+        print("@@@@@@  file linelist.py; line 29 - ",  new_wavelengths)
