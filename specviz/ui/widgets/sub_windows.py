@@ -8,9 +8,7 @@ from functools import reduce
 import numpy as np
 import pyqtgraph as pg
 
-from astropy.units import Unit
-from astropy.io import ascii
-from astropy.table import Table
+from astropy.units import Unit, Quantity
 
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
@@ -128,9 +126,11 @@ class PlotSubWindow(QMainWindow):
             amin = min(amin, container.dispersion.value[0])
             amax = max(amax, container.dispersion.value[-1])
 
+        amin = Quantity(amin, self._plot_units[0])
+        amax = Quantity(amax, self._plot_units[0])
+
         # use this table for now.
         path = '/Users/busko/Projects/specviz/specviz/specviz/data/linelists/Common_stellar.txt'
-        line_list = linelist.LineList.read(path, 'Common_stellar (*.txt *.dat)')
 
         # Creates a `specviz.core.data.Data` object from the `Qt` open file
         # dialog, and adds it to the data item list in the UI.
@@ -141,13 +141,16 @@ class PlotSubWindow(QMainWindow):
         # if not file_name:
         #     return
 
+        line_list = linelist.LineList.read(path, 'Common_stellar (*.txt *.dat)')
+        range_line_list = line_list.extract_range(amin, amax)
+
         # try:
         #     data = data_manager.load(str(file_name), str(selected_filter))
         # except:
         #     logging.error("Incompatible loader for selected data.")
 
 
-        # finally, display ine lists in a tabbed pane.
+        # finally, display line lists in a tabbed pane.
 
 
     def _toggle_measure(self, on):
