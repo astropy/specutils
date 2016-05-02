@@ -20,7 +20,8 @@ class LineList(Table):
         return io_registry.read(cls, *args, **kwargs)
 
     def extract_range(self, wmin, wmax):
-        wavelengths = self[WAVELENGTH_COLUMN]
+        wavelengths = self[WAVELENGTH_COLUMN].quantity
+        new_wavelengths = wavelengths.to(wmin.unit)
 
         indices = np.where(wavelengths.all() >= wmin and wavelengths.all() <= wmax)
 
