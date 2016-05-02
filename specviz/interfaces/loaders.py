@@ -16,6 +16,7 @@ from astropy.nddata import StdDevUncertainty
 
 # LOCAL
 from ..core.data import Data
+from ..core import linelist
 from ..core.linelist import LineList
 
 __all__ = ['fits_reader', 'fits_identify',
@@ -378,18 +379,29 @@ def linelist_reader(filename, filter, **kwargs):
     names_list = []
     start_list = []
     end_list = []
+    units_list = []
     for k in range(len((ref.columns))):
-        name = ref.columns[k]['name']
+        name = ref.columns[k][linelist.COLUMN_NAME]
         names_list.append(name)
-        start = ref.columns[k]['start']
-        end = ref.columns[k]['end']
+
+        start = ref.columns[k][linelist.COLUMN_START]
+        end = ref.columns[k][linelist.COLUMN_END]
         start_list.append(start)
         end_list.append(end)
+
+        if linelist.UNITS_COLUMN in ref.columns[k]:
+            units = ref.columns[k][linelist.UNITS_COLUMN]
+        else:
+            units = ''
+        units_list.append(units)
 
     tab = ascii.read(filename, format = ref.format,
                      names = names_list,
                      col_starts = start_list,
                      col_ends = end_list)
+
+    for k, colname in enumerate(tab.columns):
+        tab[colname].unit = units_list[k]
 
     return LineList(tab)
 
