@@ -2,10 +2,15 @@
 name: Common_stellar
 extension: [txt, dat]
 format: 'fixed_width_no_header'
-wavelength:
-  col: 0
-  unit: 'Angstrom'
-ids:
-  col: 1
+columns:
+  - name: 'wavelength'
+    index: 0
+    start: 12
+    end: 20
+    unit: 'Angstrom'
+  - name: 'ids'
+    index: 1
+    start: 24
+    end: 40
 meta:
   author: STScI

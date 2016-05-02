@@ -118,7 +118,9 @@ class PlotSubWindow(QMainWindow):
     def _show_line_ids_dialog(self):
 
         # find the wavelength range spanned by the spectrum
-        # (or spectra) at hand. The code bellow assumes
+        # (or spectra) at hand. The range will be used to select
+        # lines from the line list table(s).
+
         # increasing dispersion values!
         amin = sys.float_info.max
         amax = 0.0
@@ -126,32 +128,24 @@ class PlotSubWindow(QMainWindow):
             amin = min(amin, container.dispersion.value[0])
             amax = max(amax, container.dispersion.value[-1])
 
-        # then, use that range to scan all line lists in the data
-        # directory, to pick up the ones that have some overlap in
-        # wavelength.
-
-        # use this one file for now.
+        # use this table for now.
         path = '/Users/busko/Projects/specviz/specviz/specviz/data/linelists/Common_stellar.txt'
-        new_data = linelist.LineList.read(path, 'Common_stellar (*.txt *.dat)')
-
-
+        line_list = linelist.LineList.read(path, 'Common_stellar (*.txt *.dat)')
 
         # Creates a `specviz.core.data.Data` object from the `Qt` open file
         # dialog, and adds it to the data item list in the UI.
-        if file_name is None:
-            file_name, selected_filter = self.viewer.open_file_dialog(
-                loader_registry.filters)
+        # if file_name is None:
+        #     file_name, selected_filter = self.viewer.open_file_dialog(
+        #         loader_registry.filters)
+        #
+        # if not file_name:
+        #     return
 
-        if not file_name:
-            return
+        # try:
+        #     data = data_manager.load(str(file_name), str(selected_filter))
+        # except:
+        #     logging.error("Incompatible loader for selected data.")
 
-        try:
-            data = data_manager.load(str(file_name), str(selected_filter))
-        except:
-            logging.error("Incompatible loader for selected data.")
-
-
-        #TODO implement line list input from file
 
         # finally, display ine lists in a tabbed pane.
 

@@ -371,79 +371,27 @@ def ascii_identify(origin, *args, **kwargs):
 
 
 def linelist_reader(filename, filter, **kwargs):
-    """Like :func:`fits_reader` but for ASCII file."""
     from .registries import loader_registry  # Prevent circular import
 
-    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
-
     ref = loader_registry.get(filter)
 
-    tab = ascii.read(filename,
-                     format = ref.format,
-                     names = ('Wavelength', 'ID'),
-                     col_starts = (12, 24),
-                     col_ends = (20, 50))
+    names_list = []
+    start_list = []
+    end_list = []
+    for k in range(len((ref.columns))):
+        name = ref.columns[k]['name']
+        names_list.append(name)
+        start = ref.columns[k]['start']
+        end = ref.columns[k]['end']
+        start_list.append(start)
+        end_list.append(end)
 
+    tab = ascii.read(filename, format = ref.format,
+                     names = names_list,
+                     col_starts = start_list,
+                     col_ends = end_list)
 
-
-
-
-    # tab = ascii.read(filename, **kwargs)
-    cols = tab.colnames
-    ref = loader_registry.get(filter)
-
-    meta = ref.meta
-    meta['header'] = {}
-
-    # Only loads KEY=VAL comment entries into header
-    if 'comments' in tab.meta:
-        for s in tab.meta['comments']:
-            if '=' not in s:
-                continue
-            s2 = s.split('=')
-            meta['header'][s2[0]] = s2[1]
-
-    wcs = None
-    wave = tab[cols[ref.dispersion['col']]]
-    dispersion = wave.data
-    flux = tab[cols[ref.data['col']]]
-    data = flux.data
-    uncertainty = np.zeros(data.shape)
-    uncertainty_type = 'std'
-
-    if flux.unit is None:
-        unit = u.Unit(ref.data.get('unit', default_fluxunit))
-    else:
-        unit = flux.unit
-
-    if wave.unit is None:
-        disp_unit = u.Unit(ref.dispersion.get('unit', default_waveunit))
-    else:
-        disp_unit = wave.unit
-
-    # 0/False = good data (unlike Layers)
-    mask = np.zeros(data.shape, dtype=np.bool)
-
-    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
-        try:
-            uncertainty = tab[cols[ref.uncertainty['col']]].data
-        except IndexError:
-            pass  # Input has no uncertainty column
-        else:
-            uncertainty_type = ref.uncertainty.get('type', 'std')
-
-    # This is dictated by the type of the uncertainty.
-    uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
-
-    if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
-        try:
-            mask = tab[cols[ref.mask['col']]].data.astype(np.bool)
-        except IndexError:
-            pass  # Input has no mask column
-
-    return Data(name=str(name), data=data, dispersion=dispersion,
-                uncertainty=uncertainty, mask=mask, wcs=wcs,
-                unit=unit, dispersion_unit=disp_unit)
+    return LineList(tab)
 
 
 def linelist_identify(origin, *args, **kwargs):
