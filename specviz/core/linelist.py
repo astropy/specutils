@@ -18,20 +18,25 @@ UNITS_COLUMN = 'units'
 class LineList(Table):
 
     @classmethod
-    def read(cls, *args, **kwargs):
-        from ..interfaces.registries import io_registry
-        return io_registry.read(cls, *args, **kwargs)
-
-    @classmethod
     def merge(cls, lists):
+        ''' Executes a 'vstack' of all input lists, and
+            then sorts the result by the wavelength column.
+
+        :param lists: list
+            list of LineList instances
+        :return: LineList
+            merged line list
+        '''
         result = vstack(lists)
+
         result.sort(WAVELENGTH_COLUMN)
+
         return result
 
     def extract_range(self, wmin, wmax):
-        ''' Builds a LineList instance with the subset of
-            lines that fall within the range contained in
-            between 'wmin' and 'wmax'
+        ''' Builds a LineList instance out of self, with
+            the subset of lines that fall within the
+            wavelength range defined by 'wmin' and 'wmax'
 
         :param wmin: float
             minimum wavelength of the wavelength range
@@ -46,12 +51,12 @@ class LineList(Table):
         # units the wavelength range is expressed in.
         new_wavelengths = wavelengths.to(wmin.unit)
 
-        # 'indices' points to entries in the line list
+        # 'indices' points to rows with wavelength values
         # that lie outside the wavelength range.
         indices = np.where((new_wavelengths.value < wmin.value) |
                            (new_wavelengths.value > wmax.value))
 
-        # make copy of self and remove unwanted lines from the copy
+        # make copy of self and remove unwanted lines from the copy.
         result = Table(self)
         result.remove_rows(indices)
 
