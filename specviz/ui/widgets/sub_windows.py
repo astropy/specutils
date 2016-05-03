@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys
+import sys, os
 import logging
 from functools import reduce
 
@@ -17,7 +17,7 @@ from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.toolbars import PlotToolBar
 from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
-from ...core import linelist
+from ...core.linelist import LineList
 from .region_items import LinearRegionItem
 
 from astropy.units import Unit
@@ -132,11 +132,6 @@ class PlotSubWindow(QMainWindow):
         amin = Quantity(amin, self._plot_units[0])
         amax = Quantity(amax, self._plot_units[0])
 
-        # use this table for now.
-        path = '/Users/busko/Projects/specviz/specviz/specviz/data/linelists/Common_stellar.txt'
-
-        # Creates a `specviz.core.data.Data` object from the `Qt` open file
-        # dialog, and adds it to the data item list in the UI.
         # if file_name is None:
         #     file_name, selected_filter = self.viewer.open_file_dialog(
         #         loader_registry.filters)
@@ -144,16 +139,38 @@ class PlotSubWindow(QMainWindow):
         # if not file_name:
         #     return
 
-        line_list = linelist.LineList.read(path, 'Common_stellar (*.txt *.dat)')
-        range_line_list = line_list.extract_range(amin, amax)
+        # Lets skip the file dialog business for now. This is just a
+        # proof-of-concept code. Later we will add more fanciness to it.
+        #
+        # Use these two tables for now. In the future, the filter strings
+        # should somehow be handled by the file dialog itself.
+        fnames = ['Common_stellar.txt', 'Common_nebular.txt']
+
+        path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = path + '/../../data/linelists/'
+        linelists = []
+
+        for fname in fnames:
+            path = dir_path + fname
+            filter = fname.split('.')[0] + ' (*.txt *.dat)'
+
+            linelist = LineList.read(path, filter)
+            linelist = linelist.extract_range(amin, amax)
+
+            linelists.append(linelist)
+
+        linelist = LineList.merge(linelists)
+
+        print ('@@@@@@     line: 152  - ', linelist)
 
         # try:
         #     data = data_manager.load(str(file_name), str(selected_filter))
         # except:
         #     logging.error("Incompatible loader for selected data.")
 
+        # display line lists in a tabbed pane.
 
-        # finally, display line lists in a tabbed pane.
+        # display line markers on plot sirface.
 
 
     def _toggle_measure(self, on):
