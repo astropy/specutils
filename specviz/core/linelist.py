@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 
-from astropy.table import Table
+from astropy.table import Table, vstack
 
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
@@ -21,6 +21,12 @@ class LineList(Table):
     def read(cls, *args, **kwargs):
         from ..interfaces.registries import io_registry
         return io_registry.read(cls, *args, **kwargs)
+
+    @classmethod
+    def merge(cls, lists):
+        result = vstack(lists)
+        result.sort(WAVELENGTH_COLUMN)
+        return result
 
     def extract_range(self, wmin, wmax):
         ''' Builds a LineList instance with the subset of
