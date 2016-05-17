@@ -479,3 +479,22 @@ class Viewer(QMainWindow):
         if 'avg_cont' in stats:
             self.main_window.meanContinuumLineEdit.setText("{0:4.4g}".format(
                 float(stats['avg_cont'].value)))
+
+
+    @DispatchHandle.register_listener("on_added_linelist")
+    def add_linelist(self, linelist):
+
+
+        print ('@@@@@@     line: 488  - ')
+
+
+        text = TextItem('TEST')
+        text.setPos(100, 100)
+
+        self._plot_item.addItem(text)
+
+        self._plot_item.update()
+
+
+
+
