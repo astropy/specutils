@@ -341,10 +341,11 @@ class PlotSubWindow(QMainWindow):
 
 
         from PyQt5.QtGui import QGraphicsTextItem
-
         text = QGraphicsTextItem('TEST')
-        text.setPos(1000, 1)
 
+        # text.setPos(1000, 1)
+
+        # text.setTextWidth(10)
         # text_coord = text.vb.mapViewToScene(QtCore.QPoint(200, 200))
         # pos_x = text_coord.x() - 5  # shift text item
         # pos_y = text_coord.y() - 5
@@ -352,14 +353,7 @@ class PlotSubWindow(QMainWindow):
         #
         # text.setPos(new_pos.x(), new_pos.y())
 
-
-
-
-
-
         self._plot_item.addItem(text)
-
-
 
         self.set_active_plot(container.layer)
 
