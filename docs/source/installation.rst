@@ -3,14 +3,56 @@
 Installation
 ============
 
-Dependencies
-------------
+SpecViz is distributed through the `Anaconda <https://anaconda.org>`_ package
+manager. Specifically, it lives within Space Telescope Science Institute's
+`AstroConda <http://astroconda.readthedocs.io/>`_ channel.
 
-In the future, SpecViz will be distributed through package managers like
-`Anaconda <https://anaconda.org>`_ that will obviate the need for manual
-installation from source.
-Most of these will be handled automatically by the setup functions,
-with the exception of PyQt/PySide.
+If you do not have Anaconda, please follow the `instructions here
+<https://www.continuum.io/downloads>`_ to install it, or scroll down for
+manual installation of SpecViz.
+
+
+Install via Anaconda
+--------------------
+
+If you have AstroConda setup, then all you have to do to install SpecViz is
+simply type the following at any Bash terminal prompt::
+
+    $ conda install specviz
+
+If you do not have AstroConda setup, then you can install SpecViz by
+specifying the channel in your install command::
+
+    $ conda install --channel http://ssb.stsci.edu/astroconda specviz
+
+At this point, you're done! You can launch SpecViz by typing the following at
+any terminal::
+
+    $ specviz
+
+
+PyQt5 version (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+While the PyQt4 version of SpecViz is currently the default distributed, it
+is recommended that you upgrade to using the PyQt5 version if you know that
+you do not have any system conflicts. Note that this is entirely optional,
+but encouraged due to the fact that `Qt4 development and support has ended
+<http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_. ::
+
+    $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
+    $ conda install --channel https://conda.anaconda.org/nmearl pyqt5
+
+SpecViz can then be launched via the command line::
+
+    $ specviz
+
+Install via source
+------------------
+
+SpecViz can also be installed manually using the source code and requires the
+following dependencies to be installed on your system. Most of these will be
+handled automatically by the setup functions, with the exception of PyQt/PySide.
 
 * Python 3 (recommended) or Python 2
 * PyQt5 (recommended), PyQt4, or PySide
@@ -21,15 +63,17 @@ with the exception of PyQt/PySide.
 
 
 Installing PyQt/PySide
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
+
 The easiest way to install PyQt/PySide is through some package manager.
 Please keep in mind that PyQt5 is the recommended PyQt implementation as
 `Qt4 development and support has ended <http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_.
 
-Below are instructions for installing using *either* Homebrew *or* Anaconda.
+Below are instructions for installing using *either* `Homebrew <http://brew
+.sh/>`_ *or* `Anaconda <https://www.continuum.io/downloads>`_.
 
 PyQt5
-^^^^^
+"""""
 
 Homebrew
    `Install using Homebrew for Qt5 <http://brewformulas.org/Pyqt5>`_.
@@ -53,7 +97,7 @@ Anaconda
    (e.g. ``python=2.7``).
 
 PyQt4
-^^^^^
+"""""
 
 Homebrew
    `Install using Homebrew for Qt4 <http://brewformulas.org/Pyqt4>`_.
@@ -64,8 +108,8 @@ Anaconda
     $ conda install pyqt
 
 
-Installing SpecViz
-------------------
+Installing
+^^^^^^^^^^
 
 Clone the SpecViz repository somewhere on your system, and install locally using
 ``pip``. If you are using an Anaconda virtual environment, please be sure to
@@ -116,13 +160,10 @@ and SpecViz should now happily run.
 Launching SpecViz
 =================
 
-Once PyQt/PySide and the other dependencies are installed, SpecViz can be
-launched from the command line::
+Once you've installed SpecViz, you can launch it via the command line::
 
     $ specviz
 
-Again, if you're using an Anaconda virtual environment, please be sure to
-activate it before launching SpecViz.
 
 If you only wish to inspect a single FITS or ASCII file using the default
 :ref:`doc_custom_loaders` file formatting, you can also pass in the filename
