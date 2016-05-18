@@ -90,7 +90,7 @@ class PlotSubWindow(QMainWindow):
             self._show_unit_change_dialog)
 
         self._tool_bar.atn_line_ids.triggered.connect(
-            self._show_line_ids_dialog)
+            self._show_line_ids)
 
     def _show_unit_change_dialog(self):
         if self._unit_change_dialog.exec_():
@@ -113,7 +113,7 @@ class PlotSubWindow(QMainWindow):
 
             self._plot_item.update()
 
-    def _show_line_ids_dialog(self):
+    def _show_line_ids(self):
 
         # find the wavelength range spanned by the spectrum
         # (or spectra) at hand. The range will be used to select
@@ -158,8 +158,6 @@ class PlotSubWindow(QMainWindow):
 
         linelist = LineList.merge(linelists)
 
-        print ('@@@@@@     line: 152  - ', linelist)
-
         # try:
         #     data = data_manager.load(str(file_name), str(selected_filter))
         # except:
@@ -168,6 +166,13 @@ class PlotSubWindow(QMainWindow):
         # display line lists in a tabbed pane.
 
         # display line markers on plot sirface.
+
+        Dispatch.on_added_linelist.emit(linelist=linelist)
+
+
+
+
+
 
 
     def _toggle_measure(self, on):

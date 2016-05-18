@@ -5,6 +5,8 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtGui import *
 
+from pyqtgraph import TextItem
+
 from .qt.mainwindow import Ui_MainWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
@@ -491,9 +493,9 @@ class Viewer(QMainWindow):
         text = TextItem('TEST')
         text.setPos(100, 100)
 
-        self._plot_item.addItem(text)
+        self.current_sub_window._plot_item.addItem(text)
 
-        self._plot_item.update()
+        self.current_sub_window._plot_item.update()
 
 
 
