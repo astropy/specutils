@@ -40,8 +40,8 @@ you do not have any system conflicts. Note that this is entirely optional,
 but encouraged due to the fact that `Qt4 development and support has ended
 <http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_. ::
 
-    $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
-    $ conda install --channel https://conda.anaconda.org/nmearl pyqt5
+    $ conda install --channel https://anaconda.org/m-labs/pyqt5 pyqt5
+    $ conda install --channel https://conda.anaconda.org/nmearl specviz
 
 SpecViz can then be launched via the command line::
 
@@ -153,6 +153,16 @@ following command::
     $ conda uninstall pyqt qt
 
 and SpecViz should now happily run.
+
+Conversely, if you've had PyQt5 installed previously and you wish to run the
+PyQt4 version, you may run into a similar error::
+
+    $ RuntimeError: the PyQt4.QtCore and PyQt5.QtCore modules both wrap the
+    QObject class
+
+This issue can be solved with the following command::
+
+    $ conda uninstall pyqt5 qt5
 
 
 .. _doc_launching:

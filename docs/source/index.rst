@@ -6,36 +6,37 @@
 SpecViz: 1D Spectral Visualization Tool
 =======================================
 
-SpecViz is a tool for 1-D spectral visualization and analysis of astronomical
-spectrograms. It is written in Python thus can be run anywhere Python is
-supported (see :ref:`doc_installation`).
-SpecViz is capable of reading data from FITS and ASCII tables
-(see :ref:`doc_custom_loaders`).
+SpecViz is a tool for visualization and quick-look analysis of 1D astronomical
+spectra. It is written in the Python programming language, and therefore can be
+run anywhere Python is supported (see :ref:`doc_installation`). SpecViz is
+capable of reading data from FITS and ASCII tables (see :ref:`doc_custom_loaders`).
 
-Once ingested, data can be plotted and examined with a large selection of
-custom settings. SpecViz supports instrument-specific data quality handling,
-flexible spectral units conversions, custom plotting attributes,
-plot annotations, tiled plots, etc.
+SpecViz allows spectra to be easily plotted and examined. It supports
+instrument-specific data quality handling, flexible spectral units conversions,
+custom plotting attributes, plot annotations, tiled plots, and other features.
 
-A spectral feature quick measurement tool enables the user, with a few mouse
-actions, to perform and record measurements on selected spectral features.
+SpecViz notably includes a measurement tool for spectral lines which
+enables the user, with a few mouse actions, to perform and record measurements.
+It has a model fitting capability that enables the user to create simple
+(e.g., single Gaussian) or multi-component models (e.g., multiple Gaussians for
+emission and absorption lines in addition to regions of flat continuua).
+SpecViz incorporates various methods for fitting such models to data. For more
+details, see :ref:`doc_model_fitting`.
 
-SpecViz can be used to build wide-band SEDs, overploting or combining data from
-the same astronomical source taken with different instruments and/or spectral
-bands. Data can be further processed with averaging, splicing, detrending,
-and Fourier filtering tools.
+Furthermore, SpecViz allows for overplotting or simple combining of spectra at
+different wavelengths.
 
-SpecViz has a spectral model fitting capability that enables the user to work
-with multi-component models in a number of ways, and fit models to data.
-For more details, see :ref:`doc_model_fitting`.
+SpecViz will soon include the ability to
+   - Process spectra using averaging, splicing, detrending, and Fourier filtering tools.
+   - Support overplotting and interactively renormalizing data from spectral templates.
+   - Overplot of spectral line identifications taken from a variety of line lists.
+   - And more...
 
-Support exists for overplotting and interactively renormalize data from
-spectral templates.
+Demo
+----
 
-SpecViz can overplot spectral line identifications taken from a variety of
-line lists.
-
-.. note:: Some features are in development and not yet available.
+.. image:: https://i.vimeocdn.com/video/571749719_640.jpg
+   :target: https://vimeo.com/167441251
 
 
 Installation and Setup
