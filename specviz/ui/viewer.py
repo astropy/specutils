@@ -485,25 +485,17 @@ class Viewer(QMainWindow):
     @DispatchHandle.register_listener("on_added_linelist")
     def add_linelist(self, linelist):
 
-        # code in development. This just draws a fixed text on screen.
-        # The text coordinates are appropriate for the 'generic_spectrum'
-        # data set.
-
-        from pyqtgraph import ArrowItem
-
-        text = Annotation('TEST')
-        text.setPos(10000, 2)
-
+        # code in development. This just draws a fixed text with
+        # line marker on screen. The text coordinates are appropriate
+        # for the 'generic_spectrum' data set.
 
         curve = self.current_sub_window._plot_item.curves[0]
 
-        arrow = ArrowItem(angle=-90,  tailLen=5,  tipAngle=35, baseAngle=35, brush=2)
-
-        arrow.setPos(10000, 1.9)
+        text = Annotation('TEST', self.current_sub_window._plot_item)
+        text.setPos(9000, 2)
 
         self.current_sub_window._plot_item.addItem(text)
-
-        self.current_sub_window._plot_item.addItem(arrow)
+        self.current_sub_window._plot_item.addItem(text.arrow)
 
         self.current_sub_window._plot_item.update()
 
