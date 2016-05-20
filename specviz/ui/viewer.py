@@ -9,6 +9,7 @@ from .qt.mainwindow import Ui_MainWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
 from ..core.comms import Dispatch, DispatchHandle
+from ..core.annotation import Annotation
 from .widgets.menus import LayerContextMenu
 
 
@@ -479,3 +480,31 @@ class Viewer(QMainWindow):
         if 'avg_cont' in stats:
             self.main_window.meanContinuumLineEdit.setText("{0:4.4g}".format(
                 float(stats['avg_cont'].value)))
+
+
+    @DispatchHandle.register_listener("on_added_linelist")
+    def add_linelist(self, linelist):
+
+        # code in development. This just draws a fixed text on screen.
+        # The text coordinates are appropriate for the 'generic_spectrum'
+        # data set.
+
+        from pyqtgraph import ArrowItem
+
+        text = Annotation('TEST')
+        text.setPos(10000, 2)
+
+
+        curve = self.current_sub_window._plot_item.curves[0]
+
+        arrow = ArrowItem(angle=-90,  tailLen=5,  tipAngle=35, baseAngle=35, brush=2)
+
+        arrow.setPos(10000, 1.9)
+
+        self.current_sub_window._plot_item.addItem(text)
+
+        self.current_sub_window._plot_item.addItem(arrow)
+
+        self.current_sub_window._plot_item.update()
+
+
