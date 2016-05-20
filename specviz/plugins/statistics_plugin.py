@@ -10,33 +10,113 @@ from astropy.units import spectral_density, spectral
 import logging
 
 
-class LayerListPlugin(Plugin):
-    name = "Layer List"
+class StatisticsPlugin(Plugin):
+    name = "Statistics"
 
     def __init__(self, parent=None):
-        super(LayerListPlugin, self).__init__(parent)
+        super(StatisticsPlugin, self).__init__(parent)
 
     def setup_ui(self):
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
-        self.tree_widget_layer_list = QTreeWidget(self)
+        # Setup form layout
+        self.layout_form = QFormLayout()
+        self.layout_form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        self.layout_form.setFormAlignment(Qt.AlignJustify | Qt.AlignTop)
+        self.layout_form.setContentsMargins(1, 1, 1, 12)
+        self.layout_form.setSpacing(6)
 
-        self.layout_vertical.addWidget(self.tree_widget_layer_list)
+        self.layout_vertical.addLayout(self.layout_form)
 
-        self.layout_horizontal = QHBoxLayout()
+        # Setup labels
+        self.label_current_layer = QLabel(self)
 
-        self.button_create_layer_slice = QToolButton(self)
-        self.button_layer_arithmetic = QToolButton(self)
-        self.button_remove_layer = QToolButton(self)
+        self.layout_form.setWidget(0, QFormLayout.LabelRole, self.label_current_layer)
 
-        self.layout_horizontal.addWidget(self.button_create_layer_slice)
-        self.layout_horizontal.addWidget(self.button_layer_arithmetic)
-        self.layout_horizontal.addStretch()
-        self.layout_horizontal.addWidget(self.button_remove_layer)
+        self.line_edit_current_layer = QLineEdit(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.line_edit_current_layer.sizePolicy().hasHeightForWidth())
+        self.line_edit_current_layer.setSizePolicy(sizePolicy)
+        self.line_edit_current_layer.setStyleSheet("QLineEdit{background: #DDDDDD;}")
+        self.line_edit_current_layer.setReadOnly(True)
 
-        self.layout_vertical.addLayout(self.layout_horizontal)
+        self.layout_form.setWidget(0, QFormLayout.FieldRole,
+                                   self.line_edit_current_layer)
 
-        self.dialog_layer_arithmetic = LayerArithmeticDialog()
+        # Setup tabs
+        self.tab_widget_stats = QTabWidget(self)
+
+        # Setup basic tab
+        self.tab_basic = QWidget()
+        self.layout_vertical_tab_basic = QVBoxLayout(self.tab_basic)
+        self.layout_vertical_tab_basic.setContentsMargins(11, 11, 11, 11)
+        self.layout_vertical_tab_basic.setSpacing(6)
+
+        self.layout_form_tab_basic = QFormLayout()
+        self.layout_form_tab_basic.setFieldGrowthPolicy(
+            QFormLayout.ExpandingFieldsGrow)
+        self.layout_form_tab_basic.setFormAlignment(Qt.AlignRight |
+                                                    Qt.AlignTop |
+                                                    Qt.AlignTrailing)
+        self.layout_form_tab_basic.setContentsMargins(1, 1, 1, 1)
+        self.layout_form_tab_basic.setSpacing(6)
+
+        self.layout_vertical_tab_basic.addLayout(self.layout_form_tab_basic)
+
+        # Setup basic tab labels
+        self.label_mean = QLabel(self.tab_basic)
+        self.line_edit_mean = QLineEdit(self.tab_basic)
+        self.line_edit_mean.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_mean.setReadOnly(True)
+        self.layout_form_tab_basic.setWidget(0, QFormLayout.LabelRole,
+                                             self.label_mean)
+        self.layout_form_tab_basic.setWidget(0, QFormLayout.FieldRole,
+                                             self.line_edit_mean)
+
+        self.label_median = QLabel(self.tab_basic)
+        self.line_edit_median = QLineEdit(self.tab_basic)
+        self.line_edit_median.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_std_dev.setReadOnly(True)
+        self.layout_form_tab_basic.setWidget(1, QFormLayout.LabelRole,
+                                             self.label_median)
+        self.layout_form_tab_basic.setWidget(1, QFormLayout.FieldRole,
+                                             self.line_edit_std_dev)
+
+        self.label_std_dev = QLabel(self.tab_basic)
+        self.line_edit_std_dev = QLineEdit(self.tab_basic)
+        self.line_edit_std_dev.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_std_dev.setReadOnly(True)
+        self.layout_form_tab_basic.setWidget(2, QFormLayout.LabelRole,
+                                             self.label_std_dev)
+        self.layout_form_tab_basic.setWidget(2, QFormLayout.FieldRole,
+                                             self.line_edit_std_dev)
+
+        self.label_total = QLabel(self.tab_basic)
+        self.line_edit_total = QLineEdit(self.tab_basic)
+        self.line_edit_total.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_total.setReadOnly(True)
+        self.layout_form_tab_basic.setWidget(3, QFormLayout.LabelRole,
+                                             self.label_total)
+        self.layout_form_tab_basic.setWidget(3, QFormLayout.FieldRole,
+                                             self.line_edit_total)
+
+        self.label_data_point_count = QLabel(self.tab_basic)
+        self.line_edit_data_point_count = QLineEdit(self.tab_basic)
+        self.line_edit_data_point_count.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_data_point_count.setReadOnly(True)
+        self.layout_form_tab_basic.setWidget(4, QFormLayout.LabelRole,
+                                             self.label_data_point_count)
+        self.layout_form_tab_basic.setWidget(4, QFormLayout.FieldRole,
+                                             self.line_edit_data_point_count)
+
 
     def setup_connections(self):
         # -- Communications setup
