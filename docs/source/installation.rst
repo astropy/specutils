@@ -81,20 +81,10 @@ Homebrew
 Anaconda
    Installing PyQt5 with Anaconda will require installing from the Spyder-IDE
    channel as it is not currently a core package (but they're working on it).
+   ::
 
-   Further, Anaconda will panic if you have both PyQt4 and PyQt5 installed in
-   the same environment. To work around this, it is strongly suggested you
-   simply create a new virtual environment and install PyQt5 there::
+    $ conda install --channel https://anaconda.org/m-labs/pyqt5 pyqt5
 
-    $ conda create -n sviz_env python=3.5
-    $ source activate sviz_env
-    $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
-
-.. note::
-
-   PyQt5 **does not** require Python 3. If you wish, you can create your
-   virtual environment using Python 2 by specifying the version as shown above
-   (e.g. ``python=2.7``).
 
 PyQt4
 """""
@@ -113,13 +103,13 @@ Installing
 
 Clone the SpecViz repository somewhere on your system, and install locally using
 ``pip``. If you are using an Anaconda virtual environment, please be sure to
-activate it first before installing: ``$ source activate sviz_env``.
+activate it first before installing: ``$ source activate <environment_name>``.
 
 ::
 
     $ git clone https://github.com/spacetelescope/specviz.git
     $ cd specviz
-    $ git checkout tags/v0.1rc3
+    $ git checkout tags/v0.1.2rc3
     $ pip install -r requirements.txt
 
 .. note::
