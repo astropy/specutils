@@ -17,7 +17,6 @@ class Plugin(QDockWidget):
 
     _all_plugins = []
 
-
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
 
@@ -54,24 +53,3 @@ class Plugin(QDockWidget):
     @abstractmethod
     def setup_connections(self):
         raise NotImplementedError()
-
-    def tool_button(cls, text="My tool button", on_click=None):
-        new_tool_button = QToolButton(cls)
-        new_tool_button.setText(text)
-
-        if on_click is not None:
-            new_tool_button.clicked.connect(on_click)
-
-        cls.layout_vertical.addWidget(new_tool_button)
-
-        return new_tool_button
-
-    @staticmethod
-    def push_button(self, text="My tool button", on_click=None):
-        pass
-
-    def list_widget(self, on_select=None):
-        pass
-
-
-

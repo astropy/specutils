@@ -13,9 +13,6 @@ import logging
 class LayerListPlugin(Plugin):
     name = "Layer List"
 
-    def __init__(self, parent=None):
-        super(LayerListPlugin, self).__init__(parent)
-
     def setup_ui(self):
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
@@ -71,7 +68,8 @@ class LayerListPlugin(Plugin):
 
         # Create a new layer based on any active ROIs
         self.button_create_layer_slice.clicked.connect(
-            lambda: Dispatch.on_add_roi_layer.emit(layer=self.current_layer, from_roi=True))
+            lambda: Dispatch.on_add_roi_layer.emit(layer=self.current_layer,
+                                                   from_roi=True))
 
     @property
     def current_layer(self):

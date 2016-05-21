@@ -12,7 +12,6 @@ from ..third_party.qtpy.QtWidgets import *
 from ..interfaces.managers import (data_manager, window_manager, layer_manager,
                                    model_manager, plot_manager)
 from ..interfaces.registries import loader_registry
-from ..analysis import statistics
 from ..core.comms import Dispatch, DispatchHandle
 
 # We pick up the desired format for model files here.
@@ -484,56 +483,7 @@ class Controller(object):
         if len(model_inputs) > 0:
             model_manager.update_model(current_layer, model_inputs)
 
-    @DispatchHandle.register_listener("on_selected_layer", "on_updated_roi")
-    def update_statistics(self, layer_item=None, roi=None, measure_rois=None):
-        if layer_item is not None:
-            current_layer = layer_item.data(0, Qt.UserRole)
-        else:
-            logging.warning("No layer item provided; cannot update statistics.")
-            return
-
-        if measure_rois is not None:
-            # Set the active tab to measured
-            self.viewer.main_window.statsTabWidget.setCurrentIndex(1)
-
-            cont1_mask = self.get_roi_mask(roi=measure_rois[0])
-            cont1_data = current_layer.data[cont1_mask]
-            cont1_stat_dict = statistics.stats(cont1_data)
-
-            cont2_mask = self.get_roi_mask(roi=measure_rois[2])
-            cont2_data = current_layer.data[cont2_mask]
-            cont2_stat_dict = statistics.stats(cont2_data)
-
-            line_mask = self.get_roi_mask(roi=measure_rois[1])
-
-            line = layer_manager.copy(current_layer)
-
-            ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,
-                                                     cont2_stat_dict,
-                                                     line,
-                                                     mask=line_mask)
-            cent = statistics.centroid(line - avg_cont, mask=line_mask)
-
-            print(cent)
-
-            stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
-                         "avg_cont": avg_cont}
-        else:
-            # Set the active tab to basic
-            self.viewer.main_window.statsTabWidget.setCurrentIndex(0)
-
-            mask = self.get_roi_mask(layer=current_layer)
-
-            if mask is None:
-                values = current_layer.data
-            else:
-                values = current_layer.data[mask[current_layer._mask]]
-
-            stat_dict = statistics.stats(values)
-
-        Dispatch.on_updated_stats.emit(stats=stat_dict, layer=current_layer)
-
-    @DispatchHandle.register_listener("on_selected_window")
+    # @DispatchHandle.register_listener("on_selected_window")
     def update_layer_list(self, window=None, layer=None):
         """
         Clears and repopulates the layer list depending on the currently
@@ -554,7 +504,7 @@ class Controller(object):
             self.viewer.add_layer_item(layer, unique=True)
             self.viewer.update_layer_item(container)
 
-    @DispatchHandle.register_listener("on_selected_layer", "on_updated_model")
+    # @DispatchHandle.register_listener("on_selected_layer", "on_updated_model")
     def update_model_list(self, layer_item=None, model=None, layer=None):
         """
         Clears and repopulates the model list depending on the currently

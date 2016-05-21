@@ -7,9 +7,6 @@ from ..core.comms import Dispatch, DispatchHandle
 class DataListPlugin(Plugin):
     name = "Data List"
 
-    def __init__(self, parent=None):
-        super(DataListPlugin, self).__init__(parent)
-
     def setup_ui(self):
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
 

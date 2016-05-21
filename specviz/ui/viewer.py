@@ -13,6 +13,7 @@ from .widgets.menus import LayerContextMenu
 from .widgets.windows import MainWindow
 from ..plugins.data_list_plugin import DataListPlugin
 from ..plugins.layer_list_plugin import LayerListPlugin
+from ..plugins.statistics_plugin import StatisticsPlugin
 
 
 class Viewer(object):
@@ -24,10 +25,16 @@ class Viewer(object):
     def __init__(self):
         self.main_window = MainWindow()
         self.data_list_plugin = DataListPlugin(self.main_window)
-        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.data_list_plugin)
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
+                                       self.data_list_plugin)
         self.layer_list_plugin = LayerListPlugin(self.main_window)
         self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
                                        self.layer_list_plugin)
+        self.statistics_plugin = StatisticsPlugin(self.main_window)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea,
+                                       self.statistics_plugin)
+
+        self._setup_connections()
 
     def old__init__(self, parent=None):
         super(Viewer, self).__init__()
@@ -57,12 +64,13 @@ class Viewer(object):
 
     def _setup_connections(self):
         # Listen for subwindow selection events, update layer list on selection
-        self.main_window.mdiArea.subWindowActivated.connect(
-            self._set_current_sub_window)
+        self.main_window.mdi_area.subWindowActivated.connect(
+            lambda wi: Dispatch.on_selected_window.emit(
+            window=wi.widget() if wi is not None else None))
 
         # When a user edits the model parameter field, validate the input
-        self.wgt_model_list.itemChanged.connect(
-                self._model_parameter_validation)
+        # self.wgt_model_list.itemChanged.connect(
+        #         self._model_parameter_validation)
 
     @DispatchHandle.register_listener("on_selected_layer")
     def _set_model_tool_options(self, layer_item):
@@ -94,10 +102,10 @@ class Viewer(object):
             self.main_window.loadModelButton.setEnabled(False)
 
     def _set_current_sub_window(self, sub_window):
-        sub_window = sub_window or self.main_window.mdiArea.currentSubWindow()
+        sub_window = sub_window or self.main_window.mdi_area.currentSubWindow()
 
         if sub_window is None:
-            sub_window = self.main_window.mdiArea.activatePreviousSubWindow()
+            sub_window = self.main_window.mdi_area.activatePreviousSubWindow()
 
         if self._current_sub_window != sub_window:
             self._current_sub_window = sub_window

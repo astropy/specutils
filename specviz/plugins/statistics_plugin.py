@@ -1,20 +1,20 @@
 from ..ui.widgets.plugin import Plugin
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
-from ..ui.widgets.dialogs import LayerArithmeticDialog
 from ..interfaces.managers import layer_manager
+from ..analysis import statistics
 
-from astropy.units import spectral_density, spectral
 import logging
 
 
 class StatisticsPlugin(Plugin):
     name = "Statistics"
 
-    def __init__(self, parent=None):
-        super(StatisticsPlugin, self).__init__(parent)
+    def __init__(self, *args, **kwargs):
+        super(StatisticsPlugin, self).__init__(*args, **kwargs)
+        self._current_window = None
+        self._current_layer_item = None
 
     def setup_ui(self):
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
@@ -30,8 +30,7 @@ class StatisticsPlugin(Plugin):
 
         # Setup labels
         self.label_current_layer = QLabel(self)
-
-        self.layout_form.setWidget(0, QFormLayout.LabelRole, self.label_current_layer)
+        self.label_current_layer.setText("Current Layer")
 
         self.line_edit_current_layer = QLineEdit(self)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -43,14 +42,19 @@ class StatisticsPlugin(Plugin):
         self.line_edit_current_layer.setStyleSheet("QLineEdit{background: #DDDDDD;}")
         self.line_edit_current_layer.setReadOnly(True)
 
+        self.layout_form.setWidget(0, QFormLayout.LabelRole,
+                                   self.label_current_layer)
         self.layout_form.setWidget(0, QFormLayout.FieldRole,
                                    self.line_edit_current_layer)
 
         # Setup tabs
         self.tab_widget_stats = QTabWidget(self)
+        self.layout_vertical.addWidget(self.tab_widget_stats)
 
         # Setup basic tab
         self.tab_basic = QWidget()
+        self.tab_widget_stats.addTab(self.tab_basic, "Basic")
+
         self.layout_vertical_tab_basic = QVBoxLayout(self.tab_basic)
         self.layout_vertical_tab_basic.setContentsMargins(11, 11, 11, 11)
         self.layout_vertical_tab_basic.setSpacing(6)
@@ -68,6 +72,8 @@ class StatisticsPlugin(Plugin):
 
         # Setup basic tab labels
         self.label_mean = QLabel(self.tab_basic)
+        self.label_mean.setText("Mean")
+
         self.line_edit_mean = QLineEdit(self.tab_basic)
         self.line_edit_mean.setStyleSheet(
             "QLineEdit{background: #DDDDDD;}")
@@ -78,16 +84,20 @@ class StatisticsPlugin(Plugin):
                                              self.line_edit_mean)
 
         self.label_median = QLabel(self.tab_basic)
+        self.label_median.setText("Median")
+
         self.line_edit_median = QLineEdit(self.tab_basic)
         self.line_edit_median.setStyleSheet(
             "QLineEdit{background: #DDDDDD;}")
-        self.line_edit_std_dev.setReadOnly(True)
+        self.line_edit_median.setReadOnly(True)
         self.layout_form_tab_basic.setWidget(1, QFormLayout.LabelRole,
                                              self.label_median)
         self.layout_form_tab_basic.setWidget(1, QFormLayout.FieldRole,
-                                             self.line_edit_std_dev)
+                                             self.line_edit_median)
 
         self.label_std_dev = QLabel(self.tab_basic)
+        self.label_std_dev.setText("Standard Deviation")
+
         self.line_edit_std_dev = QLineEdit(self.tab_basic)
         self.line_edit_std_dev.setStyleSheet(
             "QLineEdit{background: #DDDDDD;}")
@@ -98,6 +108,8 @@ class StatisticsPlugin(Plugin):
                                              self.line_edit_std_dev)
 
         self.label_total = QLabel(self.tab_basic)
+        self.label_total.setText("Total")
+
         self.line_edit_total = QLineEdit(self.tab_basic)
         self.line_edit_total.setStyleSheet(
             "QLineEdit{background: #DDDDDD;}")
@@ -108,6 +120,8 @@ class StatisticsPlugin(Plugin):
                                              self.line_edit_total)
 
         self.label_data_point_count = QLabel(self.tab_basic)
+        self.label_data_point_count.setText("Data Point Count")
+
         self.line_edit_data_point_count = QLineEdit(self.tab_basic)
         self.line_edit_data_point_count.setStyleSheet(
             "QLineEdit{background: #DDDDDD;}")
@@ -117,187 +131,170 @@ class StatisticsPlugin(Plugin):
         self.layout_form_tab_basic.setWidget(4, QFormLayout.FieldRole,
                                              self.line_edit_data_point_count)
 
+        # Measured tab setup
+        self.tab_measured = QWidget()
+        self.tab_widget_stats.addTab(self.tab_measured, "Measured")
+
+        self.layout_vertical_tab_measured = QVBoxLayout(self.tab_measured)
+        self.layout_vertical_tab_measured.setContentsMargins(11, 11, 11, 11)
+        self.layout_vertical_tab_measured.setSpacing(6)
+
+        self.layout_form_tab_measured = QFormLayout()
+        self.layout_form_tab_measured.setFieldGrowthPolicy(
+            QFormLayout.ExpandingFieldsGrow)
+        self.layout_form_tab_measured.setFormAlignment(Qt.AlignRight |
+                                                       Qt.AlignTop |
+                                                       Qt.AlignTrailing)
+        self.layout_form_tab_measured.setContentsMargins(1, 1, 1, 1)
+        self.layout_form_tab_measured.setSpacing(6)
+
+        self.layout_vertical_tab_measured.addLayout(self.layout_form_tab_measured)
+
+        # Measured tab labels
+        self.label_equivalent_width = QLabel(self.tab_measured)
+        self.label_equivalent_width.setText("Equivalent Width")
+
+        self.line_edit_equivalent_width = QLineEdit(self.tab_measured)
+        self.line_edit_equivalent_width.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_equivalent_width.setReadOnly(True)
+
+        self.layout_form_tab_measured.setWidget(0, QFormLayout.LabelRole,
+                                                self.label_equivalent_width)
+        self.layout_form_tab_measured.setWidget(0, QFormLayout.FieldRole,
+                                                self.line_edit_equivalent_width)
+
+        self.label_centroid = QLabel(self.tab_measured)
+        self.label_centroid.setText("Centroid")
+
+        self.line_edit_centroid = QLineEdit(self.tab_measured)
+        self.line_edit_centroid.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_centroid.setReadOnly(True)
+
+        self.layout_form_tab_measured.setWidget(1, QFormLayout.LabelRole,
+                                                self.label_centroid)
+        self.layout_form_tab_measured.setWidget(1, QFormLayout.FieldRole,
+                                                self.line_edit_centroid)
+
+        self.label_flux = QLabel(self.tab_measured)
+        self.label_flux.setText("Flux")
+
+        self.line_edit_flux = QLineEdit(self.tab_measured)
+        self.line_edit_flux.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_flux.setReadOnly(True)
+
+        self.layout_form_tab_measured.setWidget(2, QFormLayout.LabelRole,
+                                                self.label_flux)
+        self.layout_form_tab_measured.setWidget(2, QFormLayout.FieldRole,
+                                                self.line_edit_flux)
+
+        self.label_mean_continuum = QLabel(self.tab_measured)
+        self.label_mean_continuum.setText("Mean Continuum")
+
+        self.line_edit_continuum = QLineEdit(self.tab_measured)
+        self.line_edit_continuum.setStyleSheet(
+            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_continuum.setReadOnly(True)
+
+        self.layout_form_tab_measured.setWidget(3, QFormLayout.LabelRole,
+                                                self.label_mean_continuum)
+        self.layout_form_tab_measured.setWidget(3, QFormLayout.FieldRole,
+                                                self.line_edit_continuum)
 
     def setup_connections(self):
-        # -- Communications setup
-        # Listen for layer selection events, update model tree on selection
-        self.tree_widget_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_selected_layer.emit(
-                layer_item=self.current_layer_item))
+        pass
 
-        # When a layer is selected, make that line more obvious than the others
-        self.tree_widget_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_selected_plot.emit(
-                layer=self.current_layer))
+    @DispatchHandle.register_listener("on_selected_window")
+    def set_window(self, window=None):
+        self._current_window = window
 
-        # When an interactable widget inside a layer item is clicked
-        self.tree_widget_layer_list.itemClicked.connect(
-            lambda li, col: Dispatch.on_clicked_layer.emit(
-                layer_item=li))
+    @DispatchHandle.register_listener("on_selected_layer")
+    def set_layer(self, layer_item=None):
+        self._current_layer_item = layer_item
+        current_layer = self._current_layer_item.data(0, Qt.UserRole)
+        self.line_edit_current_layer.setText(current_layer.name)
 
-        # When an interactable widget inside a layer item is clicked
-        self.tree_widget_layer_list.itemChanged.connect(
-            lambda li, col: Dispatch.on_changed_layer.emit(
-                layer_item=li))
-
-        # -- Widget connection setup
-        # When the layer list delete button is pressed
-        self.button_remove_layer.clicked.connect(
-            lambda: Dispatch.on_remove_layer.emit(layer=self.current_layer))
-
-        # When the arithmetic button is clicked, show math dialog
-        self.button_layer_arithmetic.clicked.connect(
-            self._show_arithmetic_dialog)
-
-        # Create a new layer based on any active ROIs
-        self.button_create_layer_slice.clicked.connect(
-            lambda: Dispatch.on_add_roi_layer.emit(layer=self.current_layer, from_roi=True))
-
-    @property
-    def current_layer(self):
-        """
-        Returns the currently selected layer object form the layer list widget.
-
-        Returns
-        -------
-        layer : specviz.core.data.Layer
-            The `Layer` object of the currently selected row.
-        """
-        layer_item = self.tree_widget_layer_list.currentItem()
-
-        if layer_item is not None:
-            layer = layer_item.data(0, Qt.UserRole)
-
-            return layer
-
-    @property
-    def current_layer_item(self):
-        return self.tree_widget_layer_list.currentItem()
-
-    @property
-    def all_layers(self):
-        layers = []
-        root = self.tree_widget_layer_list.invisibleRootItem()
-
-        for i in range(root.childCount()):
-            child = root.child(i)
-
-            if child.data(0, Qt.UserRole):
-                layers.append(child.data(0, Qt.UserRole))
-
-            for j in range(child.childCount()):
-                sec_child = child.child(j)
-
-                if sec_child.data(0, Qt.UserRole):
-                    layers.append(sec_child.data(0, Qt.UserRole))
-
-        return layers
-
-    @DispatchHandle.register_listener("on_added_layer")
-    def add_layer_item(self, layer, unique=True):
-        """
-        Adds a `Layer` object to the loaded layer list widget.
-
-        Parameters
-        ----------
-        layer : specviz.core.data.Layer
-            The `Layer` object to add to the list widget.
-        """
-        # Make sure there is only one item per layer object
-        if unique:
-            if self.get_layer_item(layer) is not None:
-                return
-
-        new_item = QTreeWidgetItem(
-            self.get_layer_item(layer._parent) or
-            self.tree_widget_layer_list)
-        new_item.setFlags(
-            new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
-        new_item.setText(0, layer.name)
-        new_item.setData(0, Qt.UserRole, layer)
-        new_item.setCheckState(0, Qt.Checked)
-
-        self.tree_widget_layer_list.setCurrentItem(new_item)
-
-    def get_layer_item(self, layer):
-        root = self.tree_widget_layer_list.invisibleRootItem()
-
-        for i in range(root.childCount()):
-            child = root.child(i)
-
-            if child.data(0, Qt.UserRole) == layer:
-                return child
-
-            for j in range(child.childCount()):
-                sec_child = child.child(j)
-
-                if sec_child.data(0, Qt.UserRole) == layer:
-                    return sec_child
-
-    @DispatchHandle.register_listener("on_removed_layer")
-    def remove_layer_item(self, layer):
-        root = self.tree_widget_layer_list.invisibleRootItem()
-
-        for i in range(root.childCount()):
-            child = root.child(i)
-
-            if child.data(0, Qt.UserRole) == layer:
-                root.removeChild(child)
-                break
-
-            for j in range(child.childCount()):
-                sec_child = child.child(j)
-
-                if sec_child.data(0, Qt.UserRole) == layer:
-                    child.removeChild(sec_child)
-                    break
-
-    @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
-    def update_layer_item(self, container=None, *args, **kwargs):
-        if container is None:
+    @DispatchHandle.register_listener("on_updated_roi")
+    def update_basic_stats(self, roi=None, measure_rois=None):
+        if roi is None:
             return
 
-        layer = container._layer
-        pixmap = QPixmap(10, 10)
-        pixmap.fill(container.pen.color())
-        icon = QIcon(pixmap)
-
-        layer_item = self.get_layer_item(layer)
-
-        if layer_item is not None:
-            layer_item.setIcon(0, icon)
-
-    def _show_arithmetic_dialog(self):
-        if self.current_layer is None:
+        if self._current_window is None or self._current_layer_item is None:
+            logging.warning(
+                "No window or layer item provided; cannot update statistics.")
             return
 
-        if self.dialog_layer_arithmetic.exec_():
-            formula = self.dialog_layer_arithmetic\
-                .line_edit_formula.text()
+        current_layer = self._current_layer_item.data(0, Qt.UserRole)
 
-            current_window = self.viewer.current_sub_window
-            current_layers = self.all_layers
-            new_layer = layer_manager.add_from_formula(formula,
-                                                       layers=current_layers)
+        # Set the active tab to basic
+        self.tab_widget_stats.setCurrentIndex(0)
 
-            if new_layer is None:
-                logging.warning("Formula not valid.")
-                return
+        mask = self._current_window.get_roi_mask(layer=current_layer)
 
-            # If units match, plot the resultant on the same sub window,
-            # otherwise create a new sub window to plot the spectra
-            data_units_equiv = new_layer.data.unit.is_equivalent(
-                current_window._plot_units[1],
-                equivalencies=spectral_density(new_layer.dispersion))
+        if mask is None:
+            values = current_layer.data
+        else:
+            values = current_layer.data[mask[current_layer._mask]]
 
-            disp_units_equiv = new_layer.dispersion.unit.is_equivalent(
-                current_window._plot_units[0], equivalencies=spectral())
+        stat_dict = statistics.stats(values)
 
-            if data_units_equiv and disp_units_equiv:
-                self.add_sub_window(layer=new_layer, window=current_window)
-            else:
-                logging.info("{} not equivalent to {}.".format(
-                    new_layer.data.unit, current_window._plot_units[1]))
-                self.add_sub_window(layer=new_layer)
+        self.line_edit_mean.setText("{0:4.4g}".format(
+            stat_dict['mean'].value))
+        self.line_edit_median.setText("{0:4.4g}".format(
+            stat_dict['median'].value))
+        self.line_edit_std_dev.setText("{0:4.4g}".format(
+            stat_dict['stddev'].value))
+        self.line_edit_total.setText("{0:4.4g}".format(
+            stat_dict['total'].value))
+        self.line_edit_data_point_count.setText("{0:4.4g}".format(
+            stat_dict['npoints']))
 
+    @DispatchHandle.register_listener("on_updated_roi")
+    def update_measured_states(self, roi=None, measure_rois=None):
+        if measure_rois is None:
+            return
 
+        if self._current_window is None or self._current_layer_item is None:
+            logging.warning(
+                "No window or layer item provided; cannot update statistics.")
+            return
+
+        current_layer = self._current_layer_item.data(0, Qt.UserRole)
+
+        # Set the active tab to measured
+        self.tab_widget_stats.setCurrentIndex(1)
+
+        cont1_mask = self._current_window.get_roi_mask(layer=current_layer,
+                                                       roi=measure_rois[0])
+        cont1_data = current_layer.data[cont1_mask]
+        cont1_stat_dict = statistics.stats(cont1_data)
+
+        cont2_mask = self._current_window.get_roi_mask(layer=current_layer,
+                                                       roi=measure_rois[2])
+        cont2_data = current_layer.data[cont2_mask]
+        cont2_stat_dict = statistics.stats(cont2_data)
+
+        line_mask = self._current_window.get_roi_mask(layer=current_layer,
+                                                      roi=measure_rois[1])
+
+        line = layer_manager.copy(current_layer)
+
+        ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,
+                                                 cont2_stat_dict,
+                                                 line,
+                                                 mask=line_mask)
+        cent = statistics.centroid(line - avg_cont, mask=line_mask)
+
+        stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
+                     "avg_cont": avg_cont}
+
+        self.line_edit_equivalent_width.setText("{0:4.4g}".format(
+            float(stat_dict['eq_width'].value)))
+        self.line_edit_centroid.setText("{0:5.5g}".format(
+            float(stat_dict['centroid'].value)))
+        self.line_edit_flux.setText("{0:4.4g}".format(
+            float(stat_dict['flux'].value)))
+        self.line_edit_continuum.setText("{0:4.4g}".format(
+            float(stat_dict['avg_cont'].value)))

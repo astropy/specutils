@@ -239,6 +239,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.addWidget(self.statsTabWidget)
         self.dockWidget_2.setWidget(self.dockWidgetContents_2)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.dockWidget_2)
+
         self.dockWidget_3 = QtWidgets.QDockWidget(MainWindow)
         self.dockWidget_3.setObjectName("dockWidget_3")
         self.dockWidgetContents_3 = QtWidgets.QWidget()
