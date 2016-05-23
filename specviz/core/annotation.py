@@ -1,5 +1,8 @@
 import pyqtgraph as pg
 
+from ..third_party.qtpy.QtCore import QPointF
+
+
 orientations = {
     'horizontal': {'anchor': (0.5, 1), 'angle': 0},
     'vertical':   {'anchor': (0, 0.5), 'angle': -90}
@@ -30,21 +33,18 @@ class Annotation(pg.TextItem):
 
     def setPos(self, *args):
 
-        # need to get rid of this reference to PyQt4
-        from PyQt4 import QtCore
-
-        # The text coordinates must be converted to screen (pixel) coordinates
-        # in order to place the arrow marker a fixed distance *in pixels* from
+        # Text coordinates must be converted to screen (pixel) coordinates in
+        # order to place the arrow marker a fixed distance *in pixels* from
         # the text.
 
-        text_coord = self._plot_item.vb.mapViewToScene( QtCore.QPointF(args[0], args[1]))
+        text_coord = self._plot_item.vb.mapViewToScene(QPointF(args[0], args[1]))
 
         arrow_pos_x = text_coord.x()
         arrow_pos_y = text_coord.y() + self._arrow_length
-        arrow_pos = self._plot_item.vb.mapSceneToView(QtCore.QPointF(arrow_pos_x, arrow_pos_y))
+        arrow_pos = self._plot_item.vb.mapSceneToView(QPointF(arrow_pos_x, arrow_pos_y))
 
         # text positioning is handled by the base class directly with the
         # input coordinates. Arrow positioning uses the shifted coordinates.
-        super(Annotation, self).setPos(QtCore.QPointF(args[0], args[1]))
+        super(Annotation, self).setPos(QPointF(args[0], args[1]))
         self.arrow.setPos(arrow_pos.x(), arrow_pos.y())
 
