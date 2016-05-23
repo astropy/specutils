@@ -8,9 +8,9 @@ from ..third_party.qtpy.QtGui import *
 from .qt.mainwindow import Ui_MainWindow
 from .widgets.sub_windows import PlotSubWindow
 from .widgets.dialogs import LayerArithmeticDialog
-from ..core.comms import Dispatch, DispatchHandle
-from ..core.annotation import Annotation
 from .widgets.menus import LayerContextMenu
+from ..core.comms import Dispatch, DispatchHandle
+from ..core.annotation import LineIDMarker
 
 
 class Viewer(QMainWindow):
@@ -485,25 +485,52 @@ class Viewer(QMainWindow):
     @DispatchHandle.register_listener("on_added_linelist")
     def add_linelist(self, linelist):
 
-        # this is setting all makers at a fixed heigth in data
-        # coordinates. The value height=2 works only for the
-        # 'generic_spectrum' data set. We need to derive the
-        # fixed heigth from screen and/or data coordinates
-        # instead.
+        # This is setting all markers at a fixed heigth in the
+        # initial (before any zoom) data coordinates. Still TBD
+        # how to do this in the generic case. Maybe derive heights
+        # from curve data instead? Make the markers folow the
+        # curve ups and downs?
+        #
+        # The code here works only when the data is initially
+        # displayed. Because of the way pyqtgraph handles zooming,
+        # the marker's two parts, text and arrow, are independently
+        # pinned to the plot surface in data coordinates, thus zoom
+        # in synch with the curve. This causes the relative distance
+        # between the text and the arrow to change as the plot is zoomed.
+        # A potential solution for this problem would be to create a
+        # completely new GraphicsItem which would handle the text and
+        # arrow as a seamless single entity. This likely entails digging
+        # into pyqtgraph's internals though.
+        #
+        # Ideally we would like to have the marker's X coordinate
+        # pinned down to the plot surface in data value, and the Y
+        # coordinate pinned down in screen value. This would make
+        # the markers to stay at the same heigth in the window even
+        # when the plot is zoomed. This kind of functionality doesn't
+        # seem to be possible under pyqtgraph though. This requires
+        # more investigation.
 
-        curve = self.current_sub_window._plot_item.curves[0]
-        height = 2
+        plot_item = self.current_sub_window._plot_item
 
+        # curve = plot_item.curves[0]
+
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+        height = (ymax - ymin) * 0.75 + ymin
+
+        # column names are defined in the YAML files.
         wave_column = linelist.columns['wavelength']
         id_column = linelist.columns['id']
 
         for i in range(len(wave_column)):
-            text = Annotation(id_column[i], self.current_sub_window._plot_item,
-                              orientation='vertical')
-            text.setPos(wave_column[i], height)
-            self.current_sub_window._plot_item.addItem(text)
-            self.current_sub_window._plot_item.addItem(text.arrow)
+            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
 
-        self.current_sub_window._plot_item.update()
+            marker.setPos(wave_column[i], height)
+
+            plot_item.addItem(marker)
+            plot_item.addItem(marker.arrow)
+
+            plot_item.update()
 
 
