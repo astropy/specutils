@@ -8,7 +8,7 @@ columns:
     start: 12
     end: 20
     units: 'Angstrom'
-  - name: 'ids'
+  - name: 'id'
     index: 1
     start: 24
     end: 40

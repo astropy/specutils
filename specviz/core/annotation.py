@@ -17,7 +17,6 @@ class Annotation(pg.TextItem):
     def __init__(self, text, plot_item, color=(0,0,0), orientation='horizontal'):
 
         self._plot_item = plot_item
-        self._arrow_length = 20
 
         anchor = orientations[orientation]['anchor']
         angle = orientations[orientation]['angle']
@@ -28,8 +27,8 @@ class Annotation(pg.TextItem):
 
         # some tweaking with the brush, fill, and line width parameters
         # is still needed; as is, the text looks somewhat fuzzy.
-        self.arrow = ArrowItem(angle=-90,  headLen=0, tailWidth=1,
-                                brush=(0,0,0), tailLen=self._arrow_length)
+        self.arrow = ArrowItem(angle=90,  headLen=0, tailWidth=1,
+                               brush=(0,0,0), tailLen=20)
 
     def setPos(self, *args):
 
@@ -40,7 +39,8 @@ class Annotation(pg.TextItem):
         text_coord = self._plot_item.vb.mapViewToScene(QPointF(args[0], args[1]))
 
         arrow_pos_x = text_coord.x()
-        arrow_pos_y = text_coord.y() + self._arrow_length
+        arrow_pos_y = text_coord.y()
+
         arrow_pos = self._plot_item.vb.mapSceneToView(QPointF(arrow_pos_x, arrow_pos_y))
 
         # text positioning is handled by the base class directly with the

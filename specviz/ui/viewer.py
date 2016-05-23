@@ -485,17 +485,24 @@ class Viewer(QMainWindow):
     @DispatchHandle.register_listener("on_added_linelist")
     def add_linelist(self, linelist):
 
-        # code in development. This just draws a fixed text with
-        # line marker on screen. The text coordinates are appropriate
-        # for the 'generic_spectrum' data set.
+        # this is setting all makers at a fixed heigth in data
+        # coordinates. The value height=2 works only for the
+        # 'generic_spectrum' data set. We need to derive the
+        # fixed heigth from screen and/or data coordinates
+        # instead.
 
         curve = self.current_sub_window._plot_item.curves[0]
+        height = 2
 
-        text = Annotation('TEST', self.current_sub_window._plot_item)
-        text.setPos(9000, 2)
+        wave_column = linelist.columns['wavelength']
+        id_column = linelist.columns['id']
 
-        self.current_sub_window._plot_item.addItem(text)
-        self.current_sub_window._plot_item.addItem(text.arrow)
+        for i in range(len(wave_column)):
+            text = Annotation(id_column[i], self.current_sub_window._plot_item,
+                              orientation='vertical')
+            text.setPos(wave_column[i], height)
+            self.current_sub_window._plot_item.addItem(text)
+            self.current_sub_window._plot_item.addItem(text.arrow)
 
         self.current_sub_window._plot_item.update()
 
