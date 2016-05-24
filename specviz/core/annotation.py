@@ -62,12 +62,6 @@ class LineIDMarker(TextItem):
 
         super(LineIDMarker, self).paint(p, args)
 
-        # if self.border.style() != Qt.NoPen or self.fill.style() != Qt.NoBrush:
-        p.setPen(self.border)
-        p.setBrush(self.fill)
-        p.setRenderHint(p.Antialiasing, True)
-        p.drawPolygon(self.textItem.mapToParent(self.textItem.boundingRect()))
-
         bounding_rect = self.boundingRect()
 
         print ('@@@@@@     line: 70  - ', bounding_rect)
