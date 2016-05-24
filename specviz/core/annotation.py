@@ -1,6 +1,7 @@
 from pyqtgraph import TextItem, ArrowItem
 
-from ..third_party.qtpy.QtCore import QPointF
+from ..third_party.qtpy.QtCore import Qt, QPointF
+from ..third_party.qtpy.QtGui import QPolygonF, QPen, QColor
 
 
 orientations = {
@@ -55,4 +56,49 @@ class LineIDMarker(TextItem):
         super(LineIDMarker, self).setPos(QPointF(args[0], args[1]))
 
         self.arrow.setPos(arrow_pos.x(), arrow_pos.y())
+
+
+    def paint(self, p, *args):
+
+        super(LineIDMarker, self).paint(p, args)
+
+        # if self.border.style() != Qt.NoPen or self.fill.style() != Qt.NoBrush:
+        p.setPen(self.border)
+        p.setBrush(self.fill)
+        p.setRenderHint(p.Antialiasing, True)
+        p.drawPolygon(self.textItem.mapToParent(self.textItem.boundingRect()))
+
+        bounding_rect = self.boundingRect()
+
+        print ('@@@@@@     line: 70  - ', bounding_rect)
+
+        print ('@@@@@@     line: 75  - ', bounding_rect.x())
+        print ('@@@@@@     line: 76  - ', bounding_rect.y())
+        print ('@@@@@@     line: 77  - ', bounding_rect.width())
+        print ('@@@@@@     line: 78  - ', bounding_rect.height())
+
+
+        # points = [QPointF(x_, y_) for (x_, y_) in zip(x, y)]
+        # points.append(QPointF(x[-1], 0))
+        # points.append(QPointF(x[0], 0))
+
+        points = []
+
+        # points.append(QPointF(0, 0))
+        # points.append(QPointF(24, 40))
+
+        points.append(QPointF(bounding_rect.x(), bounding_rect.y()))
+        points.append(QPointF(bounding_rect.x() + bounding_rect.width(),
+                              bounding_rect.y() + bounding_rect.height()))
+        polygon = QPolygonF(points)
+
+        print ('@@@@@@     line: 95  - ', polygon)
+
+        pen = QPen(QColor(0,0,0))
+
+        p.setPen(pen)
+        # p.setBrush(self.brush)
+
+        p.drawPolygon(polygon)
+
 
