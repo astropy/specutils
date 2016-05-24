@@ -80,10 +80,16 @@ class LineIDMarker(TextItem):
 
         # points.append(QPointF(0, 0))
         # points.append(QPointF(24, 40))
+        # points.append(QPointF(bounding_rect.x(), bounding_rect.y()))
+        # points.append(QPointF(bounding_rect.x() + bounding_rect.width(),
+        #                       bounding_rect.y() + bounding_rect.height()))
 
-        points.append(QPointF(bounding_rect.x(), bounding_rect.y()))
-        points.append(QPointF(bounding_rect.x() + bounding_rect.width(),
-                              bounding_rect.y() + bounding_rect.height()))
+        x = bounding_rect.x()
+        y = bounding_rect.y() + bounding_rect.height() / 2.
+
+        points.append(QPointF(x, y))
+        points.append(QPointF(x, y - 20))
+
         polygon = QPolygonF(points)
 
         print ('@@@@@@     line: 95  - ', polygon)

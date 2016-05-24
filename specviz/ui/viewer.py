@@ -533,7 +533,7 @@ class Viewer(QMainWindow):
         #
         #     plot_item.update()
 
-        marker = LineIDMarker('TEST', plot_item, orientation='vertical')
+        marker = LineIDMarker('TESTAAAAA', plot_item, orientation='vertical')
 
         marker.setPos(9500., height)
 
