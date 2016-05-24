@@ -523,14 +523,24 @@ class Viewer(QMainWindow):
         wave_column = linelist.columns['wavelength']
         id_column = linelist.columns['id']
 
-        for i in range(len(wave_column)):
-            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
+        # for i in range(len(wave_column)):
+        #     marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
+        #
+        #     marker.setPos(wave_column[i], height)
+        #
+        #     plot_item.addItem(marker)
+        #     plot_item.addItem(marker.arrow)
+        #
+        #     plot_item.update()
 
-            marker.setPos(wave_column[i], height)
+        marker = LineIDMarker('TEST', plot_item, orientation='vertical')
 
-            plot_item.addItem(marker)
-            plot_item.addItem(marker.arrow)
+        marker.setPos(9500., height)
 
-            plot_item.update()
+        plot_item.addItem(marker)
+        # plot_item.addItem(marker.arrow)
+
+        plot_item.update()
+
 
 
