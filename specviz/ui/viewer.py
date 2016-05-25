@@ -488,24 +488,13 @@ class Viewer(QMainWindow):
         # This is setting all markers at a fixed heigth in the
         # initial (before any zoom) data coordinates. Still TBD
         # how to do this in the generic case. Maybe derive heights
-        # from curve data instead? Make the markers folow the
+        # from curve data instead? Make the markers follow the
         # curve ups and downs?
-        #
-        # The code here works only when the data is initially
-        # displayed. Because of the way pyqtgraph handles zooming,
-        # the marker's two parts, text and arrow, are independently
-        # pinned to the plot surface in data coordinates, thus zoom
-        # in synch with the curve. This causes the relative distance
-        # between the text and the arrow to change as the plot is zoomed.
-        # A potential solution for this problem would be to create a
-        # completely new GraphicsItem which would handle the text and
-        # arrow as a seamless single entity. This likely entails digging
-        # into pyqtgraph's internals though.
         #
         # Ideally we would like to have the marker's X coordinate
         # pinned down to the plot surface in data value, and the Y
         # coordinate pinned down in screen value. This would make
-        # the markers to stay at the same heigth in the window even
+        # the markers to stay at the same height in the window even
         # when the plot is zoomed. This kind of functionality doesn't
         # seem to be possible under pyqtgraph though. This requires
         # more investigation.
@@ -523,22 +512,15 @@ class Viewer(QMainWindow):
         wave_column = linelist.columns['wavelength']
         id_column = linelist.columns['id']
 
-        # for i in range(len(wave_column)):
-        #     marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
-        #
-        #     marker.setPos(wave_column[i], height)
-        #
-        #     plot_item.addItem(marker)
-        #     plot_item.addItem(marker.arrow)
-        #
-        #     plot_item.update()
+        for i in range(len(wave_column)):
+            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
 
-        marker = LineIDMarker('TESTAAAAA', plot_item, orientation='vertical')
+            marker.setPos(wave_column[i], height)
 
-        marker.setPos(9500., height)
+            plot_item.addItem(marker)
+            # plot_item.addItem(marker.arrow)
 
-        plot_item.addItem(marker)
-        # plot_item.addItem(marker.arrow)
+            plot_item.update()
 
         plot_item.update()
 
