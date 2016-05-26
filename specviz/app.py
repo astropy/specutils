@@ -71,7 +71,5 @@ def sigint_handler(*args):
     QApplication.quit()
 
 
-# test commit
-
 if __name__ == '__main__':
     main()
