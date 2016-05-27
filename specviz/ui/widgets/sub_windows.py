@@ -23,15 +23,61 @@ pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
 
 
-class PlotSubWindow(QMainWindow):
+class UiPlotSubWindow(QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(UiPlotSubWindow, self).__init__(*args, **kwargs)
+
+        self.vertical_layout = QVBoxLayout()
+        self.horizontal_layout = QHBoxLayout()
+
+        # X range
+        self.label_x_range = QLabel()
+        self.label_x_range.setText("X Range")
+        self.line_edit_min_x_range = QLineEdit()
+        self.line_edit_max_x_range = QLineEdit()
+
+        self.layout_x_range = QHBoxLayout()
+        self.layout_x_range.addWidget(self.label_x_range)
+        self.layout_x_range.addWidget(self.line_edit_min_x_range)
+        self.layout_x_range.addWidget(self.line_edit_max_x_range)
+
+        # Y range
+        self.label_y_range = QLabel()
+        self.label_y_range.setText("Y Range")
+        self.line_edit_min_y_range = QLineEdit()
+        self.line_edit_max_y_range = QLineEdit()
+
+        self.layout_y_range = QHBoxLayout()
+        self.layout_y_range.addWidget(self.label_y_range)
+        self.layout_y_range.addWidget(self.line_edit_min_y_range)
+        self.layout_y_range.addWidget(self.line_edit_max_y_range)
+
+        # Reset
+        self.button_reset = QPushButton()
+        self.button_reset.setText("Reset")
+
+        self.horizontal_layout.addLayout(self.layout_x_range)
+        self.horizontal_layout.addLayout(self.layout_y_range)
+        self.horizontal_layout.addWidget(self.button_reset)
+        self.horizontal_layout.addStretch()
+
+        # self.vertical_layout.addLayout(self.horizontal_layout)
+
+        self.main_widget = QWidget(self)
+        self.main_widget.setLayout(self.vertical_layout)
+
+        self.setCentralWidget(self.main_widget)
+
+
+class PlotSubWindow(UiPlotSubWindow):
     """
     Sub window object responsible for displaying and interacting with plots.
     """
-    def __init__(self, **kwargs):
-        super(PlotSubWindow, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(PlotSubWindow, self).__init__(*args, **kwargs)
         # Setup plot sub window ui
-        self.ui_plot_sub_window = Ui_SpectraSubWindow()
-        self.ui_plot_sub_window.setupUi(self)
+        # self.ui_plot_sub_window = Ui_SpectraSubWindow()
+        # self.ui_plot_sub_window.setupUi(self)
 
         # Setup custom tool bar
         # self._tool_bar = PlotToolBar()
@@ -53,7 +99,8 @@ class PlotSubWindow(QMainWindow):
         self._dynamic_axis = DynamicAxisItem(orientation='top')
         self._plot_widget = pg.PlotWidget(
             axisItems={'top': self._dynamic_axis})
-        self.setCentralWidget(self._plot_widget)
+        # self.setCentralWidget(self._plot_widget)
+        self.vertical_layout.insertWidget(0, self._plot_widget)
 
         self._plot_item = self._plot_widget.getPlotItem()
         self._plot_item.showAxis('top', True)
@@ -147,12 +194,6 @@ class PlotSubWindow(QMainWindow):
         return mask
 
     def add_roi(self, *args, **kwargs):
-        if self != self.centralWidget().mdiArea.activeSubWindow():
-            print("same")
-        else:
-            print('different')
-        return
-
         view_range = self._plot_item.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
         x_pos = x_len * 0.5 + view_range[0][0]

@@ -68,7 +68,7 @@ class UiMainWindow(QMainWindow):
 
 
 class MainWindow(UiMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
 
     @DispatchHandle.register_listener("on_added_window")
@@ -78,8 +78,10 @@ class MainWindow(UiMainWindow):
             window.show()
 
     @DispatchHandle.register_listener("on_add_roi")
-    def add_roi(self):
-        sub_window = self.mdi_area.activeSubWindow()
+    def add_roi(self, *args, **kwargs):
+        mdi_sub_window = self.mdi_area.activeSubWindow()
+        window = mdi_sub_window.widget()
+        window.add_roi()
 
 
 class MdiArea(QMdiArea):
