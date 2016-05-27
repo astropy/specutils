@@ -6,6 +6,8 @@ from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
 from ..interfaces.managers import layer_manager
 
+from ..ui.widgets.utils import ICON_PATH
+
 from astropy.units import spectral_density, spectral
 import logging
 
@@ -22,11 +24,18 @@ class LayerListPlugin(Plugin):
 
         self.layout_horizontal = QHBoxLayout()
 
-        self.button_create_layer_slice = QToolButton(self)
         self.button_layer_arithmetic = QToolButton(self)
-        self.button_remove_layer = QToolButton(self)
+        self.button_layer_arithmetic.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Math-48.png")))
+        self.button_layer_arithmetic.setEnabled(False)
+        self.button_layer_arithmetic.setIconSize(QSize(25, 25))
 
-        self.layout_horizontal.addWidget(self.button_create_layer_slice)
+        self.button_remove_layer = QToolButton(self)
+        self.button_remove_layer.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Delete-48.png")))
+        self.button_remove_layer.setEnabled(False)
+        self.button_remove_layer.setIconSize(QSize(25, 25))
+
         self.layout_horizontal.addWidget(self.button_layer_arithmetic)
         self.layout_horizontal.addStretch()
         self.layout_horizontal.addWidget(self.button_remove_layer)
@@ -67,9 +76,9 @@ class LayerListPlugin(Plugin):
             self._show_arithmetic_dialog)
 
         # Create a new layer based on any active ROIs
-        self.button_create_layer_slice.clicked.connect(
-            lambda: Dispatch.on_add_roi_layer.emit(layer=self.current_layer,
-                                                   from_roi=True))
+        # self.button_create_layer_slice.clicked.connect(
+        #     lambda: Dispatch.on_add_roi_layer.emit(layer=self.current_layer,
+        #                                            from_roi=True))
 
     @property
     def current_layer(self):

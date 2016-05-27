@@ -203,6 +203,24 @@ class StatisticsPlugin(Plugin):
         self.layout_form_tab_measured.setWidget(3, QFormLayout.FieldRole,
                                                 self.line_edit_continuum)
 
+        # Add warning label
+        self.label_measured_error = QLabel()
+        self.label_measured_error.setText("You must have at least three ROIs "
+                                          "on the plot")
+        self.label_measured_error.setWordWrap(True)
+        self.label_measured_error.setStyleSheet("""
+        QLabel {
+            color: #a94442;
+            background-color: #f2dede;
+            padding: 10px;
+            border: 1px solid #ebccd1;
+            border-radius: 4px;
+        }""")
+
+        self.layout_vertical_tab_measured.addWidget(self.label_measured_error)
+
+        self.layout_vertical.addStretch()
+
     def setup_connections(self):
         pass
 

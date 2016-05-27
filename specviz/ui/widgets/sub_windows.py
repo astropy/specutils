@@ -7,6 +7,7 @@ from functools import reduce
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
+from ...third_party.qtpy.QtCore import *
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.toolbars import PlotToolBar
 from ..qt.plotsubwindow import Ui_SpectraSubWindow
@@ -33,8 +34,8 @@ class PlotSubWindow(QMainWindow):
         self.ui_plot_sub_window.setupUi(self)
 
         # Setup custom tool bar
-        self._tool_bar = PlotToolBar()
-        self.addToolBar(self._tool_bar)
+        # self._tool_bar = PlotToolBar()
+        # self.addToolBar(self._tool_bar)
 
         self._containers = []
         self._top_axis_dialog = TopAxisDialog()
@@ -63,7 +64,7 @@ class PlotSubWindow(QMainWindow):
 
     def _setup_connections(self):
         # Setup ROI connection
-        self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
+        # self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
 
         # On accept, change the displayed axis
         self._top_axis_dialog.accepted.connect(lambda:
@@ -74,15 +75,15 @@ class PlotSubWindow(QMainWindow):
                 ref_wave=self._top_axis_dialog.ref_wave))
 
         # Setup equivalent width toggle
-        self.ui_plot_sub_window.actionMeasure.triggered.connect(
-            self._toggle_measure)
+        # self.ui_plot_sub_window.actionMeasure.triggered.connect(
+        #     self._toggle_measure)
 
         # Tool bar connections
-        self._tool_bar.atn_change_top_axis.triggered.connect(
-            self._top_axis_dialog.exec_)
+        # self._tool_bar.atn_change_top_axis.triggered.connect(
+        #     self._top_axis_dialog.exec_)
 
-        self._tool_bar.atn_change_units.triggered.connect(
-            self._show_unit_change_dialog)
+        # self._tool_bar.atn_change_units.triggered.connect(
+        #     self._show_unit_change_dialog)
 
     def _show_unit_change_dialog(self):
         if self._unit_change_dialog.exec_():
@@ -145,7 +146,13 @@ class PlotSubWindow(QMainWindow):
         mask = reduce(np.logical_or, mask_holder)
         return mask
 
-    def add_roi(self):
+    def add_roi(self, *args, **kwargs):
+        if self != self.centralWidget().mdiArea.activeSubWindow():
+            print("same")
+        else:
+            print('different')
+        return
+
         view_range = self._plot_item.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
         x_pos = x_len * 0.5 + view_range[0][0]

@@ -147,6 +147,7 @@ Dispatch.register_event("on_changed_model", args=["model_item"])
 
 Dispatch.register_event("on_add_window", args=["data"])
 Dispatch.register_event("on_add_layer", args=["data", "from_roi"])
+Dispatch.register_event("on_add_roi", args=[])
 
 Dispatch.register_event("on_remove_data", args=["data"])
 Dispatch.register_event("on_remove_layer", args=["layer"])

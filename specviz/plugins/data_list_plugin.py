@@ -1,25 +1,65 @@
 from ..ui.widgets.plugin import Plugin
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
+from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
+import qtawesome as qta
+from ..ui.widgets.utils import ICON_PATH
 
 
 class DataListPlugin(Plugin):
     name = "Data List"
 
     def setup_ui(self):
+        print(ICON_PATH)
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
+        # List widget for the data sets
         self.list_widget_data_list = QListWidget(self)
 
+        # Label box to show when no data set has been loaded
+        self.label_unopened = QLabel(self)
+        self.label_unopened.setAlignment(Qt.AlignCenter | Qt.AlignHCenter)
+        self.label_unopened.setText("Click the folder icon to open a data set")
+        self.label_unopened.setWordWrap(True)
+        self.label_unopened.setStyleSheet("""
+        QLabel {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            padding: 10px;
+            border: 1px solid #faebcc;
+            border-radius: 4px;
+        }""")
+
+        self.layout_vertical.addWidget(self.label_unopened)
         self.layout_vertical.addWidget(self.list_widget_data_list)
 
         self.layout_horizontal = QHBoxLayout()
 
-        self.button_create_sub_window = QToolButton(self)
-        self.button_add_to_sub_window = QToolButton(self)
-        self.button_remove_data = QToolButton(self)
+        self.button_open_data = QToolButton(self)
+        self.button_open_data.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Open Folder-48.png")))
+        self.button_open_data.setIconSize(QSize(25, 25))
 
+        self.button_create_sub_window = QToolButton(self)
+        self.button_create_sub_window.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Open in Browser-50.png")))
+        self.button_create_sub_window.setIconSize(QSize(25, 25))
+        self.button_create_sub_window.setEnabled(False)
+
+        self.button_add_to_sub_window = QToolButton(self)
+        self.button_add_to_sub_window.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Change Theme-50.png")))
+        self.button_add_to_sub_window.setIconSize(QSize(25, 25))
+        self.button_add_to_sub_window.setEnabled(False)
+
+        self.button_remove_data = QToolButton(self)
+        self.button_remove_data.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Delete-48.png")))
+        self.button_remove_data.setEnabled(False)
+        self.button_remove_data.setIconSize(QSize(25, 25))
+
+        self.layout_horizontal.addWidget(self.button_open_data)
         self.layout_horizontal.addWidget(self.button_create_sub_window)
         self.layout_horizontal.addWidget(self.button_add_to_sub_window)
         self.layout_horizontal.addStretch()
@@ -41,6 +81,10 @@ class DataListPlugin(Plugin):
         self.button_remove_data.clicked.connect(
             lambda: Dispatch.on_remove_data.emit(
             self.current_data))
+
+        # Open file dialog
+        self.button_open_data.clicked.connect(
+            lambda: Dispatch.on_file_open.emit())
 
     @property
     def current_data(self):
@@ -75,12 +119,24 @@ class DataListPlugin(Plugin):
 
         self.list_widget_data_list.setCurrentItem(new_item)
 
+        if self.list_widget_data_list.count() > 0:
+            self.label_unopened.hide()
+            self.button_remove_data.setEnabled(True)
+            self.button_create_sub_window.setEnabled(True)
+            self.button_add_to_sub_window.setEnabled(True)
+
     @DispatchHandle.register_listener("on_removed_data")
     def remove_data_item(self, data):
         data_item = self.get_data_item(data)
 
         self.list_widget_data_list.takeItem(
             self.list_widget_data_list.row(data_item))
+
+        if self.list_widget_data_list.count() == 0:
+            self.label_unopened.show()
+            self.button_remove_data.setEnabled(False)
+            self.button_create_sub_window.setEnabled(False)
+            self.button_add_to_sub_window.setEnabled(False)
 
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):

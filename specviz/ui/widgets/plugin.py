@@ -2,7 +2,10 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
+from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
+
+from ...ui.widgets.utils import ICON_PATH
 
 
 class PluginMeta(type):
@@ -16,6 +19,7 @@ class Plugin(QDockWidget):
     __meta__ = ABCMeta
 
     _all_plugins = []
+    _tool_buttons = []
 
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
@@ -53,3 +57,17 @@ class Plugin(QDockWidget):
     @abstractmethod
     def setup_connections(self):
         raise NotImplementedError()
+
+    def add_tool_button(self, icon_path, category=None, description="",
+                        callback=None, enabled=True):
+        button = QToolButton()
+        button.setIcon(QIcon(icon_path))
+        button.setIconSize(QSize(25, 25))
+        button.setEnabled(enabled)
+        button.clicked.connect(callback if callback is not None else
+                               lambda: None)
+
+        tool_button = dict(widget=button, icon_path=icon_path,
+                           category=category, description=description)
+
+        self._tool_buttons.append(tool_button)

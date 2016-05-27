@@ -12,6 +12,7 @@ from .widgets.menus import LayerContextMenu
 
 from .widgets.windows import MainWindow
 from ..plugins.data_list_plugin import DataListPlugin
+from ..plugins.tool_tray_plugin import ToolTrayPlugin
 from ..plugins.layer_list_plugin import LayerListPlugin
 from ..plugins.statistics_plugin import StatisticsPlugin
 
@@ -27,11 +28,17 @@ class Viewer(object):
         self.data_list_plugin = DataListPlugin(self.main_window)
         self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
                                        self.data_list_plugin)
+
         self.layer_list_plugin = LayerListPlugin(self.main_window)
         self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
                                        self.layer_list_plugin)
-        self.statistics_plugin = StatisticsPlugin(self.main_window)
+
+        self.tool_tray_plugin = ToolTrayPlugin(self.main_window)
         self.main_window.addDockWidget(Qt.RightDockWidgetArea,
+                                       self.tool_tray_plugin)
+
+        self.statistics_plugin = StatisticsPlugin(self.main_window)
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
                                        self.statistics_plugin)
 
         self._setup_connections()
