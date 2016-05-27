@@ -16,8 +16,12 @@ from astropy.nddata import StdDevUncertainty
 
 # LOCAL
 from ..core.data import Data
+from ..core import linelist
+from ..core.linelist import LineList
 
-__all__ = ['fits_reader', 'fits_identify', 'ascii_reader', 'ascii_identify']
+__all__ = ['fits_reader', 'fits_identify',
+           'ascii_reader', 'ascii_identify',
+           'linelist_reader', 'linelist_identify']
 
 # Loader automatically falls back to these units for some cases
 default_waveunit = u.Unit('Angstrom')
@@ -367,6 +371,48 @@ def ascii_identify(origin, *args, **kwargs):
             args[0].lower().split('.')[-1] in ['txt', 'dat'])
 
 
+def linelist_reader(filename, filter, **kwargs):
+    from .registries import loader_registry  # Prevent circular import
+
+    ref = loader_registry.get(filter)
+
+    names_list = []
+    start_list = []
+    end_list = []
+    units_list = []
+    for k in range(len((ref.columns))):
+        name = ref.columns[k][linelist.COLUMN_NAME]
+        names_list.append(name)
+
+        start = ref.columns[k][linelist.COLUMN_START]
+        end = ref.columns[k][linelist.COLUMN_END]
+        start_list.append(start)
+        end_list.append(end)
+
+        if linelist.UNITS_COLUMN in ref.columns[k]:
+            units = ref.columns[k][linelist.UNITS_COLUMN]
+        else:
+            units = ''
+        units_list.append(units)
+
+    tab = ascii.read(filename, format = ref.format,
+                     names = names_list,
+                     col_starts = start_list,
+                     col_ends = end_list)
+
+    for k, colname in enumerate(tab.columns):
+        tab[colname].unit = units_list[k]
+
+    return LineList(tab)
+
+
+def linelist_identify(origin, *args, **kwargs):
+    """Check whether given filename is a line list.
+    """
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['txt', 'dat'])
+
+
 # NOTE: Need it this way to prevent circular import.
 def register_loaders():
     """Add IO reader/identifier to io registry."""
@@ -379,3 +425,7 @@ def register_loaders():
     # ASCII
     io_registry.register_reader('ascii', Data, ascii_reader)
     io_registry.register_identifier('ascii', Data, ascii_identify)
+
+    # line list
+    io_registry.register_reader('ascii', LineList, linelist_reader)
+    io_registry.register_identifier('ascii', LineList, linelist_identify)

@@ -5,6 +5,10 @@ are currently available; They are listed as "N/A" in the table below.
 By inspecting the respective data format and its associated YAML file, user
 should be able to create their own YAML files for custom formats.
 
+The 'linelists' sub-directory contains spectral line lists used by ``specviz``
+to plot line identifications.
+
+
 | Data File | Data Type | YAML File | Provided By |
 | --- | --- | --- | --- |
 | generic_spectra.txt | ASCII (*.txt *.dat) | ascii.yaml | Pey Lian Lim (@pllim) |

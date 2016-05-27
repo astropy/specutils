@@ -1,0 +1,16 @@
+--- !CustomLoader
+name: Common_nebular
+extension: [txt, dat]
+format: 'fixed_width_no_header'
+columns:
+  - name: 'wavelength'
+    index: 0
+    start: 12
+    end: 20
+    units: 'Angstrom'
+  - name: 'id'
+    index: 1
+    start: 24
+    end: 40
+meta:
+  author: STScI

@@ -1,8 +1,14 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys, os
 import logging
 from functools import reduce
+
+import numpy as np
+import pyqtgraph as pg
+
+from astropy.units import Unit, Quantity
 
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
@@ -11,11 +17,9 @@ from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.toolbars import PlotToolBar
 from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
+from ...core.linelist import LineList
 from .region_items import LinearRegionItem
 
-from astropy.units import Unit
-import numpy as np
-import pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -85,6 +89,9 @@ class PlotSubWindow(QMainWindow):
         self._tool_bar.atn_change_units.triggered.connect(
             self._show_unit_change_dialog)
 
+        self._tool_bar.atn_line_ids.triggered.connect(
+            self._show_line_ids)
+
     def _show_unit_change_dialog(self):
         if self._unit_change_dialog.exec_():
             x_text = self._unit_change_dialog.disp_unit
@@ -105,6 +112,68 @@ class PlotSubWindow(QMainWindow):
             self.change_units(x_unit, y_unit)
 
             self._plot_item.update()
+
+    def _show_line_ids(self):
+
+        # find the wavelength range spanned by the spectrum
+        # (or spectra) at hand. The range will be used to select
+        # lines from the line list table(s).
+
+        # increasing dispersion values!
+        amin = sys.float_info.max
+        amax = 0.0
+        for container in self._containers:
+            amin = min(amin, container.dispersion.value[0])
+            amax = max(amax, container.dispersion.value[-1])
+
+        amin = Quantity(amin, self._plot_units[0])
+        amax = Quantity(amax, self._plot_units[0])
+
+        # if file_name is None:
+        #     file_name, selected_filter = self.viewer.open_file_dialog(
+        #         loader_registry.filters)
+        #
+        # if not file_name:
+        #     return
+
+        # Lets skip the file dialog business for now. This is just a
+        # proof-of-concept code. Later we will add more fanciness to it.
+        #
+        # Use these two tables for now. In the future, the filter strings
+        # should somehow be handled by the file dialog itself.
+        fnames = ['Common_stellar.txt', 'Common_nebular.txt']
+
+        path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = path + '/../../data/linelists/'
+        linelists = []
+
+        for fname in fnames:
+            path = dir_path + fname
+            filter = fname.split('.')[0] + ' (*.txt *.dat)'
+
+            linelist = LineList.read(path, filter)
+            linelist = linelist.extract_range(amin, amax)
+
+            linelists.append(linelist)
+
+        linelist = LineList.merge(linelists)
+
+        # try:
+        #     data = data_manager.load(str(file_name), str(selected_filter))
+        # except:
+        #     logging.error("Incompatible loader for selected data.")
+
+        # display line lists in a tabbed pane.
+
+        # display line markers on plot sirface.
+
+        Dispatch.on_added_linelist.emit(linelist=linelist)
+
+
+
+
+
+
 
     def _toggle_measure(self, on):
         if on:

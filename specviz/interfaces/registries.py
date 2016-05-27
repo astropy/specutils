@@ -20,10 +20,11 @@ class CustomLoaderRegistry(Registry):
 
         cur_path = os.path.join(os.path.dirname(__file__), 'default_loaders')
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
+        lines_path = os.path.join(os.path.dirname(__file__), '../data/linelists')
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [usr_path, cur_path]
+        check_paths = [usr_path, cur_path, lines_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
