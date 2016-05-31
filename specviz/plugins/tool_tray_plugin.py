@@ -14,6 +14,7 @@ import logging
 
 class ToolTrayPlugin(Plugin):
     name = "Tools"
+    location = "right"
     _all_categories = {}
 
     def setup_ui(self):

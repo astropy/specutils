@@ -1,6 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import importlib, inspect, sys, os
+
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtGui import *
@@ -11,10 +13,7 @@ from ..core.comms import Dispatch, DispatchHandle
 from .widgets.menus import LayerContextMenu
 
 from .widgets.windows import MainWindow
-from ..plugins.data_list_plugin import DataListPlugin
-from ..plugins.tool_tray_plugin import ToolTrayPlugin
-from ..plugins.layer_list_plugin import LayerListPlugin
-from ..plugins.statistics_plugin import StatisticsPlugin
+from .widgets.plugin import Plugin
 
 
 class Viewer(object):
@@ -25,23 +24,35 @@ class Viewer(object):
     """
     def __init__(self):
         self.main_window = MainWindow()
-        self.data_list_plugin = DataListPlugin(self.main_window)
-        self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
-                                       self.data_list_plugin)
 
-        self.layer_list_plugin = LayerListPlugin(self.main_window)
-        self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
-                                       self.layer_list_plugin)
-
-        self.tool_tray_plugin = ToolTrayPlugin(self.main_window)
-        self.main_window.addDockWidget(Qt.RightDockWidgetArea,
-                                       self.tool_tray_plugin)
-
-        self.statistics_plugin = StatisticsPlugin(self.main_window)
-        self.main_window.addDockWidget(Qt.LeftDockWidgetArea,
-                                       self.statistics_plugin)
+        self.load_plugins()
 
         self._setup_connections()
+
+    def load_plugins(self):
+        for mod in os.listdir(os.path.abspath(os.path.join(
+                __file__, '..', '..', 'plugins'))):
+
+            mod = mod.split('.')[0]
+            mod = importlib.import_module("specviz.plugins." + mod)
+            cls_members = inspect.getmembers(
+                mod, lambda member: inspect.isclass(member)
+                                    and Plugin in member.__bases__)
+
+            if len(cls_members) == 0:
+                continue
+
+            for _, cls_plugin in cls_members:
+                instance_plugin = cls_plugin(self.main_window)
+
+                if instance_plugin.location != 'hidden':
+                    if instance_plugin.location == 'right':
+                        location = Qt.RightDockWidgetArea
+                    else:
+                        location = Qt.LeftDockWidgetArea
+
+                    self.main_window.addDockWidget(location,
+                                                   instance_plugin)
 
     def old__init__(self, parent=None):
         super(Viewer, self).__init__()

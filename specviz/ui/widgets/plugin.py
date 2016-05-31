@@ -21,6 +21,8 @@ class Plugin(QDockWidget):
     _all_plugins = []
     _tool_buttons = []
 
+    location = 'left'
+
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
 

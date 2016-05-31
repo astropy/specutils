@@ -8,13 +8,11 @@ from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
-from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.toolbars import PlotToolBar
 from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
 from .region_items import LinearRegionItem
 
-from astropy.units import Unit
 import numpy as np
 import pyqtgraph as pg
 
@@ -84,8 +82,6 @@ class PlotSubWindow(UiPlotSubWindow):
         # self.addToolBar(self._tool_bar)
 
         self._containers = []
-        self._top_axis_dialog = TopAxisDialog()
-        self._unit_change_dialog = UnitChangeDialog()
         self._dynamic_axis = None
         self._plot_widget = None
         self._plot_item = None
@@ -110,16 +106,9 @@ class PlotSubWindow(UiPlotSubWindow):
         self._setup_connections()
 
     def _setup_connections(self):
+        pass
         # Setup ROI connection
         # self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
-
-        # On accept, change the displayed axis
-        self._top_axis_dialog.accepted.connect(lambda:
-            self.update_axis(
-                self._containers[0].layer,
-                self._top_axis_dialog.combo_box_axis_mode.currentIndex(),
-                redshift=self._top_axis_dialog.redshift,
-                ref_wave=self._top_axis_dialog.ref_wave))
 
         # Setup equivalent width toggle
         # self.ui_plot_sub_window.actionMeasure.triggered.connect(
@@ -131,27 +120,6 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # self._tool_bar.atn_change_units.triggered.connect(
         #     self._show_unit_change_dialog)
-
-    def _show_unit_change_dialog(self):
-        if self._unit_change_dialog.exec_():
-            x_text = self._unit_change_dialog.disp_unit
-            y_text = self._unit_change_dialog.flux_unit
-
-            x_unit = y_unit = None
-
-            try:
-                x_unit = Unit(x_text) if x_text else None
-            except ValueError as e:
-                logging.error(e)
-
-            try:
-                y_unit = Unit(y_text) if y_text else None
-            except ValueError as e:
-                logging.error(e)
-
-            self.change_units(x_unit, y_unit)
-
-            self._plot_item.update()
 
     def _toggle_measure(self, on):
         if on:
