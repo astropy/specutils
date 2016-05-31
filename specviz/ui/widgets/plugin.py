@@ -85,7 +85,6 @@ class Plugin(QDockWidget):
     def active_window(self):
         return self._active_window
 
-    @active_window.setter
     @DispatchHandle.register_listener("on_activated_window")
-    def active_window(self, window):
+    def set_active_window(self, window):
         self._active_window = window

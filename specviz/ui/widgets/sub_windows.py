@@ -54,12 +54,18 @@ class UiPlotSubWindow(QMainWindow):
         self.button_reset = QPushButton()
         self.button_reset.setText("Reset")
 
-        self.horizontal_layout.addLayout(self.layout_x_range)
-        self.horizontal_layout.addLayout(self.layout_y_range)
-        self.horizontal_layout.addWidget(self.button_reset)
+        # Cursor position
+        self.line_edit_cursor_pos = QLabel()
+        # self.line_edit_cursor_pos.setReadOnly(True)
+        self.line_edit_cursor_pos.setText("None, None")
+
+        self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
+        # self.horizontal_layout.addLayout(self.layout_x_range)
+        # self.horizontal_layout.addLayout(self.layout_y_range)
+        # self.horizontal_layout.addWidget(self.button_reset)
         self.horizontal_layout.addStretch()
 
-        # self.vertical_layout.addLayout(self.horizontal_layout)
+        self.vertical_layout.addLayout(self.horizontal_layout)
 
         self.main_widget = QWidget(self)
         self.main_widget.setLayout(self.vertical_layout)
@@ -106,7 +112,12 @@ class PlotSubWindow(UiPlotSubWindow):
         self._setup_connections()
 
     def _setup_connections(self):
-        pass
+        # Connect cursor position to UI element
+        # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
+        #                        rateLimit=30, slot=self.cursor_moved)
+        self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
+
+
         # Setup ROI connection
         # self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
 
@@ -120,6 +131,26 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # self._tool_bar.atn_change_units.triggered.connect(
         #     self._show_unit_change_dialog)
+
+    def cursor_moved(self, evt):
+        pos = evt
+
+        # Data range
+        # flux = self._containers[0].data.value
+        # disp = self._containers[0].dispersion.value
+
+        # Plot range
+        vb = self._plot_item.getViewBox()
+
+        if self._plot_item.sceneBoundingRect().contains(pos):
+            mouse_point = vb.mapSceneToView(pos)
+            index = int(mouse_point.x())
+
+            if index > 0 and index < vb.viewRange()[0][1]:
+                self.line_edit_cursor_pos.setText("{0:4.4g}, {1:4.4g}".format(
+                    mouse_point.x(), mouse_point.y())
+                    # flux[index], disp[index])
+                )
 
     def _toggle_measure(self, on):
         if on:

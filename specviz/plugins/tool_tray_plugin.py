@@ -82,7 +82,9 @@ class ToolTrayPlugin(Plugin):
 
         # ---
         # Setup button layouts
-        for button in self._tool_buttons:
+        buttons = sorted(self._tool_buttons, key=lambda x: x['category'])
+
+        for button in buttons:
             cat = self.get_category(button['category'])
 
             for i in range(10):
@@ -126,6 +128,9 @@ class ToolTrayPlugin(Plugin):
         pass
 
     def get_category(self, name):
+        if name is None:
+            name = "user plugins"
+
         if name not in self._all_categories:
             vertical_layout = QVBoxLayout()
             grid_layout = QGridLayout()

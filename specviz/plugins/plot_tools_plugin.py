@@ -9,8 +9,8 @@ from ..ui.widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from astropy.units import Unit
 
 
-class ToolTrayPlugin(Plugin):
-    name = "Tools"
+class PlotToolsPlugin(Plugin):
+    name = "Plot Tools"
     location = "hidden"
     _all_categories = {}
 
@@ -36,12 +36,8 @@ class ToolTrayPlugin(Plugin):
 
     def setup_connections(self):
         # On accept, change the displayed axis
-        self._top_axis_dialog.accepted.connect(lambda:
-                                               self.update_axis(
-                                                   self._containers[0].layer,
-                                                   self._top_axis_dialog.combo_box_axis_mode.currentIndex(),
-                                                   redshift=self._top_axis_dialog.redshift,
-                                                   ref_wave=self._top_axis_dialog.ref_wave))
+        self._top_axis_dialog.accepted.connect(
+            self._update_axis)
 
     def _show_unit_change_dialog(self):
         if self._unit_change_dialog.exec_():
@@ -63,6 +59,16 @@ class ToolTrayPlugin(Plugin):
             self.change_units(x_unit, y_unit)
 
             self._plot_item.update()
+
+    def _update_axis(self):
+        if self.active_window is None:
+            return
+
+        self.active_window.update_axis(
+            self.active_window._containers[0].layer,
+            self._top_axis_dialog.combo_box_axis_mode.currentIndex(),
+            redshift=self._top_axis_dialog.redshift,
+            ref_wave=self._top_axis_dialog.ref_wave)
 
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):

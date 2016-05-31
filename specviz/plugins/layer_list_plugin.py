@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..interfaces.managers import layer_manager, plot_manager, window_manager
+from ..interfaces.managers import layer_manager, plot_manager
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -62,6 +62,10 @@ class LayerListPlugin(Plugin):
 
     def setup_connections(self):
         # -- Communications setup
+        # Listen for layer selection events, enable/disable buttons
+        self.tree_widget_layer_list.itemSelectionChanged.connect(
+            lambda: self.toggle_buttons(self.current_layer_item))
+
         # Listen for layer selection events, update model tree on selection
         self.tree_widget_layer_list.itemSelectionChanged.connect(
             lambda: Dispatch.on_selected_layer.emit(
@@ -167,8 +171,6 @@ class LayerListPlugin(Plugin):
 
         self.tree_widget_layer_list.setCurrentItem(new_item)
 
-        self.toggle_plugin_buttons()
-
     def get_layer_item(self, layer):
         root = self.tree_widget_layer_list.invisibleRootItem()
 
@@ -201,8 +203,6 @@ class LayerListPlugin(Plugin):
                 if sec_child.data(0, Qt.UserRole) == layer:
                     child.removeChild(sec_child)
                     break
-
-        self.toggle_plugin_buttons()
 
     @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
     def update_layer_item(self, container=None, *args, **kwargs):
@@ -238,7 +238,7 @@ class LayerListPlugin(Plugin):
         if layer is None:
             return
 
-        window = window if window is not None else window_manager.active_window
+        window = self.active_window
         roi_mask = mask if mask is not None else self.get_roi_mask(
             layer=layer)
 
@@ -298,8 +298,9 @@ class LayerListPlugin(Plugin):
         else:
             logging.warning("Color is not valid.")
 
-    def toggle_plugin_buttons(self):
-        if self.tree_widget_layer_list.topLevelItemCount() > 0:
+    def toggle_buttons(self, layer_item):
+        print(layer_item)
+        if layer_item is not None:
             self.button_layer_arithmetic.setEnabled(True)
             self.button_remove_layer.setEnabled(True)
             self.button_layer_slice.setEnabled(True)

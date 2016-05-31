@@ -230,6 +230,9 @@ class StatisticsPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_selected_layer")
     def set_layer(self, layer_item=None):
+        if layer_item is None:
+            return
+
         self._current_layer_item = layer_item
         current_layer = self._current_layer_item.data(0, Qt.UserRole)
         self.line_edit_current_layer.setText(current_layer.name)

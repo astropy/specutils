@@ -68,6 +68,10 @@ class DataListPlugin(Plugin):
         self.layout_vertical.addLayout(self.layout_horizontal)
 
     def setup_connections(self):
+        # Enable/disable buttons depending on selection
+        self.list_widget_data_list.itemSelectionChanged.connect(
+            lambda: self.toggle_buttons(self.current_data_item))
+
         # Connect the create new sub window button
         self.button_create_sub_window.clicked.connect(
             lambda: Dispatch.on_add_window.emit(data=self.current_data))
@@ -102,6 +106,10 @@ class DataListPlugin(Plugin):
             data = data_item.data(Qt.UserRole)
             return data
 
+    @property
+    def current_data_item(self):
+        return self.list_widget_data_list.currentItem()
+
     @DispatchHandle.register_listener("on_added_data")
     def add_data_item(self, data):
         """
@@ -119,12 +127,6 @@ class DataListPlugin(Plugin):
 
         self.list_widget_data_list.setCurrentItem(new_item)
 
-        if self.list_widget_data_list.count() > 0:
-            self.label_unopened.hide()
-            self.button_remove_data.setEnabled(True)
-            self.button_create_sub_window.setEnabled(True)
-            self.button_add_to_sub_window.setEnabled(True)
-
     @DispatchHandle.register_listener("on_removed_data")
     def remove_data_item(self, data):
         data_item = self.get_data_item(data)
@@ -132,15 +134,23 @@ class DataListPlugin(Plugin):
         self.list_widget_data_list.takeItem(
             self.list_widget_data_list.row(data_item))
 
-        if self.list_widget_data_list.count() == 0:
-            self.label_unopened.show()
-            self.button_remove_data.setEnabled(False)
-            self.button_create_sub_window.setEnabled(False)
-            self.button_add_to_sub_window.setEnabled(False)
-
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):
             data_item = self.list_widget_data_list.item(0)
 
             if data_item.data(Qt.UserRole) == data:
                 return data_item
+
+    def toggle_buttons(self, data_item):
+        if data_item is not None:
+            self.label_unopened.hide()
+            self.button_remove_data.setEnabled(True)
+            self.button_create_sub_window.setEnabled(True)
+            self.button_add_to_sub_window.setEnabled(True)
+        else:
+            self.label_unopened.show()
+            self.button_remove_data.setEnabled(False)
+            self.button_create_sub_window.setEnabled(False)
+            self.button_add_to_sub_window.setEnabled(False)
+
+
