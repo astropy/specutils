@@ -106,22 +106,11 @@ class Controller(object):
 
         self.viewer.layer_context_menu.act_change_color.triggered.disconnect()
         self.viewer.layer_context_menu.act_change_color.triggered.connect(
-            lambda: self._change_plot_color(container)
+
         )
 
         self.viewer.layer_context_menu.exec_(
             self.viewer.wgt_layer_list.viewport().mapToGlobal(point))
-
-    def _change_plot_color(self, container):
-        col = QColorDialog.getColor(container._pen_stash['pen_on'].color(),
-                                    self.viewer.wgt_layer_list)
-
-        if col.isValid():
-            container.pen = col
-
-            Dispatch.on_updated_plot.emit(container=container)
-        else:
-            logging.warning("Color is not valid.")
 
     def _set_active_plot(self):
         current_sub_window = self.viewer.current_sub_window
@@ -240,35 +229,6 @@ class Controller(object):
                 loader_registry.filters)
 
             self.read_file(file_name, file_filter=selected_filter)
-
-    def add_roi_layer(self, layer=None, mask=None, window=None):
-        """
-        Creates a layer object from the current ROIs of the active plot layer.
-
-        Parameters
-        ----------
-        layer : specviz.core.data.Layer
-            The current active layer of the active plot.
-        window : QtGui.QMdiSubWindow
-            The parent object within which the plot window resides.
-        mask : ndarray
-            Boolean mask.
-        """
-        layer = layer if layer is not None else self.viewer.current_layer
-
-        # User attempts to slice before opening a file
-        if layer is None:
-            return
-
-        window = window if window is not None else self.viewer.current_sub_window
-        roi_mask = mask if mask is not None else self.get_roi_mask(layer=layer)
-
-        new_layer = layer_manager.new(layer._source,
-                                      mask=roi_mask,
-                                      name=layer._source.name + " Layer Slice")
-
-        window_manager.add(new_layer, window)
-        plot_container = plot_manager.new(new_layer, window)
 
     @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data, window=None, layer=None):

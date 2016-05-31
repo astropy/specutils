@@ -63,9 +63,6 @@ class Viewer(object):
 
         self.wgt_model_list.setContextMenuPolicy(Qt.CustomContextMenu)
 
-        # Define the layer arithmetic dialog
-        self._layer_arithmetic_dialog = LayerArithmeticDialog()
-
         # Setup event handler
         DispatchHandle.setup(self)
 

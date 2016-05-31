@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..interfaces.managers import layer_manager
+from ..interfaces.managers import layer_manager, plot_manager, window_manager
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -36,13 +36,29 @@ class LayerListPlugin(Plugin):
         self.button_remove_layer.setEnabled(False)
         self.button_remove_layer.setIconSize(QSize(25, 25))
 
+        self.button_change_color = QToolButton(self)
+        self.button_change_color.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Color Dropper-48.png")))
+        self.button_change_color.setEnabled(False)
+        self.button_change_color.setIconSize(QSize(25, 25))
+
         self.layout_horizontal.addWidget(self.button_layer_arithmetic)
         self.layout_horizontal.addStretch()
+        self.layout_horizontal.addWidget(self.button_change_color)
         self.layout_horizontal.addWidget(self.button_remove_layer)
 
         self.layout_vertical.addLayout(self.layout_horizontal)
 
         self.dialog_layer_arithmetic = LayerArithmeticDialog()
+
+        # Add tool tray buttons
+        self.button_layer_slice = self.add_tool_button(
+            description='Create layer slice',
+            icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
+            category='transformations',
+            enabled=False,
+            callback=lambda: Dispatch.on_add_roi_layer.emit(
+                layer=self.current_layer, from_roi=True))
 
     def setup_connections(self):
         # -- Communications setup
@@ -79,6 +95,11 @@ class LayerListPlugin(Plugin):
         # self.button_create_layer_slice.clicked.connect(
         #     lambda: Dispatch.on_add_roi_layer.emit(layer=self.current_layer,
         #                                            from_roi=True))
+
+        # Allow changing of plot color
+        self.button_change_color.clicked.connect(
+            self._change_plot_color
+        )
 
     @property
     def current_layer(self):
@@ -146,6 +167,8 @@ class LayerListPlugin(Plugin):
 
         self.tree_widget_layer_list.setCurrentItem(new_item)
 
+        self.toggle_plugin_buttons()
+
     def get_layer_item(self, layer):
         root = self.tree_widget_layer_list.invisibleRootItem()
 
@@ -179,6 +202,8 @@ class LayerListPlugin(Plugin):
                     child.removeChild(sec_child)
                     break
 
+        self.toggle_plugin_buttons()
+
     @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
     def update_layer_item(self, container=None, *args, **kwargs):
         if container is None:
@@ -193,6 +218,36 @@ class LayerListPlugin(Plugin):
 
         if layer_item is not None:
             layer_item.setIcon(0, icon)
+
+    def add_roi_layer(self, layer=None, mask=None, window=None):
+        """
+        Creates a layer object from the current ROIs of the active plot layer.
+
+        Parameters
+        ----------
+        layer : specviz.core.data.Layer
+            The current active layer of the active plot.
+        window : QtGui.QMdiSubWindow
+            The parent object within which the plot window resides.
+        mask : ndarray
+            Boolean mask.
+        """
+        layer = layer if layer is not None else self.current_layer
+
+        # User attempts to slice before opening a file
+        if layer is None:
+            return
+
+        window = window if window is not None else window_manager.active_window
+        roi_mask = mask if mask is not None else self.get_roi_mask(
+            layer=layer)
+
+        new_layer = layer_manager.new(layer._source,
+                                      mask=roi_mask,
+                                      name=layer._source.name + " Layer Slice")
+
+        window_manager.add(new_layer, window)
+        plot_container = plot_manager.new(new_layer, window)
 
     def _show_arithmetic_dialog(self):
         if self.current_layer is None:
@@ -226,5 +281,34 @@ class LayerListPlugin(Plugin):
                 logging.info("{} not equivalent to {}.".format(
                     new_layer.data.unit, current_window._plot_units[1]))
                 self.add_sub_window(layer=new_layer)
+
+    def _change_plot_color(self):
+        container = plot_manager.get_plot_from_layer(
+            self.current_layer,
+            window_manager.active_window)
+
+        col = QColorDialog.getColor(
+            container._pen_stash['pen_on'].color(),
+            self.viewer.wgt_layer_list)
+
+        if col.isValid():
+            container.pen = col
+
+            Dispatch.on_updated_plot.emit(container=container)
+        else:
+            logging.warning("Color is not valid.")
+
+    def toggle_plugin_buttons(self):
+        if self.tree_widget_layer_list.topLevelItemCount() > 0:
+            self.button_layer_arithmetic.setEnabled(True)
+            self.button_remove_layer.setEnabled(True)
+            self.button_layer_slice.setEnabled(True)
+            self.button_change_color.setEnabled(True)
+        else:
+            self.button_layer_arithmetic.setEnabled(False)
+            self.button_remove_layer.setEnabled(False)
+            self.button_layer_slice.setEnabled(False)
+            self.button_change_color.setEnabled(False)
+
 
 

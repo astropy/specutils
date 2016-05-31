@@ -66,12 +66,6 @@ class ToolTrayPlugin(Plugin):
         # ---
         # Setup transformations buttons
         self.add_tool_button(
-            description='Create layer slice',
-            icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='transformations',
-            enabled=False)
-
-        self.add_tool_button(
             description='Log scale plot',
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
             category='transformations',
@@ -124,7 +118,7 @@ class ToolTrayPlugin(Plugin):
 
         # ---
         # Setup help information section
-        self.label_info = QLabel(self)
+        self.label_info = QLabel()
         self.label_info.setStyleSheet("""
         QLabel {
             color: #31708f;
@@ -136,7 +130,7 @@ class ToolTrayPlugin(Plugin):
         self.label_info.setText("Hover over an icon to learn about the tool.")
         self.label_info.setWordWrap(True)
 
-        self.layout_vertical.addWidget(self.label_info)
+        # self.layout_vertical.addWidget(self.label_info)
         self.layout_vertical.addStretch()
 
     def setup_connections(self):
@@ -166,4 +160,7 @@ class ToolTrayPlugin(Plugin):
             self._all_categories[name] = category
 
         return self._all_categories[name]
+
+    def set_help_info(self, text):
+        self.label_info.setText(text)
 

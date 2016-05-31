@@ -64,6 +64,7 @@ class Plugin(QDockWidget):
         button.setIcon(QIcon(icon_path))
         button.setIconSize(QSize(25, 25))
         button.setEnabled(enabled)
+        button.setToolTip(description)
         button.clicked.connect(callback if callback is not None else
                                lambda: None)
 
@@ -71,3 +72,5 @@ class Plugin(QDockWidget):
                            category=category, description=description)
 
         self._tool_buttons.append(tool_button)
+
+        return button
