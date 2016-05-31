@@ -3,8 +3,6 @@ from ...third_party.qtpy.QtCore import *
 from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
 
-from ..qt import icon_resource_rc
-
 
 class UiMainWindow(QMainWindow):
     def __init__(self, parent=None):

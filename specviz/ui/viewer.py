@@ -7,10 +7,8 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtGui import *
 
-from .qt.mainwindow import Ui_MainWindow
 from .widgets.sub_windows import PlotSubWindow
 from ..core.comms import Dispatch, DispatchHandle
-from .widgets.menus import LayerContextMenu
 
 from .widgets.windows import MainWindow
 from .widgets.plugin import Plugin
@@ -56,29 +54,6 @@ class Viewer(object):
 
                     self.main_window.addDockWidget(location,
                                                    instance_plugin)
-
-    def old__init__(self, parent=None):
-        super(Viewer, self).__init__()
-        self._current_sub_window = None
-
-        self.main_window = Ui_MainWindow()
-        self.main_window.setupUi(self)
-        self.wgt_data_list = self.main_window.listWidget
-        self.wgt_layer_list = self.main_window.treeWidget_2
-        self.wgt_model_list = self.main_window.treeWidget
-        self.wgt_model_list.setHeaderLabels(["Parameter", "Value"])
-
-        # Setup
-        self._setup_connections()
-
-        # Context menus
-        self.wgt_layer_list.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.layer_context_menu = LayerContextMenu()
-
-        self.wgt_model_list.setContextMenuPolicy(Qt.CustomContextMenu)
-
-        # Setup event handler
-        DispatchHandle.setup(self)
 
     def _setup_connections(self):
         # Listen for subwindow selection events, update layer list on selection

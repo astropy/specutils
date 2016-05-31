@@ -160,7 +160,6 @@ class Layer(object):
         return Layer(new_data, mask)
 
     def _arithmetic(self, operator, other, propagate=True):
-        print(self._source.dispersion_unit)
         if isinstance(other, Layer):
             # Make sure units are compatible
             if not other.data.unit.is_equivalent(

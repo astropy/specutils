@@ -299,7 +299,6 @@ class LayerListPlugin(Plugin):
             logging.warning("Color is not valid.")
 
     def toggle_buttons(self, layer_item):
-        print(layer_item)
         if layer_item is not None:
             self.button_layer_arithmetic.setEnabled(True)
             self.button_remove_layer.setEnabled(True)

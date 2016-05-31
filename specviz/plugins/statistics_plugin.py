@@ -4,8 +4,12 @@ from ..third_party.qtpy.QtCore import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..interfaces.managers import layer_manager
 from ..analysis import statistics
+from ..third_party.qtpy.QtGui import *
 
 import logging
+import pyqtgraph as pg
+import numpy as np
+import astropy.units as u
 
 
 class StatisticsPlugin(Plugin):
@@ -237,9 +241,9 @@ class StatisticsPlugin(Plugin):
         current_layer = self._current_layer_item.data(0, Qt.UserRole)
         self.line_edit_current_layer.setText(current_layer.name)
 
-    @DispatchHandle.register_listener("on_updated_roi")
-    def update_basic_stats(self, roi=None, measure_rois=None):
-        if roi is None:
+    @DispatchHandle.register_listener("on_updated_rois")
+    def update_basic_stats(self, rois=None, measure_rois=None):
+        if rois is None:
             return
 
         if self._current_window is None or self._current_layer_item is None:
@@ -250,7 +254,7 @@ class StatisticsPlugin(Plugin):
         current_layer = self._current_layer_item.data(0, Qt.UserRole)
 
         # Set the active tab to basic
-        self.tab_widget_stats.setCurrentIndex(0)
+        # self.tab_widget_stats.setCurrentIndex(0)
 
         mask = self._current_window.get_roi_mask(layer=current_layer)
 
@@ -272,41 +276,41 @@ class StatisticsPlugin(Plugin):
         self.line_edit_data_point_count.setText("{0:4.4g}".format(
             stat_dict['npoints']))
 
-    @DispatchHandle.register_listener("on_updated_roi")
-    def update_measured_states(self, roi=None, measure_rois=None):
-        if measure_rois is None:
+        # Calculate measured statistics if there are three rois
+        if len(rois) < 3:
             return
 
-        if self._current_window is None or self._current_layer_item is None:
-            logging.warning(
-                "No window or layer item provided; cannot update statistics.")
-            return
+        roi_data_sets = []
+        roi_masks = []
 
-        current_layer = self._current_layer_item.data(0, Qt.UserRole)
+        for roi in rois:
+            mask = self._current_window.get_roi_mask(layer=current_layer,
+                                                     roi=roi)
+            roi_masks.append(mask)
+            values = current_layer.data[mask[current_layer._mask]]
+            roi_data_sets.append(values)
 
-        # Set the active tab to measured
-        self.tab_widget_stats.setCurrentIndex(1)
+        roi_data_sets, rois, roi_masks = zip(*sorted(
+            zip(roi_data_sets, rois, roi_masks),
+            key=lambda x: np.max(np.abs(x[0]))))
 
-        cont1_mask = self._current_window.get_roi_mask(layer=current_layer,
-                                                       roi=measure_rois[0])
-        cont1_data = current_layer.data[cont1_mask]
-        cont1_stat_dict = statistics.stats(cont1_data)
+        rois[-1].setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
+        [x.setBrush(QColor(0, 0, 255, 50)) for x in rois[0:-1]]
+        [x.update() for x in rois]
 
-        cont2_mask = self._current_window.get_roi_mask(layer=current_layer,
-                                                       roi=measure_rois[2])
-        cont2_data = current_layer.data[cont2_mask]
-        cont2_stat_dict = statistics.stats(cont2_data)
+        cont1_stat_dict = statistics.stats(roi_data_sets[0])
+        cont2_stat_dict = statistics.stats(
+            u.Quantity(np.concatenate(roi_data_sets[:-1]).value, roi_data_sets[
+                1].unit)
+        )
 
-        line_mask = self._current_window.get_roi_mask(layer=current_layer,
-                                                      roi=measure_rois[1])
-
-        line = layer_manager.copy(current_layer)
+        line = current_layer
 
         ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,
                                                  cont2_stat_dict,
                                                  line,
-                                                 mask=line_mask)
-        cent = statistics.centroid(line - avg_cont, mask=line_mask)
+                                                 mask=roi_masks[-1])
+        cent = statistics.centroid(line - avg_cont, mask=roi_masks[-1])
 
         stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
                      "avg_cont": avg_cont}

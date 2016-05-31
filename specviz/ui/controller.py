@@ -423,7 +423,7 @@ class Controller(object):
             layer.name = layer_item.text(0)
 
         # Alert the statistics container to update the displayed layer name
-        Dispatch.on_updated_roi.emit(roi=None)
+        Dispatch.on_updated_rois.emit(rois=None)
 
     @DispatchHandle.register_listener("on_selected_model", "on_changed_model")
     def _update_model_name(self, model_item, col=0):

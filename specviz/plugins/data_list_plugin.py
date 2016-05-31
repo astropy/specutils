@@ -11,7 +11,6 @@ class DataListPlugin(Plugin):
     name = "Data List"
 
     def setup_ui(self):
-        print(ICON_PATH)
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         # List widget for the data sets

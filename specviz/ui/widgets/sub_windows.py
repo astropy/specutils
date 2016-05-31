@@ -8,8 +8,6 @@ from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
-from ..widgets.toolbars import PlotToolBar
-from ..qt.plotsubwindow import Ui_SpectraSubWindow
 from ...core.comms import Dispatch, DispatchHandle
 from .region_items import LinearRegionItem
 
@@ -79,14 +77,6 @@ class PlotSubWindow(UiPlotSubWindow):
     """
     def __init__(self, *args, **kwargs):
         super(PlotSubWindow, self).__init__(*args, **kwargs)
-        # Setup plot sub window ui
-        # self.ui_plot_sub_window = Ui_SpectraSubWindow()
-        # self.ui_plot_sub_window.setupUi(self)
-
-        # Setup custom tool bar
-        # self._tool_bar = PlotToolBar()
-        # self.addToolBar(self._tool_bar)
-
         self._containers = []
         self._dynamic_axis = None
         self._plot_widget = None
@@ -117,21 +107,6 @@ class PlotSubWindow(UiPlotSubWindow):
         #                        rateLimit=30, slot=self.cursor_moved)
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
 
-
-        # Setup ROI connection
-        # self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
-
-        # Setup equivalent width toggle
-        # self.ui_plot_sub_window.actionMeasure.triggered.connect(
-        #     self._toggle_measure)
-
-        # Tool bar connections
-        # self._tool_bar.atn_change_top_axis.triggered.connect(
-        #     self._top_axis_dialog.exec_)
-
-        # self._tool_bar.atn_change_units.triggered.connect(
-        #     self._show_unit_change_dialog)
-
     def cursor_moved(self, evt):
         pos = evt
 
@@ -151,18 +126,6 @@ class PlotSubWindow(UiPlotSubWindow):
                     mouse_point.x(), mouse_point.y())
                     # flux[index], disp[index])
                 )
-
-    def _toggle_measure(self, on):
-        if on:
-            self.add_measure_rois()
-
-            # Disable the ability to add new ROIs
-            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(True)
-        else:
-            self.remove_measure_rois()
-
-            # Enable the ability to add new ROIs
-            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(False)
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
@@ -209,55 +172,11 @@ class PlotSubWindow(UiPlotSubWindow):
         roi.sigRemoveRequested.connect(remove)
 
         # Connect events
-        Dispatch.on_updated_roi.emit(roi=roi)
+        Dispatch.on_updated_rois.emit(rois=self._rois)
         roi.sigRemoveRequested.connect(
-            lambda: Dispatch.on_updated_roi.emit(roi=roi))
+            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
         roi.sigRegionChangeFinished.connect(
-            lambda: Dispatch.on_updated_roi.emit(roi=roi))
-
-    def add_measure_rois(self):
-        # First, remove existing rois
-        for roi in self._rois:
-            self._plot_item.removeItem(roi)
-
-        if len(self._measure_rois) == 0:
-            for i in range(3):
-                view_range = self._plot_item.viewRange()
-                x_vrange = view_range[0][1] - view_range[0][0]
-                x_len = x_vrange * 0.25
-                x_pos = view_range[0][0] + x_vrange * 0.1 + x_len * 1.1 * i
-
-                roi = LinearRegionItem(values=[x_pos, x_pos + x_len],
-                                       brush=pg.mkBrush(
-                                           QColor(152, 251, 152, 50)),
-                                       removable=False)
-
-                if i == 1:
-                    roi.setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
-
-                self._measure_rois.append(roi)
-
-            for roi in self._measure_rois:
-                roi.sigRemoveRequested.connect(
-                    lambda: Dispatch.on_updated_roi.emit(
-                        measure_rois=self._measure_rois))
-                roi.sigRegionChangeFinished.connect(
-                    lambda: Dispatch.on_updated_roi.emit(
-                        measure_rois=self._measure_rois))
-
-            # Connect events
-            Dispatch.on_updated_roi.emit(measure_rois=self._measure_rois)
-
-        for roi in self._measure_rois:
-            self._plot_item.addItem(roi)
-
-    def remove_measure_rois(self):
-        for roi in self._measure_rois:
-            self._plot_item.removeItem(roi)
-
-        # Replace rois we removed
-        for roi in self._rois:
-            self._plot_item.addItem(roi)
+            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
 
     def get_container(self, layer):
         for container in self._containers:
