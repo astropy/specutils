@@ -18,6 +18,14 @@ class PlotToolsPlugin(Plugin):
         self._top_axis_dialog = TopAxisDialog()
         self._unit_change_dialog = UnitChangeDialog()
 
+        # Add an roi
+        self.button_add_roi = self.add_tool_button(
+            description='Add ROI',
+            icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
+            category='selections',
+            callback=Dispatch.on_add_roi.emit,
+            enabled=False)
+
         # Change top axis
         self.button_axis_change = self.add_tool_button(
             description='Change top axis',
@@ -75,6 +83,8 @@ class PlotToolsPlugin(Plugin):
         if window:
             self.button_axis_change.setEnabled(True)
             self.button_unit_change.setEnabled(True)
+            self.button_add_roi.setEnabled(True)
         else:
             self.button_axis_change.setEnabled(False)
             self.button_unit_change.setEnabled(False)
+            self.button_add_roi.setEnabled(False)

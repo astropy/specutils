@@ -20,11 +20,6 @@ class ToolTrayPlugin(Plugin):
     def setup_ui(self):
         # ---
         # Selections setup
-        self.add_tool_button(
-            description='Add ROI',
-            icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
-            category='selections',
-            callback=Dispatch.on_add_roi.emit)
 
         self.add_tool_button(
             description='Add line label',
@@ -121,7 +116,7 @@ class ToolTrayPlugin(Plugin):
         self.label_info.setText("Hover over an icon to learn about the tool.")
         self.label_info.setWordWrap(True)
 
-        # self.layout_vertical.addWidget(self.label_info)
+        self.layout_vertical.addWidget(self.label_info)
         self.layout_vertical.addStretch()
 
     def setup_connections(self):

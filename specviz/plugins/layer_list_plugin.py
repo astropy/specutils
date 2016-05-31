@@ -284,12 +284,11 @@ class LayerListPlugin(Plugin):
 
     def _change_plot_color(self):
         container = plot_manager.get_plot_from_layer(
-            self.current_layer,
-            window_manager.active_window)
+            self.current_layer, self.active_window)
 
         col = QColorDialog.getColor(
             container._pen_stash['pen_on'].color(),
-            self.viewer.wgt_layer_list)
+            self.tree_widget_layer_list)
 
         if col.isValid():
             container.pen = col
