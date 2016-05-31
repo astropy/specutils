@@ -14,7 +14,7 @@ class UiMainWindow(QMainWindow):
 
         self.showMaximized()
         self.setMinimumSize(QSize(640, 480))
-        self.setDockOptions(QMainWindow.AllowTabbedDocks | QMainWindow.AnimatedDocks)
+        self.setDockOptions(QMainWindow.AnimatedDocks)
         self.setWindowTitle("SpecViz")
 
         self.widget_central = QWidget(self)
@@ -70,6 +70,10 @@ class UiMainWindow(QMainWindow):
 class MainWindow(UiMainWindow):
     def __init__(self, parent=None, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
+
+        self.mdi_area.subWindowActivated.connect(
+            lambda x: Dispatch.on_activated_window.emit(
+                window=x.widget() if x is not None else None))
 
     @DispatchHandle.register_listener("on_added_window")
     def add_sub_window(self, window=None, *args, **kwargs):

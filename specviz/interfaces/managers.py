@@ -99,11 +99,6 @@ class WindowManager(Manager):
     def get_layers(self, window):
         return self._members.get(window, [])
 
-    @property
-    def active_window(self):
-        for window in self._members:
-            return window.parent().mdiArea().activeSubWindow()
-
 
 class LayerManager(Manager):
     """

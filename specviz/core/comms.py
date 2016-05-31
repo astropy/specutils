@@ -118,6 +118,8 @@ class DispatchHandle(object):
         return decorator
 
 
+Dispatch.register_event("on_activated_window", args=["window"])
+
 Dispatch.register_event("on_added_data", args=["data"])
 Dispatch.register_event("on_added_window", args=["layer", "window"])
 Dispatch.register_event("on_added_plot", args=["container", "window"])

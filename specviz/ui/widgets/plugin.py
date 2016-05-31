@@ -6,6 +6,7 @@ from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
 
 from ...ui.widgets.utils import ICON_PATH
+from ...interfaces.managers import window_manager
 
 
 class PluginMeta(type):
@@ -25,6 +26,9 @@ class Plugin(QDockWidget):
 
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
+
+        # Keep a reference to the active sub window
+        self._active_window = None
 
         self._all_plugins.append(self)
         DispatchHandle.setup(self)
@@ -76,3 +80,12 @@ class Plugin(QDockWidget):
         self._tool_buttons.append(tool_button)
 
         return button
+
+    @property
+    def active_window(self):
+        return self._active_window
+
+    @active_window.setter
+    @DispatchHandle.register_listener("on_activated_window")
+    def active_window(self, window):
+        self._active_window = window

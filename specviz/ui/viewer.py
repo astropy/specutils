@@ -23,10 +23,13 @@ class Viewer(object):
     but only their creation and placement.
     """
     def __init__(self):
+        # Instantiate main window object
         self.main_window = MainWindow()
 
+        # Load system and user plugins
         self.load_plugins()
 
+        # Setup up top-level connections
         self._setup_connections()
 
     def load_plugins(self):

@@ -19,18 +19,20 @@ class ToolTrayPlugin(Plugin):
         self._unit_change_dialog = UnitChangeDialog()
 
         # Change top axis
-        self.add_tool_button(
+        self.button_axis_change = self.add_tool_button(
             description='Change top axis',
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
-            category='selections',
-            callback=self._unit_change_dialog.exec_)
+            category='plot options',
+            callback=self._top_axis_dialog.exec_,
+            enabled=False)
 
         # Change top axis
-        self.add_tool_button(
+        self.button_unit_change = self.add_tool_button(
             description='Change plot units',
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
-            category='selections',
-            callback=Dispatch.on_add_roi.emit)
+            category='plot options',
+            callback=self._show_unit_change_dialog,
+            enabled=False)
 
     def setup_connections(self):
         # On accept, change the displayed axis
@@ -61,3 +63,12 @@ class ToolTrayPlugin(Plugin):
             self.change_units(x_unit, y_unit)
 
             self._plot_item.update()
+
+    @DispatchHandle.register_listener("on_activated_window")
+    def toggle_enabled(self, window):
+        if window:
+            self.button_axis_change.setEnabled(True)
+            self.button_unit_change.setEnabled(True)
+        else:
+            self.button_axis_change.setEnabled(False)
+            self.button_unit_change.setEnabled(False)

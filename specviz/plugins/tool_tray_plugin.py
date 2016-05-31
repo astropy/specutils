@@ -75,18 +75,6 @@ class ToolTrayPlugin(Plugin):
         # ---
         # Setup plot options
         self.add_tool_button(
-            description='Change top axis',
-            icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='plot options',
-            enabled=False)
-
-        self.add_tool_button(
-            description='Change plot units',
-            icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='plot options',
-            enabled=False)
-
-        self.add_tool_button(
             description='Export plot',
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
             category='plot options',
