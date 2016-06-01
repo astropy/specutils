@@ -10,7 +10,6 @@ import logging
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 from ..core.comms import Dispatch, DispatchHandle
-from ..interfaces.factories import DataFactory
 
 # We pick up the desired format for model files here.
 # In a future release we may want to use both formats,

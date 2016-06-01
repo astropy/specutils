@@ -146,9 +146,10 @@ class Layer(object):
     name : str
         Short description.
     """
-    def __init__(self, source, mask, parent=None, name=''):
+    def __init__(self, source, mask=None, parent=None, name=''):
         self._source = source
-        self._mask = mask.astype(bool) if mask is not None else mask
+        self._mask = mask.astype(bool) if mask is not None else np.ones(
+            source.data.shape, dtype=bool)
         self._parent = parent
         self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,

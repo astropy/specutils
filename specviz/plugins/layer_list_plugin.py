@@ -4,7 +4,6 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..interfaces.factories import DataFactory
 from ..core.data import Layer
 
 from ..ui.widgets.utils import ICON_PATH
@@ -342,6 +341,7 @@ class LayerListPlugin(Plugin):
         layer = layer_item.data(0, Qt.UserRole)
 
         if layer is not None:
+            print("HERE")
             current_window = self.active_window
 
             current_window.set_visibility(

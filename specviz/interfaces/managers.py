@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 # LOCAL
-from .factories import DataFactory, ModelFactory, PlotFactory, FitterFactory, WindowFactory
+from .factories import ModelFactory, FitterFactory
 from .initializers import initialize
 from ..analysis import modeling
 from ..third_party.py_expression_eval import Parser
