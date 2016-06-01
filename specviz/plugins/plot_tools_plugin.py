@@ -30,7 +30,7 @@ class PlotToolsPlugin(Plugin):
         self.button_axis_change = self.add_tool_button(
             description='Change top axis',
             icon_path=os.path.join(ICON_PATH, "Globe Earth-48.png"),
-            category='plot options',
+            category='options',
             callback=self._top_axis_dialog.exec_,
             enabled=False)
 
@@ -38,7 +38,7 @@ class PlotToolsPlugin(Plugin):
         self.button_unit_change = self.add_tool_button(
             description='Change plot units',
             icon_path=os.path.join(ICON_PATH, "Generic Text-48.png"),
-            category='plot options',
+            category='options',
             callback=self._show_unit_change_dialog,
             enabled=False)
 

@@ -4,7 +4,6 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..interfaces.managers import layer_manager, plot_manager, window_manager
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -280,5 +279,13 @@ class LayerListPlugin(Plugin):
             self.button_layer_slice.setEnabled(False)
             self.button_change_color.setEnabled(False)
 
+    @DispatchHandle.register_listener("on_activated_window")
+    def toggle_enabled(self, window):
+        layers = window_manager.get_layers(window)
+
+        self.tree_widget_layer_list.clear()
+
+        for layer in layers:
+            self.add_layer_item(layer)
 
 
