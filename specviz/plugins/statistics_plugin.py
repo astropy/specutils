@@ -242,8 +242,8 @@ class StatisticsPlugin(Plugin):
         current_layer = self._current_layer_item.data(0, Qt.UserRole)
         self.line_edit_current_layer.setText(current_layer.name)
 
-    @DispatchHandle.register_listener("on_updated_rois")
-    def update_statistics(self, rois=None):
+    @DispatchHandle.register_listener("on_updated_rois", "on_selected_layer")
+    def update_statistics(self, rois=None, *args, **kwargs):
         if rois is None:
             rois = []
 
@@ -279,7 +279,10 @@ class StatisticsPlugin(Plugin):
 
         # Calculate measured statistics if there are three rois
         if len(rois) < 3:
+            self.label_measured_error.show()
             return
+        else:
+            self.label_measured_error.hide()
 
         roi_data_sets = []
         roi_masks = []

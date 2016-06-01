@@ -5,16 +5,10 @@ from __future__ import (absolute_import, division, print_function,
 import logging
 
 # LOCAL
-from ..core.data import Data, Layer, ModelLayer
-from ..core.plots import LinePlot
 from ..analysis.models.spline import Spline1D
 from ..analysis.models.blackbody import BlackBody
 
-from ..ui.widgets.sub_windows import PlotSubWindow
-
 # THIRD-PARTY
-import pyqtgraph as pg
-import numpy as np
 from astropy.modeling import models, fitting
 
 

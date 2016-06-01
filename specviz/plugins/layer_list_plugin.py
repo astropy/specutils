@@ -339,13 +339,13 @@ class LayerListPlugin(Plugin):
             QtTreeWidget data column.
         """
         layer = layer_item.data(0, Qt.UserRole)
+        current_window = self.active_window
 
-        if layer is not None:
-            print("HERE")
-            current_window = self.active_window
+        if layer is None or current_window is None:
+            return
 
-            current_window.set_visibility(
-                layer, layer_item.checkState(col) == Qt.Checked,
-                override=True)
+        current_window.set_visibility(
+            layer, layer_item.checkState(col) == Qt.Checked,
+            override=True)
 
 
