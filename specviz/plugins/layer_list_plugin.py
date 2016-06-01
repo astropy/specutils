@@ -249,10 +249,8 @@ class LayerListPlugin(Plugin):
         roi_mask = mask if mask is not None and not from_roi else \
             window.get_roi_mask(layer=layer)
 
-        new_layer = DataFactory.create_layer(layer._source,
-                                             mask=roi_mask,
-                                             name=layer._source.name +
-                                                  "Layer Slice")
+        new_layer = Layer(layer._source, mask=roi_mask,
+                          name=layer._source.name + "Layer Slice")
 
         Dispatch.on_add_layer.emit(layer=new_layer)
 

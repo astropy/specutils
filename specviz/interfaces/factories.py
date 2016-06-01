@@ -24,41 +24,6 @@ class Factory(object):
     """
 
 
-class DataFactory(Factory):
-    """
-    Produces data objects.
-    """
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def from_file(path, filter):
-        new_data = Data.read(path, filter)
-
-        return new_data
-
-    @staticmethod
-    def from_array(array):
-        new_data = Data(array)
-
-        return new_data
-
-    @staticmethod
-    def create_layer(data, mask=None, parent=None, name='', model=None):
-        if not isinstance(data, Data):
-            raise ValueError('Invalid Data object')
-
-        mask = mask if mask is not None else np.ones(data.data.shape,
-                                                     dtype=bool)
-
-        if model is None:
-            new_layer = Layer(data, mask, parent, name)
-        else:
-            new_layer = ModelLayer(model, data, mask, parent, name)
-
-        return new_layer
-
-
 #TODO  a base class for Model and Fitter classes might be of help here.
 
 class ModelFactory(Factory):
@@ -130,55 +95,3 @@ class FitterFactory(Factory):
             return cls.all_fitters[name]
 
         logging.error("No such fitter {}".format(name))
-
-
-class WindowFactory(Factory):
-    """
-    Produces sub window objects.
-    """
-    @classmethod
-    def create_window(cls):
-        sub_window = PlotSubWindow()
-
-        return sub_window
-
-
-class PlotFactory(Factory):
-    """
-    Produces plot container objects.
-    """
-
-    @classmethod
-    def create_line_plot(cls, layer, unit=None, visible=False, style='line',
-                         pen=None, err_pen=None):
-        # User attempts to plot before loading file, do nothing
-        if not isinstance(layer, Layer):
-            return
-
-        plot_data_item = pg.PlotDataItem(layer.dispersion.value,
-                                         layer.data.value)
-
-        plot_container = LinePlot(layer=layer, plot=plot_data_item,
-                                  visible=visible, style=style,
-                                  pen=pen, err_pen=err_pen)
-
-        if plot_container.layer.uncertainty is not None:
-            # err_top = pg.PlotDataItem(
-            #     plot_container.layer.dispersion.value,
-            #     plot_container.layer.data.value +
-            #     plot_container.layer.uncertainty.array * 0.5)
-            # err_btm = pg.PlotDataItem(
-            #     plot_container.layer.dispersion.value,
-            #     plot_container.layer.data.value -
-            #     plot_container.layer.uncertainty.array * 0.5)
-            #
-            # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
-
-            plot_error_item = pg.ErrorBarItem(
-                x=plot_container.layer.dispersion.value,
-                y=plot_container.layer.data.value,
-                height=plot_container.layer.uncertainty.array,
-            )
-            plot_container.error = plot_error_item
-
-        return plot_container

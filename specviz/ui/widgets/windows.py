@@ -2,7 +2,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
-from ...interfaces.factories import DataFactory
+from ...core.data import Data
 from .sub_windows import PlotSubWindow
 
 
@@ -77,8 +77,7 @@ class MainWindow(UiMainWindow):
 
     @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data=None, layer=None, *args, **kwargs):
-        layer = layer or DataFactory.create_layer(data=data) # Replace with
-        # direct call?
+        layer = layer or Layer(data=data)
         window = PlotSubWindow()
         window.add_plot(layer=layer)
 
