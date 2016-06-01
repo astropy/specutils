@@ -2,6 +2,8 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
+from ...interfaces.factories import DataFactory
+from .sub_windows import PlotSubWindow
 
 
 class UiMainWindow(QMainWindow):
@@ -73,8 +75,13 @@ class MainWindow(UiMainWindow):
             lambda x: Dispatch.on_activated_window.emit(
                 window=x.widget() if x is not None else None))
 
-    @DispatchHandle.register_listener("on_added_window")
-    def add_sub_window(self, window=None, *args, **kwargs):
+    @DispatchHandle.register_listener("on_add_window")
+    def add_sub_window(self, data=None, layer=None, *args, **kwargs):
+        layer = layer or DataFactory.create_layer(data=data) # Replace with
+        # direct call?
+        window = PlotSubWindow()
+        window.add_plot(layer=layer)
+
         if window is not None:
             mdi_sub_window = self.mdi_area.addSubWindow(window)
             window.show()

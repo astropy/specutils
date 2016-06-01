@@ -65,17 +65,22 @@ class PlotToolsPlugin(Plugin):
                 logging.error(e)
 
             self.active_window.change_units(x_unit, y_unit)
-            self.active_window._plot_item.update()
+            self.active_window.update_plot()
 
     def _update_axis(self):
         if self.active_window is None:
             return
 
-        self.active_window.update_axis(
-            self.active_window._containers[0].layer,
-            self._top_axis_dialog.combo_box_axis_mode.currentIndex(),
-            redshift=self._top_axis_dialog.redshift,
-            ref_wave=self._top_axis_dialog.ref_wave)
+        if len(self.active_window._plots) > 0:
+            layer = self.active_window._plots[0].layer
+
+            self.active_window.update_axis(
+                layer,
+                self._top_axis_dialog.combo_box_axis_mode.currentIndex(),
+                redshift=self._top_axis_dialog.redshift,
+                ref_wave=self._top_axis_dialog.ref_wave)
+        else:
+            logging.warning("Active window does not have any plots.")
 
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):

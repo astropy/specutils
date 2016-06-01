@@ -2,9 +2,6 @@ from ..ui.widgets.plugin import Plugin
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
-from ..core.comms import Dispatch, DispatchHandle
-from ..interfaces.managers import layer_manager
-from ..analysis import statistics
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -61,7 +58,7 @@ class ToolTrayPlugin(Plugin):
         # Setup transformations buttons
         self.add_tool_button(
             description='Log scale plot',
-            icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
+            icon_path=os.path.join(ICON_PATH, "Combo Chart-48.png"),
             category='transformations',
             enabled=False)
 
@@ -69,8 +66,8 @@ class ToolTrayPlugin(Plugin):
         # Setup plot options
         self.add_tool_button(
             description='Export plot',
-            icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='plot options',
+            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+            category='options',
             enabled=False)
 
         # ---

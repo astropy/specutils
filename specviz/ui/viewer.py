@@ -94,32 +94,9 @@ class Viewer(object):
             self.main_window.exportModelButton.setEnabled(True)
             self.main_window.loadModelButton.setEnabled(False)
 
-    def _set_current_sub_window(self, sub_window):
-        sub_window = sub_window or self.main_window.mdi_area.currentSubWindow()
-
-        if sub_window is None:
-            sub_window = self.main_window.mdi_area.activatePreviousSubWindow()
-
-        if self._current_sub_window != sub_window:
-            self._current_sub_window = sub_window
-            Dispatch.on_selected_window.emit(window=self._current_sub_window)
-
     @property
     def current_model_item(self):
         return self.wgt_model_list.currentItem()
-
-    @property
-    def current_sub_window(self):
-        """
-        Returns the currently active `PlotSubWindow` object.
-
-        Returns
-        -------
-        sub_window : PlotSubWindow
-            The currently active `PlotSubWindow` object.
-        """
-        if self._current_sub_window is not None:
-            return self._current_sub_window.widget()
 
     @property
     def current_model(self):
@@ -132,36 +109,6 @@ class Viewer(object):
     @property
     def current_model_formula(self):
         return self.main_window.lineEdit.text()
-
-    def open_file_dialog(self, filters):
-        """
-        Given a list of filters, prompts the user to select an existing file
-        and returns the file path and filter.
-
-        Parameters
-        ----------
-        filters : list
-            List of filters for the dialog.
-
-        Returns
-        -------
-        file_name : str
-            Path to the selected file.
-        selected_filter : str
-            The chosen filter (this indicates which custom loader from the
-            registry to use).
-        """
-        dialog = QFileDialog(self.main_window)
-        dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters([x for x in filters])
-
-        if dialog.exec_():
-            file_names = dialog.selectedFiles()
-            selected_filter = dialog.selectedNameFilter()
-
-            return file_names[0], selected_filter
-
-        return None, None
 
     @DispatchHandle.register_listener("on_added_model")
     def add_model_item(self, model, layer, unique=True):
@@ -291,45 +238,3 @@ class Viewer(object):
             models[model] = args
 
         return models
-
-    def clear_layer_widget(self):
-        self.wgt_layer_list.clear()
-
-    def clear_model_widget(self):
-        self.wgt_model_list.clear()
-
-    @DispatchHandle.register_listener("on_updated_stats")
-    def update_statistics(self, stats, layer):
-        self.main_window.currentLayerLineEdit.setText("{}".format(layer.name))
-
-        if 'mean' in stats:
-            self.main_window.meanLineEdit.setText("{0:4.4g}".format(
-                stats['mean'].value))
-
-            self.main_window.medianLineEdit.setText("{0:4.4g}".format(
-                stats['median'].value))
-
-            self.main_window.standardDeviationLineEdit.setText("{0:4.4g}".format(
-                stats['stddev'].value))
-
-            self.main_window.totalLineEdit.setText("{0:4.4g}".format(
-                float(stats['total'].value)))
-
-            self.main_window.dataPointCountLineEdit.setText(
-                str(stats['npoints']))
-
-        if 'eq_width' in stats:
-            self.main_window.equivalentWidthLineEdit.setText("{0:4.4g}".format(
-                float(stats['eq_width'].value)))
-
-        if 'centroid' in stats:
-            self.main_window.centroidLineEdit.setText("{0:5.5g}".format(
-                float(stats['centroid'].value)))
-
-        if 'flux' in stats:
-            self.main_window.fluxLineEdit.setText("{0:4.4g}".format(
-                float(stats['flux'].value)))
-
-        if 'avg_cont' in stats:
-            self.main_window.meanContinuumLineEdit.setText("{0:4.4g}".format(
-                float(stats['avg_cont'].value)))

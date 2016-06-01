@@ -6,7 +6,6 @@ from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
 
 from ...ui.widgets.utils import ICON_PATH
-from ...interfaces.managers import window_manager
 
 
 class PluginMeta(type):

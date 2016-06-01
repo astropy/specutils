@@ -9,10 +9,8 @@ import logging
 # LOCAL
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
-from ..interfaces.managers import (data_manager, window_manager, layer_manager,
-                                   model_manager, plot_manager)
-from ..interfaces.registries import loader_registry
 from ..core.comms import Dispatch, DispatchHandle
+from ..interfaces.factories import DataFactory
 
 # We pick up the desired format for model files here.
 # In a future release we may want to use both formats,
@@ -193,91 +191,6 @@ class Controller(object):
         # put formula in text edit widget
         self.viewer.main_window.lineEdit.setText(formula)
 
-    @DispatchHandle.register_listener("on_file_read")
-    def read_file(self, file_name, file_filter=None):
-        """
-        Convenience method that directly reads a spectrum from a file.
-        This exists mostly to facilitate development workflow. In time it
-        could be augmented to support fancier features such as wildcards,
-        file lists, mixed file types, and the like.
-        Note that the filter string is hard coded here; its details might
-        depend on the intrincacies of the registries, loaders, and data
-        classes. In other words, this is brittle code.
-        """
-        file_name = str(file_name)
-        file_ext = os.path.splitext(file_name)[-1]
-
-        if file_filter is None:
-            if file_ext in ('.txt', '.dat'):
-                file_filter = 'ASCII (*.txt *.dat)'
-            else:
-                file_filter = 'Generic Fits (*.fits *.mits)'
-
-        try:
-            data = data_manager.load(file_name, file_filter)
-        except:
-            logging.error("Incompatible loader for selected data.")
-
-    @DispatchHandle.register_listener("on_file_open")
-    def open_file(self, file_name=None):
-        """
-        Creates a `specviz.core.data.Data` object from the `Qt` open file
-        dialog, and adds it to the data item list in the UI.
-        """
-        if file_name is None:
-            file_name, selected_filter = self.viewer.open_file_dialog(
-                loader_registry.filters)
-
-            self.read_file(file_name, file_filter=selected_filter)
-
-    @DispatchHandle.register_listener("on_add_window")
-    def add_sub_window(self, data, window=None, layer=None):
-        """
-        Creates a new plot widget to display in the MDI area. `data` and
-        `sub_window` will be retrieved from the viewer if they are not defined.
-        """
-        if layer is None:
-            layer = layer_manager.new(data)
-        else:
-            layer_manager.add(layer)
-
-        if window is None:
-            window = window_manager.new(layer)
-        else:
-            window_manager.add(layer, window)
-
-        plot_container = plot_manager.new(layer, window)
-
-    @DispatchHandle.register_listener("on_add_layer")
-    def add_layer(self, layer=None, mask=None, window=None, from_roi=True):
-        """
-        Creates a layer object from the current ROIs of the active plot layer.
-
-        Parameters
-        ----------
-        layer : specviz.core.data.Layer
-            The current active layer of the active plot.
-        window : QtGui.QMdiSubWindow
-            The parent object within which the plot window resides.
-        mask : ndarray
-            Boolean mask.
-        """
-        # User attempts to slice before opening a file
-        if layer is None and window is None:
-            logging.error("Cannot add new layer; no layer and no window "
-                          "provided.")
-            return
-
-        roi_mask = mask if mask is not None and not from_roi else \
-            window.get_roi_mask(layer=layer)
-
-        new_layer = layer_manager.new(layer._source,
-                                      mask=roi_mask,
-                                      name=layer._source.name + " Layer Slice")
-
-        window_manager.add(new_layer, window)
-        plot_container = plot_manager.new(new_layer, window)
-
     def add_model_layer(self):
         """
         Creates a new layer object using the currently defined model.
@@ -375,46 +288,6 @@ class Controller(object):
         layer = self.viewer.current_layer
 
         model_manager.remove(layer=layer, model=model)
-
-    @DispatchHandle.register_listener("on_remove_layer")
-    def remove_layer(self, layer=None):
-        current_layer = layer or self.viewer.current_layer
-
-        if current_layer is None:
-            return
-
-        layer_manager.remove(layer=current_layer)
-        window_manager.remove(layer=current_layer)
-        plot_manager.remove(layer=current_layer)
-        model_manager.remove(layer=current_layer)
-
-    @DispatchHandle.register_listener("on_remove_data")
-    def remove_data(self, current_data):
-        if current_data is None:
-            return
-
-        data_manager.remove(data=current_data)
-
-    @DispatchHandle.register_listener("on_clicked_layer")
-    def _set_layer_visibility(self, layer_item, col=0):
-        """
-        Toggles the visibility of the plot in the sub window.
-
-        Parameters
-        ----------
-        layer : Layer
-            Layer object to toggle visibility.
-
-        col : int
-            QtTreeWidget data column.
-        """
-        layer = layer_item.data(0, Qt.UserRole)
-
-        if layer is not None:
-            current_window = window_manager.get(layer)
-
-            current_window.set_visibility(
-                layer, layer_item.checkState(col) == Qt.Checked, override=True)
 
     @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
     def _update_layer_name(self, layer_item, col=0):

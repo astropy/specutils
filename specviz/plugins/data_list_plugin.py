@@ -4,6 +4,10 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
+from ..interfaces.registries import loader_registry
+from ..core.data import Data
+
+import logging
 
 
 class DataListPlugin(Plugin):
@@ -79,10 +83,9 @@ class DataListPlugin(Plugin):
             lambda: Dispatch.on_add_to_window.emit(
                 data=self.current_data))
 
-        # When the layer list delete button is pressed
+        # When the data list delete button is pressed
         self.button_remove_data.clicked.connect(
-            lambda: Dispatch.on_remove_data.emit(
-            self.current_data))
+            lambda: self.remove_data_item())
 
         # Open file dialog
         self.button_open_data.clicked.connect(
@@ -108,6 +111,74 @@ class DataListPlugin(Plugin):
     def current_data_item(self):
         return self.list_widget_data_list.currentItem()
 
+    @DispatchHandle.register_listener("on_file_open")
+    def open_file(self, file_name=None):
+        """
+        Creates a `specviz.core.data.Data` object from the `Qt` open file
+        dialog, and adds it to the data item list in the UI.
+        """
+        if file_name is None:
+            file_name, selected_filter = self.open_file_dialog(
+                loader_registry.filters)
+
+            self.read_file(file_name, file_filter=selected_filter)
+
+    def open_file_dialog(self, filters):
+        """
+        Given a list of filters, prompts the user to select an existing file
+        and returns the file path and filter.
+
+        Parameters
+        ----------
+        filters : list
+            List of filters for the dialog.
+
+        Returns
+        -------
+        file_name : str
+            Path to the selected file.
+        selected_filter : str
+            The chosen filter (this indicates which custom loader from the
+            registry to use).
+        """
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setNameFilters([x for x in filters])
+
+        if dialog.exec_():
+            file_names = dialog.selectedFiles()
+            selected_filter = dialog.selectedNameFilter()
+
+            return file_names[0], selected_filter
+
+        return None, None
+
+    @DispatchHandle.register_listener("on_file_read")
+    def read_file(self, file_name, file_filter=None):
+        """
+        Convenience method that directly reads a spectrum from a file.
+        This exists mostly to facilitate development workflow. In time it
+        could be augmented to support fancier features such as wildcards,
+        file lists, mixed file types, and the like.
+        Note that the filter string is hard coded here; its details might
+        depend on the intrincacies of the registries, loaders, and data
+        classes. In other words, this is brittle code.
+        """
+        file_name = str(file_name)
+        file_ext = os.path.splitext(file_name)[-1]
+
+        if file_filter is None:
+            if file_ext in ('.txt', '.dat'):
+                file_filter = 'ASCII (*.txt *.dat)'
+            else:
+                file_filter = 'Generic Fits (*.fits *.mits)'
+
+        try:
+            data = Data.read(file_name, file_filter)
+            Dispatch.on_added_data.emit(data=data)
+        except:
+            logging.error("Incompatible loader for selected data.")
+
     @DispatchHandle.register_listener("on_added_data")
     def add_data_item(self, data):
         """
@@ -125,12 +196,17 @@ class DataListPlugin(Plugin):
 
         self.list_widget_data_list.setCurrentItem(new_item)
 
-    @DispatchHandle.register_listener("on_removed_data")
-    def remove_data_item(self, data):
+    @DispatchHandle.register_listener("on_remove_data")
+    def remove_data_item(self, data=None):
+        if data is None:
+            data = self.current_data
+
         data_item = self.get_data_item(data)
 
         self.list_widget_data_list.takeItem(
             self.list_widget_data_list.row(data_item))
+
+        Dispatch.on_removed_data.emit(data=self.current_data)
 
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):

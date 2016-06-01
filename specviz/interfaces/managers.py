@@ -25,80 +25,6 @@ class Manager(object):
         self._members = []
 
 
-class DataManager(Manager):
-    """
-    Manages a set of data objects.
-    """
-    def __init__(self):
-        super(DataManager, self).__init__()
-
-    def load(self, path, filter):
-        new_data = DataFactory.from_file(path, filter)
-        self.add(new_data)
-
-        return new_data
-
-    def add(self, data):
-        self._members.append(data)
-
-        Dispatch.on_added_data.emit(data)
-
-    def remove(self, data):
-        if data in self._members:
-            self._members.remove(data)
-            Dispatch.on_removed_data.emit(data)
-        else:
-            logging.warning("Attempted to remove `Data` object that does "
-                            "not exist: {}".format(data.name))
-
-
-class WindowManager(Manager):
-    """
-    Manages the association of layer objects with sub windows.
-    """
-    def __init__(self):
-        super(WindowManager, self).__init__()
-        self._members = {}
-
-        DispatchHandle.setup(self)
-
-    def new(self, layer):
-        window = WindowFactory.create_window()
-
-        self.add(layer, window)
-
-        return window
-
-    def add(self, layer, window):
-        if window not in self._members:
-            self._members[window] = [layer]
-            Dispatch.on_added_window.emit(layer=layer, window=window)
-        else:
-            self._members[window].append(layer)
-
-    def remove(self, layer, window=None):
-        if window in self._members:
-            if layer in self._members[window]:
-                self._members[window].remove(layer)
-        else:
-            for window in self._members:
-                if layer in self._members[window]:
-                    self._members[window].remove(layer)
-                    break
-
-        Dispatch.on_removed_from_window.emit(layer=layer, window=window)
-
-    def get(self, layer):
-        """Returns the window to which the selected layer is attached."""
-        for window in self._members:
-            for l in self._members[window]:
-                if layer == l:
-                    return window
-
-    def get_layers(self, window):
-        return self._members.get(window, [])
-
-
 class LayerManager(Manager):
     """
     Manages a set of layer objects.
@@ -170,74 +96,6 @@ class LayerManager(Manager):
 
     def update_model_parameters(self, model, parameters):
         pass
-
-    def add_from_formula(self, formula, layers=None):
-        if not formula:
-            return
-
-        layers = layers or self._members
-        new_layer = self._evaluate(layers, formula)
-
-        if new_layer is None:
-            return
-
-        new_layer._window = None
-        new_layer._parent = None
-        new_layer.name = "Resultant"
-        self.add(new_layer)
-
-        return new_layer
-
-    def _evaluate(self, layers, formula):
-        """
-        Parse a string into an arithmetic expression.
-
-        Parameters
-        ----------
-        layers : list
-            List of `Layer` objects that correspond to the given variables.
-        formula : str
-            A string describing the arithmetic operations to perform.
-        """
-        parser = Parser()
-
-        for layer in layers:
-            formula = formula.replace(layer.name, layer.name.replace(" ", "_"))
-
-        try:
-            expr = parser.parse(formula)
-        except Exception as e:
-            logging.error(e)
-            return
-
-        # Extract variables
-        vars = expr.variables()
-
-        # List the models in the same order as the variables
-        # sorted_layers = [next(l for v in vars for l in layers
-        #                       if l.name.replace(" ", "_") == v)]
-        # sorted_layers = [l for v in vars for l in layers
-        #                  if l.name.replace(" ", "_") == v]
-        sorted_layers = []
-
-        for v in vars:
-            for l in layers:
-                if l.name.replace(" ", "_") == v:
-                    sorted_layers.append(l)
-                    break
-
-        if len(sorted_layers) != len(vars):
-            logging.error("Incorrect layer arithmetic formula: the number "
-                          "of layers does not match the number of variables.")
-
-        try:
-            result = parser.evaluate(expr.simplify({}).toString(),
-                                     dict(pair for pair in zip(vars, sorted_layers)))
-        except Exception as e:
-            logging.error("While evaluating formula: {}".format(e))
-            return
-
-        return result
 
 
 class ModelManager(Manager):
@@ -493,9 +351,4 @@ class PlotManager(Manager):
 
         Dispatch.on_updated_plot.emit(container=container, layer=layer)
 
-
-data_manager = DataManager()
-window_manager = WindowManager()
-layer_manager = LayerManager()
 model_manager = ModelManager()
-plot_manager = PlotManager()

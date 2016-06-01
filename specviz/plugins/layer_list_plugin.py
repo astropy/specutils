@@ -4,6 +4,8 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
+from ..interfaces.factories import DataFactory
+from ..core.data import Layer
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -56,7 +58,7 @@ class LayerListPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
             category='transformations',
             enabled=False,
-            callback=lambda: Dispatch.on_add_layer.emit(
+            callback=lambda: self.add_layer(
                 window=self.active_window, layer=self.current_layer,
                 from_roi=True))
 
@@ -88,8 +90,8 @@ class LayerListPlugin(Plugin):
 
         # -- Widget connection setup
         # When the layer list delete button is pressed
-        self.button_remove_layer.clicked.connect(
-            lambda: Dispatch.on_remove_layer.emit(layer=self.current_layer))
+        self.button_remove_layer.clicked.connect(lambda:
+                                                 self.remove_layer_item())
 
         # When the arithmetic button is clicked, show math dialog
         self.button_layer_arithmetic.clicked.connect(
@@ -145,7 +147,7 @@ class LayerListPlugin(Plugin):
 
         return layers
 
-    @DispatchHandle.register_listener("on_added_layer")
+    @DispatchHandle.register_listener("on_add_layer")
     def add_layer_item(self, layer, unique=True):
         """
         Adds a `Layer` object to the loaded layer list widget.
@@ -186,8 +188,11 @@ class LayerListPlugin(Plugin):
                 if sec_child.data(0, Qt.UserRole) == layer:
                     return sec_child
 
-    @DispatchHandle.register_listener("on_removed_layer")
-    def remove_layer_item(self, layer):
+    @DispatchHandle.register_listener("on_remove_layer")
+    def remove_layer_item(self, layer=None):
+        if layer is None:
+            layer = self.current_layer
+
         root = self.tree_widget_layer_list.invisibleRootItem()
 
         for i in range(root.childCount()):
@@ -204,20 +209,52 @@ class LayerListPlugin(Plugin):
                     child.removeChild(sec_child)
                     break
 
+        Dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
+
     @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
-    def update_layer_item(self, container=None, *args, **kwargs):
-        if container is None:
+    def update_layer_item(self, plot=None, *args, **kwargs):
+        if plot is None:
             return
 
-        layer = container._layer
+        layer = plot._layer
         pixmap = QPixmap(10, 10)
-        pixmap.fill(container.pen.color())
+        pixmap.fill(plot.pen.color())
         icon = QIcon(pixmap)
 
         layer_item = self.get_layer_item(layer)
 
         if layer_item is not None:
             layer_item.setIcon(0, icon)
+
+    def add_layer(self, layer=None, mask=None, window=None, from_roi=True):
+        """
+        Creates a layer object from the current ROIs of the active plot layer.
+
+        Parameters
+        ----------
+        layer : specviz.core.data.Layer
+            The current active layer of the active plot.
+        window : QtGui.QMdiSubWindow
+            The parent object within which the plot window resides.
+        mask : ndarray
+            Boolean mask.
+        """
+        # User attempts to slice before opening a file
+        if layer is None and window is None:
+            logging.error(
+                "Cannot add new layer; no layer and no window "
+                "provided.")
+            return
+
+        roi_mask = mask if mask is not None and not from_roi else \
+            window.get_roi_mask(layer=layer)
+
+        new_layer = DataFactory.create_layer(layer._source,
+                                             mask=roi_mask,
+                                             name=layer._source.name +
+                                                  "Layer Slice")
+
+        Dispatch.on_add_layer.emit(layer=new_layer)
 
     def _show_arithmetic_dialog(self):
         if self.current_layer is None:
@@ -227,10 +264,9 @@ class LayerListPlugin(Plugin):
             formula = self.dialog_layer_arithmetic\
                 .line_edit_formula.text()
 
-            current_window = self.viewer.current_sub_window
+            current_window = self.active_window
             current_layers = self.all_layers
-            new_layer = layer_manager.add_from_formula(formula,
-                                                       layers=current_layers)
+            new_layer = Layer.from_formula(formula, layers=current_layers)
 
             if new_layer is None:
                 logging.warning("Formula not valid.")
@@ -246,24 +282,23 @@ class LayerListPlugin(Plugin):
                 current_window._plot_units[0], equivalencies=spectral())
 
             if data_units_equiv and disp_units_equiv:
-                self.add_sub_window(layer=new_layer, window=current_window)
+                Dispatch.on_add_layer.emit(layer=new_layer)
             else:
                 logging.info("{} not equivalent to {}.".format(
                     new_layer.data.unit, current_window._plot_units[1]))
-                self.add_sub_window(layer=new_layer)
+                Dispatch.on_add_window(layer=new_layer)
 
     def _change_plot_color(self):
-        container = plot_manager.get_plot_from_layer(
-            self.current_layer, self.active_window)
+        plot = self.active_window.get_plot(self.current_layer)
 
         col = QColorDialog.getColor(
-            container._pen_stash['pen_on'].color(),
+            plot._pen_stash['pen_on'].color(),
             self.tree_widget_layer_list)
 
         if col.isValid():
-            container.pen = col
+            plot.pen = col
 
-            Dispatch.on_updated_plot.emit(container=container)
+            Dispatch.on_updated_plot.emit(container=plot)
         else:
             logging.warning("Color is not valid.")
 
@@ -281,11 +316,38 @@ class LayerListPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):
-        layers = window_manager.get_layers(window)
+        if window is None:
+            return
+
+        layers = window.get_all_layers()
 
         self.tree_widget_layer_list.clear()
 
         for layer in layers:
             self.add_layer_item(layer)
+            plot = window.get_plot(layer)
+            self.update_layer_item(plot)
+
+    @DispatchHandle.register_listener("on_clicked_layer")
+    def _set_layer_visibility(self, layer_item, col=0):
+        """
+        Toggles the visibility of the plot in the sub window.
+
+        Parameters
+        ----------
+        layer : Layer
+            Layer object to toggle visibility.
+
+        col : int
+            QtTreeWidget data column.
+        """
+        layer = layer_item.data(0, Qt.UserRole)
+
+        if layer is not None:
+            current_window = self.active_window
+
+            current_window.set_visibility(
+                layer, layer_item.checkState(col) == Qt.Checked,
+                override=True)
 
 

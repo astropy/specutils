@@ -6,7 +6,7 @@ import logging
 
 # LOCAL
 from ..core.data import Data, Layer, ModelLayer
-from ..core.containers import PlotContainer
+from ..core.plots import LinePlot
 from ..analysis.models.spline import Spline1D
 from ..analysis.models.blackbody import BlackBody
 
@@ -158,9 +158,9 @@ class PlotFactory(Factory):
         plot_data_item = pg.PlotDataItem(layer.dispersion.value,
                                          layer.data.value)
 
-        plot_container = PlotContainer(layer=layer, plot=plot_data_item,
-                                       visible=visible, style=style,
-                                       pen=pen, err_pen=err_pen)
+        plot_container = LinePlot(layer=layer, plot=plot_data_item,
+                                  visible=visible, style=style,
+                                  pen=pen, err_pen=err_pen)
 
         if plot_container.layer.uncertainty is not None:
             # err_top = pg.PlotDataItem(

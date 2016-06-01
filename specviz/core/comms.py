@@ -122,13 +122,13 @@ Dispatch.register_event("on_activated_window", args=["window"])
 
 Dispatch.register_event("on_added_data", args=["data"])
 Dispatch.register_event("on_added_window", args=["layer", "window"])
-Dispatch.register_event("on_added_plot", args=["container", "window"])
+Dispatch.register_event("on_added_plot", args=["plot", "window"])
 Dispatch.register_event("on_added_model", args=["model", "layer"])
 Dispatch.register_event("on_added_layer", args=["layer"])
 
 Dispatch.register_event("on_removed_data", args=["data"])
 Dispatch.register_event("on_removed_plot", args=["layer", "window"])
-Dispatch.register_event("on_removed_layer", args=["layer"])
+Dispatch.register_event("on_removed_layer", args=["layer", "window"])
 Dispatch.register_event("on_removed_model", args=["model", "layer"])
 Dispatch.register_event("on_removed_from_window", args=["layer", "window"])
 

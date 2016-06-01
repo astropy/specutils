@@ -2,7 +2,6 @@ from ..ui.widgets.plugin import Plugin
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
 from ..core.comms import Dispatch, DispatchHandle
-from ..interfaces.managers import layer_manager
 from ..analysis import statistics
 from ..third_party.qtpy.QtGui import *
 
@@ -12,12 +11,14 @@ import numpy as np
 import astropy.units as u
 
 
+LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
+
+
 class StatisticsPlugin(Plugin):
     name = "Statistics"
 
     def __init__(self, *args, **kwargs):
         super(StatisticsPlugin, self).__init__(*args, **kwargs)
-        self._current_window = None
         self._current_layer_item = None
 
     def setup_ui(self):
@@ -43,7 +44,7 @@ class StatisticsPlugin(Plugin):
         sizePolicy.setHeightForWidth(
             self.line_edit_current_layer.sizePolicy().hasHeightForWidth())
         self.line_edit_current_layer.setSizePolicy(sizePolicy)
-        self.line_edit_current_layer.setStyleSheet("QLineEdit{background: #DDDDDD;}")
+        self.line_edit_current_layer.setStyleSheet(LINE_EDIT_CSS)
         self.line_edit_current_layer.setReadOnly(True)
 
         self.layout_form.setWidget(0, QFormLayout.LabelRole,
@@ -79,8 +80,7 @@ class StatisticsPlugin(Plugin):
         self.label_mean.setText("Mean")
 
         self.line_edit_mean = QLineEdit(self.tab_basic)
-        self.line_edit_mean.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+        self.line_edit_mean.setStyleSheet(LINE_EDIT_CSS)
         self.line_edit_mean.setReadOnly(True)
         self.layout_form_tab_basic.setWidget(0, QFormLayout.LabelRole,
                                              self.label_mean)
@@ -92,7 +92,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_median = QLineEdit(self.tab_basic)
         self.line_edit_median.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_median.setReadOnly(True)
         self.layout_form_tab_basic.setWidget(1, QFormLayout.LabelRole,
                                              self.label_median)
@@ -104,7 +104,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_std_dev = QLineEdit(self.tab_basic)
         self.line_edit_std_dev.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_std_dev.setReadOnly(True)
         self.layout_form_tab_basic.setWidget(2, QFormLayout.LabelRole,
                                              self.label_std_dev)
@@ -116,7 +116,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_total = QLineEdit(self.tab_basic)
         self.line_edit_total.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_total.setReadOnly(True)
         self.layout_form_tab_basic.setWidget(3, QFormLayout.LabelRole,
                                              self.label_total)
@@ -128,7 +128,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_data_point_count = QLineEdit(self.tab_basic)
         self.line_edit_data_point_count.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_data_point_count.setReadOnly(True)
         self.layout_form_tab_basic.setWidget(4, QFormLayout.LabelRole,
                                              self.label_data_point_count)
@@ -160,7 +160,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_equivalent_width = QLineEdit(self.tab_measured)
         self.line_edit_equivalent_width.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_equivalent_width.setReadOnly(True)
 
         self.layout_form_tab_measured.setWidget(0, QFormLayout.LabelRole,
@@ -173,7 +173,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_centroid = QLineEdit(self.tab_measured)
         self.line_edit_centroid.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_centroid.setReadOnly(True)
 
         self.layout_form_tab_measured.setWidget(1, QFormLayout.LabelRole,
@@ -186,7 +186,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_flux = QLineEdit(self.tab_measured)
         self.line_edit_flux.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_flux.setReadOnly(True)
 
         self.layout_form_tab_measured.setWidget(2, QFormLayout.LabelRole,
@@ -199,7 +199,7 @@ class StatisticsPlugin(Plugin):
 
         self.line_edit_continuum = QLineEdit(self.tab_measured)
         self.line_edit_continuum.setStyleSheet(
-            "QLineEdit{background: #DDDDDD;}")
+            LINE_EDIT_CSS)
         self.line_edit_continuum.setReadOnly(True)
 
         self.layout_form_tab_measured.setWidget(3, QFormLayout.LabelRole,
@@ -222,6 +222,7 @@ class StatisticsPlugin(Plugin):
         }""")
 
         self.layout_vertical_tab_measured.addWidget(self.label_measured_error)
+        self.layout_vertical_tab_measured.addStretch()
 
         self.layout_vertical.addStretch()
 
@@ -242,11 +243,11 @@ class StatisticsPlugin(Plugin):
         self.line_edit_current_layer.setText(current_layer.name)
 
     @DispatchHandle.register_listener("on_updated_rois")
-    def update_basic_stats(self, rois=None, measure_rois=None):
+    def update_statistics(self, rois=None):
         if rois is None:
-            return
+            rois = []
 
-        if self._current_window is None or self._current_layer_item is None:
+        if self.active_window is None or self._current_layer_item is None:
             logging.warning(
                 "No window or layer item provided; cannot update statistics.")
             return

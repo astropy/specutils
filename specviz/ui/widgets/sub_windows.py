@@ -10,6 +10,7 @@ from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
 from ...core.comms import Dispatch, DispatchHandle
 from .region_items import LinearRegionItem
+from ...core.plots import LinePlot
 
 import numpy as np
 import pyqtgraph as pg
@@ -77,7 +78,7 @@ class PlotSubWindow(UiPlotSubWindow):
     """
     def __init__(self, *args, **kwargs):
         super(PlotSubWindow, self).__init__(*args, **kwargs)
-        self._containers = []
+        self._plots = []
         self._dynamic_axis = None
         self._plot_widget = None
         self._plot_item = None
@@ -129,7 +130,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
-            container = self.get_container(layer)
+            container = self.get_plot(layer)
 
         if container is None:
             return
@@ -178,13 +179,16 @@ class PlotSubWindow(UiPlotSubWindow):
         roi.sigRegionChangeFinished.connect(
             lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
 
-    def get_container(self, layer):
-        for container in self._containers:
-            if container.layer == layer:
-                return container
+    def get_plot(self, layer):
+        for plot in self._plots:
+            if plot.layer == layer:
+                return plot
+
+    def get_all_layers(self):
+        return [plot.layer for plot in self._plots]
 
     def change_units(self, x=None, y=None, z=None):
-        for cntr in self._containers:
+        for cntr in self._plots:
             cntr.change_units(x, y, z)
 
         self.set_labels(x_label=x, y_label=y)
@@ -194,12 +198,12 @@ class PlotSubWindow(UiPlotSubWindow):
     def set_labels(self, x_label='', y_label=''):
         self._plot_item.setLabels(
             left="Flux [{}]".format(
-                y_label or str(self._containers[0].layer.units[1])),
+                y_label or str(self._plots[0].layer.units[1])),
             bottom="Wavelength [{}]".format(
-                x_label or str(self._containers[0].layer.units[0])))
+                x_label or str(self._plots[0].layer.units[0])))
 
     def set_visibility(self, layer, show, override=False):
-        for container in self._containers:
+        for container in self._plots:
             if container.layer == layer:
                 if container._visibility_state != [show, show, False]:
                     container.set_visibility(show, show, inactive=False,
@@ -209,57 +213,60 @@ class PlotSubWindow(UiPlotSubWindow):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
         self._plot_widget.update()
 
+    def update_plot(self):
+        self._plot_item.update()
+
     def closeEvent(self, event):
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
 
-    @DispatchHandle.register_listener("on_added_plot")
-    def add_container(self, container, window):
-        if window != self:
+    @DispatchHandle.register_listener("on_add_layer")
+    def add_plot(self, layer, window=None):
+        if window is not None and window != self:
             logging.warning("Attempted to add container to plot, but sub "
                             "windows do not match.")
             return
 
-        # User tries to plot before loading file, do nothing
-        if not hasattr(container, 'layer'):
-            return
+        new_plot = LinePlot.from_layer(layer)
 
-        if len(self._containers) == 0:
-            self.change_units(container.layer.units[0],
-                              container.layer.units[1])
+        if len(self._plots) == 0:
+            self.change_units(new_plot.layer.units[0],
+                              new_plot.layer.units[1])
         else:
-            container.change_units(*self._plot_units)
+            new_plot.change_units(*self._plot_units)
 
-        if container.error is not None:
-            self._plot_item.addItem(container.error)
+        if new_plot.error is not None:
+            self._plot_item.addItem(new_plot.error)
 
-        self._containers.append(container)
-        self._plot_item.addItem(container.plot)
+        self._plots.append(new_plot)
+        self._plot_item.addItem(new_plot.plot)
 
-        self.set_active_plot(container.layer)
+        self.set_active_plot(new_plot.layer)
 
         # Make sure the dynamic axis object has access to a layer
-        self._dynamic_axis._layer = self._containers[0].layer
+        self._dynamic_axis._layer = self._plots[0].layer
 
-    @DispatchHandle.register_listener("on_removed_plot")
-    def remove_container(self, layer, window=None):
+        Dispatch.on_added_plot.emit(plot=new_plot, window=window)
+
+    @DispatchHandle.register_listener("on_removed_layer")
+    def remove_plot(self, layer, window=None):
         if window is not None and window != self:
             return
 
-        for container in [x for x in self._containers]:
-            if container.layer == layer:
-                self._plot_item.removeItem(container.plot)
+        for plot in self._plots:
+            if plot.layer == layer:
+                self._plot_item.removeItem(plot.plot)
 
-                if container.error is not None:
-                    self._plot_item.removeItem(container.error)
+                if plot.error is not None:
+                    self._plot_item.removeItem(plot.error)
 
-                self._containers.remove(container)
+                self._plots.remove(plot)
 
-    @DispatchHandle.register_listener("on_selected_plot")
+    @DispatchHandle.register_listener("on_select_plot")
     def set_active_plot(self, layer):
-        for container in self._containers:
-            if container.layer == layer:
-                container.set_visibility(True, True, inactive=False)
+        for plot in self._plots:
+            if plot.layer == layer:
+                plot.set_visibility(True, True, inactive=False)
             else:
-                container.set_visibility(True, False, inactive=True)
+                plot.set_visibility(True, False, inactive=True)
 
