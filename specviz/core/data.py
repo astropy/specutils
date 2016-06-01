@@ -16,6 +16,7 @@ from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
 from astropy.units import Unit, Quantity, spectral, spectral_density
 from astropy.wcs import WCS
 from ..third_party.py_expression_eval import Parser
+from ..analysis import modeling
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -333,6 +334,17 @@ class Layer(object):
             return
 
         return result
+
+    @staticmethod
+    def from_model(layer, model, fitter=None, mask=None):
+        new_model = modeling.apply_model(model, layer.dispersion,
+                                         layer.data, fitter)
+
+        new_data = Data(new_model(layer.dispersion.value))
+        new_layer = Layer(new_data, mask=mask)
+        new_layer.dispersion = layer.dispersion.value
+
+        return new_layer
 
     def __add__(self, other):
         new_layer = self._arithmetic("add", other)
