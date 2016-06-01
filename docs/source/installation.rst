@@ -40,7 +40,7 @@ you do not have any system conflicts. Note that this is entirely optional,
 but encouraged due to the fact that `Qt4 development and support has ended
 <http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_. ::
 
-    $ conda install --channel https://anaconda.org/m-labs/pyqt5 pyqt5
+    $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
     $ conda install --channel https://conda.anaconda.org/nmearl specviz
 
 SpecViz can then be launched via the command line::
