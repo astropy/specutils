@@ -248,6 +248,36 @@ class Controller(object):
 
         plot_container = plot_manager.new(layer, window)
 
+    @DispatchHandle.register_listener("on_add_layer")
+    def add_layer(self, layer=None, mask=None, window=None, from_roi=True):
+        """
+        Creates a layer object from the current ROIs of the active plot layer.
+
+        Parameters
+        ----------
+        layer : specviz.core.data.Layer
+            The current active layer of the active plot.
+        window : QtGui.QMdiSubWindow
+            The parent object within which the plot window resides.
+        mask : ndarray
+            Boolean mask.
+        """
+        # User attempts to slice before opening a file
+        if layer is None and window is None:
+            logging.error("Cannot add new layer; no layer and no window "
+                          "provided.")
+            return
+
+        roi_mask = mask if mask is not None and not from_roi else \
+            window.get_roi_mask(layer=layer)
+
+        new_layer = layer_manager.new(layer._source,
+                                      mask=roi_mask,
+                                      name=layer._source.name + " Layer Slice")
+
+        window_manager.add(new_layer, window)
+        plot_container = plot_manager.new(new_layer, window)
+
     def add_model_layer(self):
         """
         Creates a new layer object using the currently defined model.
@@ -312,32 +342,6 @@ class Controller(object):
             fitter_name=self.viewer.current_fitter)
 
         plot_manager.update_plots(layer=fitted_layer)
-
-    def get_roi_mask(self, layer=None, roi=None):
-        """
-        Retrieves the array mask depending on the ROIs currently in the
-        active plot window.
-
-        Parameters
-        ----------
-        layer : Layer
-            The layer containing the data from which the mask will be
-            constructed.
-
-        Returns
-        -------
-        roi_mask : ndarray
-            A boolean array the size of currently selected layer masking
-            outside the bounds of the ROIs.
-        """
-        current_layer = layer or self.viewer.current_layer
-        current_sub_window = self.viewer.current_sub_window
-
-        if current_sub_window is not None:
-            roi_mask = current_sub_window.get_roi_mask(layer=current_layer,
-                                                       roi=roi)
-
-            return roi_mask
 
     def update_model_layer(self, model_item=None):
         """

@@ -64,9 +64,8 @@ class PlotToolsPlugin(Plugin):
             except ValueError as e:
                 logging.error(e)
 
-            self.change_units(x_unit, y_unit)
-
-            self._plot_item.update()
+            self.active_window.change_units(x_unit, y_unit)
+            self.active_window._plot_item.update()
 
     def _update_axis(self):
         if self.active_window is None:

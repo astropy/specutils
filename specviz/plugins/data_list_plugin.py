@@ -3,7 +3,6 @@ from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
-import qtawesome as qta
 from ..ui.widgets.utils import ICON_PATH
 
 

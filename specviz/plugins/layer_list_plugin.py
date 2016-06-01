@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..interfaces.managers import layer_manager, plot_manager
+from ..interfaces.managers import layer_manager, plot_manager, window_manager
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -57,8 +57,9 @@ class LayerListPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
             category='transformations',
             enabled=False,
-            callback=lambda: Dispatch.on_add_roi_layer.emit(
-                layer=self.current_layer, from_roi=True))
+            callback=lambda: Dispatch.on_add_layer.emit(
+                window=self.active_window, layer=self.current_layer,
+                from_roi=True))
 
     def setup_connections(self):
         # -- Communications setup
@@ -218,36 +219,6 @@ class LayerListPlugin(Plugin):
 
         if layer_item is not None:
             layer_item.setIcon(0, icon)
-
-    def add_roi_layer(self, layer=None, mask=None, window=None):
-        """
-        Creates a layer object from the current ROIs of the active plot layer.
-
-        Parameters
-        ----------
-        layer : specviz.core.data.Layer
-            The current active layer of the active plot.
-        window : QtGui.QMdiSubWindow
-            The parent object within which the plot window resides.
-        mask : ndarray
-            Boolean mask.
-        """
-        layer = layer if layer is not None else self.current_layer
-
-        # User attempts to slice before opening a file
-        if layer is None:
-            return
-
-        window = self.active_window
-        roi_mask = mask if mask is not None else self.get_roi_mask(
-            layer=layer)
-
-        new_layer = layer_manager.new(layer._source,
-                                      mask=roi_mask,
-                                      name=layer._source.name + " Layer Slice")
-
-        window_manager.add(new_layer, window)
-        plot_container = plot_manager.new(new_layer, window)
 
     def _show_arithmetic_dialog(self):
         if self.current_layer is None:

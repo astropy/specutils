@@ -5,7 +5,6 @@ from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..interfaces.managers import layer_manager
 from ..analysis import statistics
-import qtawesome as qta
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -20,7 +19,6 @@ class ToolTrayPlugin(Plugin):
     def setup_ui(self):
         # ---
         # Selections setup
-
         self.add_tool_button(
             description='Add line label',
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),

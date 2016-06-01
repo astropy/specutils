@@ -72,10 +72,9 @@ class WindowManager(Manager):
     def add(self, layer, window):
         if window not in self._members:
             self._members[window] = [layer]
+            Dispatch.on_added_window.emit(layer=layer, window=window)
         else:
             self._members[window].append(layer)
-            
-        Dispatch.on_added_window.emit(layer=layer, window=window)
 
     def remove(self, layer, window=None):
         if window in self._members:
