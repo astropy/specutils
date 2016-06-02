@@ -264,7 +264,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
                 self._plots.remove(plot)
 
-    @DispatchHandle.register_listener("on_select_plot")
+    @DispatchHandle.register_listener("on_selected_plot")
     def set_active_plot(self, layer):
         for plot in self._plots:
             if plot.layer == layer:

@@ -295,7 +295,7 @@ class LayerListPlugin(Plugin):
         if col.isValid():
             plot.pen = col
 
-            Dispatch.on_updated_plot.emit(container=plot)
+            Dispatch.on_updated_plot.emit(plot=plot)
         else:
             logging.warning("Color is not valid.")
 
@@ -342,7 +342,6 @@ class LayerListPlugin(Plugin):
         current_window = self.active_window
 
         if layer is None or current_window is None:
-            print("NONE")
             return
 
         current_window.set_visibility(

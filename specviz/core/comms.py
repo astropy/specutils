@@ -134,7 +134,7 @@ Dispatch.register_event("on_removed_from_window", args=["layer", "window"])
 
 Dispatch.register_event("on_updated_layer", args=["layer"])
 Dispatch.register_event("on_updated_model", args=["model"])
-Dispatch.register_event("on_updated_plot", args=["container", "layer"])
+Dispatch.register_event("on_updated_plot", args=["plot", "layer"])
 Dispatch.register_event("on_updated_rois", args=["rois"])
 Dispatch.register_event("on_updated_stats", args=["stats", "layer"])
 

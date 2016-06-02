@@ -94,5 +94,8 @@ class Plugin(QDockWidget):
         self._active_window = window
 
     @DispatchHandle.register_listener("on_selected_layer")
-    def set_active_window(self, layer_item):
-        self._current_layer = layer_item.data(0, Qt.UserRole)
+    def set_active_layer(self, layer_item):
+        if layer_item is not None:
+            self._current_layer = layer_item.data(0, Qt.UserRole)
+        else:
+            self._current_layer = None

@@ -230,18 +230,21 @@ class StatisticsPlugin(Plugin):
         if rois is None:
             rois = []
 
-        if self.active_window is None or self._current_layer_item is None:
-            logging.warning(
-                "No window or layer item provided; cannot update statistics.")
-            return
-
-        if self._current_layer_item is None or self.active_window is None:
-            return
-
         current_layer = self._current_layer
 
-        # Set the active tab to basic
-        # self.tab_widget_stats.setCurrentIndex(0)
+        if self.active_window is None or current_layer is None:
+            logging.info(
+                "No window or layer item provided; cannot update statistics.")
+
+            # Clear statistics information
+            for att in self.__dict__:
+                if 'line_edit' in att:
+                    self.__dict__[att].setText("")
+
+            return
+
+        # Set current layer name text
+        self.line_edit_current_layer.setText(current_layer.name)
 
         mask = self.active_window.get_roi_mask(layer=current_layer)
 
