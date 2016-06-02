@@ -82,7 +82,8 @@ class MainWindow(UiMainWindow):
             else:
                 window = None
 
-        Dispatch.on_activated_window.emit(window=window.widget())
+        Dispatch.on_activated_window.emit(
+            window=window.widget() if window is not None else None)
 
     @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data=None, layer=None, *args, **kwargs):

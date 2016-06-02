@@ -313,12 +313,12 @@ class LayerListPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):
+        self.tree_widget_layer_list.clear()
+
         if window is None:
             return
 
         layers = window.get_all_layers()
-
-        self.tree_widget_layer_list.clear()
 
         for layer in layers:
             self.add_layer_item(layer)
