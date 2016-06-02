@@ -342,6 +342,7 @@ class LayerListPlugin(Plugin):
         current_window = self.active_window
 
         if layer is None or current_window is None:
+            print("NONE")
             return
 
         current_window.set_visibility(

@@ -71,9 +71,18 @@ class MainWindow(UiMainWindow):
     def __init__(self, parent=None, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
 
-        self.mdi_area.subWindowActivated.connect(
-            lambda x: Dispatch.on_activated_window.emit(
-                window=x.widget() if x is not None else None))
+        self.mdi_area.subWindowActivated.connect(self._set_activated_window)
+
+    def _set_activated_window(self, window):
+        if window is None:
+            all_sws = self.mdi_area.subWindowList(order=self.mdi_area.ActivationHistoryOrder)
+
+            if len(all_sws) > 0:
+                window = all_sws[-1]
+            else:
+                window = None
+
+        Dispatch.on_activated_window.emit(window=window.widget())
 
     @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data=None, layer=None, *args, **kwargs):

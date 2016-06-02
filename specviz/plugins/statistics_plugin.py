@@ -17,10 +17,6 @@ LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
 class StatisticsPlugin(Plugin):
     name = "Statistics"
 
-    def __init__(self, *args, **kwargs):
-        super(StatisticsPlugin, self).__init__(*args, **kwargs)
-        self._current_layer_item = None
-
     def setup_ui(self):
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
@@ -229,19 +225,6 @@ class StatisticsPlugin(Plugin):
     def setup_connections(self):
         pass
 
-    @DispatchHandle.register_listener("on_selected_window")
-    def set_window(self, window=None):
-        self._current_window = window
-
-    @DispatchHandle.register_listener("on_selected_layer")
-    def set_layer(self, layer_item=None):
-        if layer_item is None:
-            return
-
-        self._current_layer_item = layer_item
-        current_layer = self._current_layer_item.data(0, Qt.UserRole)
-        self.line_edit_current_layer.setText(current_layer.name)
-
     @DispatchHandle.register_listener("on_updated_rois", "on_selected_layer")
     def update_statistics(self, rois=None, *args, **kwargs):
         if rois is None:
@@ -252,12 +235,15 @@ class StatisticsPlugin(Plugin):
                 "No window or layer item provided; cannot update statistics.")
             return
 
-        current_layer = self._current_layer_item.data(0, Qt.UserRole)
+        if self._current_layer_item is None or self.active_window is None:
+            return
+
+        current_layer = self._current_layer
 
         # Set the active tab to basic
         # self.tab_widget_stats.setCurrentIndex(0)
 
-        mask = self._current_window.get_roi_mask(layer=current_layer)
+        mask = self.active_window.get_roi_mask(layer=current_layer)
 
         if mask is None:
             values = current_layer.data
@@ -288,7 +274,7 @@ class StatisticsPlugin(Plugin):
         roi_masks = []
 
         for roi in rois:
-            mask = self._current_window.get_roi_mask(layer=current_layer,
+            mask = self.active_window.get_roi_mask(layer=current_layer,
                                                      roi=roi)
             roi_masks.append(mask)
             values = current_layer.data[mask[current_layer._mask]]

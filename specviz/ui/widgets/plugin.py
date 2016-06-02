@@ -28,6 +28,7 @@ class Plugin(QDockWidget):
 
         # Keep a reference to the active sub window
         self._active_window = None
+        self._current_layer = None
 
         self._all_plugins.append(self)
         DispatchHandle.setup(self)
@@ -84,6 +85,14 @@ class Plugin(QDockWidget):
     def active_window(self):
         return self._active_window
 
+    @property
+    def current_layer(self):
+        return self._current_layer
+
     @DispatchHandle.register_listener("on_activated_window")
     def set_active_window(self, window):
         self._active_window = window
+
+    @DispatchHandle.register_listener("on_selected_layer")
+    def set_active_window(self, layer_item):
+        self._current_layer = layer_item.data(0, Qt.UserRole)

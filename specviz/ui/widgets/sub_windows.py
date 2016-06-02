@@ -203,11 +203,13 @@ class PlotSubWindow(UiPlotSubWindow):
                 x_label or str(self._plots[0].layer.units[0])))
 
     def set_visibility(self, layer, show, override=False):
-        for container in self._plots:
-            if container.layer == layer:
-                if container._visibility_state != [show, show, False]:
-                    container.set_visibility(show, show, inactive=False,
-                                             override=override)
+        print("SETTING VISIBILITTY")
+        plot = self.get_plot(layer)
+        print(plot)
+
+        if plot._visibility_state != [show, show, False]:
+            print("FOR REALZ")
+            plot.set_visibility(show, show, inactive=False, override=override)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
