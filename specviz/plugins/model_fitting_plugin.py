@@ -4,14 +4,11 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..core.data import ModelLayer
-# from ..interfaces.managers import model_manager
 from ..interfaces.model_io import yaml_model_io, py_model_io
 from ..interfaces.factories import ModelFactory, FitterFactory
 
 from ..ui.widgets.utils import ICON_PATH
 
-from astropy.units import spectral_density, spectral
-import logging
 import numpy as np
 
 

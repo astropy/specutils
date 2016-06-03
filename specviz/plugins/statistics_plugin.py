@@ -228,7 +228,7 @@ class StatisticsPlugin(Plugin):
     @DispatchHandle.register_listener("on_updated_rois", "on_selected_layer")
     def update_statistics(self, rois=None, *args, **kwargs):
         if rois is None:
-            rois = []
+            rois = self.active_window._rois
 
         current_layer = self._current_layer
 
@@ -268,6 +268,12 @@ class StatisticsPlugin(Plugin):
 
         # Calculate measured statistics if there are three rois
         if len(rois) < 3:
+            # So that the rois are not updating all the time, reset the
+            # colors of the rois when the number has *just* fallen below 3
+            if self.label_measured_error.isHidden():
+                [x.setBrush(QColor(0, 0, 255, 50)) for x in rois]
+                [x.update() for x in rois]
+
             self.label_measured_error.show()
             return
         else:
@@ -288,8 +294,7 @@ class StatisticsPlugin(Plugin):
             key=lambda x: np.max(np.abs(x[0]))))
 
         rois[-1].setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
-        [x.setBrush(QColor(0, 0, 255, 50)) for x in rois[0:-1]]
-        [x.update() for x in rois]
+        rois[-1].update()
 
         cont1_stat_dict = statistics.stats(roi_data_sets[0])
         cont2_stat_dict = statistics.stats(
