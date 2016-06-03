@@ -473,3 +473,33 @@ class ModelLayer(Layer):
     def model(self, value):
         self._model = value
         self._data = self._model(self.dispersion.value)
+
+    @classmethod
+    def from_formula(cls, formula, models):
+        result_model = cls._evaluate(formula, models)
+        return result_model
+
+    @classmethod
+    def _evaluate(cls, models, formula):
+        try:
+            parser = Parser()
+            expr = parser.parse(formula)
+        except:
+            return
+
+        # Extract variables
+        vars = expr.variables()
+
+        # List the models in the same order as the variables
+        sorted_models = [m for v in vars for m in models if m.name == v]
+
+        if len(sorted_models) != len(vars):
+            logging.error("Incorrect model arithmetic formula: the number "
+                          "of models does not match the number of variables.")
+            return
+
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in
+                                      zip(vars, sorted_models)))
+
+        return result

@@ -59,9 +59,9 @@ class UiPlotSubWindow(QMainWindow):
         self.line_edit_cursor_pos.setText("None, None")
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
-        # self.horizontal_layout.addLayout(self.layout_x_range)
-        # self.horizontal_layout.addLayout(self.layout_y_range)
-        # self.horizontal_layout.addWidget(self.button_reset)
+        self.horizontal_layout.addLayout(self.layout_x_range)
+        self.horizontal_layout.addLayout(self.layout_y_range)
+        self.horizontal_layout.addWidget(self.button_reset)
         self.horizontal_layout.addStretch()
 
         self.vertical_layout.addLayout(self.horizontal_layout)
@@ -203,20 +203,24 @@ class PlotSubWindow(UiPlotSubWindow):
                 x_label or str(self._plots[0].layer.units[0])))
 
     def set_visibility(self, layer, show, override=False):
-        print("SETTING VISIBILITTY")
         plot = self.get_plot(layer)
-        print(plot)
 
         if plot._visibility_state != [show, show, False]:
-            print("FOR REALZ")
             plot.set_visibility(show, show, inactive=False, override=override)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
         self._plot_widget.update()
 
-    def update_plot(self):
+    def update_plot_item(self):
         self._plot_item.update()
+
+    @DispatchHandle.register_listener("on_update_model")
+    def update_plot(self, layer=None, plot=None):
+        if layer is not None:
+            plot = self.get_plot(layer)
+
+        plot.update()
 
     def closeEvent(self, event):
         DispatchHandle.tear_down(self)

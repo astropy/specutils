@@ -147,7 +147,7 @@ class LayerListPlugin(Plugin):
         return layers
 
     @DispatchHandle.register_listener("on_add_layer")
-    def add_layer_item(self, layer, unique=True):
+    def add_layer_item(self, layer, unique=True, *args, **kwargs):
         """
         Adds a `Layer` object to the loaded layer list widget.
 
@@ -210,21 +210,6 @@ class LayerListPlugin(Plugin):
 
         Dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
 
-    @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
-    def update_layer_item(self, plot=None, *args, **kwargs):
-        if plot is None:
-            return
-
-        layer = plot._layer
-        pixmap = QPixmap(10, 10)
-        pixmap.fill(plot.pen.color())
-        icon = QIcon(pixmap)
-
-        layer_item = self.get_layer_item(layer)
-
-        if layer_item is not None:
-            layer_item.setIcon(0, icon)
-
     def add_layer(self, layer=None, mask=None, window=None, from_roi=True):
         """
         Creates a layer object from the current ROIs of the active plot layer.
@@ -252,6 +237,34 @@ class LayerListPlugin(Plugin):
                           name=layer._source.name + "Layer Slice")
 
         Dispatch.on_add_layer.emit(layer=new_layer)
+
+    @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
+    def update_layer_item(self, plot=None, *args, **kwargs):
+        if plot is None:
+            return
+
+        layer = plot._layer
+        pixmap = QPixmap(10, 10)
+        pixmap.fill(plot.pen.color())
+        icon = QIcon(pixmap)
+
+        layer_item = self.get_layer_item(layer)
+
+        if layer_item is not None:
+            layer_item.setIcon(0, icon)
+
+    @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
+    def _update_layer_name(self, layer_item, col=0):
+        if layer_item is None:
+            return
+
+        layer = layer_item.data(0, Qt.UserRole)
+
+        if hasattr(layer, 'name'):
+            layer.name = layer_item.text(0)
+
+        # Alert the statistics container to update the displayed layer name
+        Dispatch.on_updated_rois.emit(rois=None)
 
     def _show_arithmetic_dialog(self):
         if self.current_layer is None:
@@ -312,7 +325,7 @@ class LayerListPlugin(Plugin):
             self.button_change_color.setEnabled(False)
 
     @DispatchHandle.register_listener("on_activated_window")
-    def toggle_enabled(self, window):
+    def update_layer_list(self, window):
         self.tree_widget_layer_list.clear()
 
         if window is None:

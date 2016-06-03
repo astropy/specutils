@@ -17,14 +17,12 @@ from astropy.utils.exceptions import AstropyUserWarning
 from .third_party.qtpy.QtWidgets import *
 from .third_party.qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
-from .ui.controller import Controller
 
 
 class App(object):
     def __init__(self, argv):
         super(App, self).__init__()
         self.viewer = Viewer()
-        self.controller = Controller(self.viewer)
 
         if len(argv) > 1:
             self.controller.read_file(sys.argv[1])

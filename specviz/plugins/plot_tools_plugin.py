@@ -65,7 +65,7 @@ class PlotToolsPlugin(Plugin):
                 logging.error(e)
 
             self.active_window.change_units(x_unit, y_unit)
-            self.active_window.update_plot()
+            self.active_window.update_plot_item()
 
     def _update_axis(self):
         if self.active_window is None:
