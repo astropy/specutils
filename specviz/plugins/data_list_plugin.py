@@ -6,12 +6,24 @@ from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..interfaces.registries import loader_registry
 from ..core.data import Data
+from ..core.threads import FileLoadThread
 
 import logging
 
 
 class DataListPlugin(Plugin):
     name = "Data List"
+
+    def __init__(self, *args, **kwargs):
+        super(DataListPlugin, self).__init__(*args, **kwargs)
+
+        self.file_load_thread = FileLoadThread()
+
+        self.file_load_thread.status.connect(
+            Dispatch.on_status_message.emit)
+
+        self.file_load_thread.result.connect(
+            Dispatch.on_added_data.emit)
 
     def setup_ui(self):
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
@@ -155,29 +167,8 @@ class DataListPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_file_read")
     def read_file(self, file_name, file_filter=None):
-        """
-        Convenience method that directly reads a spectrum from a file.
-        This exists mostly to facilitate development workflow. In time it
-        could be augmented to support fancier features such as wildcards,
-        file lists, mixed file types, and the like.
-        Note that the filter string is hard coded here; its details might
-        depend on the intrincacies of the registries, loaders, and data
-        classes. In other words, this is brittle code.
-        """
-        file_name = str(file_name)
-        file_ext = os.path.splitext(file_name)[-1]
-
-        if file_filter is None:
-            if file_ext in ('.txt', '.dat'):
-                file_filter = 'ASCII (*.txt *.dat)'
-            else:
-                file_filter = 'Generic Fits (*.fits *.mits)'
-
-        try:
-            data = Data.read(file_name, file_filter)
-            Dispatch.on_added_data.emit(data=data)
-        except:
-            logging.error("Incompatible loader for selected data.")
+        self.file_load_thread(file_name=file_name, file_filter=file_filter)
+        self.file_load_thread.start()
 
     @DispatchHandle.register_listener("on_added_data")
     def add_data_item(self, data):
@@ -216,6 +207,7 @@ class DataListPlugin(Plugin):
                 return data_item
 
     def toggle_buttons(self, data_item):
+        print("Received data item")
         if data_item is not None:
             self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)

@@ -10,6 +10,8 @@ from ..interfaces.factories import ModelFactory, FitterFactory
 from ..ui.widgets.utils import ICON_PATH
 
 import numpy as np
+import logging
+
 
 
 class ModelFittingPlugin(Plugin):
@@ -174,11 +176,11 @@ class ModelFittingPlugin(Plugin):
     def setup_connections(self):
         # Populate model dropdown
         self.combo_box_models.addItems(
-            ModelFactory.all_models)
+            sorted(ModelFactory.all_models))
 
         # Populate fitting algorithm dropdown
         self.combo_box_fitting.addItems(
-            FitterFactory.all_fitters)
+            sorted(FitterFactory.all_fitters))
 
         # When the add new model button is clicked, create a new model
         self.button_select_model.clicked.connect(
@@ -503,4 +505,69 @@ class ModelFittingPlugin(Plugin):
         except ValueError:
             prev_val = model_item.data(col, Qt.UserRole)
             model_item.setText(col, str(prev_val))
+
+    def fit_model(self, model_layer, fitter_name):
+        if not hasattr(model_layer, 'model'):
+            logging.warning("This layer has no model to fit.")
+            return
+
+        # When fitting, the selected layer is a ModelLayer, thus
+        # the data to be fitted resides in the parent
+        parent_layer = model_layer._parent
+
+        if parent_layer is None:
+            return
+
+        # While the data comes from the parent, the mask from the model
+        # layer is the actual data that needs to be fit
+        mask = model_layer._mask
+        flux = parent_layer.data[mask]
+        dispersion = parent_layer.dispersion[mask]
+        model = model_layer.model
+
+        # If the number of parameters is greater than the number of data
+        # points, bail
+        if len(model.parameters) > flux.size:
+            logging.warning("Unable to perform fit; number of parameters is "
+                            "greater than the number of data points.")
+            return
+
+        fitted_model = self.apply_model(model, dispersion, flux,
+                                        fitter_name=fitter_name)
+
+        # Update original model with new values from fitted model
+        if hasattr(fitted_model, '_submodels'):
+            for i in range(len(fitted_model._submodels)):
+                for pname in model._submodels[i].param_names:
+                    value = getattr(fitted_model, "{}_{}".format(pname, i))
+                    setattr(model._submodels[i], pname, value.value)
+                    setattr(model[i], pname, value.value)
+        else:
+            for pname in model.param_names:
+                value = getattr(fitted_model, "{}".format(pname))
+                setattr(model, pname, value.value)
+
+        # update GUI with fit results
+        Dispatch.on_updated_model.emit(model=model)
+
+        return model_layer
+
+    def apply_model(self, model, x, y_init, fitter_name=None):
+
+        if fitter_name:
+            fitter = FitterFactory.all_fitters[fitter_name]()
+        else:
+            fitter = FitterFactory.default_fitter()
+
+        result = fitter(model, x, y_init)
+
+        if 'message' in fitter.fit_info:
+            # The fitter 'message' should probably be logged at INFO level.
+            # Problem is, info messages do not display in the error console,
+            # and we, ideally, want the user to see the message immediately
+            # after the fit is executed.
+            logging.warning(fitter.fit_info['message'])
+
+        return result
+
 

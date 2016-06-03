@@ -158,3 +158,5 @@ Dispatch.register_event("on_remove_layer", args=["layer"])
 
 Dispatch.register_event("on_file_open", args=["file_name"])
 Dispatch.register_event("on_file_read", args=["file_name", "filter"])
+
+Dispatch.register_event("on_status_message", args=["message", "timeout"])

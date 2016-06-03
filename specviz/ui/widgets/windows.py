@@ -103,6 +103,10 @@ class MainWindow(UiMainWindow):
         window = mdi_sub_window.widget()
         window.add_roi()
 
+    @DispatchHandle.register_listener("on_status_message")
+    def update_message(self, message, timeout=0):
+        self.status_bar.showMessage(message, timeout)
+
 
 class MdiArea(QMdiArea):
     def __init__(self, *args, **kwargs):
