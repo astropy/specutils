@@ -538,7 +538,7 @@ class ModelFittingPlugin(Plugin):
         self.add_model_item(layer)
 
     @DispatchHandle.register_listener("on_changed_model")
-    def _model_parameter_validation(self, model_item, col):
+    def _model_parameter_validation(self, model_item, col=1):
         if col == 0:
             return
 

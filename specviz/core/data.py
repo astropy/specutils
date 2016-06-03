@@ -439,9 +439,9 @@ class ModelLayer(Layer):
         # Handle bad mask when fitting goes awry.
         if self._mask.shape != self._source.dispersion.shape:
             self._mask = np.ones(self._source.dispersion.shape, dtype=np.bool)
-
+        print("HERE")
         self._data = self._model(self.dispersion.value)
-
+        print("I was called")
         return Quantity(self._data,
                         unit=self._source.unit).to(self.units[1])
 
