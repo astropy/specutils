@@ -5,18 +5,33 @@ from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..core.data import ModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
+from ..interfaces.initializers import initialize
 from ..interfaces.factories import ModelFactory, FitterFactory
+from ..core.threads import FitModelThread
 
 from ..ui.widgets.utils import ICON_PATH
 
 import numpy as np
 import logging
 
+# To memorize last visited directory.
+_model_directory = os.environ["HOME"]
 
 
 class ModelFittingPlugin(Plugin):
     name = "Model Fitting"
     location = "right"
+
+    def __init__(self, *args, **kwargs):
+        super(ModelFittingPlugin, self).__init__(*args, **kwargs)
+        self.fit_model_thread = FitModelThread()
+
+        self.fit_model_thread.status.connect(
+            Dispatch.on_status_message.emit)
+
+        self.fit_model_thread.result.connect(
+            lambda model_layer: Dispatch.on_update_model.emit(
+                layer=model_layer))
 
     def setup_ui(self):
         self.scroll_area = QScrollArea(self)
@@ -174,6 +189,10 @@ class ModelFittingPlugin(Plugin):
         self.layout_vertical.addWidget(self.scroll_area)
 
     def setup_connections(self):
+        # Enable/disable buttons depending on selection
+        self.tree_widget_current_models.itemSelectionChanged.connect(
+            self.toggle_buttons)
+
         # Populate model dropdown
         self.combo_box_models.addItems(
             sorted(ModelFactory.all_models))
@@ -193,15 +212,31 @@ class ModelFittingPlugin(Plugin):
 
         # When the model list delete button is pressed
         self.button_remove_model.clicked.connect(
-            lambda: self.remove_model())
+            lambda: self.remove_model_item())
 
         # When editing the formula is finished, send event
         self.line_edit_model_arithmetic.textEdited.connect(
             lambda: self.update_model_formula())
 
+        # Attach the fit button
+        self.button_perform_fit.clicked.connect(
+            self.fit_model_layer)
+
+        # ---
+        # IO
+        # Attach the model save/read buttons
+        self.button_save_model.clicked.connect(
+            self.save_model)
+
+        self.button_load_model.clicked.connect(
+            self.load_model)
+
+        self.button_export_model.clicked.connect(
+            self.export_model)
+
     @property
     def current_model(self):
-        model_item = self.current_model_item()
+        model_item = self.current_model_item
         model = model_item.data(0, Qt.UserRole)
 
         return model
@@ -214,6 +249,8 @@ class ModelFittingPlugin(Plugin):
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
         layer = self.current_layer
+
+        initialize(model, layer.dispersion, layer.data)
 
         if layer is not None:
             # There is current a selected layer
@@ -313,48 +350,46 @@ class ModelFittingPlugin(Plugin):
                     new_para_item.flags() | Qt.ItemIsEditable)
 
             self.tree_widget_current_models.addTopLevelItem(new_item)
+            self.tree_widget_current_models.expandItem(new_item)
 
         self._update_arithmetic_text(layer)
 
-    @DispatchHandle.register_listener("on_removed_model")
-    def remove_model_item(self, model=None, layer=None):
-        root = self.tree_widget_current_models.invisibleRootItem()
-
-        for i in range(root.childCount()):
-            child = root.child(i)
-
-            if child is None:
-                continue
-
-            if child.data(0, Qt.UserRole) == model:
-                root.removeChild(child)
-                break
-
-    def update_model_item(self, model):
-        if hasattr(model, '_submodels'):
-            for sub_model in model._submodels:
-                self.update_model_item(sub_model)
-            else:
-                return
-
-        model_item = self.get_model_item(model)
+    @DispatchHandle.register_listener("on_update_model")
+    def update_model_item(self, layer):
+        model_item = self.get_model_item(layer.model)
 
         if model_item is None:
             return
 
-        for i, para in enumerate(model.param_names):
-            for i in range(model_item.childCount()):
-                param_item = model_item.child(i)
+        if hasattr(layer.model, '_submodels'):
+            models = layer.model._submodels
+        else:
+            models = [layer.model]
 
-                if param_item.text(0) == para:
-                    param_item.setText(1, "{:4.4g}".format(
-                        model.parameters[i]))
+        for model in models:
+            for i, para in enumerate(model.param_names):
+                for i in range(model_item.childCount()):
+                    param_item = model_item.child(i)
+
+                    if param_item.text(0) == para:
+                        param_item.setText(1, "{:4.4g}".format(
+                            model.parameters[i]))
 
     @DispatchHandle.register_listener("on_remove_model")
     def remove_model_item(self, model=None):
         if model is None:
             model = self.current_model
 
+        # Remove model from submodels of compound model
+        layer = self.current_layer
+
+        if hasattr(layer, '_model') and hasattr(layer.model, '_submodels'):
+            layer.model._submodels.remove(model)
+        else:
+            logging.error("Cannot remove last model from a `ModelLayer`.")
+            return
+
+        # Remove model from tree widget
         root = self.tree_widget_current_models.invisibleRootItem()
 
         for i in range(root.childCount()):
@@ -370,6 +405,8 @@ class ModelFittingPlugin(Plugin):
                 if sec_child.data(0, Qt.UserRole) == model:
                     child.removeChild(sec_child)
                     break
+
+        self.update_model_formula()
 
     def get_model_item(self, model):
         root = self.tree_widget_current_models.invisibleRootItem()
@@ -420,7 +457,8 @@ class ModelFittingPlugin(Plugin):
 
         Dispatch.on_update_model.emit(layer=model_layer)
 
-    def get_compound_model(self, model_dict, formula=''):
+    def get_compound_model(self, model_dict=None, formula=''):
+        model_dict = model_dict or self.get_model_inputs()
         formula = formula or self.line_edit_model_arithmetic.text()
         models = []
 
@@ -432,27 +470,29 @@ class ModelFittingPlugin(Plugin):
 
         if formula:
             model = ModelLayer.from_formula(models, formula)
-
             return model
 
         return np.sum(models) if len(models) > 1 else models[0]
 
-    def _update_arithmetic_text(self, model_layer):
-        if hasattr(model_layer, '_model'):
+    @DispatchHandle.register_listener("on_update_model")
+    def _update_arithmetic_text(self, layer):
+        if hasattr(layer, '_model'):
             # If the model is a compound
-            if hasattr(model_layer.model, '_submodels'):
-                expr = model_layer.model._format_expression()
+            if hasattr(layer.model, '_submodels'):
+                expr = layer.model._format_expression()
                 expr = expr.replace('[', '{').replace(']', '}')
 
                 model_names = [model.name
-                               for model in model_layer.model._submodels]
+                               for model in layer.model._submodels]
 
                 expr = expr.format(*model_names)
             # If it's just a single model
             else:
-                expr = model_layer.model.name
+                expr = layer.model.name
 
             self.line_edit_model_arithmetic.setText(expr)
+
+            return expr
 
     @DispatchHandle.register_listener("on_selected_model", "on_changed_model")
     def _update_model_name(self, model_item, col=0):
@@ -474,19 +514,23 @@ class ModelFittingPlugin(Plugin):
         model = self.get_compound_model(model_dict=model_dict,
                                         formula=self.line_edit_model_arithmetic.text())
 
-        model_layer.model = model
+        if model is not None:
+            model_layer.model = model
 
-        Dispatch.on_update_model.emit(layer=model_layer)
+            Dispatch.on_update_model.emit(layer=model_layer)
+        else:
+            logging.error("Cannot set `ModelLayer` model to new compound "
+                          "model.")
 
     @DispatchHandle.register_listener("on_selected_layer")
-    def update_model_list(self, layer_item):
+    def update_model_list(self, layer_item=None, layer=None):
         self.tree_widget_current_models.clear()
         self.line_edit_model_arithmetic.clear()
 
-        if layer_item is None:
+        if layer_item is None and layer is None:
             return
 
-        layer = layer_item.data(0, Qt.UserRole)
+        layer = layer or layer_item.data(0, Qt.UserRole)
 
         if not hasattr(layer, '_model'):
             return
@@ -506,68 +550,123 @@ class ModelFittingPlugin(Plugin):
             prev_val = model_item.data(col, Qt.UserRole)
             model_item.setText(col, str(prev_val))
 
-    def fit_model(self, model_layer, fitter_name):
-        if not hasattr(model_layer, 'model'):
-            logging.warning("This layer has no model to fit.")
-            return
+    def fit_model_layer(self):
+        current_layer = self.current_layer
 
-        # When fitting, the selected layer is a ModelLayer, thus
-        # the data to be fitted resides in the parent
-        parent_layer = model_layer._parent
+        # Update the model parameters with those in the gui
+        # self.update_model_layer()
 
-        if parent_layer is None:
-            return
+        # Create fitted layer
+        self.fit_model_thread(
+            model_layer=current_layer,
+            fitter_name=self.combo_box_fitting.currentText())
+        self.fit_model_thread.start()
 
-        # While the data comes from the parent, the mask from the model
-        # layer is the actual data that needs to be fit
-        mask = model_layer._mask
-        flux = parent_layer.data[mask]
-        dispersion = parent_layer.dispersion[mask]
-        model = model_layer.model
-
-        # If the number of parameters is greater than the number of data
-        # points, bail
-        if len(model.parameters) > flux.size:
-            logging.warning("Unable to perform fit; number of parameters is "
-                            "greater than the number of data points.")
-            return
-
-        fitted_model = self.apply_model(model, dispersion, flux,
-                                        fitter_name=fitter_name)
-
-        # Update original model with new values from fitted model
-        if hasattr(fitted_model, '_submodels'):
-            for i in range(len(fitted_model._submodels)):
-                for pname in model._submodels[i].param_names:
-                    value = getattr(fitted_model, "{}_{}".format(pname, i))
-                    setattr(model._submodels[i], pname, value.value)
-                    setattr(model[i], pname, value.value)
+    def toggle_buttons(self):
+        if self.current_model_item is not None:
+            self.button_remove_model.setEnabled(True)
         else:
-            for pname in model.param_names:
-                value = getattr(fitted_model, "{}".format(pname))
-                setattr(model, pname, value.value)
+            self.button_remove_model.setEnabled(False)
 
-        # update GUI with fit results
-        Dispatch.on_updated_model.emit(model=model)
+    @DispatchHandle.register_listener("on_add_model", "on_remove_model")
+    def toggle_fitting(self, *args, **kwargs):
+        root = self.tree_widget_current_models.invisibleRootItem()
 
-        return model_layer
-
-    def apply_model(self, model, x, y_init, fitter_name=None):
-
-        if fitter_name:
-            fitter = FitterFactory.all_fitters[fitter_name]()
+        if root.childCount() > 0:
+            self.group_box_fitting.setEnabled(True)
+            self.button_save_model.setEnabled(True)
         else:
-            fitter = FitterFactory.default_fitter()
+            self.group_box_fitting.setEnabled(False)
+            self.button_save_model.setEnabled(False)
 
-        result = fitter(model, x, y_init)
+    @DispatchHandle.register_listener("on_selected_layer")
+    def toggle_io(self, layer_item, *args, **kwargs):
+        if layer_item:
+            self.button_load_model.setEnabled(True)
+        else:
+            self.button_load_model.setEnabled(False)
 
-        if 'message' in fitter.fit_info:
-            # The fitter 'message' should probably be logged at INFO level.
-            # Problem is, info messages do not display in the error console,
-            # and we, ideally, want the user to see the message immediately
-            # after the fit is executed.
-            logging.warning(fitter.fit_info['message'])
+    # ---
+    # IO
+    def _prepare_model_for_save(self):
+        model_dict = self.get_model_inputs()
+        formula = self.line_edit_model_arithmetic.text()
 
-        return result
+        if len(model_dict) == 0:
+            return None, None
+
+        return self.get_compound_model(model_dict,
+                                       formula=formula), formula
+
+    def save_model(self):
+        model, formula = self._prepare_model_for_save()
+
+        if model:
+            global _model_directory
+            yaml_model_io.saveModelToFile(self,
+                                          model,
+                                          _model_directory,
+                                          expression=formula)
+
+    def export_model(self):
+        model, formula = self._prepare_model_for_save()
+
+        if model:
+            global _model_directory
+            py_model_io.saveModelToFile(self,
+                                        model,
+                                        _model_directory,
+                                        expression=formula)
+
+    def load_model(self):
+        global _model_directory
+        fname = QFileDialog.getOpenFileNames(
+            self,
+            'Read model file',
+            _model_directory,
+            yaml_model_io.MODEL_FILE_FILTER)
+
+        # File dialog returns a tuple with a list of file names.
+        # We get the first name from the first tuple element.
+        if len(fname[0]) < 1:
+            return
+        fname = fname[0][0]
+
+        compound_model, formula, _model_directory = yaml_model_io.buildModelFromFile(
+            fname)
+
+        # Put new model in its own sub-layer under current layer.
+        current_layer = self.current_layer
+
+        if current_layer is None:
+            return
+
+        # Create new model layer using current ROI masks, if they exist
+        mask = self.active_window.get_roi_mask(layer=current_layer)
+
+        current_window = self.active_window
+
+        # If there already is a model layer, just edit its model
+        if hasattr(current_layer, '_model'):
+            current_layer.model = compound_model
+
+            self.update_model_list(layer=current_layer)
+            Dispatch.on_update_model.emit(layer=current_layer)
+        else:
+            new_model_layer = ModelLayer(
+                source=current_layer._source,
+                mask=mask,
+                parent=current_layer,
+                name="New Model Layer",
+                model=compound_model)
+
+            Dispatch.on_add_layer.emit(layer=new_model_layer,
+                                       window=current_window)
+
+        # put formula in text edit widget
+        self.line_edit_model_arithmetic.setText(formula)
+
+
+
 
 

@@ -59,10 +59,10 @@ class UiPlotSubWindow(QMainWindow):
         self.line_edit_cursor_pos.setText("None, None")
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
+        self.horizontal_layout.addStretch()
         self.horizontal_layout.addLayout(self.layout_x_range)
         self.horizontal_layout.addLayout(self.layout_y_range)
         self.horizontal_layout.addWidget(self.button_reset)
-        self.horizontal_layout.addStretch()
 
         self.vertical_layout.addLayout(self.horizontal_layout)
 

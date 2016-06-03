@@ -228,7 +228,10 @@ class StatisticsPlugin(Plugin):
     @DispatchHandle.register_listener("on_updated_rois", "on_selected_layer")
     def update_statistics(self, rois=None, *args, **kwargs):
         if rois is None:
-            rois = self.active_window._rois
+            if self.active_window is not None:
+                rois = self.active_window._rois
+            else:
+                rois = []
 
         current_layer = self._current_layer
 

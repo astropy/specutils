@@ -26,7 +26,7 @@ class EventNode(object):
             raise ValueError("Unknown keyword in event emit arguments.")
 
         for handler in self.__handlers:
-            logging.info("Sending message from: '{}'".format(handler))
+            # logging.info("Sending message from: '{}'".format(handler))
             if hasattr(handler, 'self'):
                 handler(handler.self, *args, **kwargs)
             else:

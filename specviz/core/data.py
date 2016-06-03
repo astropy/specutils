@@ -7,7 +7,7 @@ from ..analysis.utils import resample
 # STDLIB
 import logging
 logging.basicConfig(level=logging.INFO)
-import numbers
+import re
 
 # THIRD-PARTY
 import numpy as np
@@ -335,17 +335,6 @@ class Layer(object):
 
         return result
 
-    @staticmethod
-    def from_model(layer, model, fitter=None, mask=None):
-        new_model = modeling.apply_model(model, layer.dispersion,
-                                         layer.data, fitter)
-
-        new_data = Data(new_model(layer.dispersion.value))
-        new_layer = Layer(new_data, mask=mask)
-        new_layer.dispersion = layer.dispersion.value
-
-        return new_layer
-
     def __add__(self, other):
         new_layer = self._arithmetic("add", other)
 
@@ -493,10 +482,21 @@ class ModelLayer(Layer):
         # List the models in the same order as the variables
         sorted_models = [m for v in vars for m in models if m.name == v]
 
-        if len(sorted_models) != len(vars):
+        if len(sorted_models) > len(vars):
             logging.error("Incorrect model arithmetic formula: the number "
                           "of models does not match the number of variables.")
             return
+        elif len(sorted_models) < len(vars):
+            extras = [x for x in vars if x not in [y.name for y in
+                                                  sorted_models]]
+
+            for extra in extras:
+                matches = re.findall('([\+\*\-\/]?\s?{})'.format(extra), formula)
+
+                for match in matches:
+                    formula = formula.replace(match, "")
+
+            expr = parser.parse(formula)
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in

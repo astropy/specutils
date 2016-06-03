@@ -84,7 +84,7 @@ class DataListPlugin(Plugin):
     def setup_connections(self):
         # Enable/disable buttons depending on selection
         self.list_widget_data_list.itemSelectionChanged.connect(
-            lambda: self.toggle_buttons(self.current_data_item))
+            self.toggle_buttons)
 
         # Connect the create new sub window button
         self.button_create_sub_window.clicked.connect(
@@ -206,9 +206,8 @@ class DataListPlugin(Plugin):
             if data_item.data(Qt.UserRole) == data:
                 return data_item
 
-    def toggle_buttons(self, data_item):
-        print("Received data item")
-        if data_item is not None:
+    def toggle_buttons(self):
+        if self.current_data_item is not None:
             self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)
             self.button_create_sub_window.setEnabled(True)
