@@ -16,6 +16,7 @@ LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
 
 class StatisticsPlugin(Plugin):
     name = "Statistics"
+    location = "left"
 
     def setup_ui(self):
         UiStatisticsPlugin(self)

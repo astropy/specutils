@@ -9,7 +9,6 @@ from .sub_windows import PlotSubWindow
 class UiMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(UiMainWindow, self).__init__(parent)
-
         DispatchHandle.setup(self)
 
         self.showMaximized()
@@ -20,6 +19,7 @@ class UiMainWindow(QMainWindow):
         self.widget_central = QWidget(self)
         self.setCentralWidget(self.widget_central)
 
+        # Toolbar
         self.layout_vertical = QVBoxLayout(self.widget_central)
 
         # MDI area setup
@@ -47,19 +47,6 @@ class UiMainWindow(QMainWindow):
         self.menu_docks = QMenu(self.menu_bar)
 
         self.setMenuBar(self.menu_bar)
-
-        # Tool bar setup
-        # self.tool_bar_main = QToolBar(self)
-        # self.tool_bar_main.setMovable(False)
-        # self.tool_bar_main.setFloatable(False)
-        #
-        # self.action_open = QAction(self)
-        # icon_open= QIcon()
-        # icon_open.addPixmap(QPixmap(":/img/Open Folder-48.png"))
-        # self.action_open.setIcon(icon_open)
-        # self.tool_bar_main.addAction(self.action_open)
-        #
-        # self.addToolBar(Qt.TopToolBarArea, self.tool_bar_main)
 
         # Status bar setup
         self.status_bar = QStatusBar(self)

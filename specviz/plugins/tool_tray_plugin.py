@@ -10,69 +10,81 @@ import logging
 
 class ToolTrayPlugin(Plugin):
     name = "Tools"
-    location = "right"
+    location = "hidden"
+    priority = 0
+
     _all_categories = {}
 
     def setup_ui(self):
         # ---
         # Selections setup
-        self.add_tool_button(
-            description='Add line label',
+        self.add_tool_bar_actions(
+            name="Line Labels",
+            description='Add line labels',
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
-            category='selections',
+            category='Selections',
             enabled=True)
 
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Box ROI",
             description='Add box ROI',
             icon_path=os.path.join(ICON_PATH, "Rectangle Stroked-50.png"),
-            category='selections',
+            category='Selections',
             enabled=False)
 
         # ---
         # Setup interactions buttons
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Measure",
             description='Measure tool',
             icon_path=os.path.join(ICON_PATH, "Ruler-48.png"),
-            category='interactions',
+            category='Interactions',
             enabled=False)
 
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Average",
             description='Average tool',
             icon_path=os.path.join(ICON_PATH, "Average Value-48.png"),
-            category='interactions',
+            category='Interactions',
             enabled=False)
 
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Slice",
             description='Slice tool',
             icon_path=os.path.join(ICON_PATH, "Split Horizontal-48.png"),
-            category='interactions',
+            category='Interactions',
             enabled=False)
 
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Detrend",
             description='Detrend tool',
             icon_path=os.path.join(ICON_PATH, "Line Chart-48.png"),
-            category='interactions',
+            category='Interactions',
             enabled=False)
 
         # ---
         # Setup transformations buttons
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Log Scale",
             description='Log scale plot',
             icon_path=os.path.join(ICON_PATH, "Combo Chart-48.png"),
-            category='transformations',
+            category='Transformations',
             enabled=False)
 
         # ---
         # Setup plot options
-        self.add_tool_button(
+        self.add_tool_bar_actions(
+            name="Eport",
             description='Export plot',
             icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='options',
+            category='Options',
             enabled=False)
 
         # ---
         # Setup button layouts
         buttons = sorted(self._tool_buttons, key=lambda x: x['category'])
+        layout_horizontal = QHBoxLayout()
+        self.layout_vertical.addLayout(layout_horizontal)
 
         for button in buttons:
             cat = self.get_category(button['category'])
@@ -95,7 +107,7 @@ class ToolTrayPlugin(Plugin):
                 if done:
                     break
 
-            self.layout_vertical.addLayout(cat['layout'])
+            layout_horizontal.addLayout(cat['layout'])
 
         # ---
         # Setup help information section
@@ -111,8 +123,8 @@ class ToolTrayPlugin(Plugin):
         self.label_info.setText("Hover over an icon to learn about the tool.")
         self.label_info.setWordWrap(True)
 
-        self.layout_vertical.addWidget(self.label_info)
-        self.layout_vertical.addStretch()
+        # self.layout_vertical.addWidget(self.label_info)
+        layout_horizontal.addStretch()
 
     def setup_connections(self):
         pass
@@ -124,6 +136,7 @@ class ToolTrayPlugin(Plugin):
         if name not in self._all_categories:
             vertical_layout = QVBoxLayout()
             grid_layout = QGridLayout()
+            grid_layout.setSpacing(1)
 
             label = QLabel(self)
             label.setText(name.lower())
@@ -147,4 +160,3 @@ class ToolTrayPlugin(Plugin):
 
     def set_help_info(self, text):
         self.label_info.setText(text)
-

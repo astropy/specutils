@@ -19,26 +19,29 @@ class PlotToolsPlugin(Plugin):
         self._unit_change_dialog = UnitChangeDialog()
 
         # Add an roi
-        self.button_add_roi = self.add_tool_button(
+        self.button_add_roi = self.add_tool_bar_actions(
+            name="ROI",
             description='Add ROI',
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
-            category='selections',
+            category='Selections',
             callback=Dispatch.on_add_roi.emit,
             enabled=False)
 
         # Change top axis
-        self.button_axis_change = self.add_tool_button(
+        self.button_axis_change = self.add_tool_bar_actions(
+            name="Top Axis",
             description='Change top axis',
             icon_path=os.path.join(ICON_PATH, "Globe Earth-48.png"),
-            category='options',
+            category='Options',
             callback=self._top_axis_dialog.exec_,
             enabled=False)
 
         # Change top axis
-        self.button_unit_change = self.add_tool_button(
+        self.button_unit_change = self.add_tool_bar_actions(
+            name="Units",
             description='Change plot units',
             icon_path=os.path.join(ICON_PATH, "Generic Text-48.png"),
-            category='options',
+            category='Options',
             callback=self._show_unit_change_dialog,
             enabled=False)
 

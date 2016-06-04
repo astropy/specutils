@@ -14,15 +14,17 @@ import logging
 
 class LayerListPlugin(Plugin):
     name = "Layer List"
+    location = "left"
 
     def setup_ui(self):
         UiLayerListPlugin(self)
 
         # Add tool tray buttons
-        self.button_layer_slice = self.add_tool_button(
+        self.button_layer_slice = self.add_tool_bar_actions(
+            name="Slice",
             description='Create layer slice',
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='transformations',
+            category='Transformations',
             enabled=False,
             callback=lambda: self.add_layer(
                 window=self.active_window, layer=self.current_layer,

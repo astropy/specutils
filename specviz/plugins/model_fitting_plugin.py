@@ -30,8 +30,7 @@ class ModelFittingPlugin(Plugin):
             Dispatch.on_status_message.emit)
 
         self.fit_model_thread.result.connect(
-            lambda model_layer: Dispatch.on_update_model.emit(
-                layer=model_layer))
+            lambda layer: Dispatch.on_update_model.emit(layer=layer))
 
     def setup_ui(self):
         UiModelFittingPlugin(self)
@@ -195,8 +194,7 @@ class ModelFittingPlugin(Plugin):
             for i, para in enumerate(model.param_names):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
-                new_para_item.setData(0, Qt.UserRole,
-                                      model.parameters[i])
+                new_para_item.setData(0, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
                 new_para_item.setFlags(
                     new_para_item.flags() | Qt.ItemIsEditable)
@@ -208,17 +206,17 @@ class ModelFittingPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_update_model")
     def update_model_item(self, layer):
-        model_item = self.get_model_item(layer.model)
-
-        if model_item is None:
-            return
-
         if hasattr(layer.model, '_submodels'):
             models = layer.model._submodels
         else:
             models = [layer.model]
 
         for model in models:
+            model_item = self.get_model_item(model)
+
+            if model_item is None:
+                return
+
             for i, para in enumerate(model.param_names):
                 for i in range(model_item.childCount()):
                     param_item = model_item.child(i)
@@ -412,10 +410,13 @@ class ModelFittingPlugin(Plugin):
         self.fit_model_thread(
             model_layer=current_layer,
             fitter_name=self.combo_box_fitting.currentText())
+
         self.fit_model_thread.start()
 
     def toggle_buttons(self):
-        if self.current_model_item is not None:
+        root = self.tree_widget_current_models.invisibleRootItem()
+
+        if root.childCount() > 1:
             self.button_remove_model.setEnabled(True)
         else:
             self.button_remove_model.setEnabled(False)

@@ -20,8 +20,10 @@ class Plugin(QDockWidget):
 
     _all_plugins = []
     _tool_buttons = []
+    _tool_bar_actions = []
 
-    location = 'left'
+    location = 'hidden'
+    priority = 1
 
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
@@ -34,7 +36,7 @@ class Plugin(QDockWidget):
         DispatchHandle.setup(self)
 
         # GUI Setup
-        self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.setAllowedAreas(Qt.AllDockWidgetAreas)
 
         self.contents = QWidget()
         self.layout_vertical = QVBoxLayout(self.contents)
@@ -64,13 +66,14 @@ class Plugin(QDockWidget):
     def setup_connections(self):
         raise NotImplementedError()
 
-    def add_tool_button(self, icon_path, category=None, description="",
-                        callback=None, enabled=True):
+    def add_tool_buttons(self, icon_path, name="Test", category=None,
+                     description="",
+                             callback=None, enabled=True):
         button = QToolButton()
         button.setIcon(QIcon(icon_path))
         button.setIconSize(QSize(25, 25))
         button.setEnabled(enabled)
-        button.setToolTip(description)
+        button.setStatusTip(description)
         button.clicked.connect(callback if callback is not None else
                                lambda: None)
 
@@ -80,6 +83,22 @@ class Plugin(QDockWidget):
         self._tool_buttons.append(tool_button)
 
         return button
+
+    def add_tool_bar_actions(self, icon_path, name="Test", category=None,
+                             description="", callback=None, enabled=True):
+        action = QAction(QIcon(icon_path), name, self)
+        action.triggered.connect(callback if callback is not None else
+                                 lambda: None)
+        action.setText(name)
+        action.setStatusTip(description)
+        action.setEnabled(enabled)
+
+        tool_button = dict(widget=action, icon_path=icon_path,
+                           category=category, description=description)
+
+        self._tool_bar_actions.append(tool_button)
+
+        return action
 
     @property
     def active_window(self):

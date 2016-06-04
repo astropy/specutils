@@ -13,6 +13,7 @@ import logging
 
 class DataListPlugin(Plugin):
     name = "Data List"
+    location = "left"
 
     def __init__(self, *args, **kwargs):
         super(DataListPlugin, self).__init__(*args, **kwargs)
