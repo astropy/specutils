@@ -34,166 +34,14 @@ class ModelFittingPlugin(Plugin):
                 layer=model_layer))
 
     def setup_ui(self):
-        self.scroll_area = QScrollArea(self)
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
-        self.scroll_area.setFrameShadow(QFrame.Plain)
-        self.scroll_area.setLineWidth(0)
-        self.scroll_area.setWidgetResizable(True)
-
-        # The main widget inside the scroll area
-        self.main_widget = QWidget()
-        self.layout_vertical_main_widget = QVBoxLayout(self.main_widget)
-        self.layout_vertical_main_widget.setContentsMargins(1, 1, 1, 1)
-        self.layout_vertical_main_widget.setSpacing(6)
-
-        self.scroll_area.setWidget(self.main_widget)
-
-        # Tree widget/model selector group box
-        self.group_box_add_model = QGroupBox()
-        self.group_box_add_model.setTitle("Add Model")
-        self.layout_horizontal_group_box_add_model = QHBoxLayout(
-            self.group_box_add_model)
-        self.layout_horizontal_group_box_add_model.setContentsMargins(11, 11,
-                                                                      11, 11)
-        self.layout_horizontal_group_box_add_model.setSpacing(6)
-
-        # Models combo box
-        self.combo_box_models = QComboBox(self.group_box_add_model)
-
-        size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        size_policy.setHorizontalStretch(1)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(
-            self.combo_box_models.sizePolicy().hasHeightForWidth())
-        self.combo_box_models.setSizePolicy(size_policy)
-
-        self.button_select_model = QPushButton(self.group_box_add_model)
-        self.button_select_model.setText("Select")
-
-        self.layout_horizontal_group_box_add_model.addWidget(
-            self.combo_box_models)
-        self.layout_horizontal_group_box_add_model.addWidget(
-            self.button_select_model)
-
-        self.layout_vertical_main_widget.addWidget(self.group_box_add_model)
-
-        # Current models group box
-        self.group_box_current_models = QGroupBox(self.main_widget)
-        self.group_box_current_models.setTitle("Current Models")
-        self.layout_vertical_group_box_current_models = QVBoxLayout(
-            self.group_box_current_models)
-        self.layout_vertical_group_box_current_models.setContentsMargins(11,
-                                                                         11,
-                                                                         11,
-                                                                         11)
-        self.layout_vertical_group_box_current_models.setSpacing(6)
-
-        self.tree_widget_current_models = QTreeWidget(
-            self.group_box_current_models)
-        self.tree_widget_current_models.setMinimumSize(QSize(0, 150))
-        self.tree_widget_current_models.setAllColumnsShowFocus(False)
-        self.tree_widget_current_models.setHeaderHidden(False)
-        self.tree_widget_current_models.setColumnCount(2)
-        self.tree_widget_current_models.headerItem().setText(0, "Parameter")
-        self.tree_widget_current_models.headerItem().setText(1, "Value")
-        self.tree_widget_current_models.header().setVisible(True)
-        self.tree_widget_current_models.header().setCascadingSectionResizes(
-            False)
-        self.tree_widget_current_models.header().setDefaultSectionSize(130)
-
-        self.layout_vertical_group_box_current_models.addWidget(
-            self.tree_widget_current_models)
-
-        # Current models buttons
-        self.layout_horizontal_model_buttons = QHBoxLayout()
-        self.layout_horizontal_model_buttons.setContentsMargins(1, 1, 1, 12)
-        self.layout_horizontal_model_buttons.setSpacing(6)
-
-        self.button_save_model = QToolButton(self.group_box_current_models)
-        self.button_save_model.setEnabled(False)
-        self.button_save_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Save-48.png")))
-        self.button_save_model.setIconSize(QSize(25, 25))
-
-        self.button_load_model = QToolButton(self.group_box_current_models)
-        self.button_load_model.setEnabled(False)
-        self.button_load_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open Folder-48.png")))
-        self.button_load_model.setIconSize(QSize(25, 25))
-
-        self.button_export_model = QToolButton(self.group_box_current_models)
-        self.button_export_model.setEnabled(False)
-        self.button_export_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Export-48.png")))
-        self.button_export_model.setIconSize(QSize(25, 25))
-
-        self.button_remove_model = QToolButton(self.group_box_current_models)
-        self.button_remove_model.setEnabled(False)
-        self.button_remove_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Delete-48.png")))
-        self.button_remove_model.setIconSize(QSize(25, 25))
-
-        self.layout_horizontal_model_buttons.addWidget(self.button_save_model)
-        self.layout_horizontal_model_buttons.addWidget(self.button_load_model)
-        self.layout_horizontal_model_buttons.addWidget(
-            self.button_export_model)
-        self.layout_horizontal_model_buttons.addStretch()
-        self.layout_horizontal_model_buttons.addWidget(
-            self.button_remove_model)
-
-        self.layout_vertical_group_box_current_models.addLayout(
-            self.layout_horizontal_model_buttons)
-
-        # Arithmetic group box
-        self.group_box_model_arithmetic = QGroupBox(
-            self.group_box_current_models)
-        self.group_box_model_arithmetic.setTitle("Arithmetic")
-        self.layout_vertical_model_arithmetic = QVBoxLayout(
-            self.group_box_model_arithmetic)
-        self.layout_vertical_model_arithmetic.setContentsMargins(11, 11, 11,
-                                                                 11)
-        self.layout_vertical_model_arithmetic.setSpacing(6)
-
-        self.line_edit_model_arithmetic = QLineEdit(
-            self.group_box_model_arithmetic)
-        self.layout_vertical_model_arithmetic.addWidget(
-            self.line_edit_model_arithmetic)
-
-        self.layout_vertical_group_box_current_models.addWidget(
-            self.group_box_model_arithmetic)
-
-        # Fitting routines group box
-        self.group_box_fitting = QGroupBox(self.main_widget)
-        self.group_box_fitting.setTitle("Fitting")
-        self.group_box_fitting.setEnabled(False)
-
-        self.layout_vertical_fitting = QVBoxLayout(self.group_box_fitting)
-        self.layout_vertical_fitting.setContentsMargins(11, 11, 11, 11)
-        self.layout_vertical_fitting.setSpacing(6)
-
-        self.combo_box_fitting = QComboBox(self.group_box_fitting)
-
-        self.button_perform_fit = QPushButton(self.group_box_fitting)
-        self.button_perform_fit.setText("Perform fit")
-
-        self.layout_vertical_fitting.addWidget(self.combo_box_fitting)
-        self.layout_vertical_fitting.addWidget(self.button_perform_fit)
-
-        # Add group boxees
-        self.layout_vertical_main_widget.addWidget(self.group_box_add_model)
-        self.layout_vertical_main_widget.addWidget(
-            self.group_box_current_models)
-        self.layout_vertical_main_widget.addWidget(
-            self.group_box_fitting)
-
-        self.layout_vertical.addWidget(self.scroll_area)
+        UiModelFittingPlugin(self)
 
     def setup_connections(self):
         # Enable/disable buttons depending on selection
         self.tree_widget_current_models.itemSelectionChanged.connect(
             self.toggle_buttons)
 
-        # Populate model dropdown
+        # # Populate model dropdown
         self.combo_box_models.addItems(
             sorted(ModelFactory.all_models))
 
@@ -246,9 +94,13 @@ class ModelFittingPlugin(Plugin):
         return self.tree_widget_current_models.currentItem()
 
     def add_model(self):
+        layer = self.current_layer
+
+        if layer is None:
+            return
+
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
-        layer = self.current_layer
 
         initialize(model, layer.dispersion, layer.data)
 
@@ -665,6 +517,166 @@ class ModelFittingPlugin(Plugin):
 
         # put formula in text edit widget
         self.line_edit_model_arithmetic.setText(formula)
+
+
+class UiModelFittingPlugin:
+    def __init__(self, plugin):
+        plugin.scroll_area = QScrollArea(plugin)
+        plugin.scroll_area.setFrameShape(QFrame.NoFrame)
+        plugin.scroll_area.setFrameShadow(QFrame.Plain)
+        plugin.scroll_area.setLineWidth(0)
+        plugin.scroll_area.setWidgetResizable(True)
+        plugin.scroll_area.setGeometry(QRect(0, 0, 306, 553))
+        plugin.layout_vertical.setContentsMargins(0, 0, 0, 0)
+
+        # The main widget inside the scroll area
+        plugin.main_widget = QWidget()
+        plugin.layout_vertical_main_widget = QVBoxLayout(plugin.main_widget)
+        plugin.layout_vertical_main_widget.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical_main_widget.setSpacing(6)
+
+        plugin.scroll_area.setWidget(plugin.main_widget)
+
+        # Tree widget/model selector group box
+        plugin.group_box_add_model = QGroupBox()
+        plugin.group_box_add_model.setTitle("Add Model")
+        plugin.layout_horizontal_group_box_add_model = QHBoxLayout(
+            plugin.group_box_add_model)
+        plugin.layout_horizontal_group_box_add_model.setContentsMargins(11, 11,
+                                                                        11, 11)
+        plugin.layout_horizontal_group_box_add_model.setSpacing(6)
+
+        # Models combo box
+        plugin.combo_box_models = QComboBox(plugin.group_box_add_model)
+        plugin.combo_box_models.setStyleSheet("""QComboBox {width: 100px;}
+        """)
+        size_policy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        size_policy.setHorizontalStretch(1)
+        size_policy.setVerticalStretch(0)
+        size_policy.setHeightForWidth(
+            plugin.combo_box_models.sizePolicy().hasHeightForWidth())
+        plugin.combo_box_models.setSizePolicy(size_policy)
+
+        plugin.button_select_model = QPushButton(plugin.group_box_add_model)
+        plugin.button_select_model.setText("Select")
+
+        plugin.layout_horizontal_group_box_add_model.addWidget(
+            plugin.combo_box_models)
+        plugin.layout_horizontal_group_box_add_model.addWidget(
+            plugin.button_select_model)
+
+        plugin.layout_vertical_main_widget.addWidget(plugin.group_box_add_model)
+
+        # Current models group box
+        plugin.group_box_current_models = QGroupBox(plugin.main_widget)
+        plugin.group_box_current_models.setTitle("Current Models")
+        plugin.layout_vertical_group_box_current_models = QVBoxLayout(
+            plugin.group_box_current_models)
+        plugin.layout_vertical_group_box_current_models.setContentsMargins(11,
+                                                                           11,
+                                                                           11,
+                                                                           11)
+        plugin.layout_vertical_group_box_current_models.setSpacing(6)
+
+        plugin.tree_widget_current_models = QTreeWidget(
+            plugin.group_box_current_models)
+        # self.tree_widget_current_models.setMinimumSize(QSize(0, 150))
+        plugin.tree_widget_current_models.setAllColumnsShowFocus(False)
+        plugin.tree_widget_current_models.setHeaderHidden(False)
+        plugin.tree_widget_current_models.setColumnCount(2)
+        plugin.tree_widget_current_models.headerItem().setText(0, "Parameter")
+        plugin.tree_widget_current_models.headerItem().setText(1, "Value")
+        plugin.tree_widget_current_models.header().setVisible(True)
+        plugin.tree_widget_current_models.header().setCascadingSectionResizes(
+            False)
+        plugin.tree_widget_current_models.header().setDefaultSectionSize(130)
+
+        plugin.layout_vertical_group_box_current_models.addWidget(
+            plugin.tree_widget_current_models)
+
+        # Current models buttons
+        plugin.layout_horizontal_model_buttons = QHBoxLayout()
+        plugin.layout_horizontal_model_buttons.setContentsMargins(1, 1, 1, 12)
+        plugin.layout_horizontal_model_buttons.setSpacing(6)
+
+        plugin.button_save_model = QToolButton(plugin.group_box_current_models)
+        plugin.button_save_model.setEnabled(False)
+        plugin.button_save_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Save-48.png")))
+        plugin.button_save_model.setIconSize(QSize(25, 25))
+
+        plugin.button_load_model = QToolButton(plugin.group_box_current_models)
+        plugin.button_load_model.setEnabled(False)
+        plugin.button_load_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Open Folder-48.png")))
+        plugin.button_load_model.setIconSize(QSize(25, 25))
+
+        plugin.button_export_model = QToolButton(plugin.group_box_current_models)
+        plugin.button_export_model.setEnabled(False)
+        plugin.button_export_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Export-48.png")))
+        plugin.button_export_model.setIconSize(QSize(25, 25))
+
+        plugin.button_remove_model = QToolButton(plugin.group_box_current_models)
+        plugin.button_remove_model.setEnabled(False)
+        plugin.button_remove_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Delete-48.png")))
+        plugin.button_remove_model.setIconSize(QSize(25, 25))
+
+        plugin.layout_horizontal_model_buttons.addWidget(plugin.button_save_model)
+        plugin.layout_horizontal_model_buttons.addWidget(plugin.button_load_model)
+        plugin.layout_horizontal_model_buttons.addWidget(
+            plugin.button_export_model)
+        plugin.layout_horizontal_model_buttons.addStretch()
+        plugin.layout_horizontal_model_buttons.addWidget(
+            plugin.button_remove_model)
+
+        plugin.layout_vertical_group_box_current_models.addLayout(
+            plugin.layout_horizontal_model_buttons)
+
+        # Arithmetic group box
+        plugin.group_box_model_arithmetic = QGroupBox(
+            plugin.group_box_current_models)
+        plugin.group_box_model_arithmetic.setTitle("Arithmetic")
+        plugin.layout_vertical_model_arithmetic = QVBoxLayout(
+            plugin.group_box_model_arithmetic)
+        plugin.layout_vertical_model_arithmetic.setContentsMargins(11, 11, 11,
+                                                                   11)
+        plugin.layout_vertical_model_arithmetic.setSpacing(6)
+
+        plugin.line_edit_model_arithmetic = QLineEdit(
+            plugin.group_box_model_arithmetic)
+        plugin.layout_vertical_model_arithmetic.addWidget(
+            plugin.line_edit_model_arithmetic)
+
+        plugin.layout_vertical_group_box_current_models.addWidget(
+            plugin.group_box_model_arithmetic)
+
+        # Fitting routines group box
+        plugin.group_box_fitting = QGroupBox(plugin.main_widget)
+        plugin.group_box_fitting.setTitle("Fitting")
+        plugin.group_box_fitting.setEnabled(False)
+
+        plugin.layout_vertical_fitting = QVBoxLayout(plugin.group_box_fitting)
+        plugin.layout_vertical_fitting.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical_fitting.setSpacing(6)
+
+        plugin.combo_box_fitting = QComboBox(plugin.group_box_fitting)
+
+        plugin.button_perform_fit = QPushButton(plugin.group_box_fitting)
+        plugin.button_perform_fit.setText("Perform fit")
+
+        plugin.layout_vertical_fitting.addWidget(plugin.combo_box_fitting)
+        plugin.layout_vertical_fitting.addWidget(plugin.button_perform_fit)
+
+        # Add group boxees
+        plugin.layout_vertical_main_widget.addWidget(plugin.group_box_add_model)
+        plugin.layout_vertical_main_widget.addWidget(
+            plugin.group_box_current_models)
+        plugin.layout_vertical_main_widget.addWidget(
+            plugin.group_box_fitting)
+
+        plugin.layout_vertical.addWidget(plugin.scroll_area)
 
 
 

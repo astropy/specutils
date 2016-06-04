@@ -18,209 +18,7 @@ class StatisticsPlugin(Plugin):
     name = "Statistics"
 
     def setup_ui(self):
-        self.layout_vertical.setContentsMargins(11, 11, 11, 11)
-
-        # Setup form layout
-        self.layout_form = QFormLayout()
-        self.layout_form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-        self.layout_form.setFormAlignment(Qt.AlignJustify | Qt.AlignTop)
-        self.layout_form.setContentsMargins(1, 1, 1, 12)
-        self.layout_form.setSpacing(6)
-
-        self.layout_vertical.addLayout(self.layout_form)
-
-        # Setup labels
-        self.label_current_layer = QLabel(self)
-        self.label_current_layer.setText("Current Layer")
-
-        self.line_edit_current_layer = QLineEdit(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.line_edit_current_layer.sizePolicy().hasHeightForWidth())
-        self.line_edit_current_layer.setSizePolicy(sizePolicy)
-        self.line_edit_current_layer.setStyleSheet(LINE_EDIT_CSS)
-        self.line_edit_current_layer.setReadOnly(True)
-
-        self.layout_form.setWidget(0, QFormLayout.LabelRole,
-                                   self.label_current_layer)
-        self.layout_form.setWidget(0, QFormLayout.FieldRole,
-                                   self.line_edit_current_layer)
-
-        # Setup tabs
-        self.tab_widget_stats = QTabWidget(self)
-        self.layout_vertical.addWidget(self.tab_widget_stats)
-
-        # Setup basic tab
-        self.tab_basic = QWidget()
-        self.tab_widget_stats.addTab(self.tab_basic, "Basic")
-
-        self.layout_vertical_tab_basic = QVBoxLayout(self.tab_basic)
-        self.layout_vertical_tab_basic.setContentsMargins(11, 11, 11, 11)
-        self.layout_vertical_tab_basic.setSpacing(6)
-
-        self.layout_form_tab_basic = QFormLayout()
-        self.layout_form_tab_basic.setFieldGrowthPolicy(
-            QFormLayout.ExpandingFieldsGrow)
-        self.layout_form_tab_basic.setFormAlignment(Qt.AlignRight |
-                                                    Qt.AlignTop |
-                                                    Qt.AlignTrailing)
-        self.layout_form_tab_basic.setContentsMargins(1, 1, 1, 1)
-        self.layout_form_tab_basic.setSpacing(6)
-
-        self.layout_vertical_tab_basic.addLayout(self.layout_form_tab_basic)
-
-        # Setup basic tab labels
-        self.label_mean = QLabel(self.tab_basic)
-        self.label_mean.setText("Mean")
-
-        self.line_edit_mean = QLineEdit(self.tab_basic)
-        self.line_edit_mean.setStyleSheet(LINE_EDIT_CSS)
-        self.line_edit_mean.setReadOnly(True)
-        self.layout_form_tab_basic.setWidget(0, QFormLayout.LabelRole,
-                                             self.label_mean)
-        self.layout_form_tab_basic.setWidget(0, QFormLayout.FieldRole,
-                                             self.line_edit_mean)
-
-        self.label_median = QLabel(self.tab_basic)
-        self.label_median.setText("Median")
-
-        self.line_edit_median = QLineEdit(self.tab_basic)
-        self.line_edit_median.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_median.setReadOnly(True)
-        self.layout_form_tab_basic.setWidget(1, QFormLayout.LabelRole,
-                                             self.label_median)
-        self.layout_form_tab_basic.setWidget(1, QFormLayout.FieldRole,
-                                             self.line_edit_median)
-
-        self.label_std_dev = QLabel(self.tab_basic)
-        self.label_std_dev.setText("Standard Deviation")
-
-        self.line_edit_std_dev = QLineEdit(self.tab_basic)
-        self.line_edit_std_dev.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_std_dev.setReadOnly(True)
-        self.layout_form_tab_basic.setWidget(2, QFormLayout.LabelRole,
-                                             self.label_std_dev)
-        self.layout_form_tab_basic.setWidget(2, QFormLayout.FieldRole,
-                                             self.line_edit_std_dev)
-
-        self.label_total = QLabel(self.tab_basic)
-        self.label_total.setText("Total")
-
-        self.line_edit_total = QLineEdit(self.tab_basic)
-        self.line_edit_total.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_total.setReadOnly(True)
-        self.layout_form_tab_basic.setWidget(3, QFormLayout.LabelRole,
-                                             self.label_total)
-        self.layout_form_tab_basic.setWidget(3, QFormLayout.FieldRole,
-                                             self.line_edit_total)
-
-        self.label_data_point_count = QLabel(self.tab_basic)
-        self.label_data_point_count.setText("Data Point Count")
-
-        self.line_edit_data_point_count = QLineEdit(self.tab_basic)
-        self.line_edit_data_point_count.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_data_point_count.setReadOnly(True)
-        self.layout_form_tab_basic.setWidget(4, QFormLayout.LabelRole,
-                                             self.label_data_point_count)
-        self.layout_form_tab_basic.setWidget(4, QFormLayout.FieldRole,
-                                             self.line_edit_data_point_count)
-
-        # Measured tab setup
-        self.tab_measured = QWidget()
-        self.tab_widget_stats.addTab(self.tab_measured, "Measured")
-
-        self.layout_vertical_tab_measured = QVBoxLayout(self.tab_measured)
-        self.layout_vertical_tab_measured.setContentsMargins(11, 11, 11, 11)
-        self.layout_vertical_tab_measured.setSpacing(6)
-
-        self.layout_form_tab_measured = QFormLayout()
-        self.layout_form_tab_measured.setFieldGrowthPolicy(
-            QFormLayout.ExpandingFieldsGrow)
-        self.layout_form_tab_measured.setFormAlignment(Qt.AlignRight |
-                                                       Qt.AlignTop |
-                                                       Qt.AlignTrailing)
-        self.layout_form_tab_measured.setContentsMargins(1, 1, 1, 1)
-        self.layout_form_tab_measured.setSpacing(6)
-
-        self.layout_vertical_tab_measured.addLayout(self.layout_form_tab_measured)
-
-        # Measured tab labels
-        self.label_equivalent_width = QLabel(self.tab_measured)
-        self.label_equivalent_width.setText("Equivalent Width")
-
-        self.line_edit_equivalent_width = QLineEdit(self.tab_measured)
-        self.line_edit_equivalent_width.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_equivalent_width.setReadOnly(True)
-
-        self.layout_form_tab_measured.setWidget(0, QFormLayout.LabelRole,
-                                                self.label_equivalent_width)
-        self.layout_form_tab_measured.setWidget(0, QFormLayout.FieldRole,
-                                                self.line_edit_equivalent_width)
-
-        self.label_centroid = QLabel(self.tab_measured)
-        self.label_centroid.setText("Centroid")
-
-        self.line_edit_centroid = QLineEdit(self.tab_measured)
-        self.line_edit_centroid.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_centroid.setReadOnly(True)
-
-        self.layout_form_tab_measured.setWidget(1, QFormLayout.LabelRole,
-                                                self.label_centroid)
-        self.layout_form_tab_measured.setWidget(1, QFormLayout.FieldRole,
-                                                self.line_edit_centroid)
-
-        self.label_flux = QLabel(self.tab_measured)
-        self.label_flux.setText("Flux")
-
-        self.line_edit_flux = QLineEdit(self.tab_measured)
-        self.line_edit_flux.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_flux.setReadOnly(True)
-
-        self.layout_form_tab_measured.setWidget(2, QFormLayout.LabelRole,
-                                                self.label_flux)
-        self.layout_form_tab_measured.setWidget(2, QFormLayout.FieldRole,
-                                                self.line_edit_flux)
-
-        self.label_mean_continuum = QLabel(self.tab_measured)
-        self.label_mean_continuum.setText("Mean Continuum")
-
-        self.line_edit_continuum = QLineEdit(self.tab_measured)
-        self.line_edit_continuum.setStyleSheet(
-            LINE_EDIT_CSS)
-        self.line_edit_continuum.setReadOnly(True)
-
-        self.layout_form_tab_measured.setWidget(3, QFormLayout.LabelRole,
-                                                self.label_mean_continuum)
-        self.layout_form_tab_measured.setWidget(3, QFormLayout.FieldRole,
-                                                self.line_edit_continuum)
-
-        # Add warning label
-        self.label_measured_error = QLabel()
-        self.label_measured_error.setText("You must have at least three ROIs "
-                                          "on the plot")
-        self.label_measured_error.setWordWrap(True)
-        self.label_measured_error.setStyleSheet("""
-        QLabel {
-            color: #a94442;
-            background-color: #f2dede;
-            padding: 10px;
-            border: 1px solid #ebccd1;
-            border-radius: 4px;
-        }""")
-
-        self.layout_vertical_tab_measured.addWidget(self.label_measured_error)
-        self.layout_vertical_tab_measured.addStretch()
-
-        self.layout_vertical.addStretch()
+        UiStatisticsPlugin(self)
 
     def setup_connections(self):
         pass
@@ -324,3 +122,210 @@ class StatisticsPlugin(Plugin):
             float(stat_dict['flux'].value)))
         self.line_edit_continuum.setText("{0:4.4g}".format(
             float(stat_dict['avg_cont'].value)))
+
+
+class UiStatisticsPlugin:
+    def __init__(self, plugin):
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+
+        # Setup form layout
+        plugin.layout_form = QFormLayout()
+        plugin.layout_form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        plugin.layout_form.setFormAlignment(Qt.AlignJustify | Qt.AlignTop)
+        plugin.layout_form.setContentsMargins(1, 1, 1, 12)
+        plugin.layout_form.setSpacing(6)
+
+        plugin.layout_vertical.addLayout(plugin.layout_form)
+
+        # Setup labels
+        plugin.label_current_layer = QLabel(plugin)
+        plugin.label_current_layer.setText("Current Layer")
+
+        plugin.line_edit_current_layer = QLineEdit(plugin)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            plugin.line_edit_current_layer.sizePolicy().hasHeightForWidth())
+        plugin.line_edit_current_layer.setSizePolicy(sizePolicy)
+        plugin.line_edit_current_layer.setStyleSheet(LINE_EDIT_CSS)
+        plugin.line_edit_current_layer.setReadOnly(True)
+
+        plugin.layout_form.setWidget(0, QFormLayout.LabelRole,
+                                     plugin.label_current_layer)
+        plugin.layout_form.setWidget(0, QFormLayout.FieldRole,
+                                     plugin.line_edit_current_layer)
+
+        # Setup tabs
+        plugin.tab_widget_stats = QTabWidget(plugin)
+        plugin.layout_vertical.addWidget(plugin.tab_widget_stats)
+
+        # Setup basic tab
+        plugin.tab_basic = QWidget()
+        plugin.tab_widget_stats.addTab(plugin.tab_basic, "Basic")
+
+        plugin.layout_vertical_tab_basic = QVBoxLayout(plugin.tab_basic)
+        plugin.layout_vertical_tab_basic.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical_tab_basic.setSpacing(6)
+
+        plugin.layout_form_tab_basic = QFormLayout()
+        plugin.layout_form_tab_basic.setFieldGrowthPolicy(
+            QFormLayout.ExpandingFieldsGrow)
+        plugin.layout_form_tab_basic.setFormAlignment(Qt.AlignRight |
+                                                      Qt.AlignTop |
+                                                      Qt.AlignTrailing)
+        plugin.layout_form_tab_basic.setContentsMargins(1, 1, 1, 1)
+        plugin.layout_form_tab_basic.setSpacing(6)
+
+        plugin.layout_vertical_tab_basic.addLayout(plugin.layout_form_tab_basic)
+
+        # Setup basic tab labels
+        plugin.label_mean = QLabel(plugin.tab_basic)
+        plugin.label_mean.setText("Mean")
+
+        plugin.line_edit_mean = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_mean.setStyleSheet(LINE_EDIT_CSS)
+        plugin.line_edit_mean.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(0, QFormLayout.LabelRole,
+                                               plugin.label_mean)
+        plugin.layout_form_tab_basic.setWidget(0, QFormLayout.FieldRole,
+                                               plugin.line_edit_mean)
+
+        plugin.label_median = QLabel(plugin.tab_basic)
+        plugin.label_median.setText("Median")
+
+        plugin.line_edit_median = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_median.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_median.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(1, QFormLayout.LabelRole,
+                                               plugin.label_median)
+        plugin.layout_form_tab_basic.setWidget(1, QFormLayout.FieldRole,
+                                               plugin.line_edit_median)
+
+        plugin.label_std_dev = QLabel(plugin.tab_basic)
+        plugin.label_std_dev.setText("Std. Dev.")
+
+        plugin.line_edit_std_dev = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_std_dev.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_std_dev.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(2, QFormLayout.LabelRole,
+                                               plugin.label_std_dev)
+        plugin.layout_form_tab_basic.setWidget(2, QFormLayout.FieldRole,
+                                               plugin.line_edit_std_dev)
+
+        plugin.label_total = QLabel(plugin.tab_basic)
+        plugin.label_total.setText("Total")
+
+        plugin.line_edit_total = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_total.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_total.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(3, QFormLayout.LabelRole,
+                                               plugin.label_total)
+        plugin.layout_form_tab_basic.setWidget(3, QFormLayout.FieldRole,
+                                               plugin.line_edit_total)
+
+        plugin.label_data_point_count = QLabel(plugin.tab_basic)
+        plugin.label_data_point_count.setText("Data Point Count")
+
+        plugin.line_edit_data_point_count = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_data_point_count.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_data_point_count.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(4, QFormLayout.LabelRole,
+                                               plugin.label_data_point_count)
+        plugin.layout_form_tab_basic.setWidget(4, QFormLayout.FieldRole,
+                                               plugin.line_edit_data_point_count)
+
+        # Measured tab setup
+        plugin.tab_measured = QWidget()
+        plugin.tab_widget_stats.addTab(plugin.tab_measured, "Measured")
+
+        plugin.layout_vertical_tab_measured = QVBoxLayout(plugin.tab_measured)
+        plugin.layout_vertical_tab_measured.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical_tab_measured.setSpacing(6)
+
+        plugin.layout_form_tab_measured = QFormLayout()
+        plugin.layout_form_tab_measured.setFieldGrowthPolicy(
+            QFormLayout.ExpandingFieldsGrow)
+        plugin.layout_form_tab_measured.setFormAlignment(Qt.AlignRight |
+                                                         Qt.AlignTop |
+                                                         Qt.AlignTrailing)
+        plugin.layout_form_tab_measured.setContentsMargins(1, 1, 1, 1)
+        plugin.layout_form_tab_measured.setSpacing(6)
+
+        plugin.layout_vertical_tab_measured.addLayout(plugin.layout_form_tab_measured)
+
+        # Measured tab labels
+        plugin.label_equivalent_width = QLabel(plugin.tab_measured)
+        plugin.label_equivalent_width.setText("Equivalent Width")
+
+        plugin.line_edit_equivalent_width = QLineEdit(plugin.tab_measured)
+        plugin.line_edit_equivalent_width.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_equivalent_width.setReadOnly(True)
+
+        plugin.layout_form_tab_measured.setWidget(0, QFormLayout.LabelRole,
+                                                  plugin.label_equivalent_width)
+        plugin.layout_form_tab_measured.setWidget(0, QFormLayout.FieldRole,
+                                                  plugin.line_edit_equivalent_width)
+
+        plugin.label_centroid = QLabel(plugin.tab_measured)
+        plugin.label_centroid.setText("Centroid")
+
+        plugin.line_edit_centroid = QLineEdit(plugin.tab_measured)
+        plugin.line_edit_centroid.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_centroid.setReadOnly(True)
+
+        plugin.layout_form_tab_measured.setWidget(1, QFormLayout.LabelRole,
+                                                  plugin.label_centroid)
+        plugin.layout_form_tab_measured.setWidget(1, QFormLayout.FieldRole,
+                                                  plugin.line_edit_centroid)
+
+        plugin.label_flux = QLabel(plugin.tab_measured)
+        plugin.label_flux.setText("Flux")
+
+        plugin.line_edit_flux = QLineEdit(plugin.tab_measured)
+        plugin.line_edit_flux.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_flux.setReadOnly(True)
+
+        plugin.layout_form_tab_measured.setWidget(2, QFormLayout.LabelRole,
+                                                  plugin.label_flux)
+        plugin.layout_form_tab_measured.setWidget(2, QFormLayout.FieldRole,
+                                                  plugin.line_edit_flux)
+
+        plugin.label_mean_continuum = QLabel(plugin.tab_measured)
+        plugin.label_mean_continuum.setText("Mean Continuum")
+
+        plugin.line_edit_continuum = QLineEdit(plugin.tab_measured)
+        plugin.line_edit_continuum.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_continuum.setReadOnly(True)
+
+        plugin.layout_form_tab_measured.setWidget(3, QFormLayout.LabelRole,
+                                                  plugin.label_mean_continuum)
+        plugin.layout_form_tab_measured.setWidget(3, QFormLayout.FieldRole,
+                                                  plugin.line_edit_continuum)
+
+        # Add warning label
+        plugin.label_measured_error = QLabel()
+        plugin.label_measured_error.setText("You must have at least three ROIs "
+                                          "on the plot")
+        plugin.label_measured_error.setWordWrap(True)
+        plugin.label_measured_error.setStyleSheet("""
+        QLabel {
+            color: #a94442;
+            background-color: #f2dede;
+            padding: 10px;
+            border: 1px solid #ebccd1;
+            border-radius: 4px;
+        }""")
+
+        plugin.layout_vertical_tab_measured.addWidget(plugin.label_measured_error)
+        plugin.layout_vertical_tab_measured.addStretch()
+
+        plugin.layout_vertical.addStretch()

@@ -14,9 +14,7 @@ import numpy as np
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
 from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
 from astropy.units import Unit, Quantity, spectral, spectral_density
-from astropy.wcs import WCS
 from ..third_party.py_expression_eval import Parser
-from ..analysis import modeling
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -439,9 +437,9 @@ class ModelLayer(Layer):
         # Handle bad mask when fitting goes awry.
         if self._mask.shape != self._source.dispersion.shape:
             self._mask = np.ones(self._source.dispersion.shape, dtype=np.bool)
-        print("HERE")
+
         self._data = self._model(self.dispersion.value)
-        print("I was called")
+
         return Quantity(self._data,
                         unit=self._source.unit).to(self.units[1])
 

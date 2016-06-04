@@ -26,60 +26,7 @@ class DataListPlugin(Plugin):
             Dispatch.on_added_data.emit)
 
     def setup_ui(self):
-        self.layout_vertical.setContentsMargins(11, 11, 11, 11)
-
-        # List widget for the data sets
-        self.list_widget_data_list = QListWidget(self)
-
-        # Label box to show when no data set has been loaded
-        self.label_unopened = QLabel(self)
-        self.label_unopened.setAlignment(Qt.AlignCenter | Qt.AlignHCenter)
-        self.label_unopened.setText("Click the folder icon to open a data set")
-        self.label_unopened.setWordWrap(True)
-        self.label_unopened.setStyleSheet("""
-        QLabel {
-            color: #8a6d3b;
-            background-color: #fcf8e3;
-            padding: 10px;
-            border: 1px solid #faebcc;
-            border-radius: 4px;
-        }""")
-
-        self.layout_vertical.addWidget(self.label_unopened)
-        self.layout_vertical.addWidget(self.list_widget_data_list)
-
-        self.layout_horizontal = QHBoxLayout()
-
-        self.button_open_data = QToolButton(self)
-        self.button_open_data.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open Folder-48.png")))
-        self.button_open_data.setIconSize(QSize(25, 25))
-
-        self.button_create_sub_window = QToolButton(self)
-        self.button_create_sub_window.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open in Browser-50.png")))
-        self.button_create_sub_window.setIconSize(QSize(25, 25))
-        self.button_create_sub_window.setEnabled(False)
-
-        self.button_add_to_sub_window = QToolButton(self)
-        self.button_add_to_sub_window.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Change Theme-50.png")))
-        self.button_add_to_sub_window.setIconSize(QSize(25, 25))
-        self.button_add_to_sub_window.setEnabled(False)
-
-        self.button_remove_data = QToolButton(self)
-        self.button_remove_data.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Delete-48.png")))
-        self.button_remove_data.setEnabled(False)
-        self.button_remove_data.setIconSize(QSize(25, 25))
-
-        self.layout_horizontal.addWidget(self.button_open_data)
-        self.layout_horizontal.addWidget(self.button_create_sub_window)
-        self.layout_horizontal.addWidget(self.button_add_to_sub_window)
-        self.layout_horizontal.addStretch()
-        self.layout_horizontal.addWidget(self.button_remove_data)
-
-        self.layout_vertical.addLayout(self.layout_horizontal)
+        UiDataListPlugin(self)
 
     def setup_connections(self):
         # Enable/disable buttons depending on selection
@@ -217,5 +164,63 @@ class DataListPlugin(Plugin):
             self.button_remove_data.setEnabled(False)
             self.button_create_sub_window.setEnabled(False)
             self.button_add_to_sub_window.setEnabled(False)
+
+
+class UiDataListPlugin:
+    def __init__(self, plugin):
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+
+        # List widget for the data sets
+        plugin.list_widget_data_list = QListWidget(plugin)
+
+        # Label box to show when no data set has been loaded
+        plugin.label_unopened = QLabel(plugin)
+        plugin.label_unopened.setAlignment(Qt.AlignCenter | Qt.AlignHCenter)
+        plugin.label_unopened.setText("Click the folder icon to open a data set")
+        plugin.label_unopened.setWordWrap(True)
+        plugin.label_unopened.setStyleSheet("""
+        QLabel {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            padding: 10px;
+            border: 1px solid #faebcc;
+            border-radius: 4px;
+        }""")
+
+        plugin.layout_vertical.addWidget(plugin.label_unopened)
+        plugin.layout_vertical.addWidget(plugin.list_widget_data_list)
+
+        plugin.layout_horizontal = QHBoxLayout()
+
+        plugin.button_open_data = QToolButton(plugin)
+        plugin.button_open_data.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Open Folder-48.png")))
+        plugin.button_open_data.setIconSize(QSize(25, 25))
+
+        plugin.button_create_sub_window = QToolButton(plugin)
+        plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Open in Browser-50.png")))
+        plugin.button_create_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_create_sub_window.setEnabled(False)
+
+        plugin.button_add_to_sub_window = QToolButton(plugin)
+        plugin.button_add_to_sub_window.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Change Theme-50.png")))
+        plugin.button_add_to_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_add_to_sub_window.setEnabled(False)
+
+        plugin.button_remove_data = QToolButton(plugin)
+        plugin.button_remove_data.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Delete-48.png")))
+        plugin.button_remove_data.setEnabled(False)
+        plugin.button_remove_data.setIconSize(QSize(25, 25))
+
+        plugin.layout_horizontal.addWidget(plugin.button_open_data)
+        plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
+        plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)
+        plugin.layout_horizontal.addStretch()
+        plugin.layout_horizontal.addWidget(plugin.button_remove_data)
+
+        plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
 

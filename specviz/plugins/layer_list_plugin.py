@@ -16,40 +16,7 @@ class LayerListPlugin(Plugin):
     name = "Layer List"
 
     def setup_ui(self):
-        self.layout_vertical.setContentsMargins(11, 11, 11, 11)
-
-        self.tree_widget_layer_list = QTreeWidget(self)
-
-        self.layout_vertical.addWidget(self.tree_widget_layer_list)
-
-        self.layout_horizontal = QHBoxLayout()
-
-        self.button_layer_arithmetic = QToolButton(self)
-        self.button_layer_arithmetic.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Math-48.png")))
-        self.button_layer_arithmetic.setEnabled(False)
-        self.button_layer_arithmetic.setIconSize(QSize(25, 25))
-
-        self.button_remove_layer = QToolButton(self)
-        self.button_remove_layer.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Delete-48.png")))
-        self.button_remove_layer.setEnabled(False)
-        self.button_remove_layer.setIconSize(QSize(25, 25))
-
-        self.button_change_color = QToolButton(self)
-        self.button_change_color.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Color Dropper-48.png")))
-        self.button_change_color.setEnabled(False)
-        self.button_change_color.setIconSize(QSize(25, 25))
-
-        self.layout_horizontal.addWidget(self.button_layer_arithmetic)
-        self.layout_horizontal.addStretch()
-        self.layout_horizontal.addWidget(self.button_change_color)
-        self.layout_horizontal.addWidget(self.button_remove_layer)
-
-        self.layout_vertical.addLayout(self.layout_horizontal)
-
-        self.dialog_layer_arithmetic = LayerArithmeticDialog()
+        UiLayerListPlugin(self)
 
         # Add tool tray buttons
         self.button_layer_slice = self.add_tool_button(
@@ -362,3 +329,39 @@ class LayerListPlugin(Plugin):
             override=True)
 
 
+class UiLayerListPlugin:
+    def __init__(self, plugin):
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+
+        plugin.tree_widget_layer_list = QTreeWidget(plugin)
+
+        plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
+
+        plugin.layout_horizontal = QHBoxLayout()
+
+        plugin.button_layer_arithmetic = QToolButton(plugin)
+        plugin.button_layer_arithmetic.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Math-48.png")))
+        plugin.button_layer_arithmetic.setEnabled(False)
+        plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
+
+        plugin.button_remove_layer = QToolButton(plugin)
+        plugin.button_remove_layer.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Delete-48.png")))
+        plugin.button_remove_layer.setEnabled(False)
+        plugin.button_remove_layer.setIconSize(QSize(25, 25))
+
+        plugin.button_change_color = QToolButton(plugin)
+        plugin.button_change_color.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Color Dropper-48.png")))
+        plugin.button_change_color.setEnabled(False)
+        plugin.button_change_color.setIconSize(QSize(25, 25))
+
+        plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
+        plugin.layout_horizontal.addStretch()
+        plugin.layout_horizontal.addWidget(plugin.button_change_color)
+        plugin.layout_horizontal.addWidget(plugin.button_remove_layer)
+
+        plugin.layout_vertical.addLayout(plugin.layout_horizontal)
+
+        plugin.dialog_layer_arithmetic = LayerArithmeticDialog()
