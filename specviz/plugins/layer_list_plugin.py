@@ -203,7 +203,7 @@ class LayerListPlugin(Plugin):
             window.get_roi_mask(layer=layer)
 
         new_layer = Layer(layer._source, mask=roi_mask,
-                          name=layer._source.name + "Layer Slice")
+                          name=layer._source.name + " Layer Slice")
 
         Dispatch.on_add_layer.emit(layer=new_layer)
 

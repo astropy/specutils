@@ -26,6 +26,8 @@ class UiPlotSubWindow(QMainWindow):
 
         self.vertical_layout = QVBoxLayout()
         self.horizontal_layout = QHBoxLayout()
+        self.vertical_layout.setContentsMargins(0, 0, 0, 0)
+        self.vertical_layout.setSpacing(2)
 
         # X range
         self.label_x_range = QLabel()
@@ -56,12 +58,12 @@ class UiPlotSubWindow(QMainWindow):
         # Cursor position
         self.line_edit_cursor_pos = QLabel()
         # self.line_edit_cursor_pos.setReadOnly(True)
-        self.line_edit_cursor_pos.setText("None, None")
+        self.line_edit_cursor_pos.setText("Pos: 0, 0")
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
         self.horizontal_layout.addStretch()
-        self.horizontal_layout.addLayout(self.layout_x_range)
-        self.horizontal_layout.addLayout(self.layout_y_range)
+        # self.horizontal_layout.addLayout(self.layout_x_range)
+        # self.horizontal_layout.addLayout(self.layout_y_range)
         self.horizontal_layout.addWidget(self.button_reset)
 
         self.vertical_layout.addLayout(self.horizontal_layout)
@@ -107,6 +109,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
         #                        rateLimit=30, slot=self.cursor_moved)
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
+        self.button_reset.clicked.connect(self._reset_view)
 
     def cursor_moved(self, evt):
         pos = evt
@@ -123,10 +126,15 @@ class PlotSubWindow(UiPlotSubWindow):
             index = int(mouse_point.x())
 
             if index > 0 and index < vb.viewRange()[0][1]:
-                self.line_edit_cursor_pos.setText("{0:4.4g}, {1:4.4g}".format(
+                self.line_edit_cursor_pos.setText("Pos: {0:4.4g}, "
+                                                  "{1:4.4g}".format(
                     mouse_point.x(), mouse_point.y())
                     # flux[index], disp[index])
                 )
+
+    def _reset_view(self):
+        view_box = self._plot_item.getViewBox()
+        view_box.autoRange()
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
