@@ -9,14 +9,17 @@ from __future__ import (absolute_import, division, print_function,
 import signal
 import sys
 import warnings
+import os
 
 # THIRD-PARTY
 from astropy.utils.exceptions import AstropyUserWarning
 
 # LOCAL
-from .third_party.qtpy.QtWidgets import *
+from .third_party.qtpy.QtWidgets import QApplication
+from .third_party.qtpy.QtGui import QIcon
 from .third_party.qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
+from .ui.widgets.utils import ICON_PATH
 
 
 class App(object):
@@ -30,6 +33,8 @@ class App(object):
 def setup():
     qapp = QApplication(sys.argv)
     # qapp.setGraphicsSystem('native')
+    qapp.setWindowIcon(QIcon(os.path.join(ICON_PATH, 'application',
+                                          'icon.png')))
 
     #http://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co
     timer = QTimer()

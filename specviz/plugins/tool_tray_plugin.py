@@ -23,7 +23,7 @@ class ToolTrayPlugin(Plugin):
             description='Add line labels',
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
             category='Selections',
-            enabled=True)
+            enabled=False)
 
         self.add_tool_bar_actions(
             name="Box ROI",

@@ -54,8 +54,7 @@ class ModelFittingPlugin(Plugin):
 
         # When the model items in the model tree change
         self.tree_widget_current_models.itemChanged.connect(
-            lambda mi, col: Dispatch.on_changed_model.emit(
-                model_item=mi))
+            self._model_parameter_validation)
 
         # When the model list delete button is pressed
         self.button_remove_model.clicked.connect(
@@ -194,7 +193,7 @@ class ModelFittingPlugin(Plugin):
             for i, para in enumerate(model.param_names):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
-                new_para_item.setData(0, Qt.UserRole, model.parameters[i])
+                new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
                 new_para_item.setFlags(
                     new_para_item.flags() | Qt.ItemIsEditable)
@@ -387,7 +386,6 @@ class ModelFittingPlugin(Plugin):
 
         self.add_model_item(layer)
 
-    @DispatchHandle.register_listener("on_changed_model")
     def _model_parameter_validation(self, model_item, col=1):
         if col == 0:
             return
@@ -399,6 +397,8 @@ class ModelFittingPlugin(Plugin):
         except ValueError:
             prev_val = model_item.data(col, Qt.UserRole)
             model_item.setText(col, str(prev_val))
+
+        Dispatch.on_changed_model.emit(model_item=model_item)
 
     def fit_model_layer(self):
         current_layer = self.current_layer
