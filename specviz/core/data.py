@@ -495,6 +495,7 @@ class ModelLayer(Layer):
                     formula = formula.replace(match, "")
 
             expr = parser.parse(formula)
+            vars = expr.variables()
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in
