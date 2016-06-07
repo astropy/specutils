@@ -67,11 +67,9 @@ class Plugin(QDockWidget):
         raise NotImplementedError()
 
     def add_tool_buttons(self, icon_path, name="Test", category=None,
-                     description="",
-                             callback=None, enabled=True):
+                         description="", callback=None, enabled=True):
         button = QToolButton()
         button.setIcon(QIcon(icon_path))
-        button.setIconSize(QSize(25, 25))
         button.setEnabled(enabled)
         button.setStatusTip(description)
         button.clicked.connect(callback if callback is not None else
@@ -84,14 +82,16 @@ class Plugin(QDockWidget):
 
         return button
 
-    def add_tool_bar_actions(self, icon_path, name="Test", category=None,
+    def add_tool_bar_actions(self, icon_path, name="", category=None,
                              description="", callback=None, enabled=True):
-        action = QAction(QIcon(icon_path), name, self)
-        action.triggered.connect(callback if callback is not None else
-                                 lambda: None)
-        action.setText(name)
+        action = QAction(self)
+        action.setIcon(QIcon(icon_path))
+        action.setIconText(name)
         action.setStatusTip(description)
         action.setEnabled(enabled)
+
+        action.triggered.connect(callback if callback is not None else
+                                 lambda: None)
 
         tool_button = dict(widget=action, icon_path=icon_path,
                            category=category, description=description)

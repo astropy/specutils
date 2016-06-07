@@ -39,7 +39,7 @@ class ModelFactory(Factory):
         'Lorentz': models.Lorentz1D,
         'MexicanHat': models.MexicanHat1D,
         'Trapezoid': models.Trapezoid1D,
-        'ExponentialCutoffPowerLaw': models.ExponentialCutoffPowerLaw1D,
+        'ExpCutoffPowerLaw': models.ExponentialCutoffPowerLaw1D,
         'BrokenPowerLaw': models.BrokenPowerLaw1D,
         'LogParabola': models.LogParabola1D,
         'PowerLaw': models.PowerLaw1D,

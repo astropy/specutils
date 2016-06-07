@@ -125,7 +125,7 @@ class Viewer(object):
 
     def get_tool_bar(self, name):
         if name is None:
-            name = "user plugins"
+            name = "User Plugins"
 
         if name not in self._all_tool_bars:
             tool_bar = self.main_window.addToolBar(name)
