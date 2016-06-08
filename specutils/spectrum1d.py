@@ -1,15 +1,16 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # This module implements the Spectrum1D class.
 
-from __future__ import print_function, division
-from specutils.models.Indexer import Indexer
+from __future__ import print_function, division, absolute_import
+from .models.Indexer import Indexer
+from .io.registry import io_registry
 
 __all__ = ['Spectrum1D']
 
 import copy
 from astropy.extern import six
 from astropy import log
-from astropy.nddata import NDData, FlagCollection
+from astropy.nddata import NDData, FlagCollection, NDArithmeticMixin, NDSlicingMixin
 
 from astropy.utils import misc
 
@@ -21,7 +22,7 @@ from astropy import units as u
 import numpy as np
 
 
-class Spectrum1D(NDData):
+class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
     """A subclass of `NDData` for a one dimensional spectrum in Astropy.
     
     This class inherits all the base class functionality from the NDData class
@@ -190,6 +191,35 @@ class Spectrum1D(NDData):
 
         raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
                                   ' documentation')
+
+    @classmethod
+    def read(cls, *args, **kwargs):
+        """
+        Read and parse a data file and return as a `Spectrum1D`.
+        This function provides the Table interface to the astropy unified I/O
+        layer.  This allows easily reading a file in many supported data formats
+        using syntax such as::
+          >>> from specutils.spectrum1d import Spectrum1D
+          >>> dat = Spectrum1D.read('table.dat', format='ascii')
+        The arguments and keywords (other than ``format``) provided to this function are
+        passed through to the underlying data reader (e.g.
+        `~spectrum1d.io.ascii.read`).
+        """
+        return io_registry.read(cls, *args, **kwargs)
+
+    def write(self, *args, **kwargs):
+        """
+        Write this Table object out in the specified format.
+        This function provides the Table interface to the astropy unified I/O
+        layer.  This allows easily writing a file in many supported data formats
+        using syntax such as::
+          >>> from astropy.table import Table
+          >>> dat = Table([[1, 2], [3, 4]], names=('a', 'b'))
+          >>> dat.write('table.dat', format='ascii')
+        The arguments and keywords (other than ``format``) provided to this function are
+        passed through to the underlying data reader (e.g. `~astropy.io.ascii.write`).
+        """
+        io_registry.write(self, *args, **kwargs)
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None,
                  meta=None, indexer=None):
