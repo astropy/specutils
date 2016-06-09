@@ -79,6 +79,9 @@ class StatisticsPlugin(Plugin):
             self.label_measured_error.show()
             return
         else:
+            [x.setBrush(QColor(0, 0, 255, 50)) for x in rois]
+            [x.update() for x in rois]
+
             self.label_measured_error.hide()
 
         roi_data_sets = []
