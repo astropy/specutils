@@ -155,6 +155,7 @@ Dispatch.register_event("on_update_model", args=["layer"])
 
 Dispatch.register_event("on_remove_data", args=["data"])
 Dispatch.register_event("on_remove_layer", args=["layer"])
+Dispatch.register_event("on_remove_all_data")
 
 Dispatch.register_event("on_file_open", args=["file_name"])
 Dispatch.register_event("on_file_read", args=["file_name", "filter"])

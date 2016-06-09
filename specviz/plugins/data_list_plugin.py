@@ -147,6 +147,10 @@ class DataListPlugin(Plugin):
 
         Dispatch.on_removed_data.emit(data=self.current_data)
 
+    @DispatchHandle.register_listener("on_remove_all_data")
+    def remove_all_data(self):
+        self.list_widget_data_list.clear()
+
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):
             data_item = self.list_widget_data_list.item(0)
