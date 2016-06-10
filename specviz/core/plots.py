@@ -18,7 +18,7 @@ AVAILABLE_COLORS = cycle([(0, 0, 0), (0, 73, 73), (0, 146, 146),
                           (219, 209, 0), (36, 255, 36), (255, 255, 109)])
 
 
-class PlotContainer(object):
+class LinePlot(object):
     def __init__(self, layer, plot=None, visible=True, style='line',
                  pen=None, err_pen=None):
         self._layer = layer
@@ -52,6 +52,35 @@ class PlotContainer(object):
                            'error_pen_off': pg.mkPen(None)}
         self._visibility_state = [True, True, False]
         self.set_visibility(*self._visibility_state, override=True)
+
+    @staticmethod
+    def from_layer(layer, **kwargs):
+        plot_data_item = pg.PlotDataItem(layer.dispersion.value,
+                                         layer.data.value)
+
+        plot_container = LinePlot(layer=layer, plot=plot_data_item,
+                                  **kwargs)
+
+        if plot_container.layer.uncertainty is not None:
+            # err_top = pg.PlotDataItem(
+            #     plot_container.layer.dispersion.value,
+            #     plot_container.layer.data.value +
+            #     plot_container.layer.uncertainty.array * 0.5)
+            # err_btm = pg.PlotDataItem(
+            #     plot_container.layer.dispersion.value,
+            #     plot_container.layer.data.value -
+            #     plot_container.layer.uncertainty.array * 0.5)
+            #
+            # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
+
+            plot_error_item = pg.ErrorBarItem(
+                x=plot_container.layer.dispersion.value,
+                y=plot_container.layer.data.value,
+                height=plot_container.layer.uncertainty.array,
+            )
+            plot_container.error = plot_error_item
+
+        return plot_container
 
     def change_units(self, x, y=None, z=None):
         if x is None or not self._layer.units[0].is_equivalent(

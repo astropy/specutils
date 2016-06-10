@@ -13,36 +13,81 @@ from astropy.units import Unit, Quantity
 from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
-from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
-from ..widgets.toolbars import PlotToolBar
-from ..qt.plotsubwindow import Ui_SpectraSubWindow
+from ...third_party.qtpy.QtCore import *
 from ...core.comms import Dispatch, DispatchHandle
 from ...core.linelist import LineList
 from .region_items import LinearRegionItem
+from ...core.plots import LinePlot
 
+import numpy as np
+import pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
 
 
-class PlotSubWindow(QMainWindow):
+class UiPlotSubWindow(QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(UiPlotSubWindow, self).__init__(*args, **kwargs)
+
+        self.vertical_layout = QVBoxLayout()
+        self.horizontal_layout = QHBoxLayout()
+        self.vertical_layout.setContentsMargins(0, 0, 0, 0)
+        self.vertical_layout.setSpacing(2)
+
+        # X range
+        self.label_x_range = QLabel()
+        self.label_x_range.setText("X Range")
+        self.line_edit_min_x_range = QLineEdit()
+        self.line_edit_max_x_range = QLineEdit()
+
+        self.layout_x_range = QHBoxLayout()
+        self.layout_x_range.addWidget(self.label_x_range)
+        self.layout_x_range.addWidget(self.line_edit_min_x_range)
+        self.layout_x_range.addWidget(self.line_edit_max_x_range)
+
+        # Y range
+        self.label_y_range = QLabel()
+        self.label_y_range.setText("Y Range")
+        self.line_edit_min_y_range = QLineEdit()
+        self.line_edit_max_y_range = QLineEdit()
+
+        self.layout_y_range = QHBoxLayout()
+        self.layout_y_range.addWidget(self.label_y_range)
+        self.layout_y_range.addWidget(self.line_edit_min_y_range)
+        self.layout_y_range.addWidget(self.line_edit_max_y_range)
+
+        # Reset
+        self.button_reset = QPushButton()
+        self.button_reset.setText("Reset")
+
+        # Cursor position
+        self.line_edit_cursor_pos = QLabel()
+        # self.line_edit_cursor_pos.setReadOnly(True)
+        self.line_edit_cursor_pos.setText("Pos: 0, 0")
+
+        self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
+        self.horizontal_layout.addStretch()
+        # self.horizontal_layout.addLayout(self.layout_x_range)
+        # self.horizontal_layout.addLayout(self.layout_y_range)
+        self.horizontal_layout.addWidget(self.button_reset)
+
+        self.vertical_layout.addLayout(self.horizontal_layout)
+
+        self.main_widget = QWidget(self)
+        self.main_widget.setLayout(self.vertical_layout)
+
+        self.setCentralWidget(self.main_widget)
+
+
+class PlotSubWindow(UiPlotSubWindow):
     """
     Sub window object responsible for displaying and interacting with plots.
     """
-    def __init__(self, **kwargs):
-        super(PlotSubWindow, self).__init__(**kwargs)
-        # Setup plot sub window ui
-        self.ui_plot_sub_window = Ui_SpectraSubWindow()
-        self.ui_plot_sub_window.setupUi(self)
-
-        # Setup custom tool bar
-        self._tool_bar = PlotToolBar()
-        self.addToolBar(self._tool_bar)
-
-        self._containers = []
-        self._top_axis_dialog = TopAxisDialog()
-        self._unit_change_dialog = UnitChangeDialog()
+    def __init__(self, *args, **kwargs):
+        super(PlotSubWindow, self).__init__(*args, **kwargs)
+        self._plots = []
         self._dynamic_axis = None
         self._plot_widget = None
         self._plot_item = None
@@ -56,7 +101,8 @@ class PlotSubWindow(QMainWindow):
         self._dynamic_axis = DynamicAxisItem(orientation='top')
         self._plot_widget = pg.PlotWidget(
             axisItems={'top': self._dynamic_axis})
-        self.setCentralWidget(self._plot_widget)
+        # self.setCentralWidget(self._plot_widget)
+        self.vertical_layout.insertWidget(0, self._plot_widget)
 
         self._plot_item = self._plot_widget.getPlotItem()
         self._plot_item.showAxis('top', True)
@@ -66,52 +112,36 @@ class PlotSubWindow(QMainWindow):
         self._setup_connections()
 
     def _setup_connections(self):
-        # Setup ROI connection
-        self.ui_plot_sub_window.actionInsert_ROI.triggered.connect(self.add_roi)
+        # Connect cursor position to UI element
+        # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
+        #                        rateLimit=30, slot=self.cursor_moved)
+        self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
+        self.button_reset.clicked.connect(self._reset_view)
 
-        # On accept, change the displayed axis
-        self._top_axis_dialog.accepted.connect(lambda:
-            self.update_axis(
-                self._containers[0].layer,
-                self._top_axis_dialog.ui_axis_dialog.axisModeComboBox
-                    .currentIndex(),
-                redshift=self._top_axis_dialog.redshift,
-                ref_wave=self._top_axis_dialog.ref_wave))
+    def cursor_moved(self, evt):
+        pos = evt
 
-        # Setup equivalent width toggle
-        self.ui_plot_sub_window.actionMeasure.triggered.connect(
-            self._toggle_measure)
+        # Data range
+        # flux = self._containers[0].data.value
+        # disp = self._containers[0].dispersion.value
 
-        # Tool bar connections
-        self._tool_bar.atn_change_top_axis.triggered.connect(
-            self._top_axis_dialog.exec_)
+        # Plot range
+        vb = self._plot_item.getViewBox()
 
-        self._tool_bar.atn_change_units.triggered.connect(
-            self._show_unit_change_dialog)
+        if self._plot_item.sceneBoundingRect().contains(pos):
+            mouse_point = vb.mapSceneToView(pos)
+            index = int(mouse_point.x())
 
-        self._tool_bar.atn_line_ids.triggered.connect(
-            self._show_line_ids)
+            if index > 0 and index < vb.viewRange()[0][1]:
+                self.line_edit_cursor_pos.setText("Pos: {0:4.4g}, "
+                                                  "{1:4.4g}".format(
+                    mouse_point.x(), mouse_point.y())
+                    # flux[index], disp[index])
+                )
 
-    def _show_unit_change_dialog(self):
-        if self._unit_change_dialog.exec_():
-            x_text = self._unit_change_dialog.disp_unit
-            y_text = self._unit_change_dialog.flux_unit
-
-            x_unit = y_unit = None
-
-            try:
-                x_unit = Unit(x_text) if x_text else None
-            except ValueError as e:
-                logging.error(e)
-
-            try:
-                y_unit = Unit(y_text) if y_text else None
-            except ValueError as e:
-                logging.error(e)
-
-            self.change_units(x_unit, y_unit)
-
-            self._plot_item.update()
+    def _reset_view(self):
+        view_box = self._plot_item.getViewBox()
+        view_box.autoRange()
 
     def _show_line_ids(self):
 
@@ -169,28 +199,9 @@ class PlotSubWindow(QMainWindow):
 
         Dispatch.on_added_linelist.emit(linelist=linelist)
 
-
-
-
-
-
-
-    def _toggle_measure(self, on):
-        if on:
-            self.add_measure_rois()
-
-            # Disable the ability to add new ROIs
-            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(True)
-        else:
-            self.remove_measure_rois()
-
-            # Enable the ability to add new ROIs
-            self.ui_plot_sub_window.actionInsert_ROI.setDisabled(False)
-
-
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
-            container = self.get_container(layer)
+            container = self.get_plot(layer)
 
         if container is None:
             return
@@ -216,7 +227,7 @@ class PlotSubWindow(QMainWindow):
         mask = reduce(np.logical_or, mask_holder)
         return mask
 
-    def add_roi(self):
+    def add_roi(self, *args, **kwargs):
         view_range = self._plot_item.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
         x_pos = x_len * 0.5 + view_range[0][0]
@@ -233,63 +244,22 @@ class PlotSubWindow(QMainWindow):
         roi.sigRemoveRequested.connect(remove)
 
         # Connect events
-        Dispatch.on_updated_roi.emit(roi=roi)
+        Dispatch.on_updated_rois.emit(rois=self._rois)
         roi.sigRemoveRequested.connect(
-            lambda: Dispatch.on_updated_roi.emit(roi=roi))
+            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
         roi.sigRegionChangeFinished.connect(
-            lambda: Dispatch.on_updated_roi.emit(roi=roi))
+            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
 
-    def add_measure_rois(self):
-        # First, remove existing rois
-        for roi in self._rois:
-            self._plot_item.removeItem(roi)
+    def get_plot(self, layer):
+        for plot in self._plots:
+            if plot.layer == layer:
+                return plot
 
-        if len(self._measure_rois) == 0:
-            for i in range(3):
-                view_range = self._plot_item.viewRange()
-                x_vrange = view_range[0][1] - view_range[0][0]
-                x_len = x_vrange * 0.25
-                x_pos = view_range[0][0] + x_vrange * 0.1 + x_len * 1.1 * i
-
-                roi = LinearRegionItem(values=[x_pos, x_pos + x_len],
-                                       brush=pg.mkBrush(
-                                           QColor(152, 251, 152, 50)),
-                                       removable=False)
-
-                if i == 1:
-                    roi.setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
-
-                self._measure_rois.append(roi)
-
-            for roi in self._measure_rois:
-                roi.sigRemoveRequested.connect(
-                    lambda: Dispatch.on_updated_roi.emit(
-                        measure_rois=self._measure_rois))
-                roi.sigRegionChangeFinished.connect(
-                    lambda: Dispatch.on_updated_roi.emit(
-                        measure_rois=self._measure_rois))
-
-            # Connect events
-            Dispatch.on_updated_roi.emit(measure_rois=self._measure_rois)
-
-        for roi in self._measure_rois:
-            self._plot_item.addItem(roi)
-
-    def remove_measure_rois(self):
-        for roi in self._measure_rois:
-            self._plot_item.removeItem(roi)
-
-        # Replace rois we removed
-        for roi in self._rois:
-            self._plot_item.addItem(roi)
-
-    def get_container(self, layer):
-        for container in self._containers:
-            if container.layer == layer:
-                return container
+    def get_all_layers(self):
+        return [plot.layer for plot in self._plots]
 
     def change_units(self, x=None, y=None, z=None):
-        for cntr in self._containers:
+        for cntr in self._plots:
             cntr.change_units(x, y, z)
 
         self.set_labels(x_label=x, y_label=y)
@@ -299,70 +269,81 @@ class PlotSubWindow(QMainWindow):
     def set_labels(self, x_label='', y_label=''):
         self._plot_item.setLabels(
             left="Flux [{}]".format(
-                y_label or str(self._containers[0].layer.units[1])),
+                y_label or str(self._plots[0].layer.units[1])),
             bottom="Wavelength [{}]".format(
-                x_label or str(self._containers[0].layer.units[0])))
+                x_label or str(self._plots[0].layer.units[0])))
 
     def set_visibility(self, layer, show, override=False):
-        for container in self._containers:
-            if container.layer == layer:
-                if container._visibility_state != [show, show, False]:
-                    container.set_visibility(show, show, inactive=False,
-                                             override=override)
+        plot = self.get_plot(layer)
+
+        if plot._visibility_state != [show, show, False]:
+            plot.set_visibility(show, show, inactive=False, override=override)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
         self._plot_widget.update()
 
+    def update_plot_item(self):
+        self._plot_item.update()
+
+    @DispatchHandle.register_listener("on_update_model")
+    def update_plot(self, layer=None, plot=None):
+        if layer is not None:
+            plot = self.get_plot(layer)
+
+        plot.update()
+
     def closeEvent(self, event):
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
 
-    @DispatchHandle.register_listener("on_added_plot")
-    def add_container(self, container=None, window=None):
-        if window != self:
+    @DispatchHandle.register_listener("on_add_layer")
+    def add_plot(self, layer, window=None):
+        if window is not None and window != self:
+            logging.warning("Attempted to add container to plot, but sub "
+                            "windows do not match.")
             return
 
-        # User tries to plot before loading file, do nothing
-        if not hasattr(container, 'layer'):
-            return
+        new_plot = LinePlot.from_layer(layer)
 
-        if len(self._containers) == 0:
-            self.change_units(container.layer.units[0],
-                              container.layer.units[1])
+        if len(self._plots) == 0:
+            self.change_units(new_plot.layer.units[0],
+                              new_plot.layer.units[1])
         else:
-            container.change_units(*self._plot_units)
+            new_plot.change_units(*self._plot_units)
 
-        if container.error is not None:
-            self._plot_item.addItem(container.error)
+        if new_plot.error is not None:
+            self._plot_item.addItem(new_plot.error)
 
-        self._containers.append(container)
-        self._plot_item.addItem(container.plot)
+        self._plots.append(new_plot)
+        self._plot_item.addItem(new_plot.plot)
 
-        self.set_active_plot(container.layer)
+        self.set_active_plot(new_plot.layer)
 
         # Make sure the dynamic axis object has access to a layer
-        self._dynamic_axis._layer = self._containers[0].layer
+        self._dynamic_axis._layer = self._plots[0].layer
 
-    @DispatchHandle.register_listener("on_removed_plot")
-    def remove_container(self, layer, window=None):
+        Dispatch.on_added_plot.emit(plot=new_plot, window=window)
+
+    @DispatchHandle.register_listener("on_removed_layer")
+    def remove_plot(self, layer, window=None):
         if window is not None and window != self:
             return
 
-        for container in [x for x in self._containers]:
-            if container.layer == layer:
-                self._plot_item.removeItem(container.plot)
+        for plot in self._plots:
+            if plot.layer == layer:
+                self._plot_item.removeItem(plot.plot)
 
-                if container.error is not None:
-                    self._plot_item.removeItem(container.error)
+                if plot.error is not None:
+                    self._plot_item.removeItem(plot.error)
 
-                self._containers.remove(container)
+                self._plots.remove(plot)
 
     @DispatchHandle.register_listener("on_selected_plot")
     def set_active_plot(self, layer):
-        for container in self._containers:
-            if container.layer == layer:
-                container.set_visibility(True, True, inactive=False)
+        for plot in self._plots:
+            if plot.layer == layer:
+                plot.set_visibility(True, True, inactive=False)
             else:
-                container.set_visibility(True, False, inactive=True)
+                plot.set_visibility(True, False, inactive=True)
 
