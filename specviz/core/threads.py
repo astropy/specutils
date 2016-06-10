@@ -28,7 +28,10 @@ class FileLoadThread(QThread):
         else:
             self.status.emit("An error occurred while loading file.", 5000)
 
-        self.result.emit(data)
+        if data is not None:
+            self.result.emit(data)
+        else:
+            logging.error("Could not open file.")
 
     def read_file(self, file_name, file_filter):
         """
@@ -53,7 +56,8 @@ class FileLoadThread(QThread):
             data = Data.read(file_name, file_filter)
             return data
         except:
-            logging.error("Incompatible loader for selected data.")
+            logging.error("Incompatible loader for selected data: {"
+                          "}".format(file_filter))
             return
 
 
