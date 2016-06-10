@@ -3,8 +3,10 @@ from __future__ import (absolute_import, division, print_function,
 
 import yaml
 import os
+
 from astropy.io import registry as io_registry
 
+from ..core import linelist
 
 class Registry(object):
     """
@@ -47,7 +49,20 @@ class CustomLoaderRegistry(Registry):
 
     @property
     def filters(self):
-        return [x.filter for x in self._members]
+        # this has to be tweaked so as to ignore (for now) the
+        # spectral line list files. This should be better implemented
+        # in a subclass or function or something, but that leads to
+        # all kinds of side effects related to file formats, ascii
+        # readers, and the like. Besides, we didn't settle into a
+        # final design yet, so lets keep it simple and functional
+        # for now, and refactor later. We will have to eventually
+        # subclass CustomLoaderRegistry anyway so it can handle
+        # selections for user-supplied line lists.
+        result = []
+        for x in self._members:
+            if not hasattr(x, 'type') or x.type != linelist.FORMAT:
+                result.append(x.filter)
+        return result
 
 
 class YAMLLoader(yaml.YAMLObject):

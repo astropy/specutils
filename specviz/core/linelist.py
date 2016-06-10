@@ -5,6 +5,7 @@ import numpy as np
 
 from astropy.table import Table, vstack
 
+FORMAT = 'line_list'
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
 COLUMN_END = 'end'
