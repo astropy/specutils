@@ -26,6 +26,7 @@ class EventNode(object):
             raise ValueError("Unknown keyword in event emit arguments.")
 
         for handler in self.__handlers:
+            # logging.info("Sending message from: '{}'".format(handler))
             if hasattr(handler, 'self'):
                 handler(handler.self, *args, **kwargs)
             else:
@@ -111,29 +112,31 @@ class DispatchHandle(object):
                 try:
                     return func(*args, **kwargs)
                 except:
-                    logging.error(traceback.format_exc())
+                    logging.error("Exception in '{}':\n{}".format(func.__name__,
+                                                                  traceback.format_exc()))
             return wrapper
         return decorator
 
 
+Dispatch.register_event("on_activated_window", args=["window"])
+
 Dispatch.register_event("on_added_data", args=["data"])
-Dispatch.register_event("on_added_window", args=["data", "window"])
-Dispatch.register_event("on_added_plot", args=["container", "window"])
-Dispatch.register_event("on_added_model", args=["model", "layer"])
+Dispatch.register_event("on_added_window", args=["layer", "window"])
+Dispatch.register_event("on_added_plot", args=["plot", "window"])
 Dispatch.register_event("on_added_layer", args=["layer"])
 Dispatch.register_event("on_added_to_window", args=["layer", "window"])
 Dispatch.register_event("on_added_linelist", args=["linelist"])
 
 Dispatch.register_event("on_removed_data", args=["data"])
 Dispatch.register_event("on_removed_plot", args=["layer", "window"])
-Dispatch.register_event("on_removed_layer", args=["layer"])
+Dispatch.register_event("on_removed_layer", args=["layer", "window"])
 Dispatch.register_event("on_removed_model", args=["model", "layer"])
 Dispatch.register_event("on_removed_from_window", args=["layer", "window"])
 
 Dispatch.register_event("on_updated_layer", args=["layer"])
 Dispatch.register_event("on_updated_model", args=["model"])
-Dispatch.register_event("on_updated_plot", args=["container", "layer"])
-Dispatch.register_event("on_updated_roi", args=["roi", "measure_rois"])
+Dispatch.register_event("on_updated_plot", args=["plot", "layer"])
+Dispatch.register_event("on_updated_rois", args=["rois"])
 Dispatch.register_event("on_updated_stats", args=["stats", "layer"])
 
 Dispatch.register_event("on_selected_plot", args=["layer"])
@@ -144,3 +147,20 @@ Dispatch.register_event("on_selected_model", args=["model_item"])
 Dispatch.register_event("on_clicked_layer", args=["layer_item"])
 Dispatch.register_event("on_changed_layer", args=["layer_item"])
 Dispatch.register_event("on_changed_model", args=["model_item"])
+
+Dispatch.register_event("on_add_model", args=["layer"])
+Dispatch.register_event("on_add_window", args=["data", "window"])
+Dispatch.register_event("on_add_layer", args=["window", "layer", "from_roi"])
+Dispatch.register_event("on_add_roi", args=[])
+
+Dispatch.register_event("on_update_model", args=["layer"])
+
+Dispatch.register_event("on_remove_data", args=["data"])
+Dispatch.register_event("on_remove_layer", args=["layer"])
+Dispatch.register_event("on_remove_model", args=["model"])
+Dispatch.register_event("on_remove_all_data")
+
+Dispatch.register_event("on_file_open", args=["file_name"])
+Dispatch.register_event("on_file_read", args=["file_name", "file_filter"])
+
+Dispatch.register_event("on_status_message", args=["message", "timeout"])

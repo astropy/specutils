@@ -15,7 +15,7 @@ from ast import literal_eval
 
 from ...third_party.qtpy.QtWidgets import QFileDialog
 from ...interfaces.factories import ModelFactory
-from ..managers import ModelManager
+from ...core.data import ModelLayer
 
 MODEL_FILE_FILTER = "YAML files (*.yaml)"
 EXPRESSION_NAME = 'arithmetic behavior'
@@ -111,7 +111,7 @@ def _build_compound_model(in_map):
 
     formula = in_map[EXPRESSION_NAME]
 
-    return ModelManager.evaluate(model_list, formula), formula
+    return ModelLayer.from_formula(model_list, formula), formula
 
 
 def buildModelFromFile(fname):

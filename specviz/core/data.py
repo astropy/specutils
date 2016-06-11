@@ -7,14 +7,14 @@ from ..analysis.utils import resample
 # STDLIB
 import logging
 logging.basicConfig(level=logging.INFO)
-import numbers
+import re
 
 # THIRD-PARTY
 import numpy as np
 from astropy.nddata import NDData, NDArithmeticMixin, NDIOMixin
 from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
 from astropy.units import Unit, Quantity, spectral, spectral_density
-from astropy.wcs import WCS
+from ..third_party.py_expression_eval import Parser
 
 
 class Data(NDIOMixin, NDArithmeticMixin, NDData):
@@ -145,9 +145,10 @@ class Layer(object):
     name : str
         Short description.
     """
-    def __init__(self, source, mask, parent=None, name=''):
+    def __init__(self, source, mask=None, parent=None, name=''):
         self._source = source
-        self._mask = mask.astype(bool) if mask is not None else mask
+        self._mask = mask.astype(bool) if mask is not None else np.ones(
+            source.data.shape, dtype=bool)
         self._parent = parent
         self.name = self._source.name + " Layer" if not name else name
         self.units = (self._source.dispersion_unit,
@@ -160,7 +161,6 @@ class Layer(object):
         return Layer(new_data, mask)
 
     def _arithmetic(self, operator, other, propagate=True):
-        print(self._source.dispersion_unit)
         if isinstance(other, Layer):
             # Make sure units are compatible
             if not other.data.unit.is_equivalent(
@@ -261,6 +261,77 @@ class Layer(object):
                              self.name)
 
         return result_layer
+
+    @classmethod
+    def from_formula(cls, formula, layers):
+        if not formula:
+            return
+
+        layers = layers
+        new_layer = cls._evaluate(layers, formula)
+
+        if new_layer is None:
+            return
+
+        new_layer._window = None
+        new_layer._parent = None
+        new_layer.name = "Resultant"
+
+        return new_layer
+
+    @classmethod
+    def _evaluate(cls, layers, formula):
+        """
+        Parse a string into an arithmetic expression.
+
+        Parameters
+        ----------
+        layers : list
+            List of `Layer` objects that correspond to the given variables.
+        formula : str
+            A string describing the arithmetic operations to perform.
+        """
+        parser = Parser()
+
+        for layer in layers:
+            formula = formula.replace(layer.name,
+                                      layer.name.replace(" ", "_"))
+
+        try:
+            expr = parser.parse(formula)
+        except Exception as e:
+            logging.error(e)
+            return
+
+        # Extract variables
+        vars = expr.variables()
+
+        # List the models in the same order as the variables
+        # sorted_layers = [next(l for v in vars for l in layers
+        #                       if l.name.replace(" ", "_") == v)]
+        # sorted_layers = [l for v in vars for l in layers
+        #                  if l.name.replace(" ", "_") == v]
+        sorted_layers = []
+
+        for v in vars:
+            for l in layers:
+                if l.name.replace(" ", "_") == v:
+                    sorted_layers.append(l)
+                    break
+
+        if len(sorted_layers) != len(vars):
+            logging.error("Incorrect layer arithmetic formula: the number "
+                          "of layers does not match the number of variables.")
+
+        try:
+            result = parser.evaluate(expr.simplify({}).toString(),
+                                     dict(pair for pair in
+                                          zip(vars, sorted_layers)))
+        except Exception as e:
+            logging.error("While evaluating formula: {}".format(e))
+            return
+
+        return result
 
     def __add__(self, other):
         new_layer = self._arithmetic("add", other)
@@ -389,3 +460,45 @@ class ModelLayer(Layer):
     def model(self, value):
         self._model = value
         self._data = self._model(self.dispersion.value)
+
+    @classmethod
+    def from_formula(cls, formula, models):
+        result_model = cls._evaluate(formula, models)
+        return result_model
+
+    @classmethod
+    def _evaluate(cls, models, formula):
+        try:
+            parser = Parser()
+            expr = parser.parse(formula)
+        except:
+            return
+
+        # Extract variables
+        vars = expr.variables()
+
+        # List the models in the same order as the variables
+        sorted_models = [m for v in vars for m in models if m.name == v]
+
+        if len(sorted_models) > len(vars):
+            logging.error("Incorrect model arithmetic formula: the number "
+                          "of models does not match the number of variables.")
+            return
+        elif len(sorted_models) < len(vars):
+            extras = [x for x in vars if x not in [y.name for y in
+                                                  sorted_models]]
+
+            for extra in extras:
+                matches = re.findall('([\+\*\-\/]?\s?{})'.format(extra), formula)
+
+                for match in matches:
+                    formula = formula.replace(match, "")
+
+            expr = parser.parse(formula)
+            vars = expr.variables()
+
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in
+                                      zip(vars, sorted_models)))
+
+        return result

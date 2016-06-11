@@ -43,7 +43,7 @@ LONG_DESCRIPTION = package.__doc__
 builtins._ASTROPY_PACKAGE_NAME_ = PACKAGENAME
 
 # VERSION should be PEP386 compatible (http://www.python.org/dev/peps/pep-0386)
-VERSION = '0.1.2rc3.dev'
+VERSION = '0.2.0rc3.dev'
 
 # Indicates if this version is a release version
 RELEASE = 'dev' not in VERSION
@@ -78,6 +78,8 @@ package_info = get_package_info()
 package_info['package_data'].setdefault(PACKAGENAME, [])
 package_info['package_data'][PACKAGENAME].append('data/*')
 package_info['package_data'][PACKAGENAME].append('data/linelists/*')
+package_info['package_data'][PACKAGENAME].append('ui/icons/*.png')
+package_info['package_data'][PACKAGENAME].append('ui/icons/application/*')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
