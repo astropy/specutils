@@ -38,10 +38,22 @@ class Plugin(QDockWidget):
         # GUI Setup
         self.setAllowedAreas(Qt.AllDockWidgetAreas)
 
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.scroll_area.setFrameShadow(QFrame.Plain)
+        self.scroll_area.setLineWidth(0)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setGeometry(QRect(0, 0, 306, 553))
+
+        # The main widget inside the scroll area
         self.contents = QWidget()
         self.layout_vertical = QVBoxLayout(self.contents)
+        self.layout_vertical.setContentsMargins(11, 11, 11, 11)
+        self.layout_vertical.setSpacing(6)
 
-        self.setWidget(self.contents)
+        self.scroll_area.setWidget(self.contents)
+
+        self.setWidget(self.scroll_area)
 
         self.setWindowTitle(self.name)
         self.setup_ui()

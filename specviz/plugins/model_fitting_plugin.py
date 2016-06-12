@@ -522,22 +522,6 @@ class ModelFittingPlugin(Plugin):
 
 class UiModelFittingPlugin:
     def __init__(self, plugin):
-        plugin.scroll_area = QScrollArea(plugin)
-        plugin.scroll_area.setFrameShape(QFrame.NoFrame)
-        plugin.scroll_area.setFrameShadow(QFrame.Plain)
-        plugin.scroll_area.setLineWidth(0)
-        plugin.scroll_area.setWidgetResizable(True)
-        plugin.scroll_area.setGeometry(QRect(0, 0, 306, 553))
-        plugin.layout_vertical.setContentsMargins(0, 0, 0, 0)
-
-        # The main widget inside the scroll area
-        plugin.main_widget = QWidget()
-        plugin.layout_vertical_main_widget = QVBoxLayout(plugin.main_widget)
-        plugin.layout_vertical_main_widget.setContentsMargins(11, 11, 11, 11)
-        plugin.layout_vertical_main_widget.setSpacing(6)
-
-        plugin.scroll_area.setWidget(plugin.main_widget)
-
         # Tree widget/model selector group box
         plugin.group_box_add_model = QGroupBox()
         plugin.group_box_add_model.setTitle("Add Model")
@@ -566,17 +550,15 @@ class UiModelFittingPlugin:
         plugin.layout_horizontal_group_box_add_model.addWidget(
             plugin.button_select_model)
 
-        plugin.layout_vertical_main_widget.addWidget(plugin.group_box_add_model)
+        plugin.layout_vertical.addWidget(plugin.group_box_add_model)
 
         # Current models group box
-        plugin.group_box_current_models = QGroupBox(plugin.main_widget)
+        plugin.group_box_current_models = QGroupBox(plugin.contents)
         plugin.group_box_current_models.setTitle("Current Models")
         plugin.layout_vertical_group_box_current_models = QVBoxLayout(
             plugin.group_box_current_models)
-        plugin.layout_vertical_group_box_current_models.setContentsMargins(11,
-                                                                           11,
-                                                                           11,
-                                                                           11)
+        plugin.layout_vertical_group_box_current_models.setContentsMargins(
+            11, 11, 11, 11)
         plugin.layout_vertical_group_box_current_models.setSpacing(6)
 
         plugin.tree_widget_current_models = QTreeWidget(
@@ -654,7 +636,7 @@ class UiModelFittingPlugin:
             plugin.group_box_model_arithmetic)
 
         # Fitting routines group box
-        plugin.group_box_fitting = QGroupBox(plugin.main_widget)
+        plugin.group_box_fitting = QGroupBox(plugin.contents)
         plugin.group_box_fitting.setTitle("Fitting")
         plugin.group_box_fitting.setEnabled(False)
 
@@ -671,14 +653,11 @@ class UiModelFittingPlugin:
         plugin.layout_vertical_fitting.addWidget(plugin.button_perform_fit)
 
         # Add group boxees
-        plugin.layout_vertical_main_widget.addWidget(plugin.group_box_add_model)
-        plugin.layout_vertical_main_widget.addWidget(
+        plugin.layout_vertical.addWidget(plugin.group_box_add_model)
+        plugin.layout_vertical.addWidget(
             plugin.group_box_current_models)
-        plugin.layout_vertical_main_widget.addWidget(
+        plugin.layout_vertical.addWidget(
             plugin.group_box_fitting)
-
-        plugin.layout_vertical.addWidget(plugin.scroll_area)
-
 
 
 
