@@ -76,7 +76,7 @@ package_info = get_package_info()
 
 # Add the project-global data
 package_info['package_data'].setdefault(PACKAGENAME, [])
-package_info['package_data'][PACKAGENAME].append('data/*')
+package_info['package_data'][PACKAGENAME].append('data/*.*')
 package_info['package_data'][PACKAGENAME].append('data/linelists/*')
 package_info['package_data'][PACKAGENAME].append('ui/icons/*.png')
 package_info['package_data'][PACKAGENAME].append('ui/icons/application/*')
