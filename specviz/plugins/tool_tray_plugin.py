@@ -74,7 +74,7 @@ class ToolTrayPlugin(Plugin):
         # ---
         # Setup plot options
         self.add_tool_bar_actions(
-            name="Eport",
+            name="Export",
             description='Export plot',
             icon_path=os.path.join(ICON_PATH, "Export-48.png"),
             category='Options',
