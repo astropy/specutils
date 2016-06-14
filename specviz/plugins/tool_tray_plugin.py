@@ -1,11 +1,8 @@
-from ..ui.widgets.plugin import Plugin
 from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 
+from ..ui.widgets.plugin import Plugin
 from ..ui.widgets.utils import ICON_PATH
-
-import logging
 
 
 class ToolTrayPlugin(Plugin):
@@ -18,13 +15,6 @@ class ToolTrayPlugin(Plugin):
     def setup_ui(self):
         # ---
         # Selections setup
-        self.add_tool_bar_actions(
-            name="Line Labels",
-            description='Add line labels',
-            icon_path=os.path.join(ICON_PATH, "Label-48.png"),
-            category='Selections',
-            enabled=False)
-
         self.add_tool_bar_actions(
             name="Box ROI",
             description='Add box ROI',

@@ -1,26 +1,25 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys, os
+import sys
 import logging
 from functools import reduce
 
 import numpy as np
 import pyqtgraph as pg
 
-from astropy.units import Unit, Quantity
+from astropy.units import Quantity
 
-from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
+
 from ...core.comms import Dispatch, DispatchHandle
 from ...core.linelist import LineList
-from .region_items import LinearRegionItem
 from ...core.plots import LinePlot
+from ...core.annotation import LineIDMarker
+from .axes import DynamicAxisItem
+from .region_items import LinearRegionItem
 
-import numpy as np
-import pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -143,7 +142,8 @@ class PlotSubWindow(UiPlotSubWindow):
         view_box = self._plot_item.getViewBox()
         view_box.autoRange()
 
-    def _show_line_ids(self):
+    @DispatchHandle.register_listener("on_requested_linelist")
+    def _show_line_ids(self, *args, **kwargs):
 
         # find the wavelength range spanned by the spectrum
         # (or spectra) at hand. The range will be used to select
@@ -152,7 +152,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # increasing dispersion values!
         amin = sys.float_info.max
         amax = 0.0
-        for container in self._containers:
+        for container in self._plots:
             amin = min(amin, container.dispersion.value[0])
             amax = max(amax, container.dispersion.value[-1])
 
@@ -195,9 +195,51 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # display line lists in a tabbed pane.
 
-        # display line markers on plot sirface.
+        # display line markers on plot surface.
 
-        Dispatch.on_added_linelist.emit(linelist=linelist)
+        Dispatch.on_add_linelist.emit(linelist=linelist)
+
+    @DispatchHandle.register_listener("on_add_linelist")
+    def add_linelist(self, linelist):
+
+        # This is setting all markers at a fixed height in the
+        # initial data coordinates (before any zoom). Still TBD
+        # how to do this in the generic case. Maybe derive heights
+        # from curve data instead? Make the markers follow the
+        # curve ups and downs?
+        #
+        # Ideally we would like to have the marker's X coordinate
+        # pinned down to the plot surface in data value, and the Y
+        # coordinate pinned down in screen value. This would make
+        # the markers to stay at the same height in the window even
+        # when the plot is zoomed. This kind of functionality doesn't
+        # seem to be possible under pyqtgraph though. This requires
+        # more investigation.
+
+        plot_item = self._plot_item
+
+        # curve = plot_item.curves[0]
+
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+        height = (ymax - ymin) * 0.75 + ymin
+
+        # column names are defined in the YAML files.
+        wave_column = linelist.columns['wavelength']
+        id_column = linelist.columns['id']
+
+        for i in range(len(wave_column)):
+            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
+
+            marker.setPos(wave_column[i], height)
+
+            plot_item.addItem(marker)
+            # plot_item.addItem(marker.arrow)
+
+            plot_item.update()
+
+        plot_item.update()
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
