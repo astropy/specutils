@@ -17,7 +17,7 @@ class PlotToolsPlugin(Plugin):
     def setup_ui(self):
         self._top_axis_dialog = TopAxisDialog()
         self._unit_change_dialog = UnitChangeDialog()
-        self._line_lists_window = LineListsWindow()
+        self._linelist_window = LineListsWindow()
 
         # Add an roi
         self.button_add_roi = self.add_tool_bar_actions(
@@ -51,8 +51,8 @@ class PlotToolsPlugin(Plugin):
             description='Add line labels',
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
             category='Selections',
-            # callback=self._show_linelists_window,
-            callback=Dispatch.on_requested_linelist.emit,
+            callback=self._show_linelists_window,
+            # callback=Dispatch.on_requested_linelist.emit,
             enabled=False)
 
     def setup_connections(self):
@@ -95,17 +95,9 @@ class PlotToolsPlugin(Plugin):
         else:
             logging.warning("Active window does not have any plots.")
 
-
 #TODO work in progress
     def _show_linelists_window(self):
-        # self._line_lists_dialog.show()
-
-        print ('@@@@@@     line: 100  - ')
-
-        Dispatch.on_requested_linelist.emit,
-
-
-
+        self._linelist_window.show()
 
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):

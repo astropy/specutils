@@ -142,6 +142,12 @@ class PlotSubWindow(UiPlotSubWindow):
         view_box = self._plot_item.getViewBox()
         view_box.autoRange()
 
+#TODO   this might be removed from here, to a more appropriate place.
+# Reading and manipulating line lists does not seem to be necessarily
+# a job for the plot sub window. It might warrant it's own class perhaps.
+# On the other hand, preparing the line lists for plotting requires
+# knowledge of the range in wavelength spanned by the data, knowledge
+# which resides here. Need careful design here.
     @DispatchHandle.register_listener("on_requested_linelist")
     def _show_line_ids(self, *args, **kwargs):
 
@@ -199,6 +205,8 @@ class PlotSubWindow(UiPlotSubWindow):
 
         Dispatch.on_add_linelist.emit(linelist=linelist)
 
+#TODO this on the other hand, should stay here since it deals
+# directly with a plotting operation.
     @DispatchHandle.register_listener("on_add_linelist")
     def add_linelist(self, linelist):
 
