@@ -20,6 +20,8 @@ from ...core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 
+from .dialogs import LineListsWindow
+
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -67,7 +69,8 @@ class UiPlotSubWindow(QMainWindow):
         self.line_edit_cursor_pos.setText("Pos: 0, 0")
 
         # Line labels
-        self.line_labels = []
+        self._linelist_window = None
+        self._line_labels = []
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
         self.horizontal_layout.addStretch()
@@ -247,15 +250,21 @@ class PlotSubWindow(UiPlotSubWindow):
             marker.setPos(wave_column[i], height)
 
             plot_item.addItem(marker)
-            self.line_labels.append(marker)
+            self._line_labels.append(marker)
 
         plot_item.update()
 
     @DispatchHandle.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
-        for marker in self.line_labels:
+        for marker in self._line_labels:
             self._plot_item.removeItem(marker)
         self._plot_item.update()
+
+    @DispatchHandle.register_listener("on_show_linelists_window")
+    def _show_linelists_window(self, *args, **kwargs):
+        if self._linelist_window is None:
+            self._linelist_window = LineListsWindow()
+            self._linelist_window.show()
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
