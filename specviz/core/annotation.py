@@ -1,9 +1,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from pyqtgraph import TextItem
+from pyqtgraph import functions, TextItem
 
-from ..third_party.qtpy.QtCore import Qt, QPointF
+from ..third_party.qtpy.QtCore import QPointF
 from ..third_party.qtpy.QtGui import QPolygonF, QPen, QColor
 
 
@@ -16,11 +16,16 @@ class LineIDMarker(TextItem):
     ''' This class handles the drawing of a modified TextItem that's
         augmented with a linear vertical marker. These items are used
         to generate spectral line ID markers on the plot surface.
+
+        Note the convoluted handling of the 'color' parameter. This is
+        due to a bug in pyqtgraph's function 'functions.mkColor', which
+        bombs when presented with an argument of type Qt.GlobalColor.
     '''
     def __init__(self, text, plot_item, color=(0,0,0), orientation='horizontal'):
 
         self._plot_item = plot_item
         self._orientation = orientation
+        self._color = functions.mkColor(color)
 
         anchor = orientations[orientation]['anchor']
         angle = orientations[orientation]['angle']
@@ -34,8 +39,8 @@ class LineIDMarker(TextItem):
         # draw the text
         super(LineIDMarker, self).paint(p, args)
 
-        # add marker. Geometry depends on the
-        #text being vertical or horizontal.
+        # Add marker. Geometry depends on the
+        # text being vertical or horizontal.
         points = []
         bounding_rect = self.boundingRect()
 
@@ -54,7 +59,7 @@ class LineIDMarker(TextItem):
 
         polygon = QPolygonF(points)
 
-        pen = QPen(QColor(0,0,0))
+        pen = QPen(QColor(functions.mkColor(self._color)))
         p.setPen(pen)
         p.drawPolygon(polygon)
 

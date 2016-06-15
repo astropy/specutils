@@ -50,7 +50,7 @@ class PlotToolsPlugin(Plugin):
             description='Add line labels',
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
             category='Selections',
-            callback=Dispatch.on_requested_linelist.emit,
+            callback=Dispatch.on_show_linelists_window.emit,
             enabled=False)
 
     def setup_connections(self):
