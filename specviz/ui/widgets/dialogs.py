@@ -344,18 +344,21 @@ class UiLinelistsWindow(object):
 
 class LineListsWindow(UiLinelistsWindow):
     def __init__(self, parent=None):
-        super(LineListsWindow, self).__init__(parent)
+        super(LineListsWindow, self).__init__()
 
         self.main_window = QMainWindow()
         self.setupUi(self.main_window)
 
-        # Bare-bones implementation that has only the Draw button active.
-        # The action consists in requesting the input of pre-canned line
-        # lists. The ingestion routine directly calls for the display of
-        # line labels. In a real-world implementation, the ingestion
-        # should be handled separately from the drawing action, so as to
-        # give the user the opportunity to interact with the line lists.
-        self.draw_button.clicked.connect(Dispatch.on_requested_linelist.emit)
+        # Bare-bones implementation that has only the Draw and Erase buttons
+        # active. The Draw action consists in requesting the input of pre-canned
+        # line lists. The ingestion routine directly calls for the display of the
+        # associated line labels. In a real-world implementation, the ingestion
+        # should be handled separately from the drawing action, so as to give the
+        # user the opportunity to interact with the line lists.
+        self.draw_button.clicked.connect(Dispatch.on_request_linelist.emit)
+
+        # The Erase action erases all line IDs that are currently plotted.
+        self.erase_button.clicked.connect(Dispatch.on_erase_linelabels.emit)
 
     def show(self):
         self.main_window.show()

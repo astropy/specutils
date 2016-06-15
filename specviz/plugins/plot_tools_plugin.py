@@ -52,7 +52,6 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
             category='Selections',
             callback=self._show_linelists_window,
-            # callback=Dispatch.on_requested_linelist.emit,
             enabled=False)
 
     def setup_connections(self):
@@ -95,7 +94,7 @@ class PlotToolsPlugin(Plugin):
         else:
             logging.warning("Active window does not have any plots.")
 
-#TODO work in progress
+#TODO work in progress. Behavior when closing, TBD.
     def _show_linelists_window(self):
         self._linelist_window.show()
 

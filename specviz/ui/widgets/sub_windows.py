@@ -66,6 +66,9 @@ class UiPlotSubWindow(QMainWindow):
         # self.line_edit_cursor_pos.setReadOnly(True)
         self.line_edit_cursor_pos.setText("Pos: 0, 0")
 
+        # Line labels
+        self.line_labels = []
+
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
         self.horizontal_layout.addStretch()
         # self.horizontal_layout.addLayout(self.layout_x_range)
@@ -148,7 +151,8 @@ class PlotSubWindow(UiPlotSubWindow):
 # On the other hand, preparing the line lists for plotting requires
 # knowledge of the range in wavelength spanned by the data, knowledge
 # which resides here. Need careful design here.
-    @DispatchHandle.register_listener("on_requested_linelist")
+
+    @DispatchHandle.register_listener("on_request_linelist")
     def _show_line_ids(self, *args, **kwargs):
 
         # find the wavelength range spanned by the spectrum
@@ -207,14 +211,14 @@ class PlotSubWindow(UiPlotSubWindow):
 
 #TODO this on the other hand, should stay here since it deals
 # directly with a plotting operation.
+
     @DispatchHandle.register_listener("on_add_linelist")
     def add_linelist(self, linelist):
 
-        # This is setting all markers at a fixed height in the
-        # initial data coordinates (before any zoom). Still TBD
-        # how to do this in the generic case. Maybe derive heights
-        # from curve data instead? Make the markers follow the
-        # curve ups and downs?
+        # This is plotting all markers at a fixed height in the
+        # screen coordinate system. Still TBD how to do this in
+        # the generic case. Maybe derive heights from curve data
+        # instead? Make the markers follow the curve ups and downs?
         #
         # Ideally we would like to have the marker's X coordinate
         # pinned down to the plot surface in data value, and the Y
@@ -243,11 +247,15 @@ class PlotSubWindow(UiPlotSubWindow):
             marker.setPos(wave_column[i], height)
 
             plot_item.addItem(marker)
-            # plot_item.addItem(marker.arrow)
-
-            plot_item.update()
+            self.line_labels.append(marker)
 
         plot_item.update()
+
+    @DispatchHandle.register_listener("on_erase_linelabels")
+    def erase_linelabels(self, *args, **kwargs):
+        for marker in self.line_labels:
+            self._plot_item.removeItem(marker)
+        self._plot_item.update()
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
