@@ -355,7 +355,7 @@ class LineListsWindow(UiLinelistsWindow):
         # associated line labels. In a real-world implementation, the ingestion
         # should be handled separately from the drawing action, so as to give the
         # user the opportunity to interact with the line lists.
-        self.draw_button.clicked.connect(Dispatch.on_request_linelist.emit)
+        self.draw_button.clicked.connect(Dispatch.on_request_linelists.emit)
 
         # The Erase action erases all line IDs that are currently plotted.
         self.erase_button.clicked.connect(Dispatch.on_erase_linelabels.emit)
