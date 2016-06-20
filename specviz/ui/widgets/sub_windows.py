@@ -100,6 +100,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._rois = []
         self._measure_rois = []
         self._centroid_roi = None
+        self._is_selected = True
 
         DispatchHandle.setup(self)
 
@@ -309,12 +310,6 @@ class PlotSubWindow(UiPlotSubWindow):
     # _add_linelists, do not talk directly to each other, but via
     # signals. It's just in preparation for a fix.
 
-    @DispatchHandle.register_listener("on_show_linelists_window")
-    def _show_linelists_window(self, *args, **kwargs):
-        if self._linelist_window is None:
-            self._linelist_window = LineListsWindow()
-            self._linelist_window.show()
-
     @DispatchHandle.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
 
@@ -380,3 +375,33 @@ class PlotSubWindow(UiPlotSubWindow):
         for marker in self._line_labels:
             self._plot_item.removeItem(marker)
         self._plot_item.update()
+
+
+    # The 3 handlers below, and their associated signals, implement
+    # the logic that defines the show/hide/dismiss behavior of the
+    # line list window. It remains to be seen if it is what users
+    # actually want.
+
+    @DispatchHandle.register_listener("on_activated_window")
+    def _set_selection_state(self, window):
+        self._is_selected = window == self
+
+        if self._linelist_window:
+            if self._is_selected:
+                self._linelist_window.show()
+            else:
+                self._linelist_window.hide()
+
+    @DispatchHandle.register_listener("on_show_linelists_window")
+    def _show_linelists_window(self, *args, **kwargs):
+        if self._is_selected:
+            if self._linelist_window is None:
+                self._linelist_window = LineListsWindow(str(self))
+            self._linelist_window.show()
+
+    @DispatchHandle.register_listener("on_dismiss_linelists_window")
+    def _dismiss_linelists_window(self, *args, **kwargs):
+        if self._is_selected and self._linelist_window:
+            self._linelist_window.hide()
+            self._linelist_window = None
+
