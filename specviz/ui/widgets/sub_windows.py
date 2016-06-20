@@ -244,6 +244,11 @@ class PlotSubWindow(UiPlotSubWindow):
         plot.update()
 
     def closeEvent(self, event):
+
+        # before tearing down event handlers, need to close
+        # any line lists window that might be still open.
+        Dispatch.on_dismiss_linelists_window.emit()
+
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
 
