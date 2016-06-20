@@ -334,6 +334,9 @@ class PlotSubWindow(UiPlotSubWindow):
     @DispatchHandle.register_listener("on_add_linelists")
     def _add_linelists(self, linelist):
 
+        if not self._is_selected:
+            return
+
         # This is plotting all markers at a fixed height in the
         # screen coordinate system. Still TBD how to do this in
         # the generic case. Maybe derive heights from curve data
@@ -372,10 +375,10 @@ class PlotSubWindow(UiPlotSubWindow):
 
     @DispatchHandle.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
-        for marker in self._line_labels:
-            self._plot_item.removeItem(marker)
-        self._plot_item.update()
-
+        if self._is_selected:
+            for marker in self._line_labels:
+                self._plot_item.removeItem(marker)
+            self._plot_item.update()
 
     # The 3 handlers below, and their associated signals, implement
     # the logic that defines the show/hide/dismiss behavior of the
