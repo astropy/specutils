@@ -305,6 +305,23 @@ class PlotSubWindow(UiPlotSubWindow):
 
 #--------  Line lists and line labels handling.
 
+    # Finds the wavelength range spanned by the spectrum (or spectra)
+    # at hand. The range will be used to bracket the set of lines
+    # actually read from the line list table(s).
+    def _find_wavelength_range(self):
+        # increasing dispersion values!
+        amin = sys.float_info.max
+        amax = 0.0
+
+        for container in self._plots:
+            amin = min(amin, container.dispersion.value[0])
+            amax = max(amax, container.dispersion.value[-1])
+
+        amin = Quantity(amin, self._plot_units[0])
+        amax = Quantity(amax, self._plot_units[0])
+
+        return (amin, amax)
+
     # The separation of tasks among these methods and the signals
     # that drive them is so far unclear. The 'request linelists'
     # and the 'add_linelists' operations are now in practice
@@ -318,21 +335,9 @@ class PlotSubWindow(UiPlotSubWindow):
     @DispatchHandle.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
 
-        # Find the wavelength range spanned by the spectrum
-        # (or spectra) at hand. The range will be used to bracket
-        # the set of lines actually read from the line list table(s).
+        self.waverange = self._find_wavelength_range()
 
-        # increasing dispersion values!
-        amin = sys.float_info.max
-        amax = 0.0
-        for container in self._plots:
-            amin = min(amin, container.dispersion.value[0])
-            amax = max(amax, container.dispersion.value[-1])
-
-        amin = Quantity(amin, self._plot_units[0])
-        amax = Quantity(amax, self._plot_units[0])
-
-        linelist = LineList.ingest(amin, amax)
+        linelist = LineList.ingest(self.waverange)
 
         Dispatch.on_add_linelists.emit(linelist=linelist)
 
