@@ -324,26 +324,20 @@ class PlotSubWindow(UiPlotSubWindow):
 
     @DispatchHandle.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
-
         self.waverange = self._find_wavelength_range()
 
-        self._linelist = LineList.ingest(self.waverange)
-
-
-
-
-        #TODO here we display the line list in the GUI
-
-
-
-
-
+        self.linelists = LineList.ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
     def _plot_linelists(self, *args, **kwargs):
 
         if not self._is_selected:
             return
+
+        # Merge all line lists into a single one. This might
+        # change in the future to enable customized plotting
+        # for each line list.
+        merged_linelist = LineList.merge(self.linelists)
 
         # This is plotting all markers at a fixed height in the
         # screen coordinate system. Still TBD how to do this in
@@ -368,8 +362,8 @@ class PlotSubWindow(UiPlotSubWindow):
         height = (ymax - ymin) * 0.75 + ymin
 
         # column names are defined in the YAML files.
-        wave_column = self._linelist.columns[WAVELENGTH_COLUMN]
-        id_column = self._linelist.columns[ID_COLUMN]
+        wave_column = merged_linelist.columns[WAVELENGTH_COLUMN]
+        id_column = merged_linelist.columns[ID_COLUMN]
 
         for i in range(len(wave_column)):
             marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
@@ -407,7 +401,7 @@ class PlotSubWindow(UiPlotSubWindow):
     def _show_linelists_window(self, *args, **kwargs):
         if self._is_selected:
             if self._linelist_window is None:
-                self._linelist_window = LineListsWindow(str(self))
+                self._linelist_window = LineListsWindow(self)
             self._linelist_window.show()
 
     @DispatchHandle.register_listener("on_dismiss_linelists_window")

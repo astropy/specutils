@@ -129,12 +129,12 @@ class UiLinelistsWindow(object):
 
 
 class LineListsWindow(UiLinelistsWindow):
-    def __init__(self, name,  parent=None):
+    def __init__(self, plot_window, parent=None):
         super(LineListsWindow, self).__init__()
 
         # Builds GUI
         self._main_window = QMainWindow()
-        self.setupUi(self._main_window, name)
+        self.setupUi(self._main_window, str(plot_window))
 
         # Request that line lists be read from wherever are they sources.
         Dispatch.on_request_linelists.emit()
@@ -143,6 +143,15 @@ class LineListsWindow(UiLinelistsWindow):
         self.draw_button.clicked.connect(Dispatch.on_plot_linelists.emit)
         self.erase_button.clicked.connect(Dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(Dispatch.on_dismiss_linelists_window.emit)
+
+        self.buildViews(plot_window)
+
+    def buildViews(self, plot_window):
+
+        print ('@@@@@@     line: 150  - ', plot_window.linelists)
+
+
+
 
     def show(self):
         self._main_window.show()

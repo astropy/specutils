@@ -21,12 +21,16 @@ UNITS_COLUMN = 'units'
 class LineList(Table):
 
     @classmethod
+    # Returns a list with LineList instances. Each original list is
+    # stripped out of lines that lie outside the wavelength range.
     def ingest(cls, range):
+
         # Lets skip the file dialog business for now. This is just a
         # proof-of-concept code. Later we will add more fanciness to it.
         #
         # Use these two tables for now. In the future, the filter strings
         # should somehow be handled by the file dialog itself.
+
         fnames = ['Common_stellar.txt', 'Common_nebular.txt']
 
         path = os.path.dirname(os.path.abspath(__file__))
@@ -42,7 +46,7 @@ class LineList(Table):
 
             linelists.append(linelist)
 
-        return LineList.merge(linelists)
+        return linelists
 
     @classmethod
     def merge(cls, lists):
