@@ -291,7 +291,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if layer is not None:
             plot = self.get_plot(layer)
 
-        plot.update()
+            plot.update()
 
     def closeEvent(self, event):
         DispatchHandle.tear_down(self)

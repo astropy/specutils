@@ -9,6 +9,7 @@ import logging
 import pyqtgraph as pg
 import numpy as np
 import astropy.units as u
+from functools import reduce
 
 
 LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
@@ -51,9 +52,10 @@ class StatisticsPlugin(Plugin):
         mask = self.active_window.get_roi_mask(layer=current_layer)
 
         if mask is None:
-            values = current_layer.data
+            values = current_layer.data[current_layer.mask]
         else:
-            values = current_layer.data[mask[current_layer._mask]]
+            values = current_layer.data[current_layer.mask]
+            values = values[mask[current_layer.mask]]
 
         stat_dict = statistics.stats(values)
 

@@ -91,39 +91,6 @@ class Viewer(object):
         #     tool_bar = self._all_tool_bars[cat_name]
         #     tool_bar.addWidget(cat_dict['widget'])
 
-    def get_category(self, name):
-        if name is None:
-            name = "User Plugins"
-
-        if name not in self._all_categories:
-            widget = QWidget()
-            vertical_layout = QVBoxLayout()
-            horizontal_layout = QHBoxLayout()
-
-            label = QLabel()
-            label.setText(name.lower())
-            label.setStyleSheet("""
-                QLabel {
-                    color: #999999;
-                    font-variant: small-caps;
-                    font-weight: bold;
-                    font-size: 0.7em;
-                    border-top: 1px solid #999999;
-                    padding: 0px;
-                    margin: 0px;
-                }""")
-
-            vertical_layout.addWidget(label)
-            vertical_layout.addLayout(horizontal_layout)
-            widget.setLayout(vertical_layout)
-
-            category = dict(name=name, grid=horizontal_layout,
-                            layout=vertical_layout, widget=widget)
-
-            self._all_categories[name] = category
-
-        return self._all_categories[name]
-
     def get_tool_bar(self, name):
         if name is None:
             name = "User Plugins"
@@ -152,7 +119,6 @@ class Viewer(object):
         self.main_window.mdi_area.subWindowActivated.connect(
             lambda wi: Dispatch.on_selected_window.emit(
             window=wi.widget() if wi is not None else None))
-
 
     @DispatchHandle.register_listener("on_added_linelist")
     def add_linelist(self, linelist):
