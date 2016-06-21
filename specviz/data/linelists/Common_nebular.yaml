@@ -1,6 +1,7 @@
 --- !CustomLoader
 name: Common_nebular
 extension: [txt, dat]
+type: 'line_list'
 format: 'fixed_width_no_header'
 columns:
   - name: 'wavelength'

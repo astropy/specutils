@@ -1,16 +1,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import importlib, inspect, sys, os
+import importlib, inspect
 
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtGui import *
 
-from .widgets.sub_windows import PlotSubWindow
-from ..core.comms import Dispatch, DispatchHandle
-from ..core.annotation import LineIDMarker
-
+from ..core.comms import Dispatch
 from .widgets.windows import MainWindow
 from .widgets.plugin import Plugin
 

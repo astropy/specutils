@@ -1,12 +1,12 @@
 import os
 import logging
 
+from astropy.units import Unit
+
+from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..ui.widgets.plugin import Plugin
-from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import TopAxisDialog, UnitChangeDialog
-
-from astropy.units import Unit
 
 
 class PlotToolsPlugin(Plugin):
@@ -43,6 +43,14 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Generic Text-48.png"),
             category='Options',
             callback=self._show_unit_change_dialog,
+            enabled=False)
+
+        self.button_line_labels = self.add_tool_bar_actions(
+            name="Line Labels",
+            description='Add line labels',
+            icon_path=os.path.join(ICON_PATH, "Label-48.png"),
+            category='Selections',
+            callback=Dispatch.on_show_linelists_window.emit,
             enabled=False)
 
     def setup_connections(self):
@@ -91,7 +99,9 @@ class PlotToolsPlugin(Plugin):
             self.button_axis_change.setEnabled(True)
             self.button_unit_change.setEnabled(True)
             self.button_add_roi.setEnabled(True)
+            self.button_line_labels.setEnabled(True)
         else:
             self.button_axis_change.setEnabled(False)
             self.button_unit_change.setEnabled(False)
             self.button_add_roi.setEnabled(False)
+            self.button_line_labels.setEnabled(False)

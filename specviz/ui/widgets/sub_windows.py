@@ -1,26 +1,27 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys, os
+import sys
 import logging
 from functools import reduce
 
 import numpy as np
 import pyqtgraph as pg
 
-from astropy.units import Unit, Quantity
+from astropy.units import Quantity
 
-from .axes import DynamicAxisItem
 from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
+
 from ...core.comms import Dispatch, DispatchHandle
 from ...core.linelist import LineList
-from .region_items import LinearRegionItem
 from ...core.plots import LinePlot
+from ...core.annotation import LineIDMarker
+from .axes import DynamicAxisItem
+from .region_items import LinearRegionItem
 
-import numpy as np
-import pyqtgraph as pg
+from .dialogs import LineListsWindow
+
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -66,6 +67,10 @@ class UiPlotSubWindow(QMainWindow):
         self.line_edit_cursor_pos = QLabel()
         # self.line_edit_cursor_pos.setReadOnly(True)
         self.line_edit_cursor_pos.setText("Pos: 0, 0")
+
+        # Line labels
+        self._linelist_window = None
+        self._line_labels = []
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
         self.horizontal_layout.addStretch()
@@ -142,62 +147,6 @@ class PlotSubWindow(UiPlotSubWindow):
     def _reset_view(self):
         view_box = self._plot_item.getViewBox()
         view_box.autoRange()
-
-    def _show_line_ids(self):
-
-        # find the wavelength range spanned by the spectrum
-        # (or spectra) at hand. The range will be used to select
-        # lines from the line list table(s).
-
-        # increasing dispersion values!
-        amin = sys.float_info.max
-        amax = 0.0
-        for container in self._containers:
-            amin = min(amin, container.dispersion.value[0])
-            amax = max(amax, container.dispersion.value[-1])
-
-        amin = Quantity(amin, self._plot_units[0])
-        amax = Quantity(amax, self._plot_units[0])
-
-        # if file_name is None:
-        #     file_name, selected_filter = self.viewer.open_file_dialog(
-        #         loader_registry.filters)
-        #
-        # if not file_name:
-        #     return
-
-        # Lets skip the file dialog business for now. This is just a
-        # proof-of-concept code. Later we will add more fanciness to it.
-        #
-        # Use these two tables for now. In the future, the filter strings
-        # should somehow be handled by the file dialog itself.
-        fnames = ['Common_stellar.txt', 'Common_nebular.txt']
-
-        path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = path + '/../../data/linelists/'
-        linelists = []
-
-        for fname in fnames:
-            path = dir_path + fname
-            filter = fname.split('.')[0] + ' (*.txt *.dat)'
-
-            linelist = LineList.read(path, filter)
-            linelist = linelist.extract_range(amin, amax)
-
-            linelists.append(linelist)
-
-        linelist = LineList.merge(linelists)
-
-        # try:
-        #     data = data_manager.load(str(file_name), str(selected_filter))
-        # except:
-        #     logging.error("Incompatible loader for selected data.")
-
-        # display line lists in a tabbed pane.
-
-        # display line markers on plot sirface.
-
-        Dispatch.on_added_linelist.emit(linelist=linelist)
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
         if layer is not None:
@@ -347,3 +296,87 @@ class PlotSubWindow(UiPlotSubWindow):
             else:
                 plot.set_visibility(True, False, inactive=True)
 
+
+#--------  Line lists and line labels handling.
+
+    # The separation of tasks among these methods and the signals
+    # that drive them is so far unclear. The 'request linelists'
+    # and the 'add_linelists' operations are now in practice
+    # fused into a single swoop. It should be more efficient
+    # to have the line list ingestion done at constructor time,
+    # while only the actual plot should be commanded by the Draw
+    # button. This is why the two methods: _request_linelists, and
+    # _add_linelists, do not talk directly to each other, but via
+    # signals. It's just in preparation for a fix.
+
+    @DispatchHandle.register_listener("on_show_linelists_window")
+    def _show_linelists_window(self, *args, **kwargs):
+        if self._linelist_window is None:
+            self._linelist_window = LineListsWindow()
+            self._linelist_window.show()
+
+    @DispatchHandle.register_listener("on_request_linelists")
+    def _request_linelists(self, *args, **kwargs):
+
+        # Find the wavelength range spanned by the spectrum
+        # (or spectra) at hand. The range will be used to bracket
+        # the set of lines actually read from the line list table(s).
+
+        # increasing dispersion values!
+        amin = sys.float_info.max
+        amax = 0.0
+        for container in self._plots:
+            amin = min(amin, container.dispersion.value[0])
+            amax = max(amax, container.dispersion.value[-1])
+
+        amin = Quantity(amin, self._plot_units[0])
+        amax = Quantity(amax, self._plot_units[0])
+
+        linelist = LineList.ingest(amin, amax)
+
+        Dispatch.on_add_linelists.emit(linelist=linelist)
+
+    @DispatchHandle.register_listener("on_add_linelists")
+    def _add_linelists(self, linelist):
+
+        # This is plotting all markers at a fixed height in the
+        # screen coordinate system. Still TBD how to do this in
+        # the generic case. Maybe derive heights from curve data
+        # instead? Make the markers follow the curve ups and downs?
+        #
+        # Ideally we would like to have the marker's X coordinate
+        # pinned down to the plot surface in data value, and the Y
+        # coordinate pinned down in screen value. This would make
+        # the markers to stay at the same height in the window even
+        # when the plot is zoomed. This kind of functionality doesn't
+        # seem to be possible under pyqtgraph though. This requires
+        # more investigation.
+
+        plot_item = self._plot_item
+
+        # curve = plot_item.curves[0]
+
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+        height = (ymax - ymin) * 0.75 + ymin
+
+        # column names are defined in the YAML files.
+        wave_column = linelist.columns['wavelength']
+        id_column = linelist.columns['id']
+
+        for i in range(len(wave_column)):
+            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
+
+            marker.setPos(wave_column[i], height)
+
+            plot_item.addItem(marker)
+            self._line_labels.append(marker)
+
+        plot_item.update()
+
+    @DispatchHandle.register_listener("on_erase_linelabels")
+    def erase_linelabels(self, *args, **kwargs):
+        for marker in self._line_labels:
+            self._plot_item.removeItem(marker)
+        self._plot_item.update()

@@ -125,7 +125,11 @@ Dispatch.register_event("on_added_window", args=["layer", "window"])
 Dispatch.register_event("on_added_plot", args=["plot", "window"])
 Dispatch.register_event("on_added_layer", args=["layer"])
 Dispatch.register_event("on_added_to_window", args=["layer", "window"])
-Dispatch.register_event("on_added_linelist", args=["linelist"])
+
+Dispatch.register_event("on_show_linelists_window")
+Dispatch.register_event("on_request_linelists")
+Dispatch.register_event("on_add_linelists", args=["linelist"])
+Dispatch.register_event("on_erase_linelabels")
 
 Dispatch.register_event("on_removed_data", args=["data"])
 Dispatch.register_event("on_removed_plot", args=["layer", "window"])
