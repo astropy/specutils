@@ -20,7 +20,7 @@ from ...core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 
-from .dialogs import LineListsWindow
+from .linelists_window import LineListsWindow
 
 
 pg.setConfigOption('background', 'w')
@@ -328,6 +328,16 @@ class PlotSubWindow(UiPlotSubWindow):
         self.waverange = self._find_wavelength_range()
 
         self._linelist = LineList.ingest(self.waverange)
+
+
+
+
+        #TODO here we display the line list in the GUI
+
+
+
+
+
 
     @DispatchHandle.register_listener("on_plot_linelists")
     def _plot_linelists(self, *args, **kwargs):
