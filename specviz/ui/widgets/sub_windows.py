@@ -14,7 +14,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 
 from ...core.comms import Dispatch, DispatchHandle
-from ...core.linelist import LineList
+from ...core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ...core.plots import LinePlot
 from ...core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
@@ -322,27 +322,15 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return (amin, amax)
 
-    # The separation of tasks among these methods and the signals
-    # that drive them is so far unclear. The 'request linelists'
-    # and the 'add_linelists' operations are now in practice
-    # fused into a single swoop. It should be more efficient
-    # to have the line list ingestion done at constructor time,
-    # while only the actual plot should be commanded by the Draw
-    # button. This is why the two methods: _request_linelists, and
-    # _add_linelists, do not talk directly to each other, but via
-    # signals. It's just in preparation for a fix.
-
     @DispatchHandle.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
 
         self.waverange = self._find_wavelength_range()
 
-        linelist = LineList.ingest(self.waverange)
+        self._linelist = LineList.ingest(self.waverange)
 
-        Dispatch.on_add_linelists.emit(linelist=linelist)
-
-    @DispatchHandle.register_listener("on_add_linelists")
-    def _add_linelists(self, linelist):
+    @DispatchHandle.register_listener("on_plot_linelists")
+    def _plot_linelists(self, *args, **kwargs):
 
         if not self._is_selected:
             return
@@ -370,8 +358,8 @@ class PlotSubWindow(UiPlotSubWindow):
         height = (ymax - ymin) * 0.75 + ymin
 
         # column names are defined in the YAML files.
-        wave_column = linelist.columns['wavelength']
-        id_column = linelist.columns['id']
+        wave_column = self._linelist.columns[WAVELENGTH_COLUMN]
+        id_column = self._linelist.columns[ID_COLUMN]
 
         for i in range(len(wave_column)):
             marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')

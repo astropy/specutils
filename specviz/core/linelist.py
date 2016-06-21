@@ -11,7 +11,7 @@ COLUMN_NAME = 'name'
 COLUMN_START = 'start'
 COLUMN_END = 'end'
 WAVELENGTH_COLUMN = 'wavelength'
-ID_COLUMN = 'ids'
+ID_COLUMN = 'id'
 UNITS_COLUMN = 'units'
 
 
