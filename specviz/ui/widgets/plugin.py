@@ -18,21 +18,18 @@ class Plugin(QDockWidget):
     """
     __meta__ = ABCMeta
 
-    _all_plugins = []
-    _tool_buttons = []
-    _tool_bar_actions = []
-
     location = 'hidden'
     priority = 1
 
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
+        # Initialize this plugin's actions list
+        self._actions = []
 
         # Keep a reference to the active sub window
         self._active_window = None
         self._current_layer = None
 
-        self._all_plugins.append(self)
         DispatchHandle.setup(self)
 
         # GUI Setup
@@ -78,22 +75,6 @@ class Plugin(QDockWidget):
     def setup_connections(self):
         raise NotImplementedError()
 
-    def add_tool_buttons(self, icon_path, name="Test", category=None,
-                         description="", callback=None, enabled=True):
-        button = QToolButton()
-        button.setIcon(QIcon(icon_path))
-        button.setEnabled(enabled)
-        button.setStatusTip(description)
-        button.clicked.connect(callback if callback is not None else
-                               lambda: None)
-
-        tool_button = dict(widget=button, icon_path=icon_path,
-                           category=category, description=description)
-
-        self._tool_buttons.append(tool_button)
-
-        return button
-
     def add_tool_bar_actions(self, icon_path, name="", category=None,
                              description="", callback=None, enabled=True):
         action = QAction(self)
@@ -105,10 +86,7 @@ class Plugin(QDockWidget):
         action.triggered.connect(callback if callback is not None else
                                  lambda: None)
 
-        tool_button = dict(widget=action, icon_path=icon_path,
-                           category=category, description=description)
-
-        self._tool_bar_actions.append(tool_button)
+        self._actions.append(dict(action=action, category=category))
 
         return action
 

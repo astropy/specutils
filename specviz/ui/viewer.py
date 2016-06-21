@@ -23,7 +23,6 @@ class Viewer(object):
     """
     def __init__(self):
         # Instantiate main window object
-        self._all_categories = {}
         self._all_tool_bars = {}
 
         self.main_window = MainWindow()
@@ -36,9 +35,6 @@ class Viewer(object):
 
         # Load system and user plugins
         self.load_plugins()
-
-        # Setup toolbar
-        self.setup_toolbar()
 
         # Setup up top-level connections
         self._setup_connections()
@@ -77,38 +73,17 @@ class Viewer(object):
                 self.menu_docks.addAction(
                     instance_plugin.toggleViewAction())
 
-    def setup_toolbar(self):
-        for action_dict in Plugin._tool_bar_actions:
-            tool_bar = self.get_tool_bar(action_dict['category'])
-            tool_bar.addAction(action_dict['widget'])
+            for action in instance_plugin._actions:
+                tool_bar = self._get_tool_bar(action['category'])
+                tool_bar.addAction(action['action'])
 
-        # for button in Plugin._tool_buttons:
-        #     tool_bar = self.get_tool_bar(button['category'])
-        #     cat = self.get_category(button['category'])
-        #     cat['grid'].addWidget(button['widget'])
-        #
-        # for cat_name, cat_dict in self._all_categories.items():
-        #     tool_bar = self._all_tool_bars[cat_name]
-        #     tool_bar.addWidget(cat_dict['widget'])
-
-    def get_tool_bar(self, name):
+    def _get_tool_bar(self, name):
         if name is None:
             name = "User Plugins"
 
         if name not in self._all_tool_bars:
             tool_bar = self.main_window.addToolBar(name)
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-
-            label = QLabel()
-            label.setText(name.lower())
-            label.setStyleSheet("""
-                QLabel {
-                    color: #999999;
-                    font-variant: small-caps;
-                    font-weight: bold;
-                    font-size: 0.7em;
-                    border-top: 1px solid #999999;
-                }""")
 
             self._all_tool_bars[name] = tool_bar
 
