@@ -147,11 +147,15 @@ class LineListsWindow(UiLinelistsWindow):
         self.buildViews(plot_window)
 
     def buildViews(self, plot_window):
+        for linelist in plot_window.linelists:
 
-        print ('@@@@@@     line: 150  - ', plot_window.linelists)
+            view = QTableView()
+            model = LineListTableModel(linelist)
+            view.setModel(model)
 
+            # view.setShowGrid(False)
 
-
+            self.tabWidget.addTab(view, "TEST 2")
 
     def show(self):
         self._main_window.show()
@@ -159,5 +163,26 @@ class LineListsWindow(UiLinelistsWindow):
     def hide(self):
         self._main_window.hide()
 
+
+class LineListTableModel(QAbstractTableModel):
+
+    def __init__(self, table, parent=None, *args):
+
+        QAbstractTableModel.__init__(self, parent, *args)
+
+        self._table = table
+
+    def rowCount(self, index_parent=None, *args, **kwargs):
+        return len(self._table.columns[0])
+
+    def columnCount(self, index_parent=None, *args, **kwargs):
+        return len(self._table.columns)
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return QVariant()
+        elif role != Qt.DisplayRole:
+            return QVariant()
+        return QVariant(self._table.columns[index.column()][index.row()])
 
 
