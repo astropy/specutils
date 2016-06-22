@@ -99,9 +99,10 @@ class ModelFittingPlugin(Plugin):
 
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
+        mask = self.active_window.get_roi_mask(layer)
 
-        initialize(model, layer.dispersion.compressed(),
-                   layer.data.compressed())
+        initialize(model, layer.dispersion[mask].compressed(),
+                   layer.data[mask].compressed())
 
         if layer is not None:
             # There is current a selected layer
@@ -109,13 +110,10 @@ class ModelFittingPlugin(Plugin):
                 # The layer is a `ModelLayer`, in which case, additionally
                 # add the model to the compound model and update plot
                 layer.model = layer.model + model
-
-                mask = self.active_window.get_roi_mask(layer._parent)
             else:
                 # If a layer is selected, but it's not a `ModelLayer`,
                 # create a new `ModelLayer`
                 layer = self.add_model_layer(model=model)
-                mask = self.active_window.get_roi_mask(layer)
         else:
             return
             # There is no currently selected layer, simply

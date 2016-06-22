@@ -455,13 +455,29 @@ class ModelLayer(Layer):
     def data(self):
         """Flux quantity from model."""
         self._data = self._model(self.dispersion.data.value)
-        source_data = np.ma.array(
+        layer_data = np.ma.array(
             Quantity(self._data,
                      unit=self._source.unit).to(self.units[1]),
             mask=self._source.mask)
-        layer_data = np.ma.array(source_data, mask=~self._mask)
 
         return layer_data
+
+    @property
+    def roi_data(self):
+        """
+        Apply an ROI mask to the model layer data.
+        """
+        np.ma.array(self.data, mask=~self._mask)
+
+    @property
+    def dispersion(self):
+        """Dispersion quantity with mask applied."""
+        layer_dispersion = np.ma.array(
+            Quantity(self._source.dispersion,
+                     unit=self._source.dispersion_unit).to(self.units[0]),
+            mask=self._source.mask)
+
+        return layer_dispersion
 
     @property
     def uncertainty(self):

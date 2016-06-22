@@ -97,9 +97,13 @@ class FitModelThread(QThread):
         if parent_layer is None:
             return
 
-        flux = parent_layer.data.compressed().value
-        dispersion = parent_layer.dispersion.compressed().value
+        flux = parent_layer.data
+        dispersion = parent_layer.dispersion
         model = model_layer.model
+
+        # The fitting should only consider the masked regions
+        flux = flux[model_layer._mask].compressed().value
+        dispersion = dispersion[model_layer._mask].compressed().value
 
         # If the number of parameters is greater than the number of data
         # points, bail
