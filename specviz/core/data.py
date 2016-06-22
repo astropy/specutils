@@ -66,13 +66,21 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
 
         return io_registry.read(cls, *args, **kwargs)
 
-    def _from_self(self, other, copy_dispersion=False):
+    def copy(self, data, dispersion=None, dispersion_unit=None, mask=None,
+             unit=None, uncertainty=None):
         """Create a new `Data` object using current property values."""
-        return Data(name=self.name, data=other, unit=self.unit,
-                    uncertainty=StdDevUncertainty(self.uncertainty),
-                    mask=self.mask, wcs=self.wcs,
-                    dispersion=self.dispersion if copy_dispersion else None,
-                    dispersion_unit=self.dispersion_unit)
+        return Data(name=self.name, data=data,
+                    unit=unit if unit is not None else self.unit,
+                    uncertainty=StdDevUncertainty(
+                        uncertainty if uncertainty is not None else
+                        self.uncertainty),
+                    mask=mask if mask is not None else self.mask,
+                    wcs=self.wcs,
+                    dispersion=dispersion if dispersion is not None else
+                                             self.dispersion,
+                    dispersion_unit=dispersion_unit if dispersion_unit is
+                                                       not None else
+                                                       self.dispersion_unit)
 
     @property
     def dispersion(self):
@@ -162,60 +170,35 @@ class Layer(object):
     def _arithmetic(self, operator, other, propagate=True):
         if isinstance(other, Layer):
             # Make sure units are compatible
-            if not other.data.unit.is_equivalent(
-                    self.data.unit,
+            if not other.unit.is_equivalent(
+                    self.unit,
                     equivalencies=spectral_density(other.dispersion)):
                 logging.error("Spectral data objects have incompatible units.")
                 return
 
-            # Create temporary arrays from the source object; this obviates
-            # the need to re-create masks
-            this_disp_arr = Quantity(self._source.dispersion,
-                                     self._source.dispersion_unit)
-            this_data_arr = Quantity(self._source.data, self._source.unit)
-
-            if isinstance(self, ModelLayer):
-                this_disp_arr[self._mask] = self.dispersion
-                this_data_arr[self._mask] = self.data
-
-            other_disp_arr = Quantity(other._source.dispersion,
-                                      other._source.dispersion_unit).to(
-                this_disp_arr.unit)
-            other_data_arr = Quantity(other._source.data,
-                                      other._source.unit).astype(
-                other.data.dtype)
+            # Check sampling; re-sample if incompatible
+            other_samp = np.ones(self.data.data.value.shape,
+                                 [('wlen', float), ('flux', float),
+                                  ('ivar', float)])
+            other_samp['wlen'] = other.dispersion.data.value
+            other_samp['flux'] = other.data.data.value
 
             if isinstance(other, ModelLayer):
-                other_disp_arr[other._mask] = other.dispersion.to(
-                    this_disp_arr.unit)
-                other_data_arr[other._mask] = other.data
-
-            disp_min = max(self.dispersion.value[0], other.dispersion.value[0])
-            disp_max = min(self.dispersion.value[-1], other.dispersion.value[-1])
-
-            this_mask = ((this_disp_arr.value >= disp_min) &
-                         (this_disp_arr.value <= disp_max))
-            other_mask = ((other_disp_arr.value >= disp_min) &
-                          (other_disp_arr.value <= disp_max))
-
-            # Check sampling; re-sample if incompatible
-            this_step = self.dispersion[1] - self.dispersion[0]
-            other_step = other.dispersion[1] - other.dispersion[0]
-
-            if this_step != other_step:
-                other_data_val = resample(other_data_arr.value[other_mask],
-                                          other_disp_arr.value[other_mask],
-                                          this_disp_arr.value[this_mask])
-                temp_data_val = other_data_arr.value
-                temp_data_val[other_mask] = other_data_val
-                other_data_val = temp_data_val
-                other_mask = this_mask
+                cols = ('flux',)
             else:
-                other_data_val = other_data_arr.value
+                other_samp['ivar'] = other.uncertainty.data.value
+                cols = ('flux', 'ivar')
 
-            this_data = self._source._from_self(this_data_arr.value)
-            other_data = other._source._from_self(other_data_val,
-                                                  copy_dispersion=True)
+            other_resamp = resample(other_samp, 'wlen',
+                                      self.dispersion.data.value,
+                                      cols)
+
+            other_data = other._source.copy(
+                other_resamp['flux'],
+                uncertainty=other_resamp['ivar']
+                            if not isinstance(other, ModelLayer) else None,
+                mask=other._source.mask)
+            other_data._dispersion = other_resamp['wlen']
         # Assume that the operand is a single number
         else:
             if isinstance(other, Quantity):
@@ -232,32 +215,26 @@ class Layer(object):
             if operator in ['add', 'subtract']:
                 other_data._unit = this_data.unit
 
-            other_mask = self._mask
-
         # Perform arithmetic operation
-        operator = getattr(this_data, operator)
+        operator = getattr(self._source, operator)
 
         # Check for WCS incompatibility
-        if this_data.wcs != other_data.wcs:
+        if self._source.wcs != other_data.wcs:
             logging.warning("WCS objects are not equivalent; overriding "
                             "wcs information on 'other'.")
             tmp_wcs = other_data._wcs
-            other_data._wcs = this_data.wcs
+            other_data._wcs = self._source.wcs
             result_source = operator(other_data, propagate_uncertainties=propagate)
             other_data._wcs = tmp_wcs
         else:
             result_source = operator(other_data, propagate_uncertainties=propagate)
 
-        # For cases where the dispersion cannot be recalculated, copy the
-        # dispersion array
-        result_source._dispersion = other_data.dispersion
-
         if result_source.dispersion_unit.is_unity():
             result_source._dispersion_unit = other_data.dispersion_unit
 
         # Create a layer from the source data object
-        result_layer = Layer(result_source, other_mask, self._parent,
-                             self.name)
+        result_layer = Layer(result_source, parent=self._parent,
+                             name=self.name)
 
         return result_layer
 
@@ -322,13 +299,13 @@ class Layer(object):
             logging.error("Incorrect layer arithmetic formula: the number "
                           "of layers does not match the number of variables.")
 
-        try:
-            result = parser.evaluate(expr.simplify({}).toString(),
-                                     dict(pair for pair in
-                                          zip(vars, sorted_layers)))
-        except Exception as e:
-            logging.error("While evaluating formula: {}".format(e))
-            return
+        # try:
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in
+                                      zip(vars, sorted_layers)))
+        # except Exception as e:
+        #     logging.error("While evaluating formula: {}".format(e))
+        #     return
 
         return result
 
@@ -366,7 +343,7 @@ class Layer(object):
     @property
     def unit(self):
         """Flux unit."""
-        return self._source.unit
+        return self.data.data.unit
 
     @property
     def dispersion(self):
