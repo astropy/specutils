@@ -163,7 +163,7 @@ class PlotSubWindow(UiPlotSubWindow):
             # x1, y1, x2, y2 = roi_shape.getCoords()
             x1, x2 = roi.getRegion()
 
-            layer_mask = np.copy(layer._mask)
+            # layer_mask = np.copy(layer._mask)
             mask = (container.dispersion >= x1) & \
                    (container.dispersion <= x2)
             # layer_mask[layer_mask==True] = mask
@@ -174,6 +174,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
         mask = reduce(np.logical_or, mask_holder)
+
         return mask
 
     def add_roi(self, *args, **kwargs):

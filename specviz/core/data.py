@@ -168,16 +168,22 @@ class Layer(object):
         return Layer(new_data, mask)
 
     def _arithmetic(self, operator, other, propagate=True):
-        if isinstance(other, Layer):
+        if type(other) == Layer or type(self) == Layer:
+            this = self
+
+            if isinstance(self, ModelLayer):
+                this = other
+                other = self
+
             # Make sure units are compatible
             if not other.unit.is_equivalent(
-                    self.unit,
+                    this.unit,
                     equivalencies=spectral_density(other.dispersion)):
                 logging.error("Spectral data objects have incompatible units.")
                 return
 
             # Check sampling; re-sample if incompatible
-            other_samp = np.ones(self.data.data.value.shape,
+            other_samp = np.ones(this.data.data.value.shape,
                                  [('wlen', float), ('flux', float),
                                   ('ivar', float)])
             other_samp['wlen'] = other.dispersion.data.value
@@ -190,7 +196,7 @@ class Layer(object):
                 cols = ('flux', 'ivar')
 
             other_resamp = resample(other_samp, 'wlen',
-                                      self.dispersion.data.value,
+                                      this.dispersion.data.value,
                                       cols)
 
             other_data = other._source.copy(
@@ -199,7 +205,39 @@ class Layer(object):
                             if not isinstance(other, ModelLayer) else None,
                 mask=other._source.mask)
             other_data._dispersion = other_resamp['wlen']
-        # Assume that the operand is a single number
+        elif isinstance(self, ModelLayer) and isinstance(other, ModelLayer):
+            # In the case where the model layers are from two separate data
+            # layers, create a combine data layer
+            # operator_char = dict(add='+', subtract='-', divide='-',
+            #                      multiply='*')[operator]
+            # final_layer = Layer.from_formula(
+            #     "{} {} {}".format(self._parent.name, operator_char,
+            #                       other._parent.name),
+            #     [self._parent, other._parent])
+
+            operator_func = dict(add='add', subtract='sub',
+                                 divide='truediv', multiply='mult')[operator]
+            final_model = getattr(self.model,
+                                  "__{}__".format(operator_func))(other.model)
+
+            final_names = []
+
+            for smod in final_model._submodels:
+                if smod._name in final_names:
+                    split_name = re.findall(r"[^\W\d_]+|\d+", smod._name)
+                    split_name[-1] = str(int(split_name[-1]) + 1)
+                    smod._name = "".join(split_name)
+
+                final_names.append(smod._name)
+
+            final_mask = self.mask | other.mask
+
+            result_model_layer = ModelLayer(model=final_model,
+                                            source=self._parent._source,
+                                            mask=~final_mask,
+                                            parent=self._parent)
+
+            return result_model_layer
         else:
             if isinstance(other, Quantity):
                 other = other.value
@@ -247,10 +285,10 @@ class Layer(object):
         new_layer = cls._evaluate(layers, formula)
 
         if new_layer is None:
+            logging.error(
+                "Failed to create new layer from formula: {}".format(formula))
             return
 
-        new_layer._window = None
-        new_layer._parent = None
         new_layer.name = "Resultant"
 
         return new_layer
@@ -299,13 +337,13 @@ class Layer(object):
             logging.error("Incorrect layer arithmetic formula: the number "
                           "of layers does not match the number of variables.")
 
-        # try:
-        result = parser.evaluate(expr.simplify({}).toString(),
-                                 dict(pair for pair in
-                                      zip(vars, sorted_layers)))
-        # except Exception as e:
-        #     logging.error("While evaluating formula: {}".format(e))
-        #     return
+        try:
+            result = parser.evaluate(expr.simplify({}).toString(),
+                                     dict(pair for pair in
+                                          zip(vars, sorted_layers)))
+        except Exception as e:
+            logging.error("While evaluating formula: {}".format(e))
+            return
 
         return result
 
@@ -444,7 +482,7 @@ class ModelLayer(Layer):
         """
         Apply an ROI mask to the model layer data.
         """
-        np.ma.array(self.data, mask=~self._mask)
+        return np.ma.array(self.data, mask=~self._mask)
 
     @property
     def dispersion(self):

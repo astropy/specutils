@@ -261,7 +261,8 @@ class LayerListPlugin(Plugin):
                 current_window._plot_units[0], equivalencies=spectral())
 
             if data_units_equiv and disp_units_equiv:
-                Dispatch.on_add_layer.emit(layer=new_layer)
+                Dispatch.on_add_layer.emit(window=self.active_window,
+                                           layer=new_layer)
             else:
                 logging.info("{} not equivalent to {}.".format(
                     new_layer.data.unit, current_window._plot_units[1]))
