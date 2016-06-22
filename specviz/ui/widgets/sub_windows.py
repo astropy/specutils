@@ -14,7 +14,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 
 from ...core.comms import Dispatch, DispatchHandle
-from ...core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from ...core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ...core.plots import LinePlot
 from ...core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
@@ -326,7 +326,7 @@ class PlotSubWindow(UiPlotSubWindow):
     def _request_linelists(self, *args, **kwargs):
         self.waverange = self._find_wavelength_range()
 
-        self.linelists = LineList.ingest(self.waverange)
+        self.linelists = ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
     def _plot_linelists(self, *args, **kwargs):

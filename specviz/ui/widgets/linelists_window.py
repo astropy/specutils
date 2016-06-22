@@ -55,12 +55,6 @@ class UiLinelistsWindow(object):
         self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.tabWidget = QTabWidget(self.centralWidget)
         self.tabWidget.setObjectName("tabWidget")
-        self.tab = QWidget()
-        self.tab.setObjectName("tab")
-        self.tabWidget.addTab(self.tab, "")
-        self.tab_2 = QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.tabWidget.addTab(self.tab_2, "")
         self.verticalLayout_11.addWidget(self.tabWidget)
         self.gridLayout.addLayout(self.verticalLayout_11, 0, 0, 1, 1)
         self.horizontalLayout_7 = QHBoxLayout()
@@ -116,8 +110,6 @@ class UiLinelistsWindow(object):
         self.draw_button.setText(_translate("MainWindow", "Draw"))
         self.erase_button.setText(_translate("MainWindow", "Erase"))
         self.dismiss_button.setText(_translate("MainWindow", "Dismiss"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Tab 1"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Tab 2"))
         self.add_set_button.setText(_translate("MainWindow", "Add set"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
@@ -149,22 +141,25 @@ class LineListsWindow(UiLinelistsWindow):
     def buildViews(self, plot_window):
         for linelist in plot_window.linelists:
 
-            view = QTableView()
             model = LineListTableModel(linelist)
-            view.setModel(model)
 
-            view.horizontalHeader().setStretchLastSection(True)
-            view.resizeColumnsToContents()
+            if model.rowCount() > 0:
+                view = QTableView()
+                view.setModel(model)
 
-            # view.setShowGrid(False)
+                view.horizontalHeader().setStretchLastSection(True)
+                view.resizeColumnsToContents()
 
-            self.tabWidget.addTab(view, model.getName())
+                # view.setShowGrid(False)
+
+                self.tabWidget.addTab(view, model.getName())
 
     def show(self):
         self._main_window.show()
 
     def hide(self):
         self._main_window.hide()
+
 
 class LineListTableModel(QAbstractTableModel):
 
@@ -193,5 +188,5 @@ class LineListTableModel(QAbstractTableModel):
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
     def getName(self):
-        return self._table.meta['comments'][0]
-        # return self._table.name
+        # return self._table.meta['comments'][0]
+        return self._table.name

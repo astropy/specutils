@@ -15,43 +15,52 @@ ID_COLUMN = 'Line ID'
 UNITS_COLUMN = 'units'
 
 
+# Returns a list with LineList instances. Each original list is
+# stripped out of lines that lie outside the wavelength range.
+
+def ingest(range):
+
+    # Lets skip the file dialog business for now. This is just a
+    # proof-of-concept code. Later we will add more fanciness to it.
+    #
+    # Use these two tables for now. In the future, the filter strings
+    # should somehow be handled by the file dialog itself.
+
+    fnames = ['Common_stellar.txt', 'Common_nebular.txt']
+
+    path = os.path.dirname(os.path.abspath(__file__))
+    dir_path = path + '/../data/linelists/'
+    linelists = []
+
+    for fname in fnames:
+        path = dir_path + fname
+        filter = fname.split('.')[0] + ' (*.txt *.dat)'
+
+        linelist = LineList.read(path, filter)
+        linelist = linelist.extract_range(range)
+
+        linelists.append(linelist)
+
+    return linelists
+
+
 # Inheriting from QTable somehow makes this class incompatible
 # with the registry machinery in astropy.
 
 class LineList(Table):
 
-    def __init__(self, table, name):
-        Table.__init__(self, data=table)
+    def __init__(self, table=None, name=None, masked=None):
+        Table.__init__(self, data=table, masked=masked)
 
         self.name = name
 
-    @classmethod
-    # Returns a list with LineList instances. Each original list is
-    # stripped out of lines that lie outside the wavelength range.
-    def ingest(cls, range):
+        # We have to carry internally a raw reference to the
+        # table data so as to be able to use vstack() to perform
+        # merging. This shouldn't be a problem as long as the
+        # LineList instance is regarded as immutable. Which it
+        # should be anyways.
 
-        # Lets skip the file dialog business for now. This is just a
-        # proof-of-concept code. Later we will add more fanciness to it.
-        #
-        # Use these two tables for now. In the future, the filter strings
-        # should somehow be handled by the file dialog itself.
-
-        fnames = ['Common_stellar.txt', 'Common_nebular.txt']
-
-        path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = path + '/../data/linelists/'
-        linelists = []
-
-        for fname in fnames:
-            path = dir_path + fname
-            filter = fname.split('.')[0] + ' (*.txt *.dat)'
-
-            linelist = LineList.read(path, filter)
-            linelist = linelist.extract_range(range)
-
-            linelists.append(linelist)
-
-        return linelists
+        self._table = table
 
     @classmethod
     def merge(cls, lists):
@@ -63,11 +72,18 @@ class LineList(Table):
         :return: LineList
             merged line list
         '''
-        result = vstack(lists)
+        # Note that vstack operates on Table instances but
+        # not on LineList instances. So we first extract the
+        # raw Table instances.
+        tables = []
+        for linelist in lists:
+            tables.append(linelist._table)
 
-        result.sort(WAVELENGTH_COLUMN)
+        merged_table = vstack(tables)
 
-        return result
+        merged_table.sort(WAVELENGTH_COLUMN)
+
+        return cls(merged_table, "Merged")
 
     def extract_range(self, wrange):
         ''' Builds a LineList instance out of self, with
@@ -96,5 +112,7 @@ class LineList(Table):
         # make copy of self and remove unwanted lines from the copy.
         result = Table(self)
         result.remove_rows(indices)
+
+        result = LineList(result, self.name)
 
         return result
