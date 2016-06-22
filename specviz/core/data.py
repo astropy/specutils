@@ -54,10 +54,6 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     def __init__(self, data, dispersion=None, dispersion_unit=None, name="",
                  *args, **kwargs):
         super(Data, self).__init__(data=data, *args, **kwargs)
-        # TODO: This is a temporary workaround until astropy releases its
-        # next version which introduces changes to the NDData object
-        if self.uncertainty is not None:
-            self.uncertainty.parent_nddata = self
 
         self._dispersion = dispersion
         self._dispersion_unit = dispersion_unit
@@ -82,7 +78,7 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
     def dispersion(self):
         """Dispersion values."""
         if self._dispersion is None:
-            self._dispersion = np.arange(self.data.size)
+            _dispersion = np.arange(self.data.size)
 
             try:
                 crval = self.wcs.wcs.crval[0]
@@ -100,9 +96,12 @@ class Data(NDIOMixin, NDArithmeticMixin, NDData):
                 #  at the first index
                 if hasattr(self.wcs.wcs, 'ctype') and "log" \
                         in self.wcs.wcs.ctype[-1].lower():
-                    self._dispersion = np.logspace(crval, end, num)
+                    _dispersion = np.logspace(crval, end, num)
                 else:
-                    self._dispersion = np.arange(crval, end, cdelt)
+                    _dispersion = np.arange(crval, end, cdelt)
+
+                self._dispersion = np.ma.array(data=_dispersion,
+                                               mask=self.mask)
             except:
                 logging.warning("Invalid FITS headers; constructing default "
                                 "dispersion array.")
@@ -356,8 +355,13 @@ class Layer(object):
     @property
     def data(self):
         """Flux quantity with mask applied."""
-        return Quantity(self._source.data[self._mask],
-                        unit=self._source.unit).to(self.units[1])
+        source_data = np.ma.array(
+            Quantity(self._source.data,
+                     unit=self._source.unit).to(self.units[1]),
+            mask=self._source.mask)
+        layer_data = np.ma.array(source_data, mask=~self._mask)
+
+        return layer_data
 
     @property
     def unit(self):
@@ -367,15 +371,13 @@ class Layer(object):
     @property
     def dispersion(self):
         """Dispersion quantity with mask applied."""
+        source_dispersion = np.ma.array(
+            Quantity(self._source.dispersion,
+                     unit=self._source.dispersion_unit).to(self.units[0]),
+            mask=self._source.mask)
+        layer_dispersion = np.ma.array(source_dispersion, mask=~self._mask)
 
-        # This is needed to catch improper mask usage by layers.
-        if self._mask.shape != self._source.dispersion.shape:
-            raise ValueError(
-                'Mask shape mismatch, expect {0} but get {1}'.format(
-                    self._source.dispersion.shape, self._mask.shape))
-
-        return Quantity(self._source.dispersion[self._mask],
-                        unit=self._source.dispersion_unit).to(self.units[0])
+        return layer_dispersion
 
     @dispersion.setter
     def dispersion(self, value, unit=""):
@@ -384,12 +386,18 @@ class Layer(object):
     @property
     def uncertainty(self):
         """Flux uncertainty with mask applied."""
-        return self._source.uncertainty[self._mask]
+        source_uncertainty = np.ma.array(
+            Quantity(self._source.uncertainty.array,
+                     unit=self._source.unit).to(self.units[1]),
+            mask=self._source.mask)
+        layer_uncertainty = np.ma.array(source_uncertainty, mask=~self._mask)
+
+        return layer_uncertainty
 
     @property
     def mask(self):
         """Mask for spectrum data."""
-        return self._source.mask[self._mask]
+        return self._source.mask.astype(bool) & ~self._mask.astype(bool)
 
     @property
     def wcs(self):
@@ -400,6 +408,20 @@ class Layer(object):
     def meta(self):
         """Spectrum metadata."""
         return self._source.meta
+
+    def convert(self, data, unit, equivalencies=None):
+        mask = None
+
+        if isinstance(data, np.ma.MaskedArray):
+            mask = data.mask
+            data = data.data.to(unit, equivalencies=equivalencies)
+        elif isinstance(data, Quantity):
+            data = data.to(unit, equivalencies=equivalencies)
+
+        new_data = np.ma.array(data,
+                               mask=mask if mask is not None else self.mask)
+
+        return new_data
 
 
 class ModelLayer(Layer):
@@ -432,16 +454,14 @@ class ModelLayer(Layer):
     @property
     def data(self):
         """Flux quantity from model."""
+        self._data = self._model(self.dispersion.data.value)
+        source_data = np.ma.array(
+            Quantity(self._data,
+                     unit=self._source.unit).to(self.units[1]),
+            mask=self._source.mask)
+        layer_data = np.ma.array(source_data, mask=~self._mask)
 
-        # TODO: Is this too hacky?
-        # Handle bad mask when fitting goes awry.
-        if self._mask.shape != self._source.dispersion.shape:
-            self._mask = np.ones(self._source.dispersion.shape, dtype=np.bool)
-
-        self._data = self._model(self.dispersion.value)
-
-        return Quantity(self._data,
-                        unit=self._source.unit).to(self.units[1])
+        return layer_data
 
     @property
     def uncertainty(self):
@@ -459,7 +479,7 @@ class ModelLayer(Layer):
     @model.setter
     def model(self, value):
         self._model = value
-        self._data = self._model(self.dispersion.value)
+        self._data = self._model(self.dispersion.data.value)
 
     @classmethod
     def from_formula(cls, formula, models):

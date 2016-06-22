@@ -97,8 +97,8 @@ class FitModelThread(QThread):
         if parent_layer is None:
             return
 
-        flux = parent_layer.data
-        dispersion = parent_layer.dispersion
+        flux = parent_layer.data.compressed().value
+        dispersion = parent_layer.dispersion.compressed().value
         model = model_layer.model
 
         # If the number of parameters is greater than the number of data

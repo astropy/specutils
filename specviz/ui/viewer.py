@@ -92,47 +92,5 @@ class Viewer(object):
             lambda wi: Dispatch.on_selected_window.emit(
             window=wi.widget() if wi is not None else None))
 
-    @DispatchHandle.register_listener("on_added_linelist")
-    def add_linelist(self, linelist):
-
-        # This is setting all markers at a fixed heigth in the
-        # initial (before any zoom) data coordinates. Still TBD
-        # how to do this in the generic case. Maybe derive heights
-        # from curve data instead? Make the markers follow the
-        # curve ups and downs?
-        #
-        # Ideally we would like to have the marker's X coordinate
-        # pinned down to the plot surface in data value, and the Y
-        # coordinate pinned down in screen value. This would make
-        # the markers to stay at the same height in the window even
-        # when the plot is zoomed. This kind of functionality doesn't
-        # seem to be possible under pyqtgraph though. This requires
-        # more investigation.
-
-        plot_item = self.current_sub_window._plot_item
-
-        # curve = plot_item.curves[0]
-
-        data_range = plot_item.vb.viewRange()
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
-        height = (ymax - ymin) * 0.75 + ymin
-
-        # column names are defined in the YAML files.
-        wave_column = linelist.columns['wavelength']
-        id_column = linelist.columns['id']
-
-        for i in range(len(wave_column)):
-            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
-
-            marker.setPos(wave_column[i], height)
-
-            plot_item.addItem(marker)
-            # plot_item.addItem(marker.arrow)
-
-            plot_item.update()
-
-        plot_item.update()
-
 
 

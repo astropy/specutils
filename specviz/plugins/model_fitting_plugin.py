@@ -100,7 +100,8 @@ class ModelFittingPlugin(Plugin):
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
 
-        initialize(model, layer.dispersion, layer.data)
+        initialize(model, layer.dispersion.compressed(),
+                   layer.data.compressed())
 
         if layer is not None:
             # There is current a selected layer
@@ -416,7 +417,7 @@ class ModelFittingPlugin(Plugin):
     def toggle_buttons(self):
         root = self.tree_widget_current_models.invisibleRootItem()
 
-        if root.childCount() > 1:
+        if root.childCount() > 0:
             self.button_remove_model.setEnabled(True)
         else:
             self.button_remove_model.setEnabled(False)

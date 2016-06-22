@@ -35,8 +35,8 @@ class DynamicAxisItem(pg.AxisItem):
             return super(DynamicAxisItem, self).tickStrings(values, scale,
                                                             spacing)
 
-        spatial_unit = self._layer.dispersion.unit
-        dispersion = self._layer.dispersion.value
+        spatial_unit = self._layer.dispersion.data.unit
+        dispersion = self._layer.dispersion
         inds = np.arange(dispersion.size, dtype=int)
 
         if self.mode == 0:

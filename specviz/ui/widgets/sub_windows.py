@@ -164,10 +164,10 @@ class PlotSubWindow(UiPlotSubWindow):
             x1, x2 = roi.getRegion()
 
             layer_mask = np.copy(layer._mask)
-            mask = (container.dispersion.value >= x1) & \
-                   (container.dispersion.value <= x2)
-            layer_mask[layer_mask==True] = mask
-            mask_holder.append(layer_mask)
+            mask = (container.dispersion >= x1) & \
+                   (container.dispersion <= x2)
+            # layer_mask[layer_mask==True] = mask
+            mask_holder.append(mask)
 
         if len(mask_holder) == 0:
             mask_holder.append(container.layer._mask)

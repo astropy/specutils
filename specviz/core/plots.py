@@ -55,8 +55,8 @@ class LinePlot(object):
 
     @staticmethod
     def from_layer(layer, **kwargs):
-        plot_data_item = pg.PlotDataItem(layer.dispersion.value,
-                                         layer.data.value)
+        plot_data_item = pg.PlotDataItem(layer.dispersion,
+                                         layer.data)
 
         plot_container = LinePlot(layer=layer, plot=plot_data_item,
                                   **kwargs)
@@ -72,11 +72,10 @@ class LinePlot(object):
             #     plot_container.layer.uncertainty.array * 0.5)
             #
             # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
-
             plot_error_item = pg.ErrorBarItem(
-                x=plot_container.layer.dispersion.value,
-                y=plot_container.layer.data.value,
-                height=plot_container.layer.uncertainty.array,
+                x=plot_container.layer.dispersion.compressed().value,
+                y=plot_container.layer.data.compressed().value,
+                height=plot_container.layer.uncertainty.compressed().value,
             )
             plot_container.error = plot_error_item
 
@@ -122,21 +121,23 @@ class LinePlot(object):
 
     @property
     def data(self):
-        return self.layer.data.to(self._plot_units[1],
-                                  equivalencies=spectral_density(self.dispersion))
+        return self.layer.convert(self.layer.data,
+                                  self._plot_units[1],
+                                  equivalencies=spectral_density(
+                                      self.dispersion))
 
     @property
     def dispersion(self):
-        return self.layer.dispersion.to(self._plot_units[0],
-                                        equivalencies=spectral())
+        return self.layer.convert(self.layer.dispersion,
+                                  self._plot_units[0],
+                                  equivalencies=spectral())
 
     @property
     def uncertainty(self):
-        return Quantity(
-            self.layer.uncertainty.array,
-            unit=self.layer.units[1]).to(
-                self._plot_units[1],
-                equivalencies=spectral_density(self.dispersion))
+        return self.layer.convert(self.layer.uncertainty,
+                                  self._plot_units[1],
+                                  equivalencies=spectral_density(
+                                      self.dispersion))
 
     @property
     def plot(self):
@@ -178,11 +179,11 @@ class LinePlot(object):
             self.error.setOpts(pen=pg.mkPen(pen))
 
     def update(self, autoscale=False):
-        self._plot.setData(self.dispersion.value,
-                           self.data.value)
+        self._plot.setData(self.dispersion.compressed().value,
+                           self.data.compressed().value)
 
         if self.error is not None:
             self.error.setData(
-                    x=self.dispersion.value,
-                    y=self.data.value,
-                    height=self.uncertainty.value)
+                    x=self.dispersion.compressed().value,
+                    y=self.data.compressed().value,
+                    height=self.uncertainty.compressed().value)

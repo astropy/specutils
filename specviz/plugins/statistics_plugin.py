@@ -52,12 +52,11 @@ class StatisticsPlugin(Plugin):
         mask = self.active_window.get_roi_mask(layer=current_layer)
 
         if mask is None:
-            values = current_layer.data[current_layer.mask]
+            values = current_layer.data
         else:
-            values = current_layer.data[current_layer.mask]
-            values = values[mask[current_layer.mask]]
+            values = np.ma.array(current_layer.data, mask=~mask)
 
-        stat_dict = statistics.stats(values)
+        stat_dict = statistics.stats(values.compressed())
 
         self.line_edit_mean.setText("{0:4.4g}".format(
             stat_dict['mean'].value))
@@ -96,9 +95,11 @@ class StatisticsPlugin(Plugin):
             values = current_layer.data[mask[current_layer._mask]]
             roi_data_sets.append(values)
 
-        roi_data_sets, rois, roi_masks = zip(*sorted(
-            zip(roi_data_sets, rois, roi_masks),
-            key=lambda x: np.max(np.abs(x[0]))))
+        # Always make the ROI that's over the greatest absolute data value
+        # orange
+        # roi_data_sets, rois, roi_masks = zip(*sorted(
+        #     zip(roi_data_sets, rois, roi_masks),
+        #     key=lambda x: np.max(np.abs(x[0]))))
 
         rois[-1].setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
         rois[-1].update()
