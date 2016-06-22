@@ -10,8 +10,8 @@ FORMAT = 'line_list'
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
 COLUMN_END = 'end'
-WAVELENGTH_COLUMN = 'wavelength'
-ID_COLUMN = 'id'
+WAVELENGTH_COLUMN = 'Wavelength'
+ID_COLUMN = 'Line ID'
 UNITS_COLUMN = 'units'
 
 
@@ -19,6 +19,11 @@ UNITS_COLUMN = 'units'
 # with the registry machinery in astropy.
 
 class LineList(Table):
+
+    def __init__(self, table, name):
+        Table.__init__(self, data=table)
+
+        self.name = name
 
     @classmethod
     # Returns a list with LineList instances. Each original list is

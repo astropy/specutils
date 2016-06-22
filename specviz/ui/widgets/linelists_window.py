@@ -21,8 +21,8 @@ class UiLinelistsWindow(object):
     def setupUi(self, MainWindow, title):
         MainWindow.setWindowTitle(title)
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(767, 791)
-        MainWindow.setMinimumSize(QSize(640, 480))
+        MainWindow.resize(500, 500)
+        MainWindow.setMinimumSize(QSize(300, 350))
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.gridLayout = QGridLayout(self.centralWidget)
@@ -153,16 +153,18 @@ class LineListsWindow(UiLinelistsWindow):
             model = LineListTableModel(linelist)
             view.setModel(model)
 
+            view.horizontalHeader().setStretchLastSection(True)
+            view.resizeColumnsToContents()
+
             # view.setShowGrid(False)
 
-            self.tabWidget.addTab(view, "TEST 2")
+            self.tabWidget.addTab(view, model.getName())
 
     def show(self):
         self._main_window.show()
 
     def hide(self):
         self._main_window.hide()
-
 
 class LineListTableModel(QAbstractTableModel):
 
@@ -183,6 +185,13 @@ class LineListTableModel(QAbstractTableModel):
             return QVariant()
         elif role != Qt.DisplayRole:
             return QVariant()
-        return QVariant(self._table.columns[index.column()][index.row()])
+        return QVariant(str(self._table.columns[index.column()][index.row()]))
 
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self._table.colnames[section]
+        return QAbstractTableModel.headerData(self, section, orientation, role)
 
+    def getName(self):
+        return self._table.meta['comments'][0]
+        # return self._table.name

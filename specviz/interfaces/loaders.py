@@ -403,7 +403,10 @@ def linelist_reader(filename, filter, **kwargs):
     for k, colname in enumerate(tab.columns):
         tab[colname].unit = units_list[k]
 
-    return LineList(tab)
+    # The table name is taken from the 'name'
+    # element in the YAML file descriptor.
+
+    return LineList(tab, ref.name)
 
 
 def linelist_identify(origin, *args, **kwargs):
