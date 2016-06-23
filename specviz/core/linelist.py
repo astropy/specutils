@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
+import glob
 
 import numpy as np
 
@@ -20,21 +21,22 @@ UNITS_COLUMN = 'units'
 
 def ingest(range):
 
-    # Lets skip the file dialog business for now. This is just a
-    # proof-of-concept code. Later we will add more fanciness to it.
-    #
-    # Use these two tables for now. In the future, the filter strings
-    # should somehow be handled by the file dialog itself.
-
-    fnames = ['Common_stellar.txt', 'Common_nebular.txt']
+    # Lets skip the file dialog business. For now, we look
+    # for line lists and their accompanying YAML files in
+    # one single place. We also restrict our search for
+    # ascii line lists whose file names end in .txt
 
     path = os.path.dirname(os.path.abspath(__file__))
     dir_path = path + '/../data/linelists/'
+    yaml_paths = glob.glob(dir_path + '*.yaml')
     linelists = []
 
-    for fname in fnames:
-        path = dir_path + fname
-        filter = fname.split('.')[0] + ' (*.txt *.dat)'
+    for yaml_path in yaml_paths:
+        # this should get improved as when we decide how to
+        # implement support for user-supplied line lists,
+        # as well as support for other formats besides ascii.
+        path = yaml_path.replace('.yaml', '.txt')
+        filter = path.split(os.sep)[-1].split('.')[0] + ' (*.txt *.dat)'
 
         linelist = LineList.read(path, filter)
         linelist = linelist.extract_range(range)
