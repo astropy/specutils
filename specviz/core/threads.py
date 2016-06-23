@@ -105,6 +105,10 @@ class FitModelThread(QThread):
         flux = flux[model_layer._mask].compressed().value
         dispersion = dispersion[model_layer._mask].compressed().value
 
+        # Get compressed versions of the data arrays
+        # flux = flux.compressed().value
+        # dispersion = dispersion.compressed().value
+
         # If the number of parameters is greater than the number of data
         # points, bail
         if len(model.parameters) > flux.size:

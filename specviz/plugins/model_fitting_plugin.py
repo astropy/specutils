@@ -99,24 +99,24 @@ class ModelFittingPlugin(Plugin):
 
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
-        mask = self.active_window.get_roi_mask(layer)
 
-        initialize(model, layer.dispersion[mask].compressed(),
-                   layer.data[mask].compressed())
+        if isinstance(layer, ModelLayer):
+            mask = self.active_window.get_roi_mask(layer._parent)
 
-        if layer is not None:
-            # There is current a selected layer
-            if hasattr(layer, '_model'):
-                # The layer is a `ModelLayer`, in which case, additionally
-                # add the model to the compound model and update plot
-                layer.model = layer.model + model
-            else:
-                # If a layer is selected, but it's not a `ModelLayer`,
-                # create a new `ModelLayer`
-                layer = self.add_model_layer(model=model)
+            initialize(model, layer._parent.dispersion[mask].compressed(),
+                       layer._parent.data[mask].compressed())
+            # The layer is a `ModelLayer`, in which case, additionally
+            # add the model to the compound model and update plot
+            layer.model = layer.model + model
         else:
-            return
-            # There is no currently selected layer, simply
+            mask = self.active_window.get_roi_mask(layer)
+
+            initialize(model, layer.dispersion[mask].compressed(),
+                       layer.data[mask].compressed())
+
+            # If a layer is selected, but it's not a `ModelLayer`,
+            # create a new `ModelLayer`
+            layer = self.add_model_layer(model=model)
 
         Dispatch.on_update_model.emit(layer=layer)
         Dispatch.on_add_model.emit(layer=layer)
@@ -401,6 +401,16 @@ class ModelFittingPlugin(Plugin):
 
     def fit_model_layer(self):
         current_layer = self.current_layer
+
+        if not isinstance(current_layer, ModelLayer):
+            logging.error("Attempting to fit model on a non ModelLayer.")
+            return
+
+        # This would allow updating the mask on the model layer to reflect
+        # the current rois on the plot. Useful for directing fitting,
+        # but may be unintuitive.
+        mask = self.active_window.get_roi_mask(layer=current_layer._parent)
+        current_layer._mask = mask
 
         # Update the model parameters with those in the gui
         # self.update_model_layer()

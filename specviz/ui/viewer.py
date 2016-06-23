@@ -28,7 +28,7 @@ class Viewer(object):
 
         self.menu_docks.addSeparator()
 
-        self.main_window.setDockNestingEnabled(True)
+        # self.main_window.setDockNestingEnabled(True)
 
         # Load system and user plugins
         self.load_plugins()
@@ -65,6 +65,7 @@ class Viewer(object):
                     location = Qt.LeftDockWidgetArea
 
                 self.main_window.addDockWidget(location, instance_plugin)
+                instance_plugin.show()
 
                 # Add this dock's visibility action to the menu bar
                 self.menu_docks.addAction(
@@ -81,6 +82,7 @@ class Viewer(object):
         if name not in self._all_tool_bars:
             tool_bar = self.main_window.addToolBar(name)
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            tool_bar.show()
 
             self._all_tool_bars[name] = tool_bar
 
