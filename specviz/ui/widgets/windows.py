@@ -2,7 +2,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 from ...third_party.qtpy.QtGui import *
 from ...core.comms import Dispatch, DispatchHandle
-from ...core.data import Layer
+from ...core.data import GenericSpectrum1DLayer
 from .sub_windows import PlotSubWindow
 
 
@@ -75,7 +75,7 @@ class MainWindow(UiMainWindow):
     @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data=None, layer=None, window=None, *args,
                        **kwargs):
-        layer = layer or Layer(data)
+        layer = layer or GenericSpectrum1DLayer(data)
         window = window or PlotSubWindow()
         window.add_plot(layer=layer)
 

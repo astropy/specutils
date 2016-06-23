@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 # LOCAL
-from ..core.data import Data
+from ..core.data import GenericSpectrum1D
 
 __all__ = ['extract', 'stats', 'eq_width', 'fwzi', 'centroid']
 
@@ -30,7 +30,7 @@ def extract(data, x_range):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = GenericSpectrum1D(...)
     >>> d2 = extract(d, (10000, 20000))
 
     """
@@ -39,7 +39,7 @@ def extract(data, x_range):
 
     slice = (x >= x_range[0]) & (x < x_range[1])
 
-    result = Data(y[slice], dispersion=x[slice])
+    result = GenericSpectrum1D(y[slice], dispersion=x[slice])
 
     # TODO: Need to implement unit handling in Data
     #result.set_x(x[slice], unit=spectrum_data.x.unit)
@@ -64,11 +64,11 @@ def stats(data):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = GenericSpectrum1D(...)
     >>> d_stats = stats(d)
 
     """
-    if isinstance(data, Data):
+    if isinstance(data, GenericSpectrum1D):
         y = data.data
     else:
         y = data
@@ -107,7 +107,7 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = GenericSpectrum1D(...)
     >>> cont1 = extract(d, (100, 5000))
     >>> cont2 = extract(d, (18000, 20000))
     >>> cont1_stats = stats(cont1)
@@ -156,7 +156,7 @@ def fwzi(cont1_stats, cont2_stats, line):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = GenericSpectrum1D(...)
     >>> cont1 = extract(d, (100, 5000))
     >>> cont2 = extract(d, (18000, 20000))
     >>> cont1_stats = stats(cont1)
@@ -216,7 +216,7 @@ def centroid(data, mask=None):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = GenericSpectrum1D(...)
     >>> line = extract(d, (15000, 20000))
     >>> wcen_em = centroid(line)
 

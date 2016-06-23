@@ -5,7 +5,7 @@ from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..interfaces.registries import loader_registry
-from ..core.data import Data
+from ..core.data import GenericSpectrum1D
 from ..core.threads import FileLoadThread
 
 import logging
@@ -58,7 +58,7 @@ class DataListPlugin(Plugin):
 
         Returns
         -------
-        data : specviz.core.data.Data
+        data : specviz.core.data.GenericSpectrum1D
             The `Data` object of the currently selected row.
         """
         data_item = self.list_widget_data_list.currentItem()
@@ -125,7 +125,7 @@ class DataListPlugin(Plugin):
 
         Parameters
         ----------
-        data : specviz.core.data.Data
+        data : specviz.core.data.GenericSpectrum1D
             The `Data` object to add to the list widget.
         """
         new_item = QListWidgetItem(data.name, self.list_widget_data_list)

@@ -65,7 +65,7 @@ class Viewer(object):
                     location = Qt.LeftDockWidgetArea
 
                 self.main_window.addDockWidget(location, instance_plugin)
-                instance_plugin.show()
+                # instance_plugin.show()
 
                 # Add this dock's visibility action to the menu bar
                 self.menu_docks.addAction(
