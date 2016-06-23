@@ -4,7 +4,6 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
-from ..interfaces.registries import loader_registry
 from ..core.data import GenericSpectrum1D
 from ..core.threads import FileLoadThread
 

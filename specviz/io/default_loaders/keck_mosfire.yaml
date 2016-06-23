@@ -1,0 +1,19 @@
+--- !CustomLoader
+name: Keck/MOSFIRE Fits
+extension: [fits, mits]
+wcs:
+  hdu: 0
+dispersion:
+  hdu: 1
+  col: 1
+  unit: 'Angstrom'
+data:
+  hdu: 1
+  col: 0
+  unit: 'electron / (pix s)'
+uncertainty:
+  hdu: 1
+  col: 2
+  type: 'ivar'
+meta:
+  author: STScI

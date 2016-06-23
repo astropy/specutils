@@ -1,0 +1,16 @@
+--- !CustomLoader
+name: KittPeak/MDM Fits
+extension: [fits, mits]
+wcs:
+  hdu: 0
+dispersion:
+  unit: 'Angstrom'
+data:
+  hdu: 0
+  col: 0
+uncertainty:
+  hdu: 0
+  col: 3
+  type: 'std'
+meta:
+  author: STScI

@@ -15,7 +15,8 @@ from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 
 # LOCAL
-from ..core.data import GenericSpectrum1D
+from specutils import Spectrum1D
+from specviz.io.registries import loader_registry
 from ..core import linelist
 from ..core.linelist import LineList
 
@@ -83,14 +84,14 @@ def fits_reader(filename, filter, **kwargs):
 
     # Read in DQ column if it exists
     # 0/False = good (everything else bad)
-    if hasattr(ref, 'mask') and ref.full_mask.get('hdu') is not None:
-        if ref.full_mask['hdu'] == ref.data['hdu']:
+    if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
+        if ref.mask['hdu'] == ref.data['hdu']:
             dqtab = tab
         else:
             dqtab = _read_table(
-                hdulist[ref.full_mask['hdu']], col_idx=ref.full_mask['col'])
+                hdulist[ref.mask['hdu']], col_idx=ref.mask['col'])
 
-        mask2 = _read_table_column(dqtab, ref.full_mask['col'])[0]  # Data only
+        mask2 = _read_table_column(dqtab, ref.mask['col'])[0]  # Data only
         mask |= mask2.astype(np.bool) # Combine with existing mask
 
     # Wavelength constructed from WCS by default
@@ -136,9 +137,10 @@ def fits_reader(filename, filter, **kwargs):
 
     hdulist.close()
 
-    return GenericSpectrum1D(name=name, data=data, unit=unit, uncertainty=uncertainty,
-                             mask=mask, wcs=wcs, dispersion=dispersion,
-                             dispersion_unit=disp_unit)
+    return Spectrum1D.from_array(name=name, data=data, unit=unit,
+                                 uncertainty=uncertainty, mask=mask,
+                                 wcs=wcs, dispersion=dispersion,
+                                 dispersion_unit=disp_unit)
 
 
 # NOTE: This is used by both FITS and ASCII.
@@ -274,7 +276,7 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
 
     # Sometimes, Astropy returns masked column.
     if hasattr(data, 'mask'):
-        mask = data.full_mask.flatten()
+        mask = data.mask.flatten()
         data = data.data.flatten()
     else:
         mask = None
@@ -351,15 +353,15 @@ def ascii_reader(filename, filter, **kwargs):
     # This is dictated by the type of the uncertainty.
     uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
 
-    if hasattr(ref, 'mask') and ref.full_mask.get('col') is not None:
+    if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
         try:
-            mask = tab[cols[ref.full_mask['col']]].data.astype(np.bool)
+            mask = tab[cols[ref.mask['col']]].data.astype(np.bool)
         except IndexError:
             pass  # Input has no mask column
 
-    return GenericSpectrum1D(name=str(name), data=data, dispersion=dispersion,
-                             uncertainty=uncertainty, mask=mask, wcs=wcs,
-                             unit=unit, dispersion_unit=disp_unit)
+    return Spectrum1D(name=str(name), data=data, dispersion=dispersion,
+                      uncertainty=uncertainty, mask=mask, wcs=wcs,
+                      unit=unit, dispersion_unit=disp_unit)
 
 
 def ascii_identify(origin, *args, **kwargs):
@@ -412,20 +414,14 @@ def linelist_identify(origin, *args, **kwargs):
     return (isinstance(args[0], str) and
             args[0].lower().split('.')[-1] in ['txt', 'dat'])
 
+# FITS
+io_registry.register_reader('fits', Spectrum1D, fits_reader)
+io_registry.register_identifier('fits', Spectrum1D, fits_identify)
 
-# NOTE: Need it this way to prevent circular import.
-def register_loaders():
-    """Add IO reader/identifier to io registry."""
-    from .registries import io_registry
+# ASCII
+io_registry.register_reader('ascii', Spectrum1D, ascii_reader)
+io_registry.register_identifier('ascii', Spectrum1D, ascii_identify)
 
-    # FITS
-    io_registry.register_reader('fits', GenericSpectrum1D, fits_reader)
-    io_registry.register_identifier('fits', GenericSpectrum1D, fits_identify)
-
-    # ASCII
-    io_registry.register_reader('ascii', GenericSpectrum1D, ascii_reader)
-    io_registry.register_identifier('ascii', GenericSpectrum1D, ascii_identify)
-
-    # line list
-    io_registry.register_reader('ascii', LineList, linelist_reader)
-    io_registry.register_identifier('ascii', LineList, linelist_identify)
+# line list
+io_registry.register_reader('ascii', LineList, linelist_reader)
+io_registry.register_identifier('ascii', LineList, linelist_identify)

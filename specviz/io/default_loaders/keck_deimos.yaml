@@ -1,0 +1,18 @@
+--- !CustomLoader
+name: Keck/DEIMOS Fits
+extension: [fits, mits]
+wcs:
+  hdu: 1
+dispersion:
+  hdu: 1
+  col: 1
+  unit: 'Angstrom'
+data:
+  hdu: 1
+  col: 0
+uncertainty:
+  hdu: 1
+  col: 2
+  type: 'ivar'
+meta:
+  author: STScI
