@@ -26,8 +26,8 @@ def ingest(range):
     # one single place. We also restrict our search for
     # ascii line lists whose file names end in .txt
 
-    path = os.path.dirname(os.path.abspath(__file__))
-    dir_path = path + '/../data/linelists/'
+    linelist_path = os.path.dirname(os.path.abspath(__file__))
+    dir_path = linelist_path + '/../data/linelists/'
     yaml_paths = glob.glob(dir_path + '*.yaml')
     linelists = []
 
@@ -35,10 +35,10 @@ def ingest(range):
         # this should get improved as when we decide how to
         # implement support for user-supplied line lists,
         # as well as support for other formats besides ascii.
-        path = yaml_path.replace('.yaml', '.txt')
-        filter = path.split(os.sep)[-1].split('.')[0] + ' (*.txt *.dat)'
+        linelist_path = yaml_path.replace('.yaml', '.txt')
+        filter = linelist_path.split(os.sep)[-1].split('.')[0] + ' (*.txt *.dat)'
 
-        linelist = LineList.read(path, filter)
+        linelist = LineList.read(linelist_path, filter)
         linelist = linelist.extract_range(range)
 
         linelists.append(linelist)
