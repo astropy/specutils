@@ -144,21 +144,41 @@ class LineListsWindow(UiLinelistsWindow):
             model = LineListTableModel(linelist)
 
             if model.rowCount() > 0:
-                view = QTableView()
-                view.setModel(model)
+                table = QTableView()
+                table.setModel(model)
 
-                view.horizontalHeader().setStretchLastSection(True)
-                view.resizeColumnsToContents()
+                table.horizontalHeader().setStretchLastSection(True)
+                table.resizeColumnsToContents()
+                comments = linelist.meta['comments']
 
-                # view.setShowGrid(False)
+                pane = self._buildLinelistPane(table, comments)
 
-                self.tabWidget.addTab(view, model.getName())
+                self.tabWidget.addTab(pane, model.getName())
 
     def show(self):
         self._main_window.show()
 
     def hide(self):
         self._main_window.hide()
+
+    def _buildLinelistPane(self, table, comments):
+        pane = QWidget()
+
+        layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetMaximumSize)
+        info = QTextBrowser()
+        info.setMaximumHeight(100)
+        info.setAutoFillBackground(True)
+        info.setStyleSheet("background-color: rgb(230,230,230);")
+
+        for comment in comments:
+            info.append(comment)
+
+        layout.addWidget(info)
+        layout.addWidget(table)
+        pane.setLayout(layout)
+
+        return pane
 
 
 class LineListTableModel(QAbstractTableModel):
