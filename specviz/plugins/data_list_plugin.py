@@ -23,7 +23,7 @@ class DataListPlugin(Plugin):
             Dispatch.on_status_message.emit)
 
         self.file_load_thread.result.connect(
-            Dispatch.on_added_data.emit)
+            self._data_loaded)
 
         # Add tool tray buttons
         self.button_open_data = self.add_tool_bar_actions(
@@ -54,6 +54,12 @@ class DataListPlugin(Plugin):
         # When the data list delete button is pressed
         self.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
+
+    def _data_loaded(self, data):
+        Dispatch.on_added_data.emit(data=data)
+
+        if self.active_window is None:
+            Dispatch.on_add_window.emit(data=data)
 
     @property
     def current_data(self):
@@ -166,12 +172,12 @@ class DataListPlugin(Plugin):
             self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)
             self.button_create_sub_window.setEnabled(True)
-            self.button_add_to_sub_window.setEnabled(True)
+            # self.button_add_to_sub_window.setEnabled(True)
         else:
             self.label_unopened.show()
             self.button_remove_data.setEnabled(False)
             self.button_create_sub_window.setEnabled(False)
-            self.button_add_to_sub_window.setEnabled(False)
+            # self.button_add_to_sub_window.setEnabled(False)
 
 
 class UiDataListPlugin:
