@@ -2,7 +2,7 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtGui import *
 from ...third_party.qtpy.QtCore import *
 
-from ...core.comms import Dispatch
+from ...core.comms import Dispatch, DispatchHandle
 
 
 #TODO work in progress
@@ -131,29 +131,45 @@ class LineListsWindow(UiLinelistsWindow):
         # Request that line lists be read from wherever are they sources.
         Dispatch.on_request_linelists.emit()
 
-        # Connect buttons to appropriate signals.
-        self.draw_button.clicked.connect(Dispatch.on_plot_linelists.emit)
-        self.erase_button.clicked.connect(Dispatch.on_erase_linelabels.emit)
-        self.dismiss_button.clicked.connect(Dispatch.on_dismiss_linelists_window.emit)
-
         self.buildViews(plot_window)
 
+        # Connect buttons to appropriate signals.
+        #
+        # Note that, for the Draw operation, we have to pass the table views to
+        # the handler, even though it would be better to handle the row selections
+        # all in here for the sake of encapsulation. This is so because this class
+        # is not a QWidget or one of its subclasses, thus it cannot implement a
+        # DispatchHandle signal handler.
+        self.draw_button.clicked.connect(lambda:Dispatch.on_plot_linelists.emit(table_views=self._table_views))
+        self.erase_button.clicked.connect(lambda:Dispatch.on_erase_linelabels.emit)
+        self.dismiss_button.clicked.connect(lambda:Dispatch.on_dismiss_linelists_window.emit)
+
     def buildViews(self, plot_window):
+
+        # Table views must be preserved in the instance so they can be
+        # passed to whoever is going to do the actual line list plotting.
+        # The plotting code must know which lines (table rows) are selected
+        # in each line list.
+        self._table_views = []
+
         for linelist in plot_window.linelists:
 
-            model = LineListTableModel(linelist)
+            table_model = LineListTableModel(linelist)
 
-            if model.rowCount() > 0:
-                table = QTableView()
-                table.setModel(model)
+            if table_model.rowCount() > 0:
+                table_view = QTableView()
+                table_view.setModel(table_model)
 
-                table.horizontalHeader().setStretchLastSection(True)
-                table.resizeColumnsToContents()
+                table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
+                table_view.horizontalHeader().setStretchLastSection(True)
+                table_view.resizeColumnsToContents()
                 comments = linelist.meta['comments']
 
-                pane = self._buildLinelistPane(table, comments)
+                pane = self._buildLinelistPane(table_view, comments)
 
-                self.tabWidget.addTab(pane, model.getName())
+                self.tabWidget.addTab(pane, table_model.getName())
+
+                self._table_views.append(table_view)
 
     def show(self):
         self._main_window.show()
@@ -208,5 +224,4 @@ class LineListTableModel(QAbstractTableModel):
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
     def getName(self):
-        # return self._table.meta['comments'][0]
         return self._table.name

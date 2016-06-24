@@ -329,10 +329,28 @@ class PlotSubWindow(UiPlotSubWindow):
         self.linelists = ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
-    def _plot_linelists(self, *args, **kwargs):
+    def _plot_linelists(self, table_views, **kwargs):
 
         if not self._is_selected:
             return
+
+        #TODO get a list of indices in each line list. Build
+        # new line lists with only the selected rows. Then
+        # merge them for plotting.
+
+        for table_view in table_views:
+            indices = table_view.selectionModel().selectedRows()
+
+            for index in sorted(indices):
+                print('  190 -  Row %d is selected' % index.row())
+
+
+
+
+
+
+
+
 
         # Merge all line lists into a single one. This might
         # change in the future to enable customized plotting
