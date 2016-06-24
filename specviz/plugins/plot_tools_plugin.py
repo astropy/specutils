@@ -37,7 +37,7 @@ class PlotToolsPlugin(Plugin):
             callback=self._top_axis_dialog.exec_,
             enabled=False)
 
-        # Change top axis
+        # Change plot units
         self.button_unit_change = self.add_tool_bar_actions(
             name="Units",
             description='Change plot units',

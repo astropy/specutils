@@ -260,7 +260,7 @@ class PlotSubWindow(UiPlotSubWindow):
             self.change_units(new_plot.layer.dispersion_unit,
                               new_plot.layer.unit)
         else:
-            new_plot.set_units(*self._plot_units)
+            new_plot.change_units(*self._plot_units)
 
         if new_plot.error is not None:
             self._plot_item.addItem(new_plot.error)
