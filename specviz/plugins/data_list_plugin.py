@@ -25,6 +25,14 @@ class DataListPlugin(Plugin):
         self.file_load_thread.result.connect(
             Dispatch.on_added_data.emit)
 
+        # Add tool tray buttons
+        self.button_open_data = self.add_tool_bar_actions(
+            name="Open",
+            description='Open data file',
+            icon_path=os.path.join(ICON_PATH, "Open Folder-48.png"),
+            category='Loaders',
+            callback=lambda: Dispatch.on_file_open.emit())
+
     def setup_ui(self):
         UiDataListPlugin(self)
 
@@ -45,10 +53,6 @@ class DataListPlugin(Plugin):
         # When the data list delete button is pressed
         self.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
-
-        # Open file dialog
-        self.button_open_data.clicked.connect(
-            lambda: Dispatch.on_file_open.emit())
 
     @property
     def current_data(self):
@@ -195,11 +199,6 @@ class UiDataListPlugin:
 
         plugin.layout_horizontal = QHBoxLayout()
 
-        plugin.button_open_data = QToolButton(plugin)
-        plugin.button_open_data.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open Folder-48.png")))
-        plugin.button_open_data.setIconSize(QSize(25, 25))
-
         plugin.button_create_sub_window = QToolButton(plugin)
         plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open in Browser-50.png")))
@@ -218,7 +217,6 @@ class UiDataListPlugin:
         plugin.button_remove_data.setEnabled(False)
         plugin.button_remove_data.setIconSize(QSize(25, 25))
 
-        plugin.layout_horizontal.addWidget(plugin.button_open_data)
         plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
         plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)
         plugin.layout_horizontal.addStretch()
