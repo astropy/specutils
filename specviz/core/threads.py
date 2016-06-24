@@ -101,8 +101,8 @@ class FitModelThread(QThread):
         model = model_layer.model
 
         # The fitting should only consider the masked regions
-        flux = flux[model_layer._mask].compressed().value
-        dispersion = dispersion[model_layer._mask].compressed().value
+        flux = flux[model_layer.layer_mask].compressed().value
+        dispersion = dispersion[model_layer.layer_mask].compressed().value
 
         # Get compressed versions of the data arrays
         # flux = flux.compressed().value

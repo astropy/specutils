@@ -137,12 +137,10 @@ class ModelFittingPlugin(Plugin):
         # Create new layer using current ROI masks, if they exist
         mask = self.active_window.get_roi_mask(layer=layer)
 
-        new_model_layer = GenericSpectrum1DModelLayer(
-            source=layer._source,
-            mask=mask,
+        new_model_layer = GenericSpectrum1DModelLayer.from_parent(
             parent=layer,
-            name="New Model Layer",
-            model=model)
+            model=model,
+            layer_mask=mask)
 
         Dispatch.on_add_layer.emit(layer=new_model_layer,
                                    window=self.active_window)

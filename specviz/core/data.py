@@ -184,20 +184,22 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
 
 class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
     """A layer for spectrum with a model applied."""
-    @property
-    def roi_data(self):
-        """
-        Apply an ROI mask to the model layer data.
-        """
-        return np.ma.array(self.data, mask=~self._layer_mask)
+    def __init__(self, model=None, *args, **kwargs):
+        super(GenericSpectrum1DModelLayer, self).__init__(*args, **kwargs)
+        self._model = model
 
-    @property
-    def uncertainty(self):
-        """
-        Models do not need to contain uncertainties; override parent
-        class method.
-        """
-        return None
+    @classmethod
+    def from_parent(cls, parent, model=None, layer_mask=None):
+        return cls(name=parent._parent.name + " Model Layer",
+                   data=model(parent.dispersion.data.value),
+                   unit=parent.unit,
+                   uncertainty=parent.uncertainty.__class__(np.zeros(
+                       parent.data.shape)),
+                   mask=parent.mask, wcs=parent.wcs,
+                   dispersion=parent.dispersion,
+                   dispersion_unit=parent.dispersion_unit,
+                   layer_mask=layer_mask, parent=parent, model=model,
+                   copy=False)
 
     @property
     def model(self):
