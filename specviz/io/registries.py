@@ -3,8 +3,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import yaml
 import os
-import astropy.io.registry as io_registry
-from specutils import Spectrum1D
 
 
 class Registry(object):

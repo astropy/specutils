@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from ..analysis.utils import resample
+from .mixins import LayerArithmeticMixin
 
 # STDLIB
 import logging
@@ -11,45 +12,16 @@ import re
 
 # THIRD-PARTY
 import numpy as np
-from specutils.core.generic import GenericSpectrum1D
-from astropy.nddata.nduncertainty import StdDevUncertainty, NDUncertainty
-from astropy.units import Unit, Quantity, spectral, spectral_density
+from astropy.units import Unit, Quantity
 from ..third_party.py_expression_eval import Parser
+from specutils.core.generic import GenericSpectrum1D
 
-from .mixins import LayerArithmeticMixin
 
-
-class GenericSpectrum1DLayer(GenericSpectrum1D, LayerArithmeticMixin):
-    """Class to handle layers in SpecViz.
-
-    A layer is a "view" into a :class:`Data` object. It does
-    not hold any data itself, but instead contains a special ``mask`` object
-    and reference to the original data.
-
-    Since :class:`Data` inherits from
-    :class:`astropy.nddata.NDDataBase` and provides the
-    :class:`astropy.nddata.NDArithmeticMixin` mixin, it is also possible to
-    do arithmetic operations on layers.
-
-    Parameters
-    ----------
-    source : `GenericSpectrum1D`
-        Spectrum data object.
-    mask : ndarray
-        Mask for the spectrum data.
-    parent : obj or `None`
-        GUI parent.
-    name : str
-        Short description.
-    """
+class GenericSpectrum1DLayer(GenericSpectrum1D):
+    """Class to handle layers in SpecViz."""
     def __init__(self, parent=None, *args, **kwargs):
         super(GenericSpectrum1DLayer, self).__init__(*args, **kwargs)
         self._parent = parent
-
-    @classmethod
-    def new(cls, data, mask=None):
-        new_data = GenericSpectrum1D(data)
-        return GenericSpectrum1DLayer(new_data, mask)
 
     @classmethod
     def from_formula(cls, formula, layers):

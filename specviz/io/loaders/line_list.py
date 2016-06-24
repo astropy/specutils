@@ -1,9 +1,9 @@
-from ...interfaces.decorators import data_loader
+from specviz.interfaces.decorators import data_loader
 
 from astropy.io import ascii
 
-from ...core import linelist
-from ...core.linelist import LineList
+from specviz.core import linelist
+from specviz.core.linelist import LineList
 
 
 def linelist_reader(filename, filter, **kwargs):

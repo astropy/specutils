@@ -52,13 +52,12 @@ class FileLoadThread(QThread):
             else:
                 file_filter = 'Generic Fits (*.fits *.mits)'
 
-        try:
-            data = GenericSpectrum1D.read(file_name, file_filter)
-            return data
-        except:
-            logging.error("Incompatible loader for selected data: {"
-                          "}".format(file_filter))
-            return
+        # try:
+        data = GenericSpectrum1D.read(file_name, file_filter)
+        return data
+        # except:
+        #     logging.error("Incompatible loader for selected data: {"
+        #                   "}".format(file_filter))
 
 
 class FitModelThread(QThread):

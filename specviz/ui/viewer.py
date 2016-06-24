@@ -1,7 +1,7 @@
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
-import importlib, inspect
+import inspect
 
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
@@ -10,6 +10,7 @@ from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch
 from .widgets.windows import MainWindow
 from .widgets.plugin import Plugin
+from ..interfaces.importer import import_plugins
 
 
 class Viewer(object):
@@ -37,22 +38,11 @@ class Viewer(object):
         self._setup_connections()
 
     def load_plugins(self):
-        instance_plugins = []
-
-        for mod in os.listdir(os.path.abspath(os.path.join(
-                __file__, '..', '..', 'plugins'))):
-
-            mod = mod.split('.')[0]
-            mod = importlib.import_module("specviz.plugins." + mod)
-            cls_members = inspect.getmembers(
-                mod, lambda member: inspect.isclass(member)
-                                    and Plugin in member.__bases__)
-
-            if len(cls_members) == 0:
-                continue
-
-            for _, cls_plugin in cls_members:
-                instance_plugins.append(cls_plugin(self.main_window))
+        instance_plugins = import_plugins(
+            path=os.path.abspath(os.path.join(__file__, '..', '..',
+                                              'plugins')),
+            filt_func=lambda member: inspect.isclass(member)
+                                     and Plugin in member.__bases__)
 
         for instance_plugin in sorted(instance_plugins,
                                       key=lambda x: x.priority):

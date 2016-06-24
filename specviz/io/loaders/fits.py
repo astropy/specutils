@@ -1,14 +1,13 @@
-from specviz.interfaces.decorators import data_loader
+from specviz.core.data import GenericSpectrum1D
+from specviz.io.registries import loader_registry
 
-from astropy import units as u
 import numpy as np
 from astropy import units as u
 from astropy.io import ascii, fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
-
-from specutils import Spectrum1D
+import astropy.io.registry as io_registry
 
 import logging
 import os
@@ -19,58 +18,122 @@ default_fluxunit = u.Unit('erg / (Angstrom cm2 s)')
 
 
 def fits_identify(origin, *args, **kwargs):
-    """Check whether given filename is FITS.
-    This is used for Astropy I/O Registry.
-
+    """Check whether given filename is FITS. This is used for Astropy I/O
+    Registry.
     """
     return (isinstance(args[0], str) and
             args[0].lower().split('.')[-1] in ['fits', 'fit'])
 
 
-@data_loader(label="fits", identifier=fits_identify)
-def fits_reader(filename, filter, **kwargs):
+def fits_reader(filename, filter=None, **kwargs):
     """This generic function will query the loader factory, which has already
     loaded the YAML configuration files, in an attempt to parse the
     associated FITS file.
-
     Parameters
     ----------
     filename : str
         Input filename.
-
     filter : str
         File type for YAML look-up.
-
     kwargs : dict
         Keywords for Astropy reader.
-
     """
+    if filter is None or not filter:
+        filter = "Generic Fits (*.fits *.mits)"
+
     logging.info("Attempting to open '{}' using filter '{}'.".format(
-        filename, filter))
+            filename, filter))
 
     name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(filename, **kwargs)
+    ref = loader_registry.get(filter)
 
-    wcs = WCS(hdulist[0].header)
+    meta = ref.meta
+    header = dict(hdulist[ref.wcs['hdu']].header)
+    meta['header'] = header
+    wcs = WCS(hdulist[ref.wcs['hdu']].header)
 
-    # Use Astropy Tables to search the fits file for real data
-    t = Table.read(name)
+    # Usually, all the data should be in this table
+    tab = _read_table(hdulist[ref.data['hdu']], col_idx=ref.data['col'])
 
-    if len(t.colnames) > 1:
-        data_col = [x for x in t.colnames if x.lower() in ['flux', 'data']]
-        data_col = data_col[0] if len(data_col) > 0 else 1
-        data = t[data_col]
+    # Read flux column
+    data, unit, mask = _read_table_column(tab, ref.data['col'])
 
-        wave_col = [x for x in t.colenames if x.lower() in ['wave',
-                                                            'wavelength']]
+    # Find flux unit, if not in column
+    if unit is None:
+        # Get flux unit from YAML
+        if ref.data.get('unit') is not None:
+            unit = u.Unit(ref.data['unit'])
+        # Get flux unit from header
+        else:
+            unit = _flux_unit_from_header(meta['header'])
 
+    # Get data mask, if not in column.
+    # 0/False = good data (unlike Layers)
+    if mask is None:
+        mask = np.zeros(data.shape, dtype=np.bool)
+    else:
+        mask = mask.astype(np.bool)
+
+    # Read in DQ column if it exists
+    # 0/False = good (everything else bad)
+    if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
+        if ref.mask['hdu'] == ref.data['hdu']:
+            dqtab = tab
+        else:
+            dqtab = _read_table(
+                hdulist[ref.mask['hdu']], col_idx=ref.mask['col'])
+
+        mask2 = _read_table_column(dqtab, ref.mask['col'])[0]  # Data only
+        mask |= mask2.astype(np.bool) # Combine with existing mask
+
+    # Wavelength constructed from WCS by default
+    dispersion = None
+    disp_unit = None
+
+    # Read in wavelength column if it exists
+    if hasattr(ref, 'dispersion'):
+        if ref.dispersion.get('hdu') is not None:
+            if ref.dispersion['hdu'] == ref.data['hdu']:
+                wavtab = tab
+            else:
+                wavtab = _read_table(hdulist[ref.dispersion['hdu']],
+                                     col_idx=ref.dispersion['col'])
+            dispersion, disp_unit = _read_table_column(
+                wavtab, ref.dispersion['col'])[:2]  # Ignore mask
+
+        # Overrides wavelength unit from YAML
+        if ref.dispersion.get('unit') is not None:
+            disp_unit = u.Unit(ref.dispersion['unit'])
+
+        # If no unit, try to use WCS
+        if disp_unit == u.dimensionless_unscaled:
+            disp_unit = None
+
+    # Read flux uncertainty
+    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('hdu') is not None:
+        if ref.uncertainty['hdu'] == ref.data['hdu']:
+            errtab = tab
+        else:
+            errtab = _read_table(
+                hdulist[ref.uncertainty['hdu']], col_idx=ref.uncertainty['col'])
+
+        uncertainty = _read_table_column(
+            errtab, ref.uncertainty['col'], to_unit=unit)[0]  # Data only
+        uncertainty_type = ref.uncertainty.get('type', 'std')
+    else:
+        uncertainty = np.zeros(data.shape)
+        uncertainty_type = 'std'
+
+    # This is dictated by the type of the uncertainty.
+    uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
 
     hdulist.close()
 
-    return Spectrum1D.from_array(name=name, data=data, unit=unit,
-                                 uncertainty=uncertainty, mask=mask,
-                                 wcs=wcs, dispersion=dispersion,
-                                 dispersion_unit=disp_unit)
+    return GenericSpectrum1D(name=name, data=data, unit=unit,
+                             uncertainty=uncertainty, mask=mask,
+                             wcs=wcs, dispersion=dispersion,
+                             dispersion_unit=disp_unit)
 
 
 # NOTE: This is used by both FITS and ASCII.
@@ -220,3 +283,7 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
             data = coldat.to(to_unit, equivalencies).value
 
     return data, unit, mask
+
+
+io_registry.register_reader("fits", GenericSpectrum1D, fits_reader)
+io_registry.register_identifier("fits", GenericSpectrum1D, fits_identify)

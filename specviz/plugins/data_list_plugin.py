@@ -77,8 +77,7 @@ class DataListPlugin(Plugin):
         dialog, and adds it to the data item list in the UI.
         """
         if file_name is None:
-            file_name, selected_filter = self.open_file_dialog(
-                loader_registry.filters)
+            file_name, selected_filter = self.open_file_dialog([])
 
             self.read_file(file_name, file_filter=selected_filter)
 

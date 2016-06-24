@@ -20,6 +20,7 @@ from .third_party.qtpy.QtGui import QIcon
 from .third_party.qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
 from .ui.widgets.utils import ICON_PATH
+from .io import *
 
 
 class App(object):
