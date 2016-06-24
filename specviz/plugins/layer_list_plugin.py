@@ -24,7 +24,7 @@ class LayerListPlugin(Plugin):
             name="Slice",
             description='Create layer slice',
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='Transformations',
+            category=('Transformations', 3),
             enabled=False,
             callback=lambda: self.add_layer(
                 window=self.active_window, layer=self.current_layer,

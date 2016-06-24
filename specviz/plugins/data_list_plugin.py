@@ -30,7 +30,8 @@ class DataListPlugin(Plugin):
             name="Open",
             description='Open data file',
             icon_path=os.path.join(ICON_PATH, "Open Folder-48.png"),
-            category='Loaders',
+            category=('Loaders', 5),
+            priority=1,
             callback=lambda: Dispatch.on_file_open.emit())
 
     def setup_ui(self):

@@ -61,22 +61,44 @@ class Viewer(object):
                 self.menu_docks.addAction(
                     instance_plugin.toggleViewAction())
 
-            for action in instance_plugin._actions:
-                tool_bar = self._get_tool_bar(action['category'])
-                tool_bar.addAction(action['action'])
+        # Sort actions based on priority
+        all_actions = [y for x in instance_plugins for y in x._actions]
 
-    def _get_tool_bar(self, name):
+        for cat in sorted([x['category'] for x in all_actions],
+                          key=lambda x: x[0]):
+            tool_bar = self._get_tool_bar(*cat)
+
+            for act in sorted([x for x in all_actions
+                               if x['category'][0] == cat[0]],
+                              key=lambda x: x['priority'],
+                              reverse=True):
+                tool_bar.addAction(act['action'])
+
+        # Sort tool bars based on priorty
+        all_tool_bars = self._all_tool_bars.values()
+
+        for tb in sorted(all_tool_bars, key=lambda x: x['priority'],
+                         reverse=True):
+            self.main_window.addToolBar(tb['widget'])
+
+    def _get_tool_bar(self, name, priority):
         if name is None:
             name = "User Plugins"
+            priority = -1
 
         if name not in self._all_tool_bars:
-            tool_bar = self.main_window.addToolBar(name)
+            tool_bar = QToolBar(name)
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             tool_bar.show()
 
-            self._all_tool_bars[name] = tool_bar
+            self._all_tool_bars[name] = dict(widget=tool_bar,
+                                             priority=int(priority),
+                                             name=name)
+        else:
+            if self._all_tool_bars[name]['priority'] == 0:
+                self._all_tool_bars[name]['priority'] = priority
 
-        return self._all_tool_bars[name]
+        return self._all_tool_bars[name]['widget']
 
     def _setup_connections(self):
         # Listen for subwindow selection events, update layer list on selection
