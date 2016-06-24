@@ -192,10 +192,10 @@ class Spectrum1D(NDData):
                                   ' documentation')
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None,
-                 meta=None, indexer=None):
+                 meta=None, indexer=None, *args, **kwargs):
 
         super(Spectrum1D, self).__init__(data=flux, unit=unit, wcs=wcs, uncertainty=uncertainty,
-                   mask=mask, meta=meta)
+                   mask=mask, meta=meta, *args, **kwargs)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
         if indexer is None:
