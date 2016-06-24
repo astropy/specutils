@@ -338,11 +338,13 @@ class PlotSubWindow(UiPlotSubWindow):
         # new line lists with only the selected rows. Then
         # merge them for plotting.
 
-        for table_view in table_views:
+        for k, table_view in enumerate(table_views):
+
+
             indices = table_view.selectionModel().selectedRows()
 
             for index in sorted(indices):
-                print('  190 -  Row %d is selected' % index.row())
+                self.linelists[k]
 
 
 

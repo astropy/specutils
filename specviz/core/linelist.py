@@ -118,3 +118,34 @@ class LineList(Table):
         result = LineList(result, self.name)
 
         return result
+
+    def extract_from_indices(self, indices):
+        ''' Builds a LineList instance out of self, with
+            the subset of lines pointed by 'indices'
+
+        :param indices: list
+            with QModelIndex instances
+        :return: LineList
+            line list with subset of lines
+        '''
+        wavelengths = self[WAVELENGTH_COLUMN].quantity
+
+        wmin = wrange[0]
+        wmax = wrange[1]
+
+        # convert wavelenghts in line list to whatever
+        # units the wavelength range is expressed in.
+        new_wavelengths = wavelengths.to(wmin.unit)
+
+        # 'indices' points to rows with wavelength values
+        # that lie outside the wavelength range.
+        indices = np.where((new_wavelengths.value < wmin.value) |
+                           (new_wavelengths.value > wmax.value))
+
+        # make copy of self and remove unwanted lines from the copy.
+        result = Table(self)
+        result.remove_rows(indices)
+
+        result = LineList(result, self.name)
+
+        return result
