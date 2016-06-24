@@ -25,11 +25,14 @@ class LinePlot(object):
         self.style = style
         self._plot = plot
         self.error = None
-        self._plot_units = (self._layer.units[0], self._layer.units[1], None)
+        self._plot_units = (self._layer.dispersion_unit,
+                            self._layer.unit,
+                            None)
         self.line_width = 1
 
         if self._plot is not None:
-            self.change_units(self._layer.units[0], self._layer.units[1])
+            self.change_units(self._layer.dispersion_unit,
+                              self._layer.unit)
 
         r, g, b = next(AVAILABLE_COLORS)
 
@@ -55,11 +58,9 @@ class LinePlot(object):
 
     @staticmethod
     def from_layer(layer, **kwargs):
-        plot_data_item = pg.PlotDataItem(layer.dispersion,
-                                         layer.data)
+        plot_data_item = pg.PlotDataItem(layer.dispersion, layer.data)
 
-        plot_container = LinePlot(layer=layer, plot=plot_data_item,
-                                  **kwargs)
+        plot_container = LinePlot(layer=layer, plot=plot_data_item, **kwargs)
 
         if plot_container.layer.uncertainty is not None:
             # err_top = pg.PlotDataItem(
@@ -82,16 +83,18 @@ class LinePlot(object):
         return plot_container
 
     def change_units(self, x, y=None, z=None):
-        if x is None or not self._layer.units[0].is_equivalent(
+        if x is None or not self._layer.dispersion_unit.is_equivalent(
                 x, equivalencies=spectral()):
-            logging.error("Failed to convert x-axis plot units.")
+            logging.error("Failed to convert x-axis plot units. {} to {"
+                          "}".format(self._layer.dispersion_unit, x))
             x = self._plot_units[0] or self._layer.units[0]
 
-        if y is None or not self._layer.units[1].is_equivalent(
+        if y is None or not self._layer.unit.is_equivalent(
                 y, equivalencies=spectral_density(self.dispersion)):
             logging.error("Failed to convert y-axis plot units.")
             y = self._plot_units[1] or self._layer.units[1]
 
+        self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
         self.update()
 
@@ -121,23 +124,15 @@ class LinePlot(object):
 
     @property
     def data(self):
-        return self.layer.convert(self.layer.data,
-                                  self._plot_units[1],
-                                  equivalencies=spectral_density(
-                                      self.dispersion))
+        return self.layer.data
 
     @property
     def dispersion(self):
-        return self.layer.convert(self.layer.dispersion,
-                                  self._plot_units[0],
-                                  equivalencies=spectral())
+        return self.layer.dispersion
 
     @property
     def uncertainty(self):
-        return self.layer.convert(self.layer.uncertainty,
-                                  self._plot_units[1],
-                                  equivalencies=spectral_density(
-                                      self.dispersion))
+        return self.layer.uncertainty
 
     @property
     def plot(self):

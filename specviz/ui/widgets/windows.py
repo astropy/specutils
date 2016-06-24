@@ -75,7 +75,7 @@ class MainWindow(UiMainWindow):
     @DispatchHandle.register_listener("on_add_window")
     def add_sub_window(self, data=None, layer=None, window=None, *args,
                        **kwargs):
-        layer = layer or GenericSpectrum1DLayer(data)
+        layer = layer or GenericSpectrum1DLayer.from_parent(data)
         window = window or PlotSubWindow()
         window.add_plot(layer=layer)
 

@@ -179,7 +179,7 @@ class LayerListPlugin(Plugin):
 
         Dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
 
-    def add_layer(self, layer=None, mask=None, window=None, from_roi=True):
+    def add_layer(self, layer=None, layer_mask=None, window=None, from_roi=True):
         """
         Creates a layer object from the current ROIs of the active plot layer.
 
@@ -189,21 +189,20 @@ class LayerListPlugin(Plugin):
             The current active layer of the active plot.
         window : QtGui.QMdiSubWindow
             The parent object within which the plot window resides.
-        mask : ndarray
+        layer_mask : ndarray
             Boolean mask.
         """
         # User attempts to slice before opening a file
         if layer is None and window is None:
             logging.error(
-                "Cannot add new layer; no layer and no window "
-                "provided.")
+                "Cannot add new layer; no layer and no window provided.")
             return
 
-        roi_mask = mask if mask is not None and not from_roi else \
+        roi_mask = layer_mask if layer_mask is not None and not from_roi else \
             window.get_roi_mask(layer=layer)
 
-        new_layer = GenericSpectrum1DLayer(layer._source, mask=roi_mask,
-                                           name=layer._source.name + " Layer Slice")
+        new_layer = layer.from_self(layer_mask=roi_mask,
+                                    name=layer.name + " Layer Slice")
 
         Dispatch.on_add_layer.emit(layer=new_layer)
 

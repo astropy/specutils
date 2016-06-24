@@ -12,16 +12,32 @@ import re
 
 # THIRD-PARTY
 import numpy as np
-from astropy.units import Unit, Quantity
+from astropy.units import Unit, Quantity, spectral_density, spectral
 from ..third_party.py_expression_eval import Parser
 from specutils.core.generic import GenericSpectrum1D
 
 
 class GenericSpectrum1DLayer(GenericSpectrum1D):
     """Class to handle layers in SpecViz."""
-    def __init__(self, parent=None, *args, **kwargs):
+    def __init__(self, parent=None, layer_mask=None, *args, **kwargs):
         super(GenericSpectrum1DLayer, self).__init__(*args, **kwargs)
         self._parent = parent
+        self._layer_mask = layer_mask
+
+    @classmethod
+    def from_parent(cls, parent, layer_mask=None):
+        return cls(name=parent.name + " Layer", data=parent.data,
+                   unit=parent.unit, uncertainty=parent.uncertainty,
+                   mask=parent.mask, wcs=parent.wcs,
+                   dispersion=parent.dispersion,
+                   dispersion_unit=parent.dispersion_unit,
+                   layer_mask=layer_mask, parent=parent,
+                   copy=False)
+
+    def from_self(self, name="", layer_mask=None):
+        gen_spec = super(GenericSpectrum1DLayer, self).from_self(name=name)
+
+        return self.from_parent(parent=gen_spec, layer_mask=layer_mask)
 
     @classmethod
     def from_formula(cls, formula, layers):
@@ -96,7 +112,7 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
 
     @property
     def data(self):
-        """Flux quantity with mask applied.  Returns a masked array
+        """Flux quantity with mask applied. Returns a masked array
         containing a Quantity object."""
         data = np.ma.array(
             Quantity(self._data, unit=self.unit),
@@ -106,7 +122,7 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
 
     @property
     def dispersion(self):
-        """Dispersion quantity with mask applied.  Returns a masked array
+        """Dispersion quantity with mask applied. Returns a masked array
         containing a Quantity object."""
         dispersion = np.ma.array(
             Quantity(self._dispersion, unit=self.dispersion_unit),
@@ -114,34 +130,56 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
 
         return dispersion
 
-    @property
+    @GenericSpectrum1D.uncertainty.getter
     def uncertainty(self):
         """Flux uncertainty with mask applied. Returns a masked array
         containing a Quantity object."""
         uncertainty = np.ma.array(
-            Quantity(self._uncertainty, unit=self.unit),
+            Quantity(self._uncertainty.array, unit=self.unit),
             mask=self.full_mask)
 
         return uncertainty
 
     @property
+    def layer_mask(self):
+        """Mask applied from an ROI."""
+        if self._layer_mask is None:
+            self._layer_mask = np.ones(self._data.shape).astype(bool)
+
+        return self._layer_mask
+
+    @property
     def full_mask(self):
         """Mask for spectrum data."""
-        return self.mask.astype(bool) & ~self._layer_mask.astype(bool)
+        return self.mask.astype(bool) | ~self.layer_mask.astype(bool)
 
-    def convert(self, data, unit, equivalencies=None):
-        mask = None
+    def set_units(self, disp_unit, data_unit):
+        if self.dispersion_unit.is_equivalent(disp_unit,
+                                              equivalencies=spectral()):
+            self._dispersion = self.dispersion.data.to(
+                disp_unit, equivalencies=spectral()).value
 
-        if isinstance(data, np.ma.MaskedArray):
-            mask = data.mask
-            data = data.data.to(unit, equivalencies=equivalencies)
-        elif isinstance(data, Quantity):
-            data = data.to(unit, equivalencies=equivalencies)
+            # Finally, change the unit
+            self.dispersion_unit = disp_unit
+        else:
+            logging.warning("Units are not compatible.")
 
-        new_data = np.ma.array(data,
-                               mask=mask if mask is not None else self.full_mask)
+        if self.unit.is_equivalent(data_unit,
+                                   equivalencies=spectral_density(
+                                       self.dispersion.data)):
+            self._data = self.data.data.to(
+                data_unit, equivalencies=spectral_density(
+                    self.dispersion.data)).value
 
-        return new_data
+            self._uncertainty = self._uncertainty.__class__(
+                self.uncertainty.data.to(
+                    data_unit, equivalencies=spectral_density(
+                        self.dispersion.data)).value)
+
+            # Finally, change the unit
+            self._unit = data_unit
+        else:
+            logging.warning("Units are not compatible.")
 
 
 class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
@@ -159,7 +197,7 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
         Models do not need to contain uncertainties; override parent
         class method.
         """
-        return np.zeros(self.data.shape)
+        return None
 
     @property
     def model(self):
@@ -172,8 +210,8 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
         self._data = self._model(self.dispersion.data.value)
 
     @classmethod
-    def from_formula(cls, formula, models):
-        result_model = cls._evaluate(formula, models)
+    def from_formula(cls, models, formula):
+        result_model = cls._evaluate(models, formula)
 
         return result_model
 
@@ -213,13 +251,3 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
                                       zip(vars, sorted_models)))
 
         return result
-
-
-if __name__ == '__main__':
-    flux1, disp1 = np.random.sample(100), np.arange(100)
-    data1 = GenericSpectrum1D(flux1, dispersion=disp1)
-
-    flux2, disp2 = np.random.sample(100), np.arange(100)
-    data2 = GenericSpectrum1D(flux2, dispersion=disp2)
-
-    layer1, layer2 = GenericSpectrum1DLayer(data1), GenericSpectrum1DLayer(data2)
