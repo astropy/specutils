@@ -1,16 +1,15 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # This module implements the Spectrum1D class.
 
-from __future__ import print_function, division, absolute_import
-from .models.Indexer import Indexer
-from .io.registry import io_registry
+from __future__ import print_function, division
+from specutils.models.Indexer import Indexer
 
 __all__ = ['Spectrum1D']
 
 import copy
 from astropy.extern import six
 from astropy import log
-from astropy.nddata import NDData, FlagCollection, NDArithmeticMixin, NDSlicingMixin
+from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
 
@@ -22,9 +21,9 @@ from astropy import units as u
 import numpy as np
 
 
-class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
+class Spectrum1D(NDData):
     """A subclass of `NDData` for a one dimensional spectrum in Astropy.
-    
+
     This class inherits all the base class functionality from the NDData class
     and is communicative with other Spectrum1D objects in ways which make sense.
 
@@ -66,13 +65,13 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
                    uncertainty=None, mask=None, meta=None, copy=True,
                    unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
-        
+
         Parameters:
         -----------
         dispersion : `~astropy.units.quantity.Quantity` or `~np.array`
             The dispersion for the Spectrum (e.g. an array of wavelength
             points). If an array is specified `dispersion_unit` needs to be a spectral unit
-        
+
         flux : `~astropy.units.quantity.Quantity` or `~np.array`
             The flux level for each wavelength point. Should have the same length
             as `dispersion`.
@@ -97,7 +96,7 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
             If True, the array will be *copied* from the provided `data`,
             otherwise it will be referenced if possible (see `numpy.array` :attr:`copy`
             argument for details).
-        
+
         Raises
         ------
         ValueError
@@ -105,7 +104,7 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
             do not match), or the input arrays are not one dimensional.
 
         """
-        
+
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
             raise ValueError("dispersion and flux need to be one-dimensional "
                              "Numpy arrays with the same shape")
@@ -125,7 +124,7 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
 
         return cls(flux=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, meta=meta)
-    
+
     @classmethod
     def from_table(cls, table, dispersion_column='dispersion',
                    flux_column='flux', uncertainty_column=None,
@@ -166,9 +165,9 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
         return cls.from_array(flux=flux.data, dispersion=dispersion.data,
                               uncertainty=uncertainty, dispersion_unit=dispersion.units,
                               unit=flux.units, mask=table.mask, meta=table.meta)
-        
-    
-    
+
+
+
     @classmethod
     def from_ascii(cls, filename, uncertainty=None, mask=None, dtype=np.float, comments='#',
                    delimiter=None, converters=None, skiprows=0,
@@ -176,12 +175,12 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
                               delimiter=delimiter, converters=converters,
                               skiprows=skiprows, usecols=usecols, ndmin=2)
-    
+
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
-        
+
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
-        
+
     @classmethod
     def from_fits(cls, filename):
         """
@@ -191,35 +190,6 @@ class Spectrum1D(NDSlicingMixin, NDArithmeticMixin, NDData):
 
         raise NotImplementedError('This function is not implemented. To read FITS files please refer to the'
                                   ' documentation')
-
-    @classmethod
-    def read(cls, *args, **kwargs):
-        """
-        Read and parse a data file and return as a `Spectrum1D`.
-        This function provides the Table interface to the astropy unified I/O
-        layer.  This allows easily reading a file in many supported data formats
-        using syntax such as::
-          >>> from specutils.spectrum1d import Spectrum1D
-          >>> dat = Spectrum1D.read('table.dat', format='ascii')
-        The arguments and keywords (other than ``format``) provided to this function are
-        passed through to the underlying data reader (e.g.
-        `~spectrum1d.io.ascii.read`).
-        """
-        return io_registry.read(cls, *args, **kwargs)
-
-    def write(self, *args, **kwargs):
-        """
-        Write this Table object out in the specified format.
-        This function provides the Table interface to the astropy unified I/O
-        layer.  This allows easily writing a file in many supported data formats
-        using syntax such as::
-          >>> from astropy.table import Table
-          >>> dat = Table([[1, 2], [3, 4]], names=('a', 'b'))
-          >>> dat.write('table.dat', format='ascii')
-        The arguments and keywords (other than ``format``) provided to this function are
-        passed through to the underlying data reader (e.g. `~astropy.io.ascii.write`).
-        """
-        io_registry.write(self, *args, **kwargs)
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None,
                  meta=None, indexer=None):
