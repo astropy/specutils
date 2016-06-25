@@ -107,7 +107,10 @@ class ModelFittingPlugin(Plugin):
                        layer._parent.data[mask].compressed())
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
-            layer.model = layer.model + model
+            if layer.model is not None:
+                layer.model = layer.model + model
+            else:
+                layer.model = model
         else:
             mask = self.active_window.get_roi_mask(layer)
 
@@ -161,6 +164,9 @@ class ModelFittingPlugin(Plugin):
             models = [layer.model]
 
         for model in models:
+            if model is None:
+                continue
+
             if unique:
                 if self.get_model_item(model) is not None:
                     continue
@@ -232,8 +238,7 @@ class ModelFittingPlugin(Plugin):
         if hasattr(layer, '_model') and hasattr(layer.model, '_submodels'):
             layer.model._submodels.remove(model)
         else:
-            logging.error("Cannot remove last model from a `ModelLayer`.")
-            return
+            layer.model = None
 
         # Remove model from tree widget
         root = self.tree_widget_current_models.invisibleRootItem()
@@ -314,6 +319,9 @@ class ModelFittingPlugin(Plugin):
 
             models.append(model)
 
+        if len(models) == 0:
+            return
+
         if formula:
             model = GenericSpectrum1DModelLayer.from_formula(models, formula)
             return model
@@ -334,7 +342,7 @@ class ModelFittingPlugin(Plugin):
                 expr = expr.format(*model_names)
             # If it's just a single model
             else:
-                expr = layer.model.name
+                expr = layer.model.name if layer.model is not None else ""
 
             self.line_edit_model_arithmetic.setText(expr)
 

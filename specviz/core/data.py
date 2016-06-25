@@ -190,11 +190,15 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
 
     @classmethod
     def from_parent(cls, parent, model=None, layer_mask=None):
-        return cls(name=parent._parent.name + " Model Layer",
-                   data=model(parent.dispersion.data.value),
-                   unit=parent.unit,
-                   uncertainty=parent.uncertainty.__class__(np.zeros(
-                       parent.data.shape)),
+        if model is not None:
+            data = model(parent.dispersion.data.value)
+        else:
+            data = np.zeros(parent.dispersion.shape)
+
+        uncertainty = parent.uncertainty.__class__(np.zeros(parent.data.shape))
+
+        return cls(name=parent._parent.name + " Model Layer", data=data,
+                   unit=parent.unit, uncertainty=uncertainty,
                    mask=parent.mask, wcs=parent.wcs,
                    dispersion=parent.dispersion,
                    dispersion_unit=parent.dispersion_unit,
@@ -209,7 +213,9 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
     @model.setter
     def model(self, value):
         self._model = value
-        self._data = self._model(self.dispersion.data.value)
+
+        if self._model is not None:
+            self._data = self._model(self.dispersion.data.value)
 
     @classmethod
     def from_formula(cls, models, formula):
