@@ -14,8 +14,7 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
     features such as IO, arithmetic, and slicing.
     """
 
-    # The Spectrum1D wcs_attribute object is useless to use, let's avoid
-    #  using it
+    # The Spectrum1D wcs_attribute object is useless to us, let's avoid it
     _wcs_attributes = {}
 
     def __init__(self, data, name="", dispersion=None, dispersion_unit=None,
@@ -25,20 +24,20 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
         self._dispersion_unit = dispersion_unit
         self.name = name or "New Data Object"
 
-    def from_self(self, **kwargs):
+    def from_self(self, copy=True, **kwargs):
         """
         Create a new `GenericSpectrum1D` object using current property
         values. Takes all the arguments a Spectrum1D expects, arguments that
         are not included use this instance's values.
         """
-        self_kwargs = {"data": self.data, "dispersion": self.dispersion,
+        self_kwargs = {"data": self._data, "dispersion": self._dispersion,
                        "unit": self.unit, "wcs": self.wcs,
-                       "uncertainty": self.uncertainty, "mask": self.mask,
+                       "uncertainty": self._uncertainty, "mask": self.mask,
                        "meta": self.meta}
 
         self_kwargs.update(kwargs)
 
-        return self.__class__(**self_kwargs, copy=True)
+        return self.__class__(**self_kwargs, copy=copy)
 
     @classmethod
     def from_array(cls, data, *args, **kwargs):
@@ -86,6 +85,25 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
                 self._dispersion_unit = u.Unit("")
 
         return self._dispersion_unit
+
+    @dispersion_unit.setter
+    def dispersion_unit(self, value):
+        self._dispersion_unit = value
+
+    def __add__(self, other):
+        return self.add(other)
+
+    def __sub__(self, other):
+        return self.subtract(other)
+
+    def __mul__(self, other):
+        return self.multiply(other)
+
+    def __truediv__(self, other):
+        return self.divide(other)
+
+    def __len__(self):
+        return len(self.data)
 
 
 if __name__ == '__main__':
