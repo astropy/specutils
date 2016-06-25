@@ -20,13 +20,9 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
 
     def __init__(self, data, name="", dispersion=None, dispersion_unit=None,
                  uncertainty=None, *args, **kwargs):
-        # The base Spectrum1D class always assumes `flux` is an array,
-        # even though NDData does not require it. Make sure it it's true.
-        if isinstance(data, numbers.Number):
-            data = np.array([data])
-
         super(GenericSpectrum1D, self).__init__(flux=data,
                                                 uncertainty=uncertainty,
+                                                indexer="UNUSED",
                                                 *args, **kwargs)
         self._dispersion = dispersion
         self._dispersion_unit = dispersion_unit
