@@ -5,6 +5,7 @@ import logging
 
 from astropy.nddata import NDArithmeticMixin, NDSlicingMixin, NDIOMixin
 import astropy.units as u
+import numbers
 
 
 class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
@@ -18,8 +19,15 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
     _wcs_attributes = {}
 
     def __init__(self, data, name="", dispersion=None, dispersion_unit=None,
-                 *args, **kwargs):
-        super(GenericSpectrum1D, self).__init__(flux=data, *args, **kwargs)
+                 uncertainty=None, *args, **kwargs):
+        # The base Spectrum1D class always assumes `flux` is an array,
+        # even though NDData does not require it. Make sure it it's true.
+        if isinstance(data, numbers.Number):
+            data = np.array([data])
+
+        super(GenericSpectrum1D, self).__init__(flux=data,
+                                                uncertainty=uncertainty,
+                                                *args, **kwargs)
         self._dispersion = dispersion
         self._dispersion_unit = dispersion_unit
         self.name = name or "New Data Object"
