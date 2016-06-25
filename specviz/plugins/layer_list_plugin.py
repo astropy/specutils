@@ -252,11 +252,11 @@ class LayerListPlugin(Plugin):
 
             # If units match, plot the resultant on the same sub window,
             # otherwise create a new sub window to plot the spectra
-            data_units_equiv = new_layer.data.data.unit.is_equivalent(
+            data_units_equiv = new_layer.unit.is_equivalent(
                 current_window._plot_units[1],
-                equivalencies=spectral_density(new_layer.dispersion))
+                equivalencies=spectral_density(new_layer.dispersion.data))
 
-            disp_units_equiv = new_layer.dispersion.data.unit.is_equivalent(
+            disp_units_equiv = new_layer.dispersion_unit.is_equivalent(
                 current_window._plot_units[0], equivalencies=spectral())
 
             if data_units_equiv and disp_units_equiv:

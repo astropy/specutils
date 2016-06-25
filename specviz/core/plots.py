@@ -62,7 +62,7 @@ class LinePlot(object):
 
         plot_container = LinePlot(layer=layer, plot=plot_data_item, **kwargs)
 
-        if plot_container.layer.uncertainty is not None:
+        if plot_container.layer.raw_uncertainty is not None:
             # err_top = pg.PlotDataItem(
             #     plot_container.layer.dispersion.value,
             #     plot_container.layer.data.value +
@@ -76,7 +76,7 @@ class LinePlot(object):
             plot_error_item = pg.ErrorBarItem(
                 x=plot_container.layer.dispersion.compressed().value,
                 y=plot_container.layer.data.compressed().value,
-                height=plot_container.layer.uncertainty.compressed().value,
+                height=plot_container.layer.raw_uncertainty.compressed().value,
             )
             plot_container.error = plot_error_item
 
@@ -132,7 +132,7 @@ class LinePlot(object):
 
     @property
     def uncertainty(self):
-        return self.layer.uncertainty
+        return self.layer.raw_uncertainty
 
     @property
     def plot(self):

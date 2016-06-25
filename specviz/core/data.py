@@ -19,8 +19,10 @@ from specutils.core.generic import GenericSpectrum1D
 
 class GenericSpectrum1DLayer(GenericSpectrum1D):
     """Class to handle layers in SpecViz."""
-    def __init__(self, parent=None, layer_mask=None, *args, **kwargs):
-        super(GenericSpectrum1DLayer, self).__init__(*args, **kwargs)
+    def __init__(self, data, wcs=None, parent=None, layer_mask=None, *args,
+                 **kwargs):
+        super(GenericSpectrum1DLayer, self).__init__(data, wcs=wcs, *args,
+                                                     **kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
 
@@ -100,13 +102,13 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
             logging.error("Incorrect layer arithmetic formula: the number "
                           "of layers does not match the number of variables.")
 
-        try:
-            result = parser.evaluate(expr.simplify({}).toString(),
-                                     dict(pair for pair in
-                                          zip(vars, sorted_layers)))
-        except Exception as e:
-            logging.error("While evaluating formula: {}".format(e))
-            return
+        # try:
+        result = parser.evaluate(expr.simplify({}).toString(),
+                                 dict(pair for pair in
+                                      zip(vars, sorted_layers)))
+        # except Exception as e:
+        #     logging.error("While evaluating formula: {}".format(e))
+        #     return
 
         return result
 
@@ -124,14 +126,16 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
     def dispersion(self):
         """Dispersion quantity with mask applied. Returns a masked array
         containing a Quantity object."""
+        self._dispersion = super(GenericSpectrum1DLayer, self).dispersion
+
         dispersion = np.ma.array(
             Quantity(self._dispersion, unit=self.dispersion_unit),
             mask=self.full_mask)
 
         return dispersion
 
-    @GenericSpectrum1D.uncertainty.getter
-    def uncertainty(self):
+    @property
+    def raw_uncertainty(self):
         """Flux uncertainty with mask applied. Returns a masked array
         containing a Quantity object."""
         uncertainty = np.ma.array(
@@ -172,9 +176,9 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
                     self.dispersion.data)).value
 
             self._uncertainty = self._uncertainty.__class__(
-                self.uncertainty.data.to(
+                self.raw_uncertainty.data.to(
                     data_unit, equivalencies=spectral_density(
-                        self.dispersion.data)).value)
+                        self.dispersion.data)).value, unit=disp_unit)
 
             # Finally, change the unit
             self._unit = data_unit
@@ -184,8 +188,9 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
 
 class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
     """A layer for spectrum with a model applied."""
-    def __init__(self, model=None, *args, **kwargs):
-        super(GenericSpectrum1DModelLayer, self).__init__(*args, **kwargs)
+    def __init__(self, data, model=None, *args, **kwargs):
+        super(GenericSpectrum1DModelLayer, self).__init__(data, *args,
+                                                          **kwargs)
         self._model = model
 
     @classmethod
