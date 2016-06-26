@@ -1,12 +1,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import random
-
 from ..third_party.qtpy.QtGui import *
 
-from astropy.units import (Unit, Quantity, spectral_density, spectral,
-                           UnitConversionError)
+from astropy.units import spectral_density, spectral
 import pyqtgraph as pg
 from itertools import cycle
 import logging
@@ -87,12 +84,12 @@ class LinePlot(object):
                 x, equivalencies=spectral()):
             logging.error("Failed to convert x-axis plot units. {} to {"
                           "}".format(self._layer.dispersion_unit, x))
-            x = self._plot_units[0] or self._layer.units[0]
+            x = None
 
         if y is None or not self._layer.unit.is_equivalent(
-                y, equivalencies=spectral_density(self.dispersion)):
+                y, equivalencies=spectral_density(self.layer.dispersion)):
             logging.error("Failed to convert y-axis plot units.")
-            y = self._plot_units[1] or self._layer.units[1]
+            y = None
 
         self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
@@ -121,18 +118,6 @@ class LinePlot(object):
         else:
             if self.error is not None:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
-
-    @property
-    def data(self):
-        return self.layer.data
-
-    @property
-    def dispersion(self):
-        return self.layer.dispersion
-
-    @property
-    def uncertainty(self):
-        return self.layer.raw_uncertainty
 
     @property
     def plot(self):
@@ -174,11 +159,16 @@ class LinePlot(object):
             self.error.setOpts(pen=pg.mkPen(pen))
 
     def update(self, autoscale=False):
-        self._plot.setData(self.dispersion.compressed().value,
-                           self.data.compressed().value)
+        if hasattr(self.layer, '_model'):
+            disp = self.layer.unmasked_dispersion.compressed().value
+            data = self.layer.unmasked_data.compressed().value
+            uncert = self.layer.unmasked_raw_uncertainty.compressed().value
+        else:
+            disp = self.layer.dispersion.compressed().value
+            data = self.layer.data.compressed().value
+            uncert = self.layer.raw_uncertainty.compressed().value
+
+        self._plot.setData(disp, data)
 
         if self.error is not None:
-            self.error.setData(
-                    x=self.dispersion.compressed().value,
-                    y=self.data.compressed().value,
-                    height=self.uncertainty.compressed().value)
+            self.error.setData(x=disp, y=data, height=uncert)

@@ -244,7 +244,16 @@ class LayerListPlugin(Plugin):
 
             current_window = self.active_window
             current_layers = self.all_layers
-            new_layer = GenericSpectrum1DLayer.from_formula(formula, layers=current_layers)
+
+            # For whatever reason, parent_nddata in `NDUncertainty` objects are
+            # weak references, and may, without warning, get garbage collected.
+            # Re-do the the reference explicitly here to be sure it exists.
+            for layer in current_layers:
+                if layer.uncertainty is not None:
+                    layer.uncertainty.parent_nddata = layer
+
+            new_layer = GenericSpectrum1DLayer.from_formula(formula,
+                                                            current_layers)
 
             if new_layer is None:
                 logging.warning("Formula not valid.")
@@ -264,8 +273,8 @@ class LayerListPlugin(Plugin):
                                            layer=new_layer)
             else:
                 logging.info("{} not equivalent to {}.".format(
-                    new_layer.data.unit, current_window._plot_units[1]))
-                Dispatch.on_add_window(layer=new_layer)
+                    new_layer.unit, current_window._plot_units[1]))
+                Dispatch.on_add_window.emit(data=new_layer)
 
     def _change_plot_color(self):
         plot = self.active_window.get_plot(self.current_layer)
