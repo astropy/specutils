@@ -7,5 +7,6 @@ libpng
 numpy
 scipy
 astropy
+git+https://github.com/astropy/specutils.git
 git+https://github.com/nmearl/pyqtgraph.git
 -e .

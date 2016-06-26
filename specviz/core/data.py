@@ -231,7 +231,7 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
 
         uncertainty = parent.uncertainty.__class__(np.zeros(parent.data.shape))
 
-        return cls(name=parent._parent.name + " Model Layer", data=data,
+        return cls(name=parent.name + " Model Layer", data=data,
                    unit=parent.unit, uncertainty=uncertainty,
                    mask=parent.mask, wcs=parent.wcs,
                    dispersion=parent.dispersion,
