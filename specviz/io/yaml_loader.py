@@ -356,6 +356,9 @@ class AsciiYamlRegister(YamlRegister):
         else:
             disp_unit = wave.unit
 
+        # Since there's no WCS, include the dispersion unit in the meta data
+        meta['header']['cunit'] = [disp_unit.to_string(), unit.to_string()]
+
         # 0/False = good data (unlike Layers)
         mask = np.zeros(data.shape, dtype=np.bool)
 
@@ -378,7 +381,7 @@ class AsciiYamlRegister(YamlRegister):
 
         return GenericSpectrum1D(name=str(name), data=data, dispersion=dispersion,
                     uncertainty=uncertainty, mask=mask, wcs=wcs,
-                    unit=unit, dispersion_unit=disp_unit)
+                    unit=unit, dispersion_unit=disp_unit, meta=meta)
 
 
 
