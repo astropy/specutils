@@ -141,8 +141,8 @@ class LineListsWindow(UiLinelistsWindow):
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:Dispatch.on_plot_linelists.emit(table_views=self._table_views))
-        self.erase_button.clicked.connect(lambda:Dispatch.on_erase_linelabels.emit)
-        self.dismiss_button.clicked.connect(lambda:Dispatch.on_dismiss_linelists_window.emit)
+        self.erase_button.clicked.connect(Dispatch.on_erase_linelabels.emit)
+        self.dismiss_button.clicked.connect(Dispatch.on_dismiss_linelists_window.emit)
 
     def buildViews(self, plot_window):
 
