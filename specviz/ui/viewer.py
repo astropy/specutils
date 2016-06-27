@@ -9,8 +9,7 @@ from ..third_party.qtpy.QtGui import *
 
 from ..core.comms import Dispatch
 from .widgets.windows import MainWindow
-from .widgets.plugin import Plugin
-from ..interfaces.importer import import_plugins
+from ..interfaces.registries import plugin_registry
 
 
 class Viewer(object):
@@ -38,11 +37,7 @@ class Viewer(object):
         self._setup_connections()
 
     def load_plugins(self):
-        instance_plugins = import_plugins(
-            path=os.path.abspath(os.path.join(__file__, '..', '..',
-                                              'plugins')),
-            filt_func=lambda member: inspect.isclass(member)
-                                     and Plugin in member.__bases__)
+        instance_plugins = plugin_registry.members
 
         for instance_plugin in sorted(instance_plugins,
                                       key=lambda x: x.priority):

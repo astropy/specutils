@@ -1,46 +1,51 @@
-from specviz.core.data import GenericSpectrum1D
-from specviz.io.registries import loader_registry
+"""This module contains functions that perform the actual data parsing."""
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
+# STDLIB
+import logging
+import os
+
+# THIRD-PARTY
 import numpy as np
 from astropy import units as u
 from astropy.io import ascii, fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
-import astropy.io.registry as io_registry
 
-import logging
-import os
+# LOCAL
+from ..core.data import GenericSpectrum1D
+from ..core import linelist
+from ..core.linelist import LineList
+from ..interfaces.registries import loader_registry
+
+__all__ = ['fits_reader', 'fits_identify',
+           'ascii_reader', 'ascii_identify',
+           'linelist_reader', 'linelist_identify']
 
 # Loader automatically falls back to these units for some cases
 default_waveunit = u.Unit('Angstrom')
 default_fluxunit = u.Unit('erg / (Angstrom cm2 s)')
 
 
-def fits_identify(origin, *args, **kwargs):
-    """Check whether given filename is FITS. This is used for Astropy I/O
-    Registry.
-    """
-    return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] in ['fits', 'fit'])
-
-
-def fits_reader(filename, filter=None, **kwargs):
+def fits_reader(filename, filter, **kwargs):
     """This generic function will query the loader factory, which has already
     loaded the YAML configuration files, in an attempt to parse the
     associated FITS file.
+
     Parameters
     ----------
     filename : str
         Input filename.
+
     filter : str
         File type for YAML look-up.
+
     kwargs : dict
         Keywords for Astropy reader.
-    """
-    if filter is None or not filter:
-        filter = "Generic Fits (*.fits *.mits)"
 
+    """
     logging.info("Attempting to open '{}' using filter '{}'.".format(
             filename, filter))
 
@@ -130,10 +135,9 @@ def fits_reader(filename, filter=None, **kwargs):
 
     hdulist.close()
 
-    return GenericSpectrum1D(name=name, data=data, unit=unit,
-                             uncertainty=uncertainty, mask=mask,
-                             wcs=wcs, dispersion=dispersion,
-                             dispersion_unit=disp_unit)
+    return GenericSpectrum1D(name=name, data=data, unit=unit, uncertainty=uncertainty,
+                mask=mask, wcs=wcs, dispersion=dispersion,
+                dispersion_unit=disp_unit)
 
 
 # NOTE: This is used by both FITS and ASCII.
@@ -285,5 +289,138 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
     return data, unit, mask
 
 
-io_registry.register_reader("fits", GenericSpectrum1D, fits_reader)
-io_registry.register_identifier("fits", GenericSpectrum1D, fits_identify)
+def fits_identify(origin, *args, **kwargs):
+    """Check whether given filename is FITS.
+    This is used for Astropy I/O Registry.
+
+    """
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['fits', 'fit'])
+
+
+def ascii_reader(filename, filter, **kwargs):
+    """Like :func:`fits_reader` but for ASCII file."""
+    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
+    tab = ascii.read(filename, **kwargs)
+    cols = tab.colnames
+    ref = loader_registry.get(filter)
+
+    meta = ref.meta
+    meta['header'] = {}
+
+    # Only loads KEY=VAL comment entries into header
+    if 'comments' in tab.meta:
+        for s in tab.meta['comments']:
+            if '=' not in s:
+                continue
+            s2 = s.split('=')
+            meta['header'][s2[0]] = s2[1]
+
+    wcs = None
+    wave = tab[cols[ref.dispersion['col']]]
+    dispersion = wave.data
+    flux = tab[cols[ref.data['col']]]
+    data = flux.data
+    uncertainty = np.zeros(data.shape)
+    uncertainty_type = 'std'
+
+    if flux.unit is None:
+        unit = u.Unit(ref.data.get('unit', default_fluxunit))
+    else:
+        unit = flux.unit
+
+    if wave.unit is None:
+        disp_unit = u.Unit(ref.dispersion.get('unit', default_waveunit))
+    else:
+        disp_unit = wave.unit
+
+    # 0/False = good data (unlike Layers)
+    mask = np.zeros(data.shape, dtype=np.bool)
+
+    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
+        try:
+            uncertainty = tab[cols[ref.uncertainty['col']]].data
+        except IndexError:
+            pass  # Input has no uncertainty column
+        else:
+            uncertainty_type = ref.uncertainty.get('type', 'std')
+
+    # This is dictated by the type of the uncertainty.
+    uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
+
+    if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
+        try:
+            mask = tab[cols[ref.mask['col']]].data.astype(np.bool)
+        except IndexError:
+            pass  # Input has no mask column
+
+    return GenericSpectrum1D(name=str(name), data=data, dispersion=dispersion,
+                uncertainty=uncertainty, mask=mask, wcs=wcs,
+                unit=unit, dispersion_unit=disp_unit)
+
+
+def ascii_identify(origin, *args, **kwargs):
+    """Check whether given filename is ASCII.
+    This is used for Astropy I/O Registry.
+
+    """
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['txt', 'dat'])
+
+
+def linelist_reader(filename, filter, **kwargs):
+    ref = loader_registry.get(filter)
+
+    names_list = []
+    start_list = []
+    end_list = []
+    units_list = []
+    for k in range(len((ref.columns))):
+        name = ref.columns[k][linelist.COLUMN_NAME]
+        names_list.append(name)
+
+        start = ref.columns[k][linelist.COLUMN_START]
+        end = ref.columns[k][linelist.COLUMN_END]
+        start_list.append(start)
+        end_list.append(end)
+
+        if linelist.UNITS_COLUMN in ref.columns[k]:
+            units = ref.columns[k][linelist.UNITS_COLUMN]
+        else:
+            units = ''
+        units_list.append(units)
+
+    tab = ascii.read(filename, format = ref.format,
+                     names = names_list,
+                     col_starts = start_list,
+                     col_ends = end_list)
+
+    for k, colname in enumerate(tab.columns):
+        tab[colname].unit = units_list[k]
+
+    return LineList(tab)
+
+
+def linelist_identify(origin, *args, **kwargs):
+    """Check whether given filename is a line list.
+    """
+    return (isinstance(args[0], str) and
+            args[0].lower().split('.')[-1] in ['txt', 'dat'])
+
+
+# NOTE: Need it this way to prevent circular import.
+def register_loaders():
+    """Add IO reader/identifier to io registry."""
+    from .registries import io_registry
+
+    # FITS
+    io_registry.register_reader('fits', Data, fits_reader)
+    io_registry.register_identifier('fits', Data, fits_identify)
+
+    # ASCII
+    io_registry.register_reader('ascii', Data, ascii_reader)
+    io_registry.register_identifier('ascii', Data, ascii_identify)
+
+    # line list
+    io_registry.register_reader('ascii', LineList, linelist_reader)
+    io_registry.register_identifier('ascii', LineList, linelist_identify)
