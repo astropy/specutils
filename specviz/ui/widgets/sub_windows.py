@@ -334,33 +334,25 @@ class PlotSubWindow(UiPlotSubWindow):
         if not self._is_selected:
             return
 
-        #TODO get a list of indices in each line list. Build
-        # new line lists with only the selected rows. Then
-        # merge them for plotting.
+        # Get a list of the selected indices in each line list.
+        # Build new line lists with only the selected rows.
 
+        linelists_with_selections = []
         for k, table_view in enumerate(table_views):
+            line_list = self.linelists[k]
 
+            selected_rows = table_view.selectionModel().selectedRows()
+            new_list = line_list.extract_rows(selected_rows)
 
-            indices = table_view.selectionModel().selectedRows()
-
-            for index in sorted(indices):
-                self.linelists[k]
-
-
-
-
-
-
-
-
+            linelists_with_selections.append(new_list)
 
         # Merge all line lists into a single one. This might
         # change in the future to enable customized plotting
         # for each line list.
-        merged_linelist = LineList.merge(self.linelists)
+        merged_linelist = LineList.merge(linelists_with_selections)
 
-        # This is plotting all markers at a fixed height in the
-        # screen coordinate system. Still TBD how to do this in
+        # Code below is plotting all markers at a fixed height in
+        # the screen coordinate system. Still TBD how to do this in
         # the generic case. Maybe derive heights from curve data
         # instead? Make the markers follow the curve ups and downs?
         #

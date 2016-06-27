@@ -108,18 +108,12 @@ class LineList(Table):
 
         # 'indices' points to rows with wavelength values
         # that lie outside the wavelength range.
-        indices = np.where((new_wavelengths.value < wmin.value) |
-                           (new_wavelengths.value > wmax.value))
+        indices_to_remove = np.where((new_wavelengths.value < wmin.value) |
+                                     (new_wavelengths.value > wmax.value))
 
-        # make copy of self and remove unwanted lines from the copy.
-        result = Table(self)
-        result.remove_rows(indices)
+        return self._remove_lines(indices_to_remove)
 
-        result = LineList(result, self.name)
-
-        return result
-
-    def extract_from_indices(self, indices):
+    def extract_rows(self, indices):
         ''' Builds a LineList instance out of self, with
             the subset of lines pointed by 'indices'
 
@@ -128,24 +122,26 @@ class LineList(Table):
         :return: LineList
             line list with subset of lines
         '''
-        wavelengths = self[WAVELENGTH_COLUMN].quantity
+        row_indices = []
+        for index in indices:
+            row_indices.append(index.row())
 
-        wmin = wrange[0]
-        wmax = wrange[1]
+        line_indices = []
+        for index in range(len(self.columns[0])):
+            line_indices.append(index)
 
-        # convert wavelenghts in line list to whatever
-        # units the wavelength range is expressed in.
-        new_wavelengths = wavelengths.to(wmin.unit)
+        indices_to_remove = list(filter(lambda x:x not in row_indices, line_indices))
 
-        # 'indices' points to rows with wavelength values
-        # that lie outside the wavelength range.
-        indices = np.where((new_wavelengths.value < wmin.value) |
-                           (new_wavelengths.value > wmax.value))
+        return self._remove_lines(indices_to_remove)
 
-        # make copy of self and remove unwanted lines from the copy.
-        result = Table(self)
-        result.remove_rows(indices)
+    def _remove_lines(self, indices_to_remove):
+        # makes a copy of self and removes
+        # unwanted lines from the copy.
+        table = Table(self)
 
-        result = LineList(result, self.name)
+        table.remove_rows(indices_to_remove)
+
+        result = LineList(table, self.name)
 
         return result
+
