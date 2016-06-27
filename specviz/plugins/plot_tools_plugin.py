@@ -23,7 +23,8 @@ class PlotToolsPlugin(Plugin):
             name="ROI",
             description='Add ROI',
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
-            category='Selections',
+            category=('Selections', 4),
+            priority=1,
             callback=Dispatch.on_add_roi.emit,
             enabled=False)
 
@@ -32,16 +33,17 @@ class PlotToolsPlugin(Plugin):
             name="Top Axis",
             description='Change top axis',
             icon_path=os.path.join(ICON_PATH, "Globe Earth-48.png"),
-            category='Options',
+            category=('Options', 2),
             callback=self._top_axis_dialog.exec_,
             enabled=False)
 
-        # Change top axis
+        # Change plot units
         self.button_unit_change = self.add_tool_bar_actions(
             name="Units",
             description='Change plot units',
             icon_path=os.path.join(ICON_PATH, "Generic Text-48.png"),
             category='Options',
+            priority=1,
             callback=self._show_unit_change_dialog,
             enabled=False)
 

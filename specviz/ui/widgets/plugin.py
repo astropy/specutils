@@ -76,7 +76,8 @@ class Plugin(QDockWidget):
         raise NotImplementedError()
 
     def add_tool_bar_actions(self, icon_path, name="", category=None,
-                             description="", callback=None, enabled=True):
+                             description="", priority=0, enabled=True,
+                             callback=None):
         action = QAction(self)
         action.setIcon(QIcon(icon_path))
         action.setIconText(name)
@@ -86,7 +87,10 @@ class Plugin(QDockWidget):
         action.triggered.connect(callback if callback is not None else
                                  lambda: None)
 
-        self._actions.append(dict(action=action, category=category))
+        self._actions.append(dict(action=action,
+                                  category=(category, 0) if not isinstance(
+                                      category, tuple) else category,
+                                  priority=priority))
 
         return action
 

@@ -1,7 +1,7 @@
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
-import importlib, inspect
+import inspect
 
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
@@ -10,6 +10,7 @@ from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch
 from .widgets.windows import MainWindow
 from .widgets.plugin import Plugin
+from ..interfaces.importer import import_plugins
 
 
 class Viewer(object):
@@ -37,22 +38,11 @@ class Viewer(object):
         self._setup_connections()
 
     def load_plugins(self):
-        instance_plugins = []
-
-        for mod in os.listdir(os.path.abspath(os.path.join(
-                __file__, '..', '..', 'plugins'))):
-
-            mod = mod.split('.')[0]
-            mod = importlib.import_module("specviz.plugins." + mod)
-            cls_members = inspect.getmembers(
-                mod, lambda member: inspect.isclass(member)
-                                    and Plugin in member.__bases__)
-
-            if len(cls_members) == 0:
-                continue
-
-            for _, cls_plugin in cls_members:
-                instance_plugins.append(cls_plugin(self.main_window))
+        instance_plugins = import_plugins(
+            path=os.path.abspath(os.path.join(__file__, '..', '..',
+                                              'plugins')),
+            filt_func=lambda member: inspect.isclass(member)
+                                     and Plugin in member.__bases__)
 
         for instance_plugin in sorted(instance_plugins,
                                       key=lambda x: x.priority):
@@ -65,28 +55,50 @@ class Viewer(object):
                     location = Qt.LeftDockWidgetArea
 
                 self.main_window.addDockWidget(location, instance_plugin)
-                instance_plugin.show()
+                # instance_plugin.show()
 
                 # Add this dock's visibility action to the menu bar
                 self.menu_docks.addAction(
                     instance_plugin.toggleViewAction())
 
-            for action in instance_plugin._actions:
-                tool_bar = self._get_tool_bar(action['category'])
-                tool_bar.addAction(action['action'])
+        # Sort actions based on priority
+        all_actions = [y for x in instance_plugins for y in x._actions]
 
-    def _get_tool_bar(self, name):
+        for cat in sorted([x['category'] for x in all_actions],
+                          key=lambda x: x[0]):
+            tool_bar = self._get_tool_bar(*cat)
+
+            for act in sorted([x for x in all_actions
+                               if x['category'][0] == cat[0]],
+                              key=lambda x: x['priority'],
+                              reverse=True):
+                tool_bar.addAction(act['action'])
+
+        # Sort tool bars based on priorty
+        all_tool_bars = self._all_tool_bars.values()
+
+        for tb in sorted(all_tool_bars, key=lambda x: x['priority'],
+                         reverse=True):
+            self.main_window.addToolBar(tb['widget'])
+
+    def _get_tool_bar(self, name, priority):
         if name is None:
             name = "User Plugins"
+            priority = -1
 
         if name not in self._all_tool_bars:
-            tool_bar = self.main_window.addToolBar(name)
+            tool_bar = QToolBar(name)
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             tool_bar.show()
 
-            self._all_tool_bars[name] = tool_bar
+            self._all_tool_bars[name] = dict(widget=tool_bar,
+                                             priority=int(priority),
+                                             name=name)
+        else:
+            if self._all_tool_bars[name]['priority'] == 0:
+                self._all_tool_bars[name]['priority'] = priority
 
-        return self._all_tool_bars[name]
+        return self._all_tool_bars[name]['widget']
 
     def _setup_connections(self):
         # Listen for subwindow selection events, update layer list on selection

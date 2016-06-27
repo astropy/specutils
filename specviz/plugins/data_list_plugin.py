@@ -4,8 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
-from ..interfaces.registries import loader_registry
-from ..core.data import Data
+from ..core.data import GenericSpectrum1D
 from ..core.threads import FileLoadThread
 
 import logging
@@ -24,7 +23,16 @@ class DataListPlugin(Plugin):
             Dispatch.on_status_message.emit)
 
         self.file_load_thread.result.connect(
-            Dispatch.on_added_data.emit)
+            self._data_loaded)
+
+        # Add tool tray buttons
+        self.button_open_data = self.add_tool_bar_actions(
+            name="Open",
+            description='Open data file',
+            icon_path=os.path.join(ICON_PATH, "Open Folder-48.png"),
+            category=('Loaders', 5),
+            priority=1,
+            callback=lambda: Dispatch.on_file_open.emit())
 
     def setup_ui(self):
         UiDataListPlugin(self)
@@ -47,9 +55,11 @@ class DataListPlugin(Plugin):
         self.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
 
-        # Open file dialog
-        self.button_open_data.clicked.connect(
-            lambda: Dispatch.on_file_open.emit())
+    def _data_loaded(self, data):
+        Dispatch.on_added_data.emit(data=data)
+
+        if self.active_window is None:
+            Dispatch.on_add_window.emit(data=data)
 
     @property
     def current_data(self):
@@ -58,7 +68,7 @@ class DataListPlugin(Plugin):
 
         Returns
         -------
-        data : specviz.core.data.Data
+        data : specviz.core.data.GenericSpectrum1D
             The `Data` object of the currently selected row.
         """
         data_item = self.list_widget_data_list.currentItem()
@@ -78,8 +88,7 @@ class DataListPlugin(Plugin):
         dialog, and adds it to the data item list in the UI.
         """
         if file_name is None:
-            file_name, selected_filter = self.open_file_dialog(
-                loader_registry.filters)
+            file_name, selected_filter = self.open_file_dialog([])
 
             self.read_file(file_name, file_filter=selected_filter)
 
@@ -125,7 +134,7 @@ class DataListPlugin(Plugin):
 
         Parameters
         ----------
-        data : specviz.core.data.Data
+        data : specviz.core.data.GenericSpectrum1D
             The `Data` object to add to the list widget.
         """
         new_item = QListWidgetItem(data.name, self.list_widget_data_list)
@@ -163,12 +172,12 @@ class DataListPlugin(Plugin):
             self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)
             self.button_create_sub_window.setEnabled(True)
-            self.button_add_to_sub_window.setEnabled(True)
+            # self.button_add_to_sub_window.setEnabled(True)
         else:
             self.label_unopened.show()
             self.button_remove_data.setEnabled(False)
             self.button_create_sub_window.setEnabled(False)
-            self.button_add_to_sub_window.setEnabled(False)
+            # self.button_add_to_sub_window.setEnabled(False)
 
 
 class UiDataListPlugin:
@@ -197,11 +206,6 @@ class UiDataListPlugin:
 
         plugin.layout_horizontal = QHBoxLayout()
 
-        plugin.button_open_data = QToolButton(plugin)
-        plugin.button_open_data.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open Folder-48.png")))
-        plugin.button_open_data.setIconSize(QSize(25, 25))
-
         plugin.button_create_sub_window = QToolButton(plugin)
         plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open in Browser-50.png")))
@@ -220,7 +224,6 @@ class UiDataListPlugin:
         plugin.button_remove_data.setEnabled(False)
         plugin.button_remove_data.setIconSize(QSize(25, 25))
 
-        plugin.layout_horizontal.addWidget(plugin.button_open_data)
         plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
         plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)
         plugin.layout_horizontal.addStretch()

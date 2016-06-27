@@ -1,0 +1,14 @@
+--- !CustomLoader
+name: Generic Fits
+extension: [fits, mits]
+wcs:
+  hdu: 0
+data:
+  hdu: 1
+  col: 0
+uncertainty:
+  hdu: 1
+  col: 1
+  type: 'std'
+meta:
+  author: Nicholas Earl

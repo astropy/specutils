@@ -3,7 +3,7 @@ from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
-from ..core.data import ModelLayer
+from ..core.data import GenericSpectrum1DModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
 from ..interfaces.initializers import initialize
 from ..interfaces.factories import ModelFactory, FitterFactory
@@ -100,14 +100,17 @@ class ModelFittingPlugin(Plugin):
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
 
-        if isinstance(layer, ModelLayer):
+        if isinstance(layer, GenericSpectrum1DModelLayer):
             mask = self.active_window.get_roi_mask(layer._parent)
 
             initialize(model, layer._parent.dispersion[mask].compressed(),
                        layer._parent.data[mask].compressed())
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
-            layer.model = layer.model + model
+            if layer.model is not None:
+                layer.model = layer.model + model
+            else:
+                layer.model = model
         else:
             mask = self.active_window.get_roi_mask(layer)
 
@@ -137,12 +140,10 @@ class ModelFittingPlugin(Plugin):
         # Create new layer using current ROI masks, if they exist
         mask = self.active_window.get_roi_mask(layer=layer)
 
-        new_model_layer = ModelLayer(
-            source=layer._source,
-            mask=mask,
+        new_model_layer = GenericSpectrum1DModelLayer.from_parent(
             parent=layer,
-            name="New Model Layer",
-            model=model)
+            model=model,
+            layer_mask=mask)
 
         Dispatch.on_add_layer.emit(layer=new_model_layer,
                                    window=self.active_window)
@@ -163,6 +164,9 @@ class ModelFittingPlugin(Plugin):
             models = [layer.model]
 
         for model in models:
+            if model is None:
+                continue
+
             if unique:
                 if self.get_model_item(model) is not None:
                     continue
@@ -234,8 +238,7 @@ class ModelFittingPlugin(Plugin):
         if hasattr(layer, '_model') and hasattr(layer.model, '_submodels'):
             layer.model._submodels.remove(model)
         else:
-            logging.error("Cannot remove last model from a `ModelLayer`.")
-            return
+            layer.model = None
 
         # Remove model from tree widget
         root = self.tree_widget_current_models.invisibleRootItem()
@@ -316,8 +319,11 @@ class ModelFittingPlugin(Plugin):
 
             models.append(model)
 
+        if len(models) == 0:
+            return
+
         if formula:
-            model = ModelLayer.from_formula(models, formula)
+            model = GenericSpectrum1DModelLayer.from_formula(models, formula)
             return model
 
         return np.sum(models) if len(models) > 1 else models[0]
@@ -336,7 +342,7 @@ class ModelFittingPlugin(Plugin):
                 expr = expr.format(*model_names)
             # If it's just a single model
             else:
-                expr = layer.model.name
+                expr = layer.model.name if layer.model is not None else ""
 
             self.line_edit_model_arithmetic.setText(expr)
 
@@ -402,7 +408,7 @@ class ModelFittingPlugin(Plugin):
     def fit_model_layer(self):
         current_layer = self.current_layer
 
-        if not isinstance(current_layer, ModelLayer):
+        if not isinstance(current_layer, GenericSpectrum1DModelLayer):
             logging.error("Attempting to fit model on a non ModelLayer.")
             return
 
@@ -410,7 +416,7 @@ class ModelFittingPlugin(Plugin):
         # the current rois on the plot. Useful for directing fitting,
         # but may be unintuitive.
         mask = self.active_window.get_roi_mask(layer=current_layer._parent)
-        current_layer._mask = mask
+        current_layer._layer_mask = mask
 
         # Update the model parameters with those in the gui
         # self.update_model_layer()
@@ -515,7 +521,7 @@ class ModelFittingPlugin(Plugin):
             self.update_model_list(layer=current_layer)
             Dispatch.on_update_model.emit(layer=current_layer)
         else:
-            new_model_layer = ModelLayer(
+            new_model_layer = GenericSpectrum1DModelLayer(
                 source=current_layer._source,
                 mask=mask,
                 parent=current_layer,

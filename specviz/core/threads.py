@@ -2,13 +2,13 @@ from ..third_party.qtpy.QtCore import QThread, pyqtSignal
 import os
 import logging
 
-from ..core.data import Data, ModelLayer
+from ..core.data import GenericSpectrum1D, GenericSpectrum1DModelLayer
 from ..interfaces.factories import ModelFactory, FitterFactory
 
 
 class FileLoadThread(QThread):
     status = pyqtSignal(str, int)
-    result = pyqtSignal(Data)
+    result = pyqtSignal(GenericSpectrum1D)
 
     def __init__(self, parent=None):
         super(FileLoadThread, self).__init__(parent)
@@ -53,17 +53,16 @@ class FileLoadThread(QThread):
                 file_filter = 'Generic Fits (*.fits *.mits)'
 
         try:
-            data = Data.read(file_name, file_filter)
+            data = GenericSpectrum1D.read(file_name, file_filter)
             return data
         except:
             logging.error("Incompatible loader for selected data: {"
                           "}".format(file_filter))
-            return
 
 
 class FitModelThread(QThread):
     status = pyqtSignal(str, int)
-    result = pyqtSignal(ModelLayer)
+    result = pyqtSignal(GenericSpectrum1DModelLayer)
 
     def __init__(self, parent=None):
         super(FitModelThread, self).__init__(parent)
@@ -102,8 +101,8 @@ class FitModelThread(QThread):
         model = model_layer.model
 
         # The fitting should only consider the masked regions
-        flux = flux[model_layer._mask].compressed().value
-        dispersion = dispersion[model_layer._mask].compressed().value
+        flux = flux[model_layer.layer_mask].compressed().value
+        dispersion = dispersion[model_layer.layer_mask].compressed().value
 
         # Get compressed versions of the data arrays
         # flux = flux.compressed().value
