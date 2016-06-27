@@ -87,7 +87,14 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
                 self._dispersion_unit = self.wcs.wcs.cunit[0]
             except AttributeError:
                 logging.warning("No dispersion unit information in WCS.")
-                self._dispersion_unit = u.Unit("")
+
+                try:
+                    self._dispersion_unit = u.Unit(
+                        self.meta['header']['cunit'][0])
+                except:
+                    logging.warning("No dispersion unit information in meta.")
+
+                    self._dispersion_unit = u.Unit("")
 
         return self._dispersion_unit
 
