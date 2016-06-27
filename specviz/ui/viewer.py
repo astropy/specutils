@@ -1,7 +1,6 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import inspect
 
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
@@ -9,7 +8,6 @@ from ..third_party.qtpy.QtGui import *
 
 from ..core.comms import Dispatch
 from .widgets.windows import MainWindow
-from ..interfaces.registries import plugin_registry
 
 
 class Viewer(object):
@@ -32,11 +30,14 @@ class Viewer(object):
 
         # Load system and user plugins
         self.load_plugins()
+        from ..interfaces.registries import loader_registry
 
         # Setup up top-level connections
         self._setup_connections()
 
     def load_plugins(self):
+        from ..interfaces.registries import plugin_registry
+
         instance_plugins = plugin_registry.members
 
         for instance_plugin in sorted(instance_plugins,

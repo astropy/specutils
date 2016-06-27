@@ -21,6 +21,7 @@ def fits_identify(*args, **kwargs):
 
 @data_loader(label="Simple Generic", identifier=fits_identify)
 def simple_generic_loader(file_name, **kwargs):
+    print("LOADING {}".format(file_name))
     name = os.path.basename(file_name.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 

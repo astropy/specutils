@@ -2,16 +2,14 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import yaml
-import os
+import os, sys
 import importlib
 import inspect
 import logging
-from functools import wraps
 
 import astropy.io.registry as io_registry
-
 from ..core.data import GenericSpectrum1D
-from ..ui.widgets.plugin import Plugin
+from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
 
 
 class Registry(object):
@@ -39,43 +37,25 @@ class PluginRegistry(Registry):
 
         cur_path = os.path.abspath(os.path.join(__file__, '..', '..',
                                                 'plugins'))
-        for mod in os.listdir(cur_path):
+        for mod in [x for x in os.listdir(cur_path) if x.endswith('.py')]:
             mod = mod.split('.')[0]
             mod = importlib.import_module("specviz.plugins." + str(mod))
             cls_members = inspect.getmembers(
                 mod, lambda member: inspect.isclass(member)
-                                    and Plugin in member.__bases__)
-
-            if len(cls_members) == 0:
-                continue
+                                    and 'Plugin' in [x.__name__
+                                                     for x in
+                                                     member.__bases__])
 
             for _, cls_plugin in cls_members:
                 self._members.append(cls_plugin())
-
-    def add(self):
-        pass
 
 
 class LoaderRegistry(Registry):
     def __init__(self):
         super(LoaderRegistry, self).__init__()
 
-    def __call__(self, label, identifier, priority=-1, **kwargs):
-        def decorator(func):
-            func.loader_wrapper = True
-
-            @wraps(func)
-            def wrapper(label, identifier, priority=-1, **kwargs):
-                logging.info("Added {} to loader registry.".format(label))
-                io_registry.register_reader(label, GenericSpectrum1D,
-                                            func)
-                io_registry.register_identifier(label, GenericSpectrum1D,
-                                                identifier)
-
-                return func
-
-            return wrapper
-        return decorator
+        self._load_py()
+        self._load_yaml()
 
     def _load_py(self):
         """
@@ -83,25 +63,31 @@ class LoaderRegistry(Registry):
         """
         cur_path = os.path.abspath(os.path.join(__file__, '..', '..', 'io',
                                                 'loaders'))
+        usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
 
-        for mod in os.listdir(cur_path):
-            mod = mod.split('.')[0]
-            mod = importlib.import_module("specviz.loaders." + str(mod))
-            members = inspect.getmembers(
-                mod, lambda member: inspect.isfunction(member))
+        # This order determines priority in case of duplicates; paths higher
+        # in this list take precedence
+        check_paths = [usr_path, cur_path]
 
-            if len(members) == 0:
-                continue
+        for path in check_paths:
+            for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
+                mod = mod.split('.')[0]
+                sys.path.insert(0, cur_path)
+                mod = importlib.import_module(str(mod))
+                members = inspect.getmembers(mod, predicate=inspect.isfunction)
 
-            for _, func in members:
-                if func.loader_wrapper:
-                    self._members.append(func)
+                # for _, func in members:
+                #     if hasattr(func, 'loader_wrapper') and func.loader_wrapper:
+                #         self._members.append(func)
+
+                sys.path.pop(0)
 
     def _load_yaml(self):
         """
         Loads yaml files as custom loaders.
         """
-        cur_path = os.path.join(os.path.dirname(__file__), 'yaml_loaders')
+        cur_path = os.path.join(os.path.dirname(__file__), '..', 'io',
+                                'yaml_loaders')
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
         lines_path = os.path.join(os.path.dirname(__file__), '../data/linelists')
 
@@ -119,18 +105,23 @@ class LoaderRegistry(Registry):
                 custom_loader = yaml.load(open(f_path, 'r'))
                 custom_loader.set_filter()
 
-                self.add(custom_loader)
+                # Figure out which of the two generic loaders to associate
+                # this yaml file with
+                if any(ext in custom_loader.extension for ext in ['fits']):
+                    loader = FitsYamlRegister(custom_loader)
+                elif any(ext in custom_loader.extension
+                         for ext in ['txt', 'data']):
+                    loader = AsciiYamlRegister(custom_loader)
 
-    def add(self, loader):
-        if len([x for x in self._members if x.filter == loader.filter]) == 0:
-            self._members.append(loader)
-
-    def get(self, filter):
-        return [x for x in self._members if x.filter == filter][0]
-
-    @property
-    def filters(self):
-        return [x.filter for x in self._members]
+                try:
+                    io_registry.register_reader(custom_loader.name,
+                                                GenericSpectrum1D,
+                                                loader.reader)
+                    io_registry.register_identifier(custom_loader.name,
+                                                    GenericSpectrum1D,
+                                                    loader.identify)
+                except io_registry.IORegistryError as e:
+                    logging.error(e)
 
 
 class YAMLLoader(yaml.YAMLObject):

@@ -9,6 +9,8 @@ from ..core.threads import FileLoadThread
 
 import logging
 
+import astropy.io.registry as io_registry
+
 
 class DataListPlugin(Plugin):
     name = "Data List"
@@ -88,19 +90,14 @@ class DataListPlugin(Plugin):
         dialog, and adds it to the data item list in the UI.
         """
         if file_name is None:
-            file_name, selected_filter = self.open_file_dialog([])
+            file_name, selected_filter = self.open_file_dialog()
 
             self.read_file(file_name, file_filter=selected_filter)
 
-    def open_file_dialog(self, filters):
+    def open_file_dialog(self):
         """
         Given a list of filters, prompts the user to select an existing file
         and returns the file path and filter.
-
-        Parameters
-        ----------
-        filters : list
-            List of filters for the dialog.
 
         Returns
         -------
@@ -112,11 +109,13 @@ class DataListPlugin(Plugin):
         """
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters([x for x in filters])
+        dialog.setNameFilters([x + " (*)" for x in
+                               io_registry.get_formats(GenericSpectrum1D)[
+                                   'Format']])
 
         if dialog.exec_():
             file_names = dialog.selectedFiles()
-            selected_filter = dialog.selectedNameFilter()
+            selected_filter = dialog.selectedNameFilter().replace(" (*)", "")
 
             return file_names[0], selected_filter
 

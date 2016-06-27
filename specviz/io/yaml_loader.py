@@ -15,10 +15,9 @@ from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 
 # LOCAL
-from ..core.data import GenericSpectrum1D
-from ..core import linelist
-from ..core.linelist import LineList
-from ..interfaces.registries import loader_registry
+from specviz.core.data import GenericSpectrum1D
+from specviz.core import linelist
+from specviz.core.linelist import LineList
 
 __all__ = ['fits_reader', 'fits_identify',
            'ascii_reader', 'ascii_identify',
@@ -29,115 +28,28 @@ default_waveunit = u.Unit('Angstrom')
 default_fluxunit = u.Unit('erg / (Angstrom cm2 s)')
 
 
-def fits_reader(filename, filter, **kwargs):
-    """This generic function will query the loader factory, which has already
-    loaded the YAML configuration files, in an attempt to parse the
-    associated FITS file.
-
-    Parameters
-    ----------
-    filename : str
-        Input filename.
-
-    filter : str
-        File type for YAML look-up.
-
-    kwargs : dict
-        Keywords for Astropy reader.
-
+class YamlRegister(object):
     """
-    logging.info("Attempting to open '{}' using filter '{}'.".format(
-            filename, filter))
+    Class to encapsulate the IO registry information for a set of
+    yaml-loaded attributes.
+    """
+    def __init__(self, reference):
+        """
+        Initialize this particular YamlRegister.
 
-    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
-    hdulist = fits.open(filename, **kwargs)
-    ref = loader_registry.get(filter)
+        Parameters
+        ----------
+        reference : dict-like
+            The yaml reference object created by loading a yaml file.
+        """
+        self._reference = reference
 
-    meta = ref.meta
-    header = dict(hdulist[ref.wcs['hdu']].header)
-    meta['header'] = header
-    wcs = WCS(hdulist[ref.wcs['hdu']].header)
+    def identify(self, *args, **kwargs):
+        return (isinstance(args[0], str) and
+                args[0].lower().split('.')[-1] in self._reference.extension)
 
-    # Usually, all the data should be in this table
-    tab = _read_table(hdulist[ref.data['hdu']], col_idx=ref.data['col'])
-
-    # Read flux column
-    data, unit, mask = _read_table_column(tab, ref.data['col'])
-
-    # Find flux unit, if not in column
-    if unit is None:
-        # Get flux unit from YAML
-        if ref.data.get('unit') is not None:
-            unit = u.Unit(ref.data['unit'])
-        # Get flux unit from header
-        else:
-            unit = _flux_unit_from_header(meta['header'])
-
-    # Get data mask, if not in column.
-    # 0/False = good data (unlike Layers)
-    if mask is None:
-        mask = np.zeros(data.shape, dtype=np.bool)
-    else:
-        mask = mask.astype(np.bool)
-
-    # Read in DQ column if it exists
-    # 0/False = good (everything else bad)
-    if hasattr(ref, 'mask') and ref.mask.get('hdu') is not None:
-        if ref.mask['hdu'] == ref.data['hdu']:
-            dqtab = tab
-        else:
-            dqtab = _read_table(
-                hdulist[ref.mask['hdu']], col_idx=ref.mask['col'])
-
-        mask2 = _read_table_column(dqtab, ref.mask['col'])[0]  # Data only
-        mask |= mask2.astype(np.bool) # Combine with existing mask
-
-    # Wavelength constructed from WCS by default
-    dispersion = None
-    disp_unit = None
-
-    # Read in wavelength column if it exists
-    if hasattr(ref, 'dispersion'):
-        if ref.dispersion.get('hdu') is not None:
-            if ref.dispersion['hdu'] == ref.data['hdu']:
-                wavtab = tab
-            else:
-                wavtab = _read_table(hdulist[ref.dispersion['hdu']],
-                                     col_idx=ref.dispersion['col'])
-            dispersion, disp_unit = _read_table_column(
-                wavtab, ref.dispersion['col'])[:2]  # Ignore mask
-
-        # Overrides wavelength unit from YAML
-        if ref.dispersion.get('unit') is not None:
-            disp_unit = u.Unit(ref.dispersion['unit'])
-
-        # If no unit, try to use WCS
-        if disp_unit == u.dimensionless_unscaled:
-            disp_unit = None
-
-    # Read flux uncertainty
-    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('hdu') is not None:
-        if ref.uncertainty['hdu'] == ref.data['hdu']:
-            errtab = tab
-        else:
-            errtab = _read_table(
-                hdulist[ref.uncertainty['hdu']], col_idx=ref.uncertainty['col'])
-
-        uncertainty = _read_table_column(
-            errtab, ref.uncertainty['col'], to_unit=unit)[0]  # Data only
-        uncertainty_type = ref.uncertainty.get('type', 'std')
-    else:
-        uncertainty = np.zeros(data.shape)
-        uncertainty_type = 'std'
-
-    # This is dictated by the type of the uncertainty.
-    uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
-
-    hdulist.close()
-
-    return GenericSpectrum1D(name=name, data=data, unit=unit, uncertainty=uncertainty,
-                mask=mask, wcs=wcs, dispersion=dispersion,
-                dispersion_unit=disp_unit)
+    def reader(self, filename, **kwargs):
+        raise NotImplementedError()
 
 
 # NOTE: This is used by both FITS and ASCII.
@@ -289,138 +201,218 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
     return data, unit, mask
 
 
-def fits_identify(origin, *args, **kwargs):
-    """Check whether given filename is FITS.
-    This is used for Astropy I/O Registry.
-
+class FitsYamlRegister(YamlRegister):
     """
-    return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] in ['fits', 'fit'])
+    Defines the generation of `GenericSpectrum1D` objects by parsing FITS
+    files with information from YAML files.
+    """
+    def reader(self, filename, **kwargs):
+        """This generic function will query the loader factory, which has already
+        loaded the YAML configuration files, in an attempt to parse the
+        associated FITS file.
 
+        Parameters
+        ----------
+        filename : str
+            Input filename.
 
-def ascii_reader(filename, filter, **kwargs):
-    """Like :func:`fits_reader` but for ASCII file."""
-    name = os.path.basename(filename.name.rstrip(os.sep)).rsplit('.', 1)[0]
-    tab = ascii.read(filename, **kwargs)
-    cols = tab.colnames
-    ref = loader_registry.get(filter)
+        filter : str
+            File type for YAML look-up.
 
-    meta = ref.meta
-    meta['header'] = {}
+        kwargs : dict
+            Keywords for Astropy reader.
 
-    # Only loads KEY=VAL comment entries into header
-    if 'comments' in tab.meta:
-        for s in tab.meta['comments']:
-            if '=' not in s:
-                continue
-            s2 = s.split('=')
-            meta['header'][s2[0]] = s2[1]
+        """
+        logging.info("Attempting to open '{}' using filter '{}'.".format(
+                filename, filter))
 
-    wcs = None
-    wave = tab[cols[ref.dispersion['col']]]
-    dispersion = wave.data
-    flux = tab[cols[ref.data['col']]]
-    data = flux.data
-    uncertainty = np.zeros(data.shape)
-    uncertainty_type = 'std'
+        name = os.path.basename(filename.rstrip(os.sep)).rsplit('.', 1)[0]
+        hdulist = fits.open(filename, **kwargs)
 
-    if flux.unit is None:
-        unit = u.Unit(ref.data.get('unit', default_fluxunit))
-    else:
-        unit = flux.unit
+        meta = self._reference.meta
+        header = dict(hdulist[self._reference.wcs['hdu']].header)
+        meta['header'] = header
+        wcs = WCS(hdulist[self._reference.wcs['hdu']].header)
 
-    if wave.unit is None:
-        disp_unit = u.Unit(ref.dispersion.get('unit', default_waveunit))
-    else:
-        disp_unit = wave.unit
+        # Usually, all the data should be in this table
+        tab = _read_table(hdulist[self._reference.data['hdu']], col_idx=self._reference.data['col'])
 
-    # 0/False = good data (unlike Layers)
-    mask = np.zeros(data.shape, dtype=np.bool)
+        # Read flux column
+        data, unit, mask = _read_table_column(tab, self._reference.data['col'])
 
-    if hasattr(ref, 'uncertainty') and ref.uncertainty.get('col') is not None:
-        try:
-            uncertainty = tab[cols[ref.uncertainty['col']]].data
-        except IndexError:
-            pass  # Input has no uncertainty column
+        # Find flux unit, if not in column
+        if unit is None:
+            # Get flux unit from YAML
+            if self._reference.data.get('unit') is not None:
+                unit = u.Unit(self._reference.data['unit'])
+            # Get flux unit from header
+            else:
+                unit = _flux_unit_from_header(meta['header'])
+
+        # Get data mask, if not in column.
+        # 0/False = good data (unlike Layers)
+        if mask is None:
+            mask = np.zeros(data.shape, dtype=np.bool)
         else:
-            uncertainty_type = ref.uncertainty.get('type', 'std')
+            mask = mask.astype(np.bool)
 
-    # This is dictated by the type of the uncertainty.
-    uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
+        # Read in DQ column if it exists
+        # 0/False = good (everything else bad)
+        if hasattr(self._reference, 'mask') and self._reference.mask.get('hdu') is not None:
+            if self._reference.mask['hdu'] == self._reference.data['hdu']:
+                dqtab = tab
+            else:
+                dqtab = _read_table(
+                    hdulist[self._reference.mask['hdu']], col_idx=self._reference.mask['col'])
 
-    if hasattr(ref, 'mask') and ref.mask.get('col') is not None:
-        try:
-            mask = tab[cols[ref.mask['col']]].data.astype(np.bool)
-        except IndexError:
-            pass  # Input has no mask column
+            mask2 = _read_table_column(dqtab, self._reference.mask['col'])[0]  # Data only
+            mask |= mask2.astype(np.bool) # Combine with existing mask
 
-    return GenericSpectrum1D(name=str(name), data=data, dispersion=dispersion,
-                uncertainty=uncertainty, mask=mask, wcs=wcs,
-                unit=unit, dispersion_unit=disp_unit)
+        # Wavelength constructed from WCS by default
+        dispersion = None
+        disp_unit = None
 
+        # Read in wavelength column if it exists
+        if hasattr(self._reference, 'dispersion'):
+            if self._reference.dispersion.get('hdu') is not None:
+                if self._reference.dispersion['hdu'] == self._reference.data['hdu']:
+                    wavtab = tab
+                else:
+                    wavtab = _read_table(hdulist[self._reference.dispersion['hdu']],
+                                         col_idx=self._reference.dispersion['col'])
+                dispersion, disp_unit = _read_table_column(
+                    wavtab, self._reference.dispersion['col'])[:2]  # Ignore mask
 
-def ascii_identify(origin, *args, **kwargs):
-    """Check whether given filename is ASCII.
-    This is used for Astropy I/O Registry.
+            # Overrides wavelength unit from YAML
+            if self._reference.dispersion.get('unit') is not None:
+                disp_unit = u.Unit(self._reference.dispersion['unit'])
 
-    """
-    return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] in ['txt', 'dat'])
+            # If no unit, try to use WCS
+            if disp_unit == u.dimensionless_unscaled:
+                disp_unit = None
 
+        # Read flux uncertainty
+        if hasattr(self._reference, 'uncertainty') and self._reference.uncertainty.get('hdu') is not None:
+            if self._reference.uncertainty['hdu'] == self._reference.data['hdu']:
+                errtab = tab
+            else:
+                errtab = _read_table(
+                    hdulist[self._reference.uncertainty['hdu']], col_idx=self._reference.uncertainty['col'])
 
-def linelist_reader(filename, filter, **kwargs):
-    ref = loader_registry.get(filter)
-
-    names_list = []
-    start_list = []
-    end_list = []
-    units_list = []
-    for k in range(len((ref.columns))):
-        name = ref.columns[k][linelist.COLUMN_NAME]
-        names_list.append(name)
-
-        start = ref.columns[k][linelist.COLUMN_START]
-        end = ref.columns[k][linelist.COLUMN_END]
-        start_list.append(start)
-        end_list.append(end)
-
-        if linelist.UNITS_COLUMN in ref.columns[k]:
-            units = ref.columns[k][linelist.UNITS_COLUMN]
+            uncertainty = _read_table_column(
+                errtab, self._reference.uncertainty['col'], to_unit=unit)[0]  # Data only
+            uncertainty_type = self._reference.uncertainty.get('type', 'std')
         else:
-            units = ''
-        units_list.append(units)
+            uncertainty = np.zeros(data.shape)
+            uncertainty_type = 'std'
 
-    tab = ascii.read(filename, format = ref.format,
-                     names = names_list,
-                     col_starts = start_list,
-                     col_ends = end_list)
+        # This is dictated by the type of the uncertainty.
+        uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
 
-    for k, colname in enumerate(tab.columns):
-        tab[colname].unit = units_list[k]
+        hdulist.close()
 
-    return LineList(tab)
+        return GenericSpectrum1D(name=name, data=data, unit=unit, uncertainty=uncertainty,
+                    mask=mask, wcs=wcs, dispersion=dispersion,
+                    dispersion_unit=disp_unit)
 
 
-def linelist_identify(origin, *args, **kwargs):
-    """Check whether given filename is a line list.
+class AsciiYamlRegister(YamlRegister):
     """
-    return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] in ['txt', 'dat'])
+    Defines the generation of `GenericSpectrum1D` objects by parsing ASCII
+    files with information from YAML files.
+    """
+    def reader(self, filename, **kwargs):
+        """Like :func:`fits_reader` but for ASCII file."""
+        name = os.path.basename(filename.rstrip(os.sep)).rsplit('.', 1)[0]
+        tab = ascii.read(filename, **kwargs)
+        cols = tab.colnames
+
+        meta = self._reference.meta
+        meta['header'] = {}
+
+        # Only loads KEY=VAL comment entries into header
+        if 'comments' in tab.meta:
+            for s in tab.meta['comments']:
+                if '=' not in s:
+                    continue
+                s2 = s.split('=')
+                meta['header'][s2[0]] = s2[1]
+
+        wcs = None
+        wave = tab[cols[self._reference.dispersion['col']]]
+        dispersion = wave.data
+        flux = tab[cols[self._reference.data['col']]]
+        data = flux.data
+        uncertainty = np.zeros(data.shape)
+        uncertainty_type = 'std'
+
+        if flux.unit is None:
+            unit = u.Unit(self._reference.data.get('unit', default_fluxunit))
+        else:
+            unit = flux.unit
+
+        if wave.unit is None:
+            disp_unit = u.Unit(self._reference.dispersion.get('unit', default_waveunit))
+        else:
+            disp_unit = wave.unit
+
+        # 0/False = good data (unlike Layers)
+        mask = np.zeros(data.shape, dtype=np.bool)
+
+        if hasattr(self._reference, 'uncertainty') and self._reference.uncertainty.get('col') is not None:
+            try:
+                uncertainty = tab[cols[self._reference.uncertainty['col']]].data
+            except IndexError:
+                pass  # Input has no uncertainty column
+            else:
+                uncertainty_type = self._reference.uncertainty.get('type', 'std')
+
+        # This is dictated by the type of the uncertainty.
+        uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
+
+        if hasattr(self._reference, 'mask') and self._reference.mask.get('col') is not None:
+            try:
+                mask = tab[cols[self._reference.mask['col']]].data.astype(np.bool)
+            except IndexError:
+                pass  # Input has no mask column
+
+        return GenericSpectrum1D(name=str(name), data=data, dispersion=dispersion,
+                    uncertainty=uncertainty, mask=mask, wcs=wcs,
+                    unit=unit, dispersion_unit=disp_unit)
 
 
-# NOTE: Need it this way to prevent circular import.
-def register_loaders():
-    """Add IO reader/identifier to io registry."""
-    from .registries import io_registry
 
-    # FITS
-    io_registry.register_reader('fits', Data, fits_reader)
-    io_registry.register_identifier('fits', Data, fits_identify)
+class LineListYamlRegister(YamlRegister):
+    """
+    Defines the generation of `GenericSpectrum1D` objects by parsing LineList
+    files with information from YAML files.
+    """
+    def reader(self, filename, **kwargs):
+        names_list = []
+        start_list = []
+        end_list = []
+        units_list = []
+        for k in range(len((self._reference.columns))):
+            name = self._reference.columns[k][linelist.COLUMN_NAME]
+            names_list.append(name)
 
-    # ASCII
-    io_registry.register_reader('ascii', Data, ascii_reader)
-    io_registry.register_identifier('ascii', Data, ascii_identify)
+            start = self._reference.columns[k][linelist.COLUMN_START]
+            end = self._reference.columns[k][linelist.COLUMN_END]
+            start_list.append(start)
+            end_list.append(end)
 
-    # line list
-    io_registry.register_reader('ascii', LineList, linelist_reader)
-    io_registry.register_identifier('ascii', LineList, linelist_identify)
+            if linelist.UNITS_COLUMN in self._reference.columns[k]:
+                units = self._reference.columns[k][linelist.UNITS_COLUMN]
+            else:
+                units = ''
+            units_list.append(units)
+
+        tab = ascii.read(filename, format = self._reference.format,
+                         names = names_list,
+                         col_starts = start_list,
+                         col_ends = end_list)
+
+        for k, colname in enumerate(tab.columns):
+            tab[colname].unit = units_list[k]
+
+        return LineList(tab)

@@ -4,6 +4,7 @@ import logging
 
 from ..core.data import GenericSpectrum1D, GenericSpectrum1DModelLayer
 from ..interfaces.factories import ModelFactory, FitterFactory
+from ..interfaces.registries import loader_registry
 
 
 class FileLoadThread(QThread):
@@ -46,18 +47,12 @@ class FileLoadThread(QThread):
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 
-        if file_filter is None:
-            if file_ext in ('.txt', '.dat'):
-                file_filter = 'ASCII (*.txt *.dat)'
-            else:
-                file_filter = 'Generic Fits (*.fits *.mits)'
-
-        try:
-            data = GenericSpectrum1D.read(file_name, file_filter)
-            return data
-        except:
-            logging.error("Incompatible loader for selected data: {"
-                          "}".format(file_filter))
+        # try:
+        data = GenericSpectrum1D.read(file_name, format=file_filter)
+        return data
+        # except:
+        #     logging.error("Incompatible loader for selected data: {"
+        #                   "}".format(file_filter))
 
 
 class FitModelThread(QThread):
