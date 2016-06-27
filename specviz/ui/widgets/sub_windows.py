@@ -338,6 +338,15 @@ class PlotSubWindow(UiPlotSubWindow):
         # Build new line lists with only the selected rows.
 
         linelists_with_selections = []
+        
+        #TODO:  BUG
+        # this code breaks when the number of line lists is larger
+        # than the number of views. This happens for instance for
+        # the COS spectrum, where the nebular line list doesn't
+        # have a view, but nevertheless exists in self.linelists.
+        # Maybe we should establish the connection via the list
+        # name, using a dict.
+
         for k, table_view in enumerate(table_views):
             line_list = self.linelists[k]
 
