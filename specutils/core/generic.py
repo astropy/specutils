@@ -19,8 +19,9 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
     _wcs_attributes = {}
 
     def __init__(self, data, name="", dispersion=None, dispersion_unit=None,
-                 uncertainty=None, *args, **kwargs):
+                 uncertainty=None, wcs=None, *args, **kwargs):
         super(GenericSpectrum1D, self).__init__(flux=data,
+                                                wcs=wcs,
                                                 uncertainty=uncertainty,
                                                 indexer="UNUSED",
                                                 *args, **kwargs)
