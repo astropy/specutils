@@ -2,11 +2,9 @@
 
 pyyaml
 cython
-freetype
-libpng
 numpy
 scipy
 astropy
-git+https://github.com/astropy/specutils.git
+git+https://github.com/nmearl/specutils.git
 git+https://github.com/nmearl/pyqtgraph.git
 -e .
