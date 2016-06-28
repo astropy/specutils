@@ -253,7 +253,7 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
         """
         data = np.ma.array(
             Quantity(self._data, unit=self.unit),
-            mask=self._parent.mask)
+            mask=self.parent_mask)
 
         return data
 
@@ -267,7 +267,7 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
 
         dispersion = np.ma.array(
             Quantity(self._dispersion, unit=self.dispersion_unit),
-            mask=self._parent.mask)
+            mask=self.parent_mask)
 
         return dispersion
 
@@ -280,9 +280,27 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
         """
         uncertainty = np.ma.array(
             Quantity(self._uncertainty.array, unit=self.unit),
-            mask=self._parent.mask)
+            mask=self.parent_mask)
 
         return uncertainty
+
+    @property
+    def parent_mask(self):
+        """
+        A bitwise combination of the data mask and the
+        `GenericSpectrum1DModelLayer`'s parent's layer mask. This is useful
+        when dealing with slices of spectra in which you want the model
+        layer to be the visible size of the parent *in all cases* (whereas
+        `full_mask` will always be the selected region)*[]:
+
+        Returns
+        -------
+
+        """
+        if self.mask is None or self._parent.layer_mask is None:
+            return np.zeros(self._data.shape)
+
+        return self.mask.astype(bool) | ~self._parent.layer_mask.astype(bool)
 
     @property
     def model(self):

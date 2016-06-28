@@ -161,7 +161,7 @@ class DataListPlugin(Plugin):
 
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):
-            data_item = self.list_widget_data_list.item(0)
+            data_item = self.list_widget_data_list.item(i)
 
             if data_item.data(Qt.UserRole) == data:
                 return data_item
