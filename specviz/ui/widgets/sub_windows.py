@@ -14,13 +14,13 @@ from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 
 from ...core.comms import Dispatch, DispatchHandle
-from ...core.linelist import LineList
+from ...core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ...core.plots import LinePlot
 from ...core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 
-from .dialogs import LineListsWindow
+from .linelists_window import LineListsWindow
 
 
 pg.setConfigOption('background', 'w')
@@ -100,6 +100,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._rois = []
         self._measure_rois = []
         self._centroid_roi = None
+        self._is_selected = True
 
         DispatchHandle.setup(self)
 
@@ -244,6 +245,11 @@ class PlotSubWindow(UiPlotSubWindow):
             plot.update()
 
     def closeEvent(self, event):
+
+        # before tearing down event handlers, need to close
+        # any line lists window that might be still open.
+        Dispatch.on_dismiss_linelists_window.emit()
+
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
 
@@ -300,32 +306,14 @@ class PlotSubWindow(UiPlotSubWindow):
 
 #--------  Line lists and line labels handling.
 
-    # The separation of tasks among these methods and the signals
-    # that drive them is so far unclear. The 'request linelists'
-    # and the 'add_linelists' operations are now in practice
-    # fused into a single swoop. It should be more efficient
-    # to have the line list ingestion done at constructor time,
-    # while only the actual plot should be commanded by the Draw
-    # button. This is why the two methods: _request_linelists, and
-    # _add_linelists, do not talk directly to each other, but via
-    # signals. It's just in preparation for a fix.
-
-    @DispatchHandle.register_listener("on_show_linelists_window")
-    def _show_linelists_window(self, *args, **kwargs):
-        if self._linelist_window is None:
-            self._linelist_window = LineListsWindow()
-            self._linelist_window.show()
-
-    @DispatchHandle.register_listener("on_request_linelists")
-    def _request_linelists(self, *args, **kwargs):
-
-        # Find the wavelength range spanned by the spectrum
-        # (or spectra) at hand. The range will be used to bracket
-        # the set of lines actually read from the line list table(s).
-
+    # Finds the wavelength range spanned by the spectrum (or spectra)
+    # at hand. The range will be used to bracket the set of lines
+    # actually read from the line list table(s).
+    def _find_wavelength_range(self):
         # increasing dispersion values!
         amin = sys.float_info.max
         amax = 0.0
+
         for container in self._plots:
             amin = min(amin, container.dispersion.value[0])
             amax = max(amax, container.dispersion.value[-1])
@@ -333,15 +321,39 @@ class PlotSubWindow(UiPlotSubWindow):
         amin = Quantity(amin, self._plot_units[0])
         amax = Quantity(amax, self._plot_units[0])
 
-        linelist = LineList.ingest(amin, amax)
+        return (amin, amax)
 
-        Dispatch.on_add_linelists.emit(linelist=linelist)
+    @DispatchHandle.register_listener("on_request_linelists")
+    def _request_linelists(self, *args, **kwargs):
+        self.waverange = self._find_wavelength_range()
 
-    @DispatchHandle.register_listener("on_add_linelists")
-    def _add_linelists(self, linelist):
+        self.linelists = ingest(self.waverange)
 
-        # This is plotting all markers at a fixed height in the
-        # screen coordinate system. Still TBD how to do this in
+    @DispatchHandle.register_listener("on_plot_linelists")
+    def _plot_linelists(self, table_views, **kwargs):
+
+        if not self._is_selected:
+            return
+
+        # Get a list of the selected indices in each line list.
+        # Build new line lists with only the selected rows.
+
+        linelists_with_selections = []
+        for k, table_view in enumerate(table_views):
+            line_list = self.linelists[k]
+
+            selected_rows = table_view.selectionModel().selectedRows()
+            new_list = line_list.extract_rows(selected_rows)
+
+            linelists_with_selections.append(new_list)
+
+        # Merge all line lists into a single one. This might
+        # change in the future to enable customized plotting
+        # for each line list.
+        merged_linelist = LineList.merge(linelists_with_selections)
+
+        # Code below is plotting all markers at a fixed height in
+        # the screen coordinate system. Still TBD how to do this in
         # the generic case. Maybe derive heights from curve data
         # instead? Make the markers follow the curve ups and downs?
         #
@@ -363,8 +375,8 @@ class PlotSubWindow(UiPlotSubWindow):
         height = (ymax - ymin) * 0.75 + ymin
 
         # column names are defined in the YAML files.
-        wave_column = linelist.columns['wavelength']
-        id_column = linelist.columns['id']
+        wave_column = merged_linelist.columns[WAVELENGTH_COLUMN]
+        id_column = merged_linelist.columns[ID_COLUMN]
 
         for i in range(len(wave_column)):
             marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
@@ -378,6 +390,36 @@ class PlotSubWindow(UiPlotSubWindow):
 
     @DispatchHandle.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
-        for marker in self._line_labels:
-            self._plot_item.removeItem(marker)
-        self._plot_item.update()
+        if self._is_selected:
+            for marker in self._line_labels:
+                self._plot_item.removeItem(marker)
+            self._plot_item.update()
+
+    # The 3 handlers below, and their associated signals, implement
+    # the logic that defines the show/hide/dismiss behavior of the
+    # line list window. It remains to be seen if it is what users
+    # actually want.
+
+    @DispatchHandle.register_listener("on_activated_window")
+    def _set_selection_state(self, window):
+        self._is_selected = window == self
+
+        if self._linelist_window:
+            if self._is_selected:
+                self._linelist_window.show()
+            else:
+                self._linelist_window.hide()
+
+    @DispatchHandle.register_listener("on_show_linelists_window")
+    def _show_linelists_window(self, *args, **kwargs):
+        if self._is_selected:
+            if self._linelist_window is None:
+                self._linelist_window = LineListsWindow(self)
+            self._linelist_window.show()
+
+    @DispatchHandle.register_listener("on_dismiss_linelists_window")
+    def _dismiss_linelists_window(self, *args, **kwargs):
+        if self._is_selected and self._linelist_window:
+            self._linelist_window.hide()
+            self._linelist_window = None
+
