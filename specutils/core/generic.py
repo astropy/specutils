@@ -60,7 +60,7 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
                 # RuntimeWarning: cdelt will be ignored since cd is present
                 try:
                     cdelt = self.wcs.wcs.cd[0][0]
-                except:
+                except AttributeError:
                     cdelt = self.wcs.wcs.cdelt[0]
 
                 end = self.data.shape[0] * cdelt + crval
@@ -91,7 +91,7 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
                 try:
                     self._dispersion_unit = u.Unit(
                         self.meta['header']['cunit'][0])
-                except:
+                except KeyError:
                     logging.warning("No dispersion unit information in meta.")
 
                     self._dispersion_unit = u.Unit("")
@@ -116,7 +116,3 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
 
     def __len__(self):
         return len(self.data)
-
-
-if __name__ == '__main__':
-    pass
