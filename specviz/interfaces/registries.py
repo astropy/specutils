@@ -46,7 +46,7 @@ class PluginRegistry(Registry):
                                                      for x in
                                                      member.__bases__])
 
-            for _, cls_plugin in cls_members:
+            for cls_name, cls_plugin in cls_members:
                 self._members.append(cls_plugin())
 
 

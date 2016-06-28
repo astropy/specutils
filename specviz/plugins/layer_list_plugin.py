@@ -355,17 +355,20 @@ class UiLayerListPlugin:
             ICON_PATH, "Math-48.png")))
         plugin.button_layer_arithmetic.setEnabled(False)
         plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
+        plugin.button_layer_arithmetic.setMaximumSize(QSize(35, 35))
 
         plugin.button_remove_layer = QToolButton(plugin)
         plugin.button_remove_layer.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_layer.setEnabled(False)
+        plugin.button_remove_layer.setMaximumSize(QSize(35, 35))
         plugin.button_remove_layer.setIconSize(QSize(25, 25))
 
         plugin.button_change_color = QToolButton(plugin)
         plugin.button_change_color.setIcon(QIcon(os.path.join(
             ICON_PATH, "Color Dropper-48.png")))
         plugin.button_change_color.setEnabled(False)
+        plugin.button_change_color.setMaximumSize(QSize(35, 35))
         plugin.button_change_color.setIconSize(QSize(25, 25))
 
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)

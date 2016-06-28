@@ -209,12 +209,14 @@ class UiDataListPlugin:
         plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open in Browser-50.png")))
         plugin.button_create_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_create_sub_window.setMaximumSize(QSize(35, 35))
         plugin.button_create_sub_window.setEnabled(False)
 
         plugin.button_add_to_sub_window = QToolButton(plugin)
         plugin.button_add_to_sub_window.setIcon(QIcon(os.path.join(
             ICON_PATH, "Change Theme-50.png")))
         plugin.button_add_to_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_add_to_sub_window.setMaximumSize(QSize(35, 35))
         plugin.button_add_to_sub_window.setEnabled(False)
 
         plugin.button_remove_data = QToolButton(plugin)
@@ -222,6 +224,7 @@ class UiDataListPlugin:
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_data.setEnabled(False)
         plugin.button_remove_data.setIconSize(QSize(25, 25))
+        plugin.button_remove_data.setMaximumSize(QSize(35, 35))
 
         plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
         plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)

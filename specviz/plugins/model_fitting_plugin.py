@@ -602,24 +602,28 @@ class UiModelFittingPlugin:
         plugin.button_save_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Save-48.png")))
         plugin.button_save_model.setIconSize(QSize(25, 25))
+        plugin.button_save_model.setMaximumSize(QSize(35, 35))
 
         plugin.button_load_model = QToolButton(plugin.group_box_current_models)
         plugin.button_load_model.setEnabled(False)
         plugin.button_load_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open Folder-48.png")))
         plugin.button_load_model.setIconSize(QSize(25, 25))
+        plugin.button_load_model.setMaximumSize(QSize(35, 35))
 
         plugin.button_export_model = QToolButton(plugin.group_box_current_models)
         plugin.button_export_model.setEnabled(False)
         plugin.button_export_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Export-48.png")))
         plugin.button_export_model.setIconSize(QSize(25, 25))
+        plugin.button_export_model.setMaximumSize(QSize(35, 35))
 
         plugin.button_remove_model = QToolButton(plugin.group_box_current_models)
         plugin.button_remove_model.setEnabled(False)
         plugin.button_remove_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_model.setIconSize(QSize(25, 25))
+        plugin.button_remove_model.setMaximumSize(QSize(35, 35))
 
         plugin.layout_horizontal_model_buttons.addWidget(plugin.button_save_model)
         plugin.layout_horizontal_model_buttons.addWidget(plugin.button_load_model)

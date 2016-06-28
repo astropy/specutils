@@ -30,7 +30,6 @@ class Viewer(object):
 
         # Load system and user plugins
         self.load_plugins()
-        from ..interfaces.registries import loader_registry
 
         # Setup up top-level connections
         self._setup_connections()
@@ -59,18 +58,26 @@ class Viewer(object):
 
         # Sort actions based on priority
         all_actions = [y for x in instance_plugins for y in x._actions]
+        all_categories = {}
 
-        for cat in sorted([x['category'] for x in all_actions],
-                          key=lambda x: x[0]):
-            tool_bar = self._get_tool_bar(*cat)
+        for act in all_actions:
+            if all_categories.setdefault(act['category'][0], -1) < act[
+                'priority']:
+                all_categories[act['category'][0]] = act['category'][1]
+
+        for k, v in all_categories.items():
+            tool_bar = self._get_tool_bar(k, v)
 
             for act in sorted([x for x in all_actions
-                               if x['category'][0] == cat[0]],
+                               if x['category'][0] == k],
                               key=lambda x: x['priority'],
                               reverse=True):
                 tool_bar.addAction(act['action'])
+                print(act['action'].text())
 
-        # Sort tool bars based on priorty
+            tool_bar.addSeparator()
+
+        # Sort tool bars based on priority
         all_tool_bars = self._all_tool_bars.values()
 
         for tb in sorted(all_tool_bars, key=lambda x: x['priority'],
@@ -85,7 +92,17 @@ class Viewer(object):
         if name not in self._all_tool_bars:
             tool_bar = QToolBar(name)
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-            tool_bar.show()
+            tool_bar.setMovable(False)
+
+            tool_bar.setStyleSheet("""
+                QToolBar {
+                    icon-size: 32px;
+                }
+
+                QToolBar QToolButton {
+                    height: 48px;
+                }
+            """)
 
             self._all_tool_bars[name] = dict(widget=tool_bar,
                                              priority=int(priority),
