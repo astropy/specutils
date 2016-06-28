@@ -5,7 +5,7 @@ import logging
 
 from astropy.nddata import NDArithmeticMixin, NDSlicingMixin, NDIOMixin
 import astropy.units as u
-import numbers
+from astropy.wcs import WCS
 
 
 class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
@@ -54,28 +54,29 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
         if self._dispersion is None:
             self._dispersion = np.arange(self.data.size)
 
-            try:
-                crval = self.wcs.wcs.crval[0]
-
-                # RuntimeWarning: cdelt will be ignored since cd is present
+            if isinstance(self.wcs, WCS):
                 try:
-                    cdelt = self.wcs.wcs.cd[0][0]
+                    crval = self.wcs.wcs.crval[0]
+
+                    # RuntimeWarning: cdelt will be ignored since cd is present
+                    try:
+                        cdelt = self.wcs.wcs.cd[0][0]
+                    except AttributeError:
+                        cdelt = self.wcs.wcs.cdelt[0]
+
+                    end = self.data.shape[0] * cdelt + crval
+                    num = (end - crval) / cdelt
+
+                    # TODO: the values for the keywords are not guaranteed to
+                    # be at the first index
+                    if hasattr(self.wcs.wcs, 'ctype') and "log" \
+                            in self.wcs.wcs.ctype[-1].lower():
+                        self._dispersion = np.logspace(crval, end, num)
+                    else:
+                        self._dispersion = np.arange(crval, end, cdelt)
                 except AttributeError:
-                    cdelt = self.wcs.wcs.cdelt[0]
-
-                end = self.data.shape[0] * cdelt + crval
-                num = (end - crval) / cdelt
-
-                # TODO: the values for the keywords are not guaranteed to be
-                #  at the first index
-                if hasattr(self.wcs.wcs, 'ctype') and "log" \
-                        in self.wcs.wcs.ctype[-1].lower():
-                    self._dispersion = np.logspace(crval, end, num)
-                else:
-                    self._dispersion = np.arange(crval, end, cdelt)
-            except:
-                logging.warning("Invalid FITS headers; constructing default "
-                                "dispersion array.")
+                    logging.warning("Invalid FITS headers; constructing "
+                                    "default dispersion array.")
 
         return self._dispersion
 
