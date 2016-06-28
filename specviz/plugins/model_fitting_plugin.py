@@ -671,12 +671,11 @@ class UiModelFittingPlugin:
         plugin.layout_vertical_fitting.addWidget(plugin.combo_box_fitting)
         plugin.layout_vertical_fitting.addWidget(plugin.button_perform_fit)
 
-        # Add group boxees
+        # Add group boxes
         plugin.layout_vertical.addWidget(plugin.group_box_add_model)
-        plugin.layout_vertical.addWidget(
-            plugin.group_box_current_models)
-        plugin.layout_vertical.addWidget(
-            plugin.group_box_fitting)
+        plugin.layout_vertical.addWidget(plugin.group_box_current_models)
+        plugin.layout_vertical.addWidget(plugin.group_box_fitting)
 
-        # Set size of plugin
-        plugin.setMinimumSize(plugin.sizeHint())
+        # Set size of plugin. Setting this seems to screw with `QPushButton`
+        # visual formatting
+        # plugin.setMinimumSize(plugin.sizeHint())

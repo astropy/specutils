@@ -185,7 +185,6 @@ class UiDataListPlugin:
 
         # List widget for the data sets
         plugin.list_widget_data_list = QListWidget(plugin)
-        plugin.list_widget_data_list.setMinimumHeight(100)
 
         # Label box to show when no data set has been loaded
         plugin.label_unopened = QLabel(plugin)
@@ -234,5 +233,6 @@ class UiDataListPlugin:
 
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
-        # Set size of plugin
+        # Set size of plugin. Setting this seems to screw with `QPushButton`
+        # visual formatting
         plugin.setMinimumSize(plugin.sizeHint())

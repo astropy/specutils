@@ -56,15 +56,11 @@ class Viewer(object):
                 self.menu_docks.addAction(
                     instance_plugin.toggleViewAction())
 
-        for ip in instance_plugins[::-1]:
+        # Resize the widgets now that they are all present
+        for ip in instance_plugins:
             ip.setMinimumSize(ip.sizeHint())
             QApplication.processEvents()
             ip.setMinimumHeight(100)
-
-        # for ip in instance_plugins[::-1]:
-        #     ip.setMinimumSize(QSize(ip.sizeHint().width(),
-        #                             ip.sizeHint().height() * 0.25))
-        #     ip.resize(ip.sizeHint())
 
         # Sort actions based on priority
         all_actions = [y for x in instance_plugins for y in x._actions]
