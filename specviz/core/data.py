@@ -30,7 +30,7 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
                    mask=parent.mask, wcs=parent.wcs,
                    dispersion=parent.dispersion,
                    dispersion_unit=parent.dispersion_unit,
-                   layer_mask=layer_mask, parent=parent,
+                   layer_mask=layer_mask, parent=parent, meta=parent.meta,
                    copy=False)
 
     def from_self(self, name="", layer_mask=None):
@@ -239,6 +239,51 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
                    layer_mask=layer_mask, parent=parent, model=model,
                    copy=False)
 
+    @classmethod
+    def from_formula(cls, models, formula):
+        result_model = cls._evaluate(models, formula)
+
+        return result_model
+
+    @property
+    def unmasked_data(self):
+        """
+        Flux quantity with no layer mask applied. Use the parent layer
+        mask for cases wherein a slice of the spectrum is being used.
+        """
+        data = np.ma.array(
+            Quantity(self._data, unit=self.unit),
+            mask=self._parent.mask)
+
+        return data
+
+    @property
+    def unmasked_dispersion(self):
+        """
+        Dispersion quantity with no layer mask applied. Use the parent layer
+        mask for cases wherein a slice of the spectrum is being used.
+        """
+        self._dispersion = super(GenericSpectrum1DLayer, self).dispersion
+
+        dispersion = np.ma.array(
+            Quantity(self._dispersion, unit=self.dispersion_unit),
+            mask=self._parent.mask)
+
+        return dispersion
+
+    @property
+    def unmasked_raw_uncertainty(self):
+        """
+        Flux uncertainty with mask applied. Returns a masked array
+        containing a Quantity object. Use the parent layer mask for cases
+        wherein a slice of the spectrum is being used.
+        """
+        uncertainty = np.ma.array(
+            Quantity(self._uncertainty.array, unit=self.unit),
+            mask=self._parent.mask)
+
+        return uncertainty
+
     @property
     def model(self):
         """Spectrum model."""
@@ -250,12 +295,6 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
 
         if self._model is not None:
             self._data = self._model(self.dispersion.data.value)
-
-    @classmethod
-    def from_formula(cls, models, formula):
-        result_model = cls._evaluate(models, formula)
-
-        return result_model
 
     @classmethod
     def _evaluate(cls, models, formula):
