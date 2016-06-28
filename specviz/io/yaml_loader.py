@@ -418,4 +418,8 @@ class LineListYamlRegister(YamlRegister):
         for k, colname in enumerate(tab.columns):
             tab[colname].unit = units_list[k]
 
+        # The table name (for e.g. display purposes)
+        # is taken from the 'name' element in the
+        # YAML file descriptor.
+
         return LineList(tab)
