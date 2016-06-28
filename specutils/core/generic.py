@@ -103,16 +103,16 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
         self._dispersion_unit = value
 
     def __add__(self, other):
-        return self.add(other)
+        return self.add(other, handle_meta='first_found')
 
     def __sub__(self, other):
-        return self.subtract(other)
+        return self.subtract(other, handle_meta='first_found')
 
     def __mul__(self, other):
-        return self.multiply(other)
+        return self.multiply(other, handle_meta='first_found')
 
     def __truediv__(self, other):
-        return self.divide(other)
+        return self.divide(other, handle_meta='first_found')
 
     def __len__(self):
         return len(self.data)
