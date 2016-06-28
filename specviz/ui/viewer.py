@@ -56,13 +56,23 @@ class Viewer(object):
                 self.menu_docks.addAction(
                     instance_plugin.toggleViewAction())
 
+        for ip in instance_plugins[::-1]:
+            ip.setMinimumSize(ip.sizeHint())
+            QApplication.processEvents()
+            ip.setMinimumHeight(100)
+
+        # for ip in instance_plugins[::-1]:
+        #     ip.setMinimumSize(QSize(ip.sizeHint().width(),
+        #                             ip.sizeHint().height() * 0.25))
+        #     ip.resize(ip.sizeHint())
+
         # Sort actions based on priority
         all_actions = [y for x in instance_plugins for y in x._actions]
         all_categories = {}
 
         for act in all_actions:
-            if all_categories.setdefault(act['category'][0], -1) < act[
-                'priority']:
+            if all_categories.setdefault(act['category'][0], -1) < \
+                    act['priority']:
                 all_categories[act['category'][0]] = act['category'][1]
 
         for k, v in all_categories.items():
@@ -73,7 +83,6 @@ class Viewer(object):
                               key=lambda x: x['priority'],
                               reverse=True):
                 tool_bar.addAction(act['action'])
-                print(act['action'].text())
 
             tool_bar.addSeparator()
 
