@@ -350,8 +350,15 @@ class PlotSubWindow(UiPlotSubWindow):
                 line_list_name = line_list.name
 
                 if line_list_name == view_name:
+                    # must map between view and underlying model
+                    # because of row sorting.
                     selected_rows = table_view.selectionModel().selectedRows()
-                    new_list = line_list.extract_rows(selected_rows)
+                    model_selected_rows = []
+                    for sr in selected_rows:
+                        model_row = table_view.model().mapToSource(sr)
+                        model_selected_rows.append(model_row)
+
+                    new_list = line_list.extract_rows(model_selected_rows)
 
                     linelists_with_selections.append(new_list)
 

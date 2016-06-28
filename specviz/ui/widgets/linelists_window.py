@@ -158,11 +158,15 @@ class LineListsWindow(UiLinelistsWindow):
             proxy = SortModel(table_model.getName())
             proxy.setSourceModel(table_model)
 
-            table_model.setProxy(proxy)
-
             if table_model.rowCount() > 0:
                 table_view = QTableView()
                 table_view.setModel(proxy)
+
+                # setting this to False will significantly speed up
+                # the loading of very large line lists. However, these
+                # lists are often jumbled in wavelength, and consequently
+                # difficult to read and use. It remains to be seen what
+                # would be the approach users will favor.
                 table_view.setSortingEnabled(True)
 
                 table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -170,8 +174,11 @@ class LineListsWindow(UiLinelistsWindow):
                 table_view.resizeColumnsToContents()
                 comments = linelist.meta['comments']
 
-                # this assumes wavelength is column zero.
-                proxy.sort(0, Qt.AscendingOrder)
+                # this preserves the original sorting state
+                # of the list. Use zero to sort by wavelength
+                # on load. Doesn't seem to affect performance
+                # by much tough.
+                proxy.sort(-1, Qt.AscendingOrder)
 
                 pane = self._buildLinelistPane(table_view, comments)
 
@@ -213,9 +220,6 @@ class LineListTableModel(QAbstractTableModel):
 
         self._table = table
 
-    def setProxy(self, proxy):
-        self._proxy = proxy
-
     def rowCount(self, index_parent=None, *args, **kwargs):
         return len(self._table.columns[0])
 
@@ -223,9 +227,6 @@ class LineListTableModel(QAbstractTableModel):
         return len(self._table.columns)
 
     def data(self, index, role=None):
-
-        new_index = self._proxy.mapToSource(index)
-
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
