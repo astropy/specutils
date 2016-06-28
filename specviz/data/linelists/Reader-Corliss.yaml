@@ -1,0 +1,25 @@
+--- !CustomLoader
+name: Reader-Corliss
+extension: [txt, dat]
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 17
+    end: 26
+    units: 'Angstrom'
+  - name: 'Line ID'
+    index: 1
+    start: 30
+    end: 35
+  - name: 'Air/Vac'
+    index: 2
+    start: 28
+    end: 28
+  - name: 'Intensity'
+    index: 3
+    start: 6
+    end: 10
+meta:
+  author: STScI
