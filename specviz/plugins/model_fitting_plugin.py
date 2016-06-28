@@ -602,24 +602,28 @@ class UiModelFittingPlugin:
         plugin.button_save_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Save-48.png")))
         plugin.button_save_model.setIconSize(QSize(25, 25))
+        plugin.button_save_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_load_model = QToolButton(plugin.group_box_current_models)
         plugin.button_load_model.setEnabled(False)
         plugin.button_load_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open Folder-48.png")))
         plugin.button_load_model.setIconSize(QSize(25, 25))
+        plugin.button_load_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_export_model = QToolButton(plugin.group_box_current_models)
         plugin.button_export_model.setEnabled(False)
         plugin.button_export_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Export-48.png")))
         plugin.button_export_model.setIconSize(QSize(25, 25))
+        plugin.button_export_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_remove_model = QToolButton(plugin.group_box_current_models)
         plugin.button_remove_model.setEnabled(False)
         plugin.button_remove_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_model.setIconSize(QSize(25, 25))
+        plugin.button_remove_model.setMinimumSize(QSize(35, 35))
 
         plugin.layout_horizontal_model_buttons.addWidget(plugin.button_save_model)
         plugin.layout_horizontal_model_buttons.addWidget(plugin.button_load_model)
@@ -667,13 +671,11 @@ class UiModelFittingPlugin:
         plugin.layout_vertical_fitting.addWidget(plugin.combo_box_fitting)
         plugin.layout_vertical_fitting.addWidget(plugin.button_perform_fit)
 
-        # Add group boxees
+        # Add group boxes
         plugin.layout_vertical.addWidget(plugin.group_box_add_model)
-        plugin.layout_vertical.addWidget(
-            plugin.group_box_current_models)
-        plugin.layout_vertical.addWidget(
-            plugin.group_box_fitting)
+        plugin.layout_vertical.addWidget(plugin.group_box_current_models)
+        plugin.layout_vertical.addWidget(plugin.group_box_fitting)
 
-
-
-
+        # Set size of plugin. Setting this seems to screw with `QPushButton`
+        # visual formatting
+        # plugin.setMinimumSize(plugin.sizeHint())

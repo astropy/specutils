@@ -9,6 +9,8 @@ from ..core.threads import FileLoadThread
 
 import logging
 
+import astropy.io.registry as io_registry
+
 
 class DataListPlugin(Plugin):
     name = "Data List"
@@ -88,19 +90,14 @@ class DataListPlugin(Plugin):
         dialog, and adds it to the data item list in the UI.
         """
         if file_name is None:
-            file_name, selected_filter = self.open_file_dialog([])
+            file_name, selected_filter = self.open_file_dialog()
 
             self.read_file(file_name, file_filter=selected_filter)
 
-    def open_file_dialog(self, filters):
+    def open_file_dialog(self):
         """
         Given a list of filters, prompts the user to select an existing file
         and returns the file path and filter.
-
-        Parameters
-        ----------
-        filters : list
-            List of filters for the dialog.
 
         Returns
         -------
@@ -112,11 +109,13 @@ class DataListPlugin(Plugin):
         """
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters([x for x in filters])
+        dialog.setNameFilters([x + " (*)" for x in
+                               io_registry.get_formats(GenericSpectrum1D)[
+                                   'Format']])
 
         if dialog.exec_():
             file_names = dialog.selectedFiles()
-            selected_filter = dialog.selectedNameFilter()
+            selected_filter = dialog.selectedNameFilter().replace(" (*)", "")
 
             return file_names[0], selected_filter
 
@@ -162,7 +161,7 @@ class DataListPlugin(Plugin):
 
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):
-            data_item = self.list_widget_data_list.item(0)
+            data_item = self.list_widget_data_list.item(i)
 
             if data_item.data(Qt.UserRole) == data:
                 return data_item
@@ -210,12 +209,14 @@ class UiDataListPlugin:
         plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open in Browser-50.png")))
         plugin.button_create_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_create_sub_window.setMinimumSize(QSize(35, 35))
         plugin.button_create_sub_window.setEnabled(False)
 
         plugin.button_add_to_sub_window = QToolButton(plugin)
         plugin.button_add_to_sub_window.setIcon(QIcon(os.path.join(
             ICON_PATH, "Change Theme-50.png")))
         plugin.button_add_to_sub_window.setIconSize(QSize(25, 25))
+        plugin.button_add_to_sub_window.setMinimumSize(QSize(35, 35))
         plugin.button_add_to_sub_window.setEnabled(False)
 
         plugin.button_remove_data = QToolButton(plugin)
@@ -223,6 +224,7 @@ class UiDataListPlugin:
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_data.setEnabled(False)
         plugin.button_remove_data.setIconSize(QSize(25, 25))
+        plugin.button_remove_data.setMinimumSize(QSize(35, 35))
 
         plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
         plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)
@@ -231,4 +233,6 @@ class UiDataListPlugin:
 
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
-
+        # Set size of plugin. Setting this seems to screw with `QPushButton`
+        # visual formatting
+        plugin.setMinimumSize(plugin.sizeHint())

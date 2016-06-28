@@ -1,28 +1,37 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import logging
+from functools import wraps
+
 import astropy.io.registry as io_registry
 
+from ..core.data import GenericSpectrum1D
 
-def data_loader(label, identifier, cls):
+
+def data_loader(label, identifier, priority=-1, **kwargs):
     """
     A decorator that registers a function and identifies with an Astropy io
     registry object.
 
     Parameters
     ----------
-    load_func : function
+    func : function
         Function added to the registry in order to read data files.
     """
+    def decorator(func):
+        logging.info("Added {} to loader registry.".format(label))
 
-    def decorator(reader_func):
-        def wrapper():
-            print("ADDED")
-            io_registry.register_reader(label, cls, reader_func)
-            io_registry.register_identifier(label, cls, identifier)
+        func.loader_wrapper = True
 
-            return
+        format = label #"-".join(label.lower().split())
+        io_registry.register_reader(format, GenericSpectrum1D, func)
+        io_registry.register_identifier(format, GenericSpectrum1D,
+                                        identifier)
 
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
         return wrapper
 
     return decorator

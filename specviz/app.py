@@ -28,8 +28,8 @@ class App(object):
         super(App, self).__init__()
         self.viewer = Viewer()
 
-        if len(argv) > 1:
-            self.controller.read_file(sys.argv[1])
+        # if len(argv) > 1:
+        #     self.controller.read_file(sys.argv[1])
 
 def setup():
     qapp = QApplication(sys.argv)

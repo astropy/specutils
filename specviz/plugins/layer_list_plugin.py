@@ -345,6 +345,7 @@ class UiLayerListPlugin:
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.tree_widget_layer_list = QTreeWidget(plugin)
+        plugin.tree_widget_layer_list.setHeaderHidden(True)
 
         plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
 
@@ -355,17 +356,20 @@ class UiLayerListPlugin:
             ICON_PATH, "Math-48.png")))
         plugin.button_layer_arithmetic.setEnabled(False)
         plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
+        plugin.button_layer_arithmetic.setMinimumSize(QSize(35, 35))
 
         plugin.button_remove_layer = QToolButton(plugin)
         plugin.button_remove_layer.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_layer.setEnabled(False)
+        plugin.button_remove_layer.setMinimumSize(QSize(35, 35))
         plugin.button_remove_layer.setIconSize(QSize(25, 25))
 
         plugin.button_change_color = QToolButton(plugin)
         plugin.button_change_color.setIcon(QIcon(os.path.join(
             ICON_PATH, "Color Dropper-48.png")))
         plugin.button_change_color.setEnabled(False)
+        plugin.button_change_color.setMinimumSize(QSize(35, 35))
         plugin.button_change_color.setIconSize(QSize(25, 25))
 
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
@@ -376,3 +380,6 @@ class UiLayerListPlugin:
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
         plugin.dialog_layer_arithmetic = LayerArithmeticDialog()
+
+        # Set size of plugin
+        plugin.setMinimumSize(plugin.sizeHint())

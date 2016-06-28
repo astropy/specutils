@@ -79,7 +79,8 @@ class Plugin(QDockWidget):
                              description="", priority=0, enabled=True,
                              callback=None):
         action = QAction(self)
-        action.setIcon(QIcon(icon_path))
+        icon = QIcon(icon_path)
+        action.setIcon(icon)
         action.setIconText(name)
         action.setStatusTip(description)
         action.setEnabled(enabled)
