@@ -339,21 +339,21 @@ class PlotSubWindow(UiPlotSubWindow):
 
         linelists_with_selections = []
         
-        #TODO:  BUG
-        # this code breaks when the number of line lists is larger
-        # than the number of views. This happens for instance for
-        # the COS spectrum, where the nebular line list doesn't
-        # have a view, but nevertheless exists in self.linelists.
-        # Maybe we should establish the connection via the list
-        # name, using a dict.
+        for table_view in table_views:
+            # Find matching line list by its name. This could be made
+            # simpler by the use of a dict. That breaks code elsewhere
+            # though: it is assumed by that code that self.linelists
+            # is a list and not a dict.
+            view_name = table_view.model().getName()
+            for k in range(len(self.linelists)):
+                line_list = self.linelists[k]
+                line_list_name = line_list.name
 
-        for k, table_view in enumerate(table_views):
-            line_list = self.linelists[k]
+                if line_list_name == view_name:
+                    selected_rows = table_view.selectionModel().selectedRows()
+                    new_list = line_list.extract_rows(selected_rows)
 
-            selected_rows = table_view.selectionModel().selectedRows()
-            new_list = line_list.extract_rows(selected_rows)
-
-            linelists_with_selections.append(new_list)
+                    linelists_with_selections.append(new_list)
 
         # Merge all line lists into a single one. This might
         # change in the future to enable customized plotting
