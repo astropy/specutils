@@ -9,7 +9,6 @@ import logging
 import pyqtgraph as pg
 import numpy as np
 import astropy.units as u
-from functools import reduce
 
 
 LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
@@ -54,9 +53,9 @@ class StatisticsPlugin(Plugin):
         if mask is None:
             values = current_layer.data
         else:
-            values = np.ma.array(current_layer.data, mask=~mask)
+            values = current_layer.data[mask[current_layer._mask]]
 
-        stat_dict = statistics.stats(values.compressed())
+        stat_dict = statistics.stats(values)
 
         self.line_edit_mean.setText("{0:4.4g}".format(
             stat_dict['mean'].value))
@@ -90,23 +89,23 @@ class StatisticsPlugin(Plugin):
 
         for roi in rois:
             mask = self.active_window.get_roi_mask(layer=current_layer,
-                                                   roi=roi)
+                                                     roi=roi)
             roi_masks.append(mask)
-            values = np.ma.array(current_layer.data, mask=~mask)
+            values = current_layer.data[mask[current_layer._mask]]
             roi_data_sets.append(values)
 
-        # Always make the ROI that's over the greatest absolute data value
-        # orange
-        # roi_data_sets, rois, roi_masks = zip(*sorted(
-        #     zip(roi_data_sets, rois, roi_masks),
-        #     key=lambda x: np.max(np.abs(x[0]))))
+        roi_data_sets, rois, roi_masks = zip(*sorted(
+            zip(roi_data_sets, rois, roi_masks),
+            key=lambda x: np.max(np.abs(x[0]))))
 
         rois[-1].setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
         rois[-1].update()
 
-        cont1_stat_dict = statistics.stats(roi_data_sets[0].compressed().value)
+        cont1_stat_dict = statistics.stats(roi_data_sets[0])
         cont2_stat_dict = statistics.stats(
-            np.concatenate([x.compressed().value for x in roi_data_sets[:-1]]))
+            u.Quantity(np.concatenate(roi_data_sets[:-1]).value, roi_data_sets[
+                1].unit)
+        )
 
         line = current_layer
 
@@ -114,22 +113,19 @@ class StatisticsPlugin(Plugin):
                                                  cont2_stat_dict,
                                                  line,
                                                  mask=roi_masks[-1])
-
-        cent = statistics.centroid(flux=line.data.compressed().value - avg_cont,
-                                   wave=line.dispersion.compressed().value,
-                                   mask=roi_masks[-1])
+        cent = statistics.centroid(line - avg_cont, mask=roi_masks[-1])
 
         stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
                      "avg_cont": avg_cont}
 
         self.line_edit_equivalent_width.setText("{0:4.4g}".format(
-            float(stat_dict['eq_width'])))
+            float(stat_dict['eq_width'].value)))
         self.line_edit_centroid.setText("{0:5.5g}".format(
-            float(stat_dict['centroid'])))
+            float(stat_dict['centroid'].value)))
         self.line_edit_flux.setText("{0:4.4g}".format(
-            float(stat_dict['flux'])))
+            float(stat_dict['flux'].value)))
         self.line_edit_continuum.setText("{0:4.4g}".format(
-            float(stat_dict['avg_cont'])))
+            float(stat_dict['avg_cont'].value)))
 
 
 class UiStatisticsPlugin:
@@ -337,7 +333,3 @@ class UiStatisticsPlugin:
         plugin.layout_vertical_tab_measured.addStretch()
 
         plugin.layout_vertical.addStretch()
-
-        # Set size of plugin. Setting this seems to screw with `QPushButton`
-        # visual formatting
-        plugin.setMinimumSize(plugin.sizeHint())
