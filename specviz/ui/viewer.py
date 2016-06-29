@@ -16,7 +16,7 @@ class Viewer(object):
     object does **not** control the interactions between the widgets,
     but only their creation and placement.
     """
-    def __init__(self):
+    def __init__(self, hide_plugins=False):
         # Instantiate main window object
         self._all_tool_bars = {}
 
@@ -29,12 +29,12 @@ class Viewer(object):
         # self.main_window.setDockNestingEnabled(True)
 
         # Load system and user plugins
-        self.load_plugins()
+        self.load_plugins(hidden=hide_plugins)
 
         # Setup up top-level connections
         self._setup_connections()
 
-    def load_plugins(self):
+    def load_plugins(self, hidden=False):
         from ..interfaces.registries import plugin_registry
 
         instance_plugins = plugin_registry.members
@@ -50,7 +50,9 @@ class Viewer(object):
                     location = Qt.LeftDockWidgetArea
 
                 self.main_window.addDockWidget(location, instance_plugin)
-                # instance_plugin.show()
+
+                if hidden:
+                    instance_plugin.hide()
 
                 # Add this dock's visibility action to the menu bar
                 self.menu_docks.addAction(
