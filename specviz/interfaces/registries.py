@@ -69,6 +69,9 @@ class LoaderRegistry(Registry):
         # in this list take precedence
         check_paths = [usr_path, cur_path]
 
+        if not os.path.exists(usr_path):
+            os.mkdir(usr_path)
+
         for path in check_paths:
             for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
                 mod = mod.split('.')[0]
