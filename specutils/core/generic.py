@@ -48,7 +48,7 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
 
     @classmethod
     def from_array(cls, data, *args, **kwargs):
-        return cls(name="Array Data", data=data, **args, **kwargs)
+        return cls(name="Array Data", data=data, *args, **kwargs)
 
     @property
     def dispersion(self):
