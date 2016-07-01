@@ -52,7 +52,10 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
 
     @property
     def dispersion(self):
-        """Dispersion values."""
+        """
+        Override parent method in order to construct dispersion array from
+        Astropy's WCS object instead of the custom specutils WCS object.
+        """
         if self._dispersion is None:
             self._dispersion = np.arange(self.data.size)
 
