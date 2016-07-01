@@ -29,20 +29,22 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
         self._dispersion_unit = dispersion_unit
         self.name = name or "New Data Object"
 
-    def from_self(self, copy=True, **kwargs):
+    @classmethod
+    def copy(cls, original, deep_copy=True, **kwargs):
         """
         Create a new `GenericSpectrum1D` object using current property
         values. Takes all the arguments a Spectrum1D expects, arguments that
         are not included use this instance's values.
         """
-        self_kwargs = {"data": self._data, "dispersion": self._dispersion,
-                       "unit": self.unit, "wcs": self.wcs,
-                       "uncertainty": self._uncertainty, "mask": self.mask,
-                       "meta": self.meta}
+        self_kwargs = {"data": original._data,
+                       "dispersion": original._dispersion,
+                       "unit": original.unit, "wcs": original.wcs,
+                       "uncertainty": original._uncertainty,
+                       "mask": original.mask, "meta": original.meta}
 
         self_kwargs.update(kwargs)
 
-        return self.__class__(**self_kwargs, copy=copy)
+        return cls(**self_kwargs, copy=deep_copy)
 
     @classmethod
     def from_array(cls, data, *args, **kwargs):
