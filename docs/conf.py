@@ -35,8 +35,11 @@ from astropy_helpers.sphinx.conf import *
 extensions += ['sphinx.ext.mathjax']
 
 # Get configuration information from setup.cfg
-from distutils import config
-conf = config.ConfigParser()
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
+conf = ConfigParser()
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
