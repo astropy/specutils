@@ -56,7 +56,7 @@ class BSplineModel(Model):
         for i in range(len(knots)):
             params["c{:d}".format(i)] = coefficients[i]
             params["t{:d}".format(i)] = knots[i]
-        super(BSplineModel, self).__init__(param_dim=1, **params)
+        super(BSplineModel, self).__init__(**params)
 
     def _generate_param_names(self, n_pieces):
         names = []
