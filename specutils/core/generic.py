@@ -44,7 +44,7 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
 
         self_kwargs.update(kwargs)
 
-        return cls(**self_kwargs, copy=deep_copy)
+        return cls(copy=deep_copy, **self_kwargs)
 
     @classmethod
     def from_array(cls, data, *args, **kwargs):
