@@ -15,7 +15,7 @@ from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 
 # LOCAL
-from specviz.core.data import GenericSpectrum1D
+from specviz.core.data import Spectrum1DRef
 from specviz.core import linelist
 from specviz.core.linelist import LineList
 
@@ -203,7 +203,7 @@ def _read_table_column(tab, col_idx, to_unit=None, equivalencies=[]):
 
 class FitsYamlRegister(YamlRegister):
     """
-    Defines the generation of `GenericSpectrum1D` objects by parsing FITS
+    Defines the generation of `Spectrum1DRef` objects by parsing FITS
     files with information from YAML files.
     """
     def reader(self, filename, **kwargs):
@@ -311,14 +311,14 @@ class FitsYamlRegister(YamlRegister):
 
         hdulist.close()
 
-        return GenericSpectrum1D(name=name, data=data, unit=unit, uncertainty=uncertainty,
+        return Spectrum1DRef(name=name, data=data, unit=unit, uncertainty=uncertainty,
                     mask=mask, wcs=wcs, dispersion=dispersion,
                     dispersion_unit=disp_unit)
 
 
 class AsciiYamlRegister(YamlRegister):
     """
-    Defines the generation of `GenericSpectrum1D` objects by parsing ASCII
+    Defines the generation of `Spectrum1DRef` objects by parsing ASCII
     files with information from YAML files.
     """
     def reader(self, filename, **kwargs):
@@ -379,7 +379,7 @@ class AsciiYamlRegister(YamlRegister):
             except IndexError:
                 pass  # Input has no mask column
 
-        return GenericSpectrum1D(name=str(name), data=data, dispersion=dispersion,
+        return Spectrum1DRef(name=str(name), data=data, dispersion=dispersion,
                     uncertainty=uncertainty, mask=mask, wcs=wcs,
                     unit=unit, dispersion_unit=disp_unit, meta=meta)
 
@@ -387,7 +387,7 @@ class AsciiYamlRegister(YamlRegister):
 
 class LineListYamlRegister(YamlRegister):
     """
-    Defines the generation of `GenericSpectrum1D` objects by parsing LineList
+    Defines the generation of `Spectrum1DRef` objects by parsing LineList
     files with information from YAML files.
     """
     def reader(self, filename, **kwargs):

@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..core.data import GenericSpectrum1DLayer
+from ..core.data import Spectrum1DRefLayer
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -82,7 +82,7 @@ class LayerListPlugin(Plugin):
 
         Returns
         -------
-        layer : specviz.core.data.GenericSpectrum1DLayer
+        layer : specviz.core.data.Spectrum1DRefLayer
             The `Layer` object of the currently selected row.
         """
         layer_item = self.tree_widget_layer_list.currentItem()
@@ -122,7 +122,7 @@ class LayerListPlugin(Plugin):
 
         Parameters
         ----------
-        layer : specviz.core.data.GenericSpectrum1DLayer
+        layer : specviz.core.data.Spectrum1DRefLayer
             The `Layer` object to add to the list widget.
         """
         # Make sure there is only one item per layer object
@@ -185,7 +185,7 @@ class LayerListPlugin(Plugin):
 
         Parameters
         ----------
-        layer : specviz.core.data.GenericSpectrum1DLayer
+        layer : specviz.core.data.Spectrum1DRefLayer
             The current active layer of the active plot.
         window : QtGui.QMdiSubWindow
             The parent object within which the plot window resides.
@@ -252,8 +252,8 @@ class LayerListPlugin(Plugin):
                 if layer.uncertainty is not None:
                     layer.uncertainty.parent_nddata = layer
 
-            new_layer = GenericSpectrum1DLayer.from_formula(formula,
-                                                            current_layers)
+            new_layer = Spectrum1DRefLayer.from_formula(formula,
+                                                        current_layers)
 
             if new_layer is None:
                 logging.warning("Formula not valid.")
@@ -323,7 +323,7 @@ class LayerListPlugin(Plugin):
 
         Parameters
         ----------
-        layer : GenericSpectrum1DLayer
+        layer : Spectrum1DRefLayer
             Layer object to toggle visibility.
 
         col : int

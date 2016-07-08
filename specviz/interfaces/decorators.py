@@ -6,7 +6,7 @@ from functools import wraps
 
 import astropy.io.registry as io_registry
 
-from ..core.data import GenericSpectrum1D
+from ..core.data import Spectrum1DRef
 
 
 def data_loader(label, identifier, priority=-1, **kwargs):
@@ -25,8 +25,8 @@ def data_loader(label, identifier, priority=-1, **kwargs):
         func.loader_wrapper = True
 
         format = label #"-".join(label.lower().split())
-        io_registry.register_reader(format, GenericSpectrum1D, func)
-        io_registry.register_identifier(format, GenericSpectrum1D,
+        io_registry.register_reader(format, Spectrum1DRef, func)
+        io_registry.register_identifier(format, Spectrum1DRef,
                                         identifier)
 
         @wraps(func)

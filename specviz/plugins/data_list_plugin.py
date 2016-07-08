@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
-from ..core.data import GenericSpectrum1D
+from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
 
 import logging
@@ -70,7 +70,7 @@ class DataListPlugin(Plugin):
 
         Returns
         -------
-        data : specviz.core.data.GenericSpectrum1D
+        data : specviz.core.data.Spectrum1DRef
             The `Data` object of the currently selected row.
         """
         data_item = self.list_widget_data_list.currentItem()
@@ -110,7 +110,7 @@ class DataListPlugin(Plugin):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters([x + " (*)" for x in
-                               io_registry.get_formats(GenericSpectrum1D)[
+                               io_registry.get_formats(Spectrum1DRef)[
                                    'Format']])
 
         if dialog.exec_():
@@ -133,7 +133,7 @@ class DataListPlugin(Plugin):
 
         Parameters
         ----------
-        data : specviz.core.data.GenericSpectrum1D
+        data : specviz.core.data.Spectrum1DRef
             The `Data` object to add to the list widget.
         """
         new_item = QListWidgetItem(data.name, self.list_widget_data_list)

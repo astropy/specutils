@@ -3,7 +3,7 @@ from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
-from ..core.data import GenericSpectrum1DModelLayer
+from ..core.data import Spectrum1DRefModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
 from ..interfaces.initializers import initialize
 from ..interfaces.factories import ModelFactory, FitterFactory
@@ -100,7 +100,7 @@ class ModelFittingPlugin(Plugin):
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
 
-        if isinstance(layer, GenericSpectrum1DModelLayer):
+        if isinstance(layer, Spectrum1DRefModelLayer):
             mask = self.active_window.get_roi_mask(layer._parent)
 
             initialize(model, layer._parent.dispersion[mask].compressed(),
@@ -140,7 +140,7 @@ class ModelFittingPlugin(Plugin):
         # Create new layer using current ROI masks, if they exist
         mask = self.active_window.get_roi_mask(layer=layer)
 
-        new_model_layer = GenericSpectrum1DModelLayer.from_parent(
+        new_model_layer = Spectrum1DRefModelLayer.from_parent(
             parent=layer,
             model=model,
             layer_mask=mask)
@@ -323,7 +323,7 @@ class ModelFittingPlugin(Plugin):
             return
 
         if formula:
-            model = GenericSpectrum1DModelLayer.from_formula(models, formula)
+            model = Spectrum1DRefModelLayer.from_formula(models, formula)
             return model
 
         return np.sum(models) if len(models) > 1 else models[0]
@@ -408,7 +408,7 @@ class ModelFittingPlugin(Plugin):
     def fit_model_layer(self):
         current_layer = self.current_layer
 
-        if not isinstance(current_layer, GenericSpectrum1DModelLayer):
+        if not isinstance(current_layer, Spectrum1DRefModelLayer):
             logging.error("Attempting to fit model on a non ModelLayer.")
             return
 
@@ -521,7 +521,7 @@ class ModelFittingPlugin(Plugin):
             self.update_model_list(layer=current_layer)
             Dispatch.on_update_model.emit(layer=current_layer)
         else:
-            new_model_layer = GenericSpectrum1DModelLayer(
+            new_model_layer = Spectrum1DRefModelLayer(
                 source=current_layer._source,
                 mask=mask,
                 parent=current_layer,

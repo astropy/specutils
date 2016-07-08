@@ -2,13 +2,13 @@ from ..third_party.qtpy.QtCore import QThread, pyqtSignal
 import os
 import logging
 
-from ..core.data import GenericSpectrum1D, GenericSpectrum1DModelLayer
+from ..core.data import Spectrum1DRef, Spectrum1DRefModelLayer
 from ..interfaces.factories import FitterFactory
 
 
 class FileLoadThread(QThread):
     status = pyqtSignal(str, int)
-    result = pyqtSignal(GenericSpectrum1D)
+    result = pyqtSignal(Spectrum1DRef)
 
     def __init__(self, parent=None):
         super(FileLoadThread, self).__init__(parent)
@@ -47,7 +47,7 @@ class FileLoadThread(QThread):
         file_ext = os.path.splitext(file_name)[-1]
 
         try:
-            data = GenericSpectrum1D.read(file_name, format=file_filter)
+            data = Spectrum1DRef.read(file_name, format=file_filter)
             return data
         except:
             logging.error("Incompatible loader for selected data: {"
@@ -56,7 +56,7 @@ class FileLoadThread(QThread):
 
 class FitModelThread(QThread):
     status = pyqtSignal(str, int)
-    result = pyqtSignal(GenericSpectrum1DModelLayer)
+    result = pyqtSignal(Spectrum1DRefModelLayer)
 
     def __init__(self, parent=None):
         super(FitModelThread, self).__init__(parent)

@@ -11,15 +11,15 @@ import re
 import numpy as np
 from astropy.units import Quantity, spectral_density, spectral
 from ..third_party.py_expression_eval import Parser
-from specutils.core.generic import GenericSpectrum1D
+from specutils.core.generic import Spectrum1DRef
 
 
-class GenericSpectrum1DLayer(GenericSpectrum1D):
+class Spectrum1DRefLayer(Spectrum1DRef):
     """Class to handle layers in SpecViz."""
     def __init__(self, data, wcs=None, parent=None, layer_mask=None, *args,
                  **kwargs):
-        super(GenericSpectrum1DLayer, self).__init__(data, wcs=wcs, *args,
-                                                     **kwargs)
+        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, *args,
+                                                 **kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
 
@@ -34,7 +34,7 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
                    copy=False)
 
     def from_self(self, name="", layer_mask=None):
-        gen_spec = super(GenericSpectrum1DLayer, self).from_self(name=name)
+        gen_spec = Spectrum1DRef.copy(self, name=name)
 
         return self.from_parent(parent=gen_spec, layer_mask=layer_mask)
 
@@ -68,7 +68,7 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
     def dispersion(self):
         """Dispersion quantity with mask applied. Returns a masked array
         containing a Quantity object."""
-        self._dispersion = super(GenericSpectrum1DLayer, self).dispersion
+        self._dispersion = super(Spectrum1DRefLayer, self).dispersion
 
         dispersion = np.ma.array(
             Quantity(self._dispersion, unit=self.dispersion_unit),
@@ -98,7 +98,7 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
     @property
     def unmasked_dispersion(self):
         """Dispersion quantity with no layer mask applied."""
-        self._dispersion = super(GenericSpectrum1DLayer, self).dispersion
+        self._dispersion = super(Spectrum1DRefLayer, self).dispersion
 
         dispersion = np.ma.array(
             Quantity(self._dispersion, unit=self.dispersion_unit),
@@ -215,11 +215,11 @@ class GenericSpectrum1DLayer(GenericSpectrum1D):
         return result
 
 
-class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
+class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
     """A layer for spectrum with a model applied."""
     def __init__(self, data, model=None, *args, **kwargs):
-        super(GenericSpectrum1DModelLayer, self).__init__(data, *args,
-                                                          **kwargs)
+        super(Spectrum1DRefModelLayer, self).__init__(data, *args,
+                                                      **kwargs)
         self._model = model
 
     @classmethod
@@ -263,7 +263,7 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
         Dispersion quantity with no layer mask applied. Use the parent layer
         mask for cases wherein a slice of the spectrum is being used.
         """
-        self._dispersion = super(GenericSpectrum1DLayer, self).dispersion
+        self._dispersion = super(Spectrum1DRefLayer, self).dispersion
 
         dispersion = np.ma.array(
             Quantity(self._dispersion, unit=self.dispersion_unit),
@@ -288,7 +288,7 @@ class GenericSpectrum1DModelLayer(GenericSpectrum1DLayer):
     def parent_mask(self):
         """
         A bitwise combination of the data mask and the
-        `GenericSpectrum1DModelLayer`'s parent's layer mask. This is useful
+        `Spectrum1DRefModelLayer`'s parent's layer mask. This is useful
         when dealing with slices of spectra in which you want the model
         layer to be the visible size of the parent *in all cases* (whereas
         `full_mask` will always be the selected region)*[]:

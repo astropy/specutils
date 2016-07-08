@@ -1,5 +1,5 @@
 from specviz.interfaces.decorators import data_loader
-from specviz.core.data import GenericSpectrum1D
+from specviz.core.data import Spectrum1DRef
 
 import os
 
@@ -37,6 +37,6 @@ def simple_generic_loader(file_name, **kwargs):
 
     hdulist.close()
 
-    return GenericSpectrum1D(data=data, name=name, wcs=wcs,
+    return Spectrum1DRef(data=data, name=name, wcs=wcs,
                              uncertainty=uncertainty, unit=unit, meta=meta)
 
