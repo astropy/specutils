@@ -8,8 +8,7 @@ import astropy.units as u
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
 
 
-class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
-                        Spectrum1D):
+class Spectrum1DRef(NDIOMixin, NDSlicingMixin, NDArithmeticMixin, Spectrum1D):
     """
     A generalized spectrum data object that implements several `NDData`
     features such as IO, arithmetic, and slicing.
@@ -40,11 +39,11 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
 
     def __init__(self, data, name="", dispersion=None, dispersion_unit=None,
                  uncertainty=None, wcs=None, *args, **kwargs):
-        super(GenericSpectrum1D, self).__init__(flux=data,
-                                                wcs=wcs,
-                                                uncertainty=uncertainty,
-                                                indexer="UNUSED",
-                                                *args, **kwargs)
+        super(Spectrum1DRef, self).__init__(flux=data,
+                                            wcs=wcs,
+                                            uncertainty=uncertainty,
+                                            indexer="UNUSED",
+                                            *args, **kwargs)
         self._dispersion = dispersion
         self._dispersion_unit = dispersion_unit
         self.name = name or "New Data Object"
