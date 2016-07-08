@@ -15,20 +15,20 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
     features such as IO, arithmetic, and slicing.
 
     - IO is incorporated by the addition of `read` and `write` class
-    methods that utilize the `~astropy.io.registry`. By default,
-    it recognizes built-in astropy formats listed in the `unified read/write
-    interface documentation <http://docs.astropy.org/en/stable/io/unified
-    .html#table-io>`_.
+      methods that utilize the `~astropy.io.registry`. By default,
+      it recognizes built-in astropy formats listed in the `unified read/write
+      interface documentation <http://docs.astropy.org/en/stable/io/unified
+      .html#table-io>`_.
 
     - The Arithmetic mixin on :class:`~astropy.nddata.NDData` objects allows
-    for operations on the base `data` object as well as the `uncertainty`
-    value, including error propagation when using an
-    :class:`~astropy.nddata.NDUncertainty`-derived subclass. The
-    mixin also handles the `WCS`, `meta` data, and other aspects of the
-    :class:`~astropy.nddata.NDData` object.
+      for operations on the base `data` object as well as the `uncertainty`
+      value, including error propagation when using an
+      :class:`~astropy.nddata.NDUncertainty`-derived subclass. The
+      mixin also handles the `WCS`, `meta` data, and other aspects of the
+      :class:`~astropy.nddata.NDData` object.
 
     - Direct slicing of the :class:`~astropy.nddata.NDData` object is possible
-    via the slicing mixin.
+      via the slicing mixin.
 
     This spectrum object differs from the :class:`~specutils.Spectrum1D` by
     relying on the :class:`~astropy.wcs.WCS` object to maintain WCS
