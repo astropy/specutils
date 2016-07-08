@@ -3,8 +3,7 @@ import os
 import logging
 
 from ..core.data import GenericSpectrum1D, GenericSpectrum1DModelLayer
-from ..interfaces.factories import ModelFactory, FitterFactory
-from ..interfaces.registries import loader_registry
+from ..interfaces.factories import FitterFactory
 
 
 class FileLoadThread(QThread):
