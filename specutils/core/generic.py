@@ -5,7 +5,7 @@ import logging
 
 from astropy.nddata import NDArithmeticMixin, NDSlicingMixin, NDIOMixin
 import astropy.units as u
-from astropy.wcs import WCS
+from astropy.wcs import WCS, WCSSUB_SPECTRAL
 
 
 class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
@@ -57,31 +57,21 @@ class GenericSpectrum1D(NDIOMixin, NDSlicingMixin, NDArithmeticMixin,
         Astropy's WCS object instead of the custom specutils WCS object.
         """
         if self._dispersion is None:
-            self._dispersion = np.arange(self.data.size)
+            self._dispersion = np.arange(self.data.shape[0])
 
             if isinstance(self.wcs, WCS):
-                try:
-                    crval = self.wcs.wcs.crval[0]
+                # Try to reference the spectral axis
+                wcs_spec = self.wcs.sub([WCSSUB_SPECTRAL])
 
-                    # RuntimeWarning: cdelt will be ignored since cd is present
-                    try:
-                        cdelt = self.wcs.wcs.cd[0][0]
-                    except AttributeError:
-                        cdelt = self.wcs.wcs.cdelt[0]
+                # Check to see if it actually is a real coordinate description
+                if wcs_spec.naxis == 0:
+                    # It's not real, so attempt to get the spectral axis by
+                    # specifying axis by integer
+                    wcs_spec = self.wcs.sub([self.wcs.naxis])
 
-                    end = self.data.shape[0] * cdelt + crval
-                    num = (end - crval) / cdelt
-
-                    # TODO: the values for the keywords are not guaranteed to
-                    # be at the first index
-                    if hasattr(self.wcs.wcs, 'ctype') and "log" \
-                            in self.wcs.wcs.ctype[-1].lower():
-                        self._dispersion = np.logspace(crval, end, num)
-                    else:
-                        self._dispersion = np.arange(crval, end, cdelt)
-                except AttributeError:
-                    logging.warning("Invalid FITS headers; constructing "
-                                    "default dispersion array.")
+                # Construct the dispersion array
+                self._dispersion = wcs_spec.all_pix2world(
+                    np.arange(self.data.shape[0]), 0)[0]
 
         return self._dispersion
 
