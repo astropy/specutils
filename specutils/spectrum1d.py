@@ -23,7 +23,7 @@ import numpy as np
 
 class Spectrum1D(NDData):
     """A subclass of `NDData` for a one dimensional spectrum in Astropy.
-    
+
     This class inherits all the base class functionality from the NDData class
     and is communicative with other Spectrum1D objects in ways which make sense.
 
@@ -65,13 +65,13 @@ class Spectrum1D(NDData):
                    uncertainty=None, mask=None, meta=None, copy=True,
                    unit=None):
         """Initialize `Spectrum1D`-object from two `numpy.ndarray` objects
-        
+
         Parameters:
         -----------
         dispersion : `~astropy.units.quantity.Quantity` or `~np.array`
             The dispersion for the Spectrum (e.g. an array of wavelength
             points). If an array is specified `dispersion_unit` needs to be a spectral unit
-        
+
         flux : `~astropy.units.quantity.Quantity` or `~np.array`
             The flux level for each wavelength point. Should have the same length
             as `dispersion`.
@@ -96,7 +96,7 @@ class Spectrum1D(NDData):
             If True, the array will be *copied* from the provided `data`,
             otherwise it will be referenced if possible (see `numpy.array` :attr:`copy`
             argument for details).
-        
+
         Raises
         ------
         ValueError
@@ -104,7 +104,7 @@ class Spectrum1D(NDData):
             do not match), or the input arrays are not one dimensional.
 
         """
-        
+
         if dispersion.ndim != 1 or dispersion.shape != flux.shape:
             raise ValueError("dispersion and flux need to be one-dimensional "
                              "Numpy arrays with the same shape")
@@ -124,7 +124,7 @@ class Spectrum1D(NDData):
 
         return cls(flux=flux, wcs=spec_wcs, unit=unit, uncertainty=uncertainty,
                    mask=mask, meta=meta)
-    
+
     @classmethod
     def from_table(cls, table, dispersion_column='dispersion',
                    flux_column='flux', uncertainty_column=None,
@@ -165,9 +165,9 @@ class Spectrum1D(NDData):
         return cls.from_array(flux=flux.data, dispersion=dispersion.data,
                               uncertainty=uncertainty, dispersion_unit=dispersion.units,
                               unit=flux.units, mask=table.mask, meta=table.meta)
-        
-    
-    
+
+
+
     @classmethod
     def from_ascii(cls, filename, uncertainty=None, mask=None, dtype=np.float, comments='#',
                    delimiter=None, converters=None, skiprows=0,
@@ -175,12 +175,12 @@ class Spectrum1D(NDData):
         raw_data = np.loadtxt(filename, dtype=dtype, comments=comments,
                               delimiter=delimiter, converters=converters,
                               skiprows=skiprows, usecols=usecols, ndmin=2)
-    
+
         if raw_data.shape[1] != 2:
             raise ValueError('data contained in filename must have exactly two columns')
-        
+
         return cls.from_array(dispersion=raw_data[:,0], flux=raw_data[:,1], uncertainty=uncertainty, mask=mask)
-        
+
     @classmethod
     def from_fits(cls, filename):
         """
@@ -192,10 +192,10 @@ class Spectrum1D(NDData):
                                   ' documentation')
 
     def __init__(self, flux, wcs, unit=None, uncertainty=None, mask=None,
-                 meta=None, indexer=None):
+                 meta=None, indexer=None, *args, **kwargs):
 
         super(Spectrum1D, self).__init__(data=flux, unit=unit, wcs=wcs, uncertainty=uncertainty,
-                   mask=mask, meta=meta)
+                   mask=mask, meta=meta, *args, **kwargs)
 
         self._wcs_attributes = copy.deepcopy(self.__class__._wcs_attributes)
         if indexer is None:
