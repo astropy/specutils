@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 # LOCAL
-from ..core.data import Data
+from ..core.data import Spectrum1DRef
 
 __all__ = ['extract', 'stats', 'eq_width', 'fwzi', 'centroid']
 
@@ -30,7 +30,7 @@ def extract(data, x_range):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = Spectrum1DRef(...)
     >>> d2 = extract(d, (10000, 20000))
 
     """
@@ -39,7 +39,7 @@ def extract(data, x_range):
 
     slice = (x >= x_range[0]) & (x < x_range[1])
 
-    result = Data(y[slice], dispersion=x[slice])
+    result = Spectrum1DRef(y[slice], dispersion=x[slice])
 
     # TODO: Need to implement unit handling in Data
     #result.set_x(x[slice], unit=spectrum_data.x.unit)
@@ -64,11 +64,11 @@ def stats(data):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = Spectrum1DRef(...)
     >>> d_stats = stats(d)
 
     """
-    if isinstance(data, Data):
+    if isinstance(data, Spectrum1DRef):
         y = data.data
     else:
         y = data
@@ -94,7 +94,7 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
     cont1_stats, cont2_stats : dict
         This is returned by the :func:`stats` function.
 
-    line : `~specviz.core.data.Data`
+    line : `~specviz.core.data.Spectrum1DRefLayer`
         This is returned by the :func:`extract` function.
 
     mask : ndarray
@@ -107,7 +107,7 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = Spectrum1DRefLayer(...)
     >>> cont1 = extract(d, (100, 5000))
     >>> cont2 = extract(d, (18000, 20000))
     >>> cont1_stats = stats(cont1)
@@ -116,19 +116,23 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
     >>> flux, ew = eq_width(cont1_stats, cont2_stats, line)
 
     """
-    mask = np.ones(line.data.shape) if mask is None else np.array(mask)
+    flux, wave = line.data.compressed().value, \
+                 line.dispersion.compressed().value
+
+    mask = np.ones(flux) if mask is None else np.array(mask)
 
     # average of 2 continuum regions.
     avg_cont = (cont1_stats['mean'] + cont2_stats['mean']) / 2.0
 
     # average dispersion in the line region.
-    avg_dx = np.mean(line.dispersion[mask][1:] - line.dispersion[mask][:-1])
+    avg_dx = np.mean(wave[mask][1:] -
+                     wave[mask][:-1])
 
     # flux
-    flux = np.sum(line.data[mask] - avg_cont) * avg_dx
+    flux = np.sum(flux[mask] - avg_cont) * avg_dx
 
     #  EW = Sum( (Fc-Fl)/Fc * dw
-    ew = np.abs(np.sum((avg_cont - line.data[mask]) / avg_cont * avg_dx))
+    ew = np.abs(np.sum((avg_cont - wave[mask]) / avg_cont * avg_dx))
 
     return ew, flux, avg_cont
 
@@ -156,7 +160,7 @@ def fwzi(cont1_stats, cont2_stats, line):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = Spectrum1DRef(...)
     >>> cont1 = extract(d, (100, 5000))
     >>> cont2 = extract(d, (18000, 20000))
     >>> cont1_stats = stats(cont1)
@@ -199,7 +203,7 @@ def fwzi(cont1_stats, cont2_stats, line):
     return vmax - vmin, (vmin, vmax)
 
 
-def centroid(data, mask=None):
+def centroid(flux, wave, mask=None):
     """Compute centroid for the given spectrum. ::
 
         w_cen = integral(wave*flux) / integral(flux)
@@ -216,17 +220,13 @@ def centroid(data, mask=None):
 
     Examples
     --------
-    >>> d = Data(...)
+    >>> d = Spectrum1DRef(...)
     >>> line = extract(d, (15000, 20000))
     >>> wcen_em = centroid(line)
-
     """
     if mask is not None:
-        flux = data.data[mask]
-        wave = data.dispersion[mask]
-    else:
-        flux = data.data
-        wave = data.dispersion
+        flux = flux[mask]
+        wave = wave[mask]
 
     wcen = np.trapz(wave * flux, wave) / np.trapz(flux, wave)
 

@@ -164,17 +164,18 @@ class PlotSubWindow(UiPlotSubWindow):
             # x1, y1, x2, y2 = roi_shape.getCoords()
             x1, x2 = roi.getRegion()
 
-            layer_mask = np.copy(layer._mask)
-            mask = (container.dispersion.value >= x1) & \
-                   (container.dispersion.value <= x2)
-            layer_mask[layer_mask==True] = mask
-            mask_holder.append(layer_mask)
+            # layer_mask = np.copy(layer._mask)
+            mask = (container.layer.dispersion.data.value >= x1) & \
+                   (container.layer.dispersion.data.value <= x2)
+            # layer_mask[layer_mask==True] = mask
+            mask_holder.append(mask)
 
         if len(mask_holder) == 0:
-            mask_holder.append(container.layer._mask)
+            mask_holder.append(container.layer.layer_mask)
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
         mask = reduce(np.logical_or, mask_holder)
+
         return mask
 
     def add_roi(self, *args, **kwargs):
@@ -219,9 +220,9 @@ class PlotSubWindow(UiPlotSubWindow):
     def set_labels(self, x_label='', y_label=''):
         self._plot_item.setLabels(
             left="Flux [{}]".format(
-                y_label or str(self._plots[0].layer.units[1])),
+                y_label or str(self._plots[0].layer.unit)),
             bottom="Wavelength [{}]".format(
-                x_label or str(self._plots[0].layer.units[0])))
+                x_label or str(self._plots[0].layer.dispersion_unit)))
 
     def set_visibility(self, layer, show, override=False):
         plot = self.get_plot(layer)
@@ -241,7 +242,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if layer is not None:
             plot = self.get_plot(layer)
 
-        plot.update()
+            plot.update()
 
     def closeEvent(self, event):
 
@@ -262,8 +263,8 @@ class PlotSubWindow(UiPlotSubWindow):
         new_plot = LinePlot.from_layer(layer)
 
         if len(self._plots) == 0:
-            self.change_units(new_plot.layer.units[0],
-                              new_plot.layer.units[1])
+            self.change_units(new_plot.layer.dispersion_unit,
+                              new_plot.layer.unit)
         else:
             new_plot.change_units(*self._plot_units)
 

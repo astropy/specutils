@@ -4,7 +4,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..core.data import Layer
+from ..core.data import Spectrum1DRefLayer
 
 from ..ui.widgets.utils import ICON_PATH
 
@@ -24,7 +24,7 @@ class LayerListPlugin(Plugin):
             name="Slice",
             description='Create layer slice',
             icon_path=os.path.join(ICON_PATH, "Stanley Knife-48.png"),
-            category='Transformations',
+            category=('Transformations', 3),
             enabled=False,
             callback=lambda: self.add_layer(
                 window=self.active_window, layer=self.current_layer,
@@ -82,7 +82,7 @@ class LayerListPlugin(Plugin):
 
         Returns
         -------
-        layer : specviz.core.data.Layer
+        layer : specviz.core.data.Spectrum1DRefLayer
             The `Layer` object of the currently selected row.
         """
         layer_item = self.tree_widget_layer_list.currentItem()
@@ -122,7 +122,7 @@ class LayerListPlugin(Plugin):
 
         Parameters
         ----------
-        layer : specviz.core.data.Layer
+        layer : specviz.core.data.Spectrum1DRefLayer
             The `Layer` object to add to the list widget.
         """
         # Make sure there is only one item per layer object
@@ -179,31 +179,30 @@ class LayerListPlugin(Plugin):
 
         Dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
 
-    def add_layer(self, layer=None, mask=None, window=None, from_roi=True):
+    def add_layer(self, layer=None, layer_mask=None, window=None, from_roi=True):
         """
         Creates a layer object from the current ROIs of the active plot layer.
 
         Parameters
         ----------
-        layer : specviz.core.data.Layer
+        layer : specviz.core.data.Spectrum1DRefLayer
             The current active layer of the active plot.
         window : QtGui.QMdiSubWindow
             The parent object within which the plot window resides.
-        mask : ndarray
+        layer_mask : ndarray
             Boolean mask.
         """
         # User attempts to slice before opening a file
         if layer is None and window is None:
             logging.error(
-                "Cannot add new layer; no layer and no window "
-                "provided.")
+                "Cannot add new layer; no layer and no window provided.")
             return
 
-        roi_mask = mask if mask is not None and not from_roi else \
+        roi_mask = layer_mask if layer_mask is not None and not from_roi else \
             window.get_roi_mask(layer=layer)
 
-        new_layer = Layer(layer._source, mask=roi_mask,
-                          name=layer._source.name + " Layer Slice")
+        new_layer = layer.from_self(layer_mask=roi_mask,
+                                    name=layer.name + " Layer Slice")
 
         Dispatch.on_add_layer.emit(layer=new_layer)
 
@@ -245,7 +244,16 @@ class LayerListPlugin(Plugin):
 
             current_window = self.active_window
             current_layers = self.all_layers
-            new_layer = Layer.from_formula(formula, layers=current_layers)
+
+            # For whatever reason, parent_nddata in `NDUncertainty` objects are
+            # weak references, and may, without warning, get garbage collected.
+            # Re-do the the reference explicitly here to be sure it exists.
+            for layer in current_layers:
+                if layer.uncertainty is not None:
+                    layer.uncertainty.parent_nddata = layer
+
+            new_layer = Spectrum1DRefLayer.from_formula(formula,
+                                                        current_layers)
 
             if new_layer is None:
                 logging.warning("Formula not valid.")
@@ -253,19 +261,20 @@ class LayerListPlugin(Plugin):
 
             # If units match, plot the resultant on the same sub window,
             # otherwise create a new sub window to plot the spectra
-            data_units_equiv = new_layer.data.unit.is_equivalent(
+            data_units_equiv = new_layer.unit.is_equivalent(
                 current_window._plot_units[1],
-                equivalencies=spectral_density(new_layer.dispersion))
+                equivalencies=spectral_density(new_layer.dispersion.data))
 
-            disp_units_equiv = new_layer.dispersion.unit.is_equivalent(
+            disp_units_equiv = new_layer.dispersion_unit.is_equivalent(
                 current_window._plot_units[0], equivalencies=spectral())
 
             if data_units_equiv and disp_units_equiv:
-                Dispatch.on_add_layer.emit(layer=new_layer)
+                Dispatch.on_add_layer.emit(window=self.active_window,
+                                           layer=new_layer)
             else:
                 logging.info("{} not equivalent to {}.".format(
-                    new_layer.data.unit, current_window._plot_units[1]))
-                Dispatch.on_add_window(layer=new_layer)
+                    new_layer.unit, current_window._plot_units[1]))
+                Dispatch.on_add_window.emit(data=new_layer)
 
     def _change_plot_color(self):
         plot = self.active_window.get_plot(self.current_layer)
@@ -314,7 +323,7 @@ class LayerListPlugin(Plugin):
 
         Parameters
         ----------
-        layer : Layer
+        layer : Spectrum1DRefLayer
             Layer object to toggle visibility.
 
         col : int
@@ -336,6 +345,7 @@ class UiLayerListPlugin:
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.tree_widget_layer_list = QTreeWidget(plugin)
+        plugin.tree_widget_layer_list.setHeaderHidden(True)
 
         plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
 
@@ -346,17 +356,20 @@ class UiLayerListPlugin:
             ICON_PATH, "Math-48.png")))
         plugin.button_layer_arithmetic.setEnabled(False)
         plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
+        plugin.button_layer_arithmetic.setMinimumSize(QSize(35, 35))
 
         plugin.button_remove_layer = QToolButton(plugin)
         plugin.button_remove_layer.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_layer.setEnabled(False)
+        plugin.button_remove_layer.setMinimumSize(QSize(35, 35))
         plugin.button_remove_layer.setIconSize(QSize(25, 25))
 
         plugin.button_change_color = QToolButton(plugin)
         plugin.button_change_color.setIcon(QIcon(os.path.join(
             ICON_PATH, "Color Dropper-48.png")))
         plugin.button_change_color.setEnabled(False)
+        plugin.button_change_color.setMinimumSize(QSize(35, 35))
         plugin.button_change_color.setIconSize(QSize(25, 25))
 
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
@@ -367,3 +380,6 @@ class UiLayerListPlugin:
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
         plugin.dialog_layer_arithmetic = LayerArithmeticDialog()
+
+        # Set size of plugin
+        plugin.setMinimumSize(plugin.sizeHint())

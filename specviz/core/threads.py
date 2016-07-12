@@ -2,13 +2,15 @@ from ..third_party.qtpy.QtCore import QThread, pyqtSignal
 import os
 import logging
 
-from ..core.data import Data, ModelLayer
-from ..interfaces.factories import ModelFactory, FitterFactory
+from ..core.data import Spectrum1DRef, Spectrum1DRefModelLayer
+from ..interfaces.factories import FitterFactory
+
+import astropy.io.registry as io_registry
 
 
 class FileLoadThread(QThread):
     status = pyqtSignal(str, int)
-    result = pyqtSignal(Data)
+    result = pyqtSignal(Spectrum1DRef)
 
     def __init__(self, parent=None):
         super(FileLoadThread, self).__init__(parent)
@@ -46,24 +48,23 @@ class FileLoadThread(QThread):
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 
-        if file_filter is None:
-            if file_ext in ('.txt', '.dat'):
-                file_filter = 'ASCII (*.txt *.dat)'
-            else:
-                file_filter = 'Generic Fits (*.fits *.mits)'
+        if file_filter == 'Auto':
+            all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
+        else:
+            all_formats = [file_filter]
 
-        try:
-            data = Data.read(file_name, file_filter)
-            return data
-        except:
-            logging.error("Incompatible loader for selected data: {"
-                          "}".format(file_filter))
-            return
+        for format in all_formats:
+            try:
+                data = Spectrum1DRef.read(file_name, format=format)
+                return data
+            except:
+                logging.error("Incompatible loader for selected data: {"
+                              "}".format(file_filter))
 
 
 class FitModelThread(QThread):
     status = pyqtSignal(str, int)
-    result = pyqtSignal(ModelLayer)
+    result = pyqtSignal(Spectrum1DRefModelLayer)
 
     def __init__(self, parent=None):
         super(FitModelThread, self).__init__(parent)
@@ -100,6 +101,14 @@ class FitModelThread(QThread):
         flux = parent_layer.data
         dispersion = parent_layer.dispersion
         model = model_layer.model
+
+        # The fitting should only consider the masked regions
+        flux = flux[model_layer.layer_mask].compressed().value
+        dispersion = dispersion[model_layer.layer_mask].compressed().value
+
+        # Get compressed versions of the data arrays
+        # flux = flux.compressed().value
+        # dispersion = dispersion.compressed().value
 
         # If the number of parameters is greater than the number of data
         # points, bail

@@ -1,12 +1,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import random
-
 from ..third_party.qtpy.QtGui import *
 
-from astropy.units import (Unit, Quantity, spectral_density, spectral,
-                           UnitConversionError)
+from astropy.units import spectral_density, spectral
 import pyqtgraph as pg
 from itertools import cycle
 import logging
@@ -25,11 +22,14 @@ class LinePlot(object):
         self.style = style
         self._plot = plot
         self.error = None
-        self._plot_units = (self._layer.units[0], self._layer.units[1], None)
+        self._plot_units = (self._layer.dispersion_unit,
+                            self._layer.unit,
+                            None)
         self.line_width = 1
 
         if self._plot is not None:
-            self.change_units(self._layer.units[0], self._layer.units[1])
+            self.change_units(self._layer.dispersion_unit,
+                              self._layer.unit)
 
         r, g, b = next(AVAILABLE_COLORS)
 
@@ -55,13 +55,11 @@ class LinePlot(object):
 
     @staticmethod
     def from_layer(layer, **kwargs):
-        plot_data_item = pg.PlotDataItem(layer.dispersion.value,
-                                         layer.data.value)
+        plot_data_item = pg.PlotDataItem(layer.dispersion, layer.data)
 
-        plot_container = LinePlot(layer=layer, plot=plot_data_item,
-                                  **kwargs)
+        plot_container = LinePlot(layer=layer, plot=plot_data_item, **kwargs)
 
-        if plot_container.layer.uncertainty is not None:
+        if plot_container.layer.raw_uncertainty is not None:
             # err_top = pg.PlotDataItem(
             #     plot_container.layer.dispersion.value,
             #     plot_container.layer.data.value +
@@ -72,27 +70,28 @@ class LinePlot(object):
             #     plot_container.layer.uncertainty.array * 0.5)
             #
             # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
-
             plot_error_item = pg.ErrorBarItem(
-                x=plot_container.layer.dispersion.value,
-                y=plot_container.layer.data.value,
-                height=plot_container.layer.uncertainty.array,
+                x=plot_container.layer.dispersion.compressed().value,
+                y=plot_container.layer.data.compressed().value,
+                height=plot_container.layer.raw_uncertainty.compressed().value,
             )
             plot_container.error = plot_error_item
 
         return plot_container
 
     def change_units(self, x, y=None, z=None):
-        if x is None or not self._layer.units[0].is_equivalent(
+        if x is None or not self._layer.dispersion_unit.is_equivalent(
                 x, equivalencies=spectral()):
-            logging.error("Failed to convert x-axis plot units.")
-            x = self._plot_units[0] or self._layer.units[0]
+            logging.error("Failed to convert x-axis plot units. {} to {"
+                          "}".format(self._layer.dispersion_unit, x))
+            x = None
 
-        if y is None or not self._layer.units[1].is_equivalent(
-                y, equivalencies=spectral_density(self.dispersion)):
+        if y is None or not self._layer.unit.is_equivalent(
+                y, equivalencies=spectral_density(self.layer.dispersion)):
             logging.error("Failed to convert y-axis plot units.")
-            y = self._plot_units[1] or self._layer.units[1]
+            y = None
 
+        self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
         self.update()
 
@@ -119,24 +118,6 @@ class LinePlot(object):
         else:
             if self.error is not None:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
-
-    @property
-    def data(self):
-        return self.layer.data.to(self._plot_units[1],
-                                  equivalencies=spectral_density(self.dispersion))
-
-    @property
-    def dispersion(self):
-        return self.layer.dispersion.to(self._plot_units[0],
-                                        equivalencies=spectral())
-
-    @property
-    def uncertainty(self):
-        return Quantity(
-            self.layer.uncertainty.array,
-            unit=self.layer.units[1]).to(
-                self._plot_units[1],
-                equivalencies=spectral_density(self.dispersion))
 
     @property
     def plot(self):
@@ -178,11 +159,16 @@ class LinePlot(object):
             self.error.setOpts(pen=pg.mkPen(pen))
 
     def update(self, autoscale=False):
-        self._plot.setData(self.dispersion.value,
-                           self.data.value)
+        if hasattr(self.layer, '_model'):
+            disp = self.layer.unmasked_dispersion.compressed().value
+            data = self.layer.unmasked_data.compressed().value
+            uncert = self.layer.unmasked_raw_uncertainty.compressed().value
+        else:
+            disp = self.layer.dispersion.compressed().value
+            data = self.layer.data.compressed().value
+            uncert = self.layer.raw_uncertainty.compressed().value
+
+        self._plot.setData(disp, data)
 
         if self.error is not None:
-            self.error.setData(
-                    x=self.dispersion.value,
-                    y=self.data.value,
-                    height=self.uncertainty.value)
+            self.error.setData(x=disp, y=data, height=uncert)

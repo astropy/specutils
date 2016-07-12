@@ -1,7 +1,10 @@
 --index-url https://pypi.python.org/simple/
 
-jinja2
+pyyaml
 cython
-git+https://github.com/astropy/astropy.git@ffc0a89b2c42fd440eb19bcb2f93db90cab3c98b
+numpy
+scipy
+astropy
+git+https://github.com/nmearl/specutils.git
 git+https://github.com/nmearl/pyqtgraph.git
 -e .

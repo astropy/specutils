@@ -3,7 +3,7 @@ from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtGui import *
 from ..core.comms import Dispatch, DispatchHandle
-from ..core.data import ModelLayer
+from ..core.data import Spectrum1DRefModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
 from ..interfaces.initializers import initialize
 from ..interfaces.factories import ModelFactory, FitterFactory
@@ -100,24 +100,26 @@ class ModelFittingPlugin(Plugin):
         model_name = self.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
 
-        initialize(model, layer.dispersion, layer.data)
+        if isinstance(layer, Spectrum1DRefModelLayer):
+            mask = self.active_window.get_roi_mask(layer._parent)
 
-        if layer is not None:
-            # There is current a selected layer
-            if hasattr(layer, '_model'):
-                # The layer is a `ModelLayer`, in which case, additionally
-                # add the model to the compound model and update plot
+            initialize(model, layer._parent.dispersion[mask].compressed(),
+                       layer._parent.data[mask].compressed())
+            # The layer is a `ModelLayer`, in which case, additionally
+            # add the model to the compound model and update plot
+            if layer.model is not None:
                 layer.model = layer.model + model
-
-                mask = self.active_window.get_roi_mask(layer._parent)
             else:
-                # If a layer is selected, but it's not a `ModelLayer`,
-                # create a new `ModelLayer`
-                layer = self.add_model_layer(model=model)
-                mask = self.active_window.get_roi_mask(layer)
+                layer.model = model
         else:
-            return
-            # There is no currently selected layer, simply
+            mask = self.active_window.get_roi_mask(layer)
+
+            initialize(model, layer.dispersion[mask].compressed(),
+                       layer.data[mask].compressed())
+
+            # If a layer is selected, but it's not a `ModelLayer`,
+            # create a new `ModelLayer`
+            layer = self.add_model_layer(model=model)
 
         Dispatch.on_update_model.emit(layer=layer)
         Dispatch.on_add_model.emit(layer=layer)
@@ -138,12 +140,10 @@ class ModelFittingPlugin(Plugin):
         # Create new layer using current ROI masks, if they exist
         mask = self.active_window.get_roi_mask(layer=layer)
 
-        new_model_layer = ModelLayer(
-            source=layer._source,
-            mask=mask,
+        new_model_layer = Spectrum1DRefModelLayer.from_parent(
             parent=layer,
-            name="New Model Layer",
-            model=model)
+            model=model,
+            layer_mask=mask)
 
         Dispatch.on_add_layer.emit(layer=new_model_layer,
                                    window=self.active_window)
@@ -164,6 +164,9 @@ class ModelFittingPlugin(Plugin):
             models = [layer.model]
 
         for model in models:
+            if model is None:
+                continue
+
             if unique:
                 if self.get_model_item(model) is not None:
                     continue
@@ -235,8 +238,7 @@ class ModelFittingPlugin(Plugin):
         if hasattr(layer, '_model') and hasattr(layer.model, '_submodels'):
             layer.model._submodels.remove(model)
         else:
-            logging.error("Cannot remove last model from a `ModelLayer`.")
-            return
+            layer.model = None
 
         # Remove model from tree widget
         root = self.tree_widget_current_models.invisibleRootItem()
@@ -317,8 +319,11 @@ class ModelFittingPlugin(Plugin):
 
             models.append(model)
 
+        if len(models) == 0:
+            return
+
         if formula:
-            model = ModelLayer.from_formula(models, formula)
+            model = Spectrum1DRefModelLayer.from_formula(models, formula)
             return model
 
         return np.sum(models) if len(models) > 1 else models[0]
@@ -337,7 +342,7 @@ class ModelFittingPlugin(Plugin):
                 expr = expr.format(*model_names)
             # If it's just a single model
             else:
-                expr = layer.model.name
+                expr = layer.model.name if layer.model is not None else ""
 
             self.line_edit_model_arithmetic.setText(expr)
 
@@ -403,6 +408,16 @@ class ModelFittingPlugin(Plugin):
     def fit_model_layer(self):
         current_layer = self.current_layer
 
+        if not isinstance(current_layer, Spectrum1DRefModelLayer):
+            logging.error("Attempting to fit model on a non ModelLayer.")
+            return
+
+        # This would allow updating the mask on the model layer to reflect
+        # the current rois on the plot. Useful for directing fitting,
+        # but may be unintuitive.
+        mask = self.active_window.get_roi_mask(layer=current_layer._parent)
+        current_layer._layer_mask = mask
+
         # Update the model parameters with those in the gui
         # self.update_model_layer()
 
@@ -416,7 +431,7 @@ class ModelFittingPlugin(Plugin):
     def toggle_buttons(self):
         root = self.tree_widget_current_models.invisibleRootItem()
 
-        if root.childCount() > 1:
+        if root.childCount() > 0:
             self.button_remove_model.setEnabled(True)
         else:
             self.button_remove_model.setEnabled(False)
@@ -506,7 +521,7 @@ class ModelFittingPlugin(Plugin):
             self.update_model_list(layer=current_layer)
             Dispatch.on_update_model.emit(layer=current_layer)
         else:
-            new_model_layer = ModelLayer(
+            new_model_layer = Spectrum1DRefModelLayer(
                 source=current_layer._source,
                 mask=mask,
                 parent=current_layer,
@@ -522,22 +537,6 @@ class ModelFittingPlugin(Plugin):
 
 class UiModelFittingPlugin:
     def __init__(self, plugin):
-        plugin.scroll_area = QScrollArea(plugin)
-        plugin.scroll_area.setFrameShape(QFrame.NoFrame)
-        plugin.scroll_area.setFrameShadow(QFrame.Plain)
-        plugin.scroll_area.setLineWidth(0)
-        plugin.scroll_area.setWidgetResizable(True)
-        plugin.scroll_area.setGeometry(QRect(0, 0, 306, 553))
-        plugin.layout_vertical.setContentsMargins(0, 0, 0, 0)
-
-        # The main widget inside the scroll area
-        plugin.main_widget = QWidget()
-        plugin.layout_vertical_main_widget = QVBoxLayout(plugin.main_widget)
-        plugin.layout_vertical_main_widget.setContentsMargins(11, 11, 11, 11)
-        plugin.layout_vertical_main_widget.setSpacing(6)
-
-        plugin.scroll_area.setWidget(plugin.main_widget)
-
         # Tree widget/model selector group box
         plugin.group_box_add_model = QGroupBox()
         plugin.group_box_add_model.setTitle("Add Model")
@@ -566,17 +565,15 @@ class UiModelFittingPlugin:
         plugin.layout_horizontal_group_box_add_model.addWidget(
             plugin.button_select_model)
 
-        plugin.layout_vertical_main_widget.addWidget(plugin.group_box_add_model)
+        plugin.layout_vertical.addWidget(plugin.group_box_add_model)
 
         # Current models group box
-        plugin.group_box_current_models = QGroupBox(plugin.main_widget)
+        plugin.group_box_current_models = QGroupBox(plugin.contents)
         plugin.group_box_current_models.setTitle("Current Models")
         plugin.layout_vertical_group_box_current_models = QVBoxLayout(
             plugin.group_box_current_models)
-        plugin.layout_vertical_group_box_current_models.setContentsMargins(11,
-                                                                           11,
-                                                                           11,
-                                                                           11)
+        plugin.layout_vertical_group_box_current_models.setContentsMargins(
+            11, 11, 11, 11)
         plugin.layout_vertical_group_box_current_models.setSpacing(6)
 
         plugin.tree_widget_current_models = QTreeWidget(
@@ -605,24 +602,28 @@ class UiModelFittingPlugin:
         plugin.button_save_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Save-48.png")))
         plugin.button_save_model.setIconSize(QSize(25, 25))
+        plugin.button_save_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_load_model = QToolButton(plugin.group_box_current_models)
         plugin.button_load_model.setEnabled(False)
         plugin.button_load_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Open Folder-48.png")))
         plugin.button_load_model.setIconSize(QSize(25, 25))
+        plugin.button_load_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_export_model = QToolButton(plugin.group_box_current_models)
         plugin.button_export_model.setEnabled(False)
         plugin.button_export_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Export-48.png")))
         plugin.button_export_model.setIconSize(QSize(25, 25))
+        plugin.button_export_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_remove_model = QToolButton(plugin.group_box_current_models)
         plugin.button_remove_model.setEnabled(False)
         plugin.button_remove_model.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
         plugin.button_remove_model.setIconSize(QSize(25, 25))
+        plugin.button_remove_model.setMinimumSize(QSize(35, 35))
 
         plugin.layout_horizontal_model_buttons.addWidget(plugin.button_save_model)
         plugin.layout_horizontal_model_buttons.addWidget(plugin.button_load_model)
@@ -654,7 +655,7 @@ class UiModelFittingPlugin:
             plugin.group_box_model_arithmetic)
 
         # Fitting routines group box
-        plugin.group_box_fitting = QGroupBox(plugin.main_widget)
+        plugin.group_box_fitting = QGroupBox(plugin.contents)
         plugin.group_box_fitting.setTitle("Fitting")
         plugin.group_box_fitting.setEnabled(False)
 
@@ -670,16 +671,11 @@ class UiModelFittingPlugin:
         plugin.layout_vertical_fitting.addWidget(plugin.combo_box_fitting)
         plugin.layout_vertical_fitting.addWidget(plugin.button_perform_fit)
 
-        # Add group boxees
-        plugin.layout_vertical_main_widget.addWidget(plugin.group_box_add_model)
-        plugin.layout_vertical_main_widget.addWidget(
-            plugin.group_box_current_models)
-        plugin.layout_vertical_main_widget.addWidget(
-            plugin.group_box_fitting)
+        # Add group boxes
+        plugin.layout_vertical.addWidget(plugin.group_box_add_model)
+        plugin.layout_vertical.addWidget(plugin.group_box_current_models)
+        plugin.layout_vertical.addWidget(plugin.group_box_fitting)
 
-        plugin.layout_vertical.addWidget(plugin.scroll_area)
-
-
-
-
-
+        # Set size of plugin. Setting this seems to screw with `QPushButton`
+        # visual formatting
+        # plugin.setMinimumSize(plugin.sizeHint())

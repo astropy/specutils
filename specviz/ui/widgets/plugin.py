@@ -18,30 +18,39 @@ class Plugin(QDockWidget):
     """
     __meta__ = ABCMeta
 
-    _all_plugins = []
-    _tool_buttons = []
-    _tool_bar_actions = []
-
     location = 'hidden'
     priority = 1
 
     def __init__(self, parent=None):
         super(Plugin, self).__init__(parent)
+        # Initialize this plugin's actions list
+        self._actions = []
 
         # Keep a reference to the active sub window
         self._active_window = None
         self._current_layer = None
 
-        self._all_plugins.append(self)
         DispatchHandle.setup(self)
 
         # GUI Setup
         self.setAllowedAreas(Qt.AllDockWidgetAreas)
 
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.scroll_area.setFrameShadow(QFrame.Plain)
+        self.scroll_area.setLineWidth(0)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setGeometry(QRect(0, 0, 306, 553))
+
+        # The main widget inside the scroll area
         self.contents = QWidget()
         self.layout_vertical = QVBoxLayout(self.contents)
+        self.layout_vertical.setContentsMargins(11, 11, 11, 11)
+        self.layout_vertical.setSpacing(6)
 
-        self.setWidget(self.contents)
+        self.scroll_area.setWidget(self.contents)
+
+        self.setWidget(self.scroll_area)
 
         self.setWindowTitle(self.name)
         self.setup_ui()
@@ -66,26 +75,12 @@ class Plugin(QDockWidget):
     def setup_connections(self):
         raise NotImplementedError()
 
-    def add_tool_buttons(self, icon_path, name="Test", category=None,
-                         description="", callback=None, enabled=True):
-        button = QToolButton()
-        button.setIcon(QIcon(icon_path))
-        button.setEnabled(enabled)
-        button.setStatusTip(description)
-        button.clicked.connect(callback if callback is not None else
-                               lambda: None)
-
-        tool_button = dict(widget=button, icon_path=icon_path,
-                           category=category, description=description)
-
-        self._tool_buttons.append(tool_button)
-
-        return button
-
     def add_tool_bar_actions(self, icon_path, name="", category=None,
-                             description="", callback=None, enabled=True):
+                             description="", priority=0, enabled=True,
+                             callback=None):
         action = QAction(self)
-        action.setIcon(QIcon(icon_path))
+        icon = QIcon(icon_path)
+        action.setIcon(icon)
         action.setIconText(name)
         action.setStatusTip(description)
         action.setEnabled(enabled)
@@ -93,10 +88,10 @@ class Plugin(QDockWidget):
         action.triggered.connect(callback if callback is not None else
                                  lambda: None)
 
-        tool_button = dict(widget=action, icon_path=icon_path,
-                           category=category, description=description)
-
-        self._tool_bar_actions.append(tool_button)
+        self._actions.append(dict(action=action,
+                                  category=(category, 0) if not isinstance(
+                                      category, tuple) else category,
+                                  priority=priority))
 
         return action
 

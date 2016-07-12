@@ -20,6 +20,7 @@ from .third_party.qtpy.QtGui import QIcon
 from .third_party.qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
 from .ui.widgets.utils import ICON_PATH
+from .io import *
 
 
 class App(object):
@@ -27,8 +28,8 @@ class App(object):
         super(App, self).__init__()
         self.viewer = Viewer()
 
-        if len(argv) > 1:
-            self.controller.read_file(sys.argv[1])
+        # if len(argv) > 1:
+        #     self.controller.read_file(sys.argv[1])
 
 def setup():
     qapp = QApplication(sys.argv)

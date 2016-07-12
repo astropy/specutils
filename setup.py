@@ -43,7 +43,7 @@ LONG_DESCRIPTION = package.__doc__
 builtins._ASTROPY_PACKAGE_NAME_ = PACKAGENAME
 
 # VERSION should be PEP386 compatible (http://www.python.org/dev/peps/pep-0386)
-VERSION = '0.2.0rc3.dev'
+VERSION = '0.2.1rc4.dev'
 
 # Indicates if this version is a release version
 RELEASE = 'dev' not in VERSION
@@ -76,8 +76,10 @@ package_info = get_package_info()
 
 # Add the project-global data
 package_info['package_data'].setdefault(PACKAGENAME, [])
-package_info['package_data'][PACKAGENAME].append('data/*')
+package_info['package_data'][PACKAGENAME].append('data/*.*')
 package_info['package_data'][PACKAGENAME].append('data/linelists/*')
+package_info['package_data'][PACKAGENAME].append('io/loaders/*')
+package_info['package_data'][PACKAGENAME].append('io/yaml_loaders/*')
 package_info['package_data'][PACKAGENAME].append('ui/icons/*.png')
 package_info['package_data'][PACKAGENAME].append('ui/icons/application/*')
 
@@ -111,8 +113,10 @@ setup(name=PACKAGENAME,
       scripts=scripts,
       install_requires=[
           'astropy',
+          'cython',
+          'specutils',
           'numpy>=1.10',
-          'PyYAML',
+          'pyyaml',
           'pyqtgraph',
           'scipy'
       ],
