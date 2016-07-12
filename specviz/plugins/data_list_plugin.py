@@ -109,7 +109,7 @@ class DataListPlugin(Plugin):
         """
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters([x + " (*)" for x in
+        dialog.setNameFilters(["Auto (*)"] + [x + " (*)" for x in
                                io_registry.get_formats(Spectrum1DRef)[
                                    'Format']])
 

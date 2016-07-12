@@ -5,6 +5,8 @@ import logging
 from ..core.data import Spectrum1DRef, Spectrum1DRefModelLayer
 from ..interfaces.factories import FitterFactory
 
+import astropy.io.registry as io_registry
+
 
 class FileLoadThread(QThread):
     status = pyqtSignal(str, int)
@@ -46,12 +48,18 @@ class FileLoadThread(QThread):
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 
-        try:
-            data = Spectrum1DRef.read(file_name, format=file_filter)
-            return data
-        except:
-            logging.error("Incompatible loader for selected data: {"
-                          "}".format(file_filter))
+        if file_filter == 'Auto':
+            all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
+        else:
+            all_formats = [file_filter]
+
+        for format in all_formats:
+            try:
+                data = Spectrum1DRef.read(file_name, format=format)
+                return data
+            except:
+                logging.error("Incompatible loader for selected data: {"
+                              "}".format(file_filter))
 
 
 class FitModelThread(QThread):

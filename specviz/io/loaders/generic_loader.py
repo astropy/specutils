@@ -19,9 +19,8 @@ def fits_identify(*args, **kwargs):
             args[0].lower().split('.')[-1] in ['fits', 'fit'])
 
 
-@data_loader(label="Simple Generic", identifier=fits_identify)
+@data_loader(label="Simple Fits", identifier=fits_identify)
 def simple_generic_loader(file_name, **kwargs):
-    print("LOADING {}".format(file_name))
     name = os.path.basename(file_name.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
@@ -38,5 +37,5 @@ def simple_generic_loader(file_name, **kwargs):
     hdulist.close()
 
     return Spectrum1DRef(data=data, name=name, wcs=wcs,
-                             uncertainty=uncertainty, unit=unit, meta=meta)
+                         uncertainty=uncertainty, unit=unit, meta=meta)
 
