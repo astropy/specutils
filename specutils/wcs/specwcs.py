@@ -10,7 +10,7 @@ from astropy.modeling.parameters import Parameter
 from ..models.BSplineModel import BSplineModel
 import astropy.units as u
 
-from astropy.utils import OrderedDict
+from collections import OrderedDict
 from astropy.io import fits
 import copy
 from astropy import constants
