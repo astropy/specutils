@@ -164,8 +164,8 @@ class Spectrum1DLookupWCS(BaseSpectrum1DWCS):
 
 class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
     """
-    WCS for polynomial dispersion. The only added parameter is a unit,
-    otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
+    WCS for polynomial dispersion. The only added parameters are a unit.
+    Otherwise the same as 'astropy.modeling.polynomial.Polynomial1D'
     """
     def __init__(self, degree, unit=None, domain=None, window=[-1, 1],
                  **params):
@@ -175,7 +175,6 @@ class Spectrum1DPolynomialWCS(BaseSpectrum1DWCS, polynomial.Polynomial1D):
 
         self.fits_header_writers = {'linear': self._write_fits_header_linear,
                                     'matrix': self._write_fits_header_matrix}
-
 
     def evaluate(self, pixel_indices, *coeffs):
         return super(Spectrum1DPolynomialWCS, self).evaluate(pixel_indices,
@@ -381,11 +380,40 @@ class CompositeWCS(Model):
     wcs_list : list of callable objects, optional
         The object's wcs_list will be instantiated using wcs from this list
     """
-    def __init__(self, wcs_list=None):
+    _default_equivalencies = u.spectral()
+
+
+    def __init__(self, wcs_list=None, unit=None):
+        self._unit = None
+
         self.wcs_list = []
         if wcs_list is not None:
             for wcs in wcs_list:
                 self.add_WCS(wcs)
+
+    @property
+    def unit(self):
+        if self._unit is None:
+            return 1.0
+        else:
+            return self._unit
+
+    @unit.setter
+    def unit(self, value):
+        if value is None:
+            warnings.warn(
+                'Initializing a Spectrum1D WCS with units set to `None` is not recommended')
+            self._unit = None
+        else:
+            self._unit = u.Unit(value)
+
+    @property
+    def equivalencies(self):
+        """Equivalencies for spectral axes include spectral equivalencies and doppler"""
+        if hasattr(self, '_equivalencies'):
+            return self._equivalencies
+        else:
+            return self._default_equivalencies
 
     def add_WCS(self, wcs):
         """
@@ -409,14 +437,14 @@ class CompositeWCS(Model):
         input : numpy array
             The input to the composite WCS
         """
-        return self.__class__.evaluate(input, self.wcs_list)
+        return self.__class__.evaluate(input, self.wcs_list, unit=self.unit)
 
     @classmethod
-    def evaluate(cls, input, wcs_list):
+    def evaluate(cls, input, wcs_list, unit=None):
         output = input
         for wcs in wcs_list:
             output = wcs(output)
-        return output
+        return output*unit
 
 
 class DopplerShift(Model):

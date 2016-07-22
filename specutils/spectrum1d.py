@@ -1,7 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # This module implements the Spectrum1D class.
 
-from __future__ import print_function, division
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 from specutils.models.Indexer import Indexer
 
 __all__ = ['Spectrum1D']
@@ -12,8 +13,11 @@ from astropy import log
 from astropy.nddata import NDData, FlagCollection
 
 from astropy.utils import misc
+from astropy import constants as const
+from astropy.nddata.nduncertainty import StdDevUncertainty
 
 from specutils.wcs import BaseSpectrum1DWCS, Spectrum1DLookupWCS
+from specutils.utils import funcs
 
 
 from astropy import units as u
@@ -77,8 +81,8 @@ class Spectrum1D(NDData):
             as `dispersion`.
 
         dispersion_unit :
-        error : `~astropy.nddata.NDError`, optional
-            Errors on the data.
+        uncertainty : `~astropy.nddata.NDUncertainty`, optional
+            Errors on the data. Might be inverse variance
 
         mask : `~numpy.ndarray`, optional
             Mask for the data, given as a boolean Numpy array with a shape
@@ -271,6 +275,28 @@ class Spectrum1D(NDData):
     def dispersion_unit(self):
         return self.wcs.unit
 
+    @property
+    def sig(self):
+        ''' Return a standard 1sigma error array
+        '''
+        if isinstance(self.uncertainty,StdDevUncertainty):
+            return self.uncertainty.array
+        else:
+            return None
+
+    def relative_vel(self, wv_obs):
+        ''' Return a velocity array relative to an input wavelength
+        Should consider adding a velocity array to this Class, i.e. self.velo
+
+        Parameters
+        ----------
+        wv_obs : float
+          Wavelength to set the zero of the velocity array.
+          Often (1+z)*wrest
+        '''
+        spl = const.c.to('km/s').value 
+        return  (self.dispersion-wv_obs)*spl/wv_obs
+
         
     def interpolate(self, new_dispersion, kind='linear', bounds_error=True, fill_value=np.nan):
         """Interpolates onto a new wavelength grid and returns a new `Spectrum1D`-object.
@@ -425,4 +451,36 @@ class Spectrum1D(NDData):
                               , uncertainty=new_uncertainty, mask=new_mask,
                               indexer=new_indexer)
 
+    def gauss_smooth(self, npix=4., vfwhm=None, dv_const=True):
+        """
+        Convolve with a Gaussian assuming a fixed FWHM in km/s
+        Error array untouched (for now)
 
+        Parameters
+        ----------
+        npix : float (4.0)
+            Pixels to smooth over. FWHM
+        vfwhm : float 
+            FWHM in km/s
+        dv_const : Bool (True)
+            Specifies whether the wavelength array had constant velocity 
+        """
+        if dv_const:
+            if vfwhm is not None: # Set npix
+                dv = np.median( (self.dispersion - np.roll(self.dispersion,1))
+                                /self.dispersion * 3e5 )
+                npix = vfwhm / dv
+            # Convolve
+            self.flux = funcs.convolve_constant_dv(self.dispersion, self.flux,
+                                                   npix=npix, dv_const=True)
+        else:
+            self.flux = funcs.convolve_constant_dv(self.dispersion, self.flux,
+                                                   npix=npix, vfwhm=vfwhm)
+
+    def qck_plot(self, show=True, **kargs):
+        """
+        Generate a quick plot of the spectrum
+        """
+        import matplotlib.pyplot as plt
+        plt.plot(self.dispersion, self.flux, **kargs)
+        if show is True: plt.show()
