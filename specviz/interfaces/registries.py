@@ -37,17 +37,36 @@ class PluginRegistry(Registry):
 
         cur_path = os.path.abspath(os.path.join(__file__, '..', '..',
                                                 'plugins'))
-        for mod in [x for x in os.listdir(cur_path) if x.endswith('.py')]:
-            mod = mod.split('.')[0]
-            mod = importlib.import_module("specviz.plugins." + str(mod))
-            cls_members = inspect.getmembers(
-                mod, lambda member: inspect.isclass(member)
-                                    and 'Plugin' in [x.__name__
-                                                     for x in
-                                                     member.__bases__])
+        usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
 
-            for cls_name, cls_plugin in cls_members:
-                self._members.append(cls_plugin())
+        # This order determines priority in case of duplicates; paths higher
+        # in this list take precedence
+        check_paths = [usr_path, cur_path]
+
+        if not os.path.exists(usr_path):
+            os.mkdir(usr_path)
+
+        for path in check_paths:
+            for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
+                mod = mod.split('.')[0]
+
+                if path == cur_path:
+                    mod = "specviz.plugins.{}".format(mod)
+                else:
+                    sys.path.insert(0, path)
+
+                mod = importlib.import_module(mod)
+
+                cls_members = inspect.getmembers(
+                    mod, lambda member: inspect.isclass(member)
+                                        and 'Plugin' in [x.__name__
+                                                         for x in
+                                                         member.__bases__])
+
+                for cls_name, cls_plugin in cls_members:
+                    self._members.append(cls_plugin())
+
+                sys.path.pop(0)
 
 
 class LoaderRegistry(Registry):
@@ -75,8 +94,8 @@ class LoaderRegistry(Registry):
         for path in check_paths:
             for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
                 mod = mod.split('.')[0]
-                sys.path.insert(0, cur_path)
-                mod = importlib.import_module(str(mod))
+                sys.path.insert(0, path)
+                mod = importlib.import_module(mod)
                 members = inspect.getmembers(mod, predicate=inspect.isfunction)
 
                 # for _, func in members:

@@ -9,10 +9,6 @@ from glue.utils import nonpartial
 from specviz.ui.viewer import Viewer
 from specviz.core import Dispatch as SVDispatch
 from specviz.core import DispatchHandle as SVDispatchHandle
-from mosviz.core import Dispatch as MVDispatch
-from mosviz.core import DispatchHandle as MVDispatchHandle
-
-from mosviz.app import App
 
 from .viewer_options import OptionsWidget
 from .layer_widget import LayerWidget
@@ -181,79 +177,3 @@ class SpecvizViewer(BaseVizViewer):
     def _added_data(self, data):
         filename = data.name
         self._specviz_data_cache[filename] = data
-
-
-class MOSVizViewer(BaseVizViewer):
-    LABEL = "MOSViz viewer"
-
-    def __init__(self, session, parent=None):
-        super(MOSVizViewer, self).__init__(session, parent=None)
-        # We keep a cache of the mosviz data objects that correspond to a given
-        # filename - although this could take up a lot of memory if there are
-        # many spectra, so maybe this isn't needed
-        self._mosviz_data_cache = OrderedDict()
-
-        self.app = App(full_ui=False)
-        self.setCentralWidget(self.app.main_window)
-
-    # def _remove_subset(self, message):
-    #     if message.subset in self._layer_widget:
-    #         self._layer_widget.remove_layer(message.subset)
-    #         del self._mosviz_data_cache[message.subset]
-    #
-    #     self._refresh_data()
-
-    def _refresh_data(self):
-        print(len(self._layer_widget._layers))
-        for layer in self._layer_widget._layers:
-            if isinstance(layer, Subset):
-                mask = layer.to_mask(None)
-                data = layer.data
-            else:
-                mask = None
-                data = layer
-
-            columns = []
-            col_names = data.components
-
-            for att in col_names:
-                cid = data.id[att]
-                component = data.get_component(cid)
-
-                if component.categorical:
-                    col_data = component.labels[mask]
-                else:
-                    col_data = component.data[mask]
-
-                if mask is None:
-                    col_data = col_data[0]
-
-                if str(att) in ['spectrum1d', 'spectrum2d', 'cutout']:
-                    path = '/'.join(component._load_log.path.split('/')[:-1])
-                    columns.append([os.path.join(path, x) for x in col_data])
-                else:
-                    columns.append(col_data)
-
-            catalog_list = []
-
-            for row in zip(*columns):
-                catalog_dict = dict(zip([str(x) for x in col_names], row))
-                catalog_list.append(catalog_dict)
-
-            if len(catalog_list) == 0:
-                continue
-
-            if layer in self._mosviz_data_cache:
-                if self._mosviz_data_cache[layer] == catalog_list:
-                    continue
-
-            self._mosviz_data_cache[layer] = catalog_list
-
-            print("-"*20, len(self._mosviz_data_cache))
-
-            # Clear current data objects in MOSViz
-            MVDispatch.on_remove_all_data.emit()
-
-            for k, v in self._mosviz_data_cache.items():
-                MVDispatch.on_file_read.emit(file_name=v,
-                                             file_filter='mos-glue')
