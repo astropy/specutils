@@ -339,13 +339,29 @@ class PlotSubWindow(UiPlotSubWindow):
         # Build new line lists with only the selected rows.
 
         linelists_with_selections = []
-        for k, table_view in enumerate(table_views):
-            line_list = self.linelists[k]
+        
+        for table_view in table_views:
+            # Find matching line list by its name. This could be made
+            # simpler by the use of a dict. That breaks code elsewhere
+            # though: it is assumed by that code that self.linelists
+            # is a list and not a dict.
+            view_name = table_view.model().getName()
+            for k in range(len(self.linelists)):
+                line_list = self.linelists[k]
+                line_list_name = line_list.name
 
-            selected_rows = table_view.selectionModel().selectedRows()
-            new_list = line_list.extract_rows(selected_rows)
+                if line_list_name == view_name:
+                    # must map between view and underlying model
+                    # because of row sorting.
+                    selected_rows = table_view.selectionModel().selectedRows()
+                    model_selected_rows = []
+                    for sr in selected_rows:
+                        model_row = table_view.model().mapToSource(sr)
+                        model_selected_rows.append(model_row)
 
-            linelists_with_selections.append(new_list)
+                    new_list = line_list.extract_rows(model_selected_rows)
+
+                    linelists_with_selections.append(new_list)
 
         # Merge all line lists into a single one. This might
         # change in the future to enable customized plotting
