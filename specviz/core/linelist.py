@@ -38,7 +38,7 @@ def ingest(range):
         linelist_path = yaml_path.replace('.yaml', '.txt')
         filter = linelist_path.split(os.sep)[-1].split('.')[0] + ' (*.txt *.dat)'
 
-        linelist = LineList.read(linelist_path, format="ascii")
+        linelist = LineList.read(linelist_path, format="ascii.tab")
         linelist = linelist.extract_range(range)
 
         linelists.append(linelist)
