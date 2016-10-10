@@ -34,7 +34,7 @@ DESCRIPTION = metadata.get('description', 'An interactive astronomical analysis 
 AUTHOR = metadata.get('author', 'Nicholas Earl, Ivo Busko, Pey Lian Lim')
 AUTHOR_EMAIL = metadata.get('author_email', 'nearl@stsci.edu')
 LICENSE = metadata.get('license', 'unknown')
-URL = metadata.get('url', 'http://specviz.readthedocs.org')
+URL = metadata.get('url', 'https://specviz.readthedocs.io')
 
 # Get the long description from the package's docstring
 __import__(PACKAGENAME)

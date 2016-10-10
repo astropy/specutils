@@ -5,7 +5,7 @@ Installation
 
 SpecViz is distributed through the `Anaconda <https://anaconda.org>`_ package
 manager. Specifically, it lives within Space Telescope Science Institute's
-`AstroConda <http://astroconda.readthedocs.io/>`_ channel.
+`AstroConda <https://astroconda.readthedocs.io/>`_ channel.
 
 If you do not have Anaconda, please follow the `instructions here
 <https://www.continuum.io/downloads>`_ to install it, or scroll down for
