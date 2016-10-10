@@ -117,6 +117,8 @@ class PlotSubWindow(UiPlotSubWindow):
 
         self._setup_connections()
 
+        self.linelists = []
+
     def _setup_connections(self):
         # Connect cursor position to UI element
         # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
@@ -156,6 +158,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if container is None:
             return
 
+        mask = None
         mask_holder = []
         rois = [roi] if roi is not None else self._rois
 
@@ -164,17 +167,14 @@ class PlotSubWindow(UiPlotSubWindow):
             # x1, y1, x2, y2 = roi_shape.getCoords()
             x1, x2 = roi.getRegion()
 
-            # layer_mask = np.copy(layer._mask)
             mask = (container.layer.dispersion.data.value >= x1) & \
                    (container.layer.dispersion.data.value <= x2)
-            # layer_mask[layer_mask==True] = mask
+
             mask_holder.append(mask)
 
-        if len(mask_holder) == 0:
-            mask_holder.append(container.layer.layer_mask)
-
-        # mask = np.logical_not(reduce(np.logical_or, mask_holder))
-        mask = reduce(np.logical_or, mask_holder)
+        if len(mask_holder) > 0:
+            mask = reduce(np.logical_or, mask_holder)
+            mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
 
         return mask
 
@@ -315,8 +315,8 @@ class PlotSubWindow(UiPlotSubWindow):
         amax = 0.0
 
         for container in self._plots:
-            amin = min(amin, container.dispersion.value[0])
-            amax = max(amax, container.dispersion.value[-1])
+            amin = min(amin, container.layer.dispersion.compressed().value[0])
+            amax = max(amax, container.layer.dispersion.compressed().value[-1])
 
         amin = Quantity(amin, self._plot_units[0])
         amax = Quantity(amax, self._plot_units[0])
