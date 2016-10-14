@@ -71,7 +71,7 @@ def _get_num_coefficients(function_dict):
 
 def _parse_fits_units(fits_unit_string):
     """
-    Parse FITS units - only converting Angstroms to Angstrom
+    Parse FITS units - converting Angstroms to Angstrom and nanometers to nanometer
 
     Parameters
     ----------
@@ -81,6 +81,8 @@ def _parse_fits_units(fits_unit_string):
 
     if fits_unit_string.lower().strip() == 'angstroms':
         fits_unit_string = 'Angstrom'
+    elif fits_unit_string.lower().strip() == 'nanometers':
+        fits_unit_string = 'nanometer'
 
     return u.Unit(fits_unit_string)
 
