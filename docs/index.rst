@@ -1,7 +1,13 @@
-******************
+*********
 Specutils
-******************
-An AstroPy affiliated package containing operations and tools on astronomical spectra.
+*********
+
+Specutils is an `Astropy`_ affiliated package with the goal of providing a
+shared set of Python representations of astronomical spectra, and basic tools to
+operate on these spectra.  The effort is also meant to be a "hub", helping to
+unite the Python astronomical spectroscopy community around shared effort, much
+as `Astropy`_ is meant to for the wider astronomy Python ecosystem.
+
 
 First Steps
 ==============
@@ -9,13 +15,13 @@ The `Spectrum1D`_ class is one of the core classes of the specutils package.
 You can import it like this:
 
 .. code-block:: python
-  
+
   >>> from specutils import Spectrum1D
 
 To instantiate it you can define a wave and a flux:
 
 .. code-block:: python
-  
+
   >>> wave = np.arange(6000, 9000) * u.Angstrom
   >>> flux = np.random.random(3000) * u.Unit('W m-2 angstrom-1 sr-1')
 
@@ -60,7 +66,7 @@ Reading a Spectrum from a FITS file with no specified units in the header will g
 the Spectrum1D.dispersion will be an array:
 
 .. code-block:: python
-  
+
   >>> myspec.dispersion
   array([ 3732.05623192,  3732.0858853 ,  3732.11553869, ...,  4999.67906915,
           4999.70872253,  4999.73837591])
@@ -76,7 +82,7 @@ In order to be convertible, the dispersion must be an astropy Quantity, which wi
               4999.67906915, 4999.70872253, 4999.73837591] Angstrom>
   >>> myspec.wavelength
   <Quantity [ 3732.05623192, 3732.0858853 , 3732.11553869,...,
-              4999.67906915, 4999.70872253, 4999.73837591] Angstrom> 
+              4999.67906915, 4999.70872253, 4999.73837591] Angstrom>
   >>> myspec.energy
   <Quantity [ 5.32265743e-19,  5.32261514e-19,  5.32257285e-19,...,
               3.97314639e-19,  3.97312282e-19,  3.97309926e-19] J>
@@ -93,7 +99,7 @@ You can easily make a plot of the Spectrum using matplotlib in ipython with the 
 
 .. plot:: pyplots/plotting_example.py
 
-`Full Documentation`_ 
+`Full Documentation`_
 
 .. image:: https://travis-ci.org/astropy/specutils.png?branch=master
   :target: https://travis-ci.org/astropy/specutils
@@ -112,3 +118,5 @@ You can easily make a plot of the Spectrum using matplotlib in ipython with the 
 .. _Spectrum1DIRAFChebyshevWCS: http://specutils.readthedocs.org/en/latest/api/specutils.wcs.specwcs.Spectrum1DIRAFChebyshevWCS.html#specutils.wcs.specwcs.Spectrum1DIRAFChebyshevWCS
 .. _Spectrum1DIRAFBSplineWCS: http://specutils.readthedocs.org/en/latest/api/specutils.wcs.specwcs.Spectrum1DIRAFBSplineWCS.html#specutils.wcs.specwcs.Spectrum1DIRAFBSplineWCS
 .. _MultispecIRAFCompositeWCS: http://specutils.readthedocs.org/en/latest/api/specutils.wcs.specwcs.MultispecIRAFCompositeWCS.html#specutils.wcs.specwcs.MultispecIRAFCompositeWCS -->
+
+.. _Astropy: http://www.astropy.org/
