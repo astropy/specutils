@@ -13,7 +13,7 @@ from astropy.units import Quantity
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 
-from ...core.comms import Dispatch, DispatchHandle
+from ...core.comms import dispatch, DispatchHandle
 from ...core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ...core.plots import LinePlot
 from ...core.annotation import LineIDMarker
@@ -195,11 +195,11 @@ class PlotSubWindow(UiPlotSubWindow):
         roi.sigRemoveRequested.connect(remove)
 
         # Connect events
-        Dispatch.on_updated_rois.emit(rois=self._rois)
+        dispatch.on_updated_rois.emit(rois=self._rois)
         roi.sigRemoveRequested.connect(
-            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
+            lambda: dispatch.on_updated_rois.emit(rois=self._rois))
         roi.sigRegionChangeFinished.connect(
-            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
+            lambda: dispatch.on_updated_rois.emit(rois=self._rois))
 
     def get_plot(self, layer):
         for plot in self._plots:
@@ -248,7 +248,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # before tearing down event handlers, need to close
         # any line lists window that might be still open.
-        Dispatch.on_dismiss_linelists_window.emit()
+        dispatch.on_dismiss_linelists_window.emit()
 
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
@@ -279,7 +279,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
 
-        Dispatch.on_added_plot.emit(plot=new_plot, window=window)
+        dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
     @DispatchHandle.register_listener("on_removed_layer")
     def remove_plot(self, layer, window=None):

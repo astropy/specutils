@@ -6,7 +6,7 @@ from ..third_party.qtpy.QtCore import *
 from ..third_party.qtpy.QtWidgets import *
 from ..third_party.qtpy.QtGui import *
 
-from ..core.comms import Dispatch
+from ..core.comms import dispatch
 from .widgets.windows import MainWindow
 
 
@@ -123,7 +123,7 @@ class Viewer(object):
     def _setup_connections(self):
         # Listen for subwindow selection events, update layer list on selection
         self.main_window.mdi_area.subWindowActivated.connect(
-            lambda wi: Dispatch.on_selected_window.emit(
+            lambda wi: dispatch.on_selected_window.emit(
             window=wi.widget() if wi is not None else None))
 
 

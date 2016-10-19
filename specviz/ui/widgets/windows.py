@@ -1,7 +1,7 @@
 from ...third_party.qtpy.QtWidgets import *
 from ...third_party.qtpy.QtCore import *
 from ...third_party.qtpy.QtGui import *
-from ...core.comms import Dispatch, DispatchHandle
+from ...core.comms import dispatch, DispatchHandle
 from ...core.data import Spectrum1DRefLayer
 from .sub_windows import PlotSubWindow
 
@@ -69,7 +69,7 @@ class MainWindow(UiMainWindow):
             else:
                 window = None
 
-        Dispatch.on_activated_window.emit(
+        dispatch.on_activated_window.emit(
             window=window.widget() if window is not None else None)
 
     @DispatchHandle.register_listener("on_add_window")
@@ -106,4 +106,4 @@ class MdiArea(QMdiArea):
             e.ignore()
 
     def dropEvent(self, e):
-        Dispatch.on_add_window.emit(data=e.mimeData.data())
+        dispatch.on_add_window.emit(data=e.mimeData.data())

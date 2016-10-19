@@ -3,7 +3,7 @@ import logging
 
 from astropy.units import Unit
 
-from ..core.comms import Dispatch, DispatchHandle
+from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..ui.widgets.plugin import Plugin
 from ..ui.widgets.dialogs import TopAxisDialog, UnitChangeDialog
@@ -25,7 +25,7 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
             category=('Selections', 4),
             priority=1,
-            callback=Dispatch.on_add_roi.emit,
+            callback=dispatch.on_add_roi.emit,
             enabled=False)
 
         # Change top axis
@@ -52,7 +52,7 @@ class PlotToolsPlugin(Plugin):
             description='Add line labels',
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
             category='Selections',
-            callback=Dispatch.on_show_linelists_window.emit,
+            callback=dispatch.on_show_linelists_window.emit,
             enabled=False)
 
     def setup_connections(self):

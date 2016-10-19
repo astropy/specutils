@@ -7,7 +7,7 @@ from glue.core import message as msg
 from glue.utils import nonpartial
 
 from specviz.ui.viewer import Viewer
-from specviz.core import Dispatch as SVDispatch
+from specviz.core import dispatch as SVDispatch
 from specviz.core import DispatchHandle as SVDispatchHandle
 
 from .viewer_options import OptionsWidget
