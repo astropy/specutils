@@ -3,7 +3,7 @@ Specutils
 *********
 
 Specutils is an `Astropy`_ affiliated package with the goal of providing a
-shared set of Python representations of astronomical spectra, and basic tools to
+shared set of Python representations of astronomical spectra and basic tools to
 operate on these spectra.  The effort is also meant to be a "hub", helping to
 unite the Python astronomical spectroscopy community around shared effort, much
 as `Astropy`_ is meant to for the wider astronomy Python ecosystem.
