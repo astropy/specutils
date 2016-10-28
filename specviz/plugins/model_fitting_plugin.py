@@ -521,18 +521,10 @@ class ModelFittingPlugin(Plugin):
             self.update_model_list(layer=current_layer)
             dispatch.on_update_model.emit(layer=current_layer)
         else:
-            new_model_layer = Spectrum1DRefModelLayer(
-                source=current_layer._source,
-                mask=mask,
-                parent=current_layer,
-                name="New Model Layer",
-                model=compound_model)
+            layer = self.add_model_layer(compound_model)
 
-            dispatch.on_add_layer.emit(layer=new_model_layer,
-                                       window=current_window)
-
-        # put formula in text edit widget
-        self.line_edit_model_arithmetic.setText(formula)
+            dispatch.on_update_model.emit(layer=layer)
+            dispatch.on_add_model.emit(layer=layer)
 
 
 class UiModelFittingPlugin:
