@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..third_party.qtpy.QtGui import *
+from qtpy.QtGui import *
 
 from astropy.units import spectral_density, spectral
 import pyqtgraph as pg

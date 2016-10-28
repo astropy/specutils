@@ -1,7 +1,9 @@
+import os
+
 from ..ui.widgets.plugin import Plugin
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtGui import *
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io

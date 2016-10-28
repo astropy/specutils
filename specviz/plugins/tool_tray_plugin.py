@@ -1,5 +1,4 @@
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtGui import *
+import os
 
 from ..ui.widgets.plugin import Plugin
 from ..ui.widgets.utils import ICON_PATH

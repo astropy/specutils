@@ -1,5 +1,5 @@
-from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtGui import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
 
 
 class PlotToolBar(QToolBar):

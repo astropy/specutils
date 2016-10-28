@@ -10,8 +10,8 @@ import pyqtgraph as pg
 
 from astropy.units import Quantity
 
-from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
 
 from ...core.comms import dispatch, DispatchHandle
 from ...core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN

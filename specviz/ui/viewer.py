@@ -2,9 +2,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtGui import *
+from qtpy.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
 
 from ..core.comms import dispatch
 from .widgets.windows import MainWindow

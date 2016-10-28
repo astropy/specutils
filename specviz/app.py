@@ -15,9 +15,9 @@ import os
 from astropy.utils.exceptions import AstropyUserWarning
 
 # LOCAL
-from .third_party.qtpy.QtWidgets import QApplication
-from .third_party.qtpy.QtGui import QIcon
-from .third_party.qtpy.QtCore import QTimer
+from qtpy.QtWidgets import QApplication
+from qtpy.QtGui import QIcon
+from qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
 from .external.glue.data_viewer import SpecVizViewer
 from .ui.widgets.utils import ICON_PATH

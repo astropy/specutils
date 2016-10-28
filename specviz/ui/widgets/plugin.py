@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtCore import *
-from ...third_party.qtpy.QtGui import *
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
 from ...core.comms import dispatch, DispatchHandle
 
 from ...ui.widgets.utils import ICON_PATH
