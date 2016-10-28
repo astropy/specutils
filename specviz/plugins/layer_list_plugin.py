@@ -382,6 +382,3 @@ class UiLayerListPlugin:
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
         plugin.dialog_layer_arithmetic = LayerArithmeticDialog()
-
-        # Set size of plugin
-        plugin.setMinimumSize(plugin.sizeHint())

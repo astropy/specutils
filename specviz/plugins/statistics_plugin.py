@@ -337,7 +337,3 @@ class UiStatisticsPlugin:
         plugin.layout_vertical_tab_measured.addStretch()
 
         plugin.layout_vertical.addStretch()
-
-        # Set size of plugin. Setting this seems to screw with `QPushButton`
-        # visual formatting
-        plugin.setMinimumSize(plugin.sizeHint())

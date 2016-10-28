@@ -44,10 +44,11 @@ class Plugin(QDockWidget):
 
         # The main widget inside the scroll area
         self.contents = QWidget()
-        self.layout_vertical = QVBoxLayout(self.contents)
+        self.layout_vertical = QVBoxLayout()
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
         self.layout_vertical.setSpacing(6)
 
+        self.contents.setLayout(self.layout_vertical)
         self.scroll_area.setWidget(self.contents)
 
         self.setWidget(self.scroll_area)

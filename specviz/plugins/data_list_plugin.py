@@ -234,7 +234,3 @@ class UiDataListPlugin:
         plugin.layout_horizontal.addWidget(plugin.button_remove_data)
 
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
-
-        # Set size of plugin. Setting this seems to screw with `QPushButton`
-        # visual formatting
-        plugin.setMinimumSize(plugin.sizeHint())
