@@ -47,7 +47,7 @@ class LinePlot(object):
         _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
                                         _pen.color().green(),
                                         _pen.color().blue(),
-                                        50))
+                                        255))
 
         _err_pen = err_pen if err_pen is not None else pg.mkPen(
             color=(100, 100, 100, 50))
