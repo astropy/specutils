@@ -5,10 +5,11 @@ from glue.core import Subset
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.core import message as msg
 from glue.utils import nonpartial
+from glue.viewers.common.qt.toolbar import BasicToolbar
 
 from specviz.ui.viewer import Viewer
-from specviz.core import dispatch as SVDispatch
-from specviz.core import DispatchHandle as SVDispatchHandle
+from specviz.core import dispatch
+from specviz.core import DispatchHandle
 
 from .viewer_options import OptionsWidget
 from .layer_widget import LayerWidget
@@ -22,7 +23,7 @@ class BaseVizViewer(DataViewer):
         super(BaseVizViewer, self).__init__(session, parent=parent)
 
         # Connect the dataview to the specviz messaging system
-        SVDispatchHandle.setup(self)
+        DispatchHandle.setup(self)
 
         # We now set up the options widget. This controls for example which
         # attribute should be used to indicate the filenames of the spectra.
@@ -78,6 +79,7 @@ class BaseVizViewer(DataViewer):
         if data not in self._layer_widget:
             self._layer_widget.add_layer(data)
         self._layer_widget.layer = data
+        self._options_widget.set_data(self._layer_widget.layer)
         self._refresh_data()
         return True
 
@@ -85,6 +87,7 @@ class BaseVizViewer(DataViewer):
         if subset not in self._layer_widget:
             self._layer_widget.add_layer(subset)
         self._layer_widget.layer = subset
+        self._options_widget.set_data(self._layer_widget.layer)
         self._refresh_data()
         return True
 
@@ -116,12 +119,11 @@ class BaseVizViewer(DataViewer):
         raise NotImplementedError()
 
 
-class SpecvizViewer(BaseVizViewer):
-
-    LABEL = "SpecViz viewer"
+class SpecVizViewer(BaseVizViewer):
+    LABEL = "SpecViz Viewer"
 
     def __init__(self, session, parent=None):
-        super(SpecvizViewer, self).__init__(session, parent=None)
+        super(SpecVizViewer, self).__init__(session, parent=None)
         # We keep a cache of the specviz data objects that correspond to a given
         # filename - although this could take up a lot of memory if there are
         # many spectra, so maybe this isn't needed
@@ -132,11 +134,16 @@ class SpecvizViewer(BaseVizViewer):
         self.viewer = Viewer(hide_plugins=True)
         self.setCentralWidget(self.viewer.main_window)
 
+    def initialize_toolbar(self):
+        pass
+
     def _refresh_data(self):
         if self._options_widget.file_att is None:
+            print("returning because of options widget")
             return
 
         if self._layer_widget.layer is None:
+            print("returning because of layer widget")
             return
 
         if isinstance(self._layer_widget.layer, Subset):
@@ -150,7 +157,7 @@ class SpecvizViewer(BaseVizViewer):
             component = self._layer_widget.layer.get_component(cid)
 
         # Clear current data objects in SpecViz
-        SVDispatch.on_remove_all_data.emit()
+        dispatch.on_remove_all_data.emit()
 
         if not component.categorical:
             return
@@ -165,15 +172,15 @@ class SpecvizViewer(BaseVizViewer):
 
             if filename in self._specviz_data_cache:
                 data = self._specviz_data_cache[filename]
-                SVDispatch.on_add_data.emit(data=data)
+                dispatch.on_add_data.emit(data=data)
 
             else:
                 file_name = str(filename)
                 file_path = os.path.join(path, file_name)
-                SVDispatch.on_file_read.emit(file_name=file_path,
+                dispatch.on_file_read.emit(file_name=file_path,
                                            file_filter='MOS')
 
-    @SVDispatchHandle.register_listener('on_added_data')
+    @DispatchHandle.register_listener('on_added_data')
     def _added_data(self, data):
         filename = data.name
         self._specviz_data_cache[filename] = data

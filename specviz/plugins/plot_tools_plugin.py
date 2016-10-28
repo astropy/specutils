@@ -55,6 +55,14 @@ class PlotToolsPlugin(Plugin):
             callback=dispatch.on_show_linelists_window.emit,
             enabled=False)
 
+        self.button_plot_settings = self.add_tool_bar_actions(
+            name="Plot Settings",
+            description='Edit visual plot settings',
+            icon_path=os.path.join(ICON_PATH, "Settings-50.png"),
+            category='Options',
+            callback=dispatch.on_show_linelists_window.emit,
+            enabled=False)
+
     def setup_connections(self):
         # On accept, change the displayed axis
         self._top_axis_dialog.accepted.connect(
