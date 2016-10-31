@@ -99,7 +99,7 @@ class LinePlot(object):
         if y is None or not self._layer.unit.is_equivalent(
                 y, equivalencies=spectral_density(self.layer.dispersion)):
             logging.error("Failed to convert y-axis plot units.")
-            y = None
+            y = self._layer.unit
 
         self._layer.set_units(x, y)
         self._plot_units = (x, y, z)

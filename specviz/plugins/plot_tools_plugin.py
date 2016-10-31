@@ -84,6 +84,10 @@ class PlotToolsPlugin(Plugin):
             self._update_axis)
 
     def _show_unit_change_dialog(self):
+        # Populate the text fields with the current units
+        self._unit_change_dialog.line_edit_flux_unit.setText("{}".format(self.current_layer.unit))
+        self._unit_change_dialog.line_edit_disp_unit.setText("{}".format(self.current_layer.dispersion_unit))
+
         if self._unit_change_dialog.exec_():
             x_text = self._unit_change_dialog.disp_unit
             y_text = self._unit_change_dialog.flux_unit
