@@ -2,11 +2,11 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtGui import *
+from qtpy.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
 
-from ..core.comms import Dispatch
+from ..core.comms import dispatch
 from .widgets.windows import MainWindow
 
 
@@ -59,10 +59,10 @@ class Viewer(object):
                     instance_plugin.toggleViewAction())
 
         # Resize the widgets now that they are all present
-        # for ip in instance_plugins:
-        #     ip.setMinimumSize(ip.sizeHint())
-        #     QApplication.processEvents()
-        #     ip.setMinimumHeight(100)
+        for ip in instance_plugins:
+            ip.setMinimumSize(ip.sizeHint())
+            QApplication.processEvents()
+            ip.setMinimumHeight(100)
 
         # Sort actions based on priority
         all_actions = [y for x in instance_plugins for y in x._actions]
@@ -123,7 +123,7 @@ class Viewer(object):
     def _setup_connections(self):
         # Listen for subwindow selection events, update layer list on selection
         self.main_window.mdi_area.subWindowActivated.connect(
-            lambda wi: Dispatch.on_selected_window.emit(
+            lambda wi: dispatch.on_selected_window.emit(
             window=wi.widget() if wi is not None else None))
 
 

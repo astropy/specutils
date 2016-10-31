@@ -1,8 +1,10 @@
+import os
+
 from ..ui.widgets.plugin import Plugin
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtGui import *
-from ..core.comms import Dispatch, DispatchHandle
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
+from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
 from ..interfaces.initializers import initialize
@@ -27,10 +29,10 @@ class ModelFittingPlugin(Plugin):
         self.fit_model_thread = FitModelThread()
 
         self.fit_model_thread.status.connect(
-            Dispatch.on_status_message.emit)
+            dispatch.on_status_message.emit)
 
         self.fit_model_thread.result.connect(
-            lambda layer: Dispatch.on_update_model.emit(layer=layer))
+            lambda layer: dispatch.on_update_model.emit(layer=layer))
 
     def setup_ui(self):
         UiModelFittingPlugin(self)
@@ -121,8 +123,8 @@ class ModelFittingPlugin(Plugin):
             # create a new `ModelLayer`
             layer = self.add_model_layer(model=model)
 
-        Dispatch.on_update_model.emit(layer=layer)
-        Dispatch.on_add_model.emit(layer=layer)
+        dispatch.on_update_model.emit(layer=layer)
+        dispatch.on_add_model.emit(layer=layer)
 
     def add_model_layer(self, model):
         """
@@ -145,7 +147,7 @@ class ModelFittingPlugin(Plugin):
             model=model,
             layer_mask=mask)
 
-        Dispatch.on_add_layer.emit(layer=new_model_layer,
+        dispatch.on_add_layer.emit(layer=new_model_layer,
                                    window=self.active_window)
 
         return new_model_layer
@@ -306,7 +308,7 @@ class ModelFittingPlugin(Plugin):
 
         model_layer.model = model
 
-        Dispatch.on_update_model.emit(layer=model_layer)
+        dispatch.on_update_model.emit(layer=model_layer)
 
     def get_compound_model(self, model_dict=None, formula=''):
         model_dict = model_dict or self.get_model_inputs()
@@ -371,7 +373,7 @@ class ModelFittingPlugin(Plugin):
         if model is not None:
             model_layer.model = model
 
-            Dispatch.on_update_model.emit(layer=model_layer)
+            dispatch.on_update_model.emit(layer=model_layer)
         else:
             logging.error("Cannot set `ModelLayer` model to new compound "
                           "model.")
@@ -403,7 +405,7 @@ class ModelFittingPlugin(Plugin):
             prev_val = model_item.data(col, Qt.UserRole)
             model_item.setText(col, str(prev_val))
 
-        Dispatch.on_changed_model.emit(model_item=model_item)
+        dispatch.on_changed_model.emit(model_item=model_item)
 
     def fit_model_layer(self):
         current_layer = self.current_layer
@@ -519,20 +521,12 @@ class ModelFittingPlugin(Plugin):
             current_layer.model = compound_model
 
             self.update_model_list(layer=current_layer)
-            Dispatch.on_update_model.emit(layer=current_layer)
+            dispatch.on_update_model.emit(layer=current_layer)
         else:
-            new_model_layer = Spectrum1DRefModelLayer(
-                source=current_layer._source,
-                mask=mask,
-                parent=current_layer,
-                name="New Model Layer",
-                model=compound_model)
+            layer = self.add_model_layer(compound_model)
 
-            Dispatch.on_add_layer.emit(layer=new_model_layer,
-                                       window=current_window)
-
-        # put formula in text edit widget
-        self.line_edit_model_arithmetic.setText(formula)
+            dispatch.on_update_model.emit(layer=layer)
+            dispatch.on_add_model.emit(layer=layer)
 
 
 class UiModelFittingPlugin:
@@ -675,7 +669,3 @@ class UiModelFittingPlugin:
         plugin.layout_vertical.addWidget(plugin.group_box_add_model)
         plugin.layout_vertical.addWidget(plugin.group_box_current_models)
         plugin.layout_vertical.addWidget(plugin.group_box_fitting)
-
-        # Set size of plugin. Setting this seems to screw with `QPushButton`
-        # visual formatting
-        # plugin.setMinimumSize(plugin.sizeHint())

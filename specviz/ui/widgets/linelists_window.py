@@ -1,8 +1,8 @@
-from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtGui import *
-from ...third_party.qtpy.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtCore import *
 
-from ...core.comms import Dispatch, DispatchHandle
+from ...core.comms import dispatch, DispatchHandle
 
 
 #TODO work in progress
@@ -129,7 +129,7 @@ class LineListsWindow(UiLinelistsWindow):
         self.setupUi(self._main_window, str(plot_window))
 
         # Request that line lists be read from wherever are they sources.
-        Dispatch.on_request_linelists.emit()
+        dispatch.on_request_linelists.emit()
 
         self.buildViews(plot_window)
 
@@ -140,9 +140,9 @@ class LineListsWindow(UiLinelistsWindow):
         # all in here for the sake of encapsulation. This is so because this class
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
-        self.draw_button.clicked.connect(lambda:Dispatch.on_plot_linelists.emit(table_views=self._table_views))
-        self.erase_button.clicked.connect(Dispatch.on_erase_linelabels.emit)
-        self.dismiss_button.clicked.connect(Dispatch.on_dismiss_linelists_window.emit)
+        self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(table_views=self._table_views))
+        self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
+        self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
 
     def buildViews(self, plot_window):
 

@@ -3,8 +3,8 @@ from __future__ import (absolute_import, division, print_function,
 
 from pyqtgraph import functions, TextItem
 
-from ..third_party.qtpy.QtCore import QPointF
-from ..third_party.qtpy.QtGui import QPolygonF, QPen, QColor
+from qtpy.QtCore import QPointF
+from qtpy.QtGui import QPolygonF, QPen, QColor
 
 
 orientations = {

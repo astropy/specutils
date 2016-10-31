@@ -1,8 +1,10 @@
+import os
+
 from ..ui.widgets.plugin import Plugin
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtGui import *
-from ..core.comms import Dispatch, DispatchHandle
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
+from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
 from ..core.data import Spectrum1DRefLayer
 
@@ -38,22 +40,17 @@ class LayerListPlugin(Plugin):
 
         # Listen for layer selection events, update model tree on selection
         self.tree_widget_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_selected_layer.emit(
+            lambda: dispatch.on_selected_layer.emit(
                 layer_item=self.current_layer_item))
-
-        # When a layer is selected, make that line more obvious than the others
-        self.tree_widget_layer_list.itemSelectionChanged.connect(
-            lambda: Dispatch.on_selected_plot.emit(
-                layer=self.current_layer))
 
         # When an interactable widget inside a layer item is clicked
         self.tree_widget_layer_list.itemClicked.connect(
-            lambda li, col: Dispatch.on_clicked_layer.emit(
+            lambda li, col: dispatch.on_clicked_layer.emit(
                 layer_item=li))
 
         # When an interactable widget inside a layer item is clicked
         self.tree_widget_layer_list.itemChanged.connect(
-            lambda li, col: Dispatch.on_changed_layer.emit(
+            lambda li, col: dispatch.on_changed_layer.emit(
                 layer_item=li))
 
         # -- Widget connection setup
@@ -177,7 +174,7 @@ class LayerListPlugin(Plugin):
                     child.removeChild(sec_child)
                     break
 
-        Dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
+        dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
 
     def add_layer(self, layer=None, layer_mask=None, window=None, from_roi=True):
         """
@@ -202,9 +199,9 @@ class LayerListPlugin(Plugin):
             window.get_roi_mask(layer=layer)
 
         new_layer = layer.from_self(layer_mask=roi_mask,
-                                    name=layer.name + " Layer Slice")
+                                    name=layer.name + " Slice")
 
-        Dispatch.on_add_layer.emit(layer=new_layer)
+        dispatch.on_add_layer.emit(layer=new_layer, window=window)
 
     @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
     def update_layer_item(self, plot=None, *args, **kwargs):
@@ -220,19 +217,21 @@ class LayerListPlugin(Plugin):
 
         if layer_item is not None:
             layer_item.setIcon(0, icon)
+            layer_item.setCheckState(0, Qt.Checked if plot.checked else Qt.Unchecked)
 
-    @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
-    def _update_layer_name(self, layer_item, col=0):
+    @DispatchHandle.register_listener("on_selected_layer")
+    def _update_layer_name(self, layer_item, checked_state=None, col=0):
         if layer_item is None:
             return
 
         layer = layer_item.data(0, Qt.UserRole)
+        self.active_window.set_active_plot(layer)
 
         if hasattr(layer, 'name'):
             layer.name = layer_item.text(0)
 
         # Alert the statistics container to update the displayed layer name
-        Dispatch.on_updated_rois.emit(rois=None)
+        dispatch.on_updated_rois.emit(rois=None)
 
     def _show_arithmetic_dialog(self):
         if self.current_layer is None:
@@ -269,12 +268,12 @@ class LayerListPlugin(Plugin):
                 current_window._plot_units[0], equivalencies=spectral())
 
             if data_units_equiv and disp_units_equiv:
-                Dispatch.on_add_layer.emit(window=self.active_window,
+                dispatch.on_add_layer.emit(window=self.active_window,
                                            layer=new_layer)
             else:
                 logging.info("{} not equivalent to {}.".format(
                     new_layer.unit, current_window._plot_units[1]))
-                Dispatch.on_add_window.emit(data=new_layer)
+                dispatch.on_add_window.emit(data=new_layer)
 
     def _change_plot_color(self):
         plot = self.active_window.get_plot(self.current_layer)
@@ -286,7 +285,7 @@ class LayerListPlugin(Plugin):
         if col.isValid():
             plot.pen = col
 
-            Dispatch.on_updated_plot.emit(plot=plot)
+            dispatch.on_updated_plot.emit(plot=plot)
         else:
             logging.warning("Color is not valid.")
 
@@ -335,9 +334,10 @@ class LayerListPlugin(Plugin):
         if layer is None or current_window is None:
             return
 
-        current_window.set_visibility(
-            layer, layer_item.checkState(col) == Qt.Checked,
-            override=True)
+        plot = current_window.get_plot(layer)
+        plot.checked = layer_item.checkState(col) == Qt.Checked
+
+        current_window.set_active_plot(layer)
 
 
 class UiLayerListPlugin:
@@ -380,6 +380,3 @@ class UiLayerListPlugin:
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
         plugin.dialog_layer_arithmetic = LayerArithmeticDialog()
-
-        # Set size of plugin
-        plugin.setMinimumSize(plugin.sizeHint())

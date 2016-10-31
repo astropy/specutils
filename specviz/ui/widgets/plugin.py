@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtCore import *
-from ...third_party.qtpy.QtGui import *
-from ...core.comms import Dispatch, DispatchHandle
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
+from ...core.comms import dispatch, DispatchHandle
 
 from ...ui.widgets.utils import ICON_PATH
 
@@ -44,10 +44,11 @@ class Plugin(QDockWidget):
 
         # The main widget inside the scroll area
         self.contents = QWidget()
-        self.layout_vertical = QVBoxLayout(self.contents)
+        self.layout_vertical = QVBoxLayout()
         self.layout_vertical.setContentsMargins(11, 11, 11, 11)
         self.layout_vertical.setSpacing(6)
 
+        self.contents.setLayout(self.layout_vertical)
         self.scroll_area.setWidget(self.contents)
 
         self.setWidget(self.scroll_area)
@@ -75,25 +76,63 @@ class Plugin(QDockWidget):
     def setup_connections(self):
         raise NotImplementedError()
 
+    def _dict_to_menu(self, menu_dict, menu_widget=None):
+        if menu_widget is None:
+            menu_widget = QMenu()
+
+        for k, v in menu_dict.items():
+            if isinstance(v, dict):
+                new_menu = menu_widget.addMenu(k)
+                self._dict_to_menu(v, menu_widget=new_menu)
+            else:
+                act = QAction(k, menu_widget)
+
+                if isinstance(v, list):
+                    if v[0] == 'checkable':
+                        v = v[1]
+                        act.setCheckable(True)
+                        act.setChecked(True)
+
+                act.triggered.connect(v)
+                menu_widget.addAction(act)
+
+        return menu_widget
+
     def add_tool_bar_actions(self, icon_path, name="", category=None,
                              description="", priority=0, enabled=True,
-                             callback=None):
-        action = QAction(self)
+                             callback=None, menu=None):
         icon = QIcon(icon_path)
-        action.setIcon(icon)
-        action.setIconText(name)
-        action.setStatusTip(description)
-        action.setEnabled(enabled)
 
-        action.triggered.connect(callback if callback is not None else
-                                 lambda: None)
+        if menu is not None:
+            tool_button = QToolButton()
+            tool_button.setPopupMode(QToolButton.MenuButtonPopup)
 
-        self._actions.append(dict(action=action,
+            menu_widget = self._dict_to_menu(menu)
+
+            tool_button.setMenu(menu_widget)
+            tool_button.setIcon(icon)
+            tool_button.setText(name)
+            tool_button.setStatusTip(description)
+            tool_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
+            item = QWidgetAction(self)
+            item.setDefaultWidget(tool_button)
+            item.setEnabled(enabled)
+        else:
+            item = QAction(self)
+            item.triggered.connect(callback if callback is not None else
+                                     lambda: None)
+            item.setIcon(icon)
+            item.setStatusTip(description)
+            item.setEnabled(enabled)
+            item.setText(name)
+
+        self._actions.append(dict(action=item,
                                   category=(category, 0) if not isinstance(
                                       category, tuple) else category,
                                   priority=priority))
 
-        return action
+        return item
 
     @property
     def active_window(self):

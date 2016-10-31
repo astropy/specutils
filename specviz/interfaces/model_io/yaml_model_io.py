@@ -13,7 +13,7 @@ import yaml
 from io import StringIO
 from ast import literal_eval
 
-from ...third_party.qtpy.QtWidgets import QFileDialog
+from qtpy.QtWidgets import QFileDialog
 from ...interfaces.factories import ModelFactory
 from ...core.data import Spectrum1DRefModelLayer
 

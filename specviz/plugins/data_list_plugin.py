@@ -1,8 +1,10 @@
+import os
+
 from ..ui.widgets.plugin import Plugin
-from ..third_party.qtpy.QtWidgets import *
-from ..third_party.qtpy.QtCore import *
-from ..third_party.qtpy.QtGui import *
-from ..core.comms import Dispatch, DispatchHandle
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
+from qtpy.QtGui import *
+from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
@@ -22,7 +24,7 @@ class DataListPlugin(Plugin):
         self.file_load_thread = FileLoadThread()
 
         self.file_load_thread.status.connect(
-            Dispatch.on_status_message.emit)
+            dispatch.on_status_message.emit)
 
         self.file_load_thread.result.connect(
             self._data_loaded)
@@ -34,7 +36,7 @@ class DataListPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Open Folder-48.png"),
             category=('Loaders', 5),
             priority=1,
-            callback=lambda: Dispatch.on_file_open.emit())
+            callback=lambda: dispatch.on_file_open.emit())
 
     def setup_ui(self):
         UiDataListPlugin(self)
@@ -46,11 +48,11 @@ class DataListPlugin(Plugin):
 
         # Connect the create new sub window button
         self.button_create_sub_window.clicked.connect(
-            lambda: Dispatch.on_add_window.emit(data=self.current_data))
+            lambda: dispatch.on_add_window.emit(data=self.current_data))
 
         # Connect the add to current plot window button
         self.button_add_to_sub_window.clicked.connect(
-            lambda: Dispatch.on_add_to_window.emit(
+            lambda: dispatch.on_add_to_window.emit(
                 data=self.current_data))
 
         # When the data list delete button is pressed
@@ -58,10 +60,10 @@ class DataListPlugin(Plugin):
             lambda: self.remove_data_item())
 
     def _data_loaded(self, data):
-        Dispatch.on_added_data.emit(data=data)
+        dispatch.on_added_data.emit(data=data)
 
         if self.active_window is None:
-            Dispatch.on_add_window.emit(data=data)
+            dispatch.on_add_window.emit(data=data)
 
     @property
     def current_data(self):
@@ -153,7 +155,7 @@ class DataListPlugin(Plugin):
         self.list_widget_data_list.takeItem(
             self.list_widget_data_list.row(data_item))
 
-        Dispatch.on_removed_data.emit(data=self.current_data)
+        dispatch.on_removed_data.emit(data=self.current_data)
 
     @DispatchHandle.register_listener("on_remove_all_data")
     def remove_all_data(self):
@@ -232,7 +234,3 @@ class UiDataListPlugin:
         plugin.layout_horizontal.addWidget(plugin.button_remove_data)
 
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
-
-        # Set size of plugin. Setting this seems to screw with `QPushButton`
-        # visual formatting
-        plugin.setMinimumSize(plugin.sizeHint())

@@ -1,4 +1,4 @@
-from ..third_party.qtpy.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 import os
 import logging
 
@@ -9,8 +9,8 @@ import astropy.io.registry as io_registry
 
 
 class FileLoadThread(QThread):
-    status = pyqtSignal(str, int)
-    result = pyqtSignal(Spectrum1DRef)
+    status = Signal(str, int)
+    result = Signal(Spectrum1DRef)
 
     def __init__(self, parent=None):
         super(FileLoadThread, self).__init__(parent)
@@ -63,8 +63,8 @@ class FileLoadThread(QThread):
 
 
 class FitModelThread(QThread):
-    status = pyqtSignal(str, int)
-    result = pyqtSignal(Spectrum1DRefModelLayer)
+    status = Signal(str, int)
+    result = Signal(Spectrum1DRefModelLayer)
 
     def __init__(self, parent=None):
         super(FitModelThread, self).__init__(parent)

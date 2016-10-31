@@ -1,5 +1,5 @@
-from ...third_party.qtpy import QtWidgets
-from ...third_party.qtpy import QtCore
+from qtpy import QtWidgets
+from qtpy import QtCore
 
 import pyqtgraph as pg
 

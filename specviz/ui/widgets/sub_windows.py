@@ -10,10 +10,10 @@ import pyqtgraph as pg
 
 from astropy.units import Quantity
 
-from ...third_party.qtpy.QtWidgets import *
-from ...third_party.qtpy.QtCore import *
+from qtpy.QtWidgets import *
+from qtpy.QtCore import *
 
-from ...core.comms import Dispatch, DispatchHandle
+from ...core.comms import dispatch, DispatchHandle
 from ...core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ...core.plots import LinePlot
 from ...core.annotation import LineIDMarker
@@ -101,6 +101,8 @@ class PlotSubWindow(UiPlotSubWindow):
         self._measure_rois = []
         self._centroid_roi = None
         self._is_selected = True
+        self._layer_items = []
+        self.disable_errors = False
 
         DispatchHandle.setup(self)
 
@@ -195,11 +197,11 @@ class PlotSubWindow(UiPlotSubWindow):
         roi.sigRemoveRequested.connect(remove)
 
         # Connect events
-        Dispatch.on_updated_rois.emit(rois=self._rois)
+        dispatch.on_updated_rois.emit(rois=self._rois)
         roi.sigRemoveRequested.connect(
-            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
+            lambda: dispatch.on_updated_rois.emit(rois=self._rois))
         roi.sigRegionChangeFinished.connect(
-            lambda: Dispatch.on_updated_rois.emit(rois=self._rois))
+            lambda: dispatch.on_updated_rois.emit(rois=self._rois))
 
     def get_plot(self, layer):
         for plot in self._plots:
@@ -224,11 +226,21 @@ class PlotSubWindow(UiPlotSubWindow):
             bottom="Wavelength [{}]".format(
                 x_label or str(self._plots[0].layer.dispersion_unit)))
 
-    def set_visibility(self, layer, show, override=False):
+    def set_visibility(self, layer, show_data, show_uncert, inactive=None):
         plot = self.get_plot(layer)
 
-        if plot._visibility_state != [show, show, False]:
-            plot.set_visibility(show, show, inactive=False, override=override)
+        if plot is not None:
+            plot.set_plot_visibility(show_data, inactive=inactive)
+            plot.set_error_visibility(show_uncert)
+
+    def set_plot_style(self, layer, mode=None, line_width=None):
+        plot = self.get_plot(layer)
+
+        if mode is not None:
+            plot.set_mode(mode)
+
+        if line_width is not None:
+            plot.set_line_width(line_width)
 
     def update_axis(self, layer=None, mode=None, **kwargs):
         self._dynamic_axis.update_axis(layer, mode, **kwargs)
@@ -248,7 +260,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # before tearing down event handlers, need to close
         # any line lists window that might be still open.
-        Dispatch.on_dismiss_linelists_window.emit()
+        dispatch.on_dismiss_linelists_window.emit()
 
         DispatchHandle.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
@@ -279,7 +291,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
 
-        Dispatch.on_added_plot.emit(plot=new_plot, window=window)
+        dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
     @DispatchHandle.register_listener("on_removed_layer")
     def remove_plot(self, layer, window=None):
@@ -295,13 +307,15 @@ class PlotSubWindow(UiPlotSubWindow):
 
                 self._plots.remove(plot)
 
-    @DispatchHandle.register_listener("on_selected_plot")
-    def set_active_plot(self, layer):
+    def set_active_plot(self, layer, checked_state=None):
         for plot in self._plots:
-            if plot.layer == layer:
-                plot.set_visibility(True, True, inactive=False)
+            if plot.checked:
+                if plot.layer == layer:
+                    self.set_visibility(plot.layer, True, not self.disable_errors)
+                else:
+                    self.set_visibility(plot.layer, True, False)
             else:
-                plot.set_visibility(True, False, inactive=True)
+                self.set_visibility(plot.layer, False, False)
 
 
 #--------  Line lists and line labels handling.

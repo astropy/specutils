@@ -12,7 +12,7 @@
 import os, sys, re, dis
 
 from io import StringIO
-from specviz.third_party.qtpy.QtWidgets import QFileDialog
+from qtpy.QtWidgets import QFileDialog
 
 MODEL_FILE_FILTER = "Pyhton files (*.py)"
 

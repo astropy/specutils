@@ -129,12 +129,12 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
                      wave[mask][:-1])
 
     # flux
-    flux = np.sum(flux[mask] - avg_cont) * avg_dx
+    norm_flux = np.abs(flux[mask] - avg_cont)
 
     #  EW = Sum( (Fc-Fl)/Fc * dw
-    ew = np.abs(np.sum((avg_cont - wave[mask]) / avg_cont * avg_dx))
+    ew = np.sum(norm_flux * (avg_dx / avg_cont))
 
-    return ew, flux, avg_cont
+    return ew, np.sum(norm_flux), avg_cont
 
 
 # TODO: Can this be improved?

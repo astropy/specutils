@@ -1,12 +1,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..third_party.qtpy.QtGui import *
+from qtpy.QtGui import *
 
 from astropy.units import spectral_density, spectral
 import pyqtgraph as pg
 from itertools import cycle
 import logging
+import numpy as np
 
 AVAILABLE_COLORS = cycle([(0, 0, 0),
                           (0.86, 0.37119999999999997, 0.33999999999999997),
@@ -32,10 +33,8 @@ class LinePlot(object):
                             self._layer.unit,
                             None)
         self.line_width = 1
-
-        if self._plot is not None:
-            self.change_units(self._layer.dispersion_unit,
-                              self._layer.unit)
+        self.mode = None
+        self.checked = True
 
         r, g, b = next(AVAILABLE_COLORS)
         r, g, b = r * 255, g * 255, b * 255
@@ -47,7 +46,7 @@ class LinePlot(object):
         _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
                                         _pen.color().green(),
                                         _pen.color().blue(),
-                                        50))
+                                        255))
 
         _err_pen = err_pen if err_pen is not None else pg.mkPen(
             color=(100, 100, 100, 50))
@@ -57,8 +56,12 @@ class LinePlot(object):
                            'pen_off': pg.mkPen(None),
                            'error_pen_on': _err_pen,
                            'error_pen_off': pg.mkPen(None)}
-        self._visibility_state = [True, True, False]
-        self.set_visibility(*self._visibility_state, override=True)
+        self.set_plot_visibility(True)
+        self.set_error_visibility(True)
+
+        if self._plot is not None:
+            self.change_units(self._layer.dispersion_unit,
+                              self._layer.unit)
 
     @staticmethod
     def from_layer(layer, **kwargs):
@@ -96,34 +99,28 @@ class LinePlot(object):
         if y is None or not self._layer.unit.is_equivalent(
                 y, equivalencies=spectral_density(self.layer.dispersion)):
             logging.error("Failed to convert y-axis plot units.")
-            y = None
+            y = self._layer.unit
 
         self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
         self.update()
 
-    def set_visibility(self, pen_show, error_pen_show, inactive=True,
-                       override=False):
-        if override:
-            self._visibility_state = [pen_show, error_pen_show, inactive]
-        else:
-            pen_show, _, _ = self._visibility_state
+    def set_plot_visibility(self, show=None, inactive=None):
+        if show is not None:
+            if show:
+                self._plot.setPen(self._pen_stash['pen_on'])
+            else:
+                self._plot.setPen(self._pen_stash['pen_off'])
 
-        error_pen_show = error_pen_show if pen_show else False
-
-        if pen_show:
-            self._plot.setPen(self._pen_stash['pen_on'])
-
+        if inactive is not None:
             if inactive:
                 self._plot.setPen(self._pen_stash['pen_inactive'])
-        else:
-            self._plot.setPen(self._pen_stash['pen_off'])
 
-        if error_pen_show:
-            if self.error is not None:
+    def set_error_visibility(self, show=None):
+        if self.error is not None and show is not None:
+            if show:
                 self.error.setOpts(pen=self._pen_stash['error_pen_on'])
-        else:
-            if self.error is not None:
+            else:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
 
     @property
@@ -152,7 +149,6 @@ class LinePlot(object):
                                         _pen.color().blue(),
                                         50))
         self._pen_stash['pen_inactive'] = _inactive_pen
-        self.set_visibility(*self._visibility_state)
 
     @property
     def error_pen(self):
@@ -165,6 +161,18 @@ class LinePlot(object):
         if self.error is not None:
             self.error.setOpts(pen=pg.mkPen(pen))
 
+    def set_mode(self, mode):
+        if mode in ['line', 'scatter', 'histogram']:
+            self.mode = mode
+        else:
+            self.mode = None
+
+        self.update()
+
+    def set_line_width(self, width):
+        self.line_width = width
+        self.pen.setWidth(self.line_width)
+
     def update(self, autoscale=False):
         if hasattr(self.layer, '_model'):
             disp = self.layer.unmasked_dispersion.compressed().value
@@ -175,7 +183,13 @@ class LinePlot(object):
             data = self.layer.data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
 
-        self._plot.setData(disp, data)
+        disp = np.append(disp, disp[-1]) if self.mode is 'histogram' else disp
+        # data = data[:-1] if self.mode is 'histogram' else data
+
+        self._plot.setData(disp, data, symbol='o' if self.mode is 'scatter' else None,
+                           stepMode=True if self.mode is 'histogram' else False,
+                           pen=None if self.mode is 'scatter' else self.pen)
 
         if self.error is not None:
-            self.error.setData(x=disp, y=data, height=uncert)
+            self.error.setData(x=disp[:-1] if self.mode is 'histogram' else disp,
+                               y=data, height=uncert)

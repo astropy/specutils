@@ -13,7 +13,7 @@ import yaml
 from io import StringIO
 from ast import literal_eval
 
-from specviz.third_party.qtpy.QtWidgets import QFileDialog
+from qtpy.QtWidgets import QFileDialog
 from specviz.interfaces.factories import ModelFactory
 from specviz.core.layer import ModelLayer
 

@@ -24,8 +24,8 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         self._layer_mask = layer_mask
 
     @classmethod
-    def from_parent(cls, parent, layer_mask=None):
-        return cls(name=parent.name + " Layer", data=parent.data,
+    def from_parent(cls, parent, layer_mask=None, name=None):
+        return cls(name=name or parent.name + " Layer", data=parent.data,
                    unit=parent.unit, uncertainty=parent.uncertainty,
                    mask=parent.mask, wcs=parent.wcs,
                    dispersion=parent.dispersion,
@@ -36,7 +36,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
     def from_self(self, name="", layer_mask=None):
         gen_spec = Spectrum1DRef.copy(self, name=name)
 
-        return self.from_parent(parent=gen_spec, layer_mask=layer_mask)
+        return self.from_parent(parent=gen_spec, layer_mask=layer_mask, name=name)
 
     @classmethod
     def from_formula(cls, formula, layers):

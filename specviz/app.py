@@ -15,10 +15,11 @@ import os
 from astropy.utils.exceptions import AstropyUserWarning
 
 # LOCAL
-from .third_party.qtpy.QtWidgets import QApplication
-from .third_party.qtpy.QtGui import QIcon
-from .third_party.qtpy.QtCore import QTimer
+from qtpy.QtWidgets import QApplication
+from qtpy.QtGui import QIcon
+from qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
+from .external.glue.data_viewer import SpecVizViewer
 from .ui.widgets.utils import ICON_PATH
 from .io import *
 
@@ -73,6 +74,11 @@ def sigint_handler(*args):
     warnings.warn('KeyboardInterrupt caught; specviz will terminate',
                   AstropyUserWarning)
     QApplication.quit()
+
+
+def glue_setup():
+    from glue.config import qt_client
+    qt_client.add(SpecVizViewer)
 
 
 if __name__ == '__main__':
