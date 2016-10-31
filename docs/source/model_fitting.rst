@@ -4,7 +4,7 @@ Model Fitting
 =============
 
 SpecViz utilizes
-`Astropy Models and Fitting <http://astropy.readthedocs.org/en/latest/modeling/index.html>`_
+:ref:`Astropy Models and Fitting <astropy:astropy-modeling>`
 to fit models to its spectra. For example, you can fit one model to the
 continuum, another to an emission line of interest, and yet another to an
 absorption line.
