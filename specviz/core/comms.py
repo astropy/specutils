@@ -141,7 +141,7 @@ dispatch.register_event("on_updated_plot", args=["plot", "layer"])
 dispatch.register_event("on_updated_rois", args=["rois"])
 dispatch.register_event("on_updated_stats", args=["stats", "layer"])
 
-dispatch.register_event("on_selected_plot", args=["layer"])
+dispatch.register_event("on_selected_plot", args=["layer", "checked_state"])
 dispatch.register_event("on_selected_window", args=["window"])
 dispatch.register_event("on_selected_layer", args=["layer_item"])
 dispatch.register_event("on_selected_model", args=["model_item"])

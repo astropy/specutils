@@ -1,5 +1,6 @@
 import os
 import logging
+from collections import OrderedDict
 
 from astropy.units import Unit
 
@@ -61,7 +62,21 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Settings-50.png"),
             category='Options',
             callback=dispatch.on_show_linelists_window.emit,
-            enabled=False)
+            enabled=False,
+            menu=OrderedDict([
+                ('Plot style', OrderedDict([
+                    ('Line', lambda: self._set_plot_style(mode='line')),
+                    ('Scatter', lambda: self._set_plot_style(mode='scatter')),
+                    ('Histogram', lambda: self._set_plot_style(mode='histogram'))
+                ])),
+                ('Line width', OrderedDict([
+                    ('1', lambda: self._set_plot_style(line_width=1)),
+                    ('2', lambda: self._set_plot_style(line_width=2)),
+                    ('3', lambda: self._set_plot_style(line_width=3))
+                ])),
+                ('Show Errors', ['checkable', lambda x: self._toggle_errors(x)])
+            ])
+        )
 
     def setup_connections(self):
         # On accept, change the displayed axis
@@ -103,6 +118,15 @@ class PlotToolsPlugin(Plugin):
         else:
             logging.warning("Active window does not have any plots.")
 
+    def _set_plot_style(self, **kwargs):
+        if self.active_window is not None:
+            self.active_window.set_plot_style(self.current_layer, **kwargs)
+
+    def _toggle_errors(self, state):
+        if self.active_window is not None:
+            layer = self.current_layer
+            self.active_window.set_visibility(layer, True, state)
+
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):
         if window:
@@ -110,8 +134,10 @@ class PlotToolsPlugin(Plugin):
             self.button_unit_change.setEnabled(True)
             self.button_add_roi.setEnabled(True)
             # self.button_line_labels.setEnabled(True)
+            self.button_plot_settings.setEnabled(True)
         else:
             self.button_axis_change.setEnabled(False)
             self.button_unit_change.setEnabled(False)
             self.button_add_roi.setEnabled(False)
             # self.button_line_labels.setEnabled(False)
+            self.button_plot_settings.setEnabled(False)
