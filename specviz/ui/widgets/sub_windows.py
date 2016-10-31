@@ -102,6 +102,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._centroid_roi = None
         self._is_selected = True
         self._layer_items = []
+        self.disable_errors = False
 
         DispatchHandle.setup(self)
 
@@ -310,7 +311,7 @@ class PlotSubWindow(UiPlotSubWindow):
         for plot in self._plots:
             if plot.checked:
                 if plot.layer == layer:
-                    self.set_visibility(plot.layer, True, True)
+                    self.set_visibility(plot.layer, True, not self.disable_errors)
                 else:
                     self.set_visibility(plot.layer, True, False)
             else:

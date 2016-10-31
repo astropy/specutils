@@ -125,7 +125,9 @@ class PlotToolsPlugin(Plugin):
     def _toggle_errors(self, state):
         if self.active_window is not None:
             layer = self.current_layer
-            self.active_window.set_visibility(layer, True, state)
+            current_window = self.active_window
+            current_window.disable_errors = not state
+            current_window.set_active_plot(layer)
 
     @DispatchHandle.register_listener("on_activated_window")
     def toggle_enabled(self, window):
