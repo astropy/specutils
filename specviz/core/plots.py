@@ -142,13 +142,17 @@ class LinePlot(object):
 
     @pen.setter
     def pen(self, pen):
-        self._pen_stash['pen_on'] = pg.mkPen(pen, width=self.line_width)
-        _pen = self._pen_stash['pen_on']
-        _inactive_pen = pg.mkPen(QColor(_pen.color().red(),
-                                        _pen.color().green(),
-                                        _pen.color().blue(),
+        _inactive_pen = pg.mkPen(QColor(pen.color().red(),
+                                        pen.color().green(),
+                                        pen.color().blue(),
                                         50))
-        self._pen_stash['pen_inactive'] = _inactive_pen
+
+        if self._plot.opts['pen'] == self._pen_stash['pen_on']:
+            self._pen_stash['pen_on'] = pg.mkPen(pen, width=self.line_width)
+            self._plot.setPen(self._pen_stash['pen_on'])
+        elif self._plot.opts['pen'] == self._pen_stash['pen_inactive']:
+            self._pen_stash['pen_inactive'] = _inactive_pen
+            self._plot.setPen(self._pen_stash['pen_inactive'])
 
     @property
     def error_pen(self):
@@ -171,7 +175,9 @@ class LinePlot(object):
 
     def set_line_width(self, width):
         self.line_width = width
-        self.pen.setWidth(self.line_width)
+        _pen = pg.mkPen(self._plot.opts['pen'])
+        _pen.setWidth(self.line_width)
+        self.pen = _pen
 
     def update(self, autoscale=False):
         if hasattr(self.layer, '_model'):
