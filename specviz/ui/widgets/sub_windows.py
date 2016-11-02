@@ -177,6 +177,8 @@ class PlotSubWindow(UiPlotSubWindow):
         if len(mask_holder) > 0:
             mask = reduce(np.logical_or, mask_holder)
             mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
+        else:
+            mask = container.layer.layer_mask
 
         return mask
 
