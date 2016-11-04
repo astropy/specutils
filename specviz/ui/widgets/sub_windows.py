@@ -160,7 +160,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if container is None:
             return
 
-        mask = None
+        mask = np.ones(layer.dispersion.shape, dtype=bool)
         mask_holder = []
         rois = [roi] if roi is not None else self._rois
 
@@ -177,8 +177,6 @@ class PlotSubWindow(UiPlotSubWindow):
         if len(mask_holder) > 0:
             mask = reduce(np.logical_or, mask_holder)
             mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
-        else:
-            mask = container.layer.layer_mask
 
         return mask
 
