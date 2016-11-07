@@ -142,11 +142,9 @@ class SpecVizViewer(BaseVizViewer):
 
     def _refresh_data(self):
         if self._options_widget.file_att is None:
-            print("returning because of options widget")
             return
 
         if self._layer_widget.layer is None:
-            print("returning because of layer widget")
             return
 
         if isinstance(self._layer_widget.layer, Subset):
@@ -185,6 +183,5 @@ class SpecVizViewer(BaseVizViewer):
 
     @DispatchHandle.register_listener('on_added_data')
     def _added_data(self, data):
-        print("Adding data")
         filename = data.name
         self._specviz_data_cache[filename] = data
