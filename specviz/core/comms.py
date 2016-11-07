@@ -150,6 +150,7 @@ dispatch.register_event("on_clicked_layer", args=["layer_item"])
 dispatch.register_event("on_changed_layer", args=["layer_item"])
 dispatch.register_event("on_changed_model", args=["model_item"])
 
+dispatch.register_event("on_add_data", args=["data"])
 dispatch.register_event("on_add_model", args=["layer"])
 dispatch.register_event("on_add_window", args=["data", "window"])
 dispatch.register_event("on_add_layer", args=["window", "layer", "from_roi"])

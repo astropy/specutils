@@ -48,7 +48,7 @@ def extract(data, x_range):
     return result
 
 
-def stats(data):
+def stats(data, mask=None):
     """Compute basic statistics for a spectral region
     contained in a `~specviz.core.data.Data` instance.
 
@@ -73,11 +73,13 @@ def stats(data):
     else:
         y = data
 
-    return {'mean':    np.mean(y),
-            'median':  np.median(y),
-            'stddev':  np.std(y),
-            'total':   np.trapz(y),
-            'npoints': len(y)}
+    mask = np.ones(y.shape, dtype=bool) if mask is None else np.array(mask)
+
+    return {'mean':    np.mean(y[mask]),
+            'median':  np.median(y[mask]),
+            'stddev':  np.std(y[mask]),
+            'total':   np.trapz(y[mask]),
+            'npoints': len(y[mask])}
 
 
 def eq_width(cont1_stats, cont2_stats, line, mask=None):
@@ -119,7 +121,7 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
     flux, wave = line.data.compressed().value, \
                  line.dispersion.compressed().value
 
-    mask = np.ones(flux) if mask is None else np.array(mask)
+    mask = np.ones(flux.shape, dtype=bool) if mask is None else np.array(mask)
 
     # average of 2 continuum regions.
     avg_cont = (cont1_stats['mean'] + cont2_stats['mean']) / 2.0
@@ -203,7 +205,7 @@ def fwzi(cont1_stats, cont2_stats, line):
     return vmax - vmin, (vmin, vmax)
 
 
-def centroid(flux, wave, mask=None):
+def centroid(line, avg_cont, mask=None):
     """Compute centroid for the given spectrum. ::
 
         w_cen = integral(wave*flux) / integral(flux)
@@ -224,10 +226,14 @@ def centroid(flux, wave, mask=None):
     >>> line = extract(d, (15000, 20000))
     >>> wcen_em = centroid(line)
     """
-    if mask is not None:
-        flux = flux[mask]
-        wave = wave[mask]
+    flux, wave = line.data.compressed().value, \
+                 line.dispersion.compressed().value
 
-    wcen = np.trapz(wave * flux, wave) / np.trapz(flux, wave)
+    flux -= avg_cont
+
+    mask = np.ones(flux.shape, dtype=bool) if mask is None else np.array(mask)
+
+    wcen = np.trapz(wave[mask] * flux[mask], wave[mask]) / \
+           np.trapz(flux[mask], wave[mask])
 
     return wcen

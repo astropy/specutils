@@ -225,7 +225,9 @@ class LayerListPlugin(Plugin):
             return
 
         layer = layer_item.data(0, Qt.UserRole)
-        self.active_window.set_active_plot(layer)
+
+        if self.active_window is not None:
+            self.active_window.set_active_plot(layer)
 
         if hasattr(layer, 'name'):
             layer.name = layer_item.text(0)

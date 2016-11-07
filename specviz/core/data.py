@@ -236,7 +236,8 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
                    mask=parent.mask, wcs=parent.wcs,
                    dispersion=parent.dispersion,
                    dispersion_unit=parent.dispersion_unit,
-                   layer_mask=layer_mask, parent=parent, model=model,
+                   layer_mask=layer_mask or parent.layer_mask,
+                   parent=parent, model=model,
                    copy=False)
 
     @classmethod

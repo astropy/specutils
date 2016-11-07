@@ -140,12 +140,13 @@ class ModelFittingPlugin(Plugin):
         #     formula=self.line_edit_model_arithmetic.text())
 
         # Create new layer using current ROI masks, if they exist
-        mask = self.active_window.get_roi_mask(layer=layer)
+        # mask = self.active_window.get_roi_mask(layer=layer)
 
         new_model_layer = Spectrum1DRefModelLayer.from_parent(
             parent=layer,
             model=model,
-            layer_mask=mask)
+            # layer_mask=mask
+        )
 
         dispatch.on_add_layer.emit(layer=new_model_layer,
                                    window=self.active_window)

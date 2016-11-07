@@ -29,9 +29,10 @@ class OptionsWidget(QWidget):
         self._data = None
 
     def set_data(self, data):
-        print("calling set_data")
         self.file_helper.clear()
+
         if isinstance(data, Subset):
             self.file_helper.append_data(data.data)
         else:
             self.file_helper.append_data(data)
+        print(self.file_att)

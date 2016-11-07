@@ -51,21 +51,17 @@ class StatisticsPlugin(Plugin):
 
         mask = self.active_window.get_roi_mask(layer=current_layer)
 
-        if mask is None:
-            values = current_layer.data
-        else:
-            values = np.ma.array(current_layer.data, mask=~mask)
-
-        stat_dict = statistics.stats(values.compressed())
+        stat_dict = statistics.stats(current_layer.data.compressed().value,
+                                     mask=mask)
 
         self.line_edit_mean.setText("{0:4.4g}".format(
-            stat_dict['mean'].value))
+            stat_dict['mean']))
         self.line_edit_median.setText("{0:4.4g}".format(
-            stat_dict['median'].value))
+            stat_dict['median']))
         self.line_edit_std_dev.setText("{0:4.4g}".format(
-            stat_dict['stddev'].value))
+            stat_dict['stddev']))
         self.line_edit_total.setText("{0:4.4g}".format(
-            stat_dict['total'].value))
+            stat_dict['total']))
         self.line_edit_data_point_count.setText("{0:4.4g}".format(
             stat_dict['npoints']))
 
@@ -85,15 +81,12 @@ class StatisticsPlugin(Plugin):
 
             self.label_measured_error.hide()
 
-        roi_data_sets = []
         roi_masks = []
 
         for roi in rois:
             mask = self.active_window.get_roi_mask(layer=current_layer,
                                                    roi=roi)
             roi_masks.append(mask)
-            values = np.ma.array(current_layer.data, mask=~mask)
-            roi_data_sets.append(values)
 
         # Always make the ROI that's over the greatest absolute data value
         # orange
@@ -104,19 +97,16 @@ class StatisticsPlugin(Plugin):
         rois[-1].setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
         rois[-1].update()
 
-        cont1_stat_dict = statistics.stats(roi_data_sets[0].compressed().value)
-        cont2_stat_dict = statistics.stats(
-            np.concatenate([x.compressed().value for x in roi_data_sets[:-1]]))
-
-        line = current_layer
+        cont1_stat_dict = statistics.stats(current_layer.data.compressed().value, mask=roi_masks[0])
+        cont2_stat_dict = statistics.stats(current_layer.data.compressed().value, mask=np.concatenate(roi_masks[1:-1]))
 
         ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,
                                                  cont2_stat_dict,
-                                                 line,
+                                                 current_layer,
                                                  mask=roi_masks[-1])
 
-        cent = statistics.centroid(flux=line.data.compressed().value - avg_cont,
-                                   wave=line.dispersion.compressed().value,
+        cent = statistics.centroid(current_layer,
+                                   avg_cont=avg_cont,
                                    mask=roi_masks[-1])
 
         stat_dict = {"eq_width": ew, "centroid": cent, "flux": flux,
@@ -236,7 +226,7 @@ class UiStatisticsPlugin:
                                                plugin.line_edit_total)
 
         plugin.label_data_point_count = QLabel(plugin.tab_basic)
-        plugin.label_data_point_count.setText("Data Point Count")
+        plugin.label_data_point_count.setText("Count")
 
         plugin.line_edit_data_point_count = QLineEdit(plugin.tab_basic)
         plugin.line_edit_data_point_count.setStyleSheet(

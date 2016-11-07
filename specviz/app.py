@@ -10,6 +10,7 @@ import signal
 import sys
 import warnings
 import os
+import logging
 
 # THIRD-PARTY
 from astropy.utils.exceptions import AstropyUserWarning
@@ -19,7 +20,6 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtGui import QIcon
 from qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
-from .external.glue.data_viewer import SpecVizViewer
 from .ui.widgets.utils import ICON_PATH
 from .io import *
 
@@ -77,8 +77,12 @@ def sigint_handler(*args):
 
 
 def glue_setup():
-    from glue.config import qt_client
-    qt_client.add(SpecVizViewer)
+    try:
+        from .external.glue.data_viewer import SpecVizViewer
+        from glue.config import qt_client
+        qt_client.add(SpecVizViewer)
+    except ImportError:
+        logging.warning("Failed to import SpecVizViewer; Glue installation not found.")
 
 
 if __name__ == '__main__':
