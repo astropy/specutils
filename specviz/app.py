@@ -10,6 +10,7 @@ import signal
 import sys
 import warnings
 import os
+import logging
 
 # THIRD-PARTY
 from astropy.utils.exceptions import AstropyUserWarning
@@ -81,7 +82,7 @@ def glue_setup():
         from glue.config import qt_client
         qt_client.add(SpecVizViewer)
     except ImportError:
-        pass
+        logging.warning("Failed to import SpecVizViewer; Glue installation not found.")
 
 
 if __name__ == '__main__':

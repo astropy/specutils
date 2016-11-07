@@ -59,11 +59,12 @@ class DataListPlugin(Plugin):
         self.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
 
+    @DispatchHandle.register_listener("on_add_data")
     def _data_loaded(self, data):
         dispatch.on_added_data.emit(data=data)
 
-        if self.active_window is None:
-            dispatch.on_add_window.emit(data=data)
+        # Open the data automatically
+        dispatch.on_add_window.emit(data=data)
 
     @property
     def current_data(self):

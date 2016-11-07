@@ -226,7 +226,7 @@ class UiStatisticsPlugin:
                                                plugin.line_edit_total)
 
         plugin.label_data_point_count = QLabel(plugin.tab_basic)
-        plugin.label_data_point_count.setText("Data Point Count")
+        plugin.label_data_point_count.setText("Count")
 
         plugin.line_edit_data_point_count = QLineEdit(plugin.tab_basic)
         plugin.line_edit_data_point_count.setStyleSheet(

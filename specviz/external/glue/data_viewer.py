@@ -15,7 +15,7 @@ from .viewer_options import OptionsWidget
 from .layer_widget import LayerWidget
 
 
-__all__ = ['MOSVizViewer']
+__all__ = ['SpecVizViewer']
 
 
 class BaseVizViewer(DataViewer):
@@ -131,11 +131,14 @@ class SpecVizViewer(BaseVizViewer):
 
         # We set up the specviz viewer and controller as done for the standalone
         # specviz application
-        self.viewer = Viewer(hide_plugins=True)
+        self.viewer = Viewer(hide_plugins=False)
         self.setCentralWidget(self.viewer.main_window)
 
     def initialize_toolbar(self):
         pass
+
+    def open_data(self, data):
+        dispatch.on_add_data.emit(data)
 
     def _refresh_data(self):
         if self._options_widget.file_att is None:
@@ -182,5 +185,6 @@ class SpecVizViewer(BaseVizViewer):
 
     @DispatchHandle.register_listener('on_added_data')
     def _added_data(self, data):
+        print("Adding data")
         filename = data.name
         self._specviz_data_cache[filename] = data

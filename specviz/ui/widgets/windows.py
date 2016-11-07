@@ -78,6 +78,7 @@ class MainWindow(UiMainWindow):
         layer = layer or Spectrum1DRefLayer.from_parent(data)
         window = window or PlotSubWindow()
         window.add_plot(layer=layer)
+        window.setWindowTitle(layer.name)
 
         if window is not None:
             mdi_sub_window = self.mdi_area.addSubWindow(window)
