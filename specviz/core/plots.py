@@ -142,6 +142,9 @@ class LinePlot(object):
 
     @pen.setter
     def pen(self, pen):
+        if isinstance(pen, QColor):
+            pen = pg.mkPen(pen)
+
         _inactive_pen = pg.mkPen(QColor(pen.color().red(),
                                         pen.color().green(),
                                         pen.color().blue(),
