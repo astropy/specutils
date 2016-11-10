@@ -345,8 +345,12 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
                 for match in matches:
                     formula = formula.replace(match, "")
 
-            expr = parser.parse(formula)
-            vars = expr.variables()
+            try:
+                expr = parser.parse(formula)
+                vars = expr.variables()
+            except:
+                logging.error("An error occurred.")
+                return
 
         result = parser.evaluate(expr.simplify({}).toString(),
                                  dict(pair for pair in

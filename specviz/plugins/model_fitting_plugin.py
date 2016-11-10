@@ -63,7 +63,7 @@ class ModelFittingPlugin(Plugin):
             lambda: self.remove_model_item())
 
         # When editing the formula is finished, send event
-        self.line_edit_model_arithmetic.textEdited.connect(
+        self.line_edit_model_arithmetic.editingFinished.connect(
             lambda: self.update_model_formula())
 
         # Attach the fit button
