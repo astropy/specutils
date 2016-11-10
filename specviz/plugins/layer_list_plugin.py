@@ -219,7 +219,7 @@ class LayerListPlugin(Plugin):
             layer_item.setIcon(0, icon)
             layer_item.setCheckState(0, Qt.Checked if plot.checked else Qt.Unchecked)
 
-    @DispatchHandle.register_listener("on_selected_layer")
+    @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
     def _update_layer_name(self, layer_item, checked_state=None, col=0):
         if layer_item is None:
             return

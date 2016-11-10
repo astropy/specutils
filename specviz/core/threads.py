@@ -71,13 +71,16 @@ class FitModelThread(QThread):
         self.model_layer = None
         self.fitter_name = ""
 
-    def __call__(self, model_layer, fitter_name):
+    def __call__(self, model_layer, fitter_name, mask=None):
         self.model_layer = model_layer
         self.fitter_name = fitter_name
+        self.mask = mask
 
     def run(self):
         self.status.emit("Fitting model...", 0)
-        model_layer, message = self.fit_model(self.model_layer, self.fitter_name)
+        model_layer, message = self.fit_model(self.model_layer,
+                                              self.fitter_name,
+                                              self.mask)
 
         if not message:
             self.status.emit("Fit completed successfully!", 5000)
@@ -86,7 +89,7 @@ class FitModelThread(QThread):
 
         self.result.emit(model_layer)
 
-    def fit_model(self, model_layer, fitter_name):
+    def fit_model(self, model_layer, fitter_name, mask=None):
         if not hasattr(model_layer, 'model'):
             logging.warning("This layer has no model to fit.")
             return
@@ -103,8 +106,8 @@ class FitModelThread(QThread):
         model = model_layer.model
 
         # The fitting should only consider the masked regions
-        flux = flux[model_layer.layer_mask].compressed().value
-        dispersion = dispersion[model_layer.layer_mask].compressed().value
+        flux = flux[mask].compressed().value
+        dispersion = dispersion[mask].compressed().value
 
         # Get compressed versions of the data arrays
         # flux = flux.compressed().value

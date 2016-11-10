@@ -419,7 +419,7 @@ class ModelFittingPlugin(Plugin):
         # the current rois on the plot. Useful for directing fitting,
         # but may be unintuitive.
         mask = self.active_window.get_roi_mask(layer=current_layer._parent)
-        current_layer._layer_mask = mask
+        # current_layer._layer_mask = mask
 
         # Update the model parameters with those in the gui
         # self.update_model_layer()
@@ -427,7 +427,8 @@ class ModelFittingPlugin(Plugin):
         # Create fitted layer
         self.fit_model_thread(
             model_layer=current_layer,
-            fitter_name=self.combo_box_fitting.currentText())
+            fitter_name=self.combo_box_fitting.currentText(),
+            mask=mask)
 
         self.fit_model_thread.start()
 

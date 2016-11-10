@@ -208,6 +208,8 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             result = parser.evaluate(expr.simplify({}).toString(),
                                      dict(pair for pair in
                                           zip(vars, sorted_layers)))
+            result._dispersion = sorted_layers[0]._dispersion
+            result.dispersion_unit = sorted_layers[0].dispersion_unit
         except Exception as e:
             logging.error("While evaluating formula: {}".format(e))
             return
