@@ -118,5 +118,3 @@ You can easily make a plot of the Spectrum using matplotlib in ipython with the 
 .. _Spectrum1DIRAFChebyshevWCS: http://specutils.readthedocs.org/en/latest/api/specutils.wcs.specwcs.Spectrum1DIRAFChebyshevWCS.html#specutils.wcs.specwcs.Spectrum1DIRAFChebyshevWCS
 .. _Spectrum1DIRAFBSplineWCS: http://specutils.readthedocs.org/en/latest/api/specutils.wcs.specwcs.Spectrum1DIRAFBSplineWCS.html#specutils.wcs.specwcs.Spectrum1DIRAFBSplineWCS
 .. _MultispecIRAFCompositeWCS: http://specutils.readthedocs.org/en/latest/api/specutils.wcs.specwcs.MultispecIRAFCompositeWCS.html#specutils.wcs.specwcs.MultispecIRAFCompositeWCS -->
-
-.. _Astropy: http://www.astropy.org/
