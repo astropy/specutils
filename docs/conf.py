@@ -32,8 +32,6 @@ import sys
 # Load all of the global Astropy configuration
 from astropy_helpers.sphinx.conf import *
 
-extensions += ['sphinx.ext.mathjax']
-
 # Get configuration information from setup.cfg
 try:
     from ConfigParser import ConfigParser
