@@ -14,6 +14,10 @@ def data_loader(label, identifier, priority=-1, **kwargs):
     A decorator that registers a function and identifies with an Astropy io
     registry object.
 
+    Priority will be assigned as an attribute to the wrapped function for use
+    in the auto loader.  Loaders with high numerical value will be tried first,
+    followed by low numerical value in order.
+
     Parameters
     ----------
     label : str
@@ -35,6 +39,7 @@ def data_loader(label, identifier, priority=-1, **kwargs):
         logging.info("Added {} to loader registry.".format(label))
 
         func.loader_wrapper = True
+        func.priority = priority
 
         format = label #"-".join(label.lower().split())
         io_registry.register_reader(format, Spectrum1DRef, func)

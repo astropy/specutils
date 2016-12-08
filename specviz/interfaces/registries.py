@@ -86,7 +86,7 @@ class LoaderRegistry(Registry):
         2.  io/loaders distributed with this package
 
         """
-        
+
         cur_path = os.path.abspath(os.path.join(__file__, '..', '..', 'io',
                                                 'loaders'))
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')

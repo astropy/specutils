@@ -20,7 +20,7 @@ def cos_identify(*args, **kwargs):
     return False
 
 
-@data_loader(label="HST/COS", priority=100, identifier=cos_identify)
+@data_loader(label="HST/COS", priority=10, identifier=cos_identify)
 def cos_spectrum_loader(file_name, **kwargs):
     """ Load file from COS spectral data into a spectrum object
 
