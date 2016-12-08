@@ -16,10 +16,22 @@ def data_loader(label, identifier, priority=-1, **kwargs):
 
     Parameters
     ----------
-    func : function
-        Function added to the registry in order to read data files.
+    label : str
+        user-fiendly name for the data loader
+    identifier : function
+        function used to determine if the loader should be used on the Input
+    priority : int
+        absolute priority to determine which loader to attempt first
     """
+
     def decorator(func):
+        """
+        Parameters
+        ----------
+        func : function
+            Function added to the registry in order to read data files.
+        """
+
         logging.info("Added {} to loader registry.".format(label))
 
         func.loader_wrapper = True

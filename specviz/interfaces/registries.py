@@ -77,9 +77,16 @@ class LoaderRegistry(Registry):
         self._load_yaml()
 
     def _load_py(self):
+        """ Loads built-in and custom python loaders
+
+        Python modules (.py ending) found in the following locations will be
+        auto-loaded into the registry for data loading.
+
+        1.  .specviz folder in the user's HOME directory
+        2.  io/loaders distributed with this package
+
         """
-        Loads python files as custom loaders.
-        """
+        
         cur_path = os.path.abspath(os.path.join(__file__, '..', '..', 'io',
                                                 'loaders'))
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
@@ -105,8 +112,19 @@ class LoaderRegistry(Registry):
                 sys.path.pop(0)
 
     def _load_yaml(self):
-        """
-        Loads yaml files as custom loaders.
+        """ Loads yaml files as custom loaders.
+
+        YAML files found in the following three locations will be auto-loaded
+        into the registry for data loading.
+
+        1.  .specviz folder in the user's HOME directory
+        2.  the current working directory
+        3.  the linelists directory delivered with this package.
+
+        The io_registry will be updated with the YAML schematics for each of the
+        different filetypes.  Errors in loading the registry will write an error
+        to the log.
+
         """
         cur_path = os.path.join(os.path.dirname(__file__), '..', 'io',
                                 'yaml_loaders')

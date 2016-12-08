@@ -57,9 +57,9 @@ class FileLoadThread(QThread):
             try:
                 data = Spectrum1DRef.read(file_name, format=format)
                 return data
-            except:
+            except Exception as e:
                 logging.error("Incompatible loader for selected data: {"
-                              "}".format(file_filter))
+                              "} because {}".format(file_filter, e))
 
 
 class FitModelThread(QThread):
@@ -151,4 +151,3 @@ class FitModelThread(QThread):
         # update GUI with fit results
 
         return model_layer, fitter.fit_info.get('message', "")
-
