@@ -50,16 +50,22 @@ class FileLoadThread(QThread):
 
         if file_filter == 'Auto':
             all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
+
+            #-- sort loaders by priorty given in the definition
+            all_priority = [getattr(io_registry.get_reader(fmt, Spectrum1DRef), 'priority', 0) for fmt in all_formats]
+            all_registry = sorted(zip(all_formats, all_priority), key=lambda item: item[1], reverse=True)
+            all_formats = [item[0] for item in all_registry]
         else:
             all_formats = [file_filter]
 
         for format in all_formats:
+            logging.info("Trying to load with {}".format(format))
             try:
                 data = Spectrum1DRef.read(file_name, format=format)
                 return data
-            except:
+            except Exception as e:
                 logging.error("Incompatible loader for selected data: {"
-                              "}".format(file_filter))
+                              "} because {}".format(file_filter, e))
 
 
 class FitModelThread(QThread):
@@ -151,4 +157,3 @@ class FitModelThread(QThread):
         # update GUI with fit results
 
         return model_layer, fitter.fit_info.get('message', "")
-
