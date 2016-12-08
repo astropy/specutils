@@ -192,13 +192,20 @@ class LinePlot(object):
             data = self.layer.data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
 
-        disp = np.append(disp, disp[-1]) if self.mode is 'histogram' else disp
-        # data = data[:-1] if self.mode is 'histogram' else data
+        #-- Changes specific for scatter plot rendering
+        symbol = 'o' if self.mode == 'scatter' else None
+        pen = None if self.mode == 'scatter' else self.pen
 
-        self._plot.setData(disp, data, symbol='o' if self.mode is 'scatter' else None,
-                           stepMode=True if self.mode is 'histogram' else False,
-                           pen=None if self.mode is 'scatter' else self.pen)
+        #-- changes specific for histrogram rendering
+        stepMode = True if self.mode == 'histogram' else False
+        disp = np.append(disp, disp[-1]) if self.mode == 'histogram' else disp
+
+        self._plot.setData(disp,
+                           data,
+                           symbol=symbol,
+                           stepMode=stepMode,
+                           pen=pen)
 
         if self.error is not None:
-            self.error.setData(x=disp[:-1] if self.mode is 'histogram' else disp,
+            self.error.setData(x=disp[:-1] if self.mode == 'histogram' else disp,
                                y=data, height=uncert)
