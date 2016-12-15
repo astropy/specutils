@@ -8,6 +8,8 @@ import inspect
 import logging
 
 import astropy.io.registry as io_registry
+
+#-- local
 from ..core.data import Spectrum1DRef
 from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
 

@@ -122,6 +122,7 @@ setup(name=PACKAGENAME,
       scripts=scripts,
       install_requires=[
           'astropy',
+          'numpy',
           'cython',
           'specutils',
           'numpy>=1.10',
