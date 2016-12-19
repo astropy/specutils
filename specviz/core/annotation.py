@@ -12,6 +12,7 @@ orientations = {
     'vertical':   {'anchor': (0, 0.5), 'angle': -90}
 }
 
+
 class LineIDMarker(TextItem):
     ''' This class handles the drawing of a modified TextItem that's
         augmented with a linear vertical marker. These items are used
@@ -62,5 +63,3 @@ class LineIDMarker(TextItem):
         pen = QPen(QColor(functions.mkColor(self._color)))
         p.setPen(pen)
         p.drawPolygon(polygon)
-
-
