@@ -19,7 +19,7 @@ class Spline1D(Fittable1DModel):
 
 
 class Spline1DInitializer(object):
-
+    
     def initialize(self, instance, wave, flux):
         instance.wave = wave
         instance.flux = flux

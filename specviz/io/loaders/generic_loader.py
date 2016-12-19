@@ -1,6 +1,3 @@
-from specviz.interfaces.decorators import data_loader
-from specviz.core.data import Spectrum1DRef
-
 import os
 
 from astropy.io import fits
@@ -9,6 +6,10 @@ from astropy.wcs import WCS
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
+from ...interfaces import data_loader
+from ...core.data import Spectrum1DRef
+
+__all__ = ['fits_identify', 'simple_generic_loader']
 
 def fits_identify(*args, **kwargs):
     """
@@ -38,4 +39,3 @@ def simple_generic_loader(file_name, **kwargs):
 
     return Spectrum1DRef(data=data, name=name, wcs=wcs,
                          uncertainty=uncertainty, unit=unit, meta=meta)
-

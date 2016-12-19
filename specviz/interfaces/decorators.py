@@ -8,6 +8,7 @@ import astropy.io.registry as io_registry
 
 from ..core.data import Spectrum1DRef
 
+__all__ = ['data_loader']
 
 def data_loader(label, identifier, priority=-1, **kwargs):
     """

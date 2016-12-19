@@ -8,9 +8,15 @@ import inspect
 import logging
 
 import astropy.io.registry as io_registry
+
+#-- local
 from ..core.data import Spectrum1DRef
 from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
+from ..io.loaders import *
 
+__all__ = ['Registry',
+           'PluginRegistry',
+           'LoaderRegistry']
 
 class Registry(object):
     """
@@ -79,21 +85,23 @@ class LoaderRegistry(Registry):
     def _load_py(self):
         """ Loads built-in and custom python loaders
 
+        Loaders from the io.loaders module will be included from the
+        import statement.
         Python modules (.py ending) found in the following locations will be
         auto-loaded into the registry for data loading.
 
         1.  .specviz folder in the user's HOME directory
-        2.  io/loaders distributed with this package
 
         """
 
-        cur_path = os.path.abspath(os.path.join(__file__, '..', '..', 'io',
-                                                'loaders'))
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [usr_path, cur_path]
+        #
+        # Leaving in list format incase other locations want to be added
+        # in the future
+        check_paths = [usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -103,7 +111,6 @@ class LoaderRegistry(Registry):
                 mod = mod.split('.')[0]
                 sys.path.insert(0, path)
                 mod = importlib.import_module(mod)
-                members = inspect.getmembers(mod, predicate=inspect.isfunction)
 
                 # for _, func in members:
                 #     if hasattr(func, 'loader_wrapper') and func.loader_wrapper:

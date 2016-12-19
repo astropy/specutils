@@ -1,16 +1,17 @@
-from specviz.interfaces.decorators import data_loader
-from specviz.core.data import Spectrum1DRef
-
 import os
 
 from astropy.io import fits
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
+from ...interfaces import data_loader
+from ...core.data import Spectrum1DRef
+
+__all__ = ['cos_identify', 'cos_spectrum_loader']
 
 def cos_identify(*args, **kwargs):
-    """
-    Check whether given file contains HST/COS spectral data.
+    """ Check whether given file contains HST/COS spectral data.
+
     """
 
     with fits.open(args[0]) as hdu:

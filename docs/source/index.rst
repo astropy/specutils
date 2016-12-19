@@ -65,7 +65,7 @@ References/API
 .. toctree::
    :maxdepth: 1
 
-   api/index
+   api
 
 
 Indices and tables

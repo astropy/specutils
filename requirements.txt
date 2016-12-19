@@ -5,6 +5,7 @@ cython
 numpy
 scipy
 astropy
+sphinx_automodapi
 git+https://github.com/nmearl/specutils.git
 git+https://github.com/nmearl/pyqtgraph.git
 -e .
