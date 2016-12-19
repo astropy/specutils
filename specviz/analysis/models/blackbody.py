@@ -10,10 +10,40 @@ __all__ = ['BlackBody']
 
 
 class BlackBody(Fittable1DModel):
+    """
+    Produce a blackbody flux spectrum
+
+    Notes
+    -----
+    See `astropy.modeling.Fittable1DModel <http://docs.astropy.org/en/stable/api/astropy.modeling.Fittable1DModel.html#astropy.modeling.Fittable1DModel>`_
+    for further details.
+
+    Description of the blackbody function itself is described in
+    `astropy.analytic_functions <http://docs.astropy.org/en/stable/analytic_functions/index.html#blackbody-radiation>`_
+    """
     temp = Parameter(default=5000, min=10.)
     norm = Parameter(default=1.)
 
     def evaluate(self, x, temp, norm):
+        """
+        Evaluate the blackbody for a given temperature over a wavalength range
+
+        Parameters
+        ----------
+        x: numpy.ndarray
+            The wavelengths to evaulate over.
+
+        temp: float
+            The temperature to evualate at.
+
+        norm: float
+            The normalization factor.
+
+        Returns
+        -------
+        blackbody_flux: numpy.ndarray
+            The blackbody flux.
+        """
         # x is passed as a bare numpy array; must be
         # converted back to Quantity before calling
         # astropy's black body functions.
@@ -29,8 +59,25 @@ class BlackBody(Fittable1DModel):
 
 
 class BlackBodyInitializer(object):
+    """
+    `BlackBody` model initializer
+    """
 
     def initialize(self, instance, wave, flux):
+        """
+        Initialize the blackbody model
+
+        Parameters
+        ----------
+        instance: BlackBody
+            The `BlackBody` model
+
+        wave: numpy.ndarray
+            The wavelength range.
+
+        flux: numpy.ndarray
+            The source flux to normalize to.
+        """
         instance.wave = wave
         instance.flux = flux
 
