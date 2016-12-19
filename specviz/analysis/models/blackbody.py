@@ -10,7 +10,6 @@ __all__ = ['BlackBody']
 
 
 class BlackBody(Fittable1DModel):
-
     temp = Parameter(default=5000, min=10.)
     norm = Parameter(default=1.)
 
@@ -42,4 +41,3 @@ class BlackBodyInitializer(object):
         sum_model = np.sum(instance.evaluate(wave.value, instance.temp.value, 1.))
 
         instance.norm = sum_data / sum_model
-
