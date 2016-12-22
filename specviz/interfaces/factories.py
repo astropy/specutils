@@ -1,3 +1,6 @@
+"""
+App-wide factories
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -21,18 +24,23 @@ class Factory(object):
 #TODO  a base class for Model and Fitter classes might be of help here.
 
 class ModelFactory(Factory):
+    """
+    Create a model
 
-    # Ideally we should be getting these classes from astropy directly and
-    # transparently, instead of explicitly naming them here. This is basically
-    # a maintenance issue: at each new release of astropy we should check if
-    # new models became available, and existing models got deprecated.
-    #
-    # This might not be possible unless astropy itself somehow manages to
-    # further subclass its Fittable1DModel class into spectrum-specific and
-    # other types. Right now we have a mix of spectral models, galaxy surface
-    # brightness models, and others, all lumped into a single type. Thus we
-    # have to keep picking the spectral relevant types by hand for the time
-    # being.
+    Notes
+    -----
+    Ideally we should be getting these classes from astropy directly and
+    transparently, instead of explicitly naming them here. This is basically
+    a maintenance issue: at each new release of astropy we should check if
+    new models became available, and existing models got deprecated.
+
+    This might not be possible unless astropy itself somehow manages to
+    further subclass its Fittable1DModel class into spectrum-specific and
+    other types. Right now we have a mix of spectral models, galaxy surface
+    brightness models, and others, all lumped into a single type. Thus we
+    have to keep picking the spectral relevant types by hand for the time
+    being.
+    """
     all_models = {
         'Gaussian': models.Gaussian1D,
         'GaussianAbsorption': models.GaussianAbsorption1D,
@@ -64,6 +72,20 @@ class ModelFactory(Factory):
 
     @classmethod
     def create_model(cls, name):
+        """
+        Create a model
+
+        Parameters
+        ----------
+        name: str
+            The name of the model desired.
+
+        Returns
+        -------
+        model: `~astropy.modeling.models`
+            The requested model. None if the requested
+            model does not exist.
+        """
         name = str(name)
 
         if name in cls.all_models:
@@ -73,6 +95,9 @@ class ModelFactory(Factory):
 
 
 class FitterFactory(Factory):
+    """
+    Create a fitter
+    """
     default_fitter = fitting.LevMarLSQFitter
 
     all_fitters = {
@@ -83,6 +108,20 @@ class FitterFactory(Factory):
 
     @classmethod
     def create_fitter(cls, name):
+        """
+        Create a fitter
+
+        Parameters
+        ----------
+        name: str
+            The name of the fitter desired.
+
+        Returns
+        -------
+        fitter: `~astropy.fitting.Fitter`
+            The fitter class requested.
+            None if the requested fitter does not exist.
+        """
         name = str(name)
 
         if name in cls.all_fitters:
