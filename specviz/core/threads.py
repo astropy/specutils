@@ -1,3 +1,6 @@
+"""
+Threaded tasks
+"""
 from qtpy.QtCore import QThread, Signal
 import os
 import logging
@@ -9,6 +12,40 @@ import astropy.io.registry as io_registry
 
 
 class FileLoadThread(QThread):
+    """
+    Asynchronously read in a file
+
+    Parameters
+    ----------
+    parent: QtWidget
+        The parent widget or None
+
+    Call
+    ----
+    file_name: str
+        Name of the file to read.
+
+    file_filter: str
+        Type of file to read.
+
+    Attributes
+    ----------
+    file_name: str
+        Name of the file to read.
+
+    file_filter: str
+        Type of file to read. If `Auto`, try all known formats.
+
+    Signals
+    -------
+    status(message, timeout)
+        State of the thread
+            message: The status message
+            timeout: Time (msec) to display message
+
+    result(Spectrum1DRef)
+        The file's data
+    """
     status = Signal(str, int)
     result = Signal(Spectrum1DRef)
 
@@ -18,10 +55,16 @@ class FileLoadThread(QThread):
         self.file_filter = ""
 
     def __call__(self, file_name, file_filter):
+        """
+        Initialize the thread
+        """
         self.file_name = file_name
         self.file_filter = file_filter
 
     def run(self):
+        """
+        Start thread to read the file.
+        """
         self.status.emit("Loading file...", 0)
         data = self.read_file(self.file_name, self.file_filter)
 
@@ -38,6 +81,22 @@ class FileLoadThread(QThread):
     def read_file(self, file_name, file_filter):
         """
         Convenience method that directly reads a spectrum from a file.
+
+        Parameters
+        ----------
+        file_name: str
+            Name of the file to read.
+
+        file_filter: str
+            Type of file to read. If `Auto`, try all known formats.
+
+        Returns
+        -------
+        data: Spectrum1DRef
+            The file's data or None if no known formats are found.
+
+        Notes
+        -----
         This exists mostly to facilitate development workflow. In time it
         could be augmented to support fancier features such as wildcards,
         file lists, mixed file types, and the like.
@@ -69,6 +128,46 @@ class FileLoadThread(QThread):
 
 
 class FitModelThread(QThread):
+    """
+    Asynchronously fit a model to a layer
+
+    Parameters
+    ----------
+    parent: QtWidget
+        The parent widget or None
+
+    Call
+    ----
+    model_layer: Spectrum1DRefLayer
+        The layer to fit to.
+
+    fitter_name: An `~astropy.modeling` fitter
+        The fitter to use
+
+    mask: numpy.ndarray
+        The mask to apply
+
+    Attributes
+    ----------
+    model_layer: Spectrum1DRefLayer
+        The layer to fit to.
+
+    fitter_name: An `~astropy.modeling` fitter
+        The fitter to use
+
+    mask: numpy.ndarray
+        The mask to apply
+
+    Signals
+    -------
+    status(message, timeout)
+        State of the thread
+            message: The status message
+            timeout: Time (msec) to display message
+
+    result(Spectrum1DRefModelLayer)
+        The fit
+    """
     status = Signal(str, int)
     result = Signal(Spectrum1DRefModelLayer)
 
@@ -83,6 +182,9 @@ class FitModelThread(QThread):
         self.mask = mask
 
     def run(self):
+        """
+        Start thread to fit the model
+        """
         self.status.emit("Fitting model...", 0)
         model_layer, message = self.fit_model(self.model_layer,
                                               self.fitter_name,
@@ -96,6 +198,26 @@ class FitModelThread(QThread):
         self.result.emit(model_layer)
 
     def fit_model(self, model_layer, fitter_name, mask=None):
+        """
+        Fit the model
+
+        Parameters
+        ----------
+        model_layer: Spectrum1DRefLayer
+            The layer to fit to.
+
+        fitter_name: An `~astropy.modeling` fitter
+            The fitter to use
+
+        mask: numpy.ndarray
+            The mask to apply
+
+        Returns
+        -------
+        (model_layer, fitter_message): Spectrum1DRefLayer, str
+            The model_layer.model is updated with the fit paramters.
+            The message is from the fitter itself.
+        """
         if not hasattr(model_layer, 'model'):
             logging.warning("This layer has no model to fit.")
             return
