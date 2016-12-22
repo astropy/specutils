@@ -1,3 +1,6 @@
+"""
+Generic loader definitions
+"""
 import os
 
 from astropy.io import fits
@@ -11,6 +14,7 @@ from ...core.data import Spectrum1DRef
 
 __all__ = ['fits_identify', 'simple_generic_loader']
 
+
 def fits_identify(*args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
@@ -22,6 +26,23 @@ def fits_identify(*args, **kwargs):
 
 @data_loader(label="Simple Fits", identifier=fits_identify)
 def simple_generic_loader(file_name, **kwargs):
+    """
+    Basic FITS file loader
+
+    Presumption is the primary data is a table with columns 'flux'
+    and 'err'.  The dispersion information is encoded in the FITS
+    header keywords.
+
+    Parameters
+    ----------
+    file_name: str
+        The path to the FITS file
+
+    Returns
+    -------
+    data: Spectrum1DRef
+        The data.
+    """
     name = os.path.basename(file_name.name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
