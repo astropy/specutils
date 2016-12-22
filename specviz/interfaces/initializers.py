@@ -1,9 +1,12 @@
-# This module is used to initialize spectral models to the
-# data at hand. This is used by model-fitting code that has
-# to create spectral model instances with sensible parameter
-# values such that they can be used as first guesses by the
-# fitting algorithms.
+"""
+This module is used to initialize spectral models to the
+data at hand.
 
+This is used by model-fitting code that has
+to create spectral model instances with sensible parameter
+values such that they can be used as first guesses by the
+fitting algorithms.
+"""
 import numpy as np
 
 from ..analysis.models import spline, blackbody
@@ -18,13 +21,33 @@ def _get_model_name(model):
     return class_string.split('\'>')[0].split(".")[-1]
 
 
-# Initialization that is specific to the Linear1D model.
-# In a way, we need this specialized initializer because
-# the linear 1D model is more like a kind of polynomial.
-# It doesn't mesh well with other non-linear models.
 class _Linear1DInitializer(object):
+    """
+    Initialization that is specific to the Linear1D model.
 
+    Notes
+    -----
+    In a way, we need this specialized initializer because
+    the linear 1D model is more like a kind of polynomial.
+    It doesn't mesh well with other non-linear models.
+    """
     def initialize(self, instance, x, y):
+        """
+        Initialize the model
+
+        Parameters
+        ----------
+        instance: `~astropy.modeling.models`
+            The model to initialize.
+
+        x, y: numpy.ndarray
+            The data to use to initialize from.
+
+        Returns
+        -------
+        instance: `~astropy.modeling.models`
+            The initialized model.
+        """
 
         # y_range = np.max(y) - np.min(y)
         # x_range = x[-1] - x[0]
@@ -39,17 +62,40 @@ class _Linear1DInitializer(object):
         return instance
 
 
-# Initialization that is applicable to all "wide band"
-# models, that is, models that have an amplitude and
-# a position in wavelength space where this amplitude
-# is defined.
 class _WideBand1DInitializer(object):
+    """
+    Initialization that is applicable to all "wide band"
+    models
 
+    A "wide band" model is one that has an amplitude and
+    a position in wavelength space where this amplitude
+    is defined.
+
+    Parameters
+    ----------
+    factor: float
+        The scale factor to apply to the amplitutde
+    """
     def __init__(self, factor=1.0):
         self._factor = factor
 
     def initialize(self, instance, x, y):
+        """
+        Initialize the model
 
+        Parameters
+        ----------
+        instance: `~astropy.modeling.models`
+            The model to initialize.
+
+        x, y: numpy.ndarray
+            The data to use to initialize from.
+
+        Returns
+        -------
+        instance: `~astropy.modeling.models`
+            The initialized model.
+        """
         y_mean = np.mean(y)
         x_range = x[-1] - x[0]
         position = x_range / 2.0 + x[0]
@@ -62,15 +108,39 @@ class _WideBand1DInitializer(object):
         return instance
 
 
-# Initialization that is applicable to all "line profile"
-# models, that is, models that have an amplitude, a width,
-# and a defined position in wavelength space.
 class _LineProfile1DInitializer(object):
+    """
+    Initialization that is applicable to all "line profile"
+    models.
 
+    A "line profile" model is one that has an amplitude, a width,
+    and a defined position in wavelength space.
+
+    Parameters
+    ----------
+    factor: float
+        The scale factor to apply to the amplitutde
+    """
     def __init__(self, factor=1.0):
         self._factor = factor
 
     def initialize(self, instance, x, y):
+        """
+        Initialize the model
+
+        Parameters
+        ----------
+        instance: `~astropy.modeling.models`
+            The model to initialize.
+
+        x, y: numpy.ndarray
+            The data to use to initialize from.
+
+        Returns
+        -------
+        instance: `~astropy.modeling.models`
+            The initialized model.
+        """
 
         # X centroid estimates the position
         centroid = np.sum(x * y) / np.sum(y)
@@ -93,10 +163,27 @@ class _LineProfile1DInitializer(object):
         return instance
 
 
-# Sets parameter value by mapping parameter name to model type.
-# Prevents the parameter value setting to be stopped on its tracks
-# by non-existent model names or parameter names.
 def _setattr(instance, mname, pname, value):
+    """
+    Sets parameter value by mapping parameter name to model type.
+
+    Prevents the parameter value setting to be stopped on its tracks
+    by non-existent model names or parameter names.
+
+    Parameters
+    ----------
+    instance: `~astropy.modeling.models`
+        The model to initialize.
+
+    mname: str
+        Model name.
+
+    pname: str
+        Parameter name.
+
+    value: any
+        The value to assign.
+    """
     try:
         # conflicts happen when we try to set a parameter value
         # as a Quantity. Use the raw value instead.
@@ -147,10 +234,27 @@ _p_names = {
     }
 
 
-# Main entry point. X and Y are for now Quantity arrays with the
-# independent and dependent variables. It's assumed X values
-# are stored in increasing order in the array.
 def initialize(instance, x, y):
+    """
+    Main entry point. X and Y are for now Quantity arrays with the
+    independent and dependent variables. It's assumed X values
+    are stored in increasing order in the array.
+
+    Parameters
+    ----------
+    instance: `~astropy.modeling.models`
+        The model to initialize.
+
+    x, y: numpy.ndarray
+        The data to use to initialize from.
+
+    Returns
+    -------
+    instance: `~astropy.modeling.models`
+        The initialized model.
+        If there are any errors, the instance is returned
+        uninitialized.
+    """
     if x is None or y is None:
         return instance
 
