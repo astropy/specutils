@@ -1,7 +1,7 @@
-#
-# Functions in this module support the reading and writing
-# of astropy's spectral compound models from/to YAML files.
-#
+"""
+Functions in this module support the reading and writing
+of astropy's spectral compound models from/to YAML files.
+"""
 
 import os
 import sys
@@ -28,11 +28,29 @@ def _get_model_class_name(function):
     return class_string.split('\'>')[0].split(".")[-1]
 
 
-
 # ----------  From YAML file to model  ------------------------'
 
 def _ingest_constraints(param_dict):
+    """
+    Convert constraints from YAML to actual values
 
+    Parameters
+    ----------
+    param_dict: dict
+        The parameters from the parsed YAML
+
+    Returns
+    -------
+    (bounds, fixed, tied)
+        bounds: dict
+            The bounds as a dictionary of tuples
+
+        fixed: dict
+            The fixed values
+
+        tied: dict
+            The tied components
+    """
     bounds = param_dict['constraints']['bounds']
     fixed = param_dict['constraints']['fixed']
     tied = param_dict['constraints']['tied']
@@ -57,6 +75,23 @@ def _ingest_constraints(param_dict):
 
 
 def _build_single_model(in_map, model_name=None):
+    """
+    Construct the model from the parsed YAML
+
+    Parameters
+    ----------
+    in_map: dict
+        The parsed YAML
+
+    model_name: str
+        The name of the model. If None, use
+        the name from YAML
+
+    Returns
+    -------
+    `~astropy.modeling.models`
+        The reconstructed model.
+    """
     if model_name is None:
         entry_name = list(in_map.keys())[0]
     else:
@@ -88,10 +123,22 @@ def _build_single_model(in_map, model_name=None):
     return model
 
 
-# If no arithmetic behavior expression is know,
-# build a compound model by adding together all
-# models present in the map.
 def _build_additive_model(in_map):
+    """
+    If no arithmetic behavior expression is know,
+    build a compound model by adding together all
+    models present in the map.
+
+    Parameters
+    ----------
+    in_map: dict
+        The parsed YAML
+
+    Returns
+    -------
+    `~astropy.modeling.models`
+        The reconstructed model.
+    """
     model = None
     for model_name in in_map[MODEL_NAME]:
         in_model = _build_single_model(in_map[MODEL_NAME], model_name=model_name)
@@ -102,9 +149,21 @@ def _build_additive_model(in_map):
     return model
 
 
-# If an arithmetic behavior expression is present,
-# use it to build the compound model
 def _build_compound_model(in_map):
+    """
+    If an arithmetic behavior expression is present,
+    use it to build the compound model
+
+    Parameters
+    ----------
+    in_map: dict
+        The parsed YAML
+
+    Returns
+    -------
+    Spectrum1DRefModelLayer
+        The reconstructed model.
+    """
     model_list = []
     for model_name in in_map[MODEL_NAME]:
         model_list.append(_build_single_model(in_map[MODEL_NAME], model_name=model_name))
@@ -126,6 +185,18 @@ def buildModelFromFile(fname):
     ----------
     fname: str
         the ffully qualified file name
+
+    Returns
+    -------
+    (compound_model, model_expression, directory)
+        compound_model: `~astropy.modeling.models`
+            The model from the file.
+
+        model_expression: str
+            The model expression.
+
+        directory: str
+            The path where the file was read from.
     """
     directory = os.path.dirname(fname)
 
@@ -152,9 +223,21 @@ def buildModelFromFile(fname):
 
 # ----------  From model to YAML file ------------------------'
 
-# Builds a dictionary with model constraints by directly
-# referring to the _constraints attribute in a model.
 def _build_constraints_dict(model):
+    """
+    Builds a dictionary with model constraints by directly
+    referring to the _constraints attribute in a model.
+
+    Parameters
+    ----------
+    model: `~astropy.modeling.models`
+        The model to get the constraints from.
+
+    Returns
+    -------
+    constriants_dict: dict
+        The constraints extracted from the model.
+    """
     constraints_dict = copy.deepcopy(model._constraints)
 
     # bounds are stored as strings so
@@ -174,8 +257,23 @@ def _build_constraints_dict(model):
     return constraints_dict
 
 
-# From a single model, builds the dict to be output to YAML file.
 def _build_output_dict_single(model):
+    """
+    From a single model, builds the dict to be output to YAML file.
+
+    Parameters
+    ----------
+    model: `~astropy.modeling.models`
+        The model to get the constraints from.
+
+    Returns
+    (model_name, model_dict)
+        model_name: str
+            Name of the model
+
+        model_dict: dict
+            Model informaiton broken into a dictionary
+    """
     model_name = model.name
 
     param_dict = {}
@@ -193,8 +291,23 @@ def _build_output_dict_single(model):
     return model_name, model_dict
 
 
-# From a compound model, builds the dict to be output to YAML file.
 def _build_output_dict_compound(model):
+    """
+    From a compound model, builds the dict to be output to YAML file.
+
+    Parameters
+    ----------
+    model: `~astropy.modeling.models`
+        The model to get the constraints from.
+
+    Returns
+    (model_name, model_dict)
+        model_name: str
+            Name of the model
+
+        model_dict: dict
+            Model informaiton broken into a dictionary
+    """
     model_name = model.name
 
     param_dict = {}
@@ -223,9 +336,22 @@ def _build_output_dict_compound(model):
     return model_name, model_dict
 
 
-# Writes a dict to YAML file.
 def _writeToFile(out_model_dict, model_directory, parent):
+    """
+    Writes a dict to YAML file.
 
+    Parameters
+    ----------
+    out_model_dict: dict
+        The model dictionary to write.
+
+    model_directory: str
+        The path to write to
+
+    parent: QtWidget
+        The parent widget to make the file dialog belong to.
+        May be None.
+    """
     fname = QFileDialog.getSaveFileName(parent, 'Save to file', model_directory)[0]
 
     if len(fname) > 0:
@@ -238,11 +364,26 @@ def _writeToFile(out_model_dict, model_directory, parent):
         f.close()
 
 
-# Handles the case of a spectral model with a single component. It's
-# not strictly a compound model, but saving and retrieving isolated
-# components as if they were compound models makes for a simpler
-# interface.
 def _writeSingleComponentModel(model, model_directory, parent):
+    """
+Handles the case of a spectral model with a single component.
+
+    It's not strictly a compound model, but saving and retrieving
+    isolated components as if they were compound models makes for a
+    simpler interface.
+
+    Parameters
+    ----------
+    model: dict
+        The model dictionary to write.
+
+    model_directory: str
+        The path to write to
+
+    parent: QtWidget
+        The parent widget to make the file dialog belong to.
+        May be None.
+    """
     out_model_dict = {}
 
     model_name, model_dict = _build_output_dict_single(model)
@@ -251,8 +392,25 @@ def _writeSingleComponentModel(model, model_directory, parent):
     _writeToFile(out_model_dict, model_directory, parent)
 
 
-# Handles the case of a compound model
 def _writeCompoundModel(compound_model, model_directory, parent, expression):
+    """
+    Handles the case of a compound model
+
+    Parameters
+    ----------
+    compound_model: dict
+        The model dictionary to write.
+
+    model_directory: str
+        The path to write to
+
+    parent: QtWidget
+        The parent widget to make the file dialog belong to.
+        May be None.
+
+    expression: str
+        The formula associationed with the model.
+    """
     out_model_dict = {MODEL_NAME:{}}
 
     for model in compound_model:
@@ -273,10 +431,17 @@ def saveModelToFile(parent, model, model_directory, expression=None):
 
     Parameters
     ----------
-    parent : QWidget or None
-        optional widget used for screen centering.
+    parent: QtWidget or None
+        Optional widget used for screen centering.
+
+    model: dict
+        The model dictionary to write.
+
+    model_directory: str
+        The path to write to
+
     expression: str
-        the formula associated with the compound model
+        The formula associated with the compound model
     """
     if not hasattr(model, '_format_expression'):
         _writeSingleComponentModel(model, model_directory, parent)
@@ -289,10 +454,25 @@ def saveModelToFile(parent, model, model_directory, expression=None):
 #  Utility functions that might be used when we implement ties.
 #
 
-# Disassembles a tie callable. Ties read from a model
-# file are not directly accessible in text form because
-# the model file is compiled at import time.
 def get_tie_text(tie):
+    """
+    Disassembles a tie callable.
+
+    Ties read from a model
+    file are not directly accessible in text form because
+    the model file is compiled at import time.
+
+    Parameters
+    ----------
+    tie: str
+        The model file to read from.
+
+    Returns
+    -------
+    parsed:
+        The parsed text.
+        If there is an issue, return 'False'
+    """
     if tie:
         # dis() only outputs on standard output.....
         keep = sys.stdout
@@ -307,13 +487,26 @@ def get_tie_text(tie):
     return result
 
 
-# This parses the text returned by the disassembler for
-# a lambda function that multiplies a constant by a
-# variable. That is, we are assuming that ties are coded
-# as lambda functions with multiplication by a constant,
-# as in the STSDAS' specfit task.
 parser = re.compile(r'\(([^)]+)\)') # picks up whatever is enclosed in parenthesis
 def _parse_assembler_text(text):
+    """
+    This parses the text returned by the disassembler for
+    a lambda function that multiplies a constant by a
+    variable.
+
+    That is, we are assuming that ties are coded
+    as lambda functions with multiplication by a constant,
+    as in the STSDAS' specfit task.
+
+    Parameters
+    ----------
+    text:
+        The disassembled text
+
+    Returns
+    -------
+        The variable names and values in text format.
+    """
     tokens = parser.findall(text)
     factor = tokens[0]
     lambda_variable_name = tokens[1]
@@ -326,5 +519,3 @@ def _parse_assembler_text(text):
             lambda_variable_name,
             function_id,
             par_name)
-
-

@@ -49,10 +49,13 @@ def buildModelFromFile(fname):
         A 3-tuple consisting of:
             compound_model: `~astropy.modeling.models`
                 The model from the file.
+
             model_expression: str
                 Currently always an empty string.
+
             directory: str
                 The path where the file was read from.
+
         If any issues occur, the 3-tuple (None, None, None) is returned
     """
     directory = os.path.dirname(fname)
