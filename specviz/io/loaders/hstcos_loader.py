@@ -9,6 +9,7 @@ from ...core.data import Spectrum1DRef
 
 __all__ = ['cos_identify', 'cos_spectrum_loader']
 
+
 def cos_identify(*args, **kwargs):
     """ Check whether given file contains HST/COS spectral data.
 
@@ -25,6 +26,15 @@ def cos_identify(*args, **kwargs):
 def cos_spectrum_loader(file_name, **kwargs):
     """ Load file from COS spectral data into a spectrum object
 
+    Parameters
+    ----------
+    file_name: str
+        The path to the FITS file
+
+    Returns
+    -------
+    data: Spectrum1DRef
+        The data.
     """
 
     name = os.path.basename(file_name)

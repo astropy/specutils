@@ -9,6 +9,7 @@ from ...core.data import Spectrum1DRef
 
 __all__ = ['stis_identify', 'stis_spectrum_loader']
 
+
 def stis_identify(*args, **kwargs):
     """
     Check whether given file contains HST/STIS spectral data.
@@ -25,6 +26,15 @@ def stis_identify(*args, **kwargs):
 def stis_spectrum_loader(file_name, **kwargs):
     """ Load file from STIS spectral data into a spectrum object
 
+    Parameters
+    ----------
+    file_name: str
+        The path to the FITS file
+
+    Returns
+    -------
+    data: Spectrum1DRef
+        The data.
     """
 
     name = os.path.basename(file_name)
