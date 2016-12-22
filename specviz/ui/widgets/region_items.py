@@ -5,6 +5,9 @@ import pyqtgraph as pg
 
 
 class LinearRegionItem(pg.LinearRegionItem):
+    """
+    Linear Region Item
+    """
     sigHoverEvent = QtCore.Signal(object)
     sigRemoveRequested = QtCore.Signal(object)
     sigClicked = QtCore.Signal(object, object)
@@ -63,4 +66,3 @@ class LinearRegionItem(pg.LinearRegionItem):
             self.sigClicked.emit(self, ev)
         else:
             ev.ignore()
-

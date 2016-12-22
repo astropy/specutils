@@ -1,3 +1,6 @@
+"""
+Define all the line list-based windows and dialogs
+"""
 from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *

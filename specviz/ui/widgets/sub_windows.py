@@ -29,6 +29,9 @@ pg.setConfigOptions(antialias=False)
 
 
 class UiPlotSubWindow(QMainWindow):
+    """
+    Main plotting window.
+    """
     def __init__(self, *args, **kwargs):
         super(UiPlotSubWindow, self).__init__(*args, **kwargs)
 
@@ -353,7 +356,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # Build new line lists with only the selected rows.
 
         linelists_with_selections = []
-        
+
         for table_view in table_views:
             # Find matching line list by its name. This could be made
             # simpler by the use of a dict. That breaks code elsewhere
@@ -452,4 +455,3 @@ class PlotSubWindow(UiPlotSubWindow):
         if self._is_selected and self._linelist_window:
             self._linelist_window.hide()
             self._linelist_window = None
-
