@@ -1,3 +1,6 @@
+"""
+Holder for the general UI operations
+"""
 import os
 
 from ..ui.widgets.plugin import Plugin
@@ -5,6 +8,9 @@ from ..ui.widgets.utils import ICON_PATH
 
 
 class ToolTrayPlugin(Plugin):
+    """
+    UI plugin for the general UI operations
+    """
     name = "Tools"
     location = "hidden"
     priority = 0

@@ -1,3 +1,6 @@
+"""
+Plugin to manage the loaded data
+"""
 import os
 
 from ..ui.widgets.plugin import Plugin
@@ -15,6 +18,9 @@ import astropy.io.registry as io_registry
 
 
 class DataListPlugin(Plugin):
+    """
+    UI plugin to manage the data.
+    """
     name = "Data List"
     location = "left"
 

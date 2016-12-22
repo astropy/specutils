@@ -1,3 +1,6 @@
+"""
+Manage plot attributes
+"""
 import os
 import logging
 from collections import OrderedDict
@@ -11,6 +14,9 @@ from ..ui.widgets.dialogs import TopAxisDialog, UnitChangeDialog
 
 
 class PlotToolsPlugin(Plugin):
+    """
+    UI plugin to manage plot attributes of the various layers
+    """
     name = "Plot Tools"
     location = "hidden"
     _all_categories = {}
