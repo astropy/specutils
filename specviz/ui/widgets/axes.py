@@ -6,6 +6,21 @@ import astropy.units as u
 
 class DynamicAxisItem(pg.AxisItem):
     """
+    Axis that understand spectral modes
+
+    Attributes
+    ----------
+    mode: int
+        Display mode. Can be one of:
+            0: velocity
+            1: redshift
+            2: pixel (default)
+
+    redshift: float
+        Reference redshift.
+
+    ref_wave: float
+        Reference wavelength for velocity determination.
     """
     def __init__(self, *args, **kwargs):
         super(DynamicAxisItem, self).__init__(*args, **kwargs)
@@ -16,6 +31,25 @@ class DynamicAxisItem(pg.AxisItem):
         self.ref_wave = 0.0
 
     def update_axis(self, layer, mode, **kwargs):
+        """
+        Update axis display
+
+        Parameters
+        ----------
+        layer: Spectrum1DRefLayer
+            The layer to update
+
+        mode: int
+            The display mode to use.
+
+        ref_wave: float
+            if `mode` == 0, velocity, this specfies
+            the reference wavelength.
+
+        redshift: float
+            If `mode` == `, redshift, this
+            specifies the redshift.
+        """
         self.mode = mode
 
         if self.mode == 0:
@@ -31,6 +65,11 @@ class DynamicAxisItem(pg.AxisItem):
         self.show()
 
     def tickStrings(self, values, scale, spacing):
+        """
+        Defines the tick marking format based on display mode
+
+        See `~pygtgraph.AxisItem` for parameter definitions.
+        """
         if self._layer is None:
             return super(DynamicAxisItem, self).tickStrings(values, scale,
                                                             spacing)
