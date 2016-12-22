@@ -1,3 +1,6 @@
+"""
+Registry library
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -18,9 +21,15 @@ __all__ = ['Registry',
            'PluginRegistry',
            'LoaderRegistry']
 
+
 class Registry(object):
     """
     Maintains a set of referential objects.
+
+    Attributes
+    ----------
+    members: list
+        The list of members belonging to this registry.
     """
     def __init__(self):
         self._members = []
@@ -76,6 +85,8 @@ class PluginRegistry(Registry):
 
 
 class LoaderRegistry(Registry):
+    """Loads and stores the IO data loaders
+    """
     def __init__(self):
         super(LoaderRegistry, self).__init__()
 
@@ -172,6 +183,8 @@ class LoaderRegistry(Registry):
 
 
 class YAMLLoader(yaml.YAMLObject):
+    """ Helper to load YAML files
+    """
     yaml_tag = u'!CustomLoader'
 
     def __init__(self, extension, name, data, dispersion, uncertainty, mask,
