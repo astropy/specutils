@@ -1,10 +1,11 @@
-"""This module handles spectrum data objects."""
+"""
+Data Objects
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 # STDLIB
 import logging
-logging.basicConfig(level=logging.INFO)
 import re
 
 # THIRD-PARTY
@@ -12,6 +13,13 @@ import numpy as np
 from astropy.units import Quantity, spectral_density, spectral
 from ..third_party.py_expression_eval import Parser
 from specutils.core.generic import Spectrum1DRef
+
+logging.basicConfig(level=logging.INFO)
+
+__all__ = [
+    'Spectrum1DRefLayer',
+    'Spectrum1DRefModelLayer',
+]
 
 
 class Spectrum1DRefLayer(Spectrum1DRef):

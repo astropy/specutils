@@ -4,22 +4,58 @@ SpecViz API
 Analysis Functions
 ------------------
 .. automodapi:: specviz.analysis
-  :no-heading:
+   :no-heading:
 
 
 SpecViz core
 ------------
-.. automodapi:: specviz.core
-  :no-heading:
 
+Data Objects
+^^^^^^^^^^^^
+.. automodapi:: specviz.core.data
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
 
+Object Event Handling
+^^^^^^^^^^^^^^^^^^^^^
+.. automodapi:: specviz.core.comms
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
+
+Spectrum Layer Plotting
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodapi:: specviz.core.plots
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
+
+Emission/Absorption Line list utilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodapi:: specviz.core.linelist
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
+
+Thread Helpers
+^^^^^^^^^^^^^^
+.. automodapi:: specviz.core.threads
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
+
+      
 Interfaces
 ----------
 .. automodapi:: specviz.interfaces
-  :no-heading:
+   :no-heading:
 
 
 I/O module
 ----------
 .. automodapi:: specviz.io
-  :no-heading:
+   :no-heading:
+
+.. automodapi:: specviz.io.yaml_loader
+   :no-heading:

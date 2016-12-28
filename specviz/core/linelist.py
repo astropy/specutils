@@ -1,5 +1,5 @@
 """
-Utilities and classes to handle Emission/Absorption Line lists
+Emission/Absorption Line list utilities
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -10,6 +10,11 @@ import numpy as np
 
 from astropy.table import Table, vstack
 
+__all__ = [
+    'LineList',
+    'ingest',
+]
+
 FORMAT = 'line_list'
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
@@ -17,7 +22,6 @@ COLUMN_END = 'end'
 WAVELENGTH_COLUMN = 'Wavelength'
 ID_COLUMN = 'Line ID'
 UNITS_COLUMN = 'units'
-
 
 def ingest(range):
     """

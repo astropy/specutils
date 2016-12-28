@@ -1,5 +1,5 @@
 """
-Threaded tasks
+Thread Helpers
 """
 from qtpy.QtCore import QThread, Signal
 import os
@@ -10,6 +10,10 @@ from ..interfaces.factories import FitterFactory
 
 import astropy.io.registry as io_registry
 
+__all__ = [
+    'FileLoadThread',
+    'FitModelThread',
+]
 
 class FileLoadThread(QThread):
     """

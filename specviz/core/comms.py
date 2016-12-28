@@ -1,7 +1,7 @@
 """
 Object Event Handling
 
-Elevator Pitch: The singleton `Dispatch` object manages the
+The singleton `Dispatch` object manages the
 set of `EventNode` events. Handlers or **listeners** are attached
 to `EventNode`s. The `DispatchHandle` decorator is used to
 decorate classes that handle events.
