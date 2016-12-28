@@ -15,11 +15,12 @@ class BlackBody(Fittable1DModel):
 
     Notes
     -----
-    See `astropy.modeling.Fittable1DModel <http://docs.astropy.org/en/stable/api/astropy.modeling.Fittable1DModel.html#astropy.modeling.Fittable1DModel>`_
-    for further details.
+    See `~astropy.modeling.Fittable1DModel`
+    for further details on modeling and all
+    possible parameters that can be passed in.
 
     Description of the blackbody function itself is described in
-    `astropy.analytic_functions <http://docs.astropy.org/en/stable/analytic_functions/index.html#blackbody-radiation>`_
+    `~astropy.analytic_functions.blackbody`
     """
     temp = Parameter(default=5000, min=10.)
     norm = Parameter(default=1.)

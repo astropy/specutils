@@ -13,11 +13,11 @@ class Spline1D(Fittable1DModel):
     Notes
     -----
     See
-    `astropy.modeling.Fittable1DModel <http://docs.astropy.org/en/stable/api/astropy.modeling.Fittable1DModel.html#astropy.modeling.Fittable1DModel>`_
+    `~astropy.modeling.Fittable1DModel`
     for further details.
 
     The spline function is based on
-    `scipy.interpolate.UnivariateSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.UnivariateSpline.html>`_
+    `~scipy.interpolate.UnivariateSpline`
     """
     degree = Parameter(default=3, fixed=True)
     smooth = Parameter(default=1, fixed=True)  # default=None crashes the app
