@@ -51,7 +51,21 @@ Interfaces
 .. automodapi:: specviz.interfaces
    :no-heading:
 
+Model Factories
+^^^^^^^^^^^^^^^
+.. automodapi:: specviz.interfaces.factories
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
 
+Model Initialization
+^^^^^^^^^^^^^^^^^^^^
+.. automodapi:: specviz.interfaces.initializers
+   :no-heading:
+   :no-main-docstr:
+   :headings:""
+
+             
 I/O module
 ----------
 .. automodapi:: specviz.io

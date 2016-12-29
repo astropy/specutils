@@ -11,6 +11,10 @@ import numpy as np
 
 from ..analysis.models import spline, blackbody
 
+__all__ = [
+    'initialize'
+]
+
 AMPLITUDE = 'amplitude'
 POSITION  = 'position'
 WIDTH     = 'width'
@@ -236,7 +240,9 @@ _p_names = {
 
 def initialize(instance, x, y):
     """
-    Main entry point. X and Y are for now Quantity arrays with the
+    Initialize given model.
+
+    X and Y are for now Quantity arrays with the
     independent and dependent variables. It's assumed X values
     are stored in increasing order in the array.
 
