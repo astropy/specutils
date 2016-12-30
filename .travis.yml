@@ -1,7 +1,10 @@
 language: python
 
+os:
+  - linux
+  - osx
+
 python:
-    - 2.6
     - 2.7
     - 3.3
     - 3.4
@@ -34,7 +37,8 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='Cython'
+        - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda astropy-ci-extras'
+        - CONDA_DEPENDENCIES='numpy scipy cython specutils qtpy pyqtgraph pyyaml'
     matrix:
         # Make sure that egg_info works without dependencies
         - SETUP_CMD='egg_info'
@@ -64,8 +68,6 @@ matrix:
           env: NUMPY_VERSION=1.8
         - python: 2.7
           env: NUMPY_VERSION=1.7
-        - python: 2.7
-          env: NUMPY_VERSION=1.6
 
 before_install:
 
@@ -93,7 +95,7 @@ install:
     # As described above, using ci-helpers, you should be able to set up an
     # environment with dependencies installed using conda and pip, but in some
     # cases this may not provide enough flexibility in how to install a
-    # specific dependency (and it will not be able to install non-Python 
+    # specific dependency (and it will not be able to install non-Python
     # dependencies). Therefore, you can also include commands below (as
     # well as at the start of the install section or in the before_install
     # section if they are needed before setting up conda) to install any
