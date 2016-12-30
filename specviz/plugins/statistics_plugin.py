@@ -1,3 +1,6 @@
+"""
+Manage and execute the various statistical operations
+"""
 from ..ui.widgets.plugin import Plugin
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
@@ -16,6 +19,9 @@ LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
 
 
 class StatisticsPlugin(Plugin):
+    """
+    UI to manage and execute the statistical operations
+    """
     name = "Statistics"
     location = "left"
 

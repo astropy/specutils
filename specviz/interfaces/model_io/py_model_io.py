@@ -1,15 +1,17 @@
-#
-# Functions in this module support the reading and writing
-# of astropy's  spectral compound models from/to file.
-#
-# The format used in these files is plain python, directly
-# importable by the user. This format was introduced and is
-# discussed in the specfit project at:
-#
-# https://github.com/ibusko/specfit
-#
+"""
+Functions in this module support the reading and writing
+of astropy's spectral compound models from/to file.
 
-import os, sys, re, dis
+The format used in these files is plain python, directly
+importable by the user. This format was introduced and is
+discussed in the specfit project at:
+https://github.com/ibusko/specfit
+"""
+
+import dis
+import os
+import re
+import sys
 
 from io import StringIO
 from qtpy.QtWidgets import QFileDialog
@@ -23,6 +25,7 @@ def _get_component_name(function):
     class_string = str(function.__class__)
     return class_string.split('\'>')[0].split(".")[-1]
 
+
 def _get_component_path(function):
     class_string = str(function.__class__)
     module_path = class_string.split('\'')[1]
@@ -31,8 +34,30 @@ def _get_component_path(function):
     return module_path
 
 
-# Builds a compound model specified in a .py file
 def buildModelFromFile(fname):
+    """
+    Builds a compound model specified in a .py file
+
+    Parameters
+    ----------
+    fname: str
+        The model definition file
+
+    Returns
+    -------
+    (compound_model, model_expression, directory)
+        A 3-tuple consisting of:
+            compound_model: `~astropy.modeling.models`
+                The model from the file.
+
+            model_expression: str
+                Currently always an empty string.
+
+            directory: str
+                The path where the file was read from.
+
+        If any issues occur, the 3-tuple (None, None, None) is returned
+    """
     directory = os.path.dirname(fname)
     sys.path.append(directory)
 
@@ -69,11 +94,25 @@ def buildModelFromFile(fname):
         return None,None,None
 
 
-# Writes a compound model expression to file.  The 'header' string
-# contains the import statements that refer to each component type
-# that appear in the expression.
 def _writeToFile(expression_string, model_directory, parent, header):
+    """
+    Writes a compound model expression to file.
 
+    Parameters
+    ----------
+    expression_string: str
+        The model expression to write.
+
+    model_directory: str
+        The path to write the model to.
+
+    parent: QtWidget
+        The parent widget the file dialog should belong to.
+
+    header: str
+        The 'header' string contains the import statements that refer to
+        each component type that appear in the expression.
+    """
     fname = QFileDialog.getSaveFileName(parent, 'Export to .py file', model_directory)[0]
 
     if len(fname) > 0:
@@ -87,12 +126,26 @@ def _writeToFile(expression_string, model_directory, parent, header):
         f.write(expression_string)
         f.close()
 
-# here we handle the case of a spectral model with a single component.
-# It's not strictly a compound model, but saving and retrieving isolated
-# components as if they were compound models makes for a simpler interface.
-# Unfortunately, isolated components cannot be added to an already existing
-# compound model if that model was fitted already.
 def _writeSingleComponentModel(model, model_directory, parent):
+    """
+    Handle the case of a spectral model with a single component.
+
+    It's not strictly a compound model, but saving and retrieving isolated
+    components as if they were compound models makes for a simpler interface.
+    Unfortunately, isolated components cannot be added to an already existing
+    compound model if that model was fitted already.
+
+    Parameters
+    ----------
+    model: `~astropy.modeling.models`
+        The model to write.
+
+    model_directory: str
+        The path to write the model to.
+
+    parent: QtWidget
+        The parent widget the file dialog should belong to.
+    """
     name = _get_component_name(model)
     path = _get_component_path(model)
 
@@ -102,10 +155,22 @@ def _writeSingleComponentModel(model, model_directory, parent):
     _writeToFile(expression_string, model_directory, parent, header)
 
 
-# Builds a multi-component model expression inside a string,
-# and dumps string to file.
 def _writeCompoundModel(model, model_directory, parent):
+    """
+    Builds a multi-component model expression inside a string,
+    and dumps string to file.
 
+    Parameters
+    ----------
+    model: `~astropy.modeling.models`
+        The model to write.
+
+    model_directory: str
+        The path to write the model to.
+
+    parent: QtWidget
+        The parent widget the file dialog should belong to.
+    """
     # The following assumes that the formatted string expression
     # in an astropy compound model has operands of the form [0], [1],
     # etc, that is, a sequential number enclosed in square brackets.
@@ -148,21 +213,55 @@ def _writeCompoundModel(model, model_directory, parent):
     _writeToFile(expression_string, model_directory, parent, header)
 
 
-# Saves spectral model to file. This is the main entry
-# point for the 'save to file' functionality.
-# parent: optional QWidget used for screen centering.
-# expression: not used for .py files.
 def saveModelToFile(parent, model, model_directory, expression=None):
+    """
+    Saves spectral model to file.
+
+    This is the main entry
+    point for the 'save to file' functionality.
+    parent: optional QWidget used for screen centering.
+    expression: not used for .py files.
+
+    Parameters
+    ----------
+    parent: QtWidget
+        The parent widget the file dialog should belong to.
+
+    model: `~astropy.modeling.models`
+        The model to write.
+
+    model_directory: str
+        The path to write the model to.
+
+    expression: str
+        The model expression to write.
+
+    """
     if not hasattr(model, '_format_expression'):
         _writeSingleComponentModel(model, model_directory, parent)
     else:
         _writeCompoundModel(model, model_directory, parent)
 
 
-# Disassembles a tie callable. Ties read from a model
-# file are not directly accessible in text form because
-# the model file is compiled at import time.
 def get_tie_text(tie):
+    """
+    Disassembles a tie callable.
+
+    Ties read from a model
+    file are not directly accessible in text form because
+    the model file is compiled at import time.
+
+    Parameters
+    ----------
+    tie: str
+        The model file to read from.
+
+    Returns
+    -------
+    parsed:
+        The parsed text.
+        If there is an issue, return 'False'
+    """
     if tie:
         # dis() only outputs on standard output.....
         keep = sys.stdout
@@ -177,13 +276,26 @@ def get_tie_text(tie):
     return result
 
 
-# This parses the text returned by the disassembler for
-# a lambda function that multiplies a constant by a
-# variable. That is, we are assuming that ties are coded
-# as lambda functions with multiplication by a constant,
-# as in the STSDAS' specfit task.
 parser = re.compile(r'\(([^)]+)\)') # picks up whatever is enclosed in parenthesis
 def _parse_assembler_text(text):
+    """
+    This parses the text returned by the disassembler for
+    a lambda function that multiplies a constant by a
+    variable.
+
+    That is, we are assuming that ties are coded
+    as lambda functions with multiplication by a constant,
+    as in the STSDAS' specfit task.
+
+    Parameters
+    ----------
+    text:
+        The disassembled text
+
+    Returns
+    -------
+        The variable names and values in text format.
+    """
     tokens = parser.findall(text)
     factor = tokens[0]
     lambda_variable_name = tokens[1]
@@ -198,9 +310,21 @@ def _parse_assembler_text(text):
             par_name)
 
 
-# Builds the text string that describes an operand (a spectral component)
-# for an astropy compound model.
 def _assemble_component_spec(component):
+    """
+    Builds the text string that describes an operand (a spectral component)
+    for an astropy compound model.
+
+    Parameters
+    ----------
+    component: `~astropy.modeling.models`
+        The component
+
+    Returns
+    -------
+    str
+        The component in text form
+    """
     result = ""
 
     # function name - Note that get_component_name works

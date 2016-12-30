@@ -7,6 +7,9 @@ from .sub_windows import PlotSubWindow
 
 
 class UiMainWindow(QMainWindow):
+    """
+    Main application window
+    """
     def __init__(self, parent=None):
         super(UiMainWindow, self).__init__(parent)
         DispatchHandle.setup(self)

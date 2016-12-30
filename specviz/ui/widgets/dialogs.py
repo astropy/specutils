@@ -1,3 +1,6 @@
+"""
+UI Dialog definitions
+"""
 from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *

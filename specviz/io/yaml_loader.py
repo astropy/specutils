@@ -19,9 +19,12 @@ from specviz.core.data import Spectrum1DRef
 from specviz.core import linelist
 from specviz.core.linelist import LineList
 
-__all__ = ['fits_reader', 'fits_identify',
-           'ascii_reader', 'ascii_identify',
-           'linelist_reader', 'linelist_identify']
+__all__ = [
+    'AsciiYamlRegister',
+    'FitsYamlRegister',
+    'LineListYamlRegister',
+    'YamlRegister',
+]
 
 # Loader automatically falls back to these units for some cases
 default_waveunit = u.Unit('Angstrom')

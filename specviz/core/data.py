@@ -1,10 +1,11 @@
-"""This module handles spectrum data objects."""
+"""
+Data Objects
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 # STDLIB
 import logging
-logging.basicConfig(level=logging.INFO)
 import re
 
 # THIRD-PARTY
@@ -13,9 +14,36 @@ from astropy.units import Quantity, spectral_density, spectral
 from ..third_party.py_expression_eval import Parser
 from specutils.core.generic import Spectrum1DRef
 
+logging.basicConfig(level=logging.INFO)
+
+__all__ = [
+    'Spectrum1DRefLayer',
+    'Spectrum1DRefModelLayer',
+]
+
 
 class Spectrum1DRefLayer(Spectrum1DRef):
-    """Class to handle layers in SpecViz."""
+    """
+    Class to handle layers in SpecViz.
+
+    Parameters
+    ----------
+    data: numpy.ndarray
+        The flux.
+
+    wcs: `~astropy.wcs.WCS`
+        If specified, the WCS relating pixel to wavelength.
+
+    parent: layer
+        If specified, the parent layer.
+
+    layer_mask: layer
+        The layer defining the valid data mask.
+
+    args, kwargs:
+        Arguments passed to the
+        `~spectutils.core.generic.Spectrum1DRef` object.
+    """
     def __init__(self, data, wcs=None, parent=None, layer_mask=None, *args,
                  **kwargs):
         super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, *args,
@@ -25,6 +53,26 @@ class Spectrum1DRefLayer(Spectrum1DRef):
 
     @classmethod
     def from_parent(cls, parent, layer_mask=None, name=None):
+        """
+        Create a duplicate child layer from a parent layer
+
+        Parameters
+        ----------
+        parent: layer
+            The layer to duplicate.
+
+        layer_mask: layer
+            The layer defining the valid data mask.
+
+        name: str
+            Layer's name. If `None`, a name based on the parent
+            layer is used.
+
+        Returns
+        -------
+        child_layer:
+            The new layer.
+        """
         return cls(name=name or parent.name + " Layer", data=parent.data,
                    unit=parent.unit, uncertainty=parent.uncertainty,
                    mask=parent.mask, wcs=parent.wcs,
@@ -34,12 +82,46 @@ class Spectrum1DRefLayer(Spectrum1DRef):
                    copy=False)
 
     def from_self(self, name="", layer_mask=None):
+        """
+        Create a new, parentless, layer based on this layer
+
+        Parameters
+        ----------
+        name: str
+            Name of the new layer
+
+        layer_mask: layer
+            The layer defining the valid data mask.
+
+        Returns
+        -------
+        new_layer:
+            The new, parentless, layer.
+        """
         gen_spec = Spectrum1DRef.copy(self, name=name)
 
-        return self.from_parent(parent=gen_spec, layer_mask=layer_mask, name=name)
+        return self.from_parent(
+            parent=gen_spec, layer_mask=layer_mask, name=name
+        )
 
     @classmethod
     def from_formula(cls, formula, layers):
+        """
+        Create a layer from an operation performed on other layers
+
+        Parameters
+        ----------
+        formula: str
+            The operation to perform on the given layers.
+
+        layers: [layer, ...]
+            The layers which are arguments to the given formula.
+
+        Returns
+        -------
+        new_layer:
+            Result of the operation
+        """
         if not formula:
             return
 
@@ -133,6 +215,17 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         return self.mask.astype(bool) | ~self.layer_mask.astype(bool)
 
     def set_units(self, disp_unit, data_unit):
+        """
+        Set the dispersion and flux units
+
+        Parameters
+        ----------
+        disp_unit: `~astropy.units`
+            The dispersion units.
+
+        data_unit: `~astropy.units`
+            The flux units.
+        """
         if self.dispersion_unit.is_equivalent(disp_unit,
                                               equivalencies=spectral()):
             self._dispersion = self.dispersion.data.to(
@@ -218,7 +311,21 @@ class Spectrum1DRefLayer(Spectrum1DRef):
 
 
 class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
-    """A layer for spectrum with a model applied."""
+    """
+    A layer for spectrum with a model applied.
+
+    Parameters
+    ----------
+    data: numpy.ndarray
+        The flux.
+
+    model: `~astropy.modeling`
+        The model
+
+    args, kwargs:
+        Arguments passed to the
+        `~spectutils.core.generic.Spectrum1DRef` object.
+    """
     def __init__(self, data, model=None, *args, **kwargs):
         super(Spectrum1DRefModelLayer, self).__init__(data, *args,
                                                       **kwargs)
@@ -226,6 +333,25 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
 
     @classmethod
     def from_parent(cls, parent, model=None, layer_mask=None):
+        """
+        Create a duplicate child layer from a parent layer
+
+        Parameters
+        ----------
+        parent: layer
+            The layer to duplicate.
+
+        model: `~astropy.modeling`
+            The model.
+
+        layer_mask: layer
+            The layer defining the valid data mask.
+
+        Returns
+        -------
+        child_layer:
+            The new layer.
+        """
         if model is not None:
             data = model(parent.dispersion.data.value)
         else:
@@ -244,6 +370,22 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
 
     @classmethod
     def from_formula(cls, models, formula):
+        """
+        Create a layer from an operation performed on other models
+
+        Parameters
+        ----------
+        formula: str
+            The operation to perform on the given layers.
+
+        models: [model, ...]
+            The models which are arguments to the given formula.
+
+        Returns
+        -------
+        result_model:
+            Result of the operation
+        """
         result_model = cls._evaluate(models, formula)
 
         return result_model
@@ -319,6 +461,16 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
 
     @classmethod
     def _evaluate(cls, models, formula):
+        """
+        Parse a string into an arithmetic expression.
+
+        Parameters
+        ----------
+        models : list
+            List of `Layer` objects that correspond to the given variables.
+        formula : str
+            A string describing the arithmetic operations to perform.
+        """
         try:
             parser = Parser()
             expr = parser.parse(formula)
@@ -337,10 +489,12 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
             return
         elif len(sorted_models) < len(vars):
             extras = [x for x in vars if x not in [y.name for y in
-                                                  sorted_models]]
+                                                   sorted_models]]
 
             for extra in extras:
-                matches = re.findall('([\+\*\-\/]?\s?{})'.format(extra), formula)
+                matches = re.findall(
+                    '([\+\*\-\/]?\s?{})'.format(extra), formula
+                )
 
                 for match in matches:
                     formula = formula.replace(match, "")

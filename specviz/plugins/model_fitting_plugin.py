@@ -1,3 +1,6 @@
+"""
+Plugin enabling model definition and fitting
+"""
 import os
 
 from ..ui.widgets.plugin import Plugin
@@ -21,6 +24,9 @@ _model_directory = os.environ["HOME"]
 
 
 class ModelFittingPlugin(Plugin):
+    """
+    UI plugin for model definition, fitting, and management
+    """
     name = "Model Fitting"
     location = "right"
 

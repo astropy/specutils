@@ -1,3 +1,6 @@
+"""
+Emission/Absorption Line list utilities
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
@@ -7,6 +10,11 @@ import numpy as np
 
 from astropy.table import Table, vstack
 
+__all__ = [
+    'LineList',
+    'ingest',
+]
+
 FORMAT = 'line_list'
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
@@ -15,17 +23,30 @@ WAVELENGTH_COLUMN = 'Wavelength'
 ID_COLUMN = 'Line ID'
 UNITS_COLUMN = 'units'
 
-
-# Returns a list with LineList instances. Each original list is
-# stripped out of lines that lie outside the wavelength range.
-
 def ingest(range):
+    """
+    Returns a list with LineList instances.
 
-    # Lets skip the file dialog business. For now, we look
-    # for line lists and their accompanying YAML files in
-    # one single place. We also restrict our search for
-    # ascii line lists whose file names end in .txt
+    Each original list is stripped out of lines that lie outside the
+    wavelength range.
 
+    Parameters
+    ----------
+    range:
+        The wavelength range of interest.
+
+    Returns
+    -------
+    [LineList, ...]
+        The list of linelists found.
+
+    Notes
+    -----
+    Lets skip the file dialog business. For now, we look
+    for line lists and their accompanying YAML files in
+    one single place. We also restrict our search for
+    ascii line lists whose file names end in .txt
+    """
     linelist_path = os.path.dirname(os.path.abspath(__file__))
     dir_path = linelist_path + '/../data/linelists/'
     yaml_paths = glob.glob(dir_path + '*.yaml')
@@ -50,6 +71,20 @@ def ingest(range):
 # with the registry machinery in astropy.
 
 class LineList(Table):
+    """
+    A list of emission/absorption lines
+
+    Parameters
+    ----------
+    table: `~astropy.table.Table`
+        If specified, a table to initialize from.
+
+    name: str
+        The name of the list.
+
+    masked: bool
+        If true, a masked table is used.
+    """
 
     def __init__(self, table=None, name=None, masked=None):
         Table.__init__(self, data=table, masked=masked)
@@ -66,14 +101,20 @@ class LineList(Table):
 
     @classmethod
     def merge(cls, lists):
-        ''' Executes a 'vstack' of all input lists, and
-            then sorts the result by the wavelength column.
+        """
+        Executes a 'vstack' of all input lists, and
+        then sorts the result by the wavelength column.
 
-        :param lists: list
+        Parameters
+        ----------
+        lists: [LineList, ...]
             list of LineList instances
-        :return: LineList
+
+        Returns
+        -------
+        LineList
             merged line list
-        '''
+        """
         # Note that vstack operates on Table instances but
         # not on LineList instances. So we first extract the
         # raw Table instances.
@@ -88,15 +129,21 @@ class LineList(Table):
         return cls(merged_table, "Merged")
 
     def extract_range(self, wrange):
-        ''' Builds a LineList instance out of self, with
-            the subset of lines that fall within the
-            wavelength range defined by 'wmin' and 'wmax'
+        """
+        Builds a LineList instance out of self, with
+        the subset of lines that fall within the
+        wavelength range defined by 'wmin' and 'wmax'
 
-        :param wrange: tuple of 2 floats
+        Parameters
+        ----------
+        wrange: (float, float)
             minimum and maximum wavelength of the wavelength range
-        :return: LineList
+
+        Returns
+        -------
+        LineList
             line list with subset of lines
-        '''
+        """
         wavelengths = self[WAVELENGTH_COLUMN].quantity
 
         wmin = wrange[0]
@@ -114,14 +161,20 @@ class LineList(Table):
         return self._remove_lines(indices_to_remove)
 
     def extract_rows(self, indices):
-        ''' Builds a LineList instance out of self, with
-            the subset of lines pointed by 'indices'
+        """
+        Builds a LineList instance out of self, with
+        the subset of lines pointed by 'indices'
 
-        :param indices: list
-            with QModelIndex instances
-        :return: LineList
+        Parameters
+        ----------
+        indices: [QModelIndex, ...]
+            List of QModelIndex instances to extract from.
+
+        Returns
+        -------
+        LineList
             line list with subset of lines
-        '''
+        """
         row_indices = []
         for index in indices:
             row_indices.append(index.row())
@@ -130,13 +183,27 @@ class LineList(Table):
         for index in range(len(self.columns[0])):
             line_indices.append(index)
 
-        indices_to_remove = list(filter(lambda x:x not in row_indices, line_indices))
+        indices_to_remove = list(
+            filter(lambda x: x not in row_indices, line_indices)
+        )
 
         return self._remove_lines(indices_to_remove)
 
     def _remove_lines(self, indices_to_remove):
-        # makes a copy of self and removes
-        # unwanted lines from the copy.
+        """
+        Makes a copy of self and removes
+        unwanted lines from the copy.
+
+        Parameters
+        ----------
+        indices_to_remove: [int, ...]
+            List of row numbers to remove
+
+        Returns
+        -------
+        LineList:
+            A new copy of the `LineList` with the rows removed.
+        """
         table = Table(self)
 
         table.remove_rows(indices_to_remove)
@@ -144,4 +211,3 @@ class LineList(Table):
         result = LineList(table, self.name)
 
         return result
-

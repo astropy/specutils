@@ -1,3 +1,6 @@
+"""
+Plugin to manage the layers
+"""
 import os
 
 from ..ui.widgets.plugin import Plugin
@@ -15,6 +18,9 @@ import logging
 
 
 class LayerListPlugin(Plugin):
+    """
+    UI plugin to manage the data layers
+    """
     name = "Layer List"
     location = "left"
 
