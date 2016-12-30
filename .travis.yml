@@ -1,14 +1,8 @@
-language: python
+language: c
 
 os:
   - linux
   - osx
-
-python:
-    - 2.7
-    - 3.3
-    - 3.4
-    - 3.5
 
 # Setting sudo to false opts in to Travis-CI container-based builds.
 sudo: false
@@ -30,44 +24,37 @@ env:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - NUMPY_VERSION=1.9
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='sphinx_automodapi'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
         - CONDA_CHANNELS='http://ssb.stsci.edu/astroconda astropy-ci-extras'
-        - CONDA_DEPENDENCIES='numpy scipy cython specutils qtpy pyqtgraph pyyaml'
+        - CONDA_DEPENDENCIES='numpy scipy cython specutils qtpy pyqtgraph pyyaml six'
+
     matrix:
-        # Make sure that egg_info works without dependencies
-        - SETUP_CMD='egg_info'
-        # Try all python versions with the latest numpy
-        - SETUP_CMD='test'
+        - PYTHON_VERSION=2.7 SETUP_CMD='install'
+        - PYTHON_VERSION=2.7 SETUP_CMD='test'
+        - PYTHON_VERSION=2.7 SETUP_CMD='egg_info'
+        - PYTHON_VERSION=3.5 SETUP_CMD='install'
+        - PYTHON_VERSION=3.5 SETUP_CMD='test'
+        - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
+
 
 matrix:
     include:
-
         # Do a coverage test in Python 2.
-        - python: 2.7
-          env: SETUP_CMD='test --coverage'
+        - env: PYTHON_VERSION=2.7 SETUP_CMD='test --coverage'
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
-        - python: 2.7
-          env: SETUP_CMD='build_sphinx -w'
+        - env: PYTHON_VERSION=2.7 SETUP_CMD='build_sphinx -w'
 
         # Try Astropy development version
-        - python: 2.7
-          env: ASTROPY_VERSION=development
-        - python: 3.4
-          env: ASTROPY_VERSION=development
+        - env: PYTHON_VERSION=2.7 ASTROPY_VERSION=development
 
-        # Try older numpy versions
-        - python: 2.7
-          env: NUMPY_VERSION=1.8
-        - python: 2.7
-          env: NUMPY_VERSION=1.7
+        - env: PYTHON_VERSION=3.5 ASTROPY_VERSION=development
 
 before_install:
 
