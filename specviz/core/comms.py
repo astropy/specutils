@@ -16,13 +16,13 @@ from functools import wraps
 
 
 class EventNode(object):
-    """
-    An event
+    """An event
 
     An event is defined by the arguments the listeners
     of the event expect to be given.
 
     Parameters
+    ----------
     args: [arg, ...]
         The list of keyword arguments that the event
         will provide to its listeners
