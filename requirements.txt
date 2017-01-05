@@ -1,11 +1,12 @@
---index-url https://pypi.python.org/simple/
+-index-url https://pypi.python.org/simple/
 
 pyyaml
 cython
 numpy
 scipy
 astropy
-sphinx_automodapi
+sphinx_automodapi 
+sphinx_rtd_theme
 git+https://github.com/nmearl/specutils.git
 git+https://github.com/nmearl/pyqtgraph.git
 -e .

@@ -45,7 +45,12 @@ def stis_spectrum_loader(file_name, **kwargs):
 
         uncertainty = StdDevUncertainty(hdu[1].data["ERROR"].flatten())
         data = hdu[1].data['FLUX'].flatten()
+        dispersion = hdu[1].data['wavelength'].flatten()
         unit = Unit("erg/cm**2 Angstrom s")
 
-    return Spectrum1DRef(data=data, name=name,
-                         uncertainty=uncertainty, unit=unit, meta=meta)
+    return Spectrum1DRef.from_array(data=data,
+                                    dispersion=dispersion,
+                                    dispersion_unit=Unit('Angstrom'),
+                                    uncertainty=uncertainty,
+                                    unit=unit,
+                                    meta=meta)

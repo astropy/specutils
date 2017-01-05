@@ -1,4 +1,6 @@
 # SpecViz
+[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/) [![Build Status](https://travis-ci.org/spacetelescope/specviz.svg?branch=loaders)](https://travis-ci.org/spacetelescope/specviz) [![Documentation Status](http://readthedocs.org/projects/specviz/badge/?version=latest)](http://specviz.readthedocs.io/en/latest/?badge=latest)
+
 An gui-based interactive analysis tool for one dimensional astronomical data
 using Python.
 

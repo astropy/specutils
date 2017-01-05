@@ -3,7 +3,7 @@
 Installation
 ============
 
-SpecViz is distributed through the `Anaconda <https://anaconda.org>`_ package
+SpecViz is distributed through the `Anaconda <https://anaconda.org>`__ package
 manager. Specifically, it lives within Space Telescope Science Institute's
 `AstroConda <https://astroconda.readthedocs.io/>`_ channel.
 
@@ -70,7 +70,7 @@ Please keep in mind that PyQt5 is the recommended PyQt implementation as
 `Qt4 development and support has ended <http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_.
 
 Below are instructions for installing using *either* `Homebrew <http://brew
-.sh/>`_ *or* `Anaconda <https://www.continuum.io/downloads>`_.
+.sh/>`_ *or* `Anaconda <https://www.continuum.io/downloads>`__.
 
 PyQt5
 """""

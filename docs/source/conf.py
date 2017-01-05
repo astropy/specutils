@@ -36,11 +36,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
-    'sphinx.ext.pngmath',
+    'sphinx.ext.imgmath',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     'sphinx_automodapi.automodapi'
     ]
+
+suppress_warnings = ['image.nonlocal_uri']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

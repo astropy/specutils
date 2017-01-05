@@ -1,0 +1,14 @@
+name: specviz
+channels:
+  - http://ssb.stsci.edu/astroconda
+dependencies:
+  - pyyaml
+  - cython
+  - numpy
+  - scipy
+  - astropy
+  - specutils
+  - pyqtgraph
+  - pip:
+    - sphinx_automodapi
+    - sphinx_rtd_theme
