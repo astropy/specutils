@@ -9,7 +9,15 @@ This is an Astropy affiliated package.
 # ----------------------------------------------------------------------------
 from ._astropy_init import *
 # ----------------------------------------------------------------------------
+import logging
+import os
+import importlib.util as util
 
 # For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
     from .example_mod import *
+
+logging.basicConfig(level=logging.INFO)
+
+# Load the default IO functions
+from .io import *
