@@ -1,5 +1,0 @@
-numpy
-matplotlib
-Cython
--e git+http://github.com/astropy/astropy-helpers.git#egg=astropy-helpers
--e git+http://github.com/astropy/astropy.git#egg=astropy

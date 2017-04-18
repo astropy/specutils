@@ -1,10 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-The specutils package implements base classes and utilities for
-interacting with astronomical spectra in Python and the Astropy
-project.  It is intended for eventual merger with the `astropy`
-package, but for now is being developed independently.
+This is an Astropy affiliated package.
 """
 
 # Affiliated packages may add whatever they like to this file, but
@@ -12,8 +9,15 @@ package, but for now is being developed independently.
 # ----------------------------------------------------------------------------
 from ._astropy_init import *
 # ----------------------------------------------------------------------------
+import logging
+import os
+import importlib.util as util
 
+# For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
+    from .example_mod import *
 
-    from .spectrum1d import Spectrum1D
-    from . import io
+logging.basicConfig(level=logging.INFO)
+
+# Load the default IO functions
+from .io import *
