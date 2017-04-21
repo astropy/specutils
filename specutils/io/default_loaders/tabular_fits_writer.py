@@ -1,5 +1,7 @@
+from __future__ import absolute_import, division
+
 from astropy.table import Table
-from specutils.io.registers import custom_writer
+from ..registers import custom_writer
 
 
 @custom_writer("tabular-fits-writer")

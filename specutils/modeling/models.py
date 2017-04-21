@@ -1,12 +1,12 @@
+from __future__ import absolute_import, division
+import six
+
 from astropy.modeling import Fittable1DModel, Parameter, models
 from astropy.modeling.core import _ModelMeta
-
 from astropy.modeling.models import Linear1D
 import numpy as np
 
 from .profiles import TauProfile
-
-import six
 
 
 class Voigt1D(Fittable1DModel):
@@ -27,7 +27,7 @@ class Voigt1D(Fittable1DModel):
         profile = TauProfile(x, lambda_0=lambda_0, f_value=f_value,
                              gamma=gamma, v_doppler=v_doppler,
                              column_density=column_density,
-                             n_lambda=x.size,# lambda_bins=lambda_bins,
+                             n_lambda=x.size,
                              delta_v=delta_v, delta_lambda=delta_lambda)
 
         flux = np.exp(-profile.optical_depth) - 1.0
@@ -75,7 +75,7 @@ class AbsorptionMeta(type):
                  *args, **kwargs):
             from ..spectra import Spectrum1D
 
-            lines = abs_mod._submodels[1:]
+            lines = abs_mod._submodels[1:]  # noqa
 
             flux = super(abs_mod.__class__, self).__call__(dispersion,
                                                            *args, **kwargs)

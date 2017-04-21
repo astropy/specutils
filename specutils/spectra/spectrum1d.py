@@ -1,3 +1,5 @@
+from __future__ import division
+
 import logging
 
 import numpy as np
@@ -10,12 +12,14 @@ import astropy.units.equivalencies as eq
 
 __all__ = ['Spectrum1D']
 
+
 class Spectrum1D(NDDataRef):
     """
     Spectrum container for 1D spectral data.
     """
-    def __init__(self, flux, spectral_axis=None, wcs=None, unit=None, spectral_axis_unit=None,
-                 *args, **kwargs):
+    def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
+                 spectral_axis_unit=None, *args, **kwargs):
+
         if not isinstance(flux, Quantity):
             flux = Quantity(flux, unit=unit or "Jy")
 

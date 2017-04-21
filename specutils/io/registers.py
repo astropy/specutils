@@ -1,7 +1,11 @@
+from __future__ import absolute_import, division
+
 import logging
-from astropy.io import registry as io_registry
 from functools import wraps
-from specutils.spectra.spectrum1d import Spectrum1D
+
+from astropy.io import registry as io_registry
+
+from ..spectra.spectrum1d import Spectrum1D
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D):
