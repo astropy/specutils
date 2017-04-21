@@ -14,19 +14,21 @@ except NameError:
     builtins._ASTROPY_SETUP_ = False
 
 try:
-    from .version import version as __version__
+    from version import version as __version__
 except ImportError:
     __version__ = ''
 try:
-    from .version import githash as __githash__
+    from version import githash as __githash__
 except ImportError:
     __githash__ = ''
+
 
 # set up the test command
 def _get_test_runner():
     import os
     from astropy.tests.helper import TestRunner
     return TestRunner(os.path.dirname(__file__))
+
 
 def test(package=None, test_path=None, args=None, plugins=None,
          verbose=False, pastebin=None, remote_data=False, pep8=False,
@@ -86,8 +88,8 @@ def test(package=None, test_path=None, args=None, plugins=None,
 
     open_files : bool, optional
         Fail when any tests leave files open.  Off by default, because
-        this adds extra run time to the test suite.  Works only on
-        platforms with a working ``lsof`` command.
+        this adds extra run time to the test suite.  Requires the
+        `psutil <https://pypi.python.org/pypi/psutil>`_ package.
 
     parallel : int, optional
         When provided, run the tests in parallel on the specified
@@ -110,10 +112,13 @@ def test(package=None, test_path=None, args=None, plugins=None,
         remote_data=remote_data, pep8=pep8, pdb=pdb,
         coverage=coverage, open_files=open_files, **kwargs)
 
-if not _ASTROPY_SETUP_:
+if not _ASTROPY_SETUP_:  # noqa
     import os
     from warnings import warn
-    from astropy import config
+    from astropy.config.configuration import (
+        update_default_config,
+        ConfigurationDefaultMissingError,
+        ConfigurationDefaultMissingWarning)
 
     # add these here so we only need to cleanup the namespace at the end
     config_dir = None
@@ -123,16 +128,16 @@ if not _ASTROPY_SETUP_:
         config_template = os.path.join(config_dir, __package__ + ".cfg")
         if os.path.isfile(config_template):
             try:
-                config.configuration.update_default_config(
+                update_default_config(
                     __package__, config_dir, version=__version__)
             except TypeError as orig_error:
                 try:
-                    config.configuration.update_default_config(
-                        __package__, config_dir)
-                except config.configuration.ConfigurationDefaultMissingError as e:
-                    wmsg = (e.args[0] + " Cannot install default profile. If you are "
+                    update_default_config(__package__, config_dir)
+                except ConfigurationDefaultMissingError as e:
+                    wmsg = (e.args[0] +
+                            " Cannot install default profile. If you are "
                             "importing from source, this is expected.")
-                    warn(config.configuration.ConfigurationDefaultMissingWarning(wmsg))
+                    warn(ConfigurationDefaultMissingWarning(wmsg))
                     del e
-                except:
+                except Exception:
                     raise orig_error
