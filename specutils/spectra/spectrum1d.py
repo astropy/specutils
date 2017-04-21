@@ -48,6 +48,11 @@ class Spectrum1D(NDDataRef):
 
                 spectral_axis = spectral_axis * spectral_axis_unit
 
+                if wcs.wcs.restfrq != 0:
+                    self.rest_value = wcs.wcs.restfrq * u.Hz
+                if wcs.wcs.restwav != 0:
+                    self.rest_value = wcs.wcs.restwav * u.AA
+
         self._spectral_axis = spectral_axis
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
@@ -120,7 +125,7 @@ class Spectrum1D(NDDataRef):
         if value not in ('relativistic', 'optical', 'radio'):
             raise ValueError("The allowed velocity conveintions are 'optical' "
                              "(linear with respect to wavelength), 'radio' "
-                             "(linear with respect to frequency), and 'doppler'.")
+                             "(linear with respect to frequency), and 'relativistic'.")
         self._velocity_convention = value
 
     @property
