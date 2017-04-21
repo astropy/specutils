@@ -1,7 +1,10 @@
+from __future__ import division
+
 import numpy as np
 
 
 __all__ = ['equivalent_width']
+
 
 def equivalent_width(spectrum):
     """

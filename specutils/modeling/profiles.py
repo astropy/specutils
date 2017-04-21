@@ -1,10 +1,11 @@
+from __future__ import division
+
 import astropy.units as u
 from astropy import constants as c
 import numpy as np
-from scipy import special
 
 
-class TauProfile:
+class TauProfile(object):
     """
     Create an optical depth vs. wavelength profile for an
     absorption line using a voigt profile. This follows the paradigm of
@@ -68,7 +69,7 @@ class TauProfile:
         if lambda_bins is None:
             lambda_bins = lam1 + \
                           np.arange(n_lambda, dtype=np.float) * dlambda - \
-                          n_lambda * dlambda / 2  # wavelength vector (angstroms)
+                          n_lambda * dlambda / 2  # wave vector (angstroms)
 
         # tau_0
         tau_X = tau_factor * column_density * f_value / v_doppler
@@ -89,6 +90,8 @@ class TauProfile:
 
     @classmethod
     def voigt(cls, a, u):
+        from scipy import special
+
         x = np.asarray(u).astype(np.float64)
         y = np.asarray(a).astype(np.float64)
 

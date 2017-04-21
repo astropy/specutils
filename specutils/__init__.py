@@ -3,11 +3,12 @@
 """
 This is an Astropy affiliated package.
 """
+from __future__ import absolute_import, division
 
 # Affiliated packages may add whatever they like to this file, but
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
-from ._astropy_init import *
+from ._astropy_init import *  # noqa
 # ----------------------------------------------------------------------------
 import sys
 import os
@@ -16,7 +17,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # Load the default IO functions
-from .io.default_loaders import *
+from .io.default_loaders import *  # noqa
+
 
 def load_user():
     # Get the path relative to the user's home directory
@@ -45,7 +47,7 @@ def load_user():
 
             try:
                 import_module(file[:-3])
-            except ModuleNotFoundError:
+            except ModuleNotFoundError:  # noqa
                 pass
 
 load_user()
