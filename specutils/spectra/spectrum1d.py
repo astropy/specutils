@@ -51,7 +51,7 @@ class Spectrum1D(NDDataRef):
                         logging.warning("Spectral_axis unit is dimensionless. Pls set one.")
                 except AttributeError:
                     logging.warning("No spectral_axis unit information in WCS.")
-                    spectral_axis_unit = Unit("") 
+                    spectral_axis_unit = Unit("")
 
                 spectral_axis = spectral_axis * spectral_axis_unit
 

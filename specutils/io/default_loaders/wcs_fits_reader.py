@@ -27,12 +27,12 @@ def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
     """
        Parameters
        ----------
+       file_name : str
+       
         spectral_axis_unit: str or unit, optional
             Optional string or unit object to specify units of spectral axis.
     """
     logging.info("Spectrum file looks like wcs1d-fits")
-    # name is not used; what was it for?
-    # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
     with fits.open(file_name, **kwargs) as hdulist:
         header = hdulist[0].header
@@ -44,7 +44,6 @@ def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
             data = hdulist[0].data
 
         if spectral_axis_unit is not None:
-            #spectral_axis_unit = u.Unit(spectral_axis_unit)
             wcs.wcs.cunit[0] = spectral_axis_unit
 
         meta = {'header': header}
