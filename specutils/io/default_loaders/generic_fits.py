@@ -7,8 +7,8 @@ from astropy.table import Table
 from astropy.units import Unit
 from astropy.wcs import WCS
 
-from specutils.decorators.io_registers import data_loader
-from ..spectra import Spectrum1D
+from specutils.io.registers import data_loader
+from specutils.spectra import Spectrum1D
 
 
 def identify_generic_fits(origin, *args, **kwargs):
@@ -28,9 +28,7 @@ def generic_fits(file_name, **kwargs):
 
         meta = {'header': header}
         wcs = WCS(hdulist[0].header)
-        unit = Unit('Jy')
         uncertainty = StdDevUncertainty(tab["err"])
-        data = tab["flux"]
+        data = tab["flux"] * Unit("Jy")
 
-    return Spectrum1D(data=data, name=name, wcs=wcs,
-                      uncertainty=uncertainty, unit=unit, meta=meta)
+    return Spectrum1D(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)

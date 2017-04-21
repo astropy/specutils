@@ -1,3 +1,4 @@
+import logging
 from astropy.io import registry as io_registry
 from functools import wraps
 from specutils.spectra.spectrum1d import Spectrum1D
@@ -21,6 +22,8 @@ def data_loader(label, identifier=None, dtype=Spectrum1D):
     def decorator(func):
         io_registry.register_reader(label, dtype, func)
         io_registry.register_identifier(label, dtype, identifier)
+
+        logging.info("Successfully loaded reader \"{}\".".format(label))
 
         @wraps(func)
         def wrapper(*args, **kwargs):
