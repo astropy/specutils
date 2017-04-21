@@ -118,7 +118,7 @@ class Spectrum1D(NDDataRef):
 
     @property
     def energy(self):
-        return self._spectral_axis.to(u.ev, u.spectral())
+        return self._spectral_axis.to(u.eV, u.spectral())
 
     @property
     def velocity_convention(self):
