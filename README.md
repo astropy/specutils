@@ -16,7 +16,6 @@ representations.
 ## Installation
 
 There are several ways to install the package, the most direct is using `pip`
-directly
 
 ```bash
 $ pip install git+https://github.com/nmearl/specutils
@@ -30,7 +29,7 @@ $ cd specutils
 $ python setup.py install
 ```
 
-or, if you'd like to easily be able to `pip uninstall` use the following 
+or, if you'd like to easily be able to `pip uninstall`, use the following 
 commands
 
 ```bash
@@ -49,11 +48,11 @@ from specutils.spectra import Spectrum1D
 import numpy as np
 
 # Using Astropy `Quantity`s
-spec = Spectrum1D(flux=Quantity(np.random.sample(100), "ergs/s/cm2/Angstrom"),
+spec = Spectrum1D(flux=Quantity(np.random.sample(100), "erg/Angstrom/cm2/s"),
                   dispersion=Quantity(np.arange(100), "Angstrom"))
 
 # Without `Quantity`s
-spec = Spectrum1D(flux=np.random.sample(100), unit="ergs/s/cm2/Angstrom",
+spec = Spectrum1D(flux=np.random.sample(100), unit="erg/Angstrom/cm2/s",
                   dispersion=np.arange(100), disp_unit="Angstrom")
 ```
 
