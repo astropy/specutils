@@ -76,11 +76,12 @@ def generic_fits(file_name, **kwargs):
         freqs = np.arange(naxis3) + 1
         freqs = (freqs - crpix3) * cdelt3 + crval3
 
-        dispersion = freqs * cunit3
+        freqs = freqs * cunit3
 
         # should wcs be transformed to a 1D case ?
         
-    return Spectrum1D(flux=data, wcs=wcs, meta=meta, dispersion=dispersion)
+    return Spectrum1D(flux=data, wcs=wcs, meta=meta, spectral_axis=freqs)
+    # return Spectrum1D(flux=data, wcs=wcs, meta=meta)     # this does not work yet
 
 
 
