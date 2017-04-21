@@ -14,7 +14,7 @@ from specutils.spectra import Spectrum1D
 def identify_tabular_fits(origin, *args, **kwargs):
     return (isinstance(args[0], six.string_types) and
             os.path.splitext(args[0].lower())[1] == '.fits' and
-            isinstance(fits.open(args[0]), fits.BinTableHDU)
+            isinstance(fits.open(args[0])[1], fits.BinTableHDU)
            )
 
 
