@@ -173,7 +173,8 @@ class Spectrum1D(NDDataRef):
                              "axis without specifying a velocity convention.")
 
 
-        equiv = getattr(eq, self.velocity_convention)('doppler_{0}'.format(self.rest_value))
+        equiv = getattr(eq, 'doppler_{0}'.format(
+            self.velocity_convention))(self.rest_value)
 
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
