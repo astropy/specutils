@@ -6,6 +6,7 @@ from astropy.units import Unit
 from astropy.nddata import NDData
 from astropy import units as u
 import astropy.units.equivalencies as eq
+from astropy.utils.decorators import lazyproperty
 
 # Use this once in specutils
 from ..utils.wcs_utils import determine_ctype_from_vconv, convert_spectral_axis
@@ -60,7 +61,7 @@ class OneDSpectrumMixin(object):
             m1 = self.wcs.forward_transform | models.Mapping((2,))
             return m1 # this isn't really right, we need a wrapper still
 
-    @property
+    @lazyproperty
     def spectral_axis(self):
         """
         Returns a Quantity array with the values of the spectral axis.
@@ -68,9 +69,6 @@ class OneDSpectrumMixin(object):
         *PROBLEM*: THIS IS EXPENSIVE! How do we make this not evaluate each
         time?  Cache?
         """
-
-        if hasattr(self, '_spectral_axis'):
-            return self._spectral_axis
 
         spectral_wcs = self.spectral_wcs
 
@@ -99,9 +97,6 @@ class OneDSpectrumMixin(object):
             spectral_unit = Unit("")
 
         spectral_axis = spectral_axis * spectral_unit
-
-        # cache the result
-        self._spectral_axis = spectral_axis
 
         return spectral_axis
 

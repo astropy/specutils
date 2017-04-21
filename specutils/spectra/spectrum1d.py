@@ -60,8 +60,6 @@ class Spectrum1D(OneDSpectrumMixin,NDDataRef):
                 elif wcs.wcs.restwav != 0:
                     self._rest_value = wcs.wcs.restwav * u.AA
 
-        self._spectral_axis = spectral_axis
-
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
 
