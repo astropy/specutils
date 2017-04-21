@@ -1,5 +1,5 @@
 from __future__ import absolute_import, division
-from astropy.extern import six
+import six
 
 from astropy.modeling import Fittable1DModel, Parameter, models
 from astropy.modeling.core import _ModelMeta
