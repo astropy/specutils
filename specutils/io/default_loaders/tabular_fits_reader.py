@@ -27,10 +27,10 @@ def tabular_fits(file_name, **kwargs):
     with fits.open(file_name, **kwargs) as hdulist:
         header = hdulist[0].header
 
-        tab = Table.read(file_name)
+        tab = Table.read(hdulist)
 
         meta = {'header': header}
-        wcs = WCS(hdulist[0].header)
+        wcs = WCS(header)
         uncertainty = StdDevUncertainty(tab["err"])
         data = tab["flux"] * Unit("Jy")
 
