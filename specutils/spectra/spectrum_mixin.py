@@ -11,10 +11,8 @@ from astropy import units as u
 
 from spectral_cube.spectral_axis import determine_ctype_from_vconv, convert_spectral_axis
 
-__all__ = ['Spectrum1D']
 
-
-class SpectrumMixin(object):
+class OneDSpectrumMixin(object):
 
     @property
     def _spectral_axis_numpy_index(self):
@@ -35,7 +33,8 @@ class SpectrumMixin(object):
         if self._spectral_axis_numpy_index == self.data.ndim - 1:
             return self.data
         else:
-            return self.data.swapaxes(self._spectral_axis_numpy_index, self.data.ndim - 1)
+            return self.data.swapaxes(self._spectral_axis_numpy_index,
+                                      self.data.ndim - 1)
 
     @property
     def _data_with_spectral_axis_first(self):
@@ -49,29 +48,43 @@ class SpectrumMixin(object):
 
     @property
     def spectral_wcs(self):
-        return self.wcs.sub([WCSSUB_SPECTRAL])
+        if hasattr(self.wcs, 'sub'):
+            return self.wcs.sub([WCSSUB_SPECTRAL])
+        elif hasattr(self.wcs, 'forward_transform'):
+            from astropy.modeling import models
+            m1 = self.wcs.forward_transform | models.Mapping((2,))
+            return m1 # this isn't really right, we need a wrapper still
 
     @property
     def spectral_axis(self):
         """
         Returns a Quantity array with the values of the spectral axis.
+
+        *PROBLEM*: THIS IS EXPENSIVE! How do we make this not evaluate each
+        time?  Cache?
         """
 
         spectral_wcs = self.spectral_wcs
 
-        # Lim: What if I have wavelength arrays and I don't want WCS conversion?
-        # Tom: this is beyond the scope of the prototype work, your question is more
-        #      how to make a WCS object that contains a wavelngth array. The mixin
-        #      is for NDData which assumes a WCS has been created (not necessarily
-        #      a *FITS* WCS, just some transformation object).
+        # Lim: What if I have wavelength arrays and I don't want WCS
+        # conversion?
+        # Tom: this is beyond the scope of the prototype work, your question is
+        # more how to make a WCS object that contains a wavelength array. The
+        # mixin is for NDData which assumes a WCS has been created (not
+        # necessarily a *FITS* WCS, just some transformation object).
+        # Adam: We are now assuming that lookup tables ARE WCSes and WCSes
+        # can be generated from arrays
 
         if spectral_wcs.naxis == 0:
             raise TypeError('WCS has no spectral axis')
 
+        # TODO: make pix_to_world wrapper that does this
+        # (i.e., make sure fits-wcs and gwcs have same API)
         spectral_axis = spectral_wcs.all_pix2world(np.arange(self._spectral_axis_len), 0)[0]
 
         # Try to get the dispersion unit information
         try:
+            # Where does gwcs store this?
             spectral_unit = self.wcs.wcs.cunit[self.wcs.wcs.spec]
         except AttributeError:
             logging.warning("No spectral_axis unit information in WCS.")
@@ -81,13 +94,16 @@ class SpectrumMixin(object):
 
         return spectral_axis
 
+
+class OneDFITSWCSSpectrum(object):
     def with_spectral_units(self, unit, velocity_convention=None,
                             rest_value=None):
         """
         Example method that returns a new cube with updated spectral axis units
-        """
 
-        # TODO: avoid the two function calls, make a wrapper?
+        this function *CANNOT* be generalized to LUT-WCS; it strictly
+        requires the assumptions coded into the FITS-WCS standard.
+        """
 
         out_ctype = determine_ctype_from_vconv(self.wcs.wcs.ctype[self.wcs.wcs.spec],
                                                unit, velocity_convention=velocity_convention)
@@ -97,6 +113,8 @@ class SpectrumMixin(object):
 
         return self.__class__(self, wcs=new_wcs)
 
+
+class InplaceModificationMixin(object):
     # Example methods follow to demonstrate how methods can be written to be
     # agnostic of the non-spectral dimensions.
 
