@@ -130,3 +130,35 @@ from specutils import Spectrum1D
 
 spec = Spectrum1D("path/to/data", format="my-format")
 ```
+
+### Custom writer
+
+Define a custom writer in a separate python file and place the file in your
+`~/.specutils` directory. Upon importing `specutils`, the writer will be added
+to the registry.
+
+```python
+# ~/.spectacle/my_writer.py
+from astropy.table import Table
+from specutils.io.registers import custom_writer
+
+
+@custom_writer("fits-writer")
+def generic_fits(spectrum, file_name, **kwargs):
+    flux = spectrum.flux.value
+    disp = spectrum.dispersion.value
+    meta = spectrum.meta
+
+    tab = Table([disp, flux], names=("dispersion", "flux"), meta=meta)
+
+    tab.write(file_name, format="fits")
+```
+
+Using your custom writer:
+
+```python
+spec = Spectrum1D(flux=Quantity(np.random.sample(100), "erg/Angstrom/cm2/s"),
+                  dispersion=Quantity(np.arange(100), "Angstrom"))
+
+spec.write("my_output.fits", format="fits-writer")
+```

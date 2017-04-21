@@ -16,7 +16,7 @@ def identify_generic_fits(origin, *args, **kwargs):
             os.path.splitext(args[0].lower())[1] == '.fits')
 
 
-@data_loader("generic fits", identifier=identify_generic_fits,
+@data_loader("generic-fits-reader", identifier=identify_generic_fits,
              dtype=Spectrum1D)
 def generic_fits(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]

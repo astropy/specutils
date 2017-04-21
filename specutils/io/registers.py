@@ -32,7 +32,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D):
     return decorator
 
 
-def custom_writer(label):
+def custom_writer(label, dtype=Spectrum1D):
     def decorator(func):
         io_registry.register_writer(label, Spectrum1D, func)
 
