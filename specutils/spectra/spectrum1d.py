@@ -10,7 +10,7 @@ from astropy import units as u
 
 from .spectrum_mixin import OneDSpectrumMixin, FITSWCSMixin
 
-__all__ = ['Spectrum1D']
+__all__ = ['Spectrum1D', 'FITSWCSSpectrum1D']
 
 
 class Spectrum1D(OneDSpectrumMixin,NDDataRef):
@@ -56,9 +56,9 @@ class Spectrum1D(OneDSpectrumMixin,NDDataRef):
                 spectral_axis = spectral_axis * spectral_axis_unit
 
                 if wcs.wcs.restfrq != 0:
-                    self.rest_value = wcs.wcs.restfrq * u.Hz
-                if wcs.wcs.restwav != 0:
-                    self.rest_value = wcs.wcs.restwav * u.AA
+                    self._rest_value = wcs.wcs.restfrq * u.Hz
+                elif wcs.wcs.restwav != 0:
+                    self._rest_value = wcs.wcs.restwav * u.AA
 
         self._spectral_axis = spectral_axis
 
