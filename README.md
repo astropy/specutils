@@ -128,7 +128,7 @@ Using your custom loader:
 ```python
 from specutils import Spectrum1D
 
-spec = Spectrum1D("path/to/data", format="my-format")
+spec = Spectrum1D.read("path/to/data", format="my-format")
 ```
 
 ### Custom writer
