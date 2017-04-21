@@ -1,29 +1,34 @@
+from __future__ import division
+
 import logging
 
 import numpy as np
 from astropy.nddata import NDDataRef
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
 from astropy.units import Unit, Quantity
+from astropy import units as u
 import astropy.units.equivalencies as eq
 
 
 __all__ = ['Spectrum1D']
 
+
 class Spectrum1D(NDDataRef):
     """
     Spectrum container for 1D spectral data.
     """
-    def __init__(self, flux, dispersion=None, wcs=None, unit=None, disp_unit=None,
-                 *args, **kwargs):
+    def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
+                 spectral_axis_unit=None, *args, **kwargs):
+
         if not isinstance(flux, Quantity):
             flux = Quantity(flux, unit=unit or "Jy")
 
-        if dispersion is not None and not isinstance(dispersion, Quantity):
-            dispersion = Quantity(dispersion, unit=disp_unit or "Angstrom")
+        if spectral_axis is not None and not isinstance(spectral_axis, Quantity):
+            spectral_axis = Quantity(spectral_axis, unit=spectral_axis_unit or "Angstrom")
 
-        # If dispersion had not been defined, attempt to use the wcs
+        # If spectral_axis had not been defined, attempt to use the wcs
         # information, if it exists
-        if dispersion is None and wcs is not None:
+        if spectral_axis is None and wcs is not None:
             if isinstance(wcs, WCS):
                 # Try to reference the spectral axis
                 wcs_spec = wcs.sub([WCSSUB_SPECTRAL])
@@ -34,35 +39,40 @@ class Spectrum1D(NDDataRef):
                     # specifying axis by integer
                     wcs_spec = wcs.sub([wcs.naxis])
 
-                # Construct the dispersion array
-                dispersion = wcs_spec.all_pix2world(
+                # Construct the spectral_axis array
+                spectral_axis = wcs_spec.all_pix2world(
                     np.arange(flux.shape[0]), 0)[0]
 
-                # Try to get the dispersion unit information
+                # Try to get the spectral_axis unit information
                 try:
-                    disp_unit = wcs.wcs.cunit[0]
+                    spectral_axis_unit = wcs.wcs.cunit[0]
                 except AttributeError:
-                    logging.warning("No dispersion unit information in WCS.")
-                    disp_unit = Unit("")
+                    logging.warning("No spectral_axis unit information in WCS.")
+                    spectral_axis_unit = Unit("")
 
-                dispersion = dispersion * disp_unit
+                spectral_axis = spectral_axis * spectral_axis_unit
 
-        self._dispersion = dispersion
+                if wcs.wcs.restfrq != 0:
+                    self.rest_value = wcs.wcs.restfrq * u.Hz
+                if wcs.wcs.restwav != 0:
+                    self.rest_value = wcs.wcs.restwav * u.AA
+
+        self._spectral_axis = spectral_axis
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
 
     @property
-    def dispersion(self):
+    def spectral_axis(self):
         """
-        The dispersion axis data.
+        The spectral axis data.
 
         Returns
         -------
         ~`astropy.units.Quantity`
-            Dispersion data as a quantity.
+            Spectral axis data as a quantity.
         """
-        return self._dispersion
+        return self._spectral_axis
 
     @property
     def flux(self):
@@ -91,17 +101,54 @@ class Spectrum1D(NDDataRef):
             The converted flux array.
         """
         new_data = self.flux.to(
-            unit, equivalencies=eq.spectral_density(self.dispersion))
+            unit, equivalencies=eq.spectral_density(self.spectral_axis))
 
         self._data = new_data.value
         self._unit = new_data.unit
 
         return self.flux
 
-    def to_dispersion(self, unit, rest, type="doppler_relativistic"):
+    @property
+    def frequency(self):
+        return self._spectral_axis.to(u.GHz, u.spectral())
+
+    @property
+    def wavelength(self):
+        return self._spectral_axis.to(u.AA, u.spectral())
+
+    @property
+    def energy(self):
+        return self._spectral_axis.to(u.ev, u.spectral())
+
+    @property
+    def velocity_convention(self):
+        return self._velocity_convention
+
+    @velocity_convention.setter
+    def velocity_convention(self, value):
+        if value not in ('relativistic', 'optical', 'radio'):
+            raise ValueError("The allowed velocity conveintions are 'optical' "
+                             "(linear with respect to wavelength), 'radio' "
+                             "(linear with respect to frequency), and 'relativistic'.")
+        self._velocity_convention = value
+
+    @property
+    def rest_value(self):
+        return self._rest_value
+
+    @rest_value.setter
+    def rest_value(self, value):
+        if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
+            raise ValueError("Rest value must be energy/wavelength/frequency equivalent.")
+        self._rest_value = value
+
+    @property
+    def velocity(self):
         """
-        Converts the dispersion array to the given
-        wavelength/velocity/frequency space unit given the rest value.
+        Converts the spectral axis array to the given velocity space unit given
+        the rest value.
+
+        These aren't input parameters but required Spectrum attributes
 
         Parameters
         ----------
@@ -118,14 +165,16 @@ class Spectrum1D(NDDataRef):
         ~`astropy.units.Quantity`
             The converted dispersion array in the new dispersion space.
         """
-        if Unit(unit).is_equivalent("cm/s") or \
-                self.dispersion.unit.is_equivalent("cm/s"):
-            equiv = getattr(eq, type)(rest)
-        else:
-            equiv = eq.spectral()
+        if not hasattr(self, '_rest_value'):
+            raise ValueError("Cannot get velocity representation of spectral "
+                             "axis without specifying a reference value.")
+        if not hasattr(self, '_velocity_convention'):
+            raise ValueError("Cannot get velocity representation of spectral "
+                             "axis without specifying a velocity convention.")
 
-        new_data = self._dispersion.to(unit, equivalencies=equiv)
 
-        self._dispersion = new_data
+        equiv = getattr(eq, self.velocity_convention)('doppler_{0}'.format(self.rest_value))
 
-        return self.dispersion
+        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
+
+        return new_data
