@@ -47,7 +47,7 @@ class Spectrum1D(NDDataRef):
 
                 dispersion = dispersion * disp_unit
 
-            self._dispersion = dispersion
+        self._dispersion = dispersion
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
