@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from astropy.nddata import NDDataRef
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
-from astropy.units import Unit, Quantity
+from astropy.units import Unit, Quantity, dimensionless_unscaled
 from astropy import units as u
 import astropy.units.equivalencies as eq
 
@@ -30,6 +30,7 @@ class Spectrum1D(NDDataRef):
         # information, if it exists
         if spectral_axis is None and wcs is not None:
             if isinstance(wcs, WCS):
+
                 # Try to reference the spectral axis
                 wcs_spec = wcs.sub([WCSSUB_SPECTRAL])
 
@@ -46,9 +47,11 @@ class Spectrum1D(NDDataRef):
                 # Try to get the spectral_axis unit information
                 try:
                     spectral_axis_unit = wcs.wcs.cunit[0]
+                    if spectral_axis_unit == dimensionless_unscaled:
+                        logging.warning("Spectral_axis unit is dimensionless. Pls set one.")
                 except AttributeError:
                     logging.warning("No spectral_axis unit information in WCS.")
-                    spectral_axis_unit = Unit("")
+                    spectral_axis_unit = Unit("") 
 
                 spectral_axis = spectral_axis * spectral_axis_unit
 
