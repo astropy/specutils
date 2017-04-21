@@ -1,11 +1,27 @@
 # Specutils
 
+Specutils is an Astropy affiliated package with the goal of providing a shared 
+set of Python representations of astronomical spectra and basic tools to 
+operate on these spectra. The effort is also meant to be a "hub", helping to 
+unite the Python astronomical spectroscopy community around shared effort, 
+much as Astropy is meant to for the wider astronomy Python ecosystem.
+
+Note that Specutils is not intended as an all-in-one spectroscopic analysis or 
+reduction tool. While it provides some basic analysis (following the Python 
+philosophy of "batteries included"), it is also meant to facilitate connecting 
+together disparate reduction pipelines and analysis tools through shared data 
+representations.
+
 
 ## Quickstart
 
 Defining a spectrum is straightforward
 
 ```python
+from astropy.units import Quantity
+from specutils.spectra import Spectrum1D
+import numpy as np
+
 # Using Astropy `Quantity`s
 spec = Spectrum1D(flux=Quantity(np.random.sample(100), "ergs/s/cm2/Angstrom"),
                   dispersion=Quantity(np.arange(100), "Angstrom"))
@@ -15,7 +31,7 @@ spec = Spectrum1D(flux=np.random.sample(100), unit="ergs/s/cm2/Angstrom",
                   dispersion=np.arange(100), disp_unit="Angstrom")
 ```
 
-Converting to difference units
+Converting to different units
 
 ```python
 # From Angstrom to Hz
@@ -55,7 +71,7 @@ def identify_generic_fits(origin, *args, **kwargs):
             os.path.splitext(args[0].lower())[1] == '.fits')
 
 
-@data_loader("generic fits", identifier=identify_generic_fits)
+@data_loader("my-format", identifier=identify_generic_fits)
 def generic_fits(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
@@ -70,4 +86,12 @@ def generic_fits(file_name, **kwargs):
         data = tab["flux"] * Unit("Jy")
 
     return Spectrum1D(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)
+```
+
+Using your custom loader:
+
+```python
+from specutils import Spectrum1D
+
+spec = Spectrum1D("path/to/data", format="my-format")
 ```
