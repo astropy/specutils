@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import astropy.wcs
 from astropy.wcs import WCSSUB_SPECTRAL
 from astropy.units import Unit
 from astropy.nddata import NDData
@@ -196,7 +197,6 @@ class OneDSpectrumMixin(object):
 
         return new_data
 
-class FITSWCSMixin(object):
 
     def with_spectral_unit(self, unit, velocity_convention=None,
                            rest_value=None):
@@ -256,6 +256,12 @@ class FITSWCSMixin(object):
                      even if your cube has air wavelength units
 
         """
+
+        if not isinstance(self.wcs, astropy.wcs.WCS):
+            raise NotImplementedError("Spectral unit conversion for "
+                                      "non-FITS WCSes have not yet "
+                                      "been implemented.")
+
         # Allow string specification of units, for example
         if not isinstance(unit, u.Unit):
             unit = u.Unit(unit)

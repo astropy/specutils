@@ -5,8 +5,8 @@ from astropy import units as u
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from specutils.io.registers import data_loader
-from specutils.spectra import Spectrum1D
+from ..registers import data_loader
+from ...spectra import Spectrum1D
 import logging
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
@@ -48,4 +48,4 @@ def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
 
         meta = {'header': header}
 
-    return FITSWCSSpectrum1D(flux=data, wcs=wcs, meta=meta)
+    return Spectrum1D(flux=data, wcs=wcs, meta=meta)

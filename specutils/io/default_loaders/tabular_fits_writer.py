@@ -4,7 +4,7 @@ from astropy.table import Table
 from ..registers import custom_writer
 
 
-@custom_writer("tabular-fits-writer")
+@custom_writer("tabular-fits")
 def tabular_fits(spectrum, file_name, **kwargs):
     flux = spectrum.flux.value
     disp = spectrum.dispersion.value
