@@ -18,7 +18,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
            )
 
 
-@data_loader("tabular-fits-reader", identifier=identify_tabular_fits,
+@data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D)
 def tabular_fits(file_name, **kwargs):
     # name is not used; what was it for?
