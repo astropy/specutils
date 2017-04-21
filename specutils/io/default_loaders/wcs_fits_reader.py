@@ -48,5 +48,4 @@ def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
 
         meta = {'header': header}
 
-    return Spectrum1D(flux=data, wcs=wcs, meta=meta)
-
+    return FITSWCSSpectrum1D(flux=data, wcs=wcs, meta=meta)

@@ -7,13 +7,13 @@ from astropy.nddata import NDDataRef
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
 from astropy.units import Unit, Quantity, dimensionless_unscaled
 from astropy import units as u
-import astropy.units.equivalencies as eq
 
+from .spectrum_mixin import OneDSpectrumMixin, FITSWCSMixin
 
 __all__ = ['Spectrum1D']
 
 
-class Spectrum1D(NDDataRef):
+class Spectrum1D(OneDSpectrumMixin,NDDataRef):
     """
     Spectrum container for 1D spectral data.
     """
@@ -65,63 +65,19 @@ class Spectrum1D(NDDataRef):
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
 
-    @property
-    def spectral_axis(self):
-        """
-        The spectral axis data.
 
-        Returns
-        -------
-        ~`astropy.units.Quantity`
-            Spectral axis data as a quantity.
-        """
-        return self._spectral_axis
-
-    @property
-    def flux(self):
-        """
-        Converts the stored data and unit information into a quantity.
-
-        Returns
-        -------
-        ~`astropy.units.Quantity`
-            Spectral data as a quantity.
-        """
-        return self.data * Unit(self.unit)
-
-    def to_flux(self, unit):
-        """
-        Converts the flux data to the specified unit.
-
-        Parameters
-        ----------
-        unit : str or ~`astropy.units.Unit`
-            The unit to conver the flux array to.
-
-        Returns
-        -------
-        ~`astropy.units.Quantity`
-            The converted flux array.
-        """
-        new_data = self.flux.to(
-            unit, equivalencies=eq.spectral_density(self.spectral_axis))
-
-        self._data = new_data.value
-        self._unit = new_data.unit
-
-        return self.flux
 
     @property
     def frequency(self):
-        return self._spectral_axis.to(u.GHz, u.spectral())
+        return self.spectral_axis.to(u.GHz, u.spectral())
 
     @property
     def wavelength(self):
-        return self._spectral_axis.to(u.AA, u.spectral())
+        return self.spectral_axis.to(u.AA, u.spectral())
 
     @property
     def energy(self):
-        return self._spectral_axis.to(u.eV, u.spectral())
+        return self.spectral_axis.to(u.eV, u.spectral())
 
     @property
     def velocity_convention(self):
