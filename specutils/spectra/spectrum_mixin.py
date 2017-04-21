@@ -4,6 +4,7 @@ import numpy as np
 from astropy.wcs import WCSSUB_SPECTRAL
 from astropy.units import Unit
 from astropy.nddata import NDData
+from astropy import units as u
 
 # Use this once in specutils
 # from ..utils.wcs_utils import determine_ctype_from_vconv, convert_spectral_axis
@@ -115,7 +116,7 @@ class SpectrumMixin(object):
         else:
             raise ValueError("background needs to be callable or have the same shape as the spectum")
 
-       data[-1] -= substractable_continuum
+        data[-1] -= substractable_continuum
 
     def normalize(self):
         """
@@ -133,3 +134,25 @@ class SpectrumMixin(object):
         norm = np.sum(dx * dy.transpose(), axis=-1).transpose()
 
         data /= norm
+
+    def spectral_interpolation(self, spectral_value, flux_unit=None):
+        """
+        Proof of concept, this interpolates along the spectral dimension
+        """
+
+        data = self._data_with_spectral_axis_last
+
+        from scipy.interpolate import interp1d
+
+        interp = interp1d(self.spectral_axis.value, data)
+
+        x = spectral_value.to(self.spectral_axis.unit, equivalencies=u.spectral())
+        y = interp(x)
+
+        if self.unit is not None:
+            y *= self.unit
+
+        if flux_unit is None:  # Lim: Is this acceptable?
+            return y
+        else:
+            return y.to(flux_unit, equivalencies=u.spectral_density(x))
