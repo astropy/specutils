@@ -59,6 +59,8 @@ spec = Spectrum1D(flux=np.random.sample(100), unit="erg/Angstrom/cm2/s",
 Converting to different units
 
 ```python
+spec.to_flux("Jy")
+
 # From Angstrom to Hz
 spec.to_dispersion("Hz", rest=Quantity(202, "Angstrom"))
 

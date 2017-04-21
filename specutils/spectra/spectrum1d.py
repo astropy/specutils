@@ -10,6 +10,9 @@ import astropy.units.equivalencies as eq
 __all__ = ['Spectrum1D']
 
 class Spectrum1D(NDDataRef):
+    """
+    Spectrum container for 1D spectral data.
+    """
     def __init__(self, flux, dispersion=None, wcs=None, unit=None, disp_unit=None,
                  *args, **kwargs):
         if not isinstance(flux, Quantity):
@@ -51,6 +54,14 @@ class Spectrum1D(NDDataRef):
 
     @property
     def dispersion(self):
+        """
+        The dispersion axis data.
+
+        Returns
+        -------
+        ~`astropy.units.Quantity`
+            Dispersion data as a quantity.
+        """
         return self._dispersion
 
     @property
@@ -64,6 +75,28 @@ class Spectrum1D(NDDataRef):
             Spectral data as a quantity.
         """
         return self.data * Unit(self.unit)
+
+    def to_flux(self, unit):
+        """
+        Converts the flux data to the specified unit.
+
+        Parameters
+        ----------
+        unit : str or ~`astropy.units.Unit`
+            The unit to conver the flux array to.
+
+        Returns
+        -------
+        ~`astropy.units.Quantity`
+            The converted flux array.
+        """
+        new_data = self.flux.to(
+            unit, equivalencies=eq.spectral_density(self.dispersion))
+
+        self._data = new_data.value
+        self._unit = new_data.unit
+
+        return self.flux
 
     def to_dispersion(self, unit, rest, type="doppler_relativistic"):
         """
@@ -82,7 +115,7 @@ class Spectrum1D(NDDataRef):
 
         Returns
         -------
-        self.dispersion : ~`astropy.units.Quantity`
+        ~`astropy.units.Quantity`
             The converted dispersion array in the new dispersion space.
         """
         if Unit(unit).is_equivalent("cm/s") or \
