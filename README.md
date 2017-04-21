@@ -44,6 +44,14 @@ spec.to_dispersion("cm/s", rest=Quantity(1.48412108e+16, "Hz"))
 spec.to_dispersion("Angstrom", rest=Quantity(1.48412108e+16, "Hz"))
 ```
 
+Basic analysis usage
+
+```python
+from specutils.analysis import equivalent_width
+
+print(equivalent_width(spec))
+```
+
 ### Custom loaders
 
 Define a custom loader in a separate python file and place the file in your
