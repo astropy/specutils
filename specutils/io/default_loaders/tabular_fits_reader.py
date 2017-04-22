@@ -14,15 +14,22 @@ from ...spectra import Spectrum1D
 
 
 def identify_tabular_fits(origin, *args, **kwargs):
+    # check if file can be opened with this reader
+    # args[0] = filename
+    # fits.open(args[0]) = hdulist
     return (isinstance(args[0], six.string_types) and
+            # check if file is .fits
             os.path.splitext(args[0].lower())[1] == '.fits' and
+            # check hdulist has more than one extension
+            len(fits.open(args[0])) > 1 and
+            # check if fits has BinTable extension
             isinstance(fits.open(args[0])[1], fits.BinTableHDU)
             )
-
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D)
 def tabular_fits(file_name, **kwargs):
+    logging.info("Spectrum file looks like tabular-fits")
     # name is not used; what was it for?
     # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
