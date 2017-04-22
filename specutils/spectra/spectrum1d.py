@@ -13,7 +13,7 @@ from .spectrum_mixin import OneDSpectrumMixin
 __all__ = ['Spectrum1D']
 
 
-class Spectrum1D(OneDSpectrumMixin,NDDataRef):
+class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
     """
