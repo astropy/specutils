@@ -231,6 +231,31 @@ class OneDSpectrumMixin(object):
 
         return spectrum
 
+    def _newwcs_argument_validation(self, unit, velocity_convention,
+                                    rest_value):
+        # Allow string specification of units, for example
+        if not isinstance(unit, u.Unit):
+            unit = u.Unit(unit)
+
+        # Velocity conventions: required for frq <-> velo
+        # convert_spectral_axis will handle the case of no velocity
+        # convention specified & one is required
+        if velocity_convention in DOPPLER_CONVENTIONS:
+            velocity_convention = DOPPLER_CONVENTIONS[velocity_convention]
+        elif (velocity_convention is not None and
+              velocity_convention not in DOPPLER_CONVENTIONS.values()):
+            raise ValueError("Velocity convention must be radio, optical, "
+                             "or relativistic.")
+
+        # If rest value is specified, it must be a quantity
+        if (rest_value is not None and
+            (not hasattr(rest_value, 'unit') or
+             not rest_value.unit.is_equivalent(u.m, u.spectral()))):
+            raise ValueError("Rest value must be specified as an astropy "
+                             "quantity with spectral equivalence.")
+
+        return unit
+
 
     def _new_spectral_wcs(self, unit, velocity_convention=None,
                           rest_value=None):
@@ -257,31 +282,8 @@ class OneDSpectrumMixin(object):
 
         """
 
-        if not isinstance(self.wcs, astropy.wcs.WCS):
-            raise NotImplementedError("Spectral unit conversion for "
-                                      "non-FITS WCSes have not yet "
-                                      "been implemented.")
-
-        # Allow string specification of units, for example
-        if not isinstance(unit, u.Unit):
-            unit = u.Unit(unit)
-
-        # Velocity conventions: required for frq <-> velo
-        # convert_spectral_axis will handle the case of no velocity
-        # convention specified & one is required
-        if velocity_convention in DOPPLER_CONVENTIONS:
-            velocity_convention = DOPPLER_CONVENTIONS[velocity_convention]
-        elif (velocity_convention is not None and
-              velocity_convention not in DOPPLER_CONVENTIONS.values()):
-            raise ValueError("Velocity convention must be radio, optical, "
-                             "or relativistic.")
-
-        # If rest value is specified, it must be a quantity
-        if (rest_value is not None and
-            (not hasattr(rest_value, 'unit') or
-             not rest_value.unit.is_equivalent(u.m, u.spectral()))):
-            raise ValueError("Rest value must be specified as an astropy "
-                             "quantity with spectral equivalence.")
+        unit = self._newwcs_argument_validation(unit, velocity_convention,
+                                                rest_value)
 
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
@@ -300,6 +302,20 @@ class OneDSpectrumMixin(object):
 
         newwcs.wcs.set()
         return newwcs, meta
+
+    def _new_spectral_gwcs(self, unit, velocity_convention=None,
+                           rest_value=None):
+        """
+        Create a new WCS by changing units in a tabular data container
+        """
+        unit = self._newwcs_argument_validation(unit, velocity_convention,
+                                                rest_value)
+
+        equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
+
+        newwcs = self.wcs.with_new_unit(unit, equiv(rest_value))
+                                        
+        return newwcs, self.meta
 
 
 class InplaceModificationMixin(object):

@@ -7,6 +7,7 @@ from astropy.nddata import NDDataRef
 from astropy.wcs import WCS, WCSSUB_SPECTRAL
 from astropy.units import Unit, Quantity, dimensionless_unscaled
 from astropy import units as u
+from astropy.utils.decorators import lazyproperty
 
 from .spectrum_mixin import OneDSpectrumMixin
 
@@ -76,6 +77,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def energy(self):
         return self.spectral_axis.to(u.eV, u.spectral())
+
+    @lazyproperty
+    def bin_edges(self):
+        return self.wcs.bin_edges()
 
     @property
     def velocity_convention(self):
