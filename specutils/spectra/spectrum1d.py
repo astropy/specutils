@@ -197,8 +197,8 @@ class Spectrum1D(NDDataRef):
 
         >>> R = spectrum1d.spectral_resolution(
         ... np.linspace(4000, 8000, 40001)[:, np.newaxis] * u.Angstrom,
-        ... np.arange(-10, +10, 201) * u.Angstrom)
-        >>> assert R.shape == (40000, 21)
+        ... np.linspace(-10, +10, 201) * u.Angstrom)
+        >>> assert R.shape == (40000, 200)
         >>> assert np.allclose(R.sum(axis=1), 1.)
 
         Parameters
