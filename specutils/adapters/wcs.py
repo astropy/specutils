@@ -21,12 +21,13 @@ class WCSAdapterMeta(type):
         if not hasattr(cls, 'registry'):
             cls.registry = {}
         else:
-            wcs_class = dct.get('wcs', None)
+            wcs_class = dct.get('wrapped_class', None)
 
             if wcs_class is None:
                 raise NotImplemented
 
-            cls.registry.get(wcs_class, []).append(cls)
+            # cls.registry.get(wcs_class, []).append(cls)
+            cls.registry[wcs_class] = cls
 
         super(WCSAdapterMeta, cls).__init__(name, bases, dct)
 
@@ -38,6 +39,10 @@ class WCSAdapterMetaProxy(abc.ABCMeta, WCSAdapterMeta):
 @six.add_metaclass(WCSAdapterMetaProxy)
 class WCSAdapter:
     def __init__(self, wcs):
+        self._wcs = wcs
+
+    @abc.abstractproperty
+    def axes(self):
         pass
 
     @abc.abstractmethod
@@ -49,5 +54,13 @@ class WCSAdapter:
         pass
 
 
-class FITSWCSAdapter:
-    wcs = WCS
+class FITSWCSAdapter(WCSAdapter):
+    wrapped_class = WCS
+
+    axes = None
+
+    def world_to_pix(self):
+        pass
+
+    def pix_to_world(self):
+        pass
