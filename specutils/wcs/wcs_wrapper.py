@@ -31,4 +31,5 @@ class WCSWrapper:
         if adapter_class is not None:
             return adapter_class(wcs, *args, **kwargs)
 
-        raise NotImplementedError("No such class {}".format(wcs.__class__))
+        raise NotImplementedError("No such adapater for class "
+                                  "{}".format(wcs.__class__))
