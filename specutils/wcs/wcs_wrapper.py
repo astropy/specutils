@@ -26,10 +26,13 @@ class WCSWrapper:
             An instance of a `WCSAdapter` subclass that understands the WCS
             object used for initialization.
         """
+        if wcs is None:
+            return
+
         adapter_class = WCSAdapter.registry.get(wcs.__class__, None)
 
         if adapter_class is not None:
             return adapter_class(wcs, *args, **kwargs)
 
-        raise NotImplementedError("No such adapater for class "
+        raise NotImplementedError("No such adapter for class "
                                   "{}".format(wcs.__class__))
