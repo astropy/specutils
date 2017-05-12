@@ -2,22 +2,23 @@ import numpy as np
 from astropy.modeling import models
 from astropy import units as u
 from astropy import coordinates as coords
-from gwcs import wcs, utils
+import gwcs
 from gwcs import coordinate_frames as cf
 from astropy.modeling.tabular import Tabular1D
-import astropy.wcs.WCS
+import astropy.wcs
 
 def tabular_wcs(xarray):
 
-    coordinateframe = cf.CoordinateFrame(naxes=1, axes_type=('SPECTRAL',), axes_order=(0,))
+    coordinateframe = cf.CoordinateFrame(naxes=1, axes_type=('SPECTRAL',),
+                                         axes_order=(0,))
     specframe = cf.SpectralFrame(unit=xarray.unit, axes_order=(0,))
     transform = Tabular1D(np.arange(len(xarray)), xarray.value)
 
-    tabular_gwcs = wcs.WCS([(coordinateframe, transform), (specframe, None)])
+    tabular_gwcs = gwcs.wcs.WCS([(coordinateframe, transform), (specframe, None)])
 
     return tabular_gwcs
 
-class TabularGWCSWrapper(object):
+class TabularSpectralGWCSWrapper(object):
     def __init__(self, xarray):
         self.xarray = xarray
         self.gwcs = tabular_wcs(xarray)
@@ -37,7 +38,7 @@ class TabularGWCSWrapper(object):
                                   " and just raise exceptions for tabular ones because we don't "
                                   "understand what the bin edges are by default?")
 
-class FITSWCSWrapper(astropy.wcs.WCS):
+class FITSSpectralWCSWrapper(astropy.wcs.WCS):
     def bin_edges(self):
         # the WCS doesn't know about its own pixel array
         edge_indices = list(self.pixel_indices-0.5) + [self.pixel_indices[-1]+0.5]
