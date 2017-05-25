@@ -1,8 +1,6 @@
-from __future__ import absolute_import, division
-import six
-
 import os
 
+import six
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
