@@ -1,19 +1,53 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-The specutils package implements base classes and utilities for
-interacting with astronomical spectra in Python and the Astropy
-project.  It is intended for eventual merger with the `astropy`
-package, but for now is being developed independently.
+This is an Astropy affiliated package.
 """
+from __future__ import absolute_import, division
 
 # Affiliated packages may add whatever they like to this file, but
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
-from ._astropy_init import *
+from ._astropy_init import *  # noqa
 # ----------------------------------------------------------------------------
+import sys
+import os
+import logging
 
-if not _ASTROPY_SETUP_:
+logging.basicConfig(level=logging.INFO)
 
-    from .spectrum1d import Spectrum1D
-    from . import io
+# Load the default IO functions
+from .io.default_loaders import *  # noqa
+
+
+def load_user():
+    # Get the path relative to the user's home directory
+    path = os.path.expanduser("~/.specutils")
+
+    # If the directory doesn't exist, create it
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    # Import all python files from the directory
+    for file in os.listdir(path):
+        if not file.endswith("py"):
+            continue
+
+        try:
+            import importlib.util as util
+
+            spec = util.spec_from_file_location(file[:-3],
+                                                os.path.join(path, file))
+            mod = util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        except ImportError:
+            from importlib import import_module
+
+            sys.path.insert(0, path)
+
+            try:
+                import_module(file[:-3])
+            except ModuleNotFoundError:  # noqa
+                pass
+
+load_user()

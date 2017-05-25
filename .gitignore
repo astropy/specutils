@@ -1,5 +1,5 @@
 # Compiled files
-*.py[co]
+*.py[cod]
 *.a
 *.o
 *.so
@@ -14,10 +14,20 @@ __pycache__
 */cython_version.py
 htmlcov
 .coverage
+MANIFEST
+.ipynb_checkpoints
 
 # Sphinx
-_build
 docs/api
+docs/_build
+
+# Eclipse editor project files
+.project
+.pydevproject
+.settings
+
+# Pycharm editor project files
+.idea
 
 # Packages/installer info
 *.egg
@@ -34,16 +44,10 @@ develop-eggs
 distribute-*.tar.gz
 
 # Other
-.*.swp
+.cache
+.tox
+.*.sw[op]
 *~
-.settings
-.project
-.pydevproject
 
 # Mac OSX
 .DS_Store
-
-#coverage related ignores
-
-htmlcov
-.coverage
