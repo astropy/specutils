@@ -10,6 +10,8 @@ from astropy import units as u
 from astropy.utils.decorators import lazyproperty
 
 from .spectrum_mixin import OneDSpectrumMixin
+from ..wcs import WCSWrapper
+
 
 __all__ = ['Spectrum1D']
 
@@ -20,6 +22,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
                  spectral_axis_unit=None, *args, **kwargs):
+
+        wcs = WCSWrapper(wcs)
 
         if not isinstance(flux, Quantity):
             flux = Quantity(flux, unit=unit or "Jy")
