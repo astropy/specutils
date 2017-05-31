@@ -1,16 +1,15 @@
 [run]
-source = {packagename}
+source = specutils
+
 omit =
-   {packagename}/_astropy_init*
-   {packagename}/conftest*
-   {packagename}/cython_version*
-   {packagename}/setup_package*
-   {packagename}/*/setup_package*
-   {packagename}/*/*/setup_package*
-   {packagename}/tests/*
-   {packagename}/*/tests/*
-   {packagename}/*/*/tests/*
-   {packagename}/version*
+    specutils/*__init__*
+    specutils/_astropy_init.py
+    specutils/conftest*
+    specutils/cython_version*
+    specutils/*setup*
+    specutils/*tests/*
+    specutils/version*
+    specutils/extern/*
 
 [report]
 exclude_lines =
