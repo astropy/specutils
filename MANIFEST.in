@@ -4,6 +4,7 @@ include CHANGES.rst
 include ez_setup.py
 include ah_bootstrap.py
 include setup.cfg
+include specutils/tests/coveragerc
 
 recursive-include specutils *.pyx *.c *.pxd
 recursive-include docs *

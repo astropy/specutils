@@ -34,18 +34,8 @@ env:
         - SETUP_CMD='test'
         - PIP_DEPENDENCIES='six'
         - EVENT_TYPE='pull_request push'
-
-        # For this package-template, we include examples of Cython modules,
-        # so Cython is required for testing. If your package does not include
-        # Cython code, you can set CONDA_DEPENDENCIES=''
-#        - CONDA_DEPENDENCIES='Cython'
-
-        # Conda packages for affiliated packages are hosted in channel
-        # "astropy" while builds for astropy LTS with recent numpy versions
-        # are in astropy-ci-extras. If your package uses either of these,
-        # add the channels to CONDA_CHANNELS along with any other channels
-        # you want to use.
-        - CONDA_CHANNELS='astropy-ci-extras astropy'
+        - CONDA_DEPENDENCIES=''
+        - CONDA_CHANNELS='astropy-ci-extras'
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
@@ -96,38 +86,17 @@ matrix:
 
         # Do a PEP8 test with pycodestyle
         - os: linux
-          env: MAIN_CMD='pycodestyle packagename --count' SETUP_CMD=''
+          env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
 
     allow_failures:
         # Do a PEP8 test with pycodestyle
         # (allow to fail unless your code completely compliant)
         - os: linux
-          env: MAIN_CMD='pycodestyle packagename --count' SETUP_CMD=''
+          env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
 
 install:
-
-    # We now use the ci-helpers package to set up our testing environment.
-    # This is done by using Miniconda and then using conda and pip to install
-    # dependencies. Which dependencies are installed using conda and pip is
-    # determined by the CONDA_DEPENDENCIES and PIP_DEPENDENCIES variables,
-    # which should be space-delimited lists of package names. See the README
-    # in https://github.com/astropy/ci-helpers for information about the full
-    # list of environment variables that can be used to customize your
-    # environment. In some cases, ci-helpers may not offer enough flexibility
-    # in how to install a package, in which case you can have additional
-    # commands in the install: section below.
-
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
-
-    # As described above, using ci-helpers, you should be able to set up an
-    # environment with dependencies installed using conda and pip, but in some
-    # cases this may not provide enough flexibility in how to install a
-    # specific dependency (and it will not be able to install non-Python
-    # dependencies). Therefore, you can also include commands below (as
-    # well as at the start of the install section or in the before_install
-    # section if they are needed before setting up conda) to install any
-    # other dependencies.
 
 script:
    - $MAIN_CMD $SETUP_CMD
