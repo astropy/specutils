@@ -18,13 +18,13 @@ representations.
 There are several ways to install the package, the most direct is using `pip`
 
 ```bash
-$ pip install git+https://github.com/nmearl/specutils
+$ pip install git+https://github.com/astropy/specutils
 ```
 
 Otherwise, you may simply clone the repo and install the package
 
 ```bash
-$ git clone https://github.com/nmearl/specutils
+$ git clone https://github.com/astropy/specutils
 $ cd specutils
 $ python setup.py install
 ```
@@ -33,7 +33,7 @@ or, if you'd like to easily be able to `pip uninstall`, use the following
 commands
 
 ```bash
-$ git clone https://github.com/nmearl/specutils
+$ git clone https://github.com/astropy/specutils
 $ cd specutils
 $ pip install .
 ```
