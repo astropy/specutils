@@ -68,8 +68,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
 
-
-
     @property
     def frequency(self):
         return self.spectral_axis.to(u.GHz, u.spectral())
@@ -138,14 +136,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a velocity convention.")
 
-
         equiv = getattr(eq, 'doppler_{0}'.format(
             self.velocity_convention))(self.rest_value)
 
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
         return new_data
-
 
     def spectral_resolution(true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
