@@ -1,4 +1,7 @@
+import os
+
 def get_package_data():
-    return {
-        _ASTROPY_PACKAGE_NAME_ + '.tests': ['coveragerc'],
-        'specutils.tests': ['data/*fits']}
+    paths = ['coveragerc',
+             os.path.join('data', '*fits')]
+
+    return {'specutils.tests': paths}
