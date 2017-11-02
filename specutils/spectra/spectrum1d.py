@@ -147,21 +147,21 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         """Evaluate the probability distribution of the spectral resolution.
 
         For example, to tabulate a binned resolution function at 6000A
-        covering +/-10A in 0.2A steps:
+        covering +/-10A in 0.2A steps::
 
-        >>> R = spectrum1d.spectral_resolution(
+        R = spectrum1d.spectral_resolution(
         ... 6000 * u.Angstrom, np.linspace(-10, 10, 51) * u.Angstrom)
-        >>> assert R.shape == (50,)
-        >>> assert np.allclose(R.sum(), 1.)
+        assert R.shape == (50,)
+        assert np.allclose(R.sum(), 1.)
 
         To build a sparse resolution matrix for true wavelengths 4000-8000A
-        in 0.1A steps:
+        in 0.1A steps::
 
-        >>> R = spectrum1d.spectral_resolution(
+        R = spectrum1d.spectral_resolution(
         ... np.linspace(4000, 8000, 40001)[:, np.newaxis] * u.Angstrom,
         ... np.linspace(-10, +10, 201) * u.Angstrom)
-        >>> assert R.shape == (40000, 200)
-        >>> assert np.allclose(R.sum(axis=1), 1.)
+        assert R.shape == (40000, 200)
+        assert np.allclose(R.sum(axis=1), 1.)
 
         Parameters
         ----------
