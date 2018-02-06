@@ -1,7 +1,5 @@
 from __future__ import division
 
-import logging
-
 import numpy as np
 from astropy.nddata import NDDataRef
 from astropy import units as u
@@ -9,7 +7,6 @@ from astropy.utils.decorators import lazyproperty
 
 from .spectrum_mixin import OneDSpectrumMixin
 from ..wcs import WCSWrapper
-
 
 __all__ = ['Spectrum1D']
 

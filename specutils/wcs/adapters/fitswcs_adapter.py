@@ -1,8 +1,8 @@
 from ..wcs_adapter import WCSAdapter, WCSAxes
 
 from astropy.wcs import WCS
-from astropy.wcs import WCSSUB_SPECTRAL, WCSSUB_LONGITUDE, WCSSUB_LATITUDE, \
-    WCSSUB_CUBEFACE, WCSSUB_STOKES, WCSSUB_CELESTIAL
+from astropy.wcs import (WCSSUB_SPECTRAL, WCSSUB_LONGITUDE, WCSSUB_LATITUDE,
+                         WCSSUB_CUBEFACE, WCSSUB_STOKES, WCSSUB_CELESTIAL)
 
 __all__ = ['FITSWCSAdapter']
 
@@ -62,7 +62,7 @@ class FITSWCSAdapter(WCSAdapter):
 
     def bin_edges(self):
         # the WCS doesn't know about its own pixel array
-        edge_indices = list(self.axes.spectral.pixel_indices-0.5) + \
-                       [self.axes.spectral.pixel_indices[-1]+0.5]
+        edge_indices = list(self.axes.spectral.pixel_indices - 0.5) + \
+                       [self.axes.spectral.pixel_indices[-1] + 0.5]
 
         return self.pix2world(edge_indices, 0)

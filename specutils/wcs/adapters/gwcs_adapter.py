@@ -1,5 +1,4 @@
-from ..wcs_adapter import WCSAdapter, WCSAxes
-from astropy.modeling import models
+from ..wcs_adapter import WCSAdapter
 from gwcs.wcs import WCS
 
 __all__ = ['GWCSAdapter']
