@@ -1,10 +1,8 @@
 import logging
 
 import numpy as np
-import astropy.wcs
 from astropy.wcs import WCSSUB_SPECTRAL
 from astropy.units import Unit
-from astropy.nddata import NDData
 from astropy import units as u
 import astropy.units.equivalencies as eq
 from astropy.utils.decorators import lazyproperty
@@ -307,7 +305,7 @@ class OneDSpectrumMixin(object):
         equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
 
         newwcs = self.wcs.with_new_unit(unit, equiv(rest_value))
-                                        
+
         return newwcs, self.meta
 
 
