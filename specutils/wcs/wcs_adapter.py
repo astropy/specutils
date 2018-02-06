@@ -1,5 +1,6 @@
 import six
 import abc
+import logging
 from collections import namedtuple
 
 WCSAxes = namedtuple('WCSAxes', ['longitude', 'latitude', 'cubeface',
@@ -18,6 +19,7 @@ class WCSAdapterMeta(type):
             wcs_class = dct.get('wrapped_class', None)
 
             if wcs_class is not None:
+                logging.info("Added {} to adapter registry.".format(wcs_class))
                 cls.registry[wcs_class] = cls
 
         super(WCSAdapterMeta, cls).__init__(name, bases, dct)
@@ -54,14 +56,14 @@ class WCSAdapter:
         """
         return self._wcs
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def axes(self):
         """
         The associated axes described in the WCS object.
         """
         pass
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def wrapped_class(self):
         """
         A specific reference to the WCS class to which this object should be
@@ -70,15 +72,34 @@ class WCSAdapter:
         pass
 
     @abc.abstractmethod
-    def world_to_pix(self):
+    def world_to_pixel(self, world_array):
         """
         Method for performing the world to pixel transformations.
         """
         pass
 
     @abc.abstractmethod
-    def pix_to_world(self):
+    def pixel_to_world(self, pixel_array):
         """
         Method for performing the pixel to world transformations.
         """
         pass
+
+    @abc.abstractmethod
+    def spectral_axis_unit(self):
+        """
+        Returns the unit of the spectral axis.
+        """
+        pass
+
+    @abc.abstractmethod
+    def rest_frequency(self):
+        return
+
+    @abc.abstractmethod
+    def rest_wavelength(self):
+        return
+
+    def __repr__(self):
+        return "<Identity Transform WCS: pixel - {} transformation>".format(
+            self.spectral_axis_unit)
