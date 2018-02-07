@@ -1,8 +1,8 @@
-from ..wcs_adapter import WCSAdapter, WCSAxes
+from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
+                         WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
+                         WCSSUB_STOKES)
 
-from astropy.wcs import WCS
-from astropy.wcs import (WCSSUB_SPECTRAL, WCSSUB_LONGITUDE, WCSSUB_LATITUDE,
-                         WCSSUB_CUBEFACE, WCSSUB_STOKES, WCSSUB_CELESTIAL)
+from ..wcs_adapter import WCSAdapter, WCSAxes
 
 __all__ = ['FITSWCSAdapter']
 

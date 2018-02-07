@@ -1,11 +1,11 @@
-from .wcs_adapter import WCSAdapter
-from .adapters import *
-
 import gwcs
-from gwcs import coordinate_frames as cf
+import numpy as np
 from astropy.modeling.tabular import Tabular1D
 from astropy.units import quantity_input
-import numpy as np
+from gwcs import coordinate_frames as cf
+
+from .adapters import *
+from .wcs_adapter import WCSAdapter
 
 __all__ = ['WCSWrapper']
 

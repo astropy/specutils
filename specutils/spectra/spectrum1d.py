@@ -1,12 +1,12 @@
 from __future__ import division
 
 import numpy as np
-from astropy.nddata import NDDataRef
 from astropy import units as u
+from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 
-from .spectrum_mixin import OneDSpectrumMixin
 from ..wcs import WCSWrapper
+from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
 
@@ -15,6 +15,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
     """
+
     def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
                  spectral_axis_unit=None, *args, **kwargs):
         # Attempt to parse the WCS. If not WCS object is given, try instead to
@@ -23,10 +24,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if wcs is not None:
             wcs = WCSWrapper(wcs)
         elif spectral_axis is not None:
-                spectral_axis = u.Quantity(spectral_axis,
-                                         unit=spectral_axis_unit)
+            spectral_axis = u.Quantity(spectral_axis,
+                                       unit=spectral_axis_unit)
 
-                wcs = WCSWrapper.from_array(spectral_axis)
+            wcs = WCSWrapper.from_array(spectral_axis)
         else:
             # If not wcs and not spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
@@ -96,7 +97,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @rest_value.setter
     def rest_value(self, value):
         if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-            raise ValueError("Rest value must be energy/wavelength/frequency equivalent.")
+            raise ValueError(
+                "Rest value must be energy/wavelength/frequency equivalent.")
 
         self._rest_value = value
 

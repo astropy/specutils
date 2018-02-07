@@ -1,5 +1,6 @@
-from ..wcs_adapter import WCSAdapter
 from gwcs.wcs import WCS
+
+from ..wcs_adapter import WCSAdapter
 
 __all__ = ['GWCSAdapter']
 
