@@ -1,7 +1,7 @@
 import gwcs
 import numpy as np
 from astropy.modeling.tabular import Tabular1D
-from astropy.units import quantity_input
+import astropy.units as u
 from gwcs import coordinate_frames as cf
 
 from .adapters import *
@@ -44,12 +44,16 @@ class WCSWrapper:
                                   "{}".format(wcs.__class__))
 
     @staticmethod
-    @quantity_input(array=['length', 'frequency', 'speed'])
     def from_array(array):
         """
         Create a new WCS from provided tabular data. This defaults to being
         a GWCS object.
         """
+        if isinstance(array, u.Quantity):
+            if not array.unit.physical_type in ('length', 'frequency', 'speed'):
+                raise u.UnitsError(
+                    "Physical type of spectral axis must one of 'length', 'frequency', or 'speed'")
+
         coord_frame = cf.CoordinateFrame(naxes=1,
                                          axes_type=('SPECTRAL',),
                                          axes_order=(0,))
