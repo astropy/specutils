@@ -55,7 +55,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @property
     def spectral_axis(self):
-        # Construct the spectral_axis array
+        # Construct the spectral_axis array.
+        # TODO: Should applying the spectral axis unit occur in the adapter?
         spectral_axis = self.wcs.pixel_to_world(
             np.arange(self.flux.shape[0])) * self.wcs.spectral_axis_unit
 

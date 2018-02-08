@@ -28,7 +28,7 @@ class GWCSAdapter(WCSAdapter):
         """
         Method for performing the pixel to world transformations.
         """
-        return self.wcs(pixel_array, with_bounding_box=False) * self.spectral_axis_unit
+        return self.wcs(pixel_array, with_bounding_box=False)
 
     @property
     def spectral_axis_unit(self):
