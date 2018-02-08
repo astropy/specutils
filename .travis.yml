@@ -32,7 +32,7 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='six gwcs'
+        - PIP_DEPENDENCIES='six gwcs scipy'
         - EVENT_TYPE='pull_request push'
         - CONDA_DEPENDENCIES=''
         - CONDA_CHANNELS='astropy-ci-extras'
