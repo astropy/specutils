@@ -49,10 +49,7 @@ class WCSWrapper:
         Create a new WCS from provided tabular data. This defaults to being
         a GWCS object.
         """
-        if isinstance(array, u.Quantity):
-            if not array.unit.physical_type in ('length', 'frequency', 'speed'):
-                raise u.UnitsError(
-                    "Physical type of spectral axis must one of 'length', 'frequency', or 'speed'")
+        array = u.Quantity(array)
 
         coord_frame = cf.CoordinateFrame(naxes=1,
                                          axes_type=('SPECTRAL',),
