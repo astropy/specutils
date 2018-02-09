@@ -22,7 +22,7 @@ class GWCSAdapter(WCSAdapter):
         """
         Method for performing the world to pixel transformations.
         """
-        return self.wcs.backward_transform(world_array)
+        return self.wcs.invert(world_array)
 
     def pixel_to_world(self, pixel_array):
         """

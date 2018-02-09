@@ -55,9 +55,10 @@ class WCSWrapper:
                                          axes_type=('SPECTRAL',),
                                          axes_order=(0,))
         spec_frame = cf.SpectralFrame(unit=array.unit, axes_order=(0,))
-        transform = Tabular1D(np.arange(len(array)), array.value)
+        forward_transform = Tabular1D(np.arange(len(array)), array.value)
+        forward_transform.inverse = Tabular1D(array.value, np.arange(len(array)))
 
-        tabular_gwcs = gwcs.wcs.WCS(
-            [(coord_frame, transform), (spec_frame, None)])
+        tabular_gwcs = gwcs.wcs.WCS(forward_transform=forward_transform,
+        input_frame=coord_frame, output_frame=spec_frame)
 
         return WCSWrapper(wcs=tabular_gwcs)
