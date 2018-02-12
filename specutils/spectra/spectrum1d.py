@@ -40,7 +40,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         # Currently, only a fits wcs object stores the rest wavelength or
         # frequency information in the wcs object. In any other case, the user
-        # will be given an error to provide these.
+        # will be given an warning to provide these explicitly in this object.
         if wcs.rest_frequency != 0:
             self._rest_value = wcs.rest_frequency * u.Hz
         elif wcs.rest_wavelength != 0:
