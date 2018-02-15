@@ -51,7 +51,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @property
     def flux(self):
-        return self.data * self.unit
+        return u.Quantity(self.data, unit=self.unit)
 
     @property
     def spectral_axis(self):
@@ -140,7 +140,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         return new_data
 
-    def spectral_resolution(true_dispersion, delta_dispersion, axis=-1):
+    def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
         For example, to tabulate a binned resolution function at 6000A

@@ -59,6 +59,7 @@ class WCSWrapper:
         forward_transform.inverse = Tabular1D(array.value, np.arange(len(array)))
 
         tabular_gwcs = gwcs.wcs.WCS(forward_transform=forward_transform,
-        input_frame=coord_frame, output_frame=spec_frame)
+                                    input_frame=coord_frame, 
+                                    output_frame=spec_frame)
 
         return WCSWrapper(wcs=tabular_gwcs)

@@ -2,8 +2,6 @@ import abc
 import logging
 from collections import namedtuple
 
-import six
-
 WCSAxes = namedtuple('WCSAxes', ['longitude', 'latitude', 'cubeface',
                                  'spectral', 'stokes', 'celestial', ])
 
@@ -26,9 +24,8 @@ class WCSAdapterMeta(type):
         super(WCSAdapterMeta, cls).__init__(name, bases, dct)
 
 
-@six.add_metaclass(type('WCSAdapterMetaProxy',
-                        (abc.ABCMeta, WCSAdapterMeta), {}))
-class WCSAdapter:
+class WCSAdapter(metaclass=type('WCSAdapterMetaProxy',
+                                (abc.ABCMeta, WCSAdapterMeta), {})):
     """
     An adapter class that exposes the specific methods and attributes that
     `specutils` understands.
