@@ -17,7 +17,6 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 
 class OneDSpectrumMixin(object):
-
     @property
     def _spectral_axis_numpy_index(self):
         return self.data.ndim - 1 - self.wcs.wcs.spec
@@ -52,13 +51,7 @@ class OneDSpectrumMixin(object):
 
     @property
     def spectral_wcs(self):
-        # ASSUMES THE WCS IS IMMUTABLE!
-        if hasattr(self.wcs, 'sub'):
-            return self.wcs.sub([WCSSUB_SPECTRAL])
-        elif hasattr(self.wcs, 'forward_transform'):
-            from astropy.modeling import models
-            m1 = self.wcs.forward_transform | models.Mapping((2,))
-            return m1 # this isn't really right, we need a wrapper still
+        return self.wcs.axes.spectral
 
     @lazyproperty
     def spectral_axis(self):
@@ -85,7 +78,7 @@ class OneDSpectrumMixin(object):
 
         # TODO: make pix_to_world wrapper that does this
         # (i.e., make sure fits-wcs and gwcs have same API)
-        spectral_axis = spectral_wcs.all_pix2world(np.arange(self._spectral_axis_len), 0)[0]
+        spectral_axis = spectral_wcs.pix2world(np.arange(self._spectral_axis_len), 0)[0]
 
         # Try to get the dispersion unit information
         try:

@@ -1,14 +1,11 @@
 from __future__ import division
 
-import logging
-
 import numpy as np
-from astropy.nddata import NDDataRef
-from astropy.wcs import WCS, WCSSUB_SPECTRAL
-from astropy.units import Unit, Quantity, dimensionless_unscaled
 from astropy import units as u
+from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 
+from ..wcs import WCSWrapper
 from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
@@ -18,53 +15,52 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
     """
+
     def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
                  spectral_axis_unit=None, *args, **kwargs):
+        # Attempt to parse the WCS. If not WCS object is given, try instead to
+        # parse a given wavelength array. This is put into a GWCS object to
+        # then be used behind-the-scenes for all specutils operations.
+        if wcs is not None:
+            wcs = WCSWrapper(wcs)
+        elif spectral_axis is not None:
+            spectral_axis = u.Quantity(spectral_axis,
+                                       unit=spectral_axis_unit)
 
-        if not isinstance(flux, Quantity):
-            flux = Quantity(flux, unit=unit or "Jy")
+            wcs = WCSWrapper.from_array(spectral_axis)
+        else:
+            # If not wcs and not spectral axis has been given, raise an error
+            raise LookupError("No WCS object or spectral axis information has "
+                              "been given. Please provide one.")
 
-        if spectral_axis is not None and not isinstance(spectral_axis, Quantity):
-            spectral_axis = Quantity(spectral_axis, unit=spectral_axis_unit or u.AA)
+        if not isinstance(flux, u.Quantity):
+            flux = u.Quantity(flux, unit=unit or "Jy")
 
-        # If spectral_axis had not been defined, attempt to use the wcs
-        # information, if it exists
-        if spectral_axis is None and wcs is not None:
-            if isinstance(wcs, WCS):
+        self._velocity_convention = None
 
-                # Try to reference the spectral axis
-                wcs_spec = wcs.sub([WCSSUB_SPECTRAL])
-
-                # Check to see if it actually is a real coordinate description
-                if wcs_spec.naxis == 0:
-                    # It's not real, so attempt to get the spectral axis by
-                    # specifying axis by integer
-                    wcs_spec = wcs.sub([wcs.naxis])
-
-                # Construct the spectral_axis array
-                spectral_axis = wcs_spec.all_pix2world(
-                    np.arange(flux.shape[0]), 0)[0]
-
-                # Try to get the spectral_axis unit information
-                try:
-                    spectral_axis_unit = wcs.wcs.cunit[0]
-                    if spectral_axis_unit == dimensionless_unscaled:
-                        logging.warning("Spectral_axis unit is dimensionless. Pls set one.")
-                except AttributeError:
-                    logging.warning("No spectral_axis unit information in WCS.")
-                    spectral_axis_unit = Unit("")
-
-                spectral_axis = spectral_axis * spectral_axis_unit
-
-                if wcs.wcs.restfrq != 0:
-                    self._rest_value = wcs.wcs.restfrq * u.Hz
-                elif wcs.wcs.restwav != 0:
-                    self._rest_value = wcs.wcs.restwav * u.AA
+        # Currently, only a fits wcs object stores the rest wavelength or
+        # frequency information in the wcs object. In any other case, the user
+        # will be given an warning to provide these explicitly in this object.
+        if wcs.rest_frequency != 0:
+            self._rest_value = wcs.rest_frequency * u.Hz
+        elif wcs.rest_wavelength != 0:
+            self._rest_value = wcs.rest_wavelength * u.AA
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
 
+    @property
+    def flux(self):
+        return u.Quantity(self.data, unit=self.unit)
 
+    @property
+    def spectral_axis(self):
+        # Construct the spectral_axis array.
+        # TODO: Should applying the spectral axis unit occur in the adapter?
+        spectral_axis = self.wcs.pixel_to_world(
+            np.arange(self.flux.shape[0])) * self.wcs.spectral_axis_unit
+
+        return spectral_axis
 
     @property
     def frequency(self):
@@ -89,9 +85,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @velocity_convention.setter
     def velocity_convention(self, value):
         if value not in ('relativistic', 'optical', 'radio'):
-            raise ValueError("The allowed velocity conveintions are 'optical' "
+            raise ValueError("The allowed velocity conventions are 'optical' "
                              "(linear with respect to wavelength), 'radio' "
-                             "(linear with respect to frequency), and 'relativistic'.")
+                             "(linear with respect to frequency), and "
+                             "'relativistic'.")
         self._velocity_convention = value
 
     @property
@@ -101,7 +98,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @rest_value.setter
     def rest_value(self, value):
         if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-            raise ValueError("Rest value must be energy/wavelength/frequency equivalent.")
+            raise ValueError(
+                "Rest value must be energy/wavelength/frequency equivalent.")
+
         self._rest_value = value
 
     @property
@@ -134,16 +133,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a velocity convention.")
 
-
-        equiv = getattr(eq, 'doppler_{0}'.format(
+        equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
             self.velocity_convention))(self.rest_value)
 
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
         return new_data
 
-
-    def spectral_resolution(true_dispersion, delta_dispersion, axis=-1):
+    def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
         For example, to tabulate a binned resolution function at 6000A

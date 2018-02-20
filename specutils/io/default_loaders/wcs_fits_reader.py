@@ -1,3 +1,4 @@
+import logging
 import os
 
 import six
@@ -5,20 +6,20 @@ from astropy import units as u
 from astropy.io import fits
 from astropy.wcs import WCS
 
-from ..registers import data_loader
 from ...spectra import Spectrum1D
-import logging
+from ..registers import data_loader
+
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
     return (isinstance(args[0], six.string_types) and
             os.path.splitext(args[0].lower())[1] == '.fits' and
-            #check if number of axes is one
+            # check if number of axes is one
             fits.getheader(args[0])['NAXIS'] == 1 and
-            #check if CTYPE1 kep is in the header
+            # check if CTYPE1 kep is in the header
             'CTYPE1' in fits.getheader(args[0])
-           )
+            )
 
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
@@ -28,7 +29,7 @@ def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
        Parameters
        ----------
        file_name : str
-       
+
         spectral_axis_unit: str or unit, optional
             Optional string or unit object to specify units of spectral axis.
     """
