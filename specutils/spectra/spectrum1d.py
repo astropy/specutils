@@ -50,19 +50,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                                          wcs=wcs, *args, **kwargs)
 
     @property
-    def flux(self):
-        return u.Quantity(self.data, unit=self.unit)
-
-    @property
-    def spectral_axis(self):
-        # Construct the spectral_axis array.
-        # TODO: Should applying the spectral axis unit occur in the adapter?
-        spectral_axis = self.wcs.pixel_to_world(
-            np.arange(self.flux.shape[0])) * self.wcs.spectral_axis_unit
-
-        return spectral_axis
-
-    @property
     def frequency(self):
         return self.spectral_axis.to(u.GHz, u.spectral())
 
@@ -78,10 +65,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def bin_edges(self):
         return self.wcs.bin_edges()
 
-    @property
-    def velocity_convention(self):
-        return self._velocity_convention
-
     @velocity_convention.setter
     def velocity_convention(self, value):
         if value not in ('relativistic', 'optical', 'radio'):
@@ -91,10 +74,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                              "'relativistic'.")
         self._velocity_convention = value
 
-    @property
-    def rest_value(self):
-        return self._rest_value
-
     @rest_value.setter
     def rest_value(self, value):
         if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
@@ -102,43 +81,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 "Rest value must be energy/wavelength/frequency equivalent.")
 
         self._rest_value = value
-
-    @property
-    def velocity(self):
-        """
-        Converts the spectral axis array to the given velocity space unit given
-        the rest value.
-
-        These aren't input parameters but required Spectrum attributes
-
-        Parameters
-        ----------
-        unit : str or ~`astropy.units.Unit`
-            The unit to convert the dispersion array to.
-        rest : ~`astropy.units.Quantity`
-            Any quantity supported by the standard spectral equivalencies
-            (wavelength, energy, frequency, wave number).
-        type : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
-            The type of doppler spectral equivalency.
-
-        Returns
-        -------
-        ~`astropy.units.Quantity`
-            The converted dispersion array in the new dispersion space.
-        """
-        if not hasattr(self, '_rest_value'):
-            raise ValueError("Cannot get velocity representation of spectral "
-                             "axis without specifying a reference value.")
-        if not hasattr(self, '_velocity_convention'):
-            raise ValueError("Cannot get velocity representation of spectral "
-                             "axis without specifying a velocity convention.")
-
-        equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
-            self.velocity_convention))(self.rest_value)
-
-        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
-
-        return new_data
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.

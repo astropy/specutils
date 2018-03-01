@@ -57,38 +57,11 @@ class OneDSpectrumMixin(object):
     def spectral_axis(self):
         """
         Returns a Quantity array with the values of the spectral axis.
-
-        *PROBLEM*: THIS IS EXPENSIVE! How do we make this not evaluate each
-        time?  Cache?
         """
-
-        spectral_wcs = self.spectral_wcs
-
-        # Lim: What if I have wavelength arrays and I don't want WCS
-        # conversion?
-        # Tom: this is beyond the scope of the prototype work, your question is
-        # more how to make a WCS object that contains a wavelength array. The
-        # mixin is for NDData which assumes a WCS has been created (not
-        # necessarily a *FITS* WCS, just some transformation object).
-        # Adam: We are now assuming that lookup tables ARE WCSes and WCSes
-        # can be generated from arrays
-
-        if spectral_wcs.naxis == 0:
-            raise TypeError('WCS has no spectral axis')
-
-        # TODO: make pix_to_world wrapper that does this
-        # (i.e., make sure fits-wcs and gwcs have same API)
-        spectral_axis = spectral_wcs.pix2world(np.arange(self._spectral_axis_len), 0)[0]
-
-        # Try to get the dispersion unit information
-        try:
-            # Where does gwcs store this?
-            spectral_unit = self.wcs.wcs.cunit[self.wcs.wcs.spec]
-        except AttributeError:
-            logging.warning("No spectral_axis unit information in WCS.")
-            spectral_unit = Unit("")
-
-        spectral_axis = spectral_axis * spectral_unit
+        # Construct the spectral_axis array.
+        # TODO: Should applying the spectral axis unit occur in the adapter?
+        spectral_axis = self.wcs.pixel_to_world(
+            np.arange(self.flux.shape[0])) * self.wcs.spectral_axis_unit
 
         return spectral_axis
 
@@ -102,7 +75,7 @@ class OneDSpectrumMixin(object):
         ~`astropy.units.Quantity`
             Spectral data as a quantity.
         """
-        return self.data * Unit(self.unit)
+        return u.Quantity(self.data, unit=self.unit)
 
     def to_flux(self, unit):
         """
@@ -132,14 +105,6 @@ class OneDSpectrumMixin(object):
 
     def with_velocity_convention(self, new_velocity_convention):
         return self.__class__(velocity_convention=new_velocity_convention)
-
-    #@velocity_convention.setter
-    #def velocity_convention(self, value):
-    #    if value not in ('relativistic', 'optical', 'radio'):
-    #        raise ValueError("The allowed velocity conveintions are 'optical' "
-    #                         "(linear with respect to wavelength), 'radio' "
-    #                         "(linear with respect to frequency), and 'relativistic'.")
-    #    self._velocity_convention = value
 
     @property
     def rest_value(self):
@@ -181,8 +146,8 @@ class OneDSpectrumMixin(object):
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a velocity convention.")
 
-
-        equiv = getattr(eq, self.velocity_convention)('doppler_{0}'.format(self.rest_value))
+        equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
+            self.velocity_convention))(self.rest_value)
 
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
@@ -213,16 +178,17 @@ class OneDSpectrumMixin(object):
                      even if your spectrum has air wavelength units
 
         """
-        newwcs,newmeta = self._new_spectral_wcs(unit=unit,
-                                                velocity_convention=velocity_convention,
-                                                rest_value=rest_value)
+        new_wcs, new_meta = self._new_spectral_wcs(
+            unit=unit,
+            velocity_convention=velocity_convention or self._velocity_convention,
+            rest_value=rest_value or self._rest_value)
 
-        spectrum = self.__class__(flux=self.flux, wcs=newwcs, meta=newmeta,
+        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta,
                                   spectral_axis_unit=unit)
 
         return spectrum
 
-    def _newwcs_argument_validation(self, unit, velocity_convention,
+    def _new_wcs_argument_validation(self, unit, velocity_convention,
                                     rest_value):
         # Allow string specification of units, for example
         if not isinstance(unit, u.Unit):
@@ -247,11 +213,10 @@ class OneDSpectrumMixin(object):
 
         return unit
 
-
     def _new_spectral_wcs(self, unit, velocity_convention=None,
                           rest_value=None):
         """
-        Returns a new WCS with a different Spectral Axis unit
+        Returns a new WCS with a different Spectral Axis unit.
 
         Parameters
         ----------
@@ -270,16 +235,16 @@ class OneDSpectrumMixin(object):
 
             .. note: This must be the rest frequency/wavelength *in vacuum*,
                      even if your cube has air wavelength units
-
         """
 
-        unit = self._newwcs_argument_validation(unit, velocity_convention,
-                                                rest_value)
+        unit = self._new_wcs_argument_validation(unit, velocity_convention,
+                                                 rest_value)
 
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
 
         meta = self._meta.copy()
+
         if 'Original Unit' not in self._meta:
             meta['Original Unit'] = self._wcs.wcs.cunit[self._wcs.wcs.spec]
             meta['Original Type'] = self._wcs.wcs.ctype[self._wcs.wcs.spec]
@@ -288,25 +253,26 @@ class OneDSpectrumMixin(object):
                                      unit,
                                      velocity_convention=velocity_convention)
 
-        newwcs = convert_spectral_axis(self._wcs, unit, out_ctype,
+        new_wcs = convert_spectral_axis(self._wcs, unit, out_ctype,
                                        rest_value=rest_value)
 
-        newwcs.wcs.set()
-        return newwcs, meta
+        new_wcs.wcs.set()
+        
+        return new_wcs, meta
 
     def _new_spectral_gwcs(self, unit, velocity_convention=None,
                            rest_value=None):
         """
         Create a new WCS by changing units in a tabular data container
         """
-        unit = self._newwcs_argument_validation(unit, velocity_convention,
+        unit = self._new_wcs_argument_validation(unit, velocity_convention,
                                                 rest_value)
 
         equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
 
-        newwcs = self.wcs.with_new_unit(unit, equiv(rest_value))
+        new_wcs = self.wcs.with_new_unit(unit, equiv(rest_value))
 
-        return newwcs, self.meta
+        return new_wcs, self.meta
 
 
 class InplaceModificationMixin(object):
