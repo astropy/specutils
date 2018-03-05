@@ -93,11 +93,19 @@ class WCSAdapter(metaclass=type('WCSAdapterMetaProxy',
 
     @abc.abstractmethod
     def rest_frequency(self):
-        return
+        pass
 
     @abc.abstractmethod
     def rest_wavelength(self):
-        return
+        pass
+
+    @abc.abstractmethod
+    def unit(self):
+        pass
+
+    @abc.abstractmethod
+    def with_new_unit(self):
+        pass
 
     def __repr__(self):
         return "<Identity Transform WCS: pixel - {} transformation>".format(

@@ -1,5 +1,6 @@
 import logging
 from gwcs.wcs import WCS
+import astropy.units as u
 
 from ..wcs_adapter import WCSAdapter
 
@@ -59,3 +60,20 @@ class GWCSAdapter(WCSAdapter):
                         "`Spectrum1D` object.")
 
         return self._rest_wavelength
+
+    @property
+    def unit(self):
+        return self._wcs.unit
+
+    def with_new_unit(self, unit, rest_value, velocity_convention):
+        """
+        """
+        if isinstance(unit, u.Unit):
+            new_output_frame = self._wcs.output_frame
+            new_output_frame.unit = unit
+
+            wcs = WCS(forward_transform=self._wcs.forward_transform,
+                      input_frame=self._wcs.input_frame,
+                      output_frame=new_output_frame)
+
+            return wcs
