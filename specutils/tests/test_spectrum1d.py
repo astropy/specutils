@@ -64,13 +64,18 @@ def test_spectral_axis_conversions():
     with pytest.raises(ValueError) as e_info:
         spec.velocity
 
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.randn(49))
+    
+    new_spec = spec.with_spectral_unit(u.GHz)
+
 
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
                                  'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
 
     spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
-    spec.velocity_convention = "relativistic"
+    spec = spec.with_velocity_convention("relativistic")
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit.is_equivalent(u.AA)
