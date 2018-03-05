@@ -7,9 +7,6 @@ from astropy import units as u
 import astropy.units.equivalencies as eq
 from astropy.utils.decorators import lazyproperty
 
-# Use this once in specutils
-from ..utils.wcs_utils import determine_ctype_from_vconv, convert_spectral_axis
-
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
 DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
@@ -103,18 +100,22 @@ class OneDSpectrumMixin(object):
     def velocity_convention(self):
         return self._velocity_convention
 
-    def with_velocity_convention(self, new_velocity_convention):
-        return self.__class__(velocity_convention=new_velocity_convention)
+    def with_velocity_convention(self, velocity_convention):
+        return self.__class__(flux=self.flux, wcs=self.wcs, meta=self.meta,
+                              spectral_axis_unit=self.unit,
+                              velocity_convention=velocity_convention)
 
     @property
     def rest_value(self):
         return self._rest_value
 
-    #@rest_value.setter
-    #def rest_value(self, value):
-    #    if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-    #        raise ValueError("Rest value must be energy/wavelength/frequency equivalent.")
-    #    self._rest_value = value
+    @rest_value.setter
+    def rest_value(self, value):
+        if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
+            raise ValueError(
+                "Rest value must be energy/wavelength/frequency equivalent.")
+
+        self._rest_value = value
 
     @property
     def velocity(self):
@@ -153,11 +154,10 @@ class OneDSpectrumMixin(object):
 
         return new_data
 
-
     def with_spectral_unit(self, unit, velocity_convention=None,
                            rest_value=None):
         """
-        Returns a new spectrum with a different Spectral Axis unit
+        Returns a new spectrum with a different spectral axis unit.
 
         Parameters
         ----------
@@ -181,7 +181,7 @@ class OneDSpectrumMixin(object):
         new_wcs, new_meta = self._new_spectral_wcs(
             unit=unit,
             velocity_convention=velocity_convention or self._velocity_convention,
-            rest_value=rest_value or self._rest_value)
+            rest_value=rest_value or self.rest_value)
 
         spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta,
                                   spectral_axis_unit=unit)
@@ -189,7 +189,7 @@ class OneDSpectrumMixin(object):
         return spectrum
 
     def _new_wcs_argument_validation(self, unit, velocity_convention,
-                                    rest_value):
+                                     rest_value):
         # Allow string specification of units, for example
         if not isinstance(unit, u.Unit):
             unit = u.Unit(unit)
@@ -240,39 +240,22 @@ class OneDSpectrumMixin(object):
         unit = self._new_wcs_argument_validation(unit, velocity_convention,
                                                  rest_value)
 
-        # Shorter versions to keep lines under 80
-        ctype_from_vconv = determine_ctype_from_vconv
+        if velocity_convention is not None:
+            equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
+            rest_value.to(unit, equivalencies=equiv)
 
+        # Store the original unit information for posterity
         meta = self._meta.copy()
 
-        if 'Original Unit' not in self._meta:
-            meta['Original Unit'] = self._wcs.wcs.cunit[self._wcs.wcs.spec]
-            meta['Original Type'] = self._wcs.wcs.ctype[self._wcs.wcs.spec]
+        if 'original_unit' not in self._meta:
+            meta['original_unit'] = self.wcs.unit
 
-        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self._wcs.wcs.spec],
-                                     unit,
-                                     velocity_convention=velocity_convention)
+        # Create the new wcs object
+        new_wcs = self.wcs.with_new_unit(unit=unit,
+                                         rest_value=rest_value,
+                                         velocity_convention=velocity_convention)
 
-        new_wcs = convert_spectral_axis(self._wcs, unit, out_ctype,
-                                       rest_value=rest_value)
-
-        new_wcs.wcs.set()
-        
         return new_wcs, meta
-
-    def _new_spectral_gwcs(self, unit, velocity_convention=None,
-                           rest_value=None):
-        """
-        Create a new WCS by changing units in a tabular data container
-        """
-        unit = self._new_wcs_argument_validation(unit, velocity_convention,
-                                                rest_value)
-
-        equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
-
-        new_wcs = self.wcs.with_new_unit(unit, equiv(rest_value))
-
-        return new_wcs, self.meta
 
 
 class InplaceModificationMixin(object):
@@ -293,7 +276,8 @@ class InplaceModificationMixin(object):
               background.shape == data[-1].shape):
             substractable_continuum = background
         else:
-            raise ValueError("background needs to be callable or have the same shape as the spectum")
+            raise ValueError(
+                "background needs to be callable or have the same shape as the spectum")
 
         data[-1] -= substractable_continuum
 
@@ -325,7 +309,8 @@ class InplaceModificationMixin(object):
 
         interp = interp1d(self.spectral_axis.value, data)
 
-        x = spectral_value.to(self.spectral_axis.unit, equivalencies=u.spectral())
+        x = spectral_value.to(self.spectral_axis.unit,
+                              equivalencies=u.spectral())
         y = interp(x)
 
         if self.unit is not None:
