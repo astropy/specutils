@@ -5,7 +5,7 @@ from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 
-from ..wcs import WCSWrapper
+from ..wcs import WCSWrapper, WCSAdapter
 from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
@@ -17,12 +17,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
 
     def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
-                 spectral_axis_unit=None, *args, **kwargs):
+                 spectral_axis_unit=None, velocity_convention=None, *args,
+                 **kwargs):
         # Attempt to parse the WCS. If not WCS object is given, try instead to
         # parse a given wavelength array. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if wcs is not None:
-            wcs = WCSWrapper(wcs)
+            if not issubclass(wcs.__class__, WCSAdapter):
+                wcs = WCSWrapper(wcs)
         elif spectral_axis is not None:
             spectral_axis = u.Quantity(spectral_axis,
                                        unit=spectral_axis_unit)
@@ -36,7 +38,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if not isinstance(flux, u.Quantity):
             flux = u.Quantity(flux, unit=unit or "Jy")
 
-        self._velocity_convention = None
+        self._velocity_convention = velocity_convention
 
         # Currently, only a fits wcs object stores the rest wavelength or
         # frequency information in the wcs object. In any other case, the user
@@ -45,6 +47,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             self._rest_value = wcs.rest_frequency * u.Hz
         elif wcs.rest_wavelength != 0:
             self._rest_value = wcs.rest_wavelength * u.AA
+        else:
+            self._rest_value = 0 * u.AA
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
@@ -65,22 +69,45 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def bin_edges(self):
         return self.wcs.bin_edges()
 
-    @velocity_convention.setter
-    def velocity_convention(self, value):
-        if value not in ('relativistic', 'optical', 'radio'):
-            raise ValueError("The allowed velocity conventions are 'optical' "
-                             "(linear with respect to wavelength), 'radio' "
-                             "(linear with respect to frequency), and "
-                             "'relativistic'.")
-        self._velocity_convention = value
+    def _arithmetic_check(self, other, operator):
+        # Check if the shape of the axes are compatible
+        if self.spectral_axis.shape != other.spectral_axis.shape:
+            raise ValueError("Shape of spectral axes between operands must be "
+                             "equivalent.")
 
-    @rest_value.setter
-    def rest_value(self, value):
-        if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-            raise ValueError(
-                "Rest value must be energy/wavelength/frequency equivalent.")
+        # First check if units are equivalent, if so, create a new spectrum
+        # object with spectral axis in compatible units
+        other = other.with_spectral_unit(self.unit)
 
-        self._rest_value = value
+        # And that they cover the same range
+        if (self.spectral_axis[0] != other.spectral_axis[0] or
+                self.spectral_axis[-1] != other.spectral_axis[-1]):
+            raise ValueError("Spectral axes between operands must cover the "
+                             "same range. Interpolation may be required.")
+
+        # Check if the delta dispersion is equivalent between the two axes
+        if not np.array_equal(np.diff(self.spectral_axis),
+                              np.diff(other.spectral_axis)):
+            raise ValueError("Delta dispersion of spectral axes of operands "
+                             "must be equivalent. Interpolation may be required.")
+
+        # Continue with arithmetic
+        getattr(self, operator)(other)
+
+    def __add__(self, other):
+        return self._arithmetic_check(other, 'add')
+
+    def __sub__(self, other):
+        return self._arithmetic_check(other, 'subtract')
+
+    def __mult__(self, other):
+        return self._arithmetic_check(other, 'multiply')
+
+    def __div__(self, other):
+        return self._arithmetic_check(other, 'divide')
+
+    def __truediv__(self, other):
+        return self._arithmetic_check(other, 'divide')
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
