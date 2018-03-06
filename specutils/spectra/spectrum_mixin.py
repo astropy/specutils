@@ -248,10 +248,10 @@ class OneDSpectrumMixin(object):
         meta = self._meta.copy()
 
         if 'original_unit' not in self._meta:
-            meta['original_unit'] = self.wcs.unit
+            meta['original_unit'] = self.wcs.spectral_axis_unit
 
         # Create the new wcs object
-        new_wcs = self.wcs.with_new_unit(unit=unit,
+        new_wcs = self.wcs.with_spectral_unit(unit=unit,
                                          rest_value=rest_value,
                                          velocity_convention=velocity_convention)
 
