@@ -1,4 +1,4 @@
-from __future__ import division
+import logging
 
 import numpy as np
 from astropy import units as u
@@ -19,7 +19,16 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
                  spectral_axis_unit=None, velocity_convention=None, *args,
                  **kwargs):
-        # Attempt to parse the WCS. If not WCS object is given, try instead to
+        # If the flux (data) argument is a subclass of nddataref (as it would
+        # be for internal arithmetic operations), avoid setup entirely.
+        if issubclass(flux.__class__, NDDataRef):
+            print("NDDataRef subclass.")
+            self._velocity_convention = flux._velocity_convention
+            self._rest_value = flux._rest_value
+
+            return super(Spectrum1D, self).__init__(flux)
+
+        # Attempt to parse the WCS. If no WCS object is given, try instead to
         # parse a given wavelength array. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if wcs is not None:
@@ -31,7 +40,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
             wcs = WCSWrapper.from_array(spectral_axis)
         else:
-            # If not wcs and not spectral axis has been given, raise an error
+            # If not wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
 
@@ -69,45 +78,64 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def bin_edges(self):
         return self.wcs.bin_edges()
 
-    def _arithmetic_check(self, other, operator):
-        # Check if the shape of the axes are compatible
-        if self.spectral_axis.shape != other.spectral_axis.shape:
-            raise ValueError("Shape of spectral axes between operands must be "
-                             "equivalent.")
-
+    @staticmethod
+    def _compare_wcs(this_operand, other_operand):
+        """
+        NNData arithmetic callable to determine if two wcs's are compatible.
+        """
         # First check if units are equivalent, if so, create a new spectrum
         # object with spectral axis in compatible units
-        other = other.with_spectral_unit(self.unit)
+        other_wcs = other_operand.wcs.with_spectral_unit(
+            this_operand.wcs.spectral_axis_unit)
+
+        if other_wcs is None:
+            print("FALSE1")
+            return False
+
+        # Check if the shape of the axes are compatible
+        if this_operand.spectral_axis.shape != other_operand.spectral_axis.shape:
+            logging.error("Shape of spectral axes between operands must be "
+                          "equivalent.")
+            print("FALSE2")
+            return False
 
         # And that they cover the same range
-        if (self.spectral_axis[0] != other.spectral_axis[0] or
-                self.spectral_axis[-1] != other.spectral_axis[-1]):
-            raise ValueError("Spectral axes between operands must cover the "
-                             "same range. Interpolation may be required.")
+        if (this_operand.spectral_axis[0] != other_operand.spectral_axis[0] or
+                this_operand.spectral_axis[-1] != other_operand.spectral_axis[-1]):
+            logging.error("Spectral axes between operands must cover the "
+                          "same range. Interpolation may be required.")
+            print("FALSE3")
+            return False
 
         # Check if the delta dispersion is equivalent between the two axes
-        if not np.array_equal(np.diff(self.spectral_axis),
-                              np.diff(other.spectral_axis)):
-            raise ValueError("Delta dispersion of spectral axes of operands "
-                             "must be equivalent. Interpolation may be required.")
-
-        # Continue with arithmetic
-        getattr(self, operator)(other)
+        if not np.array_equal(np.diff(this_operand.spectral_axis),
+                              np.diff(other_operand.spectral_axis)):
+            logging.error("Delta dispersion of spectral axes of operands "
+                          "must be equivalent. Interpolation may be required.")
+            print("FALSE4")
+            return False
+        print("TRUE")
+        return True
 
     def __add__(self, other):
-        return self._arithmetic_check(other, 'add')
+        return self.add(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __sub__(self, other):
-        return self._arithmetic_check(other, 'subtract')
+        return self.subtract(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __mult__(self, other):
-        return self._arithmetic_check(other, 'multiply')
+        return self.multiply(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __div__(self, other):
-        return self._arithmetic_check(other, 'divide')
+        return self.divide(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __truediv__(self, other):
-        return self._arithmetic_check(other, 'divide')
+        return self.divide(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
