@@ -46,7 +46,7 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Returns the unit of the spectral axis.
         """
-        return self.axes.spectral.wcs.cunit[0]
+        return self._wcs.wcs.cunit[self._wcs.wcs.spec]
 
     @property
     def rest_frequency(self):
@@ -62,10 +62,6 @@ class FITSWCSAdapter(WCSAdapter):
         """
         return self.wcs.wcs.restwav
 
-    @property
-    def unit(self):
-        return self._wcs.wcs.cunit[self._wcs.wcs.spec]
-
     def bin_edges(self):
         # the WCS doesn't know about its own pixel array
         edge_indices = list(self.axes.spectral.pixel_indices - 0.5) + \
@@ -73,7 +69,7 @@ class FITSWCSAdapter(WCSAdapter):
 
         return self.pixel_to_world(edge_indices, 0)
 
-    def with_new_unit(self, unit, rest_value, velocity_convention):
+    def with_spectral_unit(self, unit, rest_value, velocity_convention):
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
 
