@@ -8,15 +8,16 @@ from ..spectra.spectrum1d import Spectrum1D
 
 
 def test_spectral_axes():
+    flux1 = (np.random.sample(49) * 100).astype(int)
+    flux2 = (np.random.sample(49) * 100).astype(int)
+
+    flux3 = flux1 + flux2
+
     spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.randn(49))
+                       flux=flux1)
     spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.randn(49))
+                       flux=flux2)
 
     spec3 = spec1 + spec2
 
-    # Arithmetic should defautly fail when the axes are different
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.randn(49))
-    spec2 = Spectrum1D(spectral_axis=np.arange(1100, 1150) * u.Angstrom,
-                       flux=np.random.randn(49))
+    assert np.allclose(spec3.flux.value, flux3)
