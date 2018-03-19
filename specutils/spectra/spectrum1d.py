@@ -16,17 +16,22 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     Spectrum container for 1D spectral data.
     """
 
-    def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
-                 spectral_axis_unit=None, velocity_convention=None, *args,
-                 **kwargs):
+    def __init__(self, flux=None, spectral_axis=None, wcs=None, unit=None,
+                 spectral_axis_unit=None, velocity_convention=None,
+                 rest_value=None, *args, **kwargs):
+        # In cases of slicing, new objects will be initialized with `data`
+        # instead of `flux`. Ensure we grab the `data` argument.
+        if flux is None and 'data' in kwargs:
+            flux = kwargs.pop('data')
+
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if issubclass(flux.__class__, NDDataRef):
-            print("NDDataRef subclass.")
             self._velocity_convention = flux._velocity_convention
             self._rest_value = flux._rest_value
 
-            return super(Spectrum1D, self).__init__(flux)
+            super(Spectrum1D, self).__init__(flux)
+            return
 
         # Attempt to parse the WCS. If no WCS object is given, try instead to
         # parse a given wavelength array. This is put into a GWCS object to
@@ -36,7 +41,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 wcs = WCSWrapper(wcs)
         elif spectral_axis is not None:
             spectral_axis = u.Quantity(spectral_axis,
-                                       unit=spectral_axis_unit)
+                                       unit=spectral_axis_unit or u.AA)
 
             wcs = WCSWrapper.from_array(spectral_axis)
         else:
@@ -49,15 +54,23 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         self._velocity_convention = velocity_convention
 
-        # Currently, only a fits wcs object stores the rest wavelength or
-        # frequency information in the wcs object. In any other case, the user
-        # will be given an warning to provide these explicitly in this object.
-        if wcs.rest_frequency != 0:
-            self._rest_value = wcs.rest_frequency * u.Hz
-        elif wcs.rest_wavelength != 0:
-            self._rest_value = wcs.rest_wavelength * u.AA
+        if rest_value is None:
+            if wcs.rest_frequency != 0:
+                self._rest_value = wcs.rest_frequency * u.Hz
+            elif wcs.rest_wavelength != 0:
+                self._rest_value = wcs.rest_wavelength * u.AA
+            else:
+                self._rest_value = 0 * u.AA
         else:
-            self._rest_value = 0 * u.AA
+            self._rest_value = rest_value
+
+            if not isinstance(self._rest_value, u.Quantity):
+                logging.info("No unit information provided with rest value. "
+                             "Assuming units of spectral axis ('%s').",
+                             spectral_axis.unit)
+                self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
+            elif not self._rest_value.unit.is_equivalent(u.AA) or not self._rest_value.unit.is_equivalent(u.Hz):
+                raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
