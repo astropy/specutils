@@ -18,7 +18,7 @@ class WCSAdapterMeta(type):
             wcs_class = dct.get('wrapped_class', None)
 
             if wcs_class is not None:
-                logging.info("Added {} to adapter registry.".format(wcs_class))
+                logging.debug("Added {} to adapter registry.".format(wcs_class))
                 cls.registry[wcs_class] = cls
 
         super(WCSAdapterMeta, cls).__init__(name, bases, dct)
