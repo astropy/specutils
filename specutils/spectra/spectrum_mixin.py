@@ -112,7 +112,7 @@ class OneDSpectrumMixin(object):
     @rest_value.setter
     def rest_value(self, value):
         if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-            raise ValueError(
+            raise u.UnitsError(
                 "Rest value must be energy/wavelength/frequency equivalent.")
 
         self._rest_value = value
@@ -140,10 +140,10 @@ class OneDSpectrumMixin(object):
         ~`astropy.units.Quantity`
             The converted dispersion array in the new dispersion space.
         """
-        if not hasattr(self, '_rest_value'):
+        if not hasattr(self, '_rest_value') or self._rest_value is None:
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a reference value.")
-        if not hasattr(self, '_velocity_convention'):
+        if not hasattr(self, '_velocity_convention') or self._velocity_convention is None:
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a velocity convention.")
 
