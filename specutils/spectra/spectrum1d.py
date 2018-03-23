@@ -40,8 +40,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             if not issubclass(wcs.__class__, WCSAdapter):
                 wcs = WCSWrapper(wcs)
         elif spectral_axis is not None:
-            spectral_axis = u.Quantity(spectral_axis,
-                                       unit=spectral_axis_unit or u.AA)
+            if not isinstance(spectral_axis, u.Quantity):
+                spectral_axis = u.Quantity(spectral_axis,
+                                        unit=spectral_axis_unit or u.AA)
+
+                logging.error("No spectral axis units given, assuming "
+                              "{}".format(spectral_axis.unit))
 
             wcs = WCSWrapper.from_array(spectral_axis)
         else:
@@ -102,14 +106,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             this_operand.wcs.spectral_axis_unit)
 
         if other_wcs is None:
-            print("FALSE1")
             return False
 
         # Check if the shape of the axes are compatible
         if this_operand.spectral_axis.shape != other_operand.spectral_axis.shape:
             logging.error("Shape of spectral axes between operands must be "
                           "equivalent.")
-            print("FALSE2")
             return False
 
         # And that they cover the same range
@@ -117,7 +119,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 this_operand.spectral_axis[-1] != other_operand.spectral_axis[-1]):
             logging.error("Spectral axes between operands must cover the "
                           "same range. Interpolation may be required.")
-            print("FALSE3")
             return False
 
         # Check if the delta dispersion is equivalent between the two axes
@@ -125,9 +126,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                               np.diff(other_operand.spectral_axis)):
             logging.error("Delta dispersion of spectral axes of operands "
                           "must be equivalent. Interpolation may be required.")
-            print("FALSE4")
             return False
-        print("TRUE")
+
         return True
 
     def __add__(self, other):

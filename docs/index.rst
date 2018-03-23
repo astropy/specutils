@@ -38,3 +38,14 @@ something like
     plt.plot(spec1d.wavelength, spec1d.flux)
 
 .. image:: img/quick_start.png
+
+
+Using specutils
+---------------
+
+.. toctree::
+   :maxdepth: 1
+
+   getting_started
+   creating_spectra
+   custom_loading

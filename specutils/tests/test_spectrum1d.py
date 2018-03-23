@@ -53,8 +53,7 @@ def test_spectral_axis_conversions():
     spec = Spectrum1D(spectral_axis=np.arange(50),
                       flux=np.random.randn(50))
 
-    with pytest.raises(u.UnitsError) as e_info:
-        spec.frequency
+    assert spec.wavelength.unit == u.AA
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49))
@@ -66,7 +65,7 @@ def test_spectral_axis_conversions():
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49))
-    
+
     new_spec = spec.with_spectral_unit(u.GHz)
 
 
