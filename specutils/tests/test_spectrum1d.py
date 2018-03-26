@@ -3,6 +3,7 @@ import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
 import pytest
+from astropy.nddata import StdDevUncertainty
 
 from ..spectra.spectrum1d import Spectrum1D
 
@@ -94,3 +95,18 @@ def test_create_explicit_fitswcs():
     assert isinstance(spec.velocity, u.Quantity)
     assert spec.velocity.size == 3
     assert spec.velocity.unit == u.Unit('km/s')
+
+
+def test_create_with_uncertainty():
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.sample(49),
+                      uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
+
+    assert isinstance(spec.uncertainty, StdDevUncertainty)
+
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.sample(49) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
+
+    assert spec.flux.unit == spec.uncertainty.unit
+

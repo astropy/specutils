@@ -8,9 +8,9 @@ astronomical community upon which more robust tooling can be built.
 The basic data container of specutils is the :class:`~specutils.spectra.Spectrum1D`
 class. It contains logic to handle multi-dimensional flux data, spectral axis
 in various forms (wavelenth, frequency, energy, velocity, etc.), convenient and
-unobtrusive wcs support, and uncertainty handling. This core container is
-supported by a few other features including unit support, custom data loading,
-arithmetic operation support, and multi-dimensional flux data support
+unobtrusive wcs support, and uncertainty handling. This core container also
+maintaines a few other features including unit support, custom data loading,
+arithmetic operation support, and multi-dimensional flux data support.
 
 .. note:: support for collections of spectra with distinct spectral axes
           information is slotted for a future release.
@@ -27,9 +27,10 @@ Using specutils
    getting_started
    custom_loading
    basic_analysis
+   arithmetic
 
 
-Get involved
+Get Involved
 ------------
 
 Please see :ref:`contributing` for information on bug reporting and
