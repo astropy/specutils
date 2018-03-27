@@ -105,9 +105,7 @@ specify the uncertainty type at creation time
     >>> from specutils import Spectrum1D
     >>> from astropy.nddata import StdDevUncertainty
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(10),
-                          flux=np.random.sample(10),
-                          uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
+    >>> spec = Spectrum1D(spectral_axis=np.arange(10), flux=np.random.sample(10), uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
 
 .. warning:: Not defining an uncertainty class will result in an
              :class:`~astropy.nddata.UnknownUncertainty` object which will not

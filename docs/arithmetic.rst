@@ -24,10 +24,8 @@ Arithmetic support includes addition, subtract, multiplication, and division.
     >>> import astropy.units as u
     >>> import numpy as np
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                           flux=np.random.sample(49))
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                           flux=np.random.sample(49))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec3 = spec1 + spec2
     >>> spec3
     Spectrum1D([1.42980955, 0.76450583, 0.53973912, 1.12714653, 1.46747729,
@@ -57,12 +55,8 @@ Arithmetic operations also support the propagation of unceratinty information.
 
     >>> from astropy.nddata import StdDevUncertainty
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(10) * u.nm,
-                           flux=np.random.sample(10),
-                           uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(10) * u.nm,
-                           flux=np.random.sample(10),
-                           uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=np.random.sample(10), uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
+    >>> spec2 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=np.random.sample(10), uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
     >>> spec1.uncertainty
     StdDevUncertainty([0.04386832, 0.09909487, 0.07589192, 0.0311604 ,
                    0.07973579, 0.04687858, 0.01161918, 0.06013496,
