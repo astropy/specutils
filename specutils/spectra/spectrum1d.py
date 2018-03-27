@@ -75,8 +75,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 spectral_axis = u.Quantity(spectral_axis,
                                            unit=spectral_axis_unit or u.AA)
 
-                logging.error("No spectral axis units given, assuming "
-                              "{}".format(spectral_axis.unit))
+                logging.warning("No spectral axis units given, assuming "
+                                "{}".format(spectral_axis.unit))
 
             wcs = WCSWrapper.from_array(spectral_axis)
         else:
