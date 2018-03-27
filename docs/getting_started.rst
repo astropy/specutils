@@ -82,7 +82,7 @@ Providing a FITSWCS
 
     >>> my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom', 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
     >>> spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
-    >>> spec.wavelength
+    >>> spec.wavelength #doctest:+SKIP
     <Quantity [ 6538.8, 6539.8, 6540.8] Angstrom>
     >>> spec.wcs.pixel_to_world(np.arange(3)) #doctest:+SKIP
     array([6.5388e-07, 6.5398e-07, 6.5408e-07])
