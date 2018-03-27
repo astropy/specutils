@@ -4,7 +4,7 @@ import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-
+from astropy.nddata import NDUncertainty
 from ..wcs import WCSWrapper, WCSAdapter
 from .spectrum_mixin import OneDSpectrumMixin
 
@@ -14,6 +14,37 @@ __all__ = ['Spectrum1D']
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
+
+    Parameters
+    ----------
+    flux : `numpy.ndarray`-like or `astropy.units.Quantity` or astropy.nddata.NDData`-like
+        The flux data for this spectrum.
+    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quanitty`
+        Dispersion information with the same shape as the last (or only)
+        dimension of flux.
+    wcs : `astropy.wcs.WCS` or `gwcs.WCS`
+        WCS information object.
+    unit : str or `astropy.units.Unit`
+        The unit for the flux data. Must be parseable by `astropy.units.Unit`.
+        If `flux` is supplied as a `astropy.units.Quantity`, this
+        is superceded by the defined unit.
+    spectral_axis_unit : str or `astropy.units.Unit`
+        The unit for the spectral axis. Must be parseable by `astropy.units.Unit`.
+        If `spectral_axis` is supplied as a `astropy.units.Quantity`, this
+        is superceded by the defined unit.
+    velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
+        Convention used for velocity conversions.
+    rest_value : ~`astropy.units.Quantity`
+        Any quantity supported by the standard spectral equivalencies
+        (wavelength, energy, frequency, wave number). Describes the rest value
+        of the spectral axis for use with velocity conversions.
+    uncertainty : ~`astropy.nddata.NDUncertainty`
+        Contains uncertainty information along with propagation rules for
+        spectrum arithmetic. Can take a unit, but if none is given, will use
+        the unit defined in the flux.
+    meta : dict
+        Arbitrary container for any user-specific information to be carried
+        around with the spectrum container object.
     """
 
     def __init__(self, flux=None, spectral_axis=None, wcs=None, unit=None,
@@ -42,7 +73,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         elif spectral_axis is not None:
             if not isinstance(spectral_axis, u.Quantity):
                 spectral_axis = u.Quantity(spectral_axis,
-                                        unit=spectral_axis_unit or u.AA)
+                                           unit=spectral_axis_unit or u.AA)
 
                 logging.error("No spectral axis units given, assuming "
                               "{}".format(spectral_axis.unit))

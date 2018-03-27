@@ -15,7 +15,7 @@ Creating a Custom Loader
 
 Defining a custom loader consists of importing the `data_loader` decorator from
 specutils and attaching it to a function that knows how to parse the user's data.
-The return object of this function must be a :class:`~specutils.spectra.Spectrum1D`
+The return object of this function must be a :class:~`specutils.spectra.Spectrum1D`
 object.
 
 Optionally, the user may define an identifier function. This function acts to
@@ -61,7 +61,7 @@ ensure that the data file being loaded is compatible with the loader function.
 
 
 After placing this python file in the user's `~/.specutils` directory, it can
-be utilized by referencing its name in the `read` method of the :class:`~specutils.spectra.Spectrum1D`
+be utilized by referencing its name in the `read` method of the :class:~`specutils.spectra.Spectrum1D`
 class
 
 .. code-block:: python
@@ -97,7 +97,7 @@ This again will be done in a separate python file and placed in the user's
 
 The custom writer can be used by passing the name of the custom writer to the
 `format` argument of the `write` method on the
-:class:`~specutils.spectra.Spectrum1D`.
+:class:~`specutils.spectra.Spectrum1D`.
 
 .. code-block:: python
 
