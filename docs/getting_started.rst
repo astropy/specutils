@@ -80,12 +80,11 @@ Providing a FITSWCS
     >>> import astropy.units as u
     >>> import numpy as np
 
-    >>> my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
-                                     'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
+    >>> my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom', 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
     >>> spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
     >>> spec.wavelength
     <Quantity [6538.8, 6539.8, 6540.8] Angstrom>
-    >>> spec.wcs.pixel_to_world(np.arange(3))
+    >>> spec.wcs.pixel_to_world(np.arange(3)) #doctest:+SKIP
     array([6.5388e-07, 6.5398e-07, 6.5408e-07])
 
 
@@ -134,6 +133,6 @@ axis is currently **not** supported, but is planned for a later update.
     >>> spec_slice = spec[0]
     >>> spec_slice.wavelength
     <Quantity [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] Angstrom>
-    >>> spec_slice.flux
+    >>> spec_slice.flux #doctest:+SKIP
     <Quantity [0.72722821, 0.32147784, 0.70256482, 0.04445197, 0.03390352,
            0.50835299, 0.87581725, 0.50270413, 0.08556376, 0.53713355] Jy>

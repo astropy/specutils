@@ -27,7 +27,7 @@ Arithmetic support includes addition, subtract, multiplication, and division.
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec3 = spec1 + spec2
-    >>> spec3
+    >>> spec3 #doctest:+SKIP
     Spectrum1D([1.42980955, 0.76450583, 0.53973912, 1.12714653, 1.46747729,
             0.98485104, 1.13618017, 1.02447445, 0.68610084, 0.85083215,
             0.57521794, 1.16854341, 1.05139223, 1.44550638, 1.67533841,
@@ -57,16 +57,16 @@ Arithmetic operations also support the propagation of unceratinty information.
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=np.random.sample(10), uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
     >>> spec2 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=np.random.sample(10), uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
-    >>> spec1.uncertainty
+    >>> spec1.uncertainty #doctest:+SKIP
     StdDevUncertainty([0.04386832, 0.09909487, 0.07589192, 0.0311604 ,
                    0.07973579, 0.04687858, 0.01161918, 0.06013496,
                    0.00476118, 0.06720447])
-    >>> spec2.uncertainty
+    >>> spec2.uncertainty #doctest:+SKIP
     StdDevUncertainty([0.00889175, 0.00890437, 0.05194229, 0.08794455,
                    0.09918037, 0.04815417, 0.06464564, 0.0164324 ,
                    0.04358771, 0.08260218])
     >>> spec3 = spec1 + spec2
-    >>> spec3.uncertainty
+    >>> spec3.uncertainty #doctest:+SKIP
     StdDevUncertainty([0.04476039, 0.09949412, 0.09196513, 0.09330174,
                    0.12725778, 0.06720435, 0.06568154, 0.06233969,
                    0.04384698, 0.10648737])
