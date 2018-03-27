@@ -90,7 +90,7 @@ Providing a FITSWCS
 
 
 Including Uncertainties
-----------------------
+-----------------------
 
 The :class:`~specutils.spectra.Spectrum1D` class supports uncertainties, and
 arithmetic operations performed with :class:`~specutils.spectra.Spectrum1D`
