@@ -130,7 +130,7 @@ axis is currently **not** supported, but is planned for a later update.
     >>> from specutils import Spectrum1D
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA, flux=np.random.sample((5, 10)) * u.Jy)
-    >>> spec_slice = spec[0]
+    >>> spec_slice = spec[0] #doctest:+SKIP
     >>> spec_slice.wavelength
     <Quantity [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] Angstrom>
     >>> spec_slice.flux #doctest:+SKIP
