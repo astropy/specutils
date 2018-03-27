@@ -25,7 +25,7 @@ something like
 .. image:: img/quick_start.png
 
 
-Spectra with units
+Spectra with Units
 ------------------
 
 It's also possible to include units. This can be done either by passing in
@@ -89,7 +89,7 @@ Providing a FITSWCS
     array([6.5388e-07, 6.5398e-07, 6.5408e-07])
 
 
-Spectra with Uncertainties
+Including Uncertainties
 ----------------------
 
 The :class:`~specutils.spectra.Spectrum1D` class supports uncertainties, and
@@ -110,3 +110,30 @@ specify the uncertainty type at creation time
 .. warning:: Not defining an uncertainty class will result in an
              :class:`~astropy.nddata.UnknownUncertainty` object which will not
              propagate uncertainties in arithmetic operations.
+
+
+Multi-dimensional Data Sets
+---------------------------
+
+Specutils supports the case where the user may have an `(n_spectra, n_pix)`
+shaped data set where each `n_spectra` element provides a different flux data
+array and so `flux` and `uncertainty` may be multidimensional as long as the last
+dimension matches the shape of spectral_axis This is meant to allow fast operations on
+collections of spectra that share the same `spectral_axis`. While it may seem to
+conflict with the “1D” in the class name, this name scheme is meant to
+communicate the presence of a single common spectral axis.
+
+The case where each flux data array is related to a *different* spectral
+axis is currently **not** supported, but is planned for a later update.
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA, flux=np.random.sample((5, 10)) * u.Jy)
+    >>> spec_slice = spec[0]
+    >>> spec_slice.wavelength
+    <Quantity [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] Angstrom>
+    >>> spec_slice.flux
+    <Quantity [0.72722821, 0.32147784, 0.70256482, 0.04445197, 0.03390352,
+           0.50835299, 0.87581725, 0.50270413, 0.08556376, 0.53713355] Jy>
