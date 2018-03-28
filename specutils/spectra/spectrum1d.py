@@ -79,6 +79,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         elif wcs is not None:
             if not issubclass(wcs.__class__, WCSAdapter):
                 wcs = WCSWrapper(wcs)
+        elif isinstance(flux, float) or isinstance(flux, int) or isinstance(flux, np.ndarray):
+            # In the case where the arithmetic operation is being performed with
+            # a single float, int, or array object, just go ahead and ignore wcs
+            # requirements
+            super(Spectrum1D, self).__init__(data=flux)
+            return
         else:
             # If not wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
@@ -131,6 +137,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         """
         NNData arithmetic callable to determine if two wcs's are compatible.
         """
+        # If the other operand is a simple number or array, allow the operations
+        if (isinstance(other_operand, float) or isinstance(other_operand, int)
+            or isinstance(other_operand, np.ndarray)):
+            return True
+
         # First check if units are equivalent, if so, create a new spectrum
         # object with spectral axis in compatible units
         other_wcs = other_operand.wcs.with_spectral_unit(
@@ -169,7 +180,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return self.subtract(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
-    def __mult__(self, other):
+    def __mul__(self, other):
         return self.multiply(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
