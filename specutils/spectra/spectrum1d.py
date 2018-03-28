@@ -64,13 +64,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(flux)
             return
 
-        # Attempt to parse the WCS. If no WCS object is given, try instead to
-        # parse a given wavelength array. This is put into a GWCS object to
+        # Attempt to parse the spectral axis. If none is given, try instead to
+        # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
-        if wcs is not None:
-            if not issubclass(wcs.__class__, WCSAdapter):
-                wcs = WCSWrapper(wcs)
-        elif spectral_axis is not None:
+        if spectral_axis is not None:
             if not isinstance(spectral_axis, u.Quantity):
                 spectral_axis = u.Quantity(spectral_axis,
                                            unit=spectral_axis_unit or u.AA)
@@ -79,6 +76,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                                 "{}".format(spectral_axis.unit))
 
             wcs = WCSWrapper.from_array(spectral_axis)
+        elif wcs is not None:
+            if not issubclass(wcs.__class__, WCSAdapter):
+                wcs = WCSWrapper(wcs)
         else:
             # If not wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
