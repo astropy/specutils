@@ -19,6 +19,9 @@ logging.basicConfig(level=logging.INFO)
 # Load the default IO functions
 from .io.default_loaders import *  # noqa
 
+# Allow loading spectrum object from top level module
+from .spectra import *
+
 
 def load_user():
     # Get the path relative to the user's home directory

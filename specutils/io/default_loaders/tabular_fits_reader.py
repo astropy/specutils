@@ -1,3 +1,4 @@
+import logging
 import os
 
 import six
@@ -7,8 +8,8 @@ from astropy.table import Table
 from astropy.units import Unit
 from astropy.wcs import WCS
 
-from ..registers import data_loader
 from ...spectra import Spectrum1D
+from ..registers import data_loader
 
 
 def identify_tabular_fits(origin, *args, **kwargs):

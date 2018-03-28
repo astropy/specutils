@@ -2,6 +2,8 @@ from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
                          WCSSUB_STOKES)
 
+# Use this once in specutils
+from ...utils.wcs_utils import convert_spectral_axis, determine_ctype_from_vconv
 from ..wcs_adapter import WCSAdapter, WCSAxes
 
 __all__ = ['FITSWCSAdapter']
@@ -44,7 +46,7 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Returns the unit of the spectral axis.
         """
-        return self.axes.spectral.wcs.cunit[0]
+        return self._wcs.wcs.cunit[self._wcs.wcs.spec]
 
     @property
     def rest_frequency(self):
@@ -65,4 +67,19 @@ class FITSWCSAdapter(WCSAdapter):
         edge_indices = list(self.axes.spectral.pixel_indices - 0.5) + \
                        [self.axes.spectral.pixel_indices[-1] + 0.5]
 
-        return self.pix2world(edge_indices, 0)
+        return self.pixel_to_world(edge_indices, 0)
+
+    def with_spectral_unit(self, unit, rest_value, velocity_convention):
+        # Shorter versions to keep lines under 80
+        ctype_from_vconv = determine_ctype_from_vconv
+
+        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self._wcs.wcs.spec],
+                                     unit,
+                                     velocity_convention=velocity_convention)
+
+        new_wcs = convert_spectral_axis(self._wcs, unit, out_ctype,
+                                        rest_value=rest_value)
+
+        new_wcs.wcs.set()
+
+        return new_wcs

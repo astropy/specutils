@@ -1,11 +1,11 @@
-from __future__ import division
+import logging
 
 import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-
-from ..wcs import WCSWrapper
+from astropy.nddata import NDUncertainty
+from ..wcs import WCSWrapper, WCSAdapter
 from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
@@ -14,53 +14,101 @@ __all__ = ['Spectrum1D']
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
+
+    Parameters
+    ----------
+    flux : `numpy.ndarray`-like or `astropy.units.Quantity` or astropy.nddata.NDData`-like
+        The flux data for this spectrum.
+    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quanitty`
+        Dispersion information with the same shape as the last (or only)
+        dimension of flux.
+    wcs : `astropy.wcs.WCS` or `gwcs.WCS`
+        WCS information object.
+    unit : str or `astropy.units.Unit`
+        The unit for the flux data. Must be parseable by `astropy.units.Unit`.
+        If `flux` is supplied as a `astropy.units.Quantity`, this
+        is superceded by the defined unit.
+    spectral_axis_unit : str or `astropy.units.Unit`
+        The unit for the spectral axis. Must be parseable by `astropy.units.Unit`.
+        If `spectral_axis` is supplied as a `astropy.units.Quantity`, this
+        is superceded by the defined unit.
+    velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
+        Convention used for velocity conversions.
+    rest_value : ~`astropy.units.Quantity`
+        Any quantity supported by the standard spectral equivalencies
+        (wavelength, energy, frequency, wave number). Describes the rest value
+        of the spectral axis for use with velocity conversions.
+    uncertainty : ~`astropy.nddata.NDUncertainty`
+        Contains uncertainty information along with propagation rules for
+        spectrum arithmetic. Can take a unit, but if none is given, will use
+        the unit defined in the flux.
+    meta : dict
+        Arbitrary container for any user-specific information to be carried
+        around with the spectrum container object.
     """
 
-    def __init__(self, flux, spectral_axis=None, wcs=None, unit=None,
-                 spectral_axis_unit=None, *args, **kwargs):
-        # Attempt to parse the WCS. If not WCS object is given, try instead to
+    def __init__(self, flux=None, spectral_axis=None, wcs=None, unit=None,
+                 spectral_axis_unit=None, velocity_convention=None,
+                 rest_value=None, *args, **kwargs):
+        # In cases of slicing, new objects will be initialized with `data`
+        # instead of `flux`. Ensure we grab the `data` argument.
+        if flux is None and 'data' in kwargs:
+            flux = kwargs.pop('data')
+
+        # If the flux (data) argument is a subclass of nddataref (as it would
+        # be for internal arithmetic operations), avoid setup entirely.
+        if issubclass(flux.__class__, NDDataRef):
+            self._velocity_convention = flux._velocity_convention
+            self._rest_value = flux._rest_value
+
+            super(Spectrum1D, self).__init__(flux)
+            return
+
+        # Attempt to parse the WCS. If no WCS object is given, try instead to
         # parse a given wavelength array. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if wcs is not None:
-            wcs = WCSWrapper(wcs)
+            if not issubclass(wcs.__class__, WCSAdapter):
+                wcs = WCSWrapper(wcs)
         elif spectral_axis is not None:
-            spectral_axis = u.Quantity(spectral_axis,
-                                       unit=spectral_axis_unit)
+            if not isinstance(spectral_axis, u.Quantity):
+                spectral_axis = u.Quantity(spectral_axis,
+                                           unit=spectral_axis_unit or u.AA)
+
+                logging.warning("No spectral axis units given, assuming "
+                                "{}".format(spectral_axis.unit))
 
             wcs = WCSWrapper.from_array(spectral_axis)
         else:
-            # If not wcs and not spectral axis has been given, raise an error
+            # If not wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
 
         if not isinstance(flux, u.Quantity):
             flux = u.Quantity(flux, unit=unit or "Jy")
 
-        self._velocity_convention = None
+        self._velocity_convention = velocity_convention
 
-        # Currently, only a fits wcs object stores the rest wavelength or
-        # frequency information in the wcs object. In any other case, the user
-        # will be given an warning to provide these explicitly in this object.
-        if wcs.rest_frequency != 0:
-            self._rest_value = wcs.rest_frequency * u.Hz
-        elif wcs.rest_wavelength != 0:
-            self._rest_value = wcs.rest_wavelength * u.AA
+        if rest_value is None:
+            if wcs.rest_frequency != 0:
+                self._rest_value = wcs.rest_frequency * u.Hz
+            elif wcs.rest_wavelength != 0:
+                self._rest_value = wcs.rest_wavelength * u.AA
+            else:
+                self._rest_value = 0 * u.AA
+        else:
+            self._rest_value = rest_value
+
+            if not isinstance(self._rest_value, u.Quantity):
+                logging.info("No unit information provided with rest value. "
+                             "Assuming units of spectral axis ('%s').",
+                             spectral_axis.unit)
+                self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
+            elif not self._rest_value.unit.is_equivalent(u.AA) or not self._rest_value.unit.is_equivalent(u.Hz):
+                raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
                                          wcs=wcs, *args, **kwargs)
-
-    @property
-    def flux(self):
-        return u.Quantity(self.data, unit=self.unit)
-
-    @property
-    def spectral_axis(self):
-        # Construct the spectral_axis array.
-        # TODO: Should applying the spectral axis unit occur in the adapter?
-        spectral_axis = self.wcs.pixel_to_world(
-            np.arange(self.flux.shape[0])) * self.wcs.spectral_axis_unit
-
-        return spectral_axis
 
     @property
     def frequency(self):
@@ -78,67 +126,60 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def bin_edges(self):
         return self.wcs.bin_edges()
 
-    @property
-    def velocity_convention(self):
-        return self._velocity_convention
-
-    @velocity_convention.setter
-    def velocity_convention(self, value):
-        if value not in ('relativistic', 'optical', 'radio'):
-            raise ValueError("The allowed velocity conventions are 'optical' "
-                             "(linear with respect to wavelength), 'radio' "
-                             "(linear with respect to frequency), and "
-                             "'relativistic'.")
-        self._velocity_convention = value
-
-    @property
-    def rest_value(self):
-        return self._rest_value
-
-    @rest_value.setter
-    def rest_value(self, value):
-        if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-            raise ValueError(
-                "Rest value must be energy/wavelength/frequency equivalent.")
-
-        self._rest_value = value
-
-    @property
-    def velocity(self):
+    @staticmethod
+    def _compare_wcs(this_operand, other_operand):
         """
-        Converts the spectral axis array to the given velocity space unit given
-        the rest value.
-
-        These aren't input parameters but required Spectrum attributes
-
-        Parameters
-        ----------
-        unit : str or ~`astropy.units.Unit`
-            The unit to convert the dispersion array to.
-        rest : ~`astropy.units.Quantity`
-            Any quantity supported by the standard spectral equivalencies
-            (wavelength, energy, frequency, wave number).
-        type : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
-            The type of doppler spectral equivalency.
-
-        Returns
-        -------
-        ~`astropy.units.Quantity`
-            The converted dispersion array in the new dispersion space.
+        NNData arithmetic callable to determine if two wcs's are compatible.
         """
-        if not hasattr(self, '_rest_value'):
-            raise ValueError("Cannot get velocity representation of spectral "
-                             "axis without specifying a reference value.")
-        if not hasattr(self, '_velocity_convention'):
-            raise ValueError("Cannot get velocity representation of spectral "
-                             "axis without specifying a velocity convention.")
+        # First check if units are equivalent, if so, create a new spectrum
+        # object with spectral axis in compatible units
+        other_wcs = other_operand.wcs.with_spectral_unit(
+            this_operand.wcs.spectral_axis_unit)
 
-        equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
-            self.velocity_convention))(self.rest_value)
+        if other_wcs is None:
+            return False
 
-        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
+        # Check if the shape of the axes are compatible
+        if this_operand.spectral_axis.shape != other_operand.spectral_axis.shape:
+            logging.error("Shape of spectral axes between operands must be "
+                          "equivalent.")
+            return False
 
-        return new_data
+        # And that they cover the same range
+        if (this_operand.spectral_axis[0] != other_operand.spectral_axis[0] or
+                this_operand.spectral_axis[-1] != other_operand.spectral_axis[-1]):
+            logging.error("Spectral axes between operands must cover the "
+                          "same range. Interpolation may be required.")
+            return False
+
+        # Check if the delta dispersion is equivalent between the two axes
+        if not np.array_equal(np.diff(this_operand.spectral_axis),
+                              np.diff(other_operand.spectral_axis)):
+            logging.error("Delta dispersion of spectral axes of operands "
+                          "must be equivalent. Interpolation may be required.")
+            return False
+
+        return True
+
+    def __add__(self, other):
+        return self.add(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+
+    def __sub__(self, other):
+        return self.subtract(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+
+    def __mult__(self, other):
+        return self.multiply(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+
+    def __div__(self, other):
+        return self.divide(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+
+    def __truediv__(self, other):
+        return self.divide(
+            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.

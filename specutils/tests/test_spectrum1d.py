@@ -3,6 +3,7 @@ import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
 import pytest
+from astropy.nddata import StdDevUncertainty
 
 from ..spectra.spectrum1d import Spectrum1D
 
@@ -53,8 +54,7 @@ def test_spectral_axis_conversions():
     spec = Spectrum1D(spectral_axis=np.arange(50),
                       flux=np.random.randn(50))
 
-    with pytest.raises(u.UnitsError) as e_info:
-        spec.frequency
+    assert spec.wavelength.unit == u.AA
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49))
@@ -64,13 +64,18 @@ def test_spectral_axis_conversions():
     with pytest.raises(ValueError) as e_info:
         spec.velocity
 
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.randn(49))
+
+    new_spec = spec.with_spectral_unit(u.GHz)
+
 
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
                                  'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
 
     spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
-    spec.velocity_convention = "relativistic"
+    spec = spec.with_velocity_convention("relativistic")
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit.is_equivalent(u.AA)
@@ -90,3 +95,18 @@ def test_create_explicit_fitswcs():
     assert isinstance(spec.velocity, u.Quantity)
     assert spec.velocity.size == 3
     assert spec.velocity.unit == u.Unit('km/s')
+
+
+def test_create_with_uncertainty():
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.sample(49),
+                      uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
+
+    assert isinstance(spec.uncertainty, StdDevUncertainty)
+
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.sample(49) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
+
+    assert spec.flux.unit == spec.uncertainty.unit
+

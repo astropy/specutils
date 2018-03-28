@@ -27,7 +27,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D):
         io_registry.register_reader(label, dtype, func)
         io_registry.register_identifier(label, dtype, identifier)
 
-        logging.info("Successfully loaded reader \"{}\".".format(label))
+        logging.debug("Successfully loaded reader \"{}\".".format(label))
 
         @wraps(func)
         def wrapper(*args, **kwargs):

@@ -18,7 +18,7 @@ class WCSAdapterMeta(type):
             wcs_class = dct.get('wrapped_class', None)
 
             if wcs_class is not None:
-                logging.info("Added {} to adapter registry.".format(wcs_class))
+                logging.debug("Added {} to adapter registry.".format(wcs_class))
                 cls.registry[wcs_class] = cls
 
         super(WCSAdapterMeta, cls).__init__(name, bases, dct)
@@ -93,11 +93,15 @@ class WCSAdapter(metaclass=type('WCSAdapterMetaProxy',
 
     @abc.abstractmethod
     def rest_frequency(self):
-        return
+        pass
 
     @abc.abstractmethod
     def rest_wavelength(self):
-        return
+        pass
+
+    @abc.abstractmethod
+    def with_spectral_unit(self):
+        pass
 
     def __repr__(self):
         return "<Identity Transform WCS: pixel - {} transformation>".format(
