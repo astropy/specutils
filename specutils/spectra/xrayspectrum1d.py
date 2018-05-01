@@ -45,3 +45,8 @@ class XraySpectrum1D(Spectrum1D):
         self.arf = arf
         self.rmf = rmf
         return
+
+    # Convenience function for Xray people
+    @property
+    def counts(self):
+        return self.flux
