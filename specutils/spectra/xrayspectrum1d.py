@@ -36,10 +36,10 @@ class XraySpectrum1D(Spectrum1D):
     def __init__(self, bin_lo, bin_hi, bin_unit, counts, arf=None, rmf=None):
         try:
             axis_unit = u.Unit(bin_unit)
-        else:
+        except:
             axis_unit = _unit_parser(bin_unit)
 
-        bin_mid = 0.5 * (bin_lo + bin_hi) * unit
+        bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
         Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts)
 
         self.arf = arf
