@@ -42,14 +42,29 @@ class XraySpectrum1D(Spectrum1D):
         bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
         Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts)
 
-        self.arf = arf
-        self.rmf = rmf
+        self.assign_rmf(rmf)
+        self.assign_arf(rmf)
         return
 
     # Convenience function for Xray people
     @property
     def counts(self):
         return self.flux
+
+    def assign_arf(self, arf_inp):
+        if isinstance(arf_inp, str):
+            self.arf = ARF(arf_inp)
+        else:
+            self.arf = arf_inp
+        return
+
+    def assign_rmf(self, rmf_inp):
+        if isinstance(rmf_inp, str):
+            self.rmf = RMF(rmf_inp)
+        else:
+            self.rmf = rmf_inp
+        return
+
 
 ## ----  Supporting response file objects
 
@@ -69,6 +84,9 @@ class RMF(object):
 
         Attributes
         ----------
+        filename : str
+            The file name that the RMF was drawn from
+
         n_grp : numpy.ndarray
             the Array with the number of channels in each
             channel set
@@ -100,6 +118,7 @@ class RMF(object):
         # which contains the redistribution matrix and
         # anxillary information
         hdulist = fits.open(filename)
+        self.filename = filename
 
         # get all the extension names
         extnames = np.array([h.name for h in hdulist])
@@ -309,17 +328,23 @@ class ARF(object):
     def _load_arf(self, filename):
         """
         Load an ARF from a FITS file.
+
         Parameters
         ----------
         filename : str
             The file name with the RMF file
+
         Attributes
         ----------
+        filename : str
+            The file name that the ARF was drawn from
         """
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
         hdulist = fits.open(filename)
+        self.filename = filename
+        
         h = hdulist["SPECRESP"]
         data = h.data
         hdr = h.header
