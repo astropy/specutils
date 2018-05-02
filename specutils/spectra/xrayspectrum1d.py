@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 from astropy import units as u
+from astropy.io import fits
 from .spectrum1d import Spectrum1D
 
 __all__ = ['XraySpectrum1D', 'ARF', 'RMF']
@@ -44,7 +45,7 @@ class XraySpectrum1D(Spectrum1D):
 
         self.exposure = exposure
         self.assign_rmf(rmf)
-        self.assign_arf(rmf)
+        self.assign_arf(arf)
         return
 
     # Convenience function for Xray people
