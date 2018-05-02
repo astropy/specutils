@@ -47,7 +47,6 @@ class XraySpectrum1D(Spectrum1D):
 
         self.bin_lo = bin_lo
         self.bin_hi = bin_hi
-        self.bin_unit = axis_unit # keep for reference
         self.exposure = exposure
         self.assign_rmf(rmf)
         self.assign_arf(arf)
@@ -118,7 +117,8 @@ class XraySpectrum1D(Spectrum1D):
         # The response is always stored according to energy
         # If the spectrum is stored in wavelength, reverse the result so it
         # matches in wavelength space
-        if self.bin_unit.physical_type == 'length':
+        if self.spectral_axis.unit.physical_type == 'length':
+            print("reversing output")
             return result[::-1]
         else:
             return result
