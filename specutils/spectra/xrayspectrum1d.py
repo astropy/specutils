@@ -77,7 +77,7 @@ class XraySpectrum1D(Spectrum1D):
             self.rmf = rmf_inp
         return
 
-    def apply_resp(self, mflux, exposure=None):
+    def apply_resp(self, mflux, exposure=None, store_model_counts=True):
         """
         Given a model flux spectrum, apply the response. In cases where the
         spectrum has both an ARF and an RMF, apply both. Otherwise, apply
@@ -99,9 +99,12 @@ class XraySpectrum1D(Spectrum1D):
             ARF), this keyword provides the functionality to override the
             default behaviour and manually set the exposure time to use.
 
+        store_model_counts : bool
+            If True, the output will also be stored in self.model_counts
+
         Returns
         -------
-        count_model : numpy.ndarray
+        model_counts : numpy.ndarray
             The model spectrum in units of counts/bin
 
         If no ARF file exists, it will return the model flux after applying the RMF
@@ -120,7 +123,8 @@ class XraySpectrum1D(Spectrum1D):
             print("Caution: no response file specified")
             result = mrate
 
-        self.model_counts = result
+        if store_model_counts:
+            self.model_counts = result
         return result
 
 ## ----  Supporting response file objects
