@@ -35,15 +35,18 @@ class XraySpectrum1D(Spectrum1D):
     arf
     rmf
     """
-    def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure, arf=None, rmf=None):
+    def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
+                 arf=None, rmf=None, **kwargs):
         try:
             axis_unit = u.Unit(bin_unit)
         except:
             axis_unit = _unit_parser(bin_unit)
 
         bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
-        Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts)
+        Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts, **kwargs)
 
+        self.bin_lo = bin_lo
+        self.bin_hi = bin_hi
         self.bin_unit = axis_unit # keep for reference
         self.exposure = exposure
         self.assign_rmf(rmf)
