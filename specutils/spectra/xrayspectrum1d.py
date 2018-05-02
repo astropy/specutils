@@ -31,6 +31,7 @@ class XraySpectrum1D(Spectrum1D):
     bin_hi
     bin_unit
     counts
+    exposure
     arf
     rmf
     """
@@ -43,6 +44,7 @@ class XraySpectrum1D(Spectrum1D):
         bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
         Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts)
 
+        self.bin_unit = axis_unit # keep for reference
         self.exposure = exposure
         self.assign_rmf(rmf)
         self.assign_arf(arf)
@@ -112,7 +114,7 @@ class RMF(object):
         energ_hi : numpy.ndarray
             The upper edges of the energy bins
 
-        energ_unit : str
+        energ_unit : astropy.units.Unit
             Description of the energy units used
 
         detchans : int
@@ -147,7 +149,7 @@ class RMF(object):
 
         self.energ_lo = np.array(data.field("ENERG_LO"))
         self.energ_hi = np.array(data.field("ENERG_HI"))
-        self.energ_unit = data.columns["ENERG_LO"].unit
+        self.energ_unit = _unit_parser(data.columns["ENERG_LO"].unit)
         self.detchans = hdr["DETCHANS"]
         self.offset = self.__get_tlmin(h)
 
@@ -350,7 +352,7 @@ class ARF(object):
         e_high : numpy.ndarray
             The upper edges of the energy bins
 
-        e_unit : str
+        e_unit : astropy.units.Unit
             Description of the energy units used
 
         specresp : numpy.ndarray
@@ -381,7 +383,7 @@ class ARF(object):
 
         self.e_low  = np.array(data.field("ENERG_LO"))
         self.e_high = np.array(data.field("ENERG_HI"))
-        self.e_unit = data.columns["ENERG_LO"].unit
+        self.e_unit = _unit_parser(data.columns["ENERG_LO"].unit)
         self.specresp = np.array(data.field("SPECRESP"))
 
         if "EXPOSURE" in list(hdr.keys()):
