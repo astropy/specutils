@@ -110,11 +110,18 @@ class XraySpectrum1D(Spectrum1D):
             mrate = mflux
 
         if self.rmf is not None:
-            count_model = self.rmf.apply_rmf(mrate)
-            return count_model
+            result = self.rmf.apply_rmf(mrate)
         else:
             print("Caution: no response file specified")
-            return mrate
+            result = mrate
+
+        # The response is always stored according to energy
+        # If the spectrum is stored in wavelength, reverse the result so it
+        # matches in wavelength space
+        if self.bin_unit.physical_type == 'length':
+            return result[::-1]
+        else:
+            return result
 
 
 ## ----  Supporting response file objects
