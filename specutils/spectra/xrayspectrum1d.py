@@ -34,6 +34,11 @@ class XraySpectrum1D(Spectrum1D):
     exposure
     arf
     rmf
+
+    Attributes
+    ----------
+    model : numpy.ndarray
+        Stores model values
     """
     def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
                  arf=None, rmf=None, **kwargs):
@@ -50,6 +55,7 @@ class XraySpectrum1D(Spectrum1D):
         self.exposure = exposure
         self.assign_rmf(rmf)
         self.assign_arf(arf)
+        self.model_counts = np.zeros_like(bin_mid)
         return
 
     # Convenience function for Xray people
@@ -114,15 +120,8 @@ class XraySpectrum1D(Spectrum1D):
             print("Caution: no response file specified")
             result = mrate
 
-        # The response is always stored according to energy
-        # If the spectrum is stored in wavelength, reverse the result so it
-        # matches in wavelength space
-        if self.spectral_axis.unit.physical_type == 'length':
-            print("reversing output")
-            return result[::-1]
-        else:
-            return result
-
+        self.model_counts = result
+        return result
 
 ## ----  Supporting response file objects
 
