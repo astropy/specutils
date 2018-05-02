@@ -112,6 +112,9 @@ class RMF(object):
         energ_hi : numpy.ndarray
             The upper edges of the energy bins
 
+        energ_unit : str
+            Description of the energy units used
+
         detchans : int
             The number of channels in the detector
 
@@ -340,6 +343,28 @@ class ARF(object):
         ----------
         filename : str
             The file name that the ARF was drawn from
+
+        e_low : numpy.ndarray
+            The lower edges of the energy bins
+
+        e_high : numpy.ndarray
+            The upper edges of the energy bins
+
+        e_unit : str
+            Description of the energy units used
+
+        specresp : numpy.ndarray
+            Description of the energy dependent telescope response area
+
+        fracexpo : float or numpy.ndarray
+            Fractional exposure time for the spectrum
+            (sometimes constant, sometimes dependent on spectral channel).
+            These values are stored for reference; generally, they are already
+            accounted for in the specresp array.
+
+        exposure :
+            Average exposure time for the dataset
+            (takes telescope dithering into account)
         """
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
