@@ -121,8 +121,8 @@ def test_read_linear_solution():
     assert isinstance(spec, Spectrum1D)
 
     assert isinstance(spec.flux, u.Quantity)
-    assert isinstance(spec.wavelength, u.Quantity)
+    assert isinstance(spec.spectral_axis, u.Quantity)
 
     assert spec.flux.size == spec.data.size
-    assert spec.wavelength.size == spec.data.size
+    assert spec.spectral_axis.size == spec.data.size
 
