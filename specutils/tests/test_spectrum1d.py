@@ -110,3 +110,17 @@ def test_create_with_uncertainty():
 
     assert spec.flux.unit == spec.uncertainty.unit
 
+
+def test_read_linear_solution():
+    file_path = 'data/L5g_0355+11_Cruz09.fits'
+
+    spec = Spectrum1D.read(file_path, format='wcs1d-fits')
+
+    assert isinstance(spec, Spectrum1D)
+
+    assert isinstance(spec.flux, u.Quantity)
+    assert isinstance(spec.wavelength, u.Quantity)
+
+    assert spec.flux.size == spec.data.size
+    assert spec.wavelength.size == spec.data.size
+
