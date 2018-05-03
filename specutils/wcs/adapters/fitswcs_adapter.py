@@ -1,6 +1,7 @@
 from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
                          WCSSUB_STOKES)
+from astropy.wcs import InvalidSubimageSpecificationError
 
 # Use this once in specutils
 from ...utils.wcs_utils import convert_spectral_axis, determine_ctype_from_vconv
@@ -29,11 +30,22 @@ class FITSWCSAdapter(WCSAdapter):
             celestial=self.wcs.sub([WCSSUB_CELESTIAL])
         )
 
+        # TODO: make this more efficient. Check to see whether the spectral
+        # axis was actually parsed
+        if self.axes.spectral.naxis == 0:
+            try:
+                idx = list(self.wcs.wcs.ctype).index('LINEAR')
+                self.axes = self.axes._replace(spectral=self.wcs.sub([idx + 1]))
+            except ValueError:
+                raise InvalidSubimageSpecificationError(
+                    "Cannot find a spectral axis in the provided WCS."
+                    "Are your 'ctype's correct?")
+
     def world_to_pixel(self, world_array):
         """
         Method for performing the world to pixel transformations.
         """
-        return self.axes.spectral.all_world2pixel(world_array, 0)[0]
+        return self.axes.spectral.all_world2pix(world_array, 0)[0]
 
     def pixel_to_world(self, pixel_array):
         """
