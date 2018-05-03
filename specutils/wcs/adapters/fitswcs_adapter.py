@@ -1,6 +1,7 @@
 from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
                          WCSSUB_STOKES)
+from astropy.wcs import InvalidSubimageSpecificationError
 
 # Use this once in specutils
 from ...utils.wcs_utils import convert_spectral_axis, determine_ctype_from_vconv
@@ -18,6 +19,7 @@ class FITSWCSAdapter(WCSAdapter):
 
     def __init__(self, wcs):
         super(FITSWCSAdapter, self).__init__(wcs)
+        self._spec_axis = None
 
         # Store a reference to all axes information within the wcs object
         self.axes = WCSAxes(
@@ -29,11 +31,16 @@ class FITSWCSAdapter(WCSAdapter):
             celestial=self.wcs.sub([WCSSUB_CELESTIAL])
         )
 
+        # TODO: make this more efficient. Check to see whether the spectral
+        # axis was actually parsed
+        if self.axes.spectral.naxis == 0:
+            self.axes = self.axes._replace(spectral=self.wcs.sub([self.spec_axis]))
+
     def world_to_pixel(self, world_array):
         """
         Method for performing the world to pixel transformations.
         """
-        return self.axes.spectral.all_world2pixel(world_array, 0)[0]
+        return self.axes.spectral.all_world2pix(world_array, 0)[0]
 
     def pixel_to_world(self, pixel_array):
         """
@@ -42,11 +49,31 @@ class FITSWCSAdapter(WCSAdapter):
         return self.axes.spectral.all_pix2world(pixel_array, 0)[0]
 
     @property
+    def spec_axis(self):
+        """
+        Try and parse the spectral axis of the fits wcs object.
+        """
+        self._spec_axis = self.wcs.wcs.spec
+
+        if self._spec_axis < 0:
+            try:
+                idx = list(self.wcs.wcs.ctype).index('LINEAR')
+            except ValueError:
+                raise InvalidSubimageSpecificationError(
+                    "Cannot find a spectral axis in the provided WCS."
+                    "Are your 'ctype's correct?")
+
+            if self._wcs.wcs.spec < 0:
+                self._spec_axis = idx + 1
+
+        return self._spec_axis
+
+    @property
     def spectral_axis_unit(self):
         """
         Returns the unit of the spectral axis.
         """
-        return self._wcs.wcs.cunit[self._wcs.wcs.spec]
+        return self._wcs.wcs.cunit[self.spec_axis]
 
     @property
     def rest_frequency(self):
@@ -73,7 +100,7 @@ class FITSWCSAdapter(WCSAdapter):
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
 
-        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self._wcs.wcs.spec],
+        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self.spec_axis],
                                      unit,
                                      velocity_convention=velocity_convention)
 
