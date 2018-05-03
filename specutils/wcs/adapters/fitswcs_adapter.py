@@ -73,7 +73,7 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Returns the unit of the spectral axis.
         """
-        return self._wcs.wcs.cunit[self._spec_axis]
+        return self._wcs.wcs.cunit[self.spec_axis]
 
     @property
     def rest_frequency(self):
@@ -100,7 +100,7 @@ class FITSWCSAdapter(WCSAdapter):
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
 
-        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self._spec_axis],
+        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self.spec_axis],
                                      unit,
                                      velocity_convention=velocity_convention)
 
