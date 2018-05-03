@@ -110,7 +110,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                              "Assuming units of spectral axis ('%s').",
                              spectral_axis.unit)
                 self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not self._rest_value.unit.is_equivalent(u.AA) or not self._rest_value.unit.is_equivalent(u.Hz):
+            elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
         super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
