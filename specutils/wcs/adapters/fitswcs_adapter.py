@@ -73,7 +73,7 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Returns the unit of the spectral axis.
         """
-        return self._wcs.wcs.cunit[self.spec_axis]
+        return self._wcs.wcs.cunit[self.spec_axis - 1]
 
     @property
     def rest_frequency(self):
