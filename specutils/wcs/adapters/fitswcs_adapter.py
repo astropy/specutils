@@ -19,6 +19,7 @@ class FITSWCSAdapter(WCSAdapter):
 
     def __init__(self, wcs):
         super(FITSWCSAdapter, self).__init__(wcs)
+        self._spec_axis = None
 
         # Store a reference to all axes information within the wcs object
         self.axes = WCSAxes(
@@ -33,13 +34,7 @@ class FITSWCSAdapter(WCSAdapter):
         # TODO: make this more efficient. Check to see whether the spectral
         # axis was actually parsed
         if self.axes.spectral.naxis == 0:
-            try:
-                idx = list(self.wcs.wcs.ctype).index('LINEAR')
-                self.axes = self.axes._replace(spectral=self.wcs.sub([idx + 1]))
-            except ValueError:
-                raise InvalidSubimageSpecificationError(
-                    "Cannot find a spectral axis in the provided WCS."
-                    "Are your 'ctype's correct?")
+            self.axes = self.axes._replace(spectral=self.wcs.sub([self.spec_axis]))
 
     def world_to_pixel(self, world_array):
         """
@@ -54,11 +49,31 @@ class FITSWCSAdapter(WCSAdapter):
         return self.axes.spectral.all_pix2world(pixel_array, 0)[0]
 
     @property
+    def spec_axis(self):
+        """
+        Try and parse the spectral axis of the fits wcs object.
+        """
+        if self._spec_axis is None:
+            try:
+                idx = list(self.wcs.wcs.ctype).index('LINEAR')
+            except ValueError:
+                raise InvalidSubimageSpecificationError(
+                    "Cannot find a spectral axis in the provided WCS."
+                    "Are your 'ctype's correct?")
+
+            self._spec_axis = self._wcs.wcs.spec
+
+            if self._wcs.wcs.spec < 0:
+                self._spec_axis = idx + 1
+
+        return self._spec_axis
+
+    @property
     def spectral_axis_unit(self):
         """
         Returns the unit of the spectral axis.
         """
-        return self._wcs.wcs.cunit[self._wcs.wcs.spec]
+        return self._wcs.wcs.cunit[self._spec_axis]
 
     @property
     def rest_frequency(self):
@@ -85,7 +100,7 @@ class FITSWCSAdapter(WCSAdapter):
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
 
-        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self._wcs.wcs.spec],
+        out_ctype = ctype_from_vconv(self._wcs.wcs.ctype[self._spec_axis],
                                      unit,
                                      velocity_convention=velocity_convention)
 
