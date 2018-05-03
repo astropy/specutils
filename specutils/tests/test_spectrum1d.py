@@ -112,7 +112,7 @@ def test_create_with_uncertainty():
 
 
 def test_read_linear_solution():
-    file_path = 'data/L5g_0355+11_Cruz09.fits'
+    file_path = 'specutils/tests/data/L5g_0355+11_Cruz09.fits'
 
     spec = Spectrum1D.read(file_path, format='wcs1d-fits')
 
