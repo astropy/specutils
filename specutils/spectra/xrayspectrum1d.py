@@ -34,11 +34,6 @@ class XraySpectrum1D(Spectrum1D):
     exposure
     arf
     rmf
-
-    Attributes
-    ----------
-    model : numpy.ndarray
-        Stores model values
     """
     def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
                  arf=None, rmf=None, **kwargs):
@@ -55,7 +50,6 @@ class XraySpectrum1D(Spectrum1D):
         self.exposure = exposure
         self.assign_rmf(rmf)
         self.assign_arf(arf)
-        self.model_counts = np.zeros_like(bin_mid)
         return
 
     # Convenience function for Xray people
@@ -77,7 +71,7 @@ class XraySpectrum1D(Spectrum1D):
             self.rmf = rmf_inp
         return
 
-    def apply_resp(self, mflux, exposure=None, store_model_counts=True):
+    def apply_resp(self, mflux, exposure=None):
         """
         Given a model flux spectrum, apply the response. In cases where the
         spectrum has both an ARF and an RMF, apply both. Otherwise, apply
@@ -123,8 +117,6 @@ class XraySpectrum1D(Spectrum1D):
             print("Caution: no response file specified")
             result = mrate
 
-        if store_model_counts:
-            self.model_counts = result
         return result
 
 ## ----  Supporting response file objects
