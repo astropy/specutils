@@ -39,7 +39,7 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Method for performing the pixel to world transformations.
         """
-        return self.axes.spectral.all_pix2world(pixel_array, 0)[0]
+        return self.axes.spectral.all_world2pixel(pixel_array, 0)[0]
 
     @property
     def spectral_axis_unit(self):

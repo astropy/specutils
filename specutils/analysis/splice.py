@@ -8,7 +8,7 @@ class Splice(object):
     def __init__(self, spacing='coarse'):
         if not spacing in ['coarse', 'fine']:
             raise ValueError("Attribute 'spacing' must be one of 'coarse' or 'fine'.")
-            
+
         self._spacing = spacing
 
     def __call__(self, spec_array):
