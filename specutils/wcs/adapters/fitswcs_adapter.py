@@ -53,15 +53,15 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Try and parse the spectral axis of the fits wcs object.
         """
-        if self._spec_axis is None:
+        self._spec_axis = self.wcs.wcs.spec
+
+        if self._spec_axis < 0:
             try:
                 idx = list(self.wcs.wcs.ctype).index('LINEAR')
             except ValueError:
                 raise InvalidSubimageSpecificationError(
                     "Cannot find a spectral axis in the provided WCS."
                     "Are your 'ctype's correct?")
-
-            self._spec_axis = self._wcs.wcs.spec
 
             if self._wcs.wcs.spec < 0:
                 self._spec_axis = idx + 1
