@@ -34,7 +34,7 @@ class FITSWCSAdapter(WCSAdapter):
         # TODO: make this more efficient. Check to see whether the spectral
         # axis was actually parsed
         if self.axes.spectral.naxis == 0:
-            self.axes = self.axes._replace(spectral=self.wcs.sub([self.spec_axis]))
+            self.axes = self.axes._replace(spectral=self.wcs.sub([self.spec_axis + 1]))
 
     def world_to_pixel(self, world_array):
         """
@@ -64,7 +64,7 @@ class FITSWCSAdapter(WCSAdapter):
                     "Are your 'ctype's correct?")
 
             if self._wcs.wcs.spec < 0:
-                self._spec_axis = idx + 1
+                self._spec_axis = idx
 
         return self._spec_axis
 
