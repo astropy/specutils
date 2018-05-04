@@ -161,14 +161,14 @@ class OneDSpectrumMixin(object):
 
         Parameters
         ----------
-        unit : :class:~`astropy.units.Unit`
+        unit : :class:`~astropy.units.Unit`
             Any valid spectral unit: velocity, (wave)length, or frequency.
             Only vacuum units are supported.
         velocity_convention : 'relativistic', 'radio', or 'optical'
             The velocity convention to use for the output velocity axis.
             Required if the output type is velocity. This can be either one
             of the above strings, or an `astropy.units` equivalency.
-        rest_value : :class:~`astropy.units.Quantity`
+        rest_value : :class:`~astropy.units.Quantity`
             A rest wavelength or frequency with appropriate units.  Required if
             output type is velocity.  The spectrum's WCS should include this
             already if the *input* type is velocity, but the WCS's rest
@@ -220,14 +220,14 @@ class OneDSpectrumMixin(object):
 
         Parameters
         ----------
-        unit : :class:~`astropy.units.Unit`
+        unit : :class:`~astropy.units.Unit`
             Any valid spectral unit: velocity, (wave)length, or frequency.
             Only vacuum units are supported.
         velocity_convention : 'relativistic', 'radio', or 'optical'
             The velocity convention to use for the output velocity axis.
             Required if the output type is velocity. This can be either one
             of the above strings, or an `astropy.units` equivalency.
-        rest_value : :class:~`astropy.units.Quantity`
+        rest_value : :class:`~astropy.units.Quantity`
             A rest wavelength or frequency with appropriate units.  Required if
             output type is velocity.  The cube's WCS should include this
             already if the *input* type is velocity, but the WCS's rest
