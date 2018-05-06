@@ -20,15 +20,15 @@ from specutils.spectra import Spectrum1D
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
-    print("PJT1",len(args))
     return (isinstance(args[0], six.string_types) and
-            os.path.splitext(args[0].lower())[1] == '.fits')
+            os.path.splitext(args[0].lower())[1] == '.fits' and
+            fits.getheader(args[0])['NAXIS'] == 3)
 
 
 @data_loader("cubetest1", identifier=identify_generic_fits)
 def generic_fits(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
-    print("PJT2",kwargs)
+
     with fits.open(file_name, **kwargs) as hdulist:
         header = hdulist[0].header
         data3  = hdulist[0].data
