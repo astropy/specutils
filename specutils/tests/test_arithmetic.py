@@ -1,9 +1,7 @@
 import astropy.units as u
-import astropy.wcs as fitswcs
-import gwcs
 import numpy as np
-import pytest
 
+from .spectral_examples import define_spectra
 from ..spectra.spectrum1d import Spectrum1D
 
 
@@ -19,5 +17,18 @@ def test_spectral_axes():
                        flux=flux2)
 
     spec3 = spec1 + spec2
+
+    assert np.allclose(spec3.flux.value, flux3)
+
+
+def test_add_spectra(define_spectra):
+
+    # Get the numpy array of data
+    flux1 = define_spectra.s1_um_mJy_e1_flux
+    flux2 = define_spectra.s1_um_mJy_e2_flux
+    flux3 = flux1 + flux2
+
+    # Calculate using the spectrum1d/nddata code
+    spec3 = define_spectra.s1_um_mJy_e1 + define_spectra.s1_um_mJy_e2
 
     assert np.allclose(spec3.flux.value, flux3)
