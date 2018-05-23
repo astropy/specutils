@@ -36,7 +36,7 @@ class XraySpectrum1D(Spectrum1D):
     rmf
     """
     def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
-                 arf=None, rmf=None, rest_value=0.0, **kwargs):
+                 arf=None, rmf=None, rest_value=0.0 * u.angstrom, **kwargs):
         try:
             axis_unit = u.Unit(bin_unit)
         except:
