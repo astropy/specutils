@@ -5,7 +5,7 @@ and low-level analysis of spectroscopic data. The intention is for the
 generic data containers and accompanying modules to provide a basis for the
 astronomical community upon which more robust tooling can be built.
 
-The basic data container of specutils is the :class:~`specutils.spectra.Spectrum1D`
+The basic data container of specutils is the :class:`~specutils.Spectrum1D`
 class. It contains logic to handle multi-dimensional flux data, spectral axis
 in various forms (wavelenth, frequency, energy, velocity, etc.), convenient and
 unobtrusive wcs support, and uncertainty handling. This core container also

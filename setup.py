@@ -5,6 +5,16 @@ import glob
 import os
 import sys
 
+# Uncomment to enforce Python version check during package import.
+# Also uncomment python_requires below in setup().
+# Replace "packagename" in error message with your package name.
+# This is the same check as packagename/__init__.py but this one has to
+# happen before importing ah_bootstrap.
+#__minimum_python_version__ = '3.5'
+#if sys.version_info < tuple((int(val) for val in __minimum_python_version__.split('.'))):
+#    sys.stderr.write("ERROR: packagename requires Python {} or later\n".format(__minimum_python_version__))
+#    sys.exit(1)
+
 import ah_bootstrap
 from setuptools import setup
 
@@ -30,11 +40,11 @@ conf = ConfigParser()
 conf.read(['setup.cfg'])
 metadata = dict(conf.items('metadata'))
 
-PACKAGENAME = metadata.get('package_name', 'packagename')
-DESCRIPTION = metadata.get('description', 'Astropy affiliated package')
-AUTHOR = metadata.get('author', '')
+PACKAGENAME = metadata.get('package_name', 'specutils')
+DESCRIPTION = metadata.get('description', 'packagename')
+AUTHOR = metadata.get('author', 'Astropy-specutils Developers')
 AUTHOR_EMAIL = metadata.get('author_email', '')
-LICENSE = metadata.get('license', 'unknown')
+LICENSE = metadata.get('license', 'BSD-3')
 URL = metadata.get('url', 'http://astropy.org')
 
 # order of priority for long_description:
@@ -66,7 +76,7 @@ else:
 builtins._ASTROPY_PACKAGE_NAME_ = PACKAGENAME
 
 # VERSION should be PEP440 compatible (http://www.python.org/dev/peps/pep-0440)
-VERSION = metadata.get('version', '0.1.dev')
+VERSION = metadata.get('version', '0.0.dev0')
 
 # Indicates if this version is a release version
 RELEASE = 'dev' not in VERSION
@@ -126,7 +136,7 @@ setup(name=PACKAGENAME,
       version=VERSION,
       description=DESCRIPTION,
       scripts=scripts,
-      install_requires=metadata.get('install_requires', 'astropy').strip().split(),
+      install_requires=[s.strip() for s in metadata.get('install_requires', 'astropy').split(',')],
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,
@@ -136,5 +146,6 @@ setup(name=PACKAGENAME,
       zip_safe=False,
       use_2to3=False,
       entry_points=entry_points,
+#     python_requires='>=' + __minimum_python_version__,
       **package_info
 )

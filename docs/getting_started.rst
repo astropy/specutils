@@ -25,6 +25,22 @@ something like
 .. image:: img/quick_start.png
 
 
+Reading from a File
+-------------------
+
+SpecUtils takes advantage of the Astropy IO machinery and allows loading and
+writing to files. The example below shows loading a FITS file. While SpecUtils
+has some basic data loaders, for more complicated or custom files, users are
+encouraged to :doc:`create their own loader </custom_loading>`.
+
+.. code-block:: python
+
+    from specutils import Spectrum1D
+
+    spec1d = Spectrum1D.read("/path/to/file.fits")
+
+
+
 Spectra with Units
 ------------------
 
@@ -59,7 +75,7 @@ Defining WCS
 Specutils always maintains a WCS object whether it is passed explicitly by the
 user, or is created dynamically by specutils itself. In the latter case, the
 user need not be awrae that the WCS object is being used, and is can interact
-with the :class:~`specutils.spectra.Spectrum1D` object as if it were only a simple
+with the :class:`~specutils.spectra.Spectrum1D` object as if it were only a simple
 data container.
 
 Currently, specutils understands two WCS formats: FITSWCS and GWCS. When a user
@@ -91,11 +107,11 @@ Providing a FITSWCS
 Including Uncertainties
 -----------------------
 
-The :class:~`specutils.spectra.Spectrum1D` class supports uncertainties, and
-arithmetic operations performed with :class:~`specutils.spectra.Spectrum1D`
+The :class:`~specutils.spectra.Spectrum1D` class supports uncertainties, and
+arithmetic operations performed with :class:`~specutils.spectra.Spectrum1D`
 objects will propagate uncertainties.
 
-Uncertainties are a special subclass of :class:~`astropy.nddata.NData`, and their
+Uncertainties are a special subclass of :class:`~astropy.nddata.NData`, and their
 propagation rules are implemented at the class level. Therefore, users must
 specify the uncertainty type at creation time
 
@@ -107,8 +123,10 @@ specify the uncertainty type at creation time
     >>> spec = Spectrum1D(spectral_axis=np.arange(10), flux=np.random.sample(10), uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
 
 .. warning:: Not defining an uncertainty class will result in an
-             :class:~`astropy.nddata.UnknownUncertainty` object which will not
+             :class:`~astropy.nddata.UnknownUncertainty` object which will not
              propagate uncertainties in arithmetic operations.
+
+.. seealso:: modules :py:mod:`~astropy.nddata.nduncertainty`
 
 
 Multi-dimensional Data Sets
