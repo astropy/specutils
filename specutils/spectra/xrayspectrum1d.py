@@ -110,12 +110,13 @@ class XraySpectrum1D(Spectrum1D):
         if self.arf is not None:
             mrate  = self.arf.apply_arf(mflux, exposure=exposure)
         else:
+            #print("Caution: no ARF file specified")
             mrate = mflux
 
         if self.rmf is not None:
             result = self.rmf.apply_rmf(mrate)
         else:
-            print("Caution: no response file specified")
+            #print("Caution: no RMF file specified")
             result = mrate
 
         return result
