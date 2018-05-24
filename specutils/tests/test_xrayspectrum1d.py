@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import optimize
 import astropy.units as u
 from astropy.modeling.powerlaws import PowerLaw1D
 from specutils import XraySpectrum1D
