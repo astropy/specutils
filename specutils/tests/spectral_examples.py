@@ -4,10 +4,33 @@ from astropy.modeling import models
 from specutils.spectra import Spectrum1D
 import pytest
 
+
 class SpectraExamples(object):
+    """
+    The ``SpectralExamples`` class is a *container class* that has
+    several examples of simple spectra that can be used in
+    the tests (e.g., arithmetic tests, smoothing tests etc).
+
+    Each of the spectra are created from a base noise-less spectrum
+    constructed from 4 Gaussians and a ramp. Then three example spectra
+    are created, and then gaussian random noise is added.
+
+        1. s1_um_mJy_e1 - 4 Gaussians + ramp with one instantion of noise
+                          dispersion: um, flux: mJy
+
+        2. s1_um_mJy_e2 - same as 1, but with a different instance of noise
+                          dispersion: um, flux: mJy
+
+        3. s1_AA_mJy_e3 - same as 1, butwht  a third instance of noise
+                          dispersion: Angstroms, flux: mJy
+    """
 
     def __init__(self):
+
+        #
         # Create the base wavelengths and flux
+        #
+
         self.wavelengths_um = np.linspace(0.4, 1.05, 100)
 
         g1 = models.Gaussian1D(amplitude=2000, mean=0.56, stddev=0.01)
@@ -19,21 +42,29 @@ class SpectraExamples(object):
         self.base_flux = g1(self.wavelengths_um) + g2(self.wavelengths_um) + g3(self.wavelengths_um) +\
                          g4(self.wavelengths_um) + ramp(self.wavelengths_um) + 1000
 
+        #
         # Initialize the seed so the random numbers are not quite as random
+        #
+
         np.random.seed(42)
 
+        #
         # Create two spectra with the only difference in the instance of noise
+        #
+
         self._flux_e1 = self.base_flux + 400*np.random.random(self.base_flux.shape)
         self._s1_um_mJy_e1 = Spectrum1D(spectral_axis=self.wavelengths_um*u.um, flux=self._flux_e1*u.mJ)
 
         self._flux_e2 = self.base_flux + 400*np.random.random(self.base_flux.shape)
         self._s1_um_mJy_e2 = Spectrum1D(spectral_axis=self.wavelengths_um*u.um, flux=self._flux_e2*u.mJ)
 
+        #
         # Create on spectrum with the same flux but in angstrom units
-        self.wavelengths_AA = self.wavelengths_um*10000
-        self._s1_AA_mJy_e1 = Spectrum1D(spectral_axis=self.wavelengths_AA*u.AA, flux=self._flux_e1*u.mJ)
+        #
 
-    # Create two examples of different noise
+        self.wavelengths_AA = self.wavelengths_um*10000
+        self._s1_AA_mJy_e3 = Spectrum1D(spectral_axis=self.wavelengths_AA*u.AA, flux=self._flux_e1*u.mJ)
+
     @property
     def s1_um_mJy_e1_flux(self):
         return self._flux_e1
@@ -51,14 +82,34 @@ class SpectraExamples(object):
         return self._flux_e2
 
     @property
-    def s1_AA_mJy_e1(self):
-        return self._s1_AA_mJy_e1
+    def s1_AA_mJy_e3(self):
+        return self._s1_AA_mJy_e3
 
     @property
-    def s1_AA_mJy_e1_flux(self):
+    def s1_AA_mJy_e3_flux(self):
         return self._flux_e1
 
 
 @pytest.fixture
-def define_spectra():
+def example_spectra():
+    """
+    The method will be called as a fixture to tests.
+
+    Parameters
+    ----------
+    N/A
+
+    Return
+    ------
+    ``SpectralExamples``
+        An instance of the SpectraExamples class.
+
+    Examples
+    --------
+
+    As an example, see the ``test_arithmetic.py`` test.
+
+    """
+
     return SpectraExamples()
+
