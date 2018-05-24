@@ -13,6 +13,9 @@ KEV  = ['kev', 'keV']
 ANGS = ['angs', 'Angs', 'Angstrom', 'angstrom', 'Angstroms', 'angstroms', 'A', 'a']
 
 def _unit_parser(unit_string):
+    """
+    A function for matching unit strings to the correct Astropy unit
+    """
     if unit_string in EV:
         return u.eV
     if unit_string in KEV:
@@ -22,17 +25,51 @@ def _unit_parser(unit_string):
 
 class XraySpectrum1D(Spectrum1D):
     """
-    Spectrum container for holding X-ray spectrum
-    WIP by eblur
+    Spectrum properties specific to X-ray data
 
     Parameters
     ----------
+    bin_lo : numpy.ndarray
+        The left edges for bin values
+
+    bin_hi : numpy.ndarray
+        The right edges for bin values
+
+    bin_unit : string OR astropy.units.Unit
+        Unit for the bin values
+
+    counts : numpy.ndarray
+        Counts histogram for the X-ray spectrum
+
+    exposure : float
+        Exposure time for the dataset
+
+    arf : specutils.ARF or string, default None
+        Strings will be passed to ARF.__init__
+        All other input types are stored as arf attribute
+
+    rmf : specutils.RMF or string, default None
+        Strings will be passed to RMF.__init__
+        All other input types are stored as rmf attribute
+
+    rest_value : astropy.units.Quantity, default 0 Angstrom
+        See Spectrum1D rest_value input
+
+    Attributes
+    ----------
+    Inherits from Spectrum1D object.
+    The following inputs are stored as additional attributes.
+
     bin_lo
+
     bin_hi
-    bin_unit
+
     counts
+
     exposure
+
     arf
+
     rmf
     """
     def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
@@ -59,6 +96,18 @@ class XraySpectrum1D(Spectrum1D):
         return self.flux
 
     def assign_arf(self, arf_inp):
+        """
+        Assign an ARF object to the XraySpectrum1D object
+
+        Input
+        -----
+        arf_inp : string
+            File name for the ARF (FITS file)
+
+        Returns
+        -------
+        Modifies the XraySpectrum1D.arf attribute
+        """
         if isinstance(arf_inp, str):
             self.arf = ARF(arf_inp)
         else:
@@ -66,6 +115,18 @@ class XraySpectrum1D(Spectrum1D):
         return
 
     def assign_rmf(self, rmf_inp):
+        """
+        Assign an RMF object to the XraySpectrum1D object
+
+        Input
+        -----
+        rmf_inp : string
+            File name for the RMF (FITS file)
+
+        Returns
+        -------
+        Modifies the XraySpectrum1D.rmf attribute
+        """
         if isinstance(rmf_inp, str):
             self.rmf = RMF(rmf_inp)
         else:
