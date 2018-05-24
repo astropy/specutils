@@ -87,6 +87,10 @@ class OneDSpectrumMixin(object):
             Custom equivalencies to apply to conversions.
             Set to spectral_density by default.
 
+        suppress_conversion : bool
+            Set to true if updating the unit without
+            converting data values.
+
         Returns
         -------
         ~`astropy.units.Quantity`
