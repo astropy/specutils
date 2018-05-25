@@ -96,10 +96,8 @@ class OneDSpectrumMixin(object):
         ~`astropy.units.Quantity`
             The converted flux array.
         """
-        self._unit = u.Unit(unit)
-
         if not suppress_conversion:
-            if not equivalencies:
+            if equivalencies is None:
                 equivalencies = eq.spectral_density(self.spectral_axis)
 
             new_data = self.flux.to(
@@ -107,6 +105,8 @@ class OneDSpectrumMixin(object):
 
             self._data = new_data.value
             self._unit = new_data.unit
+        else:
+            self._unit = u.Unit(unit)
 
         return self.flux
 
