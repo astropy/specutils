@@ -63,6 +63,10 @@ class OneDSpectrumMixin(object):
         return spectral_axis
 
     @property
+    def spectral_axis_unit(self):
+        return self.wcs.spectral_axis_unit
+
+    @property
     def flux(self):
         """
         Converts the stored data and unit information into a quantity.
@@ -73,6 +77,18 @@ class OneDSpectrumMixin(object):
             Spectral data as a quantity.
         """
         return u.Quantity(self.data, unit=self.unit)
+
+    @flux.setter
+    def flux(self, new_flux):
+        """
+        Converts the stored data and unit information into a quantity.
+
+        Returns
+        -------
+        ~`astropy.units.Quantity`
+            Spectral data as a quantity.
+        """
+        self.data = new_flux
 
     def to_flux(self, unit, equivalencies=None, suppress_conversion=False):
         """
