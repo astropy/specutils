@@ -90,7 +90,7 @@ class SpectraExamples(object):
 
 
 @pytest.fixture
-def example_spectra():
+def simulated_spectra():
     """
     The method will be called as a fixture to tests.
 

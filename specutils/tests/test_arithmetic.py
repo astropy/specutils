@@ -1,7 +1,7 @@
 import astropy.units as u
 import numpy as np
 
-from .spectral_examples import spectral_examples
+from .spectral_examples import simulated_spectra
 from ..spectra.spectrum1d import Spectrum1D
 
 
@@ -21,14 +21,14 @@ def test_spectral_axes():
     assert np.allclose(spec3.flux.value, flux3)
 
 
-def test_add_spectra(spectral_examples):
+def test_add_spectra(simulated_spectra):
 
     # Get the numpy array of data
-    flux1 = define_spectra.s1_um_mJy_e1_flux
-    flux2 = define_spectra.s1_um_mJy_e2_flux
+    flux1 = simulated_spectra.s1_um_mJy_e1_flux
+    flux2 = simulated_spectra.s1_um_mJy_e2_flux
     flux3 = flux1 + flux2
 
     # Calculate using the spectrum1d/nddata code
-    spec3 = define_spectra.s1_um_mJy_e1 + define_spectra.s1_um_mJy_e2
+    spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_um_mJy_e2
 
     assert np.allclose(spec3.flux.value, flux3)
