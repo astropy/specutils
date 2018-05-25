@@ -8,8 +8,7 @@ import pytest
 class SpectraExamples(object):
     """
     The ``SpectralExamples`` class is a *container class* that has
-    several examples of simple spectra that can be used in
-    the tests (e.g., arithmetic tests, smoothing tests etc).
+    several examples of simple spectra that can be used in the tests (e.g., arithmetic tests, smoothing tests etc).
 
     Each of the spectra are created from a base noise-less spectrum
     constructed from 4 Gaussians and a ramp. Then three example spectra
@@ -106,8 +105,23 @@ def example_spectra():
 
     Examples
     --------
+    This fixture can be used in a test as:
 
-    As an example, see the ``test_arithmetic.py`` test.
+    ```
+    from .spectral_examples import spectral_examples
+
+    def test_add_spectra(spectral_examples):
+
+        # Get the numpy array of data
+        flux1 = define_spectra.s1_um_mJy_e1_flux
+        flux2 = define_spectra.s1_um_mJy_e2_flux
+        flux3 = flux1 + flux2
+
+        # Calculate using the spectrum1d/nddata code
+        spec3 = define_spectra.s1_um_mJy_e1 + define_spectra.s1_um_mJy_e2
+
+        assert np.allclose(spec3.flux.value, flux3)
+    ```
 
     """
 
