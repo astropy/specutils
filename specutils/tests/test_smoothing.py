@@ -49,19 +49,19 @@ def test_smooth_box_good(simulated_spectra, width):
 
     # Calculate the smoothed flux using Astropy
     box_kernel = convolution.Box1DKernel(width)
-    flux_smoothed = convolution.convolve(flux_original, box_kernel)
+    flux_smoothed_astropy = convolution.convolve(flux_original, box_kernel)
 
     # Calculate the smoothed using specutils
     spec1_smoothed = box_smooth(spec1, width, inplace=True)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
     # Test not-in-place smoothing
     spec1_smoothed = box_smooth(spec1, width, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
     # Test in-place smoothing
     spec1_smoothed = box_smooth(spec1, width, inplace=True)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
@@ -94,19 +94,19 @@ def test_smooth_gaussian_good(simulated_spectra, stddev):
 
     # Calculate the smoothed flux using Astropy
     gaussian_kernel = convolution.Gaussian1DKernel(stddev)
-    flux_smoothed = convolution.convolve(flux_original, gaussian_kernel)
+    flux_smoothed_astropy = convolution.convolve(flux_original, gaussian_kernel)
 
     # Test not-in-place smoothing, default is not in-place
     spec1_smoothed = gaussian_smooth(spec1, stddev)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.02)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
 
     # Test not-in-place smoothing
     spec1_smoothed = gaussian_smooth(spec1, stddev, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.02)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
 
     # Test in-place smoothing
     spec1_smoothed = gaussian_smooth(spec1, stddev, inplace=True)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.02)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
 
 
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
@@ -139,19 +139,19 @@ def test_smooth_trapezoid_good(simulated_spectra, stddev):
 
     # Create the flux_smoothed which is what we want to compare to
     trapezoid_kernel = convolution.Trapezoid1DKernel(stddev)
-    flux_smoothed = convolution.convolve(flux_original, trapezoid_kernel)
+    flux_smoothed_astropy = convolution.convolve(flux_original, trapezoid_kernel)
 
     # Test not-in-place smoothing, default is not in-place
     spec1_smoothed = trapezoid_smooth(spec1, stddev)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.05)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
     # Test not-in-place smoothing
     spec1_smoothed = trapezoid_smooth(spec1, stddev, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.05)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
     # Test in-place smoothing
     spec1_smoothed = trapezoid_smooth(spec1, stddev, inplace=True)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.05)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
 
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
@@ -183,19 +183,19 @@ def test_smooth_median_good(simulated_spectra, width):
     flux_original = spec1.flux
 
     # Create the flux_smoothed which is what we want to compare to
-    flux_smoothed = medfilt(flux_original, width)
+    flux_smoothed_astropy = medfilt(flux_original, width)
 
     # Test not-in-place smoothing, default is not in-place
     spec1_smoothed = median_smooth(spec1, width)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.15)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
 
     # Test not-in-place smoothing
     spec1_smoothed = median_smooth(spec1, width, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.15)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
 
     # Test in-place smoothing
     spec1_smoothed = median_smooth(spec1, width, inplace=True)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.15)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
 
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
