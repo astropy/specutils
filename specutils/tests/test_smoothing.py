@@ -4,195 +4,211 @@ from astropy import convolution
 from scipy.signal import medfilt
 import astropy.units as u
 from ..spectra.spectrum1d import Spectrum1D
+from ..tests.spectral_examples import simulated_spectra
 
 from ..processing.smoothing import (box_smooth, gaussian_smooth,
-                                    mexicanhat_smooth, trapezoid_smooth,
-                                    median_smooth)
+                                    trapezoid_smooth, median_smooth)
+
+def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
+    """
+    There are two things to compare for each set of smoothing:
+
+    1. Compare the smoothed flux from the astropy machinery vs
+       the smoothed flux from specutils.  This is done by 
+       comparing flux_smooth1 and flux_smooth2.
+
+    2. Next we want to compare the smoothed flux to the original
+       flux.  This is a little more difficult as smoothing will
+       make a difference for median filter, but less so for 
+       convolution based smoothing if the kernel is normalized
+       (area under the kernel = 1).
+
+       In this second case the rtol (relative tolerance) is used
+       judiciously.
+
+    """
+
+    # Compare, element by element, the two smoothed fluxes.
+    assert np.allclose(flux_smooth1, flux_smooth2)
+
+    # Compare the total spectral flux of the smoothed to the original.
+    assert np.allclose(sum(flux_smooth1), sum(flux_original), rtol=rtol)
 
 
-@pytest.mark.parameterize(width=[1, 2.3])
-def test_smooth_box_good(width):
+@pytest.mark.parametrize("width", [1, 2.3])
+def test_smooth_box_good(simulated_spectra, width):
+    """
+    Test Box1DKernel smoothing with correct parmaeters.
 
-    #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+    Width values need to be a number greater than 0. 
+    """
 
-    flux = spec1.flux
+    # Create the original spectrum
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    flux_original = spec1.flux
 
-    # Create the flux_smoothed which is what we want to compare to
-    box_kernel = convolution.Gaussian1D(width)
-    flux_smoothed = convolution.convolve(flux, box_kernel)
+    # Calculate the smoothed flux using Astropy
+    box_kernel = convolution.Box1DKernel(width)
+    flux_smoothed = convolution.convolve(flux_original, box_kernel)
 
-    # Test not-in-place smoothing, defualt is not in-place
-    spec1_smoothed = box_smooth(spec1, width)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    # Calculate the smoothed using specutils
+    spec1_smoothed = box_smooth(spec1, width, inplace=True)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value)
 
     # Test not-in-place smoothing
     spec1_smoothed = box_smooth(spec1, width, inplace=False)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value)
 
     # Test in-place smoothing
     spec1_smoothed = box_smooth(spec1, width, inplace=True)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value)
 
 
-@pytest.mark.parameterize(width=[-1, 'a'])
-def test_smooth_box_bad(width):
+@pytest.mark.parametrize("width", [-1, 0, 'a'])
+def test_smooth_box_bad(simulated_spectra, width):
+    """
+    Test Box1DKernel smoothing with incorrect parmaeters.
+
+    Width values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+    spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     with pytest.raises(ValueError):
         box_smooth(spec1, width)
 
 
-@pytest.mark.parameterize(stddev=[1, 2.3])
-def test_smooth_gaussian_good(stddev):
+@pytest.mark.parametrize("stddev", [1, 2.3])
+def test_smooth_gaussian_good(simulated_spectra, stddev):
+    """
+    Test Gaussian1DKernel smoothing with correct parmaeters.
+
+    Standard deviation values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    flux_original = spec1.flux
 
-    flux = spec1.flux
+    # Calculate the smoothed flux using Astropy
+    gaussian_kernel = convolution.Gaussian1DKernel(stddev)
+    flux_smoothed = convolution.convolve(flux_original, gaussian_kernel)
 
-    # Create the flux_smoothed which is what we want to compare to
-    gaussian_kernel = convolution.Gaussian1D(stddev)
-    flux_smoothed = convolution.convolve(flux, gaussian_kernel)
-
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     spec1_smoothed = gaussian_smooth(spec1, stddev)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.02)
 
     # Test not-in-place smoothing
     spec1_smoothed = gaussian_smooth(spec1, stddev, inplace=False)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.02)
 
     # Test in-place smoothing
     spec1_smoothed = gaussian_smooth(spec1, stddev, inplace=True)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.02)
 
-@pytest.mark.parameterize(stddev=[-1, 'a'])
-def test_smooth_gaussian_bad(stddev):
+
+@pytest.mark.parametrize("stddev", [-1, 0, 'a'])
+def test_smooth_gaussian_bad(simulated_spectra, stddev):
+    """
+    Test MexicanHat1DKernel smoothing with incorrect parmaeters.
+
+    Standard deviation values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+    spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     with pytest.raises(ValueError):
         gaussian_smooth(spec1, stddev)
 
 
-@pytest.mark.parameterize(stddev=[1, 2.3])
-def test_smooth_mexicanhat_good(stddev):
+@pytest.mark.parametrize("stddev", [1, 2.3])
+def test_smooth_trapezoid_good(simulated_spectra, stddev):
+    """
+    Test Trapezoid1DKernel smoothing with correct parmaeters.
+
+    Standard deviation values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
-
-    flux = spec1.flux
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    flux_original = spec1.flux
 
     # Create the flux_smoothed which is what we want to compare to
-    mexicanhat_kernel = convolution.MexicanHat1D(stddev)
-    flux_smoothed = convolution.convolve(flux, mexicanhat_kernel)
+    trapezoid_kernel = convolution.Trapezoid1DKernel(stddev)
+    flux_smoothed = convolution.convolve(flux_original, trapezoid_kernel)
 
-    # Test not-in-place smoothing, defualt is not in-place
-    spec1_smoothed = mexicanhat_smooth(spec1, stddev)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
-
-    # Test not-in-place smoothing
-    spec1_smoothed = mexicanhat_smooth(spec1, stddev, inplace=False)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
-
-    # Test in-place smoothing
-    spec1_smoothed = mexicanhat_smooth(spec1, stddev, inplace=True)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
-
-
-@pytest.mark.parameterize(stddev=[-1, 'a'])
-def test_smooth_mexicanhat_bad(stddev):
-
-    #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
-
-    # Test not-in-place smoothing, defualt is not in-place
-    with pytest.raises(ValueError):
-        mexicanhat_smooth(spec1, stddev)
-
-
-@pytest.mark.parameterize(stddev=[1, 2.3])
-def test_smooth_trapezoid_good(stddev):
-
-    #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
-
-    flux = spec1.flux
-
-    # Create the flux_smoothed which is what we want to compare to
-    trapezoid_kernel = convolution.Trapezoid1D(stddev)
-    flux_smoothed = convolution.convolve(flux, trapezoid_kernel)
-
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     spec1_smoothed = trapezoid_smooth(spec1, stddev)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.05)
 
     # Test not-in-place smoothing
     spec1_smoothed = trapezoid_smooth(spec1, stddev, inplace=False)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.05)
 
     # Test in-place smoothing
     spec1_smoothed = trapezoid_smooth(spec1, stddev, inplace=True)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.05)
 
 
-@pytest.mark.parameterize(stddev=[-1, 'a'])
-def test_smooth_trapezoid_bad(stddev):
+@pytest.mark.parametrize("stddev", [-1, 0, 'a'])
+def test_smooth_trapezoid_bad(simulated_spectra, stddev):
+    """
+    Test Trapezoid1DKernel smoothing with incorrect parmaeters.
+
+    Standard deviation values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+    spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     with pytest.raises(ValueError):
         trapezoid_smooth(spec1, stddev)
 
 
-@pytest.mark.parameterize(width=[1, 2.3])
-def test_smooth_median_good(width):
+@pytest.mark.parametrize("width", [1, 3, 9])
+def test_smooth_median_good(simulated_spectra, width):
+    """
+    Test Median smoothing with correct parmaeters.
+
+    Width values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
-
-    flux = spec1.flux
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    flux_original = spec1.flux
 
     # Create the flux_smoothed which is what we want to compare to
-    flux_smoothed = medfilt(flux, width)
+    flux_smoothed = medfilt(flux_original, width)
 
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     spec1_smoothed = median_smooth(spec1, width)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.15)
 
     # Test not-in-place smoothing
     spec1_smoothed = median_smooth(spec1, width, inplace=False)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.15)
 
     # Test in-place smoothing
     spec1_smoothed = median_smooth(spec1, width, inplace=True)
-    assert np.allclose(spec1_smoothed, flux_smoothed)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed, flux_original.value, rtol=0.15)
 
 
-@pytest.mark.parameterize(width=[-1, 'a'])
-def test_smooth_median_bad(width):
+@pytest.mark.parametrize("width", [-1, 0, 'a'])
+def test_smooth_median_bad(simulated_spectra, width):
+    """
+    Test Median smoothing with incorrect parmaeters.
+
+    Width values need to be a number greater than 0. 
+    """
 
     #  Create the spectrum
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+    spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, defualt is not in-place
+    # Test not-in-place smoothing, default is not in-place
     with pytest.raises(ValueError):
         median_smooth(spec1, width)
