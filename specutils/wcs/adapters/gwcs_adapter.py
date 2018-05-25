@@ -24,7 +24,7 @@ class GWCSAdapter(WCSAdapter):
         # object. For now, store the desired spectral axis unit information in
         # the adapter object instead of creating a new gwcs object like we do
         # for fitswcs.
-        self._wcs_unit = wcs.output_frame.unit[0]
+        self._wcs_unit = self.wcs.output_frame.unit[0]
         self._unit = self._wcs_unit
 
         if unit is not None and unit.is_equivalent(self._unit,
