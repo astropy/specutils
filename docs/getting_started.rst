@@ -25,6 +25,22 @@ something like
 .. image:: img/quick_start.png
 
 
+Reading from a File
+-------------------
+
+SpecUtils takes advantage of the Astropy IO machinery and allows loading and
+writing to files. The example below shows loading a FITS file. While SpecUtils
+has some basic data loaders, for more complicated or custom files, users are
+encouraged to :doc:`create their own loader </custom_loading>`.
+
+.. code-block:: python
+
+    from specutils import Spectrum1D
+
+    spec1d = Spectrum1D.read("/path/to/file.fits")
+
+
+
 Spectra with Units
 ------------------
 
@@ -109,6 +125,8 @@ specify the uncertainty type at creation time
 .. warning:: Not defining an uncertainty class will result in an
              :class:`~astropy.nddata.UnknownUncertainty` object which will not
              propagate uncertainties in arithmetic operations.
+
+.. seealso:: modules :py:mod:`~astropy.nddata.nduncertainty`
 
 
 Multi-dimensional Data Sets

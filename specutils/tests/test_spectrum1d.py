@@ -2,6 +2,7 @@ import astropy.units as u
 import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
+import os
 import pytest
 from astropy.nddata import StdDevUncertainty
 
@@ -109,4 +110,19 @@ def test_create_with_uncertainty():
                       uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
 
     assert spec.flux.unit == spec.uncertainty.unit
+
+
+def test_read_linear_solution():
+    file_path = os.path.join(os.path.dirname(__file__),
+                             'data/L5g_0355+11_Cruz09.fits')
+
+    spec = Spectrum1D.read(file_path, format='wcs1d-fits')
+
+    assert isinstance(spec, Spectrum1D)
+
+    assert isinstance(spec.flux, u.Quantity)
+    assert isinstance(spec.spectral_axis, u.Quantity)
+
+    assert spec.flux.size == spec.data.size
+    assert spec.spectral_axis.size == spec.data.size
 
