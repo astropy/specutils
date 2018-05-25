@@ -14,7 +14,6 @@ The convolution based smoothing supports smoothing based on 1D kernels in
 ``astropy.convlution.convolve``.  Currently implemented are 
 :func:`~specutils.processing.smoothing.box_smooth` (:class:``astropy.convolution.convolve.Box1DKernel``),  
 :func:`~specutils.processing.smoothing.gaussian_smooth` (:class:``astropy.convolution.convolve.Gaussian1DKernel``),  
-:func:`~specutils.processing.smoothing.mexicanhat_smooth` (:class:``astropy.convolution.convolve.MexicanHat1DKernel``, 
 and :func:`~specutils.processing.smoothing.trapzoid_smooth` (:class:``astropy.convolution.convolve.Trapezoid1DKernel``).
 
 Each of the functions also has a parameter ``inplace`` which takes a boolean 
@@ -29,13 +28,11 @@ smoothed flux.
     >>> import astropy.units as u
     >>> import numpy as np
     >>> from specutils.processing.smoothing import (box_smooth, 
-                               gaussian_smooth, mexicanhat_smooth,
-                               trapezoid_smooth)
+                               gaussian_smooth, trapezoid_smooth)
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
-    >>> spec1_msmooth = mexicanhat_smooth(spec1, width=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
 
     >>> gaussian_smooth(spec1, width=3, inplace=True)
