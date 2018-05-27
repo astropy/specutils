@@ -86,7 +86,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(data=flux)
             return
         else:
-            # If not wcs and no spectral axis has been given, raise an error
+            # If no wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
 
