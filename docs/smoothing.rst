@@ -34,7 +34,7 @@ smoothed flux.
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
 
-    >>> gaussian_smooth(spec1, width=3, inplace=True)
+    >>> gaussian_smooth(spec1, stddev=3, inplace=True)
 
 Each of the specific smoothing methods create the appropriate ``astropy.convolution.convolve`` 
 kernel and then call a helper function :func:`~specutils.processing.smoothing.convolution_smooth` 
