@@ -40,9 +40,6 @@ def convolution_smooth(spectrum, kernel):
     if not isinstance(spectrum, Spectrum1D):
         raise ValueError('The spectrum parameter must be a Spectrum1D object')
 
-    if not isinstance(kernel, convolution.Kernel1D):
-        raise ValueError('The kernel parameter must be a subclass of the astropy.convolution.Kernel1D')
-
     # Get the flux of the input spectrum
     flux = spectrum.flux
 

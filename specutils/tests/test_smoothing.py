@@ -6,8 +6,8 @@ import astropy.units as u
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
 
-from ..smoothing import (box_smooth, gaussian_smooth,
-                                    trapezoid_smooth, median_smooth)
+from ..smoothing import (convolution_smooth, box_smooth, gaussian_smooth,
+                         trapezoid_smooth, median_smooth)
 
 def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
     """
@@ -35,6 +35,27 @@ def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
     assert np.allclose(sum(flux_smooth1), sum(flux_original), rtol=rtol)
 
 
+def test_smooth_custom_kernel(simulated_spectra):
+    """
+    Test CustomKernel smoothing with correct parmaeters.
+    """
+
+    # Create the original spectrum
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    flux_original = spec1.flux
+
+    # Create a custom kernel (some weird asymmetric-ness)
+    numpy_kernel = np.array([0.5, 1, 2, 0.5, 0.2])
+    numpy_kernel = numpy_kernel / np.sum(numpy_kernel)
+
+    custom_kernel = convolution.CustomKernel(numpy_kernel)
+    flux_smoothed_astropy = convolution.convolve(flux_original, custom_kernel)
+
+    # Calculate the custom smoothed
+    spec1_smoothed = convolution_smooth(spec1, custom_kernel)
+    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
+
+
 @pytest.mark.parametrize("width", [1, 2.3])
 def test_smooth_box_good(simulated_spectra, width):
     """
@@ -51,16 +72,8 @@ def test_smooth_box_good(simulated_spectra, width):
     box_kernel = convolution.Box1DKernel(width)
     flux_smoothed_astropy = convolution.convolve(flux_original, box_kernel)
 
-    # Calculate the smoothed using specutils
-    spec1_smoothed = box_smooth(spec1, width, inplace=True)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
-
-    # Test not-in-place smoothing
-    spec1_smoothed = box_smooth(spec1, width, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
-
-    # Test in-place smoothing
-    spec1_smoothed = box_smooth(spec1, width, inplace=True)
+    # Calculate the box smoothed
+    spec1_smoothed = box_smooth(spec1, width)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
 
@@ -75,7 +88,7 @@ def test_smooth_box_bad(simulated_spectra, width):
     #  Create the spectrum
     spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test bad input parameters
     with pytest.raises(ValueError):
         box_smooth(spec1, width)
 
@@ -96,16 +109,8 @@ def test_smooth_gaussian_good(simulated_spectra, stddev):
     gaussian_kernel = convolution.Gaussian1DKernel(stddev)
     flux_smoothed_astropy = convolution.convolve(flux_original, gaussian_kernel)
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test gaussian smoothing
     spec1_smoothed = gaussian_smooth(spec1, stddev)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
-
-    # Test not-in-place smoothing
-    spec1_smoothed = gaussian_smooth(spec1, stddev, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
-
-    # Test in-place smoothing
-    spec1_smoothed = gaussian_smooth(spec1, stddev, inplace=True)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
 
 
@@ -120,7 +125,7 @@ def test_smooth_gaussian_bad(simulated_spectra, stddev):
     #  Create the spectrum
     spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test bad input paramters
     with pytest.raises(ValueError):
         gaussian_smooth(spec1, stddev)
 
@@ -141,16 +146,8 @@ def test_smooth_trapezoid_good(simulated_spectra, stddev):
     trapezoid_kernel = convolution.Trapezoid1DKernel(stddev)
     flux_smoothed_astropy = convolution.convolve(flux_original, trapezoid_kernel)
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test trapezoid smoothing
     spec1_smoothed = trapezoid_smooth(spec1, stddev)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
-
-    # Test not-in-place smoothing
-    spec1_smoothed = trapezoid_smooth(spec1, stddev, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
-
-    # Test in-place smoothing
-    spec1_smoothed = trapezoid_smooth(spec1, stddev, inplace=True)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
 
@@ -165,7 +162,7 @@ def test_smooth_trapezoid_bad(simulated_spectra, stddev):
     #  Create the spectrum
     spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test bad parameters
     with pytest.raises(ValueError):
         trapezoid_smooth(spec1, stddev)
 
@@ -185,16 +182,8 @@ def test_smooth_median_good(simulated_spectra, width):
     # Create the flux_smoothed which is what we want to compare to
     flux_smoothed_astropy = medfilt(flux_original, width)
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test median smoothing
     spec1_smoothed = median_smooth(spec1, width)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
-
-    # Test not-in-place smoothing
-    spec1_smoothed = median_smooth(spec1, width, inplace=False)
-    compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
-
-    # Test in-place smoothing
-    spec1_smoothed = median_smooth(spec1, width, inplace=True)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
 
 
@@ -209,6 +198,6 @@ def test_smooth_median_bad(simulated_spectra, width):
     #  Create the spectrum
     spec1 = simulated_spectra.s1_um_mJy_e1
 
-    # Test not-in-place smoothing, default is not in-place
+    # Test bad parameters
     with pytest.raises(ValueError):
         median_smooth(spec1, width)
