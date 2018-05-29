@@ -86,3 +86,5 @@ Note: This method is not flux conserving.
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec1_msmooth = median_smooth(spec1, width=3)
+
+.. automodapi:: specutils.smoothing
