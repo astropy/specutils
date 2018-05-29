@@ -76,6 +76,9 @@ def test_smooth_box_good(simulated_spectra, width):
     spec1_smoothed = box_smooth(spec1, width)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
+    # Check the input and output units
+    assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
+    assert spec1.flux.unit == spec1_smoothed.flux.unit
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
 def test_smooth_box_bad(simulated_spectra, width):
@@ -112,6 +115,10 @@ def test_smooth_gaussian_good(simulated_spectra, stddev):
     # Test gaussian smoothing
     spec1_smoothed = gaussian_smooth(spec1, stddev)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.02)
+
+    # Check the input and output units
+    assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
+    assert spec1.flux.unit == spec1_smoothed.flux.unit
 
 
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
@@ -150,6 +157,10 @@ def test_smooth_trapezoid_good(simulated_spectra, stddev):
     spec1_smoothed = trapezoid_smooth(spec1, stddev)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value)
 
+    # Check the input and output units
+    assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
+    assert spec1.flux.unit == spec1_smoothed.flux.unit
+
 
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
 def test_smooth_trapezoid_bad(simulated_spectra, stddev):
@@ -185,6 +196,10 @@ def test_smooth_median_good(simulated_spectra, width):
     # Test median smoothing
     spec1_smoothed = median_smooth(spec1, width)
     compare_flux(spec1_smoothed.flux.value, flux_smoothed_astropy, flux_original.value, rtol=0.15)
+
+    # Check the input and output units
+    assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
+    assert spec1.flux.unit == spec1_smoothed.flux.unit
 
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
