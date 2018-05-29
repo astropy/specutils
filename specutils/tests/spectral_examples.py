@@ -27,8 +27,11 @@ class SpectraExamples(object):
         2. s1_um_mJy_e2 - same as 1, but with a different instance of noise
                           dispersion: um, flux: mJy
 
-        3. s1_AA_mJy_e3 - same as 1, butwht  a third instance of noise
+        3. s1_AA_mJy_e3 - same as 1, but with a third instance of noise
                           dispersion: Angstroms, flux: mJy
+
+        4. s1_AA_nJy_e3 - same as 1, but with a fourth instance of noise
+                          dispersion: Angstroms, flux: nJy
     """
 
     def __init__(self):
@@ -45,8 +48,9 @@ class SpectraExamples(object):
         g4 = models.Gaussian1D(amplitude=-350, mean=0.52, stddev=0.01)
         ramp = models.Linear1D(slope=300, intercept=0.0)
 
-        self.base_flux = g1(self.wavelengths_um) + g2(self.wavelengths_um) + g3(self.wavelengths_um) +\
-                         g4(self.wavelengths_um) + ramp(self.wavelengths_um) + 1000
+        self.base_flux = g1(self.wavelengths_um) + g2(self.wavelengths_um) + \
+                         g3(self.wavelengths_um) + g4(self.wavelengths_um) + \
+                         ramp(self.wavelengths_um) + 1000
 
         #
         # Initialize the seed so the random numbers are not quite as random
@@ -58,26 +62,38 @@ class SpectraExamples(object):
         # Create two spectra with the only difference in the instance of noise
         #
 
-        self._flux_e1 = self.base_flux + 400*np.random.random(self.base_flux.shape)
-        self._s1_um_mJy_e1 = Spectrum1D(spectral_axis=self.wavelengths_um*u.um, flux=self._flux_e1*u.mJ)
+        self._flux_e1 = self.base_flux + 400 * np.random.random(self.base_flux.shape)
+        self._s1_um_mJy_e1 = Spectrum1D(spectral_axis=self.wavelengths_um * u.um,
+                                        flux=self._flux_e1 * u.mJy)
 
-        self._flux_e2 = self.base_flux + 400*np.random.random(self.base_flux.shape)
-        self._s1_um_mJy_e2 = Spectrum1D(spectral_axis=self.wavelengths_um*u.um, flux=self._flux_e2*u.mJ)
+        self._flux_e2 = self.base_flux + 400 * np.random.random(self.base_flux.shape)
+        self._s1_um_mJy_e2 = Spectrum1D(spectral_axis=self.wavelengths_um * u.um,
+                                        flux=self._flux_e2 * u.mJy)
 
         #
         # Create on spectrum with the same flux but in angstrom units
         #
 
-        self.wavelengths_AA = self.wavelengths_um*10000
-        self._s1_AA_mJy_e3 = Spectrum1D(spectral_axis=self.wavelengths_AA*u.AA, flux=self._flux_e1*u.mJ)
+        self.wavelengths_AA = self.wavelengths_um * 10000
+        self._s1_AA_mJy_e3 = Spectrum1D(spectral_axis=self.wavelengths_AA * u.AA,
+                                        flux=self._flux_e1 * u.mJy)
 
-    @property
-    def s1_um_mJy_e1_flux(self):
-        return self._flux_e1
+        #
+        # Create on spectrum with the same flux but in angstrom units and nJy
+        #
+
+        self._flux_e4 = (self.base_flux + 400 * np.random.random(self.base_flux.shape)) * 1000000
+        self._s1_AA_nJy_e4 = Spectrum1D(spectral_axis=self.wavelengths_AA * u.AA,
+                                        flux=self._flux_e4 * u.nJy)
+
 
     @property
     def s1_um_mJy_e1(self):
         return self._s1_um_mJy_e1
+
+    @property
+    def s1_um_mJy_e1_flux(self):
+        return self._flux_e1
 
     @property
     def s1_um_mJy_e2(self):
@@ -94,6 +110,14 @@ class SpectraExamples(object):
     @property
     def s1_AA_mJy_e3_flux(self):
         return self._flux_e1
+
+    @property
+    def s1_AA_nJy_e4(self):
+        return self._s1_AA_nJy_e4
+
+    @property
+    def s1_AA_nJy_e4_flux(self):
+        return self._flux_e4
 
 
 @pytest.fixture
