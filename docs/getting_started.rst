@@ -75,7 +75,7 @@ Defining WCS
 Specutils always maintains a WCS object whether it is passed explicitly by the
 user, or is created dynamically by specutils itself. In the latter case, the
 user need not be awrae that the WCS object is being used, and is can interact
-with the :class:`~specutils.spectra.Spectrum1D` object as if it were only a simple
+with the :class:`~specutils.Spectrum1D` object as if it were only a simple
 data container.
 
 Currently, specutils understands two WCS formats: FITSWCS and GWCS. When a user
@@ -107,11 +107,11 @@ Providing a FITSWCS
 Including Uncertainties
 -----------------------
 
-The :class:`~specutils.spectra.Spectrum1D` class supports uncertainties, and
-arithmetic operations performed with :class:`~specutils.spectra.Spectrum1D`
+The :class:`~specutils.Spectrum1D` class supports uncertainties, and
+arithmetic operations performed with :class:`~specutils.Spectrum1D`
 objects will propagate uncertainties.
 
-Uncertainties are a special subclass of :class:`~astropy.nddata.NData`, and their
+Uncertainties are a special subclass of :class:`~astropy.nddata.NDData`, and their
 propagation rules are implemented at the class level. Therefore, users must
 specify the uncertainty type at creation time
 
@@ -126,19 +126,18 @@ specify the uncertainty type at creation time
              :class:`~astropy.nddata.UnknownUncertainty` object which will not
              propagate uncertainties in arithmetic operations.
 
-.. seealso:: modules :py:mod:`~astropy.nddata.nduncertainty`
-
 
 Multi-dimensional Data Sets
 ---------------------------
 
-Specutils supports the case where the user may have an `(n_spectra, n_pix)`
-shaped data set where each `n_spectra` element provides a different flux data
-array and so `flux` and `uncertainty` may be multidimensional as long as the last
-dimension matches the shape of spectral_axis This is meant to allow fast operations on
-collections of spectra that share the same `spectral_axis`. While it may seem to
-conflict with the “1D” in the class name, this name scheme is meant to
-communicate the presence of a single common spectral axis.
+Specutils supports the case where the user may have an ``(n_spectra, n_pix)``
+shaped data set where each ``n_spectra`` element provides a different flux
+data array and so ``flux`` and ``uncertainty`` may be multidimensional as
+long as the last dimension matches the shape of spectral_axis This is meant
+to allow fast operations on collections of spectra that share the same
+``spectral_axis``. While it may seem to conflict with the “1D” in the class
+name, this name scheme is meant to communicate the presence of a single
+common spectral axis.
 
 The case where each flux data array is related to a *different* spectral
 axis is currently **not** supported, but is planned for a later update.
