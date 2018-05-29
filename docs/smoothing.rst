@@ -5,19 +5,20 @@ Spectral Smoothing
 The spectral smoothing has two forms, 1) convolution based smoothing 
 using the `astropy.convolution` package and 2) median filter
 using the :func:`scipy.signal.medfilt`.  Each of these act on the flux
-of the :class:`~specutils.spectra.Spectram1D` object.
+of the :class:`~specutils.spectra.Spectrum1D` object.
 
-.. warning:: Specutils smoothing kernel widths and standard deviations are
-             in units of **pixels** and not ``Quantity``. An enhancement
-             will be needed for the future to understand Quantity.
+.. note:: Specutils smoothing kernel widths and standard deviations are
+             in units of pixels and not ``Quantity``.
 
 Convolution Based Smoothing
 ---------------------------
 
-While any kernel supported by `astropy.convolution` will work (using the `convolution_smooth` function), several commonly-used kernels have convenience functions wrapping them to simplify the smoothing process into a simple one-line operation.  Currently implemented are:
+While any kernel supported by `astropy.convolution` will work (using the `~specutils.smoothing.convolution_smooth` function), 
+several commonly-used kernels have convenience functions wrapping them to simplify the smoothing process into a simple 
+one-line operation.  Currently implemented are:
 :func:`~specutils.smoothing.box_smooth` (:class:`astropy.convolution.convolve.Box1DKernel`),  
 :func:`~specutils.smoothing.gaussian_smooth` (:class:`astropy.convolution.convolve.Gaussian1DKernel`),  
-and :func:`~specutils.smoothing.trapzoid_smooth` (:class:`astropy.convolution.convolve.Trapezoid1DKernel`).
+and :func:`~specutils.smoothing.trapezoid_smooth` (:class:`astropy.convolution.convolve.Trapezoid1DKernel`).
 
 
 .. code-block:: python

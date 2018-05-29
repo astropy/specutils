@@ -56,7 +56,7 @@ def convolution_smooth(spectrum, kernel):
 
 def box_smooth(spectrum, width):
     """
-    Smooth a `~specutils.spectra.Spectrum1D` instance based on a `astropy.convolution.Box1D` kernel.
+    Smooth a `~specutils.spectra.Spectrum1D` instance based on a `astropy.convolution.Box1DKernel` kernel.
 
     Parameters
     ----------
@@ -124,7 +124,7 @@ def gaussian_smooth(spectrum, stddev):
 
 def trapezoid_smooth(spectrum, width):
     """
-    Smoothing based on a Trapezoid kernel.
+    Smoothing based on a `astropy.convolution.Trapezoid1DKernel` kernel.
 
     Parameters
     ----------
@@ -159,7 +159,7 @@ def trapezoid_smooth(spectrum, width):
 def median_smooth(spectrum, width):
     """
     Smoothing based on a median filter. The median filter smoothing
-    is implemented using the `scipy.signals.medfilt` function.
+    is implemented using the `scipy.signal.medfilt` function.
 
     Parameters
     ----------
