@@ -60,6 +60,13 @@ highlight_language = 'python3'
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
 
+# We don't have references to `h5py` ... no need to load the intersphinx mapping file.
+del intersphinx_mapping['h5py']
+del intersphinx_mapping['matplotlib']
+
+# Extend astropy intersphinx_mapping with packages we use here
+intersphinx_mapping['gwcs'] = ('http://gwcs.readthedocs.io/en/latest/', None)
+
 # To perform a Sphinx version check that needs to be more specific than
 # major.minor, call `check_sphinx_version("x.y.z")` here.
 # check_sphinx_version("1.2.1")
