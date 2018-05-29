@@ -63,7 +63,7 @@ def box_smooth(spectrum, width):
     spectrum : `~specutils.spectra.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     width : number
-        The width of the kernel as defined in `astropy.convolution.Box1DKernel`
+        The width of the kernel, in pixels, as defined in `astropy.convolution.Box1DKernel`
 
     Returns
     -------
@@ -97,7 +97,7 @@ def gaussian_smooth(spectrum, stddev):
     spectrum : `~specutils.spectra.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     stddev : number
-        The stddev of the kernel as defined in `astropy.convolution.Gaussian1DKernel`
+        The stddev of the kernel, in pixels, as defined in `astropy.convolution.Gaussian1DKernel`
 
     Returns
     -------
@@ -131,7 +131,7 @@ def trapezoid_smooth(spectrum, width):
     spectrum : `~specutils.spectra.Spectrum1D`
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
     width : number
-        The width of the kernel as defined in `astropy.convolution.Trapezoid1DKernel`
+        The width of the kernel, in pixels, as defined in `astropy.convolution.Trapezoid1DKernel`
 
     Returns
     -------
@@ -166,7 +166,7 @@ def median_smooth(spectrum, width):
     spectrum : `~specutils.spectra.Spectrum1D`
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
     width : number
-        The width of the median filter.
+        The width of the median filter in pixels.
 
     Returns
     -------

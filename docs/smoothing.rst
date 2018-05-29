@@ -7,6 +7,10 @@ using the `astropy.convolution` package and 2) median filter
 using the :func:`scipy.signal.medfilt`.  Each of these act on the flux
 of the :class:`~specutils.spectra.Spectram1D` object.
 
+.. warning:: Specutils smoothing kernel widths and standard deviations are
+             in units of **pixels** and not ``Quantity``. An enhancement
+             will be needed for the future to understand Quantity.
+
 Convolution Based Smoothing
 ---------------------------
 
