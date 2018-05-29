@@ -13,7 +13,8 @@ __all__ = ['fit_models', 'fit_models_simple']
 def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
                window=None, weights=None, *args, **kwargs):
     """
-    Does a naive equivalent width measures on the spectrum object.
+    Entry point for fitting using the ``astropy.modeling.fitting``
+    machinery.
 
     Parameters
     ----------
@@ -23,7 +24,7 @@ def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
         The list of models that contain the initial guess.
     fit_models_type: str
         String representation of fit method to use as defined by the dict fit_models_types.
-    window : tuple of wavelengths 
+    window : tuple of wavelengths  (NOT IMPLEMENTED YET)
         Start and end wavelengths used for fitting.
     weights : list  (NOT IMPLEMENTED YET)
         List of weights to define importance of fitting regions.
@@ -31,7 +32,7 @@ def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
     Returns
     -------
     models : list of ``astropy.modeling.models``
-        The list of models that contain the fitted model.
+        The list of models that contain the fitted model parmeters.
 
     """
 
@@ -54,7 +55,8 @@ def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
 
 def fit_models_simple(spectrum, model_initial_conds, fitter=fitting.SLSQPLSQFitter, window=None, weights=None):
     """
-    Does a naive equivalent width measures on the spectrum object.
+    Basic fitting of the input spectrum based on the initial conditions defined as a list
+    of models with the initial conditions and bounds set.
 
     Parameters
     ----------
@@ -62,19 +64,25 @@ def fit_models_simple(spectrum, model_initial_conds, fitter=fitting.SLSQPLSQFitt
         The spectrum object overwhich the equivalent width will be calculated.
     models : list of ``astropy.modeling.models``
         The list of models that contain the initial guess.
-    window : tuple of wavelengths 
+    window : tuple of wavelengths  (NOT IMPLEMENTED YET)
         Start and end wavelengths used for fitting.
     weights : list  (NOT IMPLEMENTED YET)
         List of weights to define importance of fitting regions.
 
     Returns
     -------
-    models : list of ``astropy.modeling.models``
-        The list of models that contain the fitted model.
+    models : Compound model of ``astropy.modeling.models``
+        A compound model of models with fitted parameters.
+
+    Notes
+    -----
+       * Could add functionality to set the bounds in 
+         `model_initial_conds`` if they are not set.
+       * The models in the list of `model_initial_conds` are added
+          together and passed as a compound model to the 
+          ``astropy.modeling.fitter`` class instance.
 
     """
-
-    print(fitter)
 
     #
     # Now to fit the data create a new superposition with initial
