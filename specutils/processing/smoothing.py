@@ -14,7 +14,7 @@ __all__ = ['convolution_smooth', 'box_smooth', 'gaussian_smooth',
 def convolution_smooth(spectrum, kernel):
     """
     Apply a convolution based smoothing to the spectrum. The kernel must be one
-    of the 1D kernels defined in ``astropy.convolution``.
+    of the 1D kernels defined in `astropy.convolution`.
 
     This method can be used along but also is used by other specific methods below.
 
@@ -22,7 +22,7 @@ def convolution_smooth(spectrum, kernel):
     ----------
     spectrum : `~specutils.spectra.Spectrum1D`
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
-    kernel : ``astropy.convolution.Kernel1D`` subclass.
+    kernel : `astropy.convolution.Kernel1D` subclass.
         The convolution based smoothing kernel.
 
     Returns
@@ -59,14 +59,14 @@ def convolution_smooth(spectrum, kernel):
 
 def box_smooth(spectrum, width):
     """
-    Smooth a `~specutils.spectra.Spectrum1D` instance based on a ``astropy.convolution.Box1D`` kernel.
+    Smooth a `~specutils.spectra.Spectrum1D` instance based on a `astropy.convolution.Box1D` kernel.
 
     Parameters
     ----------
     spectrum : `~specutils.spectra.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     width : number
-        The width of the kernel as defined in ``astropy.convolution.Box1DKernel``
+        The width of the kernel as defined in `astropy.convolution.Box1DKernel`
 
     Returns
     -------
@@ -100,7 +100,7 @@ def gaussian_smooth(spectrum, stddev):
     spectrum : `~specutils.spectra.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     stddev : number
-        The stddev of the kernel as defined in ``astropy.convolution.Gaussian1DKernel``
+        The stddev of the kernel as defined in `astropy.convolution.Gaussian1DKernel`
 
     Returns
     -------
@@ -134,7 +134,7 @@ def trapezoid_smooth(spectrum, width):
     spectrum : `~specutils.spectra.Spectrum1D`
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
     width : number
-        The width of the kernel as defined in ``astropy.convolution.Trapezoid1DKernel``
+        The width of the kernel as defined in `astropy.convolution.Trapezoid1DKernel`
 
     Returns
     -------
@@ -162,7 +162,7 @@ def trapezoid_smooth(spectrum, width):
 def median_smooth(spectrum, width):
     """
     Smoothing based on a median filter. The median filter smoothing
-    is implemented using the ``scipy.signals.medfilt`` function.
+    is implemented using the `scipy.signals.medfilt` function.
 
     Parameters
     ----------
