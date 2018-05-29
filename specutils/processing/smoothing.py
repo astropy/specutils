@@ -11,7 +11,7 @@ __all__ = ['convolution_smooth', 'box_smooth', 'gaussian_smooth',
            'trapezoid_smooth', 'median_smooth']
 
 
-def convolution_smooth(spectrum, kernel, inplace=False):
+def convolution_smooth(spectrum, kernel):
     """
     Apply a convolution based smoothing to the spectrum. The kernel must be one
     of the 1D kernels defined in ``astropy.convolution``.
@@ -24,15 +24,11 @@ def convolution_smooth(spectrum, kernel, inplace=False):
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
     kernel : ``astropy.convolution.Kernel1D`` subclass.
         The convolution based smoothing kernel.
-    inplace : bool
-        Choose if the smoothing should be applied to the input spectrum or a copy.
-        Default is False.
 
     Returns
     -------
     spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is either the one passed in (inplace=True) or
-        a copy of the one passed in with the updated flux (inplace=False)
+        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -53,16 +49,7 @@ def convolution_smooth(spectrum, kernel, inplace=False):
     # Smooth based on the input kernel
     smoothed_flux = convolution.convolve(flux, kernel)
 
-    # Set the smoothed flux to the input spectrum (inplace) or
-    # to a copy and return (not inplace)
-#     if inplace:
-#         spectrum.flux = smoothed_flux
-#         return spectrum
-#     else:
-#         # TODO: This can be modified when specutils has a deepcopy method.
-#         spectrum_out = deepcopy(spectrum)
-#         spectrum_out.flux = smoothed_flux
-#         return spectrum_out
+    # Return a new object with the smoothed flux.
     return Spectrum1D(flux=smoothed_flux, spectral_axis=spectrum.spectral_axis,
                       wcs=spectrum.wcs, unit=spectrum.unit, 
                       spectral_axis_unit=spectrum.spectral_axis_unit, 
@@ -70,7 +57,7 @@ def convolution_smooth(spectrum, kernel, inplace=False):
                       rest_value=spectrum.rest_value)
 
 
-def box_smooth(spectrum, width, inplace=False):
+def box_smooth(spectrum, width):
     """
     Smooth a `~specutils.spectra.Spectrum1D` instance based on a ``astropy.convolution.Box1D`` kernel.
 
@@ -80,15 +67,11 @@ def box_smooth(spectrum, width, inplace=False):
         The spectrum object to which the smoothing will be applied.
     width : number
         The width of the kernel as defined in ``astropy.convolution.Box1DKernel``
-    inplace : bool
-        Choose if the smoothing should be applied to the input spectrum or a copy.
-        Default is False.
 
     Returns
     -------
     spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is either the one passed in (inplace=True) or
-        a copy of the one passed in with the updated flux (inplace=False)
+        Output `~specutils.spectra.Spectrum1D` which a copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -105,12 +88,12 @@ def box_smooth(spectrum, width, inplace=False):
     box1d_kernel = convolution.Box1DKernel(width)
 
     # Call and return the convolution smoothing.
-    return convolution_smooth(spectrum, box1d_kernel, inplace)
+    return convolution_smooth(spectrum, box1d_kernel)
 
 
-def gaussian_smooth(spectrum, stddev, inplace=False):
+def gaussian_smooth(spectrum, stddev):
     """
-    Smooth a `~specutils.spectra.Spectrum1D` instance based on a ``astropy.convolution.Gaussian1DKernel``.
+    Smooth a `~specutils.spectra.Spectrum1D` instance based on a `astropy.convolution.Gaussian1DKernel`.
 
     Parameters
     ----------
@@ -118,15 +101,11 @@ def gaussian_smooth(spectrum, stddev, inplace=False):
         The spectrum object to which the smoothing will be applied.
     stddev : number
         The stddev of the kernel as defined in ``astropy.convolution.Gaussian1DKernel``
-    inplace : bool
-        Choose if the smoothing should be applied to the input spectrum or a copy.
-        Default is False.
 
     Returns
     -------
     spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is either the one passed in (inplace=True) or
-        a copy of the one passed in with the updated flux (inplace=False)
+        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -143,10 +122,10 @@ def gaussian_smooth(spectrum, stddev, inplace=False):
     gaussian_kernel = convolution.Gaussian1DKernel(stddev)
 
     # Call and return the convolution smoothing.
-    return convolution_smooth(spectrum, gaussian_kernel, inplace)
+    return convolution_smooth(spectrum, gaussian_kernel)
 
 
-def trapezoid_smooth(spectrum, width, inplace=False):
+def trapezoid_smooth(spectrum, width):
     """
     Smoothing based on a Trapezoid kernel.
 
@@ -156,15 +135,11 @@ def trapezoid_smooth(spectrum, width, inplace=False):
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
     width : number
         The width of the kernel as defined in ``astropy.convolution.Trapezoid1DKernel``
-    inplace : bool
-        Choose if the smoothing should be applied to the input spectrum or a copy.
-        Default is False.
 
     Returns
     -------
     spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is either the one passed in (inplace=True) or
-        a copy of the one passed in with the updated flux (inplace=False)
+        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -181,10 +156,10 @@ def trapezoid_smooth(spectrum, width, inplace=False):
     trapezoid_kernel = convolution.Trapezoid1DKernel(width)
 
     # Call and return the convolution smoothing.
-    return convolution_smooth(spectrum, trapezoid_kernel, inplace)
+    return convolution_smooth(spectrum, trapezoid_kernel)
 
 
-def median_smooth(spectrum, width, inplace=False):
+def median_smooth(spectrum, width):
     """
     Smoothing based on a median filter. The median filter smoothing
     is implemented using the ``scipy.signals.medfilt`` function.
@@ -195,15 +170,11 @@ def median_smooth(spectrum, width, inplace=False):
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
     width : number
         The width of the median filter.
-    inplace : bool
-        Choose if the smoothing should be applied to the input spectrum or a copy.
-        Default is False.
 
     Returns
     -------
     spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is either the one passed in (inplace=True) or
-        a copy of the one passed in with the updated flux (inplace=False)
+        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -225,17 +196,7 @@ def median_smooth(spectrum, width, inplace=False):
     # Smooth based on the input kernel
     smoothed_flux = medfilt(flux, width)
 
-#    # Set the smoothed flux to the input spectrum (inplace) or
-#    # to a copy and return (not inplace)
-#    if inplace:
-#        spectrum.flux = smoothed_flux
-#        return spectrum
-#    else:
-#        # TODO: This can be modified when specutils has a deepcopy method.
-#        spectrum_out = deepcopy(spectrum)
-#        spectrum_out.flux = smoothed_flux
-#        return spectrum_out
-
+    # Return a new object with the smoothed flux.
     return Spectrum1D(flux=smoothed_flux, spectral_axis=spectrum.spectral_axis,
                       wcs=spectrum.wcs, unit=spectrum.unit, 
                       spectral_axis_unit=spectrum.spectral_axis_unit, 
