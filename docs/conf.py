@@ -27,6 +27,7 @@
 
 import datetime
 import os
+import six
 import sys
 
 try:
@@ -179,3 +180,28 @@ if eval(setup_cfg.get('edit_on_github')):
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
+# -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
+#
+nitpicky = True
+nitpick_ignore = []
+
+# Some warnings are impossible to suppress, and you can list specific references
+# that should be ignored in a nitpick-exceptions file which should be inside
+# the docs/ directory. The format of the file should be:
+#
+# <type> <class>
+#
+# for example:
+#
+# py:class astropy.io.votable.tree.Element
+# py:class astropy.io.votable.tree.SimpleElement
+# py:class astropy.io.votable.tree.SimpleElementWithContent
+#
+# Uncomment the following lines to enable the exceptions:
+#
+# for line in open('nitpick-exceptions'):
+#     if line.strip() == "" or line.startswith("#"):
+#         continue
+#     dtype, target = line.split(None, 1)
+#     target = target.strip()
+#     nitpick_ignore.append((dtype, six.u(target)))
