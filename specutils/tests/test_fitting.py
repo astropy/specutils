@@ -4,7 +4,7 @@ import numpy as np
 
 from specutils.tests.spectral_examples import simulated_spectra
 from specutils.spectra.spectrum1d import Spectrum1D
-from specutils.fitting.fitlines import fit_models, fit_models_simple
+from specutils.fitting.fitmodels import fit_models, fit_models_simple
 
 def test_fitting_simple_slsqplsq(simulated_spectra):
     """
