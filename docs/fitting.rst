@@ -89,4 +89,4 @@ The output of the fitting routine is another set of models whose parameters cont
 
    Original spectrum (blue) and fitted spectrum (orange).
 
-.. automodpai:: specuilts.fitting
+.. automodapi:: specutils.fitting
