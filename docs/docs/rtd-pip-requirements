@@ -1,5 +1,0 @@
-numpy>=1.9
-numpydoc
-scipy
-gwcs
-astropy>=2.0
