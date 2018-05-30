@@ -4,7 +4,7 @@ import numpy as np
 
 from specutils.tests.spectral_examples import simulated_spectra
 from specutils.spectra.spectrum1d import Spectrum1D
-from specutils.fitting.fitmodels import fit_models, fit_models_simple
+from specutils.fitting import fitmodels, fitmodels_simple
 
 def test_fitting_simple_slsqplsq(simulated_spectra):
     """
@@ -35,7 +35,7 @@ def test_fitting_simple_slsqplsq(simulated_spectra):
     #  Fit the simulated spectrum based on the input models (including bounds)
     #
 
-    fitted_models = fit_models(simulated_spectra.s1_um_mJy_e1, [fg1, fg2, fg3, framp])
+    fitted_models = fitmodels(simulated_spectra.s1_um_mJy_e1, [fg1, fg2, fg3, framp])
 
     #
     # Given the output ``fitted_models`` (which fits the data to calculate amplitude
@@ -85,7 +85,7 @@ def test_fitting_simple_levmarlsq(simulated_spectra):
     #  Fit the simulated spectrum based on the input models (including bounds)
     #
 
-    fitted_models = fit_models(simulated_spectra.s1_um_mJy_e1, [fg1, fg2, fg3, framp], 
+    fitted_models = fitmodels(simulated_spectra.s1_um_mJy_e1, [fg1, fg2, fg3, framp], 
                                fitter=fitting.LevMarLSQFitter)
 
     #
