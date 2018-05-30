@@ -32,8 +32,7 @@ and :func:`~specutils.smoothing.trapezoid_smooth` (:class:`astropy.convolution.c
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
-
-    >>> gaussian_smooth(spec1, stddev=3)
+    >>> gaussian_smooth(spec1, stddev=3) #doctest:+SKIP
     Spectrum1D([0.22830748, 0.2783204 , 0.32007408, 0.35270403, 0.37899655,
                 0.40347983, 0.42974259, 0.45873436, 0.48875214, 0.51675647,
                 0.54007149, 0.55764758, 0.57052796, 0.58157173, 0.59448669,
