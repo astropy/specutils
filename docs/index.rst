@@ -33,5 +33,5 @@ Using specutils
 Get Involved
 ------------
 
-Please see :ref:`contributing` for information on bug reporting and
+Please see :doc:`contributing` for information on bug reporting and
 contributing to the specutils project.
