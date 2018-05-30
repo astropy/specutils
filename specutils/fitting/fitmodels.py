@@ -7,10 +7,10 @@ import numpy as np
 from astropy.modeling import models, fitting
 
 
-__all__ = ['fit_models', 'fit_models_simple']
+__all__ = ['fitmodels', 'fitmodels_simple']
 
 
-def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
+def fitmodels(spectrum, model_initial_conds, fitmodels_type='simple',
                window=None, weights=None, *args, **kwargs):
     """
     Entry point for fitting using the ``astropy.modeling.fitting``
@@ -22,8 +22,8 @@ def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
         The spectrum object overwhich the equivalent width will be calculated.
     model_initial_conds : list of ``astropy.modeling.models``
         The list of models that contain the initial guess.
-    fit_models_type: str
-        String representation of fit method to use as defined by the dict fit_models_types.
+    fitmodels_type: str
+        String representation of fit method to use as defined by the dict fitmodels_types.
     window : tuple of wavelengths  (NOT IMPLEMENTED YET)
         Start and end wavelengths used for fitting.
     weights : list  (NOT IMPLEMENTED YET)
@@ -41,19 +41,19 @@ def fit_models(spectrum, model_initial_conds, fit_models_type='simple',
     #     str description  ->  fit method
     #
 
-    fit_models_types = {
-        'simple': fit_models_simple
+    fitmodels_types = {
+        'simple': fitmodels_simple
     }
 
-    if fit_models_type in fit_models_types.keys():
-        return fit_models_types[fit_models_type](spectrum, model_initial_conds, 
+    if fitmodels_type in fitmodels_types.keys():
+        return fitmodels_types[fitmodels_type](spectrum, model_initial_conds, 
                                                  *args, **kwargs)
     else:
         raise ValueError('Fit line type {} is not one of implmented {}'.format(
-            fit_models_type, fit_models_types.keys()))
+            fitmodels_type, fitmodels_types.keys()))
 
 
-def fit_models_simple(spectrum, model_initial_conds, fitter=fitting.SLSQPLSQFitter, window=None, weights=None):
+def fitmodels_simple(spectrum, model_initial_conds, fitter=fitting.SLSQPLSQFitter, window=None, weights=None):
     """
     Basic fitting of the input spectrum based on the initial conditions defined as a list
     of models with the initial conditions and bounds set.
