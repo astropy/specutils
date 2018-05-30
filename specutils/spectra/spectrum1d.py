@@ -10,6 +10,8 @@ from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
 
+__doctest_skip__ = ['Spectrum1D.spectral_resolution']
+
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
