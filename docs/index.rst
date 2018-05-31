@@ -28,6 +28,7 @@ Using specutils
    custom_loading
    basic_analysis
    arithmetic
+   smoothing
 
 
 Get Involved
