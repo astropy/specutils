@@ -26,8 +26,7 @@ and :func:`~specutils.manipulation.trapezoid_smooth` (:class:`astropy.convolutio
     >>> from specutils import Spectrum1D
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> from specutils.manipulation import (box_smooth, gaussian_smooth, 
-                                            trapezoid_smooth)
+    >>> from specutils.manipulation import (box_smooth, gaussian_smooth, trapezoid_smooth)
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
