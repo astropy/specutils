@@ -1,8 +1,5 @@
 from __future__ import division
 
-# TODO: This can be removed when specutils has a deepcopy method.
-from copy import deepcopy
-
 from astropy import convolution
 from scipy.signal import medfilt
 from ..spectra import Spectrum1D

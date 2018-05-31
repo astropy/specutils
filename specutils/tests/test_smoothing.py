@@ -6,8 +6,9 @@ import astropy.units as u
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
 
-from ..smoothing import (convolution_smooth, box_smooth, gaussian_smooth,
-                         trapezoid_smooth, median_smooth)
+from ..manipulation.smoothing import (convolution_smooth, box_smooth, 
+                                      gaussian_smooth, trapezoid_smooth, 
+                                      median_smooth)
 
 def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
     """

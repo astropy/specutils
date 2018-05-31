@@ -13,12 +13,12 @@ of the :class:`~specutils.spectra.Spectrum1D` object.
 Convolution Based Smoothing
 ---------------------------
 
-While any kernel supported by `astropy.convolution` will work (using the `~specutils.smoothing.convolution_smooth` function), 
+While any kernel supported by `astropy.convolution` will work (using the `~specutils.manipulation.convolution_smooth` function), 
 several commonly-used kernels have convenience functions wrapping them to simplify the smoothing process into a simple 
 one-line operation.  Currently implemented are:
-:func:`~specutils.smoothing.box_smooth` (:class:`astropy.convolution.convolve.Box1DKernel`),  
-:func:`~specutils.smoothing.gaussian_smooth` (:class:`astropy.convolution.convolve.Gaussian1DKernel`),  
-and :func:`~specutils.smoothing.trapezoid_smooth` (:class:`astropy.convolution.convolve.Trapezoid1DKernel`).
+:func:`~specutils.manipulation.box_smooth` (:class:`astropy.convolution.convolve.Box1DKernel`),  
+:func:`~specutils.manipulation.gaussian_smooth` (:class:`astropy.convolution.convolve.Gaussian1DKernel`),  
+and :func:`~specutils.manipulation.trapezoid_smooth` (:class:`astropy.convolution.convolve.Trapezoid1DKernel`).
 
 
 .. code-block:: python
@@ -26,7 +26,8 @@ and :func:`~specutils.smoothing.trapezoid_smooth` (:class:`astropy.convolution.c
     >>> from specutils import Spectrum1D
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> from specutils.smoothing import (box_smooth, gaussian_smooth, trapezoid_smooth)
+    >>> from specutils.manipulation import (box_smooth, gaussian_smooth, 
+                                            trapezoid_smooth)
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
@@ -46,7 +47,7 @@ and :func:`~specutils.smoothing.trapezoid_smooth` (:class:`astropy.convolution.c
 
 
 Each of the specific smoothing methods create the appropriate `astropy.convolution.convolve` 
-kernel and then call a helper function :func:`~specutils.smoothing.convolution_smooth` 
+kernel and then call a helper function :func:`~specutils.manipulation.convolution_smooth` 
 that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 
 .. code-block:: python
@@ -55,7 +56,7 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
     >>> import astropy.units as u
     >>> from astropy.convolution import Box1DKernel
     >>> import numpy as np
-    >>> from specutils.smoothing import convolution_smooth
+    >>> from specutils.manipulation import convolution_smooth
 
     >>> box1d_kernel = Box1DKernel(width=3)
 
@@ -80,9 +81,9 @@ Note: This method is not flux conserving.
     >>> from specutils import Spectrum1D
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> from specutils.smoothing import median_smooth 
+    >>> from specutils.manipulation import median_smooth 
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec1_msmooth = median_smooth(spec1, width=3)
 
-.. automodapi:: specutils.smoothing
+.. automodapi:: specutils.manipulation
