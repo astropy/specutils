@@ -19,8 +19,8 @@ def convolution_smooth(spectrum, kernel):
     ----------
     spectrum : `~specutils.spectra.Spectrum1D`
         The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
-    kernel : `astropy.convolution.Kernel1D` subclass.
-        The convolution based smoothing kernel.
+    kernel : `astropy.convolution.Kernel1D` subclass or array.
+        The convolution based smoothing kernel - anything that `astropy.convolution.convolve` accepts.
 
     Returns
     -------
