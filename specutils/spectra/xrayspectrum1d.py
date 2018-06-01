@@ -91,7 +91,6 @@ class XraySpectrum1D(Spectrum1D):
         self.exposure = exposure
         self.assign_rmf(rmf)
         self.assign_arf(arf)
-        return
 
     # Convenience function for Xray people
     @property
@@ -115,7 +114,6 @@ class XraySpectrum1D(Spectrum1D):
             self.arf = ARF(arf_inp)
         else:
             self.arf = arf_inp
-        return
 
     def assign_rmf(self, rmf_inp):
         """
@@ -190,7 +188,6 @@ class XraySpectrum1D(Spectrum1D):
 class RMF(object):
     def __init__(self, filename):
         self._load_rmf(filename)
-        pass
 
     def _load_rmf(self, filename, extension=None):
         """
