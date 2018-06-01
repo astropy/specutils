@@ -202,8 +202,8 @@ class RMF(object):
             The file name with the RMF file
 
         extension : str (default None)
-            FITS file extinction keyword, if the response matrix is stored
-            under an extension other tham "MATRIX" or "SPECRESP MATRIX"
+            FITS file extension keyword, if the response matrix is stored
+            under an extension other than "MATRIX" or "SPECRESP MATRIX"
 
         Attributes
         ----------
@@ -466,7 +466,7 @@ class ARF(object):
         Parameters
         ----------
         filename : str
-            The file name with the RMF file
+            The file name with the ARF file
 
         Attributes
         ----------
