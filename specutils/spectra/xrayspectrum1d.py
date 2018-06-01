@@ -5,7 +5,7 @@ from astropy import units as u
 from astropy.io import fits
 from .spectrum1d import Spectrum1D
 
-__all__ = ['XraySpectrum1D', 'ARF', 'RMF']
+__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix']
 
 # For dealing with varied unit string choices
 EV   = ['eV', 'ev']
@@ -47,12 +47,12 @@ class XraySpectrum1D(Spectrum1D):
     exposure : float
         Exposure time for the dataset
 
-    arf : specutils.ARF or string, default None
-        Strings will be passed to ARF.__init__
+    arf : specutils.AreaResponse or string, default None
+        Strings will be passed to AreaResponse.__init__
         All other input types are stored as arf attribute
 
-    rmf : specutils.RMF or string, default None
-        Strings will be passed to RMF.__init__
+    rmf : specutils.ResponseMatrix or string, default None
+        Strings will be passed to ResponseMatrix.__init__
         All other input types are stored as rmf attribute
 
     rest_value : astropy.units.Quantity, default 0 Angstrom
@@ -111,7 +111,7 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.arf attribute
         """
         if isinstance(arf_inp, str):
-            self.arf = ARF(arf_inp)
+            self.arf = AreaResponse(arf_inp)
         else:
             self.arf = arf_inp
 
@@ -129,7 +129,7 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.rmf attribute
         """
         if isinstance(rmf_inp, str):
-            self.rmf = RMF(rmf_inp)
+            self.rmf = ResponseMatrix(rmf_inp)
         else:
             self.rmf = rmf_inp
         return
@@ -185,7 +185,7 @@ class XraySpectrum1D(Spectrum1D):
 
 ## ----  Supporting response file objects
 
-class RMF(object):
+class ResponseMatrix(object):
     def __init__(self, filename):
         self._load_rmf(filename)
 
@@ -449,7 +449,7 @@ class RMF(object):
         return counts[:self.detchans]
 
 
-class ARF(object):
+class AreaResponse(object):
 
     def __init__(self, filename):
 
