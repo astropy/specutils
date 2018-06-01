@@ -136,7 +136,7 @@ class XraySpectrum1D(Spectrum1D):
             self.rmf = rmf_inp
         return
 
-    def apply_resp(self, mflux, exposure=None):
+    def apply_response(self, mflux, exposure=None):
         """
         Given a model flux spectrum, apply the response. In cases where the
         spectrum has both an ARF and an RMF, apply both. Otherwise, apply
@@ -192,7 +192,7 @@ class RMF(object):
         self._load_rmf(filename)
         pass
 
-    def _load_rmf(self, filename):
+    def _load_rmf(self, filename, extension=None):
         """
         Load a response matrix file (RMF) from a FITS file.
 
@@ -200,6 +200,10 @@ class RMF(object):
         ----------
         filename : str
             The file name with the RMF file
+
+        extension : str (default None)
+            FITS file extinction keyword, if the response matrix is stored
+            under an extension other tham "MATRIX" or "SPECRESP MATRIX"
 
         Attributes
         ----------
@@ -246,11 +250,19 @@ class RMF(object):
         extnames = np.array([h.name for h in hdulist])
 
         # figure out the right extension to use
-        if "MATRIX" in extnames:
+        if extension is not None:
+            h = hdulist[extension]
+
+        elif "MATRIX" in extnames:
             h = hdulist["MATRIX"]
 
         elif "SPECRESP MATRIX" in extnames:
             h = hdulist["SPECRESP MATRIX"]
+
+        else:
+            print("Cannot find common FITS file extension for response matrix values")
+            print("Please set the `extension` keyword")
+            return
 
         data = h.data
         hdr = h.header
