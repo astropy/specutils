@@ -12,6 +12,9 @@ EV   = ['eV', 'ev']
 KEV  = ['kev', 'keV']
 ANGS = ['angs', 'Angs', 'Angstrom', 'angstrom', 'Angstroms', 'angstroms', 'A', 'a']
 
+## An introduction to X-ray analysis can be found here:
+## http://cxc.cfa.harvard.edu/xrayschool/talks/intro_xray_analysis.pdf
+
 def _unit_parser(unit_string):
     """
     A function for matching unit strings to the correct Astropy unit
@@ -97,12 +100,12 @@ class XraySpectrum1D(Spectrum1D):
 
     def assign_arf(self, arf_inp):
         """
-        Assign an ARF object to the XraySpectrum1D object
+        Assign an area response file (ARF) object to the XraySpectrum1D object
 
         Input
         -----
         arf_inp : string
-            File name for the ARF (FITS file)
+            File name for the area response file (FITS file)
 
         Returns
         -------
@@ -116,12 +119,12 @@ class XraySpectrum1D(Spectrum1D):
 
     def assign_rmf(self, rmf_inp):
         """
-        Assign an RMF object to the XraySpectrum1D object
+        Assign a response matrix file (RMF) object to the XraySpectrum1D object
 
         Input
         -----
         rmf_inp : string
-            File name for the RMF (FITS file)
+            File name for the response matrix file (FITS file)
 
         Returns
         -------
@@ -191,7 +194,7 @@ class RMF(object):
 
     def _load_rmf(self, filename):
         """
-        Load an RMF from a FITS file.
+        Load a response matrix file (RMF) from a FITS file.
 
         Parameters
         ----------
@@ -446,7 +449,7 @@ class ARF(object):
 
     def _load_arf(self, filename):
         """
-        Load an ARF from a FITS file.
+        Load an area response file (ARF) from a FITS file.
 
         Parameters
         ----------
@@ -512,7 +515,7 @@ class ARF(object):
 
     def apply_arf(self, spec, exposure=None):
         """
-        Fold the spectrum through the ARF.
+        Fold the spectrum through the area response file (ARF).
         The ARF is a single vector encoding the effective area information
         about the detector. A such, applying the ARF is a simple
         multiplication with the input spectrum.
