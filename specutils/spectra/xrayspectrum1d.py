@@ -137,8 +137,8 @@ class XraySpectrum1D(Spectrum1D):
     def apply_response(self, mflux, exposure=None):
         """
         Given a model flux spectrum, apply the response. In cases where the
-        spectrum has both an ARF and an RMF, apply both. Otherwise, apply
-        whatever response is in RMF.
+        spectrum has both an area response file (ARF) and a response matrix
+        file (RMF), apply both. Otherwise, apply whatever response is in RMF.
 
         The model flux spectrum *must* be created using the same units and
         bins as in the ARF (where the ARF exists)!
