@@ -79,7 +79,7 @@ class XraySpectrum1D(Spectrum1D):
                  arf=None, rmf=None, rest_value=0.0 * u.angstrom, **kwargs):
         try:
             axis_unit = u.Unit(bin_unit)
-        except:
+        except ValueError:
             axis_unit = _unit_parser(bin_unit)
 
         bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
