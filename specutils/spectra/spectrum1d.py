@@ -132,8 +132,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @property
     def photon_flux(self):
-        return (self.flux/self.energy).to(
-            1.0/(self.spectral_axis.unit*u.s*(u.cm**2)))
+        return (self.flux/self.energy)
 
     @lazyproperty
     def bin_edges(self):

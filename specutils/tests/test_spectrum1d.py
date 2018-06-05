@@ -1,5 +1,6 @@
 import astropy.units as u
 import astropy.wcs as fitswcs
+import astropy.constants as const
 import gwcs
 import numpy as np
 import os
@@ -174,3 +175,11 @@ def test_read_linear_solution():
 
     assert spec.flux.size == spec.data.size
     assert spec.spectral_axis.size == spec.data.size
+
+
+def test_energy_photon_flux():
+    spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                      flux=np.random.randn(10))
+    assert spec.energy.size == 10
+    assert spec.photon_flux.size == 10
+    assert spec.photon_flux.unit = self.flux.unit/self.energy.unit
