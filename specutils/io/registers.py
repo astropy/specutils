@@ -8,6 +8,9 @@ from astropy.io import registry as io_registry
 from ..spectra.spectrum1d import Spectrum1D
 
 
+__all__ = ['data_loader', 'custom_writer']
+
+
 def data_loader(label, identifier=None, dtype=Spectrum1D):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom

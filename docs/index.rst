@@ -30,9 +30,15 @@ Using specutils
    arithmetic
    smoothing
 
+.. toctree::
+    :maxdepth: 1
+
+    high-level_API.rst
+
 
 Get Involved
 ------------
+
 
 Please see :doc:`contributing` for information on bug reporting and
 contributing to the specutils project.

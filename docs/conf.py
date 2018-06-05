@@ -27,6 +27,7 @@
 
 import datetime
 import os
+import six
 import sys
 
 try:
@@ -58,6 +59,13 @@ highlight_language = 'python3'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
+
+# We don't have references to `h5py` ... no need to load the intersphinx mapping file.
+del intersphinx_mapping['h5py']
+del intersphinx_mapping['matplotlib']
+
+# Extend astropy intersphinx_mapping with packages we use here
+intersphinx_mapping['gwcs'] = ('http://gwcs.readthedocs.io/en/latest/', None)
 
 # To perform a Sphinx version check that needs to be more specific than
 # major.minor, call `check_sphinx_version("x.y.z")` here.
@@ -179,3 +187,28 @@ if eval(setup_cfg.get('edit_on_github')):
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
+# -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
+#
+nitpicky = True
+nitpick_ignore = []
+
+# Some warnings are impossible to suppress, and you can list specific references
+# that should be ignored in a nitpick-exceptions file which should be inside
+# the docs/ directory. The format of the file should be:
+#
+# <type> <class>
+#
+# for example:
+#
+# py:class astropy.io.votable.tree.Element
+# py:class astropy.io.votable.tree.SimpleElement
+# py:class astropy.io.votable.tree.SimpleElementWithContent
+#
+# Uncomment the following lines to enable the exceptions:
+#
+# for line in open('nitpick-exceptions'):
+#     if line.strip() == "" or line.startswith("#"):
+#         continue
+#     dtype, target = line.split(None, 1)
+#     target = target.strip()
+#     nitpick_ignore.append((dtype, six.u(target)))
