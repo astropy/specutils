@@ -17,15 +17,15 @@ def convolution_smooth(spectrum, kernel):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
     kernel : `astropy.convolution.Kernel1D` subclass or array.
         The convolution based smoothing kernel - anything that `astropy.convolution.convolve` accepts.
 
     Returns
     -------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -45,27 +45,27 @@ def convolution_smooth(spectrum, kernel):
 
     # Return a new object with the smoothed flux.
     return Spectrum1D(flux=smoothed_flux, spectral_axis=spectrum.spectral_axis,
-                      wcs=spectrum.wcs, unit=spectrum.unit, 
-                      spectral_axis_unit=spectrum.spectral_axis_unit, 
+                      wcs=spectrum.wcs, unit=spectrum.unit,
+                      spectral_axis_unit=spectrum.spectral_axis_unit,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
 
 
 def box_smooth(spectrum, width):
     """
-    Smooth a `~specutils.spectra.Spectrum1D` instance based on a `astropy.convolution.Box1DKernel` kernel.
+    Smooth a `~specutils.Spectrum1D` instance based on a `astropy.convolution.Box1DKernel` kernel.
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.Spectrum1D`
+    spectrum : `~specutils.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     width : number
         The width of the kernel, in pixels, as defined in `astropy.convolution.Box1DKernel`
 
     Returns
     -------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which a copy of the one passed in with the updated flux.
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which a copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -87,19 +87,19 @@ def box_smooth(spectrum, width):
 
 def gaussian_smooth(spectrum, stddev):
     """
-    Smooth a `~specutils.spectra.Spectrum1D` instance based on a `astropy.convolution.Gaussian1DKernel`.
+    Smooth a `~specutils.Spectrum1D` instance based on a `astropy.convolution.Gaussian1DKernel`.
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.Spectrum1D`
+    spectrum : `~specutils.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     stddev : number
         The stddev of the kernel, in pixels, as defined in `astropy.convolution.Gaussian1DKernel`
 
     Returns
     -------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -125,15 +125,15 @@ def trapezoid_smooth(spectrum, width):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
     width : number
         The width of the kernel, in pixels, as defined in `astropy.convolution.Trapezoid1DKernel`
 
     Returns
     -------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -160,15 +160,15 @@ def median_smooth(spectrum, width):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        The `~specutils.spectra.Spectrum1D` object to which the smoothing will be applied.
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
     width : number
         The width of the median filter in pixels.
 
     Returns
     -------
-    spectrum : `~specutils.spectra.Spectrum1D`
-        Output `~specutils.spectra.Spectrum1D` which is copy of the one passed in with the updated flux.
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
 
     Raises
     ------
@@ -192,7 +192,7 @@ def median_smooth(spectrum, width):
 
     # Return a new object with the smoothed flux.
     return Spectrum1D(flux=smoothed_flux, spectral_axis=spectrum.spectral_axis,
-                      wcs=spectrum.wcs, unit=spectrum.unit, 
-                      spectral_axis_unit=spectrum.spectral_axis_unit, 
+                      wcs=spectrum.wcs, unit=spectrum.unit,
+                      spectral_axis_unit=spectrum.spectral_axis_unit,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
