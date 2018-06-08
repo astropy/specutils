@@ -2,10 +2,10 @@
 Spectral Smoothing
 ==================
 
-The spectral smoothing has two forms, 1) convolution based smoothing 
+The spectral smoothing has two forms, 1) convolution based smoothing
 using the `astropy.convolution` package and 2) median filter
 using the :func:`scipy.signal.medfilt`.  Each of these act on the flux
-of the :class:`~specutils.spectra.Spectrum1D` object.
+of the :class:`~specutils.Spectrum1D` object.
 
 .. note:: Specutils smoothing kernel widths and standard deviations are
              in units of pixels and not ``Quantity``.
@@ -13,12 +13,16 @@ of the :class:`~specutils.spectra.Spectrum1D` object.
 Convolution Based Smoothing
 ---------------------------
 
-While any kernel supported by `astropy.convolution` will work (using the `~specutils.manipulation.convolution_smooth` function), 
-several commonly-used kernels have convenience functions wrapping them to simplify the smoothing process into a simple 
-one-line operation.  Currently implemented are:
-:func:`~specutils.manipulation.box_smooth` (:class:`astropy.convolution.convolve.Box1DKernel`),  
-:func:`~specutils.manipulation.gaussian_smooth` (:class:`astropy.convolution.convolve.Gaussian1DKernel`),  
-and :func:`~specutils.manipulation.trapezoid_smooth` (:class:`astropy.convolution.convolve.Trapezoid1DKernel`).
+While any kernel supported by `astropy.convolution` will work (using the
+`~specutils.manipulation.convolution_smooth` function), several
+commonly-used kernels have convenience functions wrapping them to simplify
+the smoothing process into a simple one-line operation.  Currently
+implemented are: :func:`~specutils.manipulation.box_smooth`
+(:class:`~astropy.convolution.Box1DKernel`),
+:func:`~specutils.manipulation.gaussian_smooth`
+(:class:`~astropy.convolution.Gaussian1DKernel`), and
+:func:`~specutils.manipulation.trapezoid_smooth`
+(:class:`~astropy.convolution.Trapezoid1DKernel`).
 
 
 .. code-block:: python
@@ -45,8 +49,8 @@ and :func:`~specutils.manipulation.trapezoid_smooth` (:class:`astropy.convolutio
                 0.50453064, 0.46677128, 0.41125485, 0.34213489])
 
 
-Each of the specific smoothing methods create the appropriate `astropy.convolution.convolve` 
-kernel and then call a helper function :func:`~specutils.manipulation.convolution_smooth` 
+Each of the specific smoothing methods create the appropriate `astropy.convolution.convolve`
+kernel and then call a helper function :func:`~specutils.manipulation.convolution_smooth`
 that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 
 .. code-block:: python
@@ -70,7 +74,7 @@ Median Smoothing
 ----------------
 
 The median based smoothing  is implemented using `scipy.signal.medfilt` and
-has a similar call structure to the convolution-based smoothing methods. This 
+has a similar call structure to the convolution-based smoothing methods. This
 method applys the median filter across the flux.
 
 Note: This method is not flux conserving.
@@ -80,9 +84,14 @@ Note: This method is not flux conserving.
     >>> from specutils import Spectrum1D
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> from specutils.manipulation import median_smooth 
+    >>> from specutils.manipulation import median_smooth
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
     >>> spec1_msmooth = median_smooth(spec1, width=3)
 
+
+Reference/API
+-------------
+
 .. automodapi:: specutils.manipulation
+    :no-heading:
