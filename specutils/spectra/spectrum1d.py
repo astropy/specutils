@@ -10,6 +10,8 @@ from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
 
+__doctest_skip__ = ['Spectrum1D.spectral_resolution']
+
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
@@ -19,26 +21,26 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     ----------
     flux : `numpy.ndarray`-like or `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quanitty`
+    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quantity`
         Dispersion information with the same shape as the last (or only)
         dimension of flux.
-    wcs : `astropy.wcs.WCS` or `gwcs.WCS`
+    wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
         WCS information object.
     unit : str or `astropy.units.Unit`
         The unit for the flux data. Must be parseable by `astropy.units.Unit`.
-        If `flux` is supplied as a `astropy.units.Quantity`, this
+        If ``flux`` is supplied as a `~astropy.units.Quantity`, this
         is superceded by the defined unit.
     spectral_axis_unit : str or `astropy.units.Unit`
         The unit for the spectral axis. Must be parseable by `astropy.units.Unit`.
-        If `spectral_axis` is supplied as a `astropy.units.Quantity`, this
+        If ``spectral_axis`` is supplied as a `~astropy.units.Quantity`, this
         is superceded by the defined unit.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
-    rest_value : ~`astropy.units.Quantity`
+    rest_value : `~astropy.units.Quantity`
         Any quantity supported by the standard spectral equivalencies
         (wavelength, energy, frequency, wave number). Describes the rest value
         of the spectral axis for use with velocity conversions.
-    uncertainty : ~`astropy.nddata.NDUncertainty`
+    uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
         the unit defined in the flux.
@@ -86,7 +88,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(data=flux)
             return
         else:
-            # If not wcs and no spectral axis has been given, raise an error
+            # If no wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
 
@@ -195,29 +197,32 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
-        For example, to tabulate a binned resolution function at 6000A
-        covering +/-10A in 0.2A steps::
+        Examples
+        --------
 
-        R = spectrum1d.spectral_resolution(
-        ... 6000 * u.Angstrom, np.linspace(-10, 10, 51) * u.Angstrom)
-        assert R.shape == (50,)
-        assert np.allclose(R.sum(), 1.)
+        To tabulate a binned resolution function at 6000A covering +/-10A in
+        0.2A steps:
+
+        >>> R = spectrum1d.spectral_resolution(
+        ...     6000 * u.Angstrom, np.linspace(-10, 10, 51) * u.Angstrom)
+        >>> assert R.shape == (50,)
+        >>> assert np.allclose(R.sum(), 1.)
 
         To build a sparse resolution matrix for true wavelengths 4000-8000A
-        in 0.1A steps::
+        in 0.1A steps:
 
-        R = spectrum1d.spectral_resolution(
-        ... np.linspace(4000, 8000, 40001)[:, np.newaxis] * u.Angstrom,
-        ... np.linspace(-10, +10, 201) * u.Angstrom)
-        assert R.shape == (40000, 200)
-        assert np.allclose(R.sum(axis=1), 1.)
+        >>> R = spectrum1d.spectral_resolution(
+        ...     np.linspace(4000, 8000, 40001)[:, np.newaxis] * u.Angstrom,
+        ...     np.linspace(-10, +10, 201) * u.Angstrom)
+        >>> assert R.shape == (40000, 200)
+        >>> assert np.allclose(R.sum(axis=1), 1.)
 
         Parameters
         ----------
-        true_dispersion : ~`astropy.units.Quantity`
+        true_dispersion : `~astropy.units.Quantity`
             True value(s) of dispersion for which the resolution should be
             evaluated.
-        delta_dispersion : ~`astropy.units.Quantity`
+        delta_dispersion : `~astropy.units.Quantity`
             Array of (observed - true) dispersion bin edges to integrate the
             resolution probability density over.
         axis : int
@@ -231,5 +236,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             Array of dimensionless probabilities calculated as the integral of
             P(observed | true) over each bin in (observed - true). The output
             shape is the result of broadcasting the input shapes.
+
         """
         pass

@@ -12,6 +12,8 @@ DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
 DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
 DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
+__all__ = ['OneDSpectrumMixin']
+
 
 class OneDSpectrumMixin(object):
     @property
@@ -63,36 +65,57 @@ class OneDSpectrumMixin(object):
         return spectral_axis
 
     @property
+    def spectral_axis_unit(self):
+        """
+        Returns the units of the spectral axis.
+        """
+        return self.wcs.spectral_axis_unit
+
+    @property
     def flux(self):
         """
         Converts the stored data and unit information into a quantity.
 
         Returns
         -------
-        ~`astropy.units.Quantity`
+        `~astropy.units.Quantity`
             Spectral data as a quantity.
         """
         return u.Quantity(self.data, unit=self.unit)
 
-    def to_flux(self, unit):
+    def to_flux(self, unit, equivalencies=None, suppress_conversion=False):
         """
         Converts the flux data to the specified unit.
 
         Parameters
         ----------
-        unit : str or ~`astropy.units.Unit`
+        unit : str or `~astropy.units.Unit`
             The unit to conver the flux array to.
+
+        equivalencies : list of equivalencies
+            Custom equivalencies to apply to conversions.
+            Set to spectral_density by default.
+
+        suppress_conversion : bool
+            Set to true if updating the unit without
+            converting data values.
 
         Returns
         -------
-        ~`astropy.units.Quantity`
+        `~astropy.units.Quantity`
             The converted flux array.
         """
-        new_data = self.flux.to(
-            unit, equivalencies=eq.spectral_density(self.spectral_axis))
+        if not suppress_conversion:
+            if equivalencies is None:
+                equivalencies = eq.spectral_density(self.spectral_axis)
 
-        self._data = new_data.value
-        self._unit = new_data.unit
+            new_data = self.flux.to(
+                unit, equivalencies=equivalencies)
+
+            self._data = new_data.value
+            self._unit = new_data.unit
+        else:
+            self._unit = u.Unit(unit)
 
         return self.flux
 

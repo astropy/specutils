@@ -71,3 +71,8 @@ Arithmetic operations also support the propagation of unceratinty information.
                    0.12725778, 0.06720435, 0.06568154, 0.06233969,
                    0.04384698, 0.10648737])
 
+
+Reference/API
+-------------
+.. automodapi:: specutils.spectra.spectrum_mixin
+    :no-heading:

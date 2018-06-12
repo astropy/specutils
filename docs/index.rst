@@ -28,10 +28,17 @@ Using specutils
    custom_loading
    basic_analysis
    arithmetic
+   smoothing
+
+.. toctree::
+    :maxdepth: 1
+
+    high-level_API.rst
 
 
 Get Involved
 ------------
 
-Please see :ref:`contributing` for information on bug reporting and
+
+Please see :doc:`contributing` for information on bug reporting and
 contributing to the specutils project.
