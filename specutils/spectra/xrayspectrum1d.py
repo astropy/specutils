@@ -234,7 +234,7 @@ class ResponseMatrix(object):
             The number of channels in the detector
 
         """
-        self.filename = ""
+        self.filename = filename
         self.offset = None
         self.n_grp = None
         self.f_chan = None
@@ -251,7 +251,6 @@ class ResponseMatrix(object):
         # which contains the redistribution matrix and
         # anxillary information
         hdulist = fits.open(filename)
-        self.filename = filename
 
         # get all the extension names
         extnames = np.array([h.name for h in hdulist])
@@ -497,7 +496,7 @@ class AreaResponse(object):
             Average exposure time for the dataset
             (takes telescope dithering into account)
         """
-        self.filename = ""
+        self.filename = filename
         self.e_low = None
         self.e_high = None
         self.e_unit = None
@@ -511,7 +510,6 @@ class AreaResponse(object):
         # which contains the redistribution matrix and
         # anxillary information
         hdulist = fits.open(filename)
-        self.filename = filename
 
         h = hdulist["SPECRESP"]
         data = h.data
