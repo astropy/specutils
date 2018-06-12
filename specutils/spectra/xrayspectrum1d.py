@@ -187,9 +187,6 @@ class XraySpectrum1D(Spectrum1D):
 
 class ResponseMatrix(object):
     def __init__(self, filename):
-        self._load_rmf(filename)
-
-    def _load_rmf(self, filename, extension=None):
         """
         Load a response matrix file (RMF) from a FITS file.
 
@@ -237,6 +234,19 @@ class ResponseMatrix(object):
             The number of channels in the detector
 
         """
+        self.filename = ""
+        self.offset = None
+        self.n_grp = None
+        self.f_chan = None
+        self.n_chan = None
+        self.matrix = None
+        self.energ_lo = None
+        self.energ_hi = None
+        self.energ_unit = None
+        self.detchans = None
+        self._load_rmf(filename)
+
+    def _load_rmf(self, filename, extension=None):
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
@@ -452,11 +462,6 @@ class ResponseMatrix(object):
 class AreaResponse(object):
 
     def __init__(self, filename):
-
-        self._load_arf(filename)
-        pass
-
-    def _load_arf(self, filename):
         """
         Load an area response file (ARF) from a FITS file.
 
@@ -492,6 +497,16 @@ class AreaResponse(object):
             Average exposure time for the dataset
             (takes telescope dithering into account)
         """
+        self.filename = ""
+        self.e_low = None
+        self.e_high = None
+        self.e_unit = None
+        self.specresp = None
+        self.fracexpo = None
+        self.exposure = None
+        self._load_arf(filename)
+
+    def _load_arf(self, filename):
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
