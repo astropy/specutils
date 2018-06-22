@@ -11,8 +11,9 @@ a separate python file and place the file in their ``~/.specutils`` directory.
 
 Loading from a FITS File
 ------------------------
-A spectra with a *Linear Wavelength Solution* can be read using the `Spectrum1D.read`
-function to parse the file name and format
+A spectra with a *Linear Wavelength Solution* can be read using the ``read``
+method of the :class:`~specutils.Spectrum1D` class to parse the file name and
+format
 
 
 .. code-block:: python
@@ -25,7 +26,7 @@ function to parse the file name and format
   spec = Spectrum1D.read(file_path, format='wcs1d-fits')
 
 
-This will create a `Spectrum1D` object that you can manipulate later.
+This will create a :class:`~specutils.Spectrum1D` object that you can manipulate later.
 
 For instance, you could plot the spectrum.
 
