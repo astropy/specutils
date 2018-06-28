@@ -79,7 +79,7 @@ class GWCSAdapter(WCSAdapter):
     def with_spectral_unit(self, unit, rest_value=None, velocity_convention=None):
         """
         """
-        if isinstance(unit, u.Unit) and unit.is_equivalent(
+        if isinstance(unit, u.UnitBase) and unit.is_equivalent(
                 self._wcs_unit, equivalencies=u.spectral()):
             return self.__class__(self.wcs, unit=unit)
 

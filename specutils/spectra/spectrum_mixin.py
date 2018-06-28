@@ -214,7 +214,7 @@ class OneDSpectrumMixin(object):
     def _new_wcs_argument_validation(self, unit, velocity_convention,
                                      rest_value):
         # Allow string specification of units, for example
-        if not isinstance(unit, u.Unit):
+        if not isinstance(unit, u.UnitBase):
             unit = u.Unit(unit)
 
         # Velocity conventions: required for frq <-> velo
