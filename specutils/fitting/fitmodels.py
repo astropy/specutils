@@ -1,14 +1,10 @@
 from __future__ import division
 
-import itertools
-import operator
-
 import numpy as np
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.utils import excise_regions
 from astropy.modeling import fitting
-import astropy.units as u
 
 
 __all__ = ['fit_lines']
@@ -80,8 +76,6 @@ def fit_lines(spectrum, model, fitter=fitting.SLSQPLSQFitter(),
 
     for modeli, model_guess in enumerate(model):
 
-        print('Window is {}'.format(window))
-
         #
         # Determine the window if it is not None.  There
         # are several options here:
@@ -101,17 +95,13 @@ def fit_lines(spectrum, model, fitter=fitting.SLSQPLSQFitter(),
         else:
             model_window = None
 
-        print('Model window is {}'.format(model_window))
-
         # In this case the window defines the area around the center of each model
         if model_window is not None and isinstance(model_window, (float, int)):
             center = model_guess.mean.value
-            print('model_guaess is {}  model_window is {}'.format(center, model_window))
             indices = np.nonzero((dispersion >= center-model_window) & (dispersion < center+model_window))
 
             dispersion = dispersion[indices]
             flux = flux[indices]
-            print('Going to fit to dispersion {}'.format(dispersion))
 
         # In this case the window is the start and end points of where we should fit
         elif model_window is not None and isinstance(model_window, tuple):
