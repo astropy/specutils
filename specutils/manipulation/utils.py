@@ -41,23 +41,27 @@ def linear_exciser(spectrum, region):
     # Find the indices of the wavelengths in the range `range`
     #
 
-    wavelengths = spectrum.spectral_axis
-    wavelengths_in = (wavelengths > range[0]) & (wavelengths < range[1])
+    wavelengths = spectrum.spectral_axis.value
+    wavelengths_in = (wavelengths >= region[0]) & (wavelengths < region[1])
     inclusive_indices = np.nonzero(wavelengths_in)[0]
+    print('wavelengths in region {} are {}'.format(region, wavelengths_in))
 
     #
     # Now set the flux values for these indices to be a
     # linear range
     #
 
-    s, e = inclusive_indices[0]-1, inclusive_indices[1]+1
+    s, e = inclusive_indices[0]-1, inclusive_indices[-1]+1
 
-    flux = spectrum.flux
+    flux = spectrum.flux.value
     modified_flux = flux
-    modified_flux[s:e] = np.linspace(flux[s], flux[e], len(inclusive_indices))
+    print('s {}  e {} len(inc_inds) {}'.format(s, e, len(inclusive_indices)))
+    print('flux {}'.format(flux))
+    print('flux[s] {}'.format(flux[s]))
+    modified_flux[s:e] = np.linspace(flux[s], flux[e], len(inclusive_indices)+1)
 
     # Return a new object with the regions excised.
-    return Spectrum1D(flux=modified_flux, spectral_axis=wavelengths,
+    return Spectrum1D(flux=modified_flux*spectrum.flux.unit, spectral_axis=wavelengths,
                       wcs=spectrum.wcs, unit=spectrum.unit,
                       spectral_axis_unit=spectrum.spectral_axis_unit,
                       velocity_convention=spectrum.velocity_convention,
@@ -84,8 +88,7 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
-        default: linear_exciser
-
+        default: linear_exciser 
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
@@ -101,9 +104,6 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
     # Parameter checks
     if not isinstance(spectrum, Spectrum1D):
         raise ValueError('The spectrum parameter must be Spectrum1D object.')
-
-    if not isinstance(regions, list):
-        raise ValueError('The regions parameter must be a list of 2-tuples.')
 
     for region in regions:
         spectrum = excise_region(spectrum, region, exciser)
@@ -148,7 +148,7 @@ def excise_region(spectrum, region, exciser=linear_exciser):
     if not isinstance(spectrum, Spectrum1D):
         raise ValueError('The spectrum parameter must be Spectrum1D object.')
 
-    if not isinstance(region, tuple) or not len(region) == 2:
+    if not len(region) == 2:
         raise ValueError('The region parameter must be a 2-tuples of start and end wavelengths.')
 
     #
