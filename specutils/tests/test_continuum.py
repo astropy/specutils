@@ -1,10 +1,8 @@
-import astropy.units as u
-from astropy.modeling import models, fitting
 import numpy as np
 
-from specutils.tests.spectral_examples import simulated_spectra
 from specutils.spectra.spectrum1d import Spectrum1D
 from specutils.fitting.continuum import fit_continuum_generic
+
 
 def single_peak_continuum():
     np.random.seed(0)
@@ -36,4 +34,4 @@ def test_continuum_fit():
                3.29625438, 3.35904898, 3.38512587, 3.36964273, 3.30775726,
                3.19462717, 3.02541014, 2.79526388, 2.49934609, 2.13281445])
 
-    assert np.allclose(y_continuum_fitted[::10], y_continuum_fitted_expected)
+    assert np.allclose(y_continuum_fitted[::10], y_continuum_fitted_expected, atol=1e-5)

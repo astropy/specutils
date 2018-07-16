@@ -59,7 +59,7 @@ def test_single_peak_fit():
                2.91286375e+00, 2.89719280e+00, 1.96758892e+00, 9.12412206e-01,
                2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04])
 
-    assert np.allclose(y_single_fit[::10], y_single_fit_expected)
+    assert np.allclose(y_single_fit[::10], y_single_fit_expected, atol=1e-3)
 
 
 def test_single_peak_fit_window():
@@ -81,7 +81,7 @@ def test_single_peak_fit_window():
            2.90430306e+00, 2.89488656e+00, 1.98047026e+00, 9.29934277e-01,
            2.99697654e-01, 6.62920712e-02, 1.00643791e-02, 1.04871999e-03])
 
-    assert np.allclose(y_single_fit[::10], y_single_fit_expected)
+    assert np.allclose(y_single_fit[::10], y_single_fit_expected, atol=1e-3)
 
 
 def test_single_peak_fit_tuple_window():
@@ -103,7 +103,7 @@ def test_single_peak_fit_tuple_window():
            2.81787042e+00, 2.92075452e+00, 1.89302084e+00, 7.67188406e-01,
            1.94417326e-01, 3.08073399e-02, 3.05252853e-03, 1.89126142e-04])
 
-    assert np.allclose(y_single_fit[::10], y_single_fit_expected)
+    assert np.allclose(y_single_fit[::10], y_single_fit_expected, atol=1e-3)
 
 
 def test_double_peak_fit():
@@ -126,7 +126,7 @@ def test_double_peak_fit():
                1.25211690e-004, 2.72881561e-016, 7.82165893e-031, 2.53533026e-047,
                2.11308760e-067, 4.52830712e-091, 2.49510977e-118, 3.53491398e-149])
 
-    assert np.allclose(y12_double_fit[::10], y12_double_fit_expected)
+    assert np.allclose(y12_double_fit[::10], y12_double_fit_expected, atol=1e-3)
 
 
 def test_double_peak_fit_tuple_window():
@@ -147,7 +147,8 @@ def test_double_peak_fit_tuple_window():
                3.26025884e-005, 7.16287502e-002, 8.85143615e-001, 6.15221044e-002,
                2.40513633e-005, 5.28858259e-011, 6.54078626e-019, 4.55000316e-029,
                1.78026443e-041, 3.91785542e-056, 4.84957155e-073, 3.37636518e-092])
-    assert np.allclose(y2_double_fit[::10], y2_double_fit_expected)
+
+    assert np.allclose(y2_double_fit[::10], y2_double_fit_expected, atol=1e-3)
 
 
 def test_double_peak_fit_window():
@@ -168,7 +169,8 @@ def test_double_peak_fit_window():
                2.31921800e-008, 1.94840077e-002, 9.23139096e-001, 2.46665339e-003,
                3.71707429e-010, 3.15897717e-021, 1.51406271e-036, 4.09254414e-056,
                6.23871307e-080, 5.36350616e-108, 2.60048700e-140, 7.11070597e-177])
-    assert np.allclose(y2_double_fit[::10], y2_double_fit_expected)
+
+    assert np.allclose(y2_double_fit[::10], y2_double_fit_expected, atol=1e-3)
 
 
 def test_double_peak_fit_separate_window():
@@ -192,7 +194,7 @@ def test_double_peak_fit_separate_window():
                7.56902561e-016, 5.08187488e-033, 1.23277138e-056, 1.08047743e-086,
                3.42155430e-123, 3.91476554e-166, 1.61831351e-215, 2.41709735e-271])
 
-    assert np.allclose(yl_double_fit[::10], yl_double_fit_expected)
+    assert np.allclose(yl_double_fit[::10], yl_double_fit_expected, atol=1e-3)
 
     # Comparing every 10th value.
     yr_double_fit_expected = np.array([6.44733204e-153, 2.26531185e-125, 1.44273676e-100, 1.66554871e-078,
@@ -201,7 +203,7 @@ def test_double_peak_fit_separate_window():
                2.55206011e-003, 1.12816484e-008, 9.03993610e-017, 1.31301384e-027,
                3.45688068e-041, 1.64972143e-057, 1.42707890e-076, 2.23767235e-098])
 
-    assert np.allclose(yr_double_fit[::10], yr_double_fit_expected)
+    assert np.allclose(yr_double_fit[::10], yr_double_fit_expected, atol=1e-3)
 
 
 def test_double_peak_fit_separate_window_tuple_window():
@@ -225,7 +227,7 @@ def test_double_peak_fit_separate_window_tuple_window():
                2.12798732e-004, 2.54779195e-015, 3.77506978e-033, 6.92232688e-058,
                1.57088835e-089, 4.41168638e-128, 1.53331026e-173, 6.59510245e-226])
 
-    assert np.allclose(y1_double_fit[::10], y1_double_fit_expected)
+    assert np.allclose(y1_double_fit[::10], y1_double_fit_expected, atol=1e-3)
 
     # Comparing every 10th value.
     y2_double_fit_expected = np.array([0.00000000e+000, 0.00000000e+000, 0.00000000e+000, 1.22905611e-250,
@@ -234,7 +236,7 @@ def test_double_peak_fit_separate_window_tuple_window():
            1.84106884e-028, 1.31056734e-058, 1.00714783e-099, 8.35548514e-152,
            7.48332638e-215, 7.23539540e-289, 0.00000000e+000, 0.00000000e+000])
 
-    assert np.allclose(y2_double_fit[::10], y2_double_fit_expected)
+    assert np.allclose(y2_double_fit[::10], y2_double_fit_expected, atol=1e-3)
 
 
 def test_double_peak_fit_with_exclusion():
@@ -256,4 +258,4 @@ def test_double_peak_fit_with_exclusion():
                2.09501379e-04, 6.37503889e-09, 2.99976192e-15, 2.18272355e-23,
                2.45594524e-33, 4.27313508e-45, 1.14969479e-58, 4.78328766e-74])
 
-    assert np.allclose(y1_double_fit[::10], y1_double_fit_expected)
+    assert np.allclose(y1_double_fit[::10], y1_double_fit_expected, atol=1e-3)
