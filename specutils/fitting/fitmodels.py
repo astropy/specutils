@@ -11,11 +11,11 @@ from astropy.modeling import fitting
 import astropy.units as u
 
 
-__all__ = ['fit_models']
+__all__ = ['fit_lines']
 
 
-def fit_models(spectrum, model, fitter=fitting.SLSQPLSQFitter(),
-               exclude_regions=None, weights=None, window=None):
+def fit_lines(spectrum, model, fitter=fitting.SLSQPLSQFitter(),
+              exclude_regions=None, weights=None, window=None):
     """
     Fit the input models (initial conditions) to the spectrum.  Output will be
     the same models with the parameters set based on the fitting.

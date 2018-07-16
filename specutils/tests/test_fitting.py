@@ -3,7 +3,7 @@ import numpy as np
 
 from specutils.tests.spectral_examples import simulated_spectra
 from specutils.spectra.spectrum1d import Spectrum1D
-from specutils.fitting import fit_models
+from specutils.fitting import fit_lines
 
 
 def single_peak():
@@ -49,7 +49,7 @@ def test_single_peak_fit():
     s_single = Spectrum1D(flux=y_single, spectral_axis=x_single)
 
     g_init = models.Gaussian1D(amplitude=3., mean=5.5, stddev=1.)
-    g_fit = fit_models(s_single, g_init)
+    g_fit = fit_lines(s_single, g_init)
     y_single_fit = g_fit(x_single)
 
     # Comparing every 10th value.
@@ -71,7 +71,7 @@ def test_single_peak_fit_window():
     s_single = Spectrum1D(flux=y_single, spectral_axis=x_single)
 
     g_init = models.Gaussian1D(amplitude=3., mean=5.5, stddev=1.)
-    g_fit = fit_models(s_single, g_init, window=2)
+    g_fit = fit_lines(s_single, g_init, window=2)
     y_single_fit = g_fit(x_single)
 
     # Comparing every 10th value.
@@ -93,7 +93,7 @@ def test_single_peak_fit_tuple_window():
     s_single = Spectrum1D(flux=y_single, spectral_axis=x_single)
 
     g_init = models.Gaussian1D(amplitude=3., mean=5.5, stddev=1.)
-    g_fit = fit_models(s_single, g_init, window=(6, 7))
+    g_fit = fit_lines(s_single, g_init, window=(6, 7))
     y_single_fit = g_fit(x_single)
 
     # Comparing every 10th value.
@@ -116,7 +116,7 @@ def test_double_peak_fit():
 
     g1_init = models.Gaussian1D(amplitude=2., mean=5.8, stddev=0.2)
     g2_init = models.Gaussian1D(amplitude=1., mean=4.5, stddev=0.2)
-    g12_fit = fit_models(s_double, g1_init+g2_init)
+    g12_fit = fit_lines(s_double, g1_init+g2_init)
     y12_double_fit = g12_fit(x_double)
 
     # Comparing every 10th value.
@@ -138,7 +138,7 @@ def test_double_peak_fit_tuple_window():
     s_double = Spectrum1D(flux=y_double, spectral_axis=x_double, rest_value=0)
 
     g2_init = models.Gaussian1D(amplitude=1., mean=4.7, stddev=0.2)
-    g2_fit = fit_models(s_double, g2_init, window=(4.3, 5.3))
+    g2_fit = fit_lines(s_double, g2_init, window=(4.3, 5.3))
     y2_double_fit = g2_fit(x_double)
 
     # Comparing every 10th value.
@@ -159,7 +159,7 @@ def test_double_peak_fit_window():
     s_double = Spectrum1D(flux=y_double, spectral_axis=x_double, rest_value=0)
 
     g2_init = models.Gaussian1D(amplitude=1., mean=4.7, stddev=0.2)
-    g2_fit = fit_models(s_double, g2_init, window=0.3)
+    g2_fit = fit_lines(s_double, g2_init, window=0.3)
     y2_double_fit = g2_fit(x_double)
 
     # Comparing every 10th value.
@@ -181,7 +181,7 @@ def test_double_peak_fit_separate_window():
 
     gl_init = models.Gaussian1D(amplitude=1., mean=4.8, stddev=0.2)
     gr_init = models.Gaussian1D(amplitude=2., mean=5.3, stddev=0.2)
-    gl_fit, gr_fit = fit_models(s_double, [gl_init, gr_init], window=0.2)
+    gl_fit, gr_fit = fit_lines(s_double, [gl_init, gr_init], window=0.2)
     yl_double_fit = gl_fit(x_double)
     yr_double_fit = gr_fit(x_double)
 
@@ -214,7 +214,7 @@ def test_double_peak_fit_separate_window_tuple_window():
 
     g1_init = models.Gaussian1D(amplitude=2., mean=5.3, stddev=0.2)
     g2_init = models.Gaussian1D(amplitude=1., mean=4.9, stddev=0.1)
-    g1_fit, g2_fit = fit_models(s_double, [g1_init, g2_init], window=[(5.3, 5.8), (4.6, 5.3)])
+    g1_fit, g2_fit = fit_lines(s_double, [g1_init, g2_init], window=[(5.3, 5.8), (4.6, 5.3)])
     y1_double_fit = g1_fit(x_double)
     y2_double_fit = g2_fit(x_double)
 
@@ -246,7 +246,7 @@ def test_double_peak_fit_with_exclusion():
     s_double = Spectrum1D(flux=y_double, spectral_axis=x_double, rest_value=0)
 
     g1_init = models.Gaussian1D(amplitude=1., mean=4.9, stddev=0.2)
-    g1_fit = fit_models(s_double, g1_init, exclude_regions=[(5.2, 5.8)])
+    g1_fit = fit_lines(s_double, g1_init, exclude_regions=[(5.2, 5.8)])
     y1_double_fit = g1_fit(x_double)
 
     # Comparing every 10th value.
