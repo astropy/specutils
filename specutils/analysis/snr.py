@@ -70,6 +70,9 @@ def _snr(spectrum, region=None, noise_region=None):
     spectrum : ``specutils.spectra.spectrum1d.Spectrum1D``
         The spectrum object overwhich the equivalent width will be calculated.
 
+    region: 2-tuple or list of 2-tuples
+        Region within the spectrum to calculate the SNR.
+
     noise_region: 2-tuple
         Region within the spectrum from which to calculate the noise (based on standard deviation
         of the flux values)
@@ -92,13 +95,13 @@ def _snr(spectrum, region=None, noise_region=None):
 
     flux = calc_spectrum.flux
 
-    # If a `noise_region` is defined then calculate the standard deviation
-    # in the `noise_region` and use that as the uncertainty.
+    # If a noise_region is defined then calculate the standard deviation
+    # in the noise_region and use that as the uncertainty.
     if noise_region is not None:
         spectrum_noise_region = excise_region(spectrum, noise_region)
         uncertainty = np.std(spectrum_noise_region.flux)
 
-    # If `noise_region` is not defined then use the Uncertainty in the spectrum.
+    # If noise_region is not defined then use the Uncertainty in the spectrum.
     else:
         uncertainty = calc_spectrum.uncertainty.array*spectrum.uncertainty.unit
 
