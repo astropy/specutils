@@ -39,9 +39,9 @@ def snr(spectrum, region=None, noise_region=None):
           This will compute the mean of the flux / uncertainty.
 
       2) SNR based on noise_region
-          This will compute the standard devation of the flux in the `noise_region`
-          and the mean of the flux in the `region` and then return the mean flux divided
-          by the standard deviation of the `noise_region` flux.
+          This will compute the standard devation of the flux in the noise_region
+          and the mean of the flux in the region and then return the mean flux divided
+          by the standard deviation of the noise_region flux.
 
     """
 
