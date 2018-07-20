@@ -12,7 +12,7 @@ def excise_region(spectrum, region):
     spectrum: ``specutils.spectra.spectrum1d.Spectrum1D``
         The spectrum object from which the region will be excised.
 
-    region: 2-tuple
+    region: ``specutils.utils.SpectralRegion``
         The lower and upper disperion values (with ``astropy.units`` units)
 
     Return
@@ -27,24 +27,17 @@ def excise_region(spectrum, region):
 
     """
 
-    #
-    # Check units
-    #
-
-    if not isinstance(region[0], u.Quantity) or not isinstance(region[1], u.Quantity):
-        raise ValueError('Region start and end must be in astropy units')
-
     dispersion = spectrum.spectral_axis
 
-    left_index = np.nonzero(dispersion >= region[0])
+    left_index = np.nonzero(dispersion >= region.lower)
     if len(left_index) == 0:
-        raise ValueError('No dispersion values greater than {}'.format(region[0]))
+        raise ValueError('No dispersion values greater than {}'.format(region.lower))
     else:
         left_index = left_index[0][0]
 
-    right_index = np.nonzero(dispersion < region[1])
+    right_index = np.nonzero(dispersion < region.upper)
     if len(right_index) == 0:
-        raise ValueError('No dispersion values less than {}'.format(region[1]))
+        raise ValueError('No dispersion values less than {}'.format(region.upper))
     else:
         right_index = right_index[0][-1]
 

@@ -9,6 +9,7 @@ from ..spectra.spectrum1d import Spectrum1D
 from astropy.nddata import StdDevUncertainty
 import astropy.units as u
 from ..analysis import equivalent_width, snr
+from ..utils import SpectralRegion
 
 
 def test_equivalent_width():
@@ -72,7 +73,7 @@ def test_snr_single_region(simulated_spectra):
 
     np.random.seed(42)
 
-    region = (0.52*u.um, 0.59*u.um)
+    region = SpectralRegion(0.52*u.um, 0.59*u.um)
     
     #
     #  Set up the data
@@ -85,8 +86,8 @@ def test_snr_single_region(simulated_spectra):
     wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
-    l = np.nonzero(wavelengths>region[0])[0][0]
-    r = np.nonzero(wavelengths<region[1])[0][-1]
+    l = np.nonzero(wavelengths>region.lower)[0][0]
+    r = np.nonzero(wavelengths<region.upper)[0][-1]
 
     spec_snr_expected = np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit))
 
@@ -110,7 +111,7 @@ def test_snr_two_regions(simulated_spectra):
     # Set the regions over which the SNR is calculated
     #
 
-    regions = [(0.52*u.um, 0.59*u.um), (0.8*u.um, 0.9*u.um)]
+    regions = [SpectralRegion(0.52*u.um, 0.59*u.um), SpectralRegion(0.8*u.um, 0.9*u.um)]
     
     #
     #  Set up the data
@@ -126,8 +127,8 @@ def test_snr_two_regions(simulated_spectra):
     spec_snr_expected = []
     for region in regions:
 
-        l = np.nonzero(wavelengths>region[0])[0][0]
-        r = np.nonzero(wavelengths<region[1])[0][-1]
+        l = np.nonzero(wavelengths>region.lower)[0][0]
+        r = np.nonzero(wavelengths<region.upper)[0][-1]
 
         spec_snr_expected.append(np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit)))
 
@@ -147,8 +148,8 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
 
     np.random.seed(42)
 
-    region = (0.52*u.um, 0.59*u.um)
-    noise_region = (0.40*u.um, 0.45*u.um)
+    region = SpectralRegion(0.52*u.um, 0.59*u.um)
+    noise_region = SpectralRegion(0.40*u.um, 0.45*u.um)
     
     #
     #  Set up the data
@@ -161,11 +162,11 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
     wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
-    l = np.nonzero(wavelengths>=region[0])[0][0]
-    r = np.nonzero(wavelengths<region[1])[0][-1]
+    l = np.nonzero(wavelengths>=region.lower)[0][0]
+    r = np.nonzero(wavelengths<region.upper)[0][-1]
 
-    noise_l = np.nonzero(wavelengths>=noise_region[0])[0][0]
-    noise_r = np.nonzero(wavelengths<noise_region[1])[0][-1]
+    noise_l = np.nonzero(wavelengths>=noise_region.lower)[0][0]
+    noise_r = np.nonzero(wavelengths<noise_region.upper)[0][-1]
 
     spec_snr_expected = np.mean(flux[l:r] / np.std(flux[noise_l:noise_r]))
 

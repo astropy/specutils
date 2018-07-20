@@ -1,15 +1,14 @@
-from __future__ import division
-
 import numpy as np
 import astropy.units as u
 from ..manipulation import excise_region
+from ..utils import SpectralRegion
 
 __all__ = ['snr']
 
 
 def snr(spectrum, region=None, noise_region=None):
     """
-    Calculate the mean S/N of the spectrum based on the flux and uncertainty in the spectrum. This will 
+    Calculate the mean S/N of the spectrum based on the flux and uncertainty in the spectrum. This will
     be calculated over the regions, if they are specified.
 
     Parameters
@@ -17,10 +16,10 @@ def snr(spectrum, region=None, noise_region=None):
     spectrum : ``specutils.spectra.spectrum1d.Spectrum1D``
         The spectrum object overwhich the equivalent width will be calculated.
 
-    region: 2-tuple or list of 2-tuples
+    region: ``specutils.utils.SpectralRegion`` or list of ``specutils.utils.SpectralRegion``
         Region within the spectrum to calculate the SNR.
 
-    noise_region: 2-tuple
+    noise_region: ``specutils.utils.SpectralRegion``
         Region within the spectrum from which to calculate the noise (based on standard deviation
         of the flux values)
 
@@ -50,7 +49,7 @@ def snr(spectrum, region=None, noise_region=None):
         return _snr(spectrum, noise_region=noise_region)
 
     # Single region
-    elif isinstance(region, tuple):
+    elif isinstance(region, SpectralRegion):
         return _snr(spectrum, region=region, noise_region=noise_region)
 
     # List of regions
@@ -70,10 +69,10 @@ def _snr(spectrum, region=None, noise_region=None):
     spectrum : ``specutils.spectra.spectrum1d.Spectrum1D``
         The spectrum object overwhich the equivalent width will be calculated.
 
-    region: 2-tuple or list of 2-tuples
+    region: ``specutils.utils.SpectralRegion``
         Region within the spectrum to calculate the SNR.
 
-    noise_region: 2-tuple
+    noise_region: ``specutils.utils.SpectralRegion``
         Region within the spectrum from which to calculate the noise (based on standard deviation
         of the flux values)
 
