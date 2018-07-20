@@ -1,6 +1,4 @@
 import numpy as np
-import astropy.units as u
-from ..manipulation import excise_region
 from ..utils import SpectralRegion
 
 __all__ = ['snr']
@@ -60,6 +58,7 @@ def snr(spectrum, region=None, noise_region=None):
             snrs.append(_snr(spectrum, region=reg, noise_region=noise_region))
         return snrs
 
+
 def _snr(spectrum, region=None, noise_region=None):
     """
     Calculate the mean S/N of the spectrum based on the flux and uncertainty in the spectrum.
@@ -88,7 +87,7 @@ def _snr(spectrum, region=None, noise_region=None):
     """
 
     if region is not None:
-        calc_spectrum = excise_region(spectrum, region)
+        calc_spectrum = region.excise(spectrum)
     else:
         calc_spectrum = spectrum
 
@@ -97,11 +96,11 @@ def _snr(spectrum, region=None, noise_region=None):
     # If a noise_region is defined then calculate the standard deviation
     # in the noise_region and use that as the uncertainty.
     if noise_region is not None:
-        spectrum_noise_region = excise_region(spectrum, noise_region)
+        spectrum_noise_region = noise_region.excise(spectrum)
         uncertainty = np.std(spectrum_noise_region.flux)
 
     # If noise_region is not defined then use the Uncertainty in the spectrum.
     else:
-        uncertainty = calc_spectrum.uncertainty.array*spectrum.uncertainty.unit
+        uncertainty = calc_spectrum.uncertainty.array * spectrum.uncertainty.unit
 
     return np.mean(flux / uncertainty)

@@ -1,3 +1,4 @@
+import numpy as np
 import astropy.units as u
 
 
@@ -84,3 +85,32 @@ class SpectralRegion:
             raise TypeError('Upper bound of the region must have an astropy.units unit')
 
         self._upper = value
+
+    def excise(self, spectrum):
+        """
+        Excise a spectral region from the spectrum.
+
+        Parameters
+        ----------
+        spectrum: ``specutils.spectra.spectrum1d.Spectrum1D``
+            The spectrum object from which the region will be excised.
+
+        Return
+        ------
+        spectrum: ``specutils.spectra.spectrum1d.Spectrum1D``
+            Excised spectrum.
+
+        Notes
+        -----
+        The region excised is a discrete subset of the input spectrum. No interpolation is done
+        on the left and right side of the spectrum.
+
+        """
+
+        left_index = int(np.ceil(spectrum.wcs.world_to_pixel(np.array(self._lower))))
+        right_index = int(np.floor(spectrum.wcs.world_to_pixel(np.array(self._upper))))
+
+        if left_index >= right_index:
+            raise ValueError('Lower region, {}, appears to be greater than the upper region, {}.'.format(self._lower, self._upper))
+
+        return spectrum[left_index:right_index]
