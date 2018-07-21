@@ -5,6 +5,8 @@ Basic Analysis
 The specutils package comes with a few basic spectral analytic functions.
 More extensive and involve analysis techniques will be available in another
 package, `specreduce <https://github.com/astropy/specreduce>`_.
+We also recommend that you consider the astropy affiliated package
+`linetools <https://github.com/linetools/linetools>`_.
 
 Specutils supports some built-in callable functions for basic calculations
 over the given spectrum object.
