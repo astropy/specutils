@@ -16,7 +16,8 @@ with the goal of providing a shared set of Python representations of
 astronomical spectra and basic tools to operate on these spectra. The effort is
 also meant to be a "hub", helping to unite the Python astronomical spectroscopy
 community around shared effort, much as Astropy is meant to for the wider
-astronomy Python ecosystem.
+astronomy Python ecosystem. This broader effort is outlined in the
+`APE13 document <https://github.com/astropy/astropy-APEs/blob/master/APE13.rst>`_.
 
 Note that Specutils is not intended to meet all possible spectroscopic analysis or
 reduction needs. While it provides some standard analysis functionality
