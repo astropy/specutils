@@ -11,7 +11,8 @@ Specutils
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org/
 
-Specutils is an Astropy affiliated package with the goal of providing a shared
+Specutils is an `Astropy affiliated package <http://affiliated.astropy.org/>`_
+ with the goal of providing a shared
 set of Python representations of astronomical spectra and basic tools to
 operate on these spectra. The effort is also meant to be a "hub", helping to
 unite the Python astronomical spectroscopy community around shared effort,
@@ -22,6 +23,14 @@ reduction tool. While it provides some basic analysis (following the Python
 philosophy of "batteries included"), it is also meant to facilitate connecting
 together disparate reduction pipelines and analysis tools through shared data
 representations.
+
+Getting Started with Specutils
+------------------------------
+
+For details on installing and using Specutils, see the
+`specutils documentation <http://specutils.readthedocs.io/en/latest/>`_.
+
+Note that Specutils no longer supports Python 2.
 
 License
 -------
