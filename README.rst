@@ -33,7 +33,10 @@ Getting Started with Specutils
 For details on installing and using Specutils, see the
 `specutils documentation <http://specutils.readthedocs.io/en/latest/>`_.
 
-Note that Specutils no longer supports Python 2.
+Note that Specutils now only supports Python 3. While some functionality may
+continue to work on Python 2, it is not tested and support cannot be guaranteed
+(due to the sunsetting of Python 2 support by the Python and Astropy development
+teams).
 
 License
 -------
