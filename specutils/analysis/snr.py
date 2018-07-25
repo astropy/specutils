@@ -44,22 +44,19 @@ def snr(spectrum, region=None, noise_region=None):
 
     # No region, therefore whole spectrum.
     if region is None:
-        return _snr(spectrum, noise_region=noise_region)
+        return _snr_single_region(spectrum, noise_region=noise_region)
 
     # Single region
     elif isinstance(region, SpectralRegion):
-        return _snr(spectrum, region=region, noise_region=noise_region)
+        return _snr_single_region(spectrum, region=region, noise_region=noise_region)
 
     # List of regions
     elif isinstance(region, list):
-
-        snrs = []
-        for reg in region:
-            snrs.append(_snr(spectrum, region=reg, noise_region=noise_region))
-        return snrs
+        return [_snr_single_region(spectrum, region=reg, noise_region=noise_region)
+                for reg in region]
 
 
-def _snr(spectrum, region=None, noise_region=None):
+def _snr_single_region(spectrum, region=None, noise_region=None):
     """
     Calculate the mean S/N of the spectrum based on the flux and uncertainty in the spectrum.
 
