@@ -9,7 +9,7 @@ from ..spectra.spectrum1d import Spectrum1D
 from astropy.nddata import StdDevUncertainty
 import astropy.units as u
 from ..analysis import equivalent_width, snr
-from ..utils import SpectralRegion
+from ..spectra import SpectralRegion
 
 
 def test_equivalent_width():

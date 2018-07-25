@@ -1,5 +1,5 @@
 import numpy as np
-from ..utils import SpectralRegion
+from ..spectra import SpectralRegion
 
 __all__ = ['snr']
 
@@ -84,7 +84,7 @@ def _snr_single_region(spectrum, region=None, noise_region=None):
     """
 
     if region is not None:
-        calc_spectrum = region.excise(spectrum)
+        calc_spectrum = region.extract(spectrum)
     else:
         calc_spectrum = spectrum
 
@@ -93,7 +93,7 @@ def _snr_single_region(spectrum, region=None, noise_region=None):
     # If a noise_region is defined then calculate the standard deviation
     # in the noise_region and use that as the uncertainty.
     if noise_region is not None:
-        spectrum_noise_region = noise_region.excise(spectrum)
+        spectrum_noise_region = noise_region.extract(spectrum)
         uncertainty = np.std(spectrum_noise_region.flux)
 
     # If noise_region is not defined then use the Uncertainty in the spectrum.

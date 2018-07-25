@@ -70,7 +70,7 @@ class SpectralRegion:
         """
 
         if not (value.unit.is_equivalent(u.pixel) or
-           value.unit.is_equivalent(u.angstrom, equivalencies=u.spectral)):
+           value.unit.is_equivalent(u.angstrom, equivalencies=u.spectral())):
             raise u.UnitError('Lower bound of region is not a spectral region unit')
 
         self._lower = value
@@ -92,7 +92,7 @@ class SpectralRegion:
         """
 
         if not (value.unit.is_equivalent(u.pixel) or
-           value.unit.is_equivalent(u.angstrom, equivalencies=u.spectral)):
+           value.unit.is_equivalent(u.angstrom, equivalencies=u.spectral())):
             raise u.UnitError('Upper bound of region is not a spectral region unit')
 
         self._upper = value
