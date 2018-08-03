@@ -21,10 +21,10 @@ class SpectralRegion:
         Parameters
         ----------
 
-        center: Scalar `~astropy.units.Quantity` with pixel or ``spectral_axis`` units
+        center: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The center of the spectral region.
 
-        Width: Scalar `~astropy.units.Quantity` with pixel or ``spectral_axis`` units
+        Width: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The width of the spectral region.
         """
 
@@ -37,10 +37,10 @@ class SpectralRegion:
         Parameters
         ----------
 
-        lower: Scalar `~astropy.units.Quantity` with pixel or ``spectral_axis`` units
+        lower: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The lower bound of the region.
 
-        upper: Scalar `~astropy.units.Quantity` with pixel or ``spectral_axis`` units
+        upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The upper bound of the region.
 
         """
@@ -65,7 +65,7 @@ class SpectralRegion:
         Parameters
         ----------
 
-        value: Scalar `~astropy.units.Quantity` with pixel or ``spectral_axis`` units
+        value: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The lower bound of the region.
         """
 
@@ -87,7 +87,7 @@ class SpectralRegion:
         Parameters
         ----------
 
-        value: Scalar `~astropy.units.Quantity` with pixel or ``spectral_axis`` units
+        value: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The upper bound of the region.
         """
 
