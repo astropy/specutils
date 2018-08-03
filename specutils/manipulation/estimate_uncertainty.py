@@ -5,9 +5,8 @@ from astropy.nddata import StdDevUncertainty
 
 def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     """
-    Set the uncertainty in the ``spectrum`` by setting (or overwriting)
-    each element of the uncertainty to the the noise of the flux
-    calculated from the ``spectral_region``.
+    Generates a new spectrum with an uncertainty from the noise in a particular
+    region of the spectrum.
 
     Parameters
     ----------
@@ -18,10 +17,15 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     spectral_region: `~specutils.spectra.SpectralRegion`
         The region to use to calculate the standard deviation.
 
+    noise_func: callable
+        A function which takes the flux in the ``spectral_region`` and yields a
+        *single* value for the noise to use in the result spectrum.
+
     Return
     ------
     spectrum_uncertainty: `~specutils.spectra.Spectrum1D
-        The spectrum with the uncertainty set.
+        The ``spectrum``, but with a constant uncertainty set by the result of
+        the noise region calculation
 
     """
 
