@@ -24,6 +24,24 @@ Currently, specutils supports basic equivalent width calculations.
     >>> equivalent_width(spec) #doctest:+SKIP
     <Quantity 24.16006697 Angstrom>
 
+SNR
+---
+
+Currently, specutils supports basic signal-to-noise ratio calculations.
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils.spectra import Spectrum1D
+    >>> from astropy.nddata import StdDevUncertainty
+    >>> from specutils.analysis import snr
+
+    >>> uncertainty = StdDevUncertainty(0.1*np.abs(np.random.random(50))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy, 
+                          uncertainty=uncertainty)
+    >>> snr(spec) #doctest:+SKIP
+    <Quantity 149.97247134>
 
 Reference/API
 -------------
