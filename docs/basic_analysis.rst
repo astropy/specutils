@@ -38,8 +38,7 @@ Currently, specutils supports basic signal-to-noise ratio calculations.
     >>> from specutils.analysis import snr
 
     >>> uncertainty = StdDevUncertainty(0.1*np.abs(np.random.random(50))*u.Jy)
-    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy, 
-                          uncertainty=uncertainty)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy, uncertainty=uncertainty)
     >>> snr(spec) #doctest:+SKIP
     <Quantity 149.97247134>
 
