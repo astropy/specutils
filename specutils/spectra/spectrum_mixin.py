@@ -81,7 +81,7 @@ class OneDSpectrumMixin(object):
         `~astropy.units.Quantity`
             Spectral data as a quantity.
         """
-        return u.Quantity(self.data, unit=self.unit)
+        return u.Quantity(self.data, unit=self.unit, copy=False)
 
     def to_flux(self, unit, equivalencies=None, suppress_conversion=False):
         """
