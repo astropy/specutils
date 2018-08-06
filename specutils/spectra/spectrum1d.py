@@ -149,6 +149,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def bin_edges(self):
         return self.wcs.bin_edges()
 
+    @property
+    def shape(self):
+        return (self.spectral_axis.size, self.flux.size)
+
+    def __len__(self):
+        return self.flux.size
+
     @staticmethod
     def _compare_wcs(this_operand, other_operand):
         """
