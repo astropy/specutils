@@ -6,3 +6,4 @@ from __future__ import absolute_import
 
 from .spectrum1d import *  # noqa
 from .spectral_region import *  # noqa
+from .spectrum_collection import *  #noqa
