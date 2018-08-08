@@ -24,7 +24,7 @@ def fit_continuum_generic(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(
     spectrum : Spectrum1D
         The spectrum object overwhich the equivalent width will be calculated.
 
-    model : list of ``astropy.modeling.models``
+    model : list of `~astropy.modeling.Model`
         The list of models that contain the initial guess.
 
     exclude_regions : list of 2-tuples
@@ -36,16 +36,15 @@ def fit_continuum_generic(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(
 
     Returns
     -------
-    continuum_spectrum : Spectrum ``specutils.Spectrum1D``
+    continuum_spectrum : Spectrum `~specutils.Spectrum1D`
         Underlying continuum based on a Chebyshev1D fit (default).
 
     Notes
     -----
        * Could add functionality to set the bounds in
-         `model_initial_conds`` if they are not set.
-       * The models in the list of `model_initial_conds` are added
-          together and passed as a compound model to the
-          ``astropy.modeling.fitter`` class instance.
+         ``model`` if they are not set.
+       * The models in the list of ``model`` are added together and passed as a
+         compound model to the `~astropy.modeling.fitting.Fitter` class instance.
 
     """
 
@@ -65,7 +64,7 @@ def fit_continuum_generic(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(
 def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(),
                   exclude_regions=None, weights=None):
     """
-    Entry point for fitting using the ``astropy.modeling.fitting``
+    Entry point for fitting using the `~astropy.modeling.fitting`
     machinery.
 
     Parameters
@@ -73,7 +72,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(),
     spectrum : Spectrum1D
         The spectrum object overwhich the equivalent width will be calculated.
 
-    model_initial_conds : list of ``astropy.modeling.models``
+    model: list of `~astropy.modeling.Model`
         The list of models that contain the initial guess.
 
     fitmodels_type: str
@@ -87,7 +86,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(),
 
     Returns
     -------
-    models : list of ``astropy.modeling.models``
+    models : list of `~astropy.modeling.Model`
         The list of models that contain the fitted model parmeters.
 
     """

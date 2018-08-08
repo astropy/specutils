@@ -2,12 +2,12 @@
 Spectrum Fitting
 ===================
 
-Specutils has the ability to fit the flux of a `specutils.spectra.Spectrum1D` object.
-The fit routine takes the `specutils.spectra.Spectrum1D` object and a list of 
-`astropy.modeling.models` that have initial guesses for each of the parameters. 
+Specutils has the ability to fit the flux of a `~specutils.Spectrum1D` object.
+The fit routine takes the `~specutils.Spectrum1D` object and a list of 
+`~astropy.modeling.Model` that have initial guesses for each of the parameters. 
 
-The internal functionality uses `astropy.modeling.fitting` routines.  The flux
-is extracted from the `specutils.spectra.Spectrum1D` and is passed along with a 
+The internal functionality uses `~astropy.modeling.fitting` routines.  The flux
+is extracted from the `~specutils.Spectrum1D` and is passed along with a 
 compound model created from the model initial guesses.
 
 Model Fitting
@@ -42,7 +42,7 @@ For the purpose of the example, build a ``spectrum1d`` variable that will be use
 	>>> # Create the flux array
     >>> base_flux = g1(wave_um) + g2(wave_um) + g3(wave_um) + ramp(wave_um)
 
-	>>> # Create the `specutils.spectra.Spectrum1D` object.
+	>>> # Create the `specutils.Spectrum1D` object.
     >>> flux_e1 = base_flux + 100*np.random.random(base_flux.shape)
     >>> spectrum1d = Spectrum1D(spectral_axis=wave_um*u.um, flux=flux_e1*u.mJy)
 
@@ -54,7 +54,7 @@ For the purpose of the example, build a ``spectrum1d`` variable that will be use
    Spectrum to be fit.
 
 Now that there is a ``spectrum1d`` to fit, the real fitting setup must happen.  First create
-the `astropy.modeling.models` to be used in the fitting routine.
+the `astropy.modeling.Model` to be used in the fitting routine.
 
 .. code-block:: python
 
