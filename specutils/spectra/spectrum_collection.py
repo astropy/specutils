@@ -7,14 +7,28 @@ from astropy.nddata import NDIOMixin, NDUncertainty
 
 from .spectrum1d import Spectrum1D
 
-__all__ = ['SpectrumArray', 'SpectrumCollection', 'ResampleMixin']
+__all__ = ['SpectrumCollection']
 
 
-class SpectrumArray(MutableSequence):
+class SpectrumCollection(MutableSequence, NDIOMixin):
     """
-    An array class to hold a set of :class:`~specutils.Spectrum1D` objects.
-    This class does not implicitly attempt to resample onto a new wavelength
-    grid.
+    A container class for :class:`~specutils.Spectrum1D` objects. This allows 
+    for operations to be performed over a set of spectrum objects. This class 
+    behaves as if it were a :class:`~specutils.Spectrum1D` and supports
+    pythonic collection operations like slicing, deleting, and inserting.
+
+    Note
+    ----
+    Items in this collection must currently be the same shape. Items are not
+    automatically resampled onto a shared grid. Currently, users should resample
+    their spectra prior to creating a :class:`~specutils.SpectrumCollection`
+    object.
+
+    Parameters
+    ----------
+    items : list, ndarray
+        A list of :class:`~specutils.Spectrum1D` objects to be held in the
+        collection
     """
     def __init__(self, items):
         self._items = list(items)
