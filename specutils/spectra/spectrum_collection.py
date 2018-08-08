@@ -31,7 +31,11 @@ class SpectrumCollection(MutableSequence, NDIOMixin):
         collection
     """
     def __init__(self, items):
-        self._items = list(items)
+        # Enforce that the shape of each item must be the same
+        if not all((x.shape == items[0].shape for x in items)):
+            raise Exception("Shape of all elements must be the same.")
+
+        self._items = items
 
     def __setitem__(self, index, value):
         self._items[index] = value
