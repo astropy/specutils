@@ -52,46 +52,23 @@ class SpectrumCollection(MutableSequence, NDIOMixin):
     def __len__(self):
         return len(self._items)
 
+    def _get_property(self, name):
+        val = [getattr(x, name) for x in self._items]
 
-class SpectrumCollection(SpectrumArray, ResampleMixin, NDIOMixin):
-    """
-    A container class for spectra which themselves do not share a single
-    dispersion solution. :class:`~specutils.Spectrum1D` objects added to this
-    collection are automatically rebinned onto the user-specified dispersion
-    grid.
+        if name == 'uncertainty':
+            val = [x.array if val is not None else 0 for x in val]
 
-    Parameters
-    ----------
-    output_grid : str, array-like, tuple
-        See the docstring in
-        :class:`~specutils.spectra.spectrum_collection.ResampleMixin`.
-    """
-    def __init__(self, items=[], resampler=None):
-        super(SpectrumCollection, self).__init__(items)
-        self._resampler = resampler
+            logging.info(
+                "`SpectrumCollection` assumes that all "
+                "spectra have the same uncertainty type.")
 
-    def __setitem__(self, *args, **kwargs):
-        super(SpectrumCollection, self).__setitem__(*args, **kwargs)
-        self._rebin()
+            if self._items[0].uncertainty is not None:
+                val = self._items[0].uncertainty.__class__(val)
 
-    def __delitem__(self, *args, **kwargs):
-        super(SpectrumCollection, self).__delitem__(*args, **kwargs)
-        self._rebin()
+        elif hasattr(val[0], 'unit'):
+            val = np.vstack(np.array(val)) * val[0].unit
 
-    def insert(self, *args, **kwargs):
-        super(SpectrumCollection, self).insert(*args, **kwargs)
-        self._rebin()
-
-    def append(self, *args, **kwargs):
-        super(SpectrumCollection, self).append(*args, **kwargs)
-        self._rebin()
-
-    @property
-    def resampler(self):
-        return self._resampler
-
-    def _rebin(self):
-        
+        return val
 
     def __getattr__(self, name):
         """
@@ -102,23 +79,12 @@ class SpectrumCollection(SpectrumArray, ResampleMixin, NDIOMixin):
         # TODO: currently, this method assumes that all uncertainties share
         # the same uncertainty type.
         if hasattr(Spectrum1D, name):
-            val = [getattr(x, name) for x in self._resampled_items]
-
-            if name == 'uncertainty':
-                val = [x.array if val is not None else 0 for x in val]
-
-                logging.info(
-                    "`SpectrumCollection` assumes that all "
-                    "spectra have the same uncertainty type.")
-
-                if self._items[0].uncertainty is not None:
-                    val = self._items[0].uncertainty.__class__(val)
-            elif hasattr(val[0], 'unit'):
-                val = np.vstack(np.array(val)) * val[0].unit
+            # First, check to see if this property is cached
+            val = self._get_property(name)
 
             return val
 
-        return object.__getattr__(self, name)
+        return object.__getattribute__(self, name)
 
     def __repr__(self):
         return """<SpectrumCollection(size={})>""".format(len(self))
