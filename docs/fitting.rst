@@ -31,20 +31,19 @@ For the purpose of the example, build a ``spectrum1d`` variable that will be use
 .. code-block:: python
 
 	>>> # Create the wavelength array
-    >>> wave_um = np.linspace(0.4, 1.05, 100)
+    >>> wave_um = np.linspace(0.4, 1.05, 100) * u.um
 
 	>>> # Create the models
-    >>> g1 = models.Gaussian1D(amplitude=2000, mean=0.52, stddev=0.01)
-    >>> g2 = models.Gaussian1D(amplitude=500, mean=0.64, stddev=0.02)
-    >>> g3 = models.Gaussian1D(amplitude=-350, mean=0.78, stddev=0.01)
-    >>> ramp = models.Linear1D(slope=300, intercept=0.0)
+    >>> g1 = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.52*u.um, stddev=0.01*u.um)
+    >>> g2 = models.Gaussian1D(amplitude=500*u.mJy, mean=0.64*u.um, stddev=0.02*u.um)
+    >>> g3 = models.Gaussian1D(amplitude=-350*u.mJy, mean=0.78*u.um, stddev=0.01*u.um)
 
 	>>> # Create the flux array
-    >>> base_flux = g1(wave_um) + g2(wave_um) + g3(wave_um) + ramp(wave_um)
+    >>> base_flux = g1(wave_um) + g2(wave_um) + g3(wave_um)
 
 	>>> # Create the `specutils.Spectrum1D` object.
-    >>> flux_e1 = base_flux + 100*np.random.random(base_flux.shape)
-    >>> spectrum1d = Spectrum1D(spectral_axis=wave_um*u.um, flux=flux_e1*u.mJy)
+    >>> flux_e1 = base_flux + 100*np.random.random(base_flux.shape)*u.mJy
+    >>> spectrum1d = Spectrum1D(spectral_axis=wave_um, flux=flux_e1)
 
 
 .. figure:: img/fitting_original.jpg
@@ -54,31 +53,30 @@ For the purpose of the example, build a ``spectrum1d`` variable that will be use
    Spectrum to be fit.
 
 Now that there is a ``spectrum1d`` to fit, the real fitting setup must happen.  First create
-the `astropy.modeling.Model` to be used in the fitting routine.
+the `~astropy.modeling.Model` to be used in the fitting routine.
 
 .. code-block:: python
 
     >>> # Create the initial guesses
-    >>> fg1 = models.Gaussian1D(amplitude=1900, mean=5175, stddev=200,
-            bounds = {'amplitude': (1700, 2400), 
-                      'mean': (4800, 5500), 
-                      'stddev': (1.1754943508222875e-38, 500)})
-    >>> fg2 = models.Gaussian1D(amplitude=400, mean=6232, stddev=150,
-            bounds = {'amplitude': (200, 500), 
-                      'mean': (5500, 7000), 
-                      'stddev': (1.1754943508222875e-38, 300)})
-    >> fg3 = models.Gaussian1D(amplitude=-500, mean=7900, stddev=150,
-            bounds = {'amplitude': (-800, -300), 
-                      'mean': (7300, 8200), 
-                      'stddev': (1.1754943508222875e-38, 300)})
-    >>> framp = models.Linear1D(slope=320/10000, intercept=0)
+    >>> fg1 = models.Gaussian1D(amplitude=1900*u.mJy, mean=0.5*u.um, stddev=0.02*u.um,
+                        bounds={'amplitude': (1700*u.mJy, 2400*u.mJy),
+                                'mean': (0.3*u.um, 0.6*u.um),
+                                'stddev': (0.001*u.um, 0.03*u.um)})
+    >>> fg2 = models.Gaussian1D(amplitude=400*u.mJy, mean=0.63*u.um, stddev=0.03*u.um,
+                        bounds={'amplitude': (200*u.mJy, 600*u.mJy),
+                                'mean': (0.6*u.um, 0.7*u.um),
+                                'stddev': (0.001*u.um, 0.03*u.um)})
+    >>> fg3 = models.Gaussian1D(amplitude=-500*u.mJy, mean=0.79*u.um, stddev=0.02*u.um,
+                        bounds={'amplitude': (-600*u.mJy, -300*u.mJy),
+                                'mean': (0.7*u.um, 0.82*u.um),
+                                'stddev': (0.001*u.um, 0.03*u.um)})
 
 Now comes the actual fitting:
 
 .. code-block:: python
 
     >>> # And... now we can do the fitting
-    >>> fitted_models = fitting.fitmodels(spectrum1d, [fg1, fg2, fg3, framp])
+    >>> fitted_models = fitting.fit_lines(spectrum1d, fg1+fg2+fg3)
 
 The output of the fitting routine is another set of models whose parameters contain the result of the fit.
 (There is a corresponding output model for each input model.)

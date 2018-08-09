@@ -233,19 +233,24 @@ def _convert_and_remove_units(model, spectrum):
         for param_name in m.param_names:
             quantity = getattr(m, param_name).quantity
 
-            if quantity.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
-                quantity = quantity.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
+            if quantity is not None:
 
-            elif quantity.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
-                quantity = quantity.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+                if quantity.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
+                    quantity = quantity.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
 
+                elif quantity.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
+                    quantity = quantity.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+
+                else:
+                    raise Exception('Conversion from unit type {}'.format(quantity.unit))
+
+                new_params[param_name] = quantity.value
             else:
-                raise Exception('Conversion from unit type {}'.format(quantity.unit))
-
-            new_params[param_name] = quantity.value
+                new_params[param_name] = getattr(m, param_name).value
 
         # Now that all the parameters have been cleaned up
         # create the new model class
+        print('params {} for class {}'.format(new_params, m.__class__))
         model_guess = m.__class__(**new_params)
 
         model_unitless.append(model_guess)
@@ -282,7 +287,11 @@ def _convert_and_add_units(model, model_init, spectrum):
         new_params = {}
         for param_name in m.param_names:
             quantity = getattr(m, param_name).value
-            new_params[param_name] = quantity * getattr(m_init, param_name).quantity.unit
+
+            if getattr(m_init, param_name).quantity is not None:
+                new_params[param_name] = quantity * getattr(m_init, param_name).quantity.unit
+            else:
+                new_params[param_name] = quantity
 
         # Now that all the parameters have been cleaned up
         # create the new model class
