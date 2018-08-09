@@ -7,7 +7,7 @@ import pytest
 from ..tests.spectral_examples import simulated_spectra
 from ..spectra.spectrum1d import Spectrum1D
 import astropy.units as u
-from ..analysis import equivalent_width, snr
+from ..analysis import equivalent_width, snr, centroid
 from ..manipulation import noise_region_uncertainty
 from ..spectra import SpectralRegion
 from astropy.nddata import StdDevUncertainty
@@ -178,7 +178,7 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
 
     region = SpectralRegion(0.52*u.um, 0.59*u.um)
     noise_region = SpectralRegion(0.40*u.um, 0.45*u.um)
-    
+
     #
     #  Set up the data
     #
@@ -205,4 +205,127 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
 
     assert np.allclose(spec_snr.value, spec_snr_expected.value)
 
+# --
 
+def test_centroid(simulated_spectra):
+    """
+    Test the simple version of the spectral centroid.
+    """
+
+    np.random.seed(42)
+
+    #
+    #  Set up the data and add the uncertainty and calculate the expected SNR
+    #
+
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    wavelengths = spectrum.spectral_axis
+    flux = spectrum.flux
+
+    spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(wavelengths)
+
+    #
+    # SNR of the whole spectrum
+    #
+
+    spec_centroid = centroid(spectrum)
+
+    assert isinstance(spec_centroid, u.Quantity)
+    assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
+
+
+def test_snr_multiple_flux(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR, with multiple flux per single dispersion.
+    """
+
+    #
+    #  Set up the data and add the uncertainty and calculate the expected SNR
+    #
+
+    np.random.seed(42)
+
+    spec = Spectrum1D(spectral_axis=np.arange(10) * u.um,
+                      flux=np.random.sample((10, 5)) * u.Jy)
+
+    centroid_spec = centroid(spec)
+
+    assert np.allclose(centroid_spec.value, np.array([0.5191939 , 0.31976068, 0.30832925, 0.65393441, 0.36912737]))
+
+
+# def test_snr_single_region(simulated_spectra):
+#     """
+#     Test the simple version of the spectral SNR over a region of the spectrum.
+#     """
+# 
+#     np.random.seed(42)
+# 
+#     region = SpectralRegion(0.52*u.um, 0.59*u.um)
+# 
+#     #
+#     #  Set up the data
+#     #
+# 
+#     spectrum = simulated_spectra.s1_um_mJy_e1
+#     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+#     spectrum.uncertainty = uncertainty
+# 
+#     wavelengths = spectrum.spectral_axis
+#     flux = spectrum.flux
+# 
+#     l = np.nonzero(wavelengths>region.lower)[0][0]
+#     r = np.nonzero(wavelengths<region.upper)[0][-1]
+# 
+#     spec_snr_expected = np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit))
+# 
+#     #
+#     # SNR of the whole spectrum
+#     #
+# 
+#     spec_snr = snr(spectrum, region)
+# 
+#     assert np.allclose(spec_snr.value, spec_snr_expected.value)
+# 
+# 
+# def test_snr_two_regions(simulated_spectra):
+#     """
+#     Test the simple version of the spectral SNR within two regions.
+#     """
+# 
+#     np.random.seed(42)
+# 
+#     #
+#     # Set the regions over which the SNR is calculated
+#     #
+# 
+#     regions = [SpectralRegion(0.52*u.um, 0.59*u.um), SpectralRegion(0.8*u.um, 0.9*u.um)]
+#     
+#     #
+#     #  Set up the data
+#     #
+# 
+#     spectrum = simulated_spectra.s1_um_mJy_e1
+#     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.Jy)
+#     spectrum.uncertainty = uncertainty
+# 
+#     wavelengths = spectrum.spectral_axis
+#     flux = spectrum.flux
+# 
+#     spec_snr_expected = []
+#     for region in regions:
+# 
+#         l = np.nonzero(wavelengths>region.lower)[0][0]
+#         r = np.nonzero(wavelengths<region.upper)[0][-1]
+# 
+#         spec_snr_expected.append(np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit)))
+# 
+#     #
+#     # SNR of the whole spectrum
+#     #
+# 
+#     spec_snr = snr(spectrum, regions)
+# 
+#     assert np.allclose(spec_snr, spec_snr_expected)
