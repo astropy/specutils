@@ -225,7 +225,7 @@ def test_centroid(simulated_spectra):
     wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
-    spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(wavelengths)
+    spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(flux)
 
     #
     # SNR of the whole spectrum
@@ -253,7 +253,8 @@ def test_snr_multiple_flux(simulated_spectra):
 
     centroid_spec = centroid(spec)
 
-    assert np.allclose(centroid_spec.value, np.array([0.5191939 , 0.31976068, 0.30832925, 0.65393441, 0.36912737]))
+    assert np.allclose(centroid_spec.value, np.array([5.39321967, 3.6856305 , 3.09779811, 4.99442161, 4.50267016]))
+    assert centroid_spec.unit == u.um
 
 
 # def test_snr_single_region(simulated_spectra):

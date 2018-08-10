@@ -81,4 +81,4 @@ def _centroid_single_region(spectrum, region=None):
 
     # the axis=0 will enable this to run on single-dispersion, single-flux
     # and single-dispersion, multiple-flux
-    return np.sum(flux * dispersion, axis=0) / np.sum(calc_spectrum.spectral_axis, axis=0)
+    return np.sum(flux * dispersion, axis=0) / np.sum(flux, axis=0)
