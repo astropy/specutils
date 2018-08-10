@@ -42,6 +42,23 @@ Currently, specutils supports basic signal-to-noise ratio calculations.
     >>> snr(spec) #doctest:+SKIP
     <Quantity 149.97247134>
 
+Centroid
+--------
+
+Currently, specutils supports basic centroid calculations.
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils.spectra import Spectrum1D
+    >>> from astropy.nddata import StdDevUncertainty
+    >>> from specutils.analysis import centroid
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy)
+    >>> centroid(spec) #doctest:+SKIP
+    <Quantity 24.39045495 Angstrom>
+
 Reference/API
 -------------
 .. automodapi:: specutils.analysis
