@@ -36,7 +36,7 @@ def centroid(spectrum, region=None):
 
     # Single region
     elif isinstance(region, SpectralRegion):
-        return _ntroid(spectrum, region=region)
+        return _centroid_single_region(spectrum, region=region)
 
     # List of regions
     elif isinstance(region, list):
@@ -69,7 +69,10 @@ def _centroid_single_region(spectrum, region=None):
     """
 
     if region is not None:
+        print('original spectrum is {}'.format(spectrum.spectral_axis))
         calc_spectrum = region.extract(spectrum)
+        print('extracted region is {}'.format(calc_spectrum))
+        print('extracted region is {}'.format(calc_spectrum.spectral_axis))
     else:
         calc_spectrum = spectrum
 
