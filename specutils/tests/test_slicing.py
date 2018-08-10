@@ -1,8 +1,5 @@
 import astropy.units as u
-import astropy.wcs as fitswcs
-import gwcs
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose
 
 from ..spectra.spectrum1d import Spectrum1D
@@ -29,3 +26,16 @@ def test_spectral_axes():
     assert sliced_spec2.wcs == spec2.wcs
     assert_allclose(sliced_spec2.wcs.pixel_to_world(np.arange(10)), spec2.wcs.pixel_to_world(np.arange(10)))
     assert sliced_spec2.flux.shape[0] == 49
+
+
+def test_slicing():
+
+    # Create the initial spectrum
+    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA, flux=2*np.arange(10)*u.Jy)
+
+    # Slice it.
+    sub_spec = spec[4:8]
+
+    assert sub_spec.spectral_axis.unit == u.AA
+    assert np.allclose(sub_spec.spectral_axis.value, np.array([4, 5, 6, 7]))
+    assert np.allclose(sub_spec.flux.value, np.array([8, 10, 12, 14]))

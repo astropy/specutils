@@ -194,6 +194,27 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
+    def __getitem__(self, key):
+        """
+        NDData is agnostic about self.spectral_axis so we need
+        to deal with it separately.
+
+        __setitem__ and __delitem__ are not duplicated in this way
+        as Spectrum1D does not support item assignment.
+        """
+
+        # Get a copy of the current spectral axis
+        spectral_axis = self.spectral_axis
+
+        # Call the sub-class (in particular, here call the NDData which
+        # does most fo the work.
+        self = super().__getitem__(key)
+
+        # Set to the new value.
+        self.spectral_axis = spectral_axis[key]
+
+        return self
+
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
