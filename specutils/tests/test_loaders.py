@@ -22,8 +22,8 @@ def test_specific_spec_axis_unit():
     assert optical_spec.spectral_axis.unit == "Angstrom"
 
 
-def test_spectrum_collection_loader():
-    stis_fits_file = get_pkg_data_filename('data/odbue5030_x1d.fits')
-    spec_col = SpectrumCollection.read(stis_fits_file,
-                                       format='stis-fits')
+# def test_spectrum_collection_loader():
+#     stis_fits_file = get_pkg_data_filename('data/odbue5030_x1d.fits')
+#     spec_col = SpectrumCollection.read(stis_fits_file,
+#                                        format='stis-fits')
 
