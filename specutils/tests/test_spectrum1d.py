@@ -6,7 +6,6 @@ import gwcs
 import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
-from astropy.utils.data import get_pkg_data_filename
 
 from ..spectra.spectrum1d import Spectrum1D
 
@@ -196,7 +195,8 @@ def test_create_with_uncertainty():
 
 
 def test_read_linear_solution():
-    file_path = get_pkg_data_filename('data/L5g_0355+11_Cruz09.fits')
+    file_path = os.path.join(os.path.dirname(__file__),
+                             'data/L5g_0355+11_Cruz09.fits')
 
     spec = Spectrum1D.read(file_path, format='wcs1d-fits')
 
