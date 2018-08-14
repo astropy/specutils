@@ -6,7 +6,7 @@ import logging
 import astropy.units as u
 
 
-class Resample(meta=abc.ABCMeta):
+class Resample(metaclass=abc.ABCMeta):
     def __init__(self, *args, **kwargs):
         pass
 
