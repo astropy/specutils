@@ -28,11 +28,11 @@ def test_continuum_fit():
     s_single_continuum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
     g1_fit = fit_continuum_generic(s_single_continuum)
 
-    y_continuum_fitted = g1_fit(x_single_continuum*u.um)
+    y_continuum_fitted = g1_fit(x_single_continuum)
 
     y_continuum_fitted_expected = np.array([1.71414049, 1.87778562, 2.05313605, 2.23534949, 2.41958364,
                2.60099619, 2.77474484, 2.93598729, 3.07988123, 3.20158436,
                3.29625438, 3.35904898, 3.38512587, 3.36964273, 3.30775726,
                3.19462717, 3.02541014, 2.79526388, 2.49934609, 2.13281445])
 
-    assert np.allclose(y_continuum_fitted.value[::10], y_continuum_fitted_expected, atol=1e-5)
+    assert np.allclose(y_continuum_fitted[::10], y_continuum_fitted_expected, atol=1e-5)

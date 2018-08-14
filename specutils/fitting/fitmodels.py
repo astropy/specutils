@@ -189,119 +189,97 @@ def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     # units and then remove the units
     #
 
-    model_unitless = _convert_and_remove_units(model, spectrum)
+    model_unitless, dispersion_unitless, flux_unitless = _strip_units_from_model(model, spectrum)
 
     #
     # Do the fitting of spectrum to the model.
     #
 
-    fit_model_unitless = fitter(model_unitless, dispersion.value, flux.value)
+    print('model_unitless {}'.format(model_unitless))
+    fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless)
 
     #
     # Now add the units back onto the model....
     #
 
-    fit_model = _convert_and_add_units(fit_model_unitless, model, spectrum)
+    fit_model = _add_units_to_model(fit_model_unitless, model)
 
     return fit_model
 
 
-def _convert_and_remove_units(model, spectrum):
-    """
-    This method converts the model's units to
-    those of the spectrum and then outputs a new
-    model with units stripped.
-
-    # m.__class__(**{nm: getattr(m, nm).value for nm in m.param_names})
-    """
+def _strip_units_from_model(model_in, spectrum):
 
     dispersion = spectrum.spectral_axis
-    dispersion_unit = spectrum.spectral_axis.unit
-    flux_unit = spectrum.flux.unit
+    flux = spectrum.flux
 
-    single_model_in = not hasattr(model, 'submodel_names')
-    if single_model_in:
-        model = [model]
-        N_models = 1
-    else:
-        N_models = model.n_submodels()
+    compound_model = model_in.n_submodels() > 1
 
-    model_unitless = []
-    for ii in range(N_models):
-        m = model[ii]
-        new_params = {}
-        for param_name in m.param_names:
-            quantity = getattr(m, param_name).quantity
+    if not compound_model:
+        model_in = [model_in]
 
-            if quantity is not None:
+    model_out = []
+    for sub_model in model_in:
 
-                if quantity.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
-                    quantity = quantity.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
+        new_sub_model = sub_model.__class__.copy(sub_model)
 
-                elif quantity.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
-                    quantity = quantity.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+        for pn in new_sub_model.param_names:
 
-                else:
-                    raise Exception('Conversion from unit type {}'.format(quantity.unit))
-
-                new_params[param_name] = quantity.value
+            is_quantity = False
+            a = getattr(sub_model, pn)
+            if hasattr(a, 'quantity') and a.quantity is not None:
+                is_quantity = True
+                v = getattr(sub_model, pn).quantity.value * u.dimensionless_unscaled
             else:
-                new_params[param_name] = getattr(m, param_name).value
+                v = getattr(sub_model, pn).value
 
-        # Now that all the parameters have been cleaned up
-        # create the new model class
-        model_guess = m.deepcopy()
-        [setattr(model_guess, pn, new_params[pn]) for pn in model_guess.param_names]
+            setattr(new_sub_model, pn, v)
+        model_out.append(new_sub_model)
 
-        model_unitless.append(model_guess)
+    dispersion_out = dispersion.value
+    if is_quantity:
+        dispersion_out = dispersion_out * u.dimensionless_unscaled
 
-    if single_model_in:
-        return model_unitless[0]
+    flux_out = flux.value
+    if is_quantity:
+        flux_out = flux_out * u.dimensionless_unscaled
+
+    if compound_model:
+        # TODO:  Wrong -- they may not be added together.
+        model_out = functools.reduce(operator.add, model_out)
     else:
-        return functools.reduce(operator.add, model_unitless)
+        model_out = model_out[0]
+
+    return model_out, dispersion_out, flux_out
 
 
-def _convert_and_add_units(model, model_init, spectrum):
-    """
-    This method converts the model's units to
-    those of the spectrum and then outputs a new
-    model with units stripped.
+def _add_units_to_model(model_in, model_orig):
 
-    # m.__class__(**{nm: getattr(m, nm).value for nm in m.param_names})
-    """
+    compound_model = model_in.n_submodels() > 1
+    if not compound_model:
+        model_in = [model_in]
+        model_orig = [model_orig]
 
-    single_model_in = not hasattr(model, 'submodel_names')
-    if single_model_in:
-        model = [model]
-        model_init = [model_init]
-        N_models = 1
-    else:
-        N_models = model.n_submodels()
+    model_out = []
+    for ii, m_in in enumerate(model_in):
+        m_orig = model_orig[ii]
 
-    model_unitless = []
+        new_sub_model = m_in.__class__.copy(m_in)
 
-    for ii in range(N_models):
-        m = model[ii]
-        m_init = model_init[ii]
+        for pn in new_sub_model.param_names:
 
-        new_params = {}
-        for param_name in m.param_names:
-            quantity = getattr(m, param_name).value
-
-            if getattr(m_init, param_name).quantity is not None:
-                new_params[param_name] = quantity * getattr(m_init, param_name).quantity.unit
+            a = getattr(m_in, pn)
+            if hasattr(a, 'quantity') and a.quantity is not None:
+                v = getattr(m_in, pn).quantity.value * getattr(m_orig, pn).quantity.unit
             else:
-                new_params[param_name] = quantity
+                v = getattr(m_in, pn).value
 
-        # Now that all the parameters have been cleaned up
-        # create the new model class
-        #model_out = m.__class__(**new_params)
-        model_out = m.deepcopy()
-        [setattr(model_out, pn, u.Quantity(new_params[pn])) for pn in model_out.param_names]
+            setattr(new_sub_model, pn, v)
+        model_out.append(new_sub_model)
 
-        model_unitless.append(model_out)
-
-    if single_model_in:
-        return model_unitless[0]
+    if compound_model:
+        # TODO:  Wrong -- they may not be added together.
+        model_out = functools.reduce(operator.add, model_out)
     else:
-        return functools.reduce(operator.add, model_unitless)
+        model_out = model_out[0]
+
+    return model_out
