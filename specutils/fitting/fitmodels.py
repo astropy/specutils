@@ -250,8 +250,8 @@ def _convert_and_remove_units(model, spectrum):
 
         # Now that all the parameters have been cleaned up
         # create the new model class
-        print('params {} for class {}'.format(new_params, m.__class__))
-        model_guess = m.__class__(**new_params)
+        model_guess = m.deepcopy()
+        [setattr(model_guess, pn, new_params[pn]) for pn in model_guess.param_names]
 
         model_unitless.append(model_guess)
 
@@ -295,7 +295,9 @@ def _convert_and_add_units(model, model_init, spectrum):
 
         # Now that all the parameters have been cleaned up
         # create the new model class
-        model_out = m.__class__(**new_params)
+        #model_out = m.__class__(**new_params)
+        model_out = m.deepcopy()
+        [setattr(model_out, pn, u.Quantity(new_params[pn])) for pn in model_out.param_names]
 
         model_unitless.append(model_out)
 
