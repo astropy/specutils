@@ -202,15 +202,26 @@ def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     # Now add the units back onto the model....
     #
 
-    fit_model = _add_units_to_model(fit_model_unitless, model)
+    fit_model = _add_units_to_model(fit_model_unitless, model, spectrum)
 
     return fit_model
 
 
 def _strip_units_from_model(model_in, spectrum):
+    """
+    This method strips the units from the model, so the result can
+    be passed to the fitting routine. This is necessary as CoumpoundModel
+    with units does not work in the fitters.
+
+    Note:  When CompoundModel with units works in the fitters this method
+           can be removed.
+    """
 
     dispersion = spectrum.spectral_axis
+    dispersion_unit = spectrum.spectral_axis.unit
+
     flux = spectrum.flux
+    flux_unit = spectrum.flux.unit
 
     compound_model = model_in.n_submodels() > 1
 
@@ -218,21 +229,43 @@ def _strip_units_from_model(model_in, spectrum):
         model_in = [model_in]
 
     model_out = []
+
+    # Run through each model in the list or compound model
     for sub_model in model_in:
 
+        # Make a copy of it.  This copy will have the
+        # 'unitless' version of the parameters.
         new_sub_model = sub_model.__class__.copy(sub_model)
 
+        # Now for each parameter in the model, convert to
+        # spectrum units and then get the value.
         for pn in new_sub_model.param_names:
 
             is_quantity = False
             a = getattr(sub_model, pn)
             if hasattr(a, 'quantity') and a.quantity is not None:
                 is_quantity = True
-                v = getattr(sub_model, pn).quantity.value * u.dimensionless_unscaled
+                q = getattr(sub_model, pn).quantity
+
+                # Convert the quantity to the spectral units, and then we will use
+                # the value of it in the model.
+                if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
+                    quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
+
+                elif q.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
+                    quantity = q.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+
+                # The value must be a quantity in order to use setattr (below)
+                # as the setter requires a Quantity on the rhs if the parameter
+                # is already a value.
+                v = quantity.value * u.dimensionless_unscaled
             else:
                 v = getattr(sub_model, pn).value
 
             setattr(new_sub_model, pn, v)
+
+        # The new model now has unitless information in it but has
+        # been converted to spectral unit scale.
         model_out.append(new_sub_model)
 
     dispersion_out = dispersion.value
@@ -243,6 +276,9 @@ def _strip_units_from_model(model_in, spectrum):
     if is_quantity:
         flux_out = flux_out * u.dimensionless_unscaled
 
+    # If a compound model we need to re-create it, otherwise
+    # it is a single model and we just get the first one (a
+    # there is only one.
     if compound_model:
         # TODO:  Wrong -- they may not be added together.
         model_out = functools.reduce(operator.add, model_out)
@@ -252,24 +288,61 @@ def _strip_units_from_model(model_in, spectrum):
     return model_out, dispersion_out, flux_out
 
 
-def _add_units_to_model(model_in, model_orig):
+def _add_units_to_model(model_in, model_orig, spectrum):
+    """
+    This method adds the units to the model based on the units of the
+    model passed in.  This is necessary as CoumpoundModel
+    with units does not work in the fitters.
 
+    Note:  When CompoundModel with units works in the fitters this method
+           can be removed.
+    """
+
+    dispersion = spectrum.spectral_axis
+
+    # If not a compound model, then make a single element
+    # list so we can use the for loop below.
     compound_model = model_in.n_submodels() > 1
     if not compound_model:
         model_in = [model_in]
         model_orig = [model_orig]
 
     model_out = []
+
+    # For each model in the list or submodel in the compound model
+    # we will convert the values back to the original (sub-)model values.
     for ii, m_in in enumerate(model_in):
         m_orig = model_orig[ii]
 
+        # Make the new sub-model.
         new_sub_model = m_in.__class__.copy(m_in)
 
+        # Convert the model values from the spectrum units
+        # back to the original model units.
         for pn in new_sub_model.param_names:
 
-            a = getattr(m_in, pn)
-            if hasattr(a, 'quantity') and a.quantity is not None:
-                v = getattr(m_in, pn).quantity.value * getattr(m_orig, pn).quantity.unit
+            m_orig_param = getattr(m_orig, pn)
+            m_in_param = getattr(m_in, pn)
+
+            if hasattr(m_orig_param, 'quantity') and m_orig_param.quantity is not None:
+
+                m_orig_param_quantity = m_orig_param.quantity
+                m_in_param_quantity = m_in_param.quantity
+
+                # At this point parameter name of m_in will be in 
+                # dimensionless_unscaled units.  So we need to remove that
+                # and add on the spectrum's unit.
+                if m_orig_param_quantity.unit.is_equivalent(spectrum.spectral_axis.unit, equivalencies=u.equivalencies.spectral()):
+
+                    current_value = m_in_param_quantity.value * spectrum.spectral_axis.unit
+
+                    v = current_value.to(m_orig_param_quantity.unit, equivalencies=u.equivalencies.spectral())
+
+                elif m_orig_param_quantity.unit.is_equivalent(spectrum.flux.unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
+                    current_value = m_in_param_quantity.value * spectrum.flux.unit
+
+                    v = current_value.to(m_orig_param_quantity.unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+
             else:
                 v = getattr(m_in, pn).value
 
@@ -283,3 +356,36 @@ def _add_units_to_model(model_in, model_orig):
         model_out = model_out[0]
 
     return model_out
+
+def _combine_postfix(equation):
+
+    ops = {'+':operator.add,
+           '-':operator.sub,
+           '*':operator.mul,
+           '/':operator.truediv,
+           '^':operator.pow,
+           'sin':math.sin,
+           'tan':math.tan,
+           'cos':math.cos,
+           'pi':math.pi}
+
+    stack = []
+    result = 0
+    for i in equation:
+        if isinstance(i, Model):
+            stack.insert(0,i)
+        else:
+            if len(stack) < 2:
+                print('Error: insufficient values in expression')
+                break
+            else:
+                if len(i) == 1:
+                    n1 = stack.pop(1)
+                    n2 = stack.pop(0)
+                    result = ops[i](n1,n2)
+                    stack.insert(0,result)
+                else:
+                    n1 = float(stack.pop(0))
+                    result = ops[i](math.radians(n1))
+                    stack.insert(0,result)
+    return result
