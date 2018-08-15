@@ -58,17 +58,17 @@ the `~astropy.modeling.Model` to be used in the fitting routine.
 .. code-block:: python
 
     >>> # Create the initial guesses
-    >>> fg1 = models.Gaussian1D(amplitude=1900*u.mJy, mean=0.5*u.um, stddev=0.02*u.um,
-                        bounds={'amplitude': (1700*u.mJy, 2400*u.mJy),
-                                'mean': (0.3*u.um, 0.6*u.um),
+    >>> fg1 = models.Gaussian1D(amplitude=1900*u.mJy, mean=0.5*u.um, stddev=0.02*u.um, \
+                        bounds={'amplitude': (1700*u.mJy, 2400*u.mJy), \
+                                'mean': (0.3*u.um, 0.6*u.um), \
                                 'stddev': (0.001*u.um, 0.03*u.um)})
-    >>> fg2 = models.Gaussian1D(amplitude=400*u.mJy, mean=0.63*u.um, stddev=0.03*u.um,
-                        bounds={'amplitude': (200*u.mJy, 600*u.mJy),
-                                'mean': (0.6*u.um, 0.7*u.um),
+    >>> fg2 = models.Gaussian1D(amplitude=400*u.mJy, mean=0.63*u.um, stddev=0.03*u.um, \
+                        bounds={'amplitude': (200*u.mJy, 600*u.mJy), \
+                                'mean': (0.6*u.um, 0.7*u.um), \
                                 'stddev': (0.001*u.um, 0.03*u.um)})
-    >>> fg3 = models.Gaussian1D(amplitude=-500*u.mJy, mean=0.79*u.um, stddev=0.02*u.um,
-                        bounds={'amplitude': (-600*u.mJy, -300*u.mJy),
-                                'mean': (0.7*u.um, 0.82*u.um),
+    >>> fg3 = models.Gaussian1D(amplitude=-500*u.mJy, mean=0.79*u.um, stddev=0.02*u.um, \
+                        bounds={'amplitude': (-600*u.mJy, -300*u.mJy), \
+                                'mean': (0.7*u.um, 0.82*u.um), \
                                 'stddev': (0.001*u.um, 0.03*u.um)})
 
 Now comes the actual fitting:
