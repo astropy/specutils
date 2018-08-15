@@ -8,7 +8,7 @@ import astropy.units as u
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.utils import excise_regions
-from astropy.modeling import fitting
+from astropy.modeling import fitting, Model
 
 
 __all__ = ['fit_lines']
@@ -195,7 +195,6 @@ def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     # Do the fitting of spectrum to the model.
     #
 
-    print('model_unitless {}'.format(model_unitless))
     fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless)
 
     #
@@ -227,11 +226,18 @@ def _strip_units_from_model(model_in, spectrum):
 
     if not compound_model:
         model_in = [model_in]
+    else:
+        model_in = [c.value for c in model_in._tree.traverse_postorder()]
 
-    model_out = []
+    model_out_stack = []
 
     # Run through each model in the list or compound model
     for sub_model in model_in:
+
+        # If it is an operator put onto the stack and move on...
+        if not isinstance(sub_model, Model):
+            model_out_stack.append(sub_model)
+            continue
 
         # Make a copy of it.  This copy will have the
         # 'unitless' version of the parameters.
@@ -266,7 +272,7 @@ def _strip_units_from_model(model_in, spectrum):
 
         # The new model now has unitless information in it but has
         # been converted to spectral unit scale.
-        model_out.append(new_sub_model)
+        model_out_stack.append(new_sub_model)
 
     dispersion_out = dispersion.value
     if is_quantity:
@@ -280,10 +286,9 @@ def _strip_units_from_model(model_in, spectrum):
     # it is a single model and we just get the first one (a
     # there is only one.
     if compound_model:
-        # TODO:  Wrong -- they may not be added together.
-        model_out = functools.reduce(operator.add, model_out)
+        model_out = _combine_postfix(model_out_stack)
     else:
-        model_out = model_out[0]
+        model_out = model_out_stack[0]
 
     return model_out, dispersion_out, flux_out
 
@@ -306,12 +311,23 @@ def _add_units_to_model(model_in, model_orig, spectrum):
     if not compound_model:
         model_in = [model_in]
         model_orig = [model_orig]
+    else:
+        compound_model_in = model_in
 
-    model_out = []
+        model_in = [c.value for c in model_in._tree.traverse_postorder()]
+        model_orig = [c.value for c in model_orig._tree.traverse_postorder()]
+
+    model_out_stack = []
+    model_index = 0
 
     # For each model in the list or submodel in the compound model
     # we will convert the values back to the original (sub-)model values.
     for ii, m_in in enumerate(model_in):
+
+        if not isinstance(m_in, Model):
+            model_out_stack.append(m_in)
+            continue
+
         m_orig = model_orig[ii]
 
         # Make the new sub-model.
@@ -319,7 +335,7 @@ def _add_units_to_model(model_in, model_orig, spectrum):
 
         # Convert the model values from the spectrum units
         # back to the original model units.
-        for pn in new_sub_model.param_names:
+        for pi, pn in enumerate(new_sub_model.param_names):
 
             m_orig_param = getattr(m_orig, pn)
             m_in_param = getattr(m_in, pn)
@@ -334,40 +350,52 @@ def _add_units_to_model(model_in, model_orig, spectrum):
                 # and add on the spectrum's unit.
                 if m_orig_param_quantity.unit.is_equivalent(spectrum.spectral_axis.unit, equivalencies=u.equivalencies.spectral()):
 
-                    current_value = m_in_param_quantity.value * spectrum.spectral_axis.unit
+                    # If it is a compound model, then we need to get the value from the
+                    # actual compound model as the tree is not updated in the fitting
+                    if compound_model:
+                        current_value = getattr(compound_model_in, '{}_{}'.format(pn, model_index)).value *\
+                                        spectrum.spectral_axis.unit
+                    else:
+                        current_value = m_in_param_quantity.value * spectrum.spectral_axis.unit
 
                     v = current_value.to(m_orig_param_quantity.unit, equivalencies=u.equivalencies.spectral())
 
-                elif m_orig_param_quantity.unit.is_equivalent(spectrum.flux.unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
-                    current_value = m_in_param_quantity.value * spectrum.flux.unit
+                elif m_orig_param_quantity.unit.is_equivalent(spectrum.flux.unit,
+                                                              equivalencies=u.equivalencies.spectral_density(dispersion)):
+                    # If it is a compound model, then we need to get the value from the
+                    # actual compound model as the tree is not updated in the fitting
+                    if compound_model:
+                        current_value = getattr(compound_model_in, '{}_{}'.format(pn, model_index)).value *\
+                                        spectrum.flux.unit
+                    else:
+                        current_value = m_in_param_quantity.value * spectrum.flux.unit
 
-                    v = current_value.to(m_orig_param_quantity.unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+                    v = current_value.to(m_orig_param_quantity.unit,
+                                         equivalencies=u.equivalencies.spectral_density(dispersion))
 
             else:
                 v = getattr(m_in, pn).value
 
             setattr(new_sub_model, pn, v)
-        model_out.append(new_sub_model)
+        model_out_stack.append(new_sub_model)
+
+        model_index += 1
 
     if compound_model:
-        # TODO:  Wrong -- they may not be added together.
-        model_out = functools.reduce(operator.add, model_out)
+        model_out = _combine_postfix(model_out_stack)
     else:
-        model_out = model_out[0]
+        model_out = model_out_stack[0]
 
     return model_out
 
+
 def _combine_postfix(equation):
 
-    ops = {'+':operator.add,
-           '-':operator.sub,
-           '*':operator.mul,
-           '/':operator.truediv,
-           '^':operator.pow,
-           'sin':math.sin,
-           'tan':math.tan,
-           'cos':math.cos,
-           'pi':math.pi}
+    ops = {'+': operator.add,
+           '-': operator.sub,
+           '*': operator.mul,
+           '/': operator.truediv,
+           '^': operator.pow}
 
     stack = []
     result = 0
