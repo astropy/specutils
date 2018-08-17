@@ -8,7 +8,7 @@ import astropy.units as u
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.utils import excise_regions
-from astropy.modeling import fitting, Model
+from astropy.modeling import fitting, Model, models
 
 
 __all__ = ['fit_lines']
@@ -214,7 +214,17 @@ def _strip_units_from_model(model_in, spectrum):
 
     Note:  When CompoundModel with units works in the fitters this method
            can be removed.
+
+    Note: This assumes there are two types of models, those that are
+          based on `~astropy.modeling.models.PolynomialModel` and therefore
+          require the ``degree`` parameter when instantiating the class, and
+          "everything else" that does not require an "extra" parameter for
+          class instantiation.
     """
+
+    #
+    # Get the dispersion and flux information from the spectrum
+    #
 
     dispersion = spectrum.spectral_axis
     dispersion_unit = spectrum.spectral_axis.unit
@@ -222,39 +232,64 @@ def _strip_units_from_model(model_in, spectrum):
     flux = spectrum.flux
     flux_unit = spectrum.flux.unit
 
+    #
+    # Determine if a compound model
+    #
+
     compound_model = model_in.n_submodels() > 1
 
     if not compound_model:
+        # For this we are going to just make it a list so that we
+        # can use the looping structure below.
         model_in = [model_in]
     else:
+        # If it is a compound model then we are going to create the RPN
+        # representation of it which is a list that contains either astropy
+        # models or string representations of operators (e.g., '+' or '*').
         model_in = [c.value for c in model_in._tree.traverse_postorder()]
 
-    model_out_stack = []
-
+    #
     # Run through each model in the list or compound model
+    #
+
+    model_out_stack = []
     for sub_model in model_in:
 
+        #
         # If it is an operator put onto the stack and move on...
+        #
+
         if not isinstance(sub_model, Model):
             model_out_stack.append(sub_model)
             continue
 
-        # Make a copy of it.  This copy will have the
-        # 'unitless' version of the parameters.
-        new_sub_model = sub_model.__class__.copy(sub_model)
+        #
+        # Make a new instance of the class.
+        #
 
-        # Now for each parameter in the model, convert to
-        # spectrum units and then get the value.
+        if isinstance(sub_model, models.PolynomialModel):
+            new_sub_model = sub_model.__class__(sub_model.degree)
+        else:
+            new_sub_model = sub_model.__class__()
+
+        #
+        # Now for each parameter in the model determine if a dispersion or
+        # flux type of unit, then convert to spectrum units and then get the value.
+        #
+
         for pn in new_sub_model.param_names:
 
-            is_quantity = False
+            # This could be a Quantity or Parameter
             a = getattr(sub_model, pn)
+
             if hasattr(a, 'quantity') and a.quantity is not None:
-                is_quantity = True
                 q = getattr(sub_model, pn).quantity
 
-                # Convert the quantity to the spectral units, and then we will use
-                # the value of it in the model.
+                #
+                # Convert the quantity to the spectrum's units, and then we will use
+                # the *value* of it in the new unitless-model.
+                #
+
                 if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
                     quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
 
@@ -264,9 +299,14 @@ def _strip_units_from_model(model_in, spectrum):
                 # The value must be a quantity in order to use setattr (below)
                 # as the setter requires a Quantity on the rhs if the parameter
                 # is already a value.
-                v = quantity.value * u.dimensionless_unscaled
+                v = quantity.value
             else:
                 v = getattr(sub_model, pn).value
+
+            #
+            # Add this information for the parameter name into the
+            # new sub model.
+            #
 
             setattr(new_sub_model, pn, v)
 
@@ -274,23 +314,15 @@ def _strip_units_from_model(model_in, spectrum):
         # been converted to spectral unit scale.
         model_out_stack.append(new_sub_model)
 
-    dispersion_out = dispersion.value
-    if is_quantity:
-        dispersion_out = dispersion_out * u.dimensionless_unscaled
-
-    flux_out = flux.value
-    if is_quantity:
-        flux_out = flux_out * u.dimensionless_unscaled
-
     # If a compound model we need to re-create it, otherwise
-    # it is a single model and we just get the first one (a
-    # there is only one.
+    # it is a single model and we just get the first one (as
+    # there is only one).
     if compound_model:
         model_out = _combine_postfix(model_out_stack)
     else:
         model_out = model_out_stack[0]
 
-    return model_out, dispersion_out, flux_out
+    return model_out, dispersion.value, flux.value
 
 
 def _add_units_to_model(model_in, model_orig, spectrum):
@@ -301,41 +333,77 @@ def _add_units_to_model(model_in, model_orig, spectrum):
 
     Note:  When CompoundModel with units works in the fitters this method
            can be removed.
+
+    Note: This assumes there are two types of models, those that are
+          based on `~astropy.modeling.models.PolynomialModel` and therefore
+          require the ``degree`` parameter when instantiating the class, and
+          "everything else" that does not require an "extra" parameter for
+          class instantiation.
     """
 
     dispersion = spectrum.spectral_axis
 
+    #
     # If not a compound model, then make a single element
     # list so we can use the for loop below.
+    #
+
     compound_model = model_in.n_submodels() > 1
     if not compound_model:
-        model_in = [model_in]
-        model_orig = [model_orig]
+        model_in_list = [model_in]
+        model_orig_list = [model_orig]
     else:
         compound_model_in = model_in
 
-        model_in = [c.value for c in model_in._tree.traverse_postorder()]
-        model_orig = [c.value for c in model_orig._tree.traverse_postorder()]
+        model_in_list = [c.value for c in model_in._tree.traverse_postorder()]
+        model_orig_list = [c.value for c in model_orig._tree.traverse_postorder()]
 
     model_out_stack = []
     model_index = 0
 
-    # For each model in the list or submodel in the compound model
-    # we will convert the values back to the original (sub-)model values.
-    for ii, m_in in enumerate(model_in):
+    #
+    # For each model in the list we will convert the values back to
+    # the original (sub-)model units.
+    #
+
+    for ii, m_in in enumerate(model_in_list):
+
+        #
+        # If an operator (ie not Model) then we'll just add
+        # to the stack and evaluate at the end.
+        #
 
         if not isinstance(m_in, Model):
             model_out_stack.append(m_in)
             continue
 
-        m_orig = model_orig[ii]
+        #
+        # Get the corresponding *original* sub-model that
+        # will match the current sub-model. From this we will
+        # grab the units to apply.
+        #
 
+        m_orig = model_orig_list[ii]
+
+        #
         # Make the new sub-model.
-        new_sub_model = m_in.__class__.copy(m_in)
+        #
 
-        # Convert the model values from the spectrum units
-        # back to the original model units.
+        if isinstance(m_in, models.PolynomialModel):
+            new_sub_model = m_in.__class__(m_in.degree)
+        else:
+            new_sub_model = m_in.__class__()
+
+        #
+        # Convert the model values from the spectrum units back to the
+        # original model units.
+        #
+
         for pi, pn in enumerate(new_sub_model.param_names):
+
+            #
+            # Get the parameter from the original model and unit-less model.
+            #
 
             m_orig_param = getattr(m_orig, pn)
             m_in_param = getattr(m_in, pn)
@@ -343,12 +411,12 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             if hasattr(m_orig_param, 'quantity') and m_orig_param.quantity is not None:
 
                 m_orig_param_quantity = m_orig_param.quantity
-                m_in_param_quantity = m_in_param.quantity
 
-                # At this point parameter name of m_in will be in 
-                # dimensionless_unscaled units.  So we need to remove that
-                # and add on the spectrum's unit.
-                if m_orig_param_quantity.unit.is_equivalent(spectrum.spectral_axis.unit, equivalencies=u.equivalencies.spectral()):
+                #
+                # If a spectral dispersion type of unit...
+                #
+                if m_orig_param_quantity.unit.is_equivalent(spectrum.spectral_axis.unit,
+                                                            equivalencies=u.equivalencies.spectral()):
 
                     # If it is a compound model, then we need to get the value from the
                     # actual compound model as the tree is not updated in the fitting
@@ -356,10 +424,13 @@ def _add_units_to_model(model_in, model_orig, spectrum):
                         current_value = getattr(compound_model_in, '{}_{}'.format(pn, model_index)).value *\
                                         spectrum.spectral_axis.unit
                     else:
-                        current_value = m_in_param_quantity.value * spectrum.spectral_axis.unit
+                        current_value = m_in_param.value * spectrum.spectral_axis.unit
 
                     v = current_value.to(m_orig_param_quantity.unit, equivalencies=u.equivalencies.spectral())
 
+                #
+                # If a spectral density type of unit...
+                #
                 elif m_orig_param_quantity.unit.is_equivalent(spectrum.flux.unit,
                                                               equivalencies=u.equivalencies.spectral_density(dispersion)):
                     # If it is a compound model, then we need to get the value from the
@@ -368,7 +439,7 @@ def _add_units_to_model(model_in, model_orig, spectrum):
                         current_value = getattr(compound_model_in, '{}_{}'.format(pn, model_index)).value *\
                                         spectrum.flux.unit
                     else:
-                        current_value = m_in_param_quantity.value * spectrum.flux.unit
+                        current_value = m_in_param.value * spectrum.flux.unit
 
                     v = current_value.to(m_orig_param_quantity.unit,
                                          equivalencies=u.equivalencies.spectral_density(dispersion))
@@ -376,10 +447,25 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             else:
                 v = getattr(m_in, pn).value
 
+            #
+            # Set the parameter value into the new sub-model.
+            #
+
             setattr(new_sub_model, pn, v)
+
+        #
+        # Add the new unit-filled model onto the stack.
+        #
+
         model_out_stack.append(new_sub_model)
 
         model_index += 1
+
+    #
+    # Create the output model which is either the evaulation
+    # of the RPN representation of the model (if a compound model)
+    # or just the first element if a non-compound model.
+    #
 
     if compound_model:
         model_out = _combine_postfix(model_out_stack)
@@ -390,30 +476,32 @@ def _add_units_to_model(model_in, model_orig, spectrum):
 
 
 def _combine_postfix(equation):
+    """
+    Given a Python list in post order (RPN) of an equation, convert/apply the operations to evaluate.
+    The list order is the same as what is output from ``model._tree.traverse_postorder()``.
+
+    Structure modified from https://codereview.stackexchange.com/questions/79795/reverse-polish-notation-calculator-in-python
+    """
 
     ops = {'+': operator.add,
            '-': operator.sub,
            '*': operator.mul,
            '/': operator.truediv,
-           '^': operator.pow}
+           '^': operator.pow,
+           '**': operator.pow}
 
     stack = []
     result = 0
     for i in equation:
         if isinstance(i, Model):
-            stack.insert(0,i)
+            stack.insert(0, i)
         else:
             if len(stack) < 2:
                 print('Error: insufficient values in expression')
                 break
             else:
-                if len(i) == 1:
-                    n1 = stack.pop(1)
-                    n2 = stack.pop(0)
-                    result = ops[i](n1,n2)
-                    stack.insert(0,result)
-                else:
-                    n1 = float(stack.pop(0))
-                    result = ops[i](math.radians(n1))
-                    stack.insert(0,result)
+                n1 = stack.pop(1)
+                n2 = stack.pop(0)
+                result = ops[i](n1, n2)
+                stack.insert(0, result)
     return result
