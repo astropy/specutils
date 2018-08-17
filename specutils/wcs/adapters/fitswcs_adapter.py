@@ -1,10 +1,11 @@
+import astropy.units as u
 from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
-                         WCSSUB_STOKES)
-from astropy.wcs import InvalidSubimageSpecificationError
+                         WCSSUB_STOKES, InvalidSubimageSpecificationError)
 
 # Use this once in specutils
-from ...utils.wcs_utils import convert_spectral_axis, determine_ctype_from_vconv
+from ...utils.wcs_utils import (convert_spectral_axis,
+                                determine_ctype_from_vconv)
 from ..wcs_adapter import WCSAdapter, WCSAxes
 
 __all__ = ['FITSWCSAdapter']
@@ -44,13 +45,14 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Method for performing the world to pixel transformations.
         """
-        return self.axes.spectral.all_world2pix(world_array, 0)[0]
+        return u.Quantity(self.axes.spectral.all_world2pix(world_array, 0)[0])
 
     def pixel_to_world(self, pixel_array):
         """
         Method for performing the pixel to world transformations.
         """
-        return self.axes.spectral.all_pix2world(pixel_array, 0)[0]
+        return u.Quantity(self.axes.spectral.all_pix2world(pixel_array, 0)[0],
+                          self.spectral_axis_unit)
 
     @property
     def spec_axis(self):
