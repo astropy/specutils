@@ -14,6 +14,11 @@ from ..analysis import (equivalent_width, snr, centroid, gaussian_sigma_width,
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
+from ..spectra import Spectrum1D, SpectralRegion
+from ..analysis import equivalent_width, snr, centroid, sigma_full_width
+from ..manipulation import noise_region_uncertainty
+from ..tests.spectral_examples import simulated_spectra
+
 
 def test_equivalent_width():
     spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
