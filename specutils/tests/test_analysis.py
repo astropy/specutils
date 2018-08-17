@@ -1,13 +1,15 @@
-import astropy.units as u
-import numpy as np
 import pytest
+import numpy as np
 
-from ..tests.spectral_examples import simulated_spectra
-from ..spectra.spectrum1d import Spectrum1D
-from ..analysis import equivalent_width, snr, centroid
-from ..manipulation import noise_region_uncertainty, extract_region
-from ..spectra import SpectralRegion
+import astropy.units as u
+from astropy.units import quantity
+from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
+
+from ..spectra import Spectrum1D, SpectralRegion
+from ..analysis import equivalent_width, snr, centroid, sigma_full_width
+from ..manipulation import noise_region_uncertainty
+from ..tests.spectral_examples import simulated_spectra
 
 
 def test_equivalent_width():
@@ -88,8 +90,6 @@ def test_snr_multiple_flux(simulated_spectra):
     #
     #  Set up the data and add the uncertainty and calculate the expected SNR
     #
-
-    np.random.seed(42)
 
     uncertainty = StdDevUncertainty(0.1*np.random.random((5, 10))*u.mJy)
     spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
@@ -244,3 +244,19 @@ def test_centroid_multiple_flux(simulated_spectra):
 
     assert np.allclose(centroid_spec.value, np.array([4.46190995, 4.17223565, 4.37778249, 4.51595259, 4.7429066]))
     assert centroid_spec.unit == u.um
+
+
+def test_sigma_full_width():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian spectrum for testing
+    mean = 5
+    frequencies = np.linspace(1, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = sigma_full_width(spectrum)
+
+    assert quantity.isclose(result, g1.stddev*2, atol=0.01*u.GHz)
