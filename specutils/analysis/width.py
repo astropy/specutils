@@ -2,13 +2,13 @@ import numpy as np
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from ..spectra import SpectralRegion
 
-__all__ = ['sigma']
+__all__ = ['sigma_full_width']
 
 
-def sigma(spectrum, region=None):
+def sigma_full_width(spectrum, region=None):
     """
-    Calculate the gaussian sigma width of the spectrum.  This will be
-    calculated over the regions, if they are specified.
+    Calculate the full width of the spectrum based on an approximate value of
+    sigma.  This will be calculated over the regions, if they are specified.
 
     Parameters
     ----------
@@ -20,8 +20,8 @@ def sigma(spectrum, region=None):
 
     Returns
     -------
-    snr : float or list (based on region input)
-        Signal to noise ratio of the spectrum or within the regions
+    full_width : float or list (based on region input)
+        Approximate full width of the signal
 
     Notes
     -----
@@ -32,20 +32,21 @@ def sigma(spectrum, region=None):
 
     # No region, therefore whole spectrum.
     if region is None:
-        return _compute_sigma(spectrum)
+        return _compute_sigma_full_width(spectrum)
 
     # Single region
     elif isinstance(region, SpectralRegion):
-        return _compute_sigma(spectrum, region=region)
+        return _compute_sigma_full_width(spectrum, region=region)
 
     # List of regions
     elif isinstance(region, list):
-        return [_compute_sigma(spectrum, region=reg) for reg in region]
+        return [_compute_sigma_full_width(spectrum, region=reg) for reg in region]
 
 
-def _compute_sigma(spectrum, region=None):
+def _compute_sigma_full_width(spectrum, region=None):
     """
-    Calculate the gaussian sigma width of the spectrum.
+    Calculate the full width of the spectrum based on an approximate value of
+    sigma.
 
     Parameters
     ----------
@@ -57,12 +58,12 @@ def _compute_sigma(spectrum, region=None):
 
     Returns
     -------
-    snr : float or list (based on region input)
-        Signal to noise ratio of the spectrum or within the regions
+    full_width : float or list (based on region input)
+        Approximate full width of the signal
 
     Notes
     -----
-    This is a helper function for the above `snr()` method.
+    This is a helper function for the above `sigma_full_width()` method.
 
     """
 
@@ -78,4 +79,4 @@ def _compute_sigma(spectrum, region=None):
     fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux) / np.sum(flux))
     sigma = fwhm * gaussian_fwhm_to_sigma
 
-    return sigma
+    return sigma * 2
