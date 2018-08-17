@@ -19,21 +19,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     Parameters
     ----------
-    flux : `numpy.ndarray`-like or `astropy.units.Quantity` or astropy.nddata.NDData`-like
+    flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quantity`
+    spectral_axis : `astropy.units.Quantity`
         Dispersion information with the same shape as the last (or only)
         dimension of flux.
     wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
         WCS information object.
-    unit : str or `astropy.units.Unit`
-        The unit for the flux data. Must be parseable by `astropy.units.Unit`.
-        If ``flux`` is supplied as a `~astropy.units.Quantity`, this
-        is superceded by the defined unit.
-    spectral_axis_unit : str or `astropy.units.Unit`
-        The unit for the spectral axis. Must be parseable by `astropy.units.Unit`.
-        If ``spectral_axis`` is supplied as a `~astropy.units.Quantity`, this
-        is superceded by the defined unit.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
     rest_value : `~astropy.units.Quantity`
@@ -48,10 +40,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
     """
+    def __init__(self, flux=None, spectral_axis=None, wcs=None,
+                 velocity_convention=None, rest_value=None, *args, **kwargs):
+        # Ensure that the flux argument is an astropy quantity
+        if flux is not None and not isinstance(flux, u.Quantity):
+            raise ValueError("Flux must be a `Quantity` object.")
 
-    def __init__(self, flux=None, spectral_axis=None, wcs=None, unit=None,
-                 spectral_axis_unit=None, velocity_convention=None,
-                 rest_value=None, *args, **kwargs):
         # In cases of slicing, new objects will be initialized with `data`
         # instead of `flux`. Ensure we grab the `data` argument.
         if flux is None and 'data' in kwargs:
@@ -70,12 +64,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if spectral_axis is not None:
+            # Ensure that the spectral axis is an astropy quantity
             if not isinstance(spectral_axis, u.Quantity):
-                spectral_axis = u.Quantity(spectral_axis,
-                                           unit=spectral_axis_unit or u.AA)
-
-                logging.warning("No spectral axis units given, assuming "
-                                "{}".format(spectral_axis.unit))
+                raise ValueError("Spectral axis must be a `Quantity` object.")
 
             wcs = WCSWrapper.from_array(spectral_axis)
         elif wcs is not None:
@@ -91,9 +82,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # If no wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
-
-        if not isinstance(flux, u.Quantity):
-            flux = u.Quantity(flux, unit=unit or "Jy")
 
         self._velocity_convention = velocity_convention
 

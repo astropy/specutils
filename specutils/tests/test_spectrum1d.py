@@ -12,8 +12,8 @@ from ..spectra.spectrum1d import Spectrum1D
 
 
 def test_create_from_arrays():
-    spec = Spectrum1D(spectral_axis=np.arange(50),
-                      flux=np.random.randn(50))
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.size == 50
@@ -39,7 +39,7 @@ def test_create_from_multidimensional_arrays():
 
 def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit == u.nm
@@ -47,40 +47,44 @@ def test_create_from_quantities():
 
 
 def test_create_implicit_wcs():
-    spec = Spectrum1D(spectral_axis=np.arange(50),
-                      flux=np.random.randn(50))
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
 
     assert isinstance(spec.wcs.wcs, gwcs.wcs.WCS)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
     assert pix2world.size == 5
+    assert isinstance(pix2world, u.Quantity)
 
 
 def test_create_implicit_wcs_with_spectral_unit():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     assert isinstance(spec.wcs.wcs, gwcs.wcs.WCS)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
     assert pix2world.size == 5
+    assert isinstance(pix2world, u.Quantity)
 
 
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
-    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500]))
+    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
+                      spectral_axis=np.array([400, 500]) * u.AA)
+
     assert np.all(spec.spectral_axis == np.array([400, 500]) * u.angstrom)
     assert spec.spectral_axis.unit == u.angstrom
 
-    spec = Spectrum1D(spectral_axis=np.arange(50),
-                      flux=np.random.randn(50))
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
 
     assert spec.wavelength.unit == u.AA
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     assert spec.frequency.unit == u.GHz
 
@@ -88,14 +92,15 @@ def test_spectral_axis_conversions():
         spec.velocity
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     new_spec = spec.with_spectral_unit(u.GHz)
 
 
 def test_flux_unit_conversion():
     # By default the flux units should be set to Jy
-    s = Spectrum1D(flux=np.array([26.0, 44.5]), spectral_axis=np.array([400, 500]) * u.nm)
+    s = Spectrum1D(flux=np.array([26.0, 44.5] * u.Jy),
+                   spectral_axis=np.array([400, 500]) * u.nm)
     assert np.all(s.flux == np.array([26.0, 44.5]) * u.Jy)
     assert s.flux.unit == u.Jy
 
@@ -109,7 +114,8 @@ def test_flux_unit_conversion():
         s.new_flux_unit(unit=u.m)
 
     # Pass custom equivalencies
-    s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500]) * u.nm)
+    s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
+                   spectral_axis=np.array([400, 500]) * u.nm)
     eq = [[u.Jy, u.m,
           lambda x: np.full_like(np.array(x), 1000.0, dtype=np.double),
           lambda x: np.full_like(np.array(x), 0.001, dtype=np.double)]]
@@ -174,7 +180,7 @@ def test_create_explicit_fitswcs():
 
 def test_create_with_uncertainty():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.sample(49),
+                      flux=np.random.sample(49) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
 
     assert isinstance(spec.uncertainty, StdDevUncertainty)
