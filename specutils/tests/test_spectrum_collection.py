@@ -19,7 +19,7 @@ def test_create_spectrum_collection():
     assert isinstance(sc.flux, u.Quantity)
     assert sc.flux.shape == (2, 50)
     assert isinstance(sc.flux[0], u.Quantity)
-    assert sc.flux[0].size == 1
+    assert sc.flux[0].size == 50
 
     # Test to ensure that the shape requirement is enforced
     with pytest.raises(Exception):
