@@ -217,3 +217,40 @@ def test_sigma_full_width():
     result = sigma_full_width(spectrum)
 
     assert quantity.isclose(result, g1.stddev*2, atol=0.01*u.GHz)
+
+
+def test_sigma_full_width_regions():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
+    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
+    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
+
+    compound = g1 + g2 + g3
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
+
+    region1 = SpectralRegion(lower=5*u.GHz, upper=15*u.GHz)
+    result1 = sigma_full_width(spectrum, region=region1)
+
+    exp1 = g1.stddev*2
+    assert quantity.isclose(result1, exp1, atol=0.25*exp1)
+
+    region2 = SpectralRegion(lower=1*u.GHz, upper=3*u.GHz)
+    result2 = sigma_full_width(spectrum, region=region2)
+
+    exp2 = g2.stddev*2
+    assert quantity.isclose(result2, exp2, atol=0.25*exp2)
+
+    region3 = SpectralRegion(lower=40*u.GHz, upper=100*u.GHz)
+    result3 = sigma_full_width(spectrum, region=region3)
+
+    exp3 = g3.stddev*2
+    assert quantity.isclose(result3, exp3, atol=0.25*exp3)
+
+    # Test using a list of regions
+    result_list = sigma_full_width(spectrum, region=[region1, region2, region3])
+    for model, result in zip((g1, g2, g3), result_list):
+        exp = model.stddev*2
+        assert quantity.isclose(result, exp, atol=0.25*exp)
