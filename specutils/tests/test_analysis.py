@@ -6,6 +6,7 @@ from astropy.units import quantity
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
+from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (equivalent_width, snr, centroid, sigma_full_width,
@@ -261,7 +262,7 @@ def test_sigma_full_width():
 
     result = sigma_full_width(spectrum)
 
-    assert quantity.isclose(result, g1.stddev*2, atol=0.01*u.GHz)
+    assert quantity_allclose(result, g1.stddev*2, atol=0.01*u.GHz)
 
 
 def test_sigma_full_width_regions():
@@ -280,25 +281,25 @@ def test_sigma_full_width_regions():
     result1 = sigma_full_width(spectrum, region=region1)
 
     exp1 = g1.stddev*2
-    assert quantity.isclose(result1, exp1, atol=0.25*exp1)
+    assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(lower=1*u.GHz, upper=3*u.GHz)
     result2 = sigma_full_width(spectrum, region=region2)
 
     exp2 = g2.stddev*2
-    assert quantity.isclose(result2, exp2, atol=0.25*exp2)
+    assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(lower=40*u.GHz, upper=100*u.GHz)
     result3 = sigma_full_width(spectrum, region=region3)
 
     exp3 = g3.stddev*2
-    assert quantity.isclose(result3, exp3, atol=0.25*exp3)
+    assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
     result_list = sigma_full_width(spectrum, region=[region1, region2, region3])
     for model, result in zip((g1, g2, g3), result_list):
         exp = model.stddev*2
-        assert quantity.isclose(result, exp, atol=0.25*exp)
+        assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
 @pytest.mark.xfail(reason="Bug in representation of multiple 1D spectra")
@@ -336,4 +337,4 @@ def test_full_width_half_max():
     result = full_width_half_max(spectrum)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
-    assert quantity.isclose(result, expected, atol=0.01*u.GHz)
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
