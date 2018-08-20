@@ -5,9 +5,11 @@ import astropy.units as u
 from astropy.units import quantity
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
+from astropy.stats.funcs import gaussian_sigma_to_fwhm
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..analysis import equivalent_width, snr, centroid, sigma_full_width
+from ..analysis import (equivalent_width, snr, centroid, sigma_full_width,
+                        full_width_half_max)
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
@@ -318,3 +320,20 @@ def test_sigma_full_width_multi_spectrum():
     spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
     results = sigma_full_width(spectra)
+
+
+def test_full_width_half_max():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian spectrum for testing
+    mean = 5
+    frequencies = np.linspace(1, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = full_width_half_max(spectrum)
+
+    expected = g1.stddev * gaussian_sigma_to_fwhm
+    assert quantity.isclose(result, expected, atol=0.01*u.GHz)
