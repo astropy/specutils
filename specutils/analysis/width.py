@@ -2,7 +2,23 @@ import numpy as np
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from ..spectra import SpectralRegion
 
-__all__ = ['sigma_full_width']
+
+__all__ = ['sigma_full_width', 'full_width_half_max']
+
+
+def _computation_wrapper(func, spectrum, region):
+
+    # No region, therefore whole spectrum.
+    if region is None:
+        return func(spectrum)
+
+    # Single region
+    elif isinstance(region, SpectralRegion):
+        return func(spectrum, region=region)
+
+    # List of regions
+    elif isinstance(region, list):
+        return [func(spectrum, region=reg) for reg in region]
 
 
 def sigma_full_width(spectrum, region=None):
@@ -22,25 +38,66 @@ def sigma_full_width(spectrum, region=None):
     -------
     full_width : float or list (based on region input)
         Approximate full width of the signal
+    """
+    return _computation_wrapper(_compute_sigma_full_width, spectrum, region)
+
+
+def full_width_half_max(spectrum, region=None):
+    """
+    Calculate the full width half max of the spectrum.  This will be calculated
+    over the regions, if they are specified.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object overwhich the equivalent width will be calculated.
+
+    region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+        Region within the spectrum to calculate the FWHM value.
+
+    Returns
+    -------
+    full_width_half_max : float or list (based on region input)
+        Approximate full width of the signal at half max
+    """
+    return _computation_wrapper(_compute_full_width_half_max, spectrum, region)
+
+
+def _compute_full_width_half_max(spectrum, region=None):
+    """
+    Calculate the full width of the spectrum at half max.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object overwhich the equivalent width will be calculated.
+
+    region: `~specutils.utils.SpectralRegion`
+        Region within the spectrum to calculate the FWHM value.
+
+    Returns
+    -------
+    full_width_half_max : float or list (based on region input)
+        Approximate full width of the signal at half max
 
     Notes
     -----
-    The spectrum will need to have the uncertainty defined in order
-    for the gaussian sigma width to be calculated.
+    This is a helper function for the above `full_width_half_max()` method.
 
     """
 
-    # No region, therefore whole spectrum.
-    if region is None:
-        return _compute_sigma_full_width(spectrum)
+    if region is not None:
+        calc_spectrum = region.extract(spectrum)
+    else:
+        calc_spectrum = spectrum
 
-    # Single region
-    elif isinstance(region, SpectralRegion):
-        return _compute_sigma_full_width(spectrum, region=region)
+    flux = calc_spectrum.flux
+    frequencies = calc_spectrum.frequency
 
-    # List of regions
-    elif isinstance(region, list):
-        return [_compute_sigma_full_width(spectrum, region=reg) for reg in region]
+    dx = frequencies - np.mean(frequencies)
+    fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+
+    return fwhm
 
 
 def _compute_sigma_full_width(spectrum, region=None):
@@ -67,16 +124,7 @@ def _compute_sigma_full_width(spectrum, region=None):
 
     """
 
-    if region is not None:
-        calc_spectrum = region.extract(spectrum)
-    else:
-        calc_spectrum = spectrum
-
-    flux = calc_spectrum.flux
-    frequencies = calc_spectrum.frequency
-
-    dx = frequencies - np.mean(frequencies)
-    fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+    fwhm = _compute_full_width_half_max(spectrum, region)
     sigma = fwhm * gaussian_fwhm_to_sigma
 
     return sigma * 2
