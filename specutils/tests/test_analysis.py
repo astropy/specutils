@@ -4,6 +4,7 @@ import gwcs
 import numpy as np
 import pytest
 
+from ..tests.spectral_examples import simulated_spectra
 from ..spectra.spectrum1d import Spectrum1D
 import astropy.units as u
 from ..analysis import equivalent_width, snr, centroid

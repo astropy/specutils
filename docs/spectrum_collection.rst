@@ -22,6 +22,7 @@ dispersion solution.
     >>> spec2 = Spectrum1D(spectral_axis=np.linspace(25, 76, 50) * u.AA, flux=np.random.randn(50) * u.Jy)
     >>> spec_coll = SpectrumCollection([spec1, spec2])
     >>> print(spec_coll.shape)
+    [(50, 50), (50, 50)]
 
 .. plot::
 
@@ -50,11 +51,11 @@ the :class:`~specutils.Spectrum1D` object.
 .. code:: python
 
     >>> print(type(spec1.flux))
-    astropy.units.quantity.Quantity
+    <class 'astropy.units.quantity.Quantity'>
     >>> print(type(spec_coll.flux))
-    astropy.units.quantity.Quantity
+    <class 'astropy.units.quantity.Quantity'>
 
-The difference is their shape. The returned array from the 
+The difference is their shape. The returned array from the
 :class:`~specutils.SpectrumCollection`
 object will have shape ``(N, M)`` where ``N`` is the number of input spectra
 and ``M`` is the length of the output dispersion grid.
@@ -62,9 +63,9 @@ and ``M`` is the length of the output dispersion grid.
 .. code:: python
 
     >>> print(spec1.flux.shape)
-    (25,)
+    (50,)
     >>> print(spec_coll.flux.shape)
-    (2, 24)
+    (2, 50)
 
 The items stored in the :class:`~specutils.SpectrumCollection` object are the
 *original* input spectra. Iterating over a :class:`~specutils.SpectrumCollection`
