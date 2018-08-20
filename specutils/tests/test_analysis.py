@@ -1,16 +1,15 @@
-import astropy.units as u
-import astropy.wcs as fitswcs
-import gwcs
-import numpy as np
 import pytest
+import numpy as np
 
-from ..tests.spectral_examples import simulated_spectra
-from ..spectra.spectrum1d import Spectrum1D
 import astropy.units as u
-from ..analysis import equivalent_width, snr
-from ..manipulation import noise_region_uncertainty
-from ..spectra import SpectralRegion
+from astropy.units import quantity
+from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
+
+from ..spectra import Spectrum1D, SpectralRegion
+from ..analysis import equivalent_width, snr, sigma_full_width
+from ..manipulation import noise_region_uncertainty
+from ..tests.spectral_examples import simulated_spectra
 
 
 def test_equivalent_width():
@@ -43,7 +42,7 @@ def test_snr(simulated_spectra):
     """
 
     np.random.seed(42)
-    
+
     #
     #  Set up the data and add the uncertainty and calculate the expected SNR
     #
@@ -73,12 +72,10 @@ def test_snr_multiple_flux(simulated_spectra):
     """
 
     np.random.seed(42)
-    
+
     #
     #  Set up the data and add the uncertainty and calculate the expected SNR
     #
-
-    np.random.seed(42)
 
     uncertainty = StdDevUncertainty(0.1*np.random.random((5, 10))*u.mJy)
     spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
@@ -140,7 +137,7 @@ def test_snr_two_regions(simulated_spectra):
     #
 
     regions = [SpectralRegion(0.52*u.um, 0.59*u.um), SpectralRegion(0.8*u.um, 0.9*u.um)]
-    
+
     #
     #  Set up the data
     #
@@ -178,7 +175,7 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
 
     region = SpectralRegion(0.52*u.um, 0.59*u.um)
     noise_region = SpectralRegion(0.40*u.um, 0.45*u.um)
-    
+
     #
     #  Set up the data
     #
@@ -206,3 +203,75 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
     assert np.allclose(spec_snr.value, spec_snr_expected.value)
 
 
+def test_sigma_full_width():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian spectrum for testing
+    mean = 5
+    frequencies = np.linspace(1, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = sigma_full_width(spectrum)
+
+    assert quantity.isclose(result, g1.stddev*2, atol=0.01*u.GHz)
+
+
+def test_sigma_full_width_regions():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
+    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
+    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
+
+    compound = g1 + g2 + g3
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
+
+    region1 = SpectralRegion(lower=5*u.GHz, upper=15*u.GHz)
+    result1 = sigma_full_width(spectrum, region=region1)
+
+    exp1 = g1.stddev*2
+    assert quantity.isclose(result1, exp1, atol=0.25*exp1)
+
+    region2 = SpectralRegion(lower=1*u.GHz, upper=3*u.GHz)
+    result2 = sigma_full_width(spectrum, region=region2)
+
+    exp2 = g2.stddev*2
+    assert quantity.isclose(result2, exp2, atol=0.25*exp2)
+
+    region3 = SpectralRegion(lower=40*u.GHz, upper=100*u.GHz)
+    result3 = sigma_full_width(spectrum, region=region3)
+
+    exp3 = g3.stddev*2
+    assert quantity.isclose(result3, exp3, atol=0.25*exp3)
+
+    # Test using a list of regions
+    result_list = sigma_full_width(spectrum, region=[region1, region2, region3])
+    for model, result in zip((g1, g2, g3), result_list):
+        exp = model.stddev*2
+        assert quantity.isclose(result, exp, atol=0.25*exp)
+
+
+@pytest.mark.xfail(reason="Bug in representation of multiple 1D spectra")
+def test_sigma_full_width_multi_spectrum():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
+    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
+    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
+
+    flux = np.ndarray((3, len(frequencies)))
+
+    flux[0] = g1(frequencies)
+    flux[1] = g2(frequencies)
+    flux[2] = g3(frequencies)
+
+    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    results = sigma_full_width(spectra)
