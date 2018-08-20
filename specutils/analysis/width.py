@@ -76,7 +76,7 @@ def _compute_sigma_full_width(spectrum, region=None):
     frequencies = calc_spectrum.frequency
 
     dx = frequencies - np.mean(frequencies)
-    fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux) / np.sum(flux))
+    fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
     sigma = fwhm * gaussian_fwhm_to_sigma
 
     return sigma * 2
