@@ -46,7 +46,14 @@ class GWCSAdapter(WCSAdapter):
         remove this code.
         """
         # Create shift of x-axis
-        shifter = models.Shift(item.start)
+        if isinstance(item, int):
+            shift = item
+        elif isinstance(item, slice):
+            shift = item.start
+        else:
+            raise TypeError('Unknown index type {}, must be int or slice.'.format(item))
+
+        shifter = models.Shift(shift)
 
         # Get the current forward transform
         forward = self._wcs.forward_transform
