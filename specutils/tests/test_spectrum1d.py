@@ -21,6 +21,16 @@ def test_create_from_arrays():
     assert spec.flux.size == 50
 
 
+def test_create_from_multidimensional_arrays():
+
+    freqs = np.arange(50) * u.GHz
+    flux = np.random.random((5, len(freqs))) * u.Jy
+    spec = Spectrum1D(spectral_axis=freqs, flux=flux)
+
+    assert (spec.frequency == freqs).all()
+    assert (spec.flux == flux).all()
+
+
 def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49))
