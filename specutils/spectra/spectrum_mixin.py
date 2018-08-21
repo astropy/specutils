@@ -60,7 +60,7 @@ class OneDSpectrumMixin(object):
         # Construct the spectral_axis array.
         # TODO: Should applying the spectral axis unit occur in the adapter?
         spectral_axis = self.wcs.pixel_to_world(
-            np.arange(self.flux.shape[0])) * self.wcs.spectral_axis_unit
+            np.arange(self.flux.shape[-1])) * self.wcs.spectral_axis_unit
 
         return spectral_axis
 
