@@ -1,6 +1,7 @@
 import logging
 from gwcs.wcs import WCS
 import astropy.units as u
+from astropy.modeling import models
 
 from ..wcs_adapter import WCSAdapter
 
@@ -30,6 +31,30 @@ class GWCSAdapter(WCSAdapter):
         if unit is not None and unit.is_equivalent(self._unit,
                                                    equivalencies=u.spectral()):
             self._unit = unit
+
+    def __getitem__(self, item):
+        """
+        This is a bit of a hack in order to fix the slicing of the WCS
+        in the spectral dispersion direction.  The NDData slices properly
+        but the spectral dispersion result was not.
+
+        There is code slightly downstream that sets the *number* of entries
+        in the dispersion axis, this is just need to shift to the correct
+        starting element.
+
+        When WCS gets the abillity to do slicing then we might be able to
+        remove this code.
+        """
+        # Create shift of x-axis
+        shifter = models.Shift(item.start)
+
+        # Get the current forward transform
+        forward = self._wcs.forward_transform
+
+        # Set the new transform
+        self._wcs.set_transform(self._wcs.input_frame, self._wcs.output_frame, shifter|forward)
+
+        return self
 
     def world_to_pixel(self, world_array):
         """
