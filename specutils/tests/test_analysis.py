@@ -302,15 +302,14 @@ def test_sigma_full_width_regions():
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-@pytest.mark.xfail(reason="Bug in representation of multiple 1D spectra")
 def test_sigma_full_width_multi_spectrum():
 
     np.random.seed(42)
 
     frequencies = np.linspace(1, 100, 10000) * u.GHz
-    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
-    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
-    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=0.8*u.GHz)
+    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=5*u.GHz)
+    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=10*u.GHz)
 
     flux = np.ndarray((3, len(frequencies)))
 
@@ -321,6 +320,10 @@ def test_sigma_full_width_multi_spectrum():
     spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
     results = sigma_full_width(spectra)
+
+    expected = (g1.stddev*2, g2.stddev*2, g3.stddev*2)
+    for result, exp in zip(results, expected):
+        assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
 def test_full_width_half_max():
