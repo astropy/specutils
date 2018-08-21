@@ -22,6 +22,11 @@ def test_create_from_arrays():
 
 
 def test_create_from_multidimensional_arrays():
+    """
+    This is a test for a bug that was fixed by #283. It makes sure that
+    multidimensional flux arrays are handled properly when creating Spectrum1D
+    objects.
+    """
 
     freqs = np.arange(50) * u.GHz
     flux = np.random.random((5, len(freqs))) * u.Jy
