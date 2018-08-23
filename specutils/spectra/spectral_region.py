@@ -1,6 +1,5 @@
 import numpy as np
 import astropy.units as u
-import copy
 
 
 class SpectralRegion:
@@ -150,4 +149,4 @@ class SpectralRegion:
         if left_index >= right_index:
             raise ValueError('Lower region, {}, appears to be greater than the upper region, {}.'.format(self._lower, self._upper))
 
-        return copy.deepcopy(spectrum)[left_index:right_index]
+        return spectrum[left_index:right_index]
