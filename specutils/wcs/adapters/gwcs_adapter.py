@@ -1,4 +1,6 @@
 import logging
+import copy
+
 from gwcs.wcs import WCS
 import astropy.units as u
 from astropy.modeling import models
@@ -45,6 +47,7 @@ class GWCSAdapter(WCSAdapter):
         When WCS gets the abillity to do slicing then we might be able to
         remove this code.
         """
+
         # Create shift of x-axis
         if isinstance(item, int):
             shift = item
@@ -53,15 +56,21 @@ class GWCSAdapter(WCSAdapter):
         else:
             raise TypeError('Unknown index type {}, must be int or slice.'.format(item))
 
+        # Create copy as we need to modify this and return it.
+        newwcs = copy.deepcopy(self)
+
+        if shift == 0:
+            return newwcs
+
         shifter = models.Shift(shift)
 
         # Get the current forward transform
-        forward = self._wcs.forward_transform
+        forward = newwcs._wcs.forward_transform
 
         # Set the new transform
-        self._wcs.set_transform(self._wcs.input_frame, self._wcs.output_frame, shifter|forward)
+        newwcs.wcs.set_transform(newwcs._wcs.input_frame, newwcs._wcs.output_frame, shifter|forward)
 
-        return self
+        return newwcs
 
     def world_to_pixel(self, world_array):
         """
