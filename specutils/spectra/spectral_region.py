@@ -48,7 +48,10 @@ class SpectralRegion:
         # Create instance variables
         self._subregions = None
 
+        #
         # Set the values (using the setters for doing the proper checking)
+        #
+
         if self._is_2_element(args):
             self._subregions = [tuple(args)]
         elif isinstance(args, (list, tuple)) and all([self._is_2_element(x) for x in args[0]]):
@@ -56,8 +59,58 @@ class SpectralRegion:
         else:
             raise ValueError('SpectralRegion input must be a 2-tuple or a list of 2-tuples.')
 
+        #
+        #  Check validity of the input sub regions.
+        #
+        if not self._valid():
+            raise ValueError('SpectralRegion 2-tuple lower extent must be less than upper extent.')
+
     def __str__(self):
-        return 'SpectralRegion: {}'.format(', '.join(['{} - {}'.format(x[0], x[1]) for x in self._subregions]))
+        return 'SpectralRegion: {}'.format(
+                ', '.join(['{} - {}'.format(x[0], x[1]) for x in self._subregions]))
+
+    def __add__(self, other):
+        """
+        Ability to add two SpectralRegion classes together.
+        """
+        return SpectralRegion(self._subregions + other._subregions)
+
+    def __iadd__(self, other):
+        """
+        Ability to add one SpectralRegion to another using +=.
+        """
+        self._subregions += other._subregions
+        return self
+
+    def __len__(self):
+        """
+        Number of spectral regions.
+        """
+        return len(self._subregions)
+
+    def __getslice__(self, item):
+        """
+        Enable slicing of the SpectralRegion list.
+        """
+        return SpectralRegion(self._subregions[item])
+
+    def __getitem__(self, item):
+        """
+        Enable slicing or extracting the SpectralRegion.
+        """
+        if isinstance(item, slice):
+            return self.__getslice__(item)
+        else:
+            return SpectralRegion([self._subregions[item]])
+
+    def __delitem__(self, item):
+        """
+        Delete a specific item from the list.
+        """
+        del self._subregions[item]
+
+    def _valid(self):
+        return all(x[0] < x[1] for x in self._subregions)
 
     def _is_2_element(self, value):
         """
@@ -68,49 +121,34 @@ class SpectralRegion:
                isinstance(value[0], u.Quantity) and \
                isinstance(value[1], u.Quantity)
 
+    def _reorder(self):
+        """
+        Re-order the  list based on lower bounds.
+
+        This could be important for when a spectrum is extracted.
+        """
+        self._subregions.sort(key=lambda k: k[0])
+
+    @property
+    def bounds(self):
+        """
+        Compute the lower and upper extent of the SpectralRegion.
+        """
+        return (self.lower, self.upper)
+
     @property
     def lower(self):
-        return self._lower
-
-    @lower.setter
-    def lower(self, value):
         """
-        Lower bound for the interval.
-
-        Parameters
-        ----------
-
-        value: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The lower bound of the region.
+        The most minimum value of the sub-regions.
         """
-
-        if not (value.unit.is_equivalent(u.pixel) or
-           value.unit.is_equivalent(u.angstrom, equivalencies=u.spectral())):
-            raise u.UnitError('Lower bound of region is not a spectral region unit')
-
-        self._lower = value
+        return min(x[0] for x in self._subregions)
 
     @property
     def upper(self):
-        return self._upper
-
-    @upper.setter
-    def upper(self, value):
         """
-        Upper bound for the interval.
-
-        Parameters
-        ----------
-
-        value: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The upper bound of the region.
+        The most maximum value of the sub-regions.
         """
-
-        if not (value.unit.is_equivalent(u.pixel) or
-           value.unit.is_equivalent(u.angstrom, equivalencies=u.spectral())):
-            raise u.UnitError('Upper bound of region is not a spectral region unit')
-
-        self._upper = value
+        return max(x[0] for x in self._subregions)
 
     def to_pixel(self, spectrum):
         """
@@ -131,8 +169,8 @@ class SpectralRegion:
 
         """
 
-        left_index = int(np.ceil(spectrum.wcs.world_to_pixel(np.array(self._lower))))
-        right_index = int(np.floor(spectrum.wcs.world_to_pixel(np.array(self._upper))))
+        left_index = int(np.ceil(spectrum.wcs.world_to_pixel(self.lower)))
+        right_index = int(np.floor(spectrum.wcs.world_to_pixel(self.upper)))
 
         return left_index, right_index
 
