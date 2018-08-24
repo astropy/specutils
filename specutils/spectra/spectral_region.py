@@ -1,3 +1,6 @@
+import itertools
+import sys
+
 import numpy as np
 import astropy.units as u
 
@@ -149,6 +152,83 @@ class SpectralRegion:
         The most maximum value of the sub-regions.
         """
         return max(x[0] for x in self._subregions)
+
+    def invert_from_spectrum(self, spectrum):
+        """
+        Invert a SpectralRegion based on the extent of the
+        input spectrum.  
+
+        See notes in SpectralRegion.invert() method.
+        """
+        return self.invert(spectrum.spectral_axis[0], spectrum.spetral_axis[-1])
+
+    def _in_range(self, value, lower, upper):
+        return (value >= lower) and (value <= upper)
+
+    def invert(self, lower_bound, upper_bound):
+        """
+        Given a set of sub-regions this SpectralRegion defines,
+        create a new SpectralRegion such that the sub-regions
+        are defined in the new one as regions *not* in this
+        SpectralRegion.
+
+        For example, if this SpectralRegion is defined as:
+           sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
+
+        and we call `sr_invert = sr.invert(0.3*u.um, 1.0*u.um)` then
+        `sr_invert` will be
+           SpectralRegion([(0.3*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um), (0.9*u.um, 1*u.um)])
+
+        This could be useful if a SpectralRegion has sub-regions defined
+        for peaks in a spectrum and then one wants to create a SpectralRegion
+        defined as all the *non*-peaks, then one could use this function.
+        """
+
+        #
+        # Create 'rs' region list with left and right extra ranges.
+        #
+        min_num = -sys.maxsize-1
+        max_num = sys.maxsize
+        rs = self._subregions + [(min_num*u.um, lower_bound), (upper_bound, max_num*u.um)]
+
+        #
+        # Sort the region list based on lower bound.
+        #
+
+        sorted_regions = sorted(rs, key=lambda k: k[0])
+
+        #
+        # Create new region list that has overlapping regions merged
+        #
+
+        merged = []
+        for higher in sorted_regions:
+            if not merged:
+                merged.append(higher)
+            else:
+                lower = merged[-1]
+                # test for intersection between lower and higher:
+                # we know via sorting that lower[0] <= higher[0]
+                if higher[0] <= lower[1]:
+                    upper_bound = max(lower[1], higher[1])
+                    merged[-1] = (lower[0], upper_bound)  # replace by merged interval
+                else:
+                    merged.append(higher)
+
+        #
+        # Create new list and drop first and last (the maxsize ones).
+        # We go from -inf, upper1, lower2, upper2....
+        # and remap to     lower1, upper1, lower2, ...
+        #
+
+        newlist = list(itertools.chain.from_iterable(merged))
+        newlist = newlist[1:-1]
+
+        #
+        # Now create new Spectrum region
+        #
+
+        return SpectralRegion([(x, y) for x, y in zip(newlist[0::2], newlist[1::2])])
 
     def to_pixel(self, spectrum):
         """
