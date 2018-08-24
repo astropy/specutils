@@ -30,7 +30,7 @@ class SpectralRegion:
 
         return SpectralRegion(center - width, center + width)
 
-    def __init__(self, lower, upper):
+    def __init__(self, *args):
         """
         Lower and upper values for the interval.
 
@@ -46,12 +46,27 @@ class SpectralRegion:
         """
 
         # Create instance variables
-        self._lower = None
-        self._upper = None
+        self._subregions = None
 
         # Set the values (using the setters for doing the proper checking)
-        self.lower = lower
-        self.upper = upper
+        if self._is_2_element(args):
+            self._subregions = [tuple(args)]
+        elif isinstance(args, (list, tuple)) and all([self._is_2_element(x) for x in args[0]]):
+            self._subregions = [tuple(x) for x in args[0]]
+        else:
+            raise ValueError('SpectralRegion input must be a 2-tuple or a list of 2-tuples.')
+
+    def __str__(self):
+        return 'SpectralRegion: {}'.format(', '.join(['{} - {}'.format(x[0], x[1]) for x in self._subregions]))
+
+    def _is_2_element(self, value):
+        """
+        Helper function to check a variable to see if it
+        is a 2-tuple.
+        """
+        return len(value) == 2 and \
+               isinstance(value[0], u.Quantity) and \
+               isinstance(value[1], u.Quantity)
 
     @property
     def lower(self):
@@ -100,7 +115,7 @@ class SpectralRegion:
     def to_pixel(self, spectrum):
         """
         Calculate and return the left and right indices defined
-        by the lower and upper bounds and based on the input 
+        by the lower and upper bounds and based on the input
         `~specutils.spectra.spectrum1d.Spectrum1D`. The left and right indices will
         be returned.
 
