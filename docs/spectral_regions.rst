@@ -117,7 +117,7 @@ There is also the ability to iterate:
     ...      SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
 
     >>> for s in sr:
-    ...     print(s.lower)
+    ...     print(s.lower) #doctest:+SKIP
     SpectralRegion: 0.15 um - 0.2 um
     SpectralRegion: 0.3 um - 0.4 um
     SpectralRegion: 0.45 um - 0.6 um
