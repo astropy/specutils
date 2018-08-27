@@ -1,16 +1,10 @@
-import astropy.units as u
-import astropy.wcs as fitswcs
-import gwcs
 import numpy as np
 import pytest
 
-from ..tests.spectral_examples import simulated_spectra
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra import Spectrum1D, SpectralRegion
 import astropy.units as u
-from ..analysis import equivalent_width, snr
-from ..manipulation import noise_region_uncertainty
-from ..spectra import SpectralRegion
 from astropy.nddata import StdDevUncertainty
+
 
 # Should work when #272 is in
 @pytest.mark.xfail
@@ -79,6 +73,7 @@ def test_region_two_sub(simulated_spectra):
 
     assert np.allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
+
 def test_lower_upper():
     # Spectral region with just one range (lower and upper bound)
     sr = SpectralRegion(0.45*u.um, 0.6*u.um)
@@ -102,6 +97,7 @@ def test_lower_upper():
     # Get lower bound of a single sub-region:
     assert sr[0].lower == 0.04*u.um
     assert sr[0].upper == 0.05*u.um
+
 
 def test_adding_spectral_regions():
 
@@ -130,7 +126,7 @@ def test_getitem():
     assert sr[-1].subregions == [(0.8*u.um, 0.9*u.um)]
 
 
-def test_getitem():
+def test_bounds():
 
     # Single subregion
     sr = SpectralRegion(0.45*u.um, 0.6*u.um)
@@ -188,6 +184,7 @@ def test_slicing():
 
 def test_invert():
 
+    # Invert from range.
     sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
          SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
          SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
@@ -198,5 +195,11 @@ def test_invert():
                             (0.6*u.um, 0.8*u.um), (0.9*u.um, 1.0*u.um), (1.2*u.um, 1.3*u.um),
                             (1.5*u.um, 3.0*u.um)]
 
+    for ii, expected in enumerate(sr_inverted_expected):
+        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+
+    # Invert from spectrum.
+    spectrum = Spectrum1D(spectral_axis=np.linspace(0.05, 3, 20)*u.um, flux=np.random.random(20))
+    sr_inverted = sr.invert_from_spectrum(spectrum)
     for ii, expected in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]

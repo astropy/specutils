@@ -180,7 +180,7 @@ class SpectralRegion:
 
         See notes in SpectralRegion.invert() method.
         """
-        return self.invert(spectrum.spectral_axis[0], spectrum.spetral_axis[-1])
+        return self.invert(spectrum.spectral_axis[0], spectrum.spectral_axis[-1])
 
     def _in_range(self, value, lower, upper):
         return (value >= lower) and (value <= upper)
