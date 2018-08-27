@@ -71,8 +71,7 @@ And if the spectrum contains a continuum, then it should be subtracted first:
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy)
     >>> continuum_baseline = continuum(spec)
-    >>> centroid(spec-continuum_baseline) #doctest:+SKIP
-    <Quantity 23.39045495 Angstrom>
+    >>> c = centroid(spec-continuum_baseline) #doctest:+SKIP
 
 Reference/API
 -------------
