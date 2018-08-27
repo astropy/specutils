@@ -195,8 +195,8 @@ class SpectralRegion:
         For example, if this SpectralRegion is defined as:
            sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
 
-        and we call `sr_invert = sr.invert(0.3*u.um, 1.0*u.um)` then
-        `sr_invert` will be
+        and we call ``sr_invert = sr.invert(0.3*u.um, 1.0*u.um)`` then
+        ``sr_invert`` will be
            SpectralRegion([(0.3*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um), (0.9*u.um, 1*u.um)])
 
         This could be useful if a SpectralRegion has sub-regions defined
