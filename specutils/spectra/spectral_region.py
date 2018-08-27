@@ -13,6 +13,20 @@ class SpectralRegion:
     In the future, there might be more functionality added in here and there
     is some discussion that this might/could move to
     `Astropy Regions <http://astropy-regions.readthedocs.io/en/latest/>`_.
+
+    Parameters
+    ----------
+
+    lower: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+       The lower bound of the region.
+
+    upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+       The upper bound of the region.
+
+    Notes
+    -----
+    The subregions will be ordered based on the lower bound of each subregion.
+
     """
 
     @staticmethod
@@ -36,20 +50,6 @@ class SpectralRegion:
     def __init__(self, *args):
         """
         Lower and upper values for the interval.
-
-        Parameters
-        ----------
-
-        lower: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The lower bound of the region.
-
-        upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The upper bound of the region.
-
-        Notes
-        -----
-        The subregions will be ordered based on the lower bound of each subregion.
-
         """
 
         # Create instance variables
@@ -176,7 +176,7 @@ class SpectralRegion:
     def invert_from_spectrum(self, spectrum):
         """
         Invert a SpectralRegion based on the extent of the
-        input spectrum.  
+        input spectrum.
 
         See notes in SpectralRegion.invert() method.
         """
@@ -192,16 +192,33 @@ class SpectralRegion:
         are defined in the new one as regions *not* in this
         SpectralRegion.
 
+        Parameters
+        ----------
+
+        lower: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+           The lower bound of the region.
+
+        upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+           The upper bound of the region.
+
+        Returns
+        -------
+        spectral_region: `~specutils.SpectralRegion`
+           Spectral region of the non-selected regions
+
+        Notes
+        -----
+
         For example, if this SpectralRegion is defined as:
            sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
 
         and we call ``sr_invert = sr.invert(0.3*u.um, 1.0*u.um)`` then
-        ``sr_invert`` will be
-           SpectralRegion([(0.3*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um), (0.9*u.um, 1*u.um)])
+        ``sr_invert`` will be SpectralRegion([(0.3*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um), (0.9*u.um, 1*u.um)])
 
         This could be useful if a SpectralRegion has sub-regions defined
         for peaks in a spectrum and then one wants to create a SpectralRegion
         defined as all the *non*-peaks, then one could use this function.
+
         """
 
         #
@@ -262,8 +279,8 @@ class SpectralRegion:
         spectrum: `~specutils.spectra.spectrum1d.Spectrum1D`
             The spectrum object from which the region will be extracted.
 
-        Return
-        ------
+        Returns
+        -------
         left_index, right_index: int, int
             Left and right indices defined by the lower and upper bounds.
 
@@ -285,8 +302,8 @@ class SpectralRegion:
         spectrum: `~specutils.spectra.spectrum1d.Spectrum1D`
             The spectrum object from which the region will be extracted.
 
-        Return
-        ------
+        Returns
+        -------
         spectrum: `~specutils.spectra.spectrum1d.Spectrum1D`
             Excised spectrum.
 
