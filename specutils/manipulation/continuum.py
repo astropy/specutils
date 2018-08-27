@@ -28,53 +28,62 @@ def fit_continuum_generic(spectrum,
     spectrum : `~specutils.Spectrum1D`
         The `~specutils.Spectrum1D` object to which a continuum model is fit
 
-    model : `XXXX`
+    model : `astropy.modeling.FittableModel`
         The type of model to use for the continuum.
-        astropy.modeling.models
-        Must either be astropy.modeling.Fittable1DModel
-        or the string "spline" (since this is not currently implemented)
+        Must be astropy.modeling.FittableModel
+        See astropy.modeling.models
         Default: models.Chebyshev1D(3)
+        TODO add a spline option (since this is not currently implemented)
         
-    fitter : `XXXX`
+    fitter : `astropy.modeling.fitting.Fitter`
         The type of fitter to use for the continuum.
-        astropy.modeling.fitting
+        See astropy.modeling.fitting for valid choices
+        TODO currently does not typecheck because fitters do not subclass fitting.Fitter
         Default: fitting.LevMarLSQFitter()
         
     sigma : float, optional
         The number of standard deviations to use for both lower and upper clipping limit.
         Defaults to 3.0
-        
+    
     sigma_lower : float or None, optional
         Number of standard deviations for lower bound clipping limit.
         If None (default), then `sigma` is used.
-        
+    
     sigma_upper : float or None, optional
         Number of standard deviations for upper bound clipping limit.
         If None (default), then `sigma` is used.
-        
+    
     iters : int or None, optional
         Number of iterations to perform sigma clipping.
         If None, clips until convergence achieved.
         Defaults to 5
-        
+    
     exclude_regions : list of tuples, optional
         A list of dispersion regions to exclude.
         Each tuple must be sorted.
         e.g. [(6555,6575)]
-
+    
     full_output : bool, optional
         If True, return more information.
         Currently, just the model and the pixels-used boolean array
-        
+    
     Returns
     -------
-    continuum_model : `XXXX`
-        Output `XXXX` which is a model for the continuum
-
+    continuum_model : `astropy.modeling.FittableModel`
+        Output a model for the continuum
+    
     Raises
     ------
     ValueError
-       In the case that ``spectrum`` .... is not the correct type
+       If: spectrum is not the correct type,
+       the exclude regions do not satisfy a list of sorted tuples,
+       the model and/or fitter are of the wrong type,
+       
+    Examples
+    --------
+    TODO add more and unit tests
+    
+    See https://github.com/spacetelescope/dat_pyinthesky/blob/master/pyinthesky_specutils_fitting.ipynb
     
     """
     
@@ -95,10 +104,10 @@ def fit_continuum_generic(spectrum,
         fitter = fitting.LevMarLSQFitter()
     if not isinstance(model, modeling.FittableModel):
         raise ValueError('The model parameter must be a astropy.modeling.FittableModel object')
-    ## TODO this is waiting on a refactor in fitting to work
+    ## TODO this is waiting on a refactor in modeling.fitting to work
     #if not isinstance(fitter, fitting.Fitter):
     #    raise ValueError('The model parameter must be a astropy.modeling.fitting.Fitter object')
-
+    
     ## Get input spectrum data
     x = spectrum.spectral_axis.value
     y = spectrum.flux.value
@@ -118,19 +127,18 @@ def fit_continuum_generic(spectrum,
         logging.info("Iter {}: Fitting {}/{} pixels".format(i_iter, good.sum(), len(good)))
         ## Fit model
         ## TODO include data uncertainties
-        new_model = fitter(model, x[good], y[good])
+        continuum_model = fitter(model, x[good], y[good])
         
         ## Sigma clip
-        difference = new_model(x) - y
+        difference = continuum_model(x) - y
         finite = np.isfinite(difference)
         sigma_difference = difference / np.std(difference[np.logical_and(good, finite)])
         good[sigma_difference > sigma_upper] = False
         good[sigma_difference < -sigma_lower] = False
         
-    model = new_model
     if full_output:
-        return model, good
-    return model
+        return continuum_model, good
+    return continuum_model
 
 def fit_continuum_linetools(spec, edges=None, ax=None, debug=False, kind="QSO", **kwargs):
     """
