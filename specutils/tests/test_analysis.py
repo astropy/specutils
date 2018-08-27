@@ -73,7 +73,7 @@ def test_snr_multiple_flux(simulated_spectra):
     """
 
     np.random.seed(42)
-    
+
     #
     #  Set up the data and add the uncertainty and calculate the expected SNR
     #
@@ -140,7 +140,7 @@ def test_snr_two_regions(simulated_spectra):
     #
 
     regions = [SpectralRegion(0.52*u.um, 0.59*u.um), SpectralRegion(0.8*u.um, 0.9*u.um)]
-    
+
     #
     #  Set up the data
     #
@@ -155,8 +155,8 @@ def test_snr_two_regions(simulated_spectra):
     spec_snr_expected = []
     for region in regions:
 
-        l = np.nonzero(wavelengths>region.lower)[0][0]
-        r = np.nonzero(wavelengths<region.upper)[0][-1]
+        l = np.nonzero(wavelengths >= region.lower)[0][0]
+        r = np.nonzero(wavelengths <= region.upper)[0][-1]
 
         spec_snr_expected.append(np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit)))
 
