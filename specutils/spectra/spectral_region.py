@@ -46,6 +46,10 @@ class SpectralRegion:
         upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The upper bound of the region.
 
+        Notes
+        -----
+        The subregions will be ordered based on the lower bound of each subregion.
+
         """
 
         # Create instance variables
@@ -68,6 +72,11 @@ class SpectralRegion:
         if not self._valid():
             raise ValueError('SpectralRegion 2-tuple lower extent must be less than upper extent.')
 
+        #
+        # The sub-regions are to always be ordered based on the lower bound.
+        #
+        self._reorder()
+
     def __str__(self):
         return 'SpectralRegion: {}'.format(
                 ', '.join(['{} - {}'.format(x[0], x[1]) for x in self._subregions]))
@@ -83,6 +92,7 @@ class SpectralRegion:
         Ability to add one SpectralRegion to another using +=.
         """
         self._subregions += other._subregions
+        self._reorder()
         return self
 
     def __len__(self):
@@ -127,10 +137,12 @@ class SpectralRegion:
     def _reorder(self):
         """
         Re-order the  list based on lower bounds.
-
-        This could be important for when a spectrum is extracted.
         """
         self._subregions.sort(key=lambda k: k[0])
+
+    @property
+    def subregions(self):
+        return self._subregions
 
     @property
     def bounds(self):
@@ -143,15 +155,23 @@ class SpectralRegion:
     def lower(self):
         """
         The most minimum value of the sub-regions.
+
+        The sub-regions are ordered based on the lower bound, so the
+        lower bound for this instance is the lower bound of the first
+        sub-region.
         """
-        return min(x[0] for x in self._subregions)
+        return self._subregions[0][0]
 
     @property
     def upper(self):
         """
         The most maximum value of the sub-regions.
+
+        The sub-regions are ordered based on the lower bound, but the
+        upper bound might not be the upper bound of the last sub-region
+        so we have to look for it.
         """
-        return max(x[0] for x in self._subregions)
+        return max(x[1] for x in self._subregions)
 
     def invert_from_spectrum(self, spectrum):
         """
