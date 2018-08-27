@@ -13,7 +13,7 @@ def centroid(spectrum, region=None):
     Parameters
     ----------
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
-        The spectrum object overwhich the equivalent width will be calculated.
+        The spectrum object overwhich the centroid will be calculated.
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
@@ -21,12 +21,13 @@ def centroid(spectrum, region=None):
     Returns
     -------
     centroid : float or list (based on region input)
-        Signal to noise ratio of the spectrum or within the regions
+        Centroid of the spectrum or within the regions
 
     Notes
     -----
     The spectrum will need to be continuum subtracted before calling
-    this method.
+    this method. See the 
+    `analysis documentation <https://specutils.readthedocs.io/en/latest/basic_analysis.html>`_ for more information.
 
     """
 
@@ -52,7 +53,7 @@ def _centroid_single_region(spectrum, region=None):
     Parameters
     ----------
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
-        The spectrum object overwhich the equivalent width will be calculated.
+        The spectrum object overwhich the centroid will be calculated.
 
     region: `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
