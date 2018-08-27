@@ -4,11 +4,9 @@ from ..spectra import SpectralRegion
 __all__ = ['centroid']
 
 
-def centroid(spectrum, region=None):
+def centroid(spectrum, region):
     """
-    Calculate the centroid of the spectrum based on the flux and uncertainty
-    in the spectrum. This will be calculated over the regions, if they
-    are specified.
+    Calculate the centroid of a region, or regions, of the spectrum.
 
     Parameters
     ----------
