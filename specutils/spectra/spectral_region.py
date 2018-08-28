@@ -77,9 +77,19 @@ class SpectralRegion:
         #
         self._reorder()
 
+    def _info(self):
+        toreturn = 'Spectral Region, {} sub-regions:\n'.format(len(self._subregions))
+        for ii, subregion in enumerate(self._subregions):
+            toreturn += '  ({}, {})'.format(subregion[0], subregion[1])
+            if (ii % 3) == 2:
+                toreturn += '\n'
+        return toreturn
+
     def __str__(self):
-        return 'SpectralRegion: {}'.format(
-                ', '.join(['{} - {}'.format(x[0], x[1]) for x in self._subregions]))
+        return self._info()
+
+    def __repr__(self):
+        return self._info()
 
     def __add__(self, other):
         """
@@ -267,7 +277,7 @@ class SpectralRegion:
 
         return SpectralRegion([(x, y) for x, y in zip(newlist[0::2], newlist[1::2])])
 
-    def to_pixel(self, spectrum):
+    def to_pixel(self, subregion, spectrum):
         """
         Calculate and return the left and right indices defined
         by the lower and upper bounds and based on the input
@@ -286,8 +296,8 @@ class SpectralRegion:
 
         """
 
-        left_index = int(np.ceil(spectrum.wcs.world_to_pixel(self.lower)))
-        right_index = int(np.floor(spectrum.wcs.world_to_pixel(self.upper)))
+        left_index = int(np.ceil(spectrum.wcs.world_to_pixel([subregion.lower])))
+        right_index = int(np.floor(spectrum.wcs.world_to_pixel([subregion.upper])))
 
         return left_index, right_index
 
@@ -313,10 +323,14 @@ class SpectralRegion:
         on the left and right side of the spectrum.
 
         """
+    
+        extracted_spectrum = None
+        for subregion in self._subregions:
+            left_index, right_index = self.to_pixel(subregion, spectrum)
 
-        left_index, right_index = self.to_pixel(spectrum)
+            if extracted_spectrum is None:
+                extracted_spectrum = spectrum[left_index:right_index]
+            else:
+                extracted_spectrum += spectrum[left_index:right_index]
 
-        if left_index >= right_index:
-            raise ValueError('Lower region, {}, appears to be greater than the upper region, {}.'.format(self._lower, self._upper))
-
-        return spectrum[left_index:right_index]
+        return extracted_spectrum
