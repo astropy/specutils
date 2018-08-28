@@ -78,11 +78,28 @@ class SpectralRegion:
         self._reorder()
 
     def _info(self):
+        """
+        Pretty print the sub-regions.
+        """
+
         toreturn = 'Spectral Region, {} sub-regions:\n'.format(len(self._subregions))
+
+        # Setup the subregion text.
+        subregion_text = []
         for ii, subregion in enumerate(self._subregions):
-            toreturn += '  ({}, {})'.format(subregion[0], subregion[1])
-            if (ii % 3) == 2:
+            subregion_text.append('  ({}, {})'.format(subregion[0], subregion[1]))
+
+        # Determine the length of the text boxes.
+        max_len = max(len(srt) for srt in subregion_text) + 1
+        ncols = 70 // max_len
+
+        # Add sub region info to the output text.
+        fmt = '{' + ':<{}'.format(max_len) + '}'
+        for ii, srt in enumerate(subregion_text):
+            toreturn += fmt.format(srt)
+            if ii % ncols == (ncols-1):
                 toreturn += '\n'
+
         return toreturn
 
     def __str__(self):
