@@ -323,7 +323,7 @@ class SpectralRegion:
         on the left and right side of the spectrum.
 
         """
-    
+
         extracted_spectrum = None
         for subregion in self._subregions:
             left_index, right_index = self.to_pixel(subregion, spectrum)
