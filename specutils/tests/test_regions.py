@@ -183,17 +183,16 @@ def test_slicing():
 
 
 def test_invert():
-
-    # Invert from range.
     sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
          SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
          SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
 
-    sr_inverted = sr.invert(0.05*u.um, 3*u.um)
-
     sr_inverted_expected = [(0.05*u.um, 0.15*u.um), (0.2*u.um, 0.3*u.um), (0.4*u.um, 0.45*u.um),
                             (0.6*u.um, 0.8*u.um), (0.9*u.um, 1.0*u.um), (1.2*u.um, 1.3*u.um),
                             (1.5*u.um, 3.0*u.um)]
+
+    # Invert from range.
+    sr_inverted = sr.invert(0.05*u.um, 3*u.um)
 
     for ii, expected in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
@@ -203,3 +202,13 @@ def test_invert():
     sr_inverted = sr.invert_from_spectrum(spectrum)
     for ii, expected in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+
+
+def test_extract(simulated_spectra):
+
+    # Setup the test spectrum.
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+
