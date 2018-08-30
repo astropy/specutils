@@ -1,4 +1,5 @@
 import astropy.units as u
+import astropy.wcs as fitswcs
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -71,3 +72,13 @@ def test_slicing():
     assert sub_spec.frequency.unit == u.GHz
     assert np.allclose(sub_spec.frequency.value, np.array([74948.1145, 59958.4916, 49965.40966667, 42827.494]))
 
+def test_slicing_with_fits():
+    my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
+                                 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
+
+    spec = Spectrum1D(flux=[5, 6, 7, 8, 9, 10] * u.Jy, wcs=my_wcs)
+    spec_slice = spec[1:5]
+
+    assert isinstance(spec_slice, Spectrum1D)
+    assert spec_slice.flux.size == 4
+    assert np.allclose(spec_slice.wcs.pixel_to_world([6, 7, 8, 9]), spec.wcs.pixel_to_world([6, 7, 8, 9]))
