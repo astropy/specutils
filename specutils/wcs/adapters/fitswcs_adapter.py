@@ -36,6 +36,10 @@ class FITSWCSAdapter(WCSAdapter):
         if self.axes.spectral.naxis == 0:
             self.axes = self.axes._replace(spectral=self.wcs.sub([self.spec_axis + 1]))
 
+    def __getitem__(self, item):
+        """Pass slicing information to the internal `FITSWCS` object."""
+        return self.wcs[item]
+
     def world_to_pixel(self, world_array):
         """
         Method for performing the world to pixel transformations.

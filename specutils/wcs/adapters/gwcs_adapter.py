@@ -41,10 +41,10 @@ class GWCSAdapter(WCSAdapter):
         but the spectral dispersion result was not.
 
         There is code slightly downstream that sets the *number* of entries
-        in the dispersion axis, this is just need to shift to the correct
+        in the dispersion axis, this is just needed to shift to the correct
         starting element.
 
-        When WCS gets the abillity to do slicing then we might be able to
+        When WCS gets the ability to do slicing then we might be able to
         remove this code.
         """
 
