@@ -3,7 +3,7 @@ import numpy as np
 import astropy.units as u
 
 from specutils.spectra.spectrum1d import Spectrum1D
-from specutils.fitting.continuum import fit_continuum_generic
+from specutils.fitting.continuum import fit_generic_continuum
 
 
 def single_peak_continuum():
@@ -27,7 +27,7 @@ def test_continuum_fit():
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
     s_single_continuum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
-    g1_fit = fit_continuum_generic(s_single_continuum)
+    g1_fit = fit_generic_continuum(s_single_continuum)
 
     y_continuum_fitted = g1_fit(x_single_continuum)
 
