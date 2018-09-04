@@ -4,14 +4,14 @@ import numpy as np
 
 from ..spectra import Spectrum1D, SpectralRegion
 
-__all__ = ['excise_regions']
+__all__ = ['excise_regions', 'linear_exciser']
 
 
 def linear_exciser(spectrum, region):
     """
     Basic spectral excise method where the spectral region defined by the
     2-tuple parameter `region` (start and end wavelengths) will result
-    in the flux between those regions be set to a linear ramp of the
+    in the flux between those regions set to a linear ramp of the
     two points immediately before and after the start and end regions.
 
     Other methods could be defined by the user to do other types of excision.

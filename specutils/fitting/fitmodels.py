@@ -17,15 +17,13 @@ __all__ = ['fit_lines']
 def fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
               exclude_regions=None, weights=None, window=None):
     """
-    Fit the input models (initial conditions) to the spectrum.  Output will be
-    the same models with the parameters set based on the fitting.
-
-    spectrum, models -> models
+    Fit the input models to the spectrum. The parameter values of the
+    input models will be used as the initial conditions for the fit.
 
     Parameters
     ----------
     spectrum : Spectrum1D
-        The spectrum object overwhich the equivalent width will be calculated.
+        The spectrum object over which the equivalent width will be calculated.
 
     model: `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
         The model or list of models that contain the initial guess.
@@ -35,6 +33,10 @@ def fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
 
     weights : list  (NOT IMPLEMENTED YET)
         List of weights to define importance of fitting regions.
+
+    window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
+        Regions of the spectrum to use in the fitting. If None, then the
+        whole spectrum will be used in the fitting.
 
     Returns
     -------
@@ -121,7 +123,7 @@ def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     Parameters
     ----------
     spectrum : Spectrum1D
-        The spectrum object overwhich the equivalent width will be calculated.
+        The spectrum object over which the equivalent width will be calculated.
 
     model: `~astropy.modeling.Model`
         The model or that contain the initial guess.
@@ -132,6 +134,10 @@ def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     weights : list  (NOT IMPLEMENTED YET)
         List of weights to define importance of fitting regions.
 
+    window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
+        Regions of the spectrum to use in the fitting. If None, then the
+        whole spectrum will be used in the fitting.
+
     Returns
     -------
     model : Compound model of `~astropy.modeling.Model`
@@ -140,10 +146,11 @@ def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     Notes
     -----
        * Could add functionality to set the bounds in ``model`` if they are not set.
-       * The models in the list of ``model`` are added together and passed as a
-          compound model to the `~astropy.modeling.fitting.Fitter` class instance.
 
     """
+
+    if weights is not None:
+        raise NotImplementedError('Weights are not yet implemented.')
 
     #
     # If we are to exclude certain regions, then remove them.

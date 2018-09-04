@@ -28,7 +28,8 @@ current code).
     >>> np.random.seed(42)
 
 
-For the purpose of the example, build a ``spectrum1d`` variable that will be used in the fitting:
+For the purpose of the example, build a `~specutils.Spectrum1D` object that will
+be used in the fitting:
 
 .. code-block:: python
 
@@ -43,7 +44,7 @@ For the purpose of the example, build a ``spectrum1d`` variable that will be use
 	>>> # Create the flux array
     >>> base_flux = g1(wave_um) + g2(wave_um) + g3(wave_um)
 
-	>>> # Create the `specutils.Spectrum1D` object.
+	>>> # Create the `~specutils.Spectrum1D` object.
     >>> flux_e1 = base_flux + 100*np.random.random(base_flux.shape)*u.mJy
     >>> spectrum1d = Spectrum1D(spectral_axis=wave_um, flux=flux_e1)
 
@@ -54,7 +55,7 @@ For the purpose of the example, build a ``spectrum1d`` variable that will be use
 
    Spectrum to be fit.
 
-Now that there is a ``spectrum1d`` to fit, the real fitting setup must happen.  First create
+Now that there is a `~specutils.Spectrum1D` to fit, the real fitting setup must happen.  First create
 the `~astropy.modeling.Model` to be used in the fitting routine.
 
 .. code-block:: python
