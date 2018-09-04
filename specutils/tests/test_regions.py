@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
-from ..spectra import Spectrum1D, SpectralRegion
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty
+
+from ..spectra import Spectrum1D, SpectralRegion
+from .spectral_examples import simulated_spectra
 
 
 # Should work when #272 is in
