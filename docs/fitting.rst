@@ -14,7 +14,9 @@ Model Fitting
 -------------
 
 The first step is to create a set of models with initial guesses as the parameters. Even
-better is to include a set of bounds for each parameter, but that is optional. 
+better is to include a set of bounds for each parameter, but that is optional. (A method
+will be provided in a future PR, but user defined initial guesses may be used with the
+current code).
 
 .. code-block:: python
 
