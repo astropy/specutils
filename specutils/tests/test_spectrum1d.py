@@ -181,4 +181,5 @@ def test_energy_photon_flux():
                       flux=np.random.randn(10))
     assert spec.energy.size == 10
     assert spec.photon_flux.size == 10
-    assert spec.photon_flux.unit == self.flux.unit / self.energy.unit
+    assert spec.photon_flux.unit == u.photon * u.cm**-2
+
