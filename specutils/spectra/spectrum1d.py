@@ -201,6 +201,21 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
+    def __str__(self):
+        result = "Spectrum1D\n"
+        # Handle case of single value flux
+        if self.flux.ndim == 1 and self.flux.size == 1:
+            return result + "flux:   {}".format(self.flux)
+        result += "flux:           range: {:.5} ... {:.5}\n".format(
+            self.flux[0], self.flux[-1])
+        result += "spectral axis:  range: {:.5} ... {:.5}".format(
+            self.spectral_axis[0], self.spectral_axis[-1])
+        return result
+
+    def __repr__(self):
+        return "<Spectrum1D(flux={}, spectral_axis={})>".format(
+            repr(self.flux), repr(self.spectral_axis))
+
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
