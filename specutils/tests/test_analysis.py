@@ -237,6 +237,21 @@ def test_centroid(simulated_spectra):
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
 
 
+def test_inverted_centroid(simulated_spectra):
+    """
+    Ensures the centroid calculation also works for *inverted* spectra - i.e.
+    continuum-subtracted absorption lines.
+    """
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    spec_centroid_expected = (np.sum(spectrum.flux * spectrum.spectral_axis) /
+                              np.sum(spectrum.flux))
+
+    spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+                                   flux=-spectrum.flux)
+    spec_centroid_inverted = centroid(spectrum_inverted, None)
+    assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
+
+
 def test_snr_multiple_flux(simulated_spectra):
     """
     Test the simple version of the spectral SNR, with multiple flux per single dispersion.
@@ -255,6 +270,12 @@ def test_snr_multiple_flux(simulated_spectra):
 
     assert np.allclose(centroid_spec.value, np.array([5.39321967, 3.6856305 , 3.09779811, 4.99442161, 4.50267016]))
     assert centroid_spec.unit == u.um
+
+    # spec_inverted = Spectrum1D(spectral_axis=spec.spectral_axis,
+    #                                flux=-spec.flux)
+    # spec_centroid_inverted = centroid(spec_inverted, None, invert=True)
+    # assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected_inverted.value)
+
 
 
 @pytest.mark.xfail
