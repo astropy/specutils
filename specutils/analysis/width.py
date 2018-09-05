@@ -36,7 +36,7 @@ def sigma_full_width(spectrum, region=None):
 
     Returns
     -------
-    full_width : float or list (based on region input)
+    full_width : `~astropy.units.Quantity` or list (based on region input)
         Approximate full width of the signal
     """
     return _computation_wrapper(_compute_sigma_full_width, spectrum, region)
@@ -57,7 +57,7 @@ def full_width_half_max(spectrum, region=None):
 
     Returns
     -------
-    full_width_half_max : float or list (based on region input)
+    full_width_half_max : `~astropy.units.Quantity` or list (based on region input)
         Approximate full width of the signal at half max
     """
     return _computation_wrapper(_compute_full_width_half_max, spectrum, region)
@@ -77,7 +77,7 @@ def _compute_full_width_half_max(spectrum, region=None):
 
     Returns
     -------
-    full_width_half_max : float or list (based on region input)
+    full_width_half_max : `~astropy.units.Quantity` or list (based on region input)
         Approximate full width of the signal at half max
 
     Notes
@@ -115,7 +115,7 @@ def _compute_sigma_full_width(spectrum, region=None):
 
     Returns
     -------
-    full_width : float or list (based on region input)
+    full_width : `~astropy.units.Quantity` or list (based on region input)
         Approximate full width of the signal
 
     Notes

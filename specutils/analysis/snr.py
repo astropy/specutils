@@ -21,7 +21,7 @@ def snr(spectrum, region=None):
 
     Returns
     -------
-    snr : float or list (based on region input)
+    snr : `~astropy.units.Quantity` or list (based on region input)
         Signal to noise ratio of the spectrum or within the regions
 
     Notes
@@ -63,7 +63,7 @@ def _snr_single_region(spectrum, region=None):
 
     Returns
     -------
-    snr : float or list (based on region input)
+    snr : `~astropy.units.Quantity` or list (based on region input)
         Signal to noise ratio of the spectrum or within the regions
 
     Notes

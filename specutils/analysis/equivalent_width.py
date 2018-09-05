@@ -17,7 +17,7 @@ def equivalent_width(spectrum):
 
     Returns
     -------
-    ew : float
+    ew : `~astropy.units.Quantity`
         Equivalent width calculation.
 
     TODO:  what frame of reference do you want the spectral_axis to be in ???
