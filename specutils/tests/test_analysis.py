@@ -43,7 +43,7 @@ def test_snr(simulated_spectra):
     """
 
     np.random.seed(42)
-    
+
     #
     #  Set up the data and add the uncertainty and calculate the expected SNR
     #
@@ -231,7 +231,7 @@ def test_centroid(simulated_spectra):
     # SNR of the whole spectrum
     #
 
-    spec_centroid = centroid(spectrum)
+    spec_centroid = centroid(spectrum, None)
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
@@ -251,7 +251,7 @@ def test_snr_multiple_flux(simulated_spectra):
     spec = Spectrum1D(spectral_axis=np.arange(10) * u.um,
                       flux=np.random.sample((10, 5)) * u.Jy)
 
-    centroid_spec = centroid(spec)
+    centroid_spec = centroid(spec, None)
 
     assert np.allclose(centroid_spec.value, np.array([5.39321967, 3.6856305 , 3.09779811, 4.99442161, 4.50267016]))
     assert centroid_spec.unit == u.um
@@ -305,7 +305,7 @@ def test_snr_two_regions(simulated_spectra):
     #
 
     regions = [SpectralRegion(0.52*u.um, 0.59*u.um), SpectralRegion(0.8*u.um, 0.9*u.um)]
-    
+
     #
     #  Set up the data
     #
