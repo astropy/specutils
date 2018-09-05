@@ -1,8 +1,9 @@
+import os
+
 import astropy.units as u
 import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
-import os
 import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.data import get_pkg_data_filename
