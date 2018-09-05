@@ -55,7 +55,7 @@ def test_create_implicit_wcs():
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
     assert pix2world.size == 5
-    assert isinstance(pix2world, u.Quantity)
+    assert isinstance(pix2world, np.ndarray)
 
 
 def test_create_implicit_wcs_with_spectral_unit():
@@ -67,7 +67,7 @@ def test_create_implicit_wcs_with_spectral_unit():
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
     assert pix2world.size == 5
-    assert isinstance(pix2world, u.Quantity)
+    assert isinstance(pix2world, np.ndarray)
 
 
 def test_spectral_axis_conversions():
@@ -99,7 +99,7 @@ def test_spectral_axis_conversions():
 
 def test_flux_unit_conversion():
     # By default the flux units should be set to Jy
-    s = Spectrum1D(flux=np.array([26.0, 44.5] * u.Jy),
+    s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
                    spectral_axis=np.array([400, 500]) * u.nm)
     assert np.all(s.flux == np.array([26.0, 44.5]) * u.Jy)
     assert s.flux.unit == u.Jy

@@ -123,7 +123,6 @@ class OneDSpectrumMixin(object):
 
     def with_velocity_convention(self, velocity_convention):
         return self.__class__(flux=self.flux, wcs=self.wcs, meta=self.meta,
-                              spectral_axis_unit=self.unit,
                               velocity_convention=velocity_convention)
 
     @property
@@ -204,8 +203,7 @@ class OneDSpectrumMixin(object):
             velocity_convention=velocity_convention or self._velocity_convention,
             rest_value=rest_value or self.rest_value)
 
-        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta,
-                                  spectral_axis_unit=unit)
+        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta)
 
         return spectrum
 

@@ -40,7 +40,6 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     # Return new specturm with uncertainty set.
     return Spectrum1D(flux=spectrum.flux, spectral_axis=spectrum.spectral_axis,
                       uncertainty=uncertainty,
-                      wcs=spectrum.wcs, unit=spectrum.unit,
-                      spectral_axis_unit=spectrum.spectral_axis_unit,
+                      wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)

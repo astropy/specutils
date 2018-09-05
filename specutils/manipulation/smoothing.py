@@ -1,7 +1,9 @@
 from __future__ import division
 
+import astropy.units as u
 from astropy import convolution
 from scipy.signal import medfilt
+
 from ..spectra import Spectrum1D
 
 __all__ = ['convolution_smooth', 'box_smooth', 'gaussian_smooth',
@@ -44,9 +46,10 @@ def convolution_smooth(spectrum, kernel):
     smoothed_flux = convolution.convolve(flux, kernel)
 
     # Return a new object with the smoothed flux.
-    return Spectrum1D(flux=smoothed_flux, spectral_axis=spectrum.spectral_axis,
-                      wcs=spectrum.wcs, unit=spectrum.unit,
-                      spectral_axis_unit=spectrum.spectral_axis_unit,
+    return Spectrum1D(flux=u.Quantity(smoothed_flux, spectrum.unit),
+                      spectral_axis=u.Quantity(spectrum.spectral_axis,
+                                               spectrum.spectral_axis_unit),
+                      wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
 
@@ -191,8 +194,9 @@ def median_smooth(spectrum, width):
     smoothed_flux = medfilt(flux, width)
 
     # Return a new object with the smoothed flux.
-    return Spectrum1D(flux=smoothed_flux, spectral_axis=spectrum.spectral_axis,
-                      wcs=spectrum.wcs, unit=spectrum.unit,
-                      spectral_axis_unit=spectrum.spectral_axis_unit,
+    return Spectrum1D(flux=u.Quantity(smoothed_flux, spectrum.unit),
+                      spectral_axis=u.Quantity(spectrum.spectral_axis,
+                                               spectrum.spectral_axis_unit),
+                      wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)

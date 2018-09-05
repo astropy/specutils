@@ -46,6 +46,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if flux is not None and not isinstance(flux, u.Quantity):
             raise ValueError("Flux must be a `Quantity` object.")
 
+        # Insure that the unit information codified in the quantity object is
+        # the One True Unit.
+        kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
+                                            else kwargs.get('unit'))
+
         # In cases of slicing, new objects will be initialized with `data`
         # instead of `flux`. Ensure we grab the `data` argument.
         if flux is None and 'data' in kwargs:
@@ -103,8 +108,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
-        super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
-                                         wcs=wcs, *args, **kwargs)
+        super(Spectrum1D, self).__init__(
+            data=flux.value if isinstance(flux, u.Quantity) else flux,
+            wcs=wcs, *args, **kwargs)
 
     @property
     def frequency(self):
