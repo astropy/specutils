@@ -42,6 +42,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
                  velocity_convention=None, rest_value=None, *args, **kwargs):
+        # If the flux (data) argument is a subclass of nddataref (as it would
+        # be for internal arithmetic operations), avoid setup entirely.
+        if issubclass(flux.__class__, NDDataRef):
+            self._velocity_convention = flux._velocity_convention
+            self._rest_value = flux._rest_value
+
+            super(Spectrum1D, self).__init__(flux)
+            return
+
         # Ensure that the flux argument is an astropy quantity
         if flux is not None and not isinstance(flux, u.Quantity):
             raise ValueError("Flux must be a `Quantity` object.")
@@ -55,15 +64,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # instead of `flux`. Ensure we grab the `data` argument.
         if flux is None and 'data' in kwargs:
             flux = kwargs.pop('data')
-
-        # If the flux (data) argument is a subclass of nddataref (as it would
-        # be for internal arithmetic operations), avoid setup entirely.
-        if issubclass(flux.__class__, NDDataRef):
-            self._velocity_convention = flux._velocity_convention
-            self._rest_value = flux._rest_value
-
-            super(Spectrum1D, self).__init__(flux)
-            return
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
