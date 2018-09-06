@@ -44,7 +44,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                  velocity_convention=None, rest_value=None, *args, **kwargs):
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if issubclass(flux.__class__, NDDataRef):
+        if isinstance(flux, NDDataRef):
             self._velocity_convention = flux._velocity_convention
             self._rest_value = flux._rest_value
 
