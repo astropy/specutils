@@ -264,11 +264,11 @@ def test_snr_multiple_flux(simulated_spectra):
     np.random.seed(42)
 
     spec = Spectrum1D(spectral_axis=np.arange(10) * u.um,
-                      flux=np.random.sample((10, 5)) * u.Jy)
+                      flux=np.random.sample((5, 10)) * u.Jy)
 
     centroid_spec = centroid(spec, None)
 
-    assert np.allclose(centroid_spec.value, np.array([5.39321967, 3.6856305 , 3.09779811, 4.99442161, 4.50267016]))
+    assert np.allclose(centroid_spec.value, np.array([4.46190995, 4.17223565, 4.37778249, 4.51595259, 4.7429066]))
     assert centroid_spec.unit == u.um
 
     # spec_inverted = Spectrum1D(spectral_axis=spec.spectral_axis,

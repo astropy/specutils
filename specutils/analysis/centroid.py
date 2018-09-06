@@ -68,10 +68,7 @@ def _centroid_single_region(spectrum, region=None):
     """
 
     if region is not None:
-        print('original spectrum is {}'.format(spectrum.spectral_axis))
         calc_spectrum = region.extract(spectrum)
-        print('extracted region is {}'.format(calc_spectrum))
-        print('extracted region is {}'.format(calc_spectrum.spectral_axis))
     else:
         calc_spectrum = spectrum
 
@@ -79,8 +76,8 @@ def _centroid_single_region(spectrum, region=None):
     dispersion = calc_spectrum.spectral_axis
 
     if len(flux.shape) > 1:
-        dispersion = np.tile(dispersion[np.newaxis].T, [1, flux.shape[1]])
+        dispersion = np.tile(dispersion, [flux.shape[0], 1])
 
-    # the axis=0 will enable this to run on single-dispersion, single-flux
+    # the axis=-1 will enable this to run on single-dispersion, single-flux
     # and single-dispersion, multiple-flux
-    return np.sum(flux * dispersion, axis=0) / np.sum(flux, axis=0)
+    return np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
