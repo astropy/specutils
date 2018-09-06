@@ -208,7 +208,7 @@ def test_read_linear_solution():
 
 def test_energy_photon_flux():
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                      flux=np.random.randn(10))
+                      flux=np.random.randn(10)*u.Jy)
     assert spec.energy.size == 10
     assert spec.photon_flux.size == 10
     assert spec.photon_flux.unit == u.photon * u.cm**-2

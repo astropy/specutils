@@ -56,10 +56,10 @@ def linear_exciser(spectrum, region):
     modified_flux[s:e] = np.linspace(flux[s], flux[e], len(inclusive_indices)+1)
 
     # Return a new object with the regions excised.
-    return Spectrum1D(flux=modified_flux*spectrum.flux.unit, spectral_axis=wavelengths,
+    return Spectrum1D(flux=modified_flux*spectrum.flux.unit,
+                      spectral_axis=wavelengths,
                       uncertainty=spectrum.uncertainty,
                       wcs=spectrum.wcs, unit=spectrum.unit,
-                      spectral_axis_unit=spectrum.spectral_axis_unit,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
 
@@ -84,7 +84,7 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
-        default: linear_exciser 
+        default: linear_exciser
 
     Returns
     -------
