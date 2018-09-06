@@ -66,7 +66,6 @@ And if the spectrum contains a continuum, then it should be subtracted first:
     >>> import astropy.units as u
     >>> from specutils.spectra import Spectrum1D
     >>> from astropy.nddata import StdDevUncertainty
-    >>> from specutils.fitting import continuum
     >>> from specutils.analysis import centroid
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy)
