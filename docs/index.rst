@@ -29,6 +29,7 @@ Using specutils
    basic_analysis
    arithmetic
    smoothing
+   fitting
 
 .. toctree::
     :maxdepth: 1
