@@ -299,8 +299,8 @@ def test_snr_single_region(simulated_spectra):
     wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
-    l = np.nonzero(wavelengths>region.lower)[0][0]
-    r = np.nonzero(wavelengths<region.upper)[0][-1]
+    l = np.nonzero(wavelengths > region.lower)[0][0]
+    r = np.nonzero(wavelengths < region.upper)[0][-1]
 
     spec_snr_expected = np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit))
 
