@@ -1,29 +1,41 @@
-===================
-Spectrum Fitting
-===================
+=====================
+Line/Spectrum Fitting
+=====================
 
-Specutils has the ability to fit the flux of a `~specutils.Spectrum1D` object.
-The fit routine takes the `~specutils.Spectrum1D` object and a list of 
-`~astropy.modeling.Model` that have initial guesses for each of the parameters. 
+One of the primary tasks in spectroscopic analysis is fitting models of spectra.
+This concept is often applied mainly to line-fitting, but the same general
+approach applies to continuum fitting or even full-spectrum fitting.
+``specutils`` provides conveniences that aim to leverage the  general fitting
+framework of `astropy.modeling` to spectral-specific tasks.
 
-The internal functionality uses `~astropy.modeling.fitting` routines.  The flux
-is extracted from the `~specutils.Spectrum1D` and is passed along with a 
-compound model created from the model initial guesses.
+At a high level, this fitting  takes the `~specutils.Spectrum1D` object and a
+list of `~astropy.modeling.Model` objects that have initial guesses for each of
+the parameters. these are used to create a compound model created from the model
+initial guesses.  This model is then actually fit to the spectrum's ``flux``,
+yielding a single composite model result (which can be split back into its
+components if desired).
 
-Model Fitting
--------------
+Model (Line) Fitting
+--------------------
 
-The first step is to create a set of models with initial guesses as the parameters. Even
-better is to include a set of bounds for each parameter, but that is optional. (A method
-will be provided in a future PR, but user defined initial guesses may be used with the
-current code).
+The generic model fitting machinery is well-suited to fitting spectral lines.
+The first step is to create a set of models with initial guesses as the
+parameters. To acheive better fits it may be wise to include a set of bounds for
+each parameter, but that is optional.
+
+.. note::
+  A method to make plausible initial guesses will be provided in a future
+  version, but user defined initial guesses are required at present.
+
+Below are a series of examples of this sort of fitting.
 
 
 Simple Example
 ^^^^^^^^^^^^^^
 
-Below is a simple example to demonstrate how to use the `~specutils.fitting.fit_lines` method
-to fit a spectrum to an Astropy model initial guess.
+Below is a simple example to demonstrate how to use the
+`~specutils.fitting.fit_lines` method to fit a spectrum to an Astropy model
+initial guess.
 
 .. plot::
    :include-source:
@@ -428,6 +440,11 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
 
 Continuum Fitting
 -----------------
+
+While the line-fitting machinery can be used to fit continuua at the same time
+as models, often it is convenient to subtract or normalize a spectrum by its
+continuum before other processing is done.  ``specutils`` provides some
+convenience functions to perform exactly this task.  An example is shown below.
 
 .. plot::
     :include-source:
