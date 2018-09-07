@@ -20,7 +20,7 @@ Currently, specutils supports basic equivalent width calculations.
     >>> from specutils.spectra import Spectrum1D
     >>> from specutils.analysis import equivalent_width
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=np.random.randn(50))
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=np.random.randn(50)*u.Jy)
     >>> equivalent_width(spec) #doctest:+SKIP
     <Quantity 24.16006697 Angstrom>
 

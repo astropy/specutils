@@ -32,7 +32,7 @@ implemented are: :func:`~specutils.manipulation.box_smooth`
     >>> import numpy as np
     >>> from specutils.manipulation import (box_smooth, gaussian_smooth, trapezoid_smooth)
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
