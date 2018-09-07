@@ -67,6 +67,20 @@ def test_snr(simulated_spectra):
     assert np.allclose(spec_snr.value, spec_snr_expected.value)
 
 
+def test_snr_no_uncertainty(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR.
+    """
+
+    #
+    #  Set up the data and add the uncertainty and calculate the expected SNR
+    #
+
+    spectrum = simulated_spectra.s1_um_mJy_e1
+
+    with pytest.raises(Exception) as e_info:
+        _ = snr(spectrum)
+
 def test_snr_multiple_flux(simulated_spectra):
     """
     Test the simple version of the spectral SNR, with multiple flux per single dispersion.
