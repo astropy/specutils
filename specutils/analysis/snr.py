@@ -30,6 +30,9 @@ def snr(spectrum, region=None):
 
     """
 
+    if spectrum.uncertainty is None:
+        raise Exception("Spectrum1D currently requires the uncertainty be defined.")
+
     # No region, therefore whole spectrum.
     if region is None:
         return _snr_single_region(spectrum)
