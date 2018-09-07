@@ -56,7 +56,7 @@ Currently, specutils supports basic centroid calculations.
     >>> from specutils.analysis import centroid
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy)
-    >>> centroid(spec) #doctest:+SKIP
+    >>> centroid(spec, region=None) #doctest:+SKIP
     <Quantity 24.39045495 Angstrom>
 
 And if the spectrum contains a continuum, then it should be subtracted first:
@@ -66,11 +66,14 @@ And if the spectrum contains a continuum, then it should be subtracted first:
     >>> import astropy.units as u
     >>> from specutils.spectra import Spectrum1D
     >>> from astropy.nddata import StdDevUncertainty
+    >>> from specutils.fitting import fit_generic_continuum
     >>> from specutils.analysis import centroid
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy)
-    >>> continuum_baseline = continuum(spec)
-    >>> c = centroid(spec-continuum_baseline) #doctest:+SKIP
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(10+np.random.randn(50))*u.Jy)
+    >>> continuum_baseline = fit_generic_continuum(spec)
+    >>> continuum_flux = continuum_baseline(spec.spectral_axis.value)
+    >>> continuum = Spectrum1D(spectral_axis=spec.spectral_axis, flux=continuum_flux)
+    >>> c = centroid(spec-continuum, region=None) #doctest:+SKIP
 
 Reference/API
 -------------
