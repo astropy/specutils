@@ -202,11 +202,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __str__(self):
-        result = "Spectrum1D\n"
+        result = "Spectrum1D "
         # Handle case of single value flux
-        if self.flux.ndim == 1 and self.flux.size == 1:
+        if self.flux.ndim == 0:
+            result += "(length=1)\n"
             return result + "flux:   {}".format(self.flux)
+
         # Handle case of multiple flux arrays
+        result += "(length={})\n".format(len(self.spectral_axis))
         if self.flux.ndim > 1:
             for i, flux in enumerate(self.flux):
                 result += "flux{:2}:           range: {:.5} ... {:.5}\n".format(
