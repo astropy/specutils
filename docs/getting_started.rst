@@ -1,28 +1,47 @@
-****************
+******************************
+Getting Started with specutils
+******************************
+
 Creating Spectra
-****************
+----------------
 
-Quick Start
------------
+Generating a spectrum object is quite easy. The simplest way is to simply do:
 
-Generating a spectrum object is quite easy. The simplest way is to simply do::
-
-.. code-block:: python
+.. plot::
+    :include-source:
+    :align: center
 
     >>> import numpy as np
     >>> import astropy.units as u
     >>> import matplotlib.pyplot as plt
-
     >>> from specutils import Spectrum1D
-
-    >>> flux = np.random.sample(200)*u.Jy
+    >>> flux = np.random.randn(200)*u.Jy
     >>> wavelength = np.arange(5100, 5300)*u.AA
-
     >>> spec1d = Spectrum1D(spectral_axis=wavelength, flux=flux)
-
     >>> plot = plt.plot(spec1d.spectral_axis, spec1d.flux)
 
-.. image:: img/quick_start.png
+
+Including Uncertainties
+-----------------------
+
+The :class:`~specutils.Spectrum1D` class supports uncertainties, and
+arithmetic operations performed with :class:`~specutils.Spectrum1D`
+objects will propagate uncertainties.
+
+Uncertainties are a special subclass of :class:`~astropy.nddata.NDData`, and their
+propagation rules are implemented at the class level. Therefore, users must
+specify the uncertainty type at creation time
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+    >>> from astropy.nddata import StdDevUncertainty
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
+
+.. warning:: Not defining an uncertainty class will result in an
+             :class:`~astropy.nddata.UnknownUncertainty` object which will not
+             propagate uncertainties in arithmetic operations.
 
 
 Reading from a File
@@ -73,29 +92,6 @@ Providing a FITSWCS
     <Quantity [ 6538.8, 6539.8, 6540.8] Angstrom>
     >>> spec.wcs.pixel_to_world(np.arange(3)) #doctest:+SKIP
     array([6.5388e-07, 6.5398e-07, 6.5408e-07])
-
-
-Including Uncertainties
------------------------
-
-The :class:`~specutils.Spectrum1D` class supports uncertainties, and
-arithmetic operations performed with :class:`~specutils.Spectrum1D`
-objects will propagate uncertainties.
-
-Uncertainties are a special subclass of :class:`~astropy.nddata.NDData`, and their
-propagation rules are implemented at the class level. Therefore, users must
-specify the uncertainty type at creation time
-
-.. code-block:: python
-
-    >>> from specutils import Spectrum1D
-    >>> from astropy.nddata import StdDevUncertainty
-
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
-
-.. warning:: Not defining an uncertainty class will result in an
-             :class:`~astropy.nddata.UnknownUncertainty` object which will not
-             propagate uncertainties in arithmetic operations.
 
 
 Multi-dimensional Data Sets
