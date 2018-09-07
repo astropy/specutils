@@ -218,8 +218,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             result += "flux:             range: {:.5} ... {:.5}\n".format(
                 self.flux[0], self.flux[-1])
         # Add information about spectral axis
-        result += "spectral axis:    range: {:.5} ... {:.5}".format(
+        result += "spectral axis:    range: {:.5} ... {:.5}\n".format(
             self.spectral_axis[0], self.spectral_axis[-1])
+        # Add information about uncertainties if available
+        if self.uncertainty:
+            result += "uncertainty:      range: {} ... {}\n".format(
+                self.uncertainty[0], self.uncertainty[-1])
         return result
 
     def __repr__(self):
