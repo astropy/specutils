@@ -72,9 +72,9 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.9
+          env: PYTHON_VERSION=3.4
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
+          env: PYTHON_VERSION=3.5
         - os: linux
           env: NUMPY_VERSION=1.11
 
