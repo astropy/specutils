@@ -14,7 +14,7 @@ from astropy.modeling import fitting, Model, models
 __all__ = ['fit_lines']
 
 
-def fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
+def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
               exclude_regions=None, weights=None, window=None):
     """
     Fit the input models to the spectrum. The parameter values of the
@@ -112,7 +112,7 @@ def fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
     return fitted_models
 
 
-def _fit_lines(spectrum, model, fitter=fitting.SimplexLSQFitter(),
+def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
                exclude_regions=None, weights=None, window=None):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be

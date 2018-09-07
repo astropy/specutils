@@ -1,7 +1,7 @@
 from __future__ import division
 
 from astropy.modeling.polynomial import Chebyshev1D
-from astropy.modeling.fitting import SLSQPLSQFitter
+from astropy.modeling.fitting import LevMarLSQFitter
 
 from ..fitting import fit_lines
 from ..manipulation.smoothing import median_smooth
@@ -11,7 +11,7 @@ __all__ = ['fit_continuum', 'fit_generic_continuum']
 
 
 def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
-                          fitter=SLSQPLSQFitter(),
+                          fitter=LevMarLSQFitter(),
                           exclude_regions=None, weights=None):
     """
     Basic fitting of the continuum of an input spectrum. The input
@@ -59,7 +59,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
     return fit_continuum(spectrum_smoothed, model, fitter, exclude_regions, weights)
 
 
-def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=SLSQPLSQFitter(),
+def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
                   exclude_regions=None, window=None, weights=None):
     """
     Entry point for fitting using the `~astropy.modeling.fitting`
