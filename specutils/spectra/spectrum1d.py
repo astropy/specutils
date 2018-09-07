@@ -220,8 +220,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return result
 
     def __repr__(self):
-        return "<Spectrum1D(flux={}, spectral_axis={})>".format(
-            repr(self.flux), repr(self.spectral_axis))
+        if self.wcs:
+            result = "<Spectrum1D(flux={}, spectral_axis={})>".format(
+                repr(self.flux), repr(self.spectral_axis))
+        else:
+            result = "<Spectrum1D(flux={})>".format(repr(self.flux))
+        return result
+
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
