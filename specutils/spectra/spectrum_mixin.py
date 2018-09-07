@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 from astropy.wcs import WCSSUB_SPECTRAL
@@ -83,7 +84,7 @@ class OneDSpectrumMixin(object):
         """
         return u.Quantity(self.data, unit=self.unit, copy=False)
 
-    def set_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
+    def new_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
         """
         Converts the flux data to the specified unit.  This is an in-place
         change to the object.
@@ -103,9 +104,10 @@ class OneDSpectrumMixin(object):
 
         Returns
         -------
-        `~astropy.units.Quantity`
-            The converted flux array.
+        `~astropy.units.Spectrum1D`
+            A new spectrum with the converted flux array
         """
+        new_spec = deepcopy(self)
         if not suppress_conversion:
             if equivalencies is None:
                 equivalencies = eq.spectral_density(self.spectral_axis)
@@ -113,12 +115,12 @@ class OneDSpectrumMixin(object):
             new_data = self.flux.to(
                 unit, equivalencies=equivalencies)
 
-            self._data = new_data.value
-            self._unit = new_data.unit
+            new_spec._data = new_data.value
+            new_spec._unit = new_data.unit
         else:
-            self._unit = u.Unit(unit)
+            new_spec._unit = u.Unit(unit)
 
-        return self.flux
+        return new_spec
 
     @property
     def velocity_convention(self):
