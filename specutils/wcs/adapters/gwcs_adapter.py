@@ -76,7 +76,9 @@ class GWCSAdapter(WCSAdapter):
         """
         Method for performing the world to pixel transformations.
         """
-        return u.Quantity(self.wcs.invert(world_array.value), unit=world_array.unit)
+        world_array = u.Quantity(world_array)
+        
+        return u.Quantity(self.wcs.invert(world_array), unit=world_array)
 
     def pixel_to_world(self, pixel_array):
         """
