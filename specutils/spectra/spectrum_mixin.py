@@ -83,9 +83,10 @@ class OneDSpectrumMixin(object):
         """
         return u.Quantity(self.data, unit=self.unit, copy=False)
 
-    def to_flux(self, unit, equivalencies=None, suppress_conversion=False):
+    def set_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
         """
-        Converts the flux data to the specified unit.
+        Converts the flux data to the specified unit.  This is an in-place
+        change to the object.
 
         Parameters
         ----------
