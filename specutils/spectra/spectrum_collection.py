@@ -66,6 +66,10 @@ class SpectrumCollection(NDIOMixin):
     def shape(self):
         return self.flux.shape
 
+    @property
+    def uncertainty(self):
+        return self._uncertainty
+
 
 class MutableSpectrumCollection(MutableSequence, NDIOMixin):
     """
