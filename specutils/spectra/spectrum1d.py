@@ -133,9 +133,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def photon_flux(self):
         """
-        The flux, in units of photons per cm^2
+        The flux density of photons as a `~astropy.Quantity`, in units of
+        photons per cm^2 per second per spectral_axis unit
         """
-        return (self.flux / (self.energy /u.photon)).to(u.photon * u.cm**-2)
+        flux_in_spectral_axis_units = self.flux.to(u.W * u.cm**-2 * self.spectral_axis.unit**-1, u.spectral_density(self.spectral_axis))
+        photon_flux_density = flux_in_spectral_axis_units / (self.energy / u.photon)
+        return photon_flux_density.to(u.photon * u.cm**-2 * u.s**-1 *
+                                      self.spectral_axis.unit**-1)
 
     @lazyproperty
     def bin_edges(self):
