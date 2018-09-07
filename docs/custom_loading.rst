@@ -9,6 +9,40 @@ Specutils leverages the astropy io registry to provide an interface for convenie
 loading data from files. To create a custom loader, the user must define it in
 a separate python file and place the file in their ``~/.specutils`` directory.
 
+Loading from a FITS File
+------------------------
+A spectra with a *Linear Wavelength Solution* can be read using the ``read``
+method of the :class:`~specutils.Spectrum1D` class to parse the file name and
+format
+
+
+.. code-block:: python
+
+  import os
+  from specutils import Spectrum1D
+
+  file_path = os.path.join('path/to/folder', 'file_with_1d_wcs.fits')
+
+  spec = Spectrum1D.read(file_path, format='wcs1d-fits')
+
+
+This will create a :class:`~specutils.Spectrum1D` object that you can manipulate later.
+
+For instance, you could plot the spectrum.
+
+.. code-block:: python
+
+  import matplotlib.pyplot as plt
+
+  plt.title('FITS file with 1D WCS')
+  plt.xlabel('Wavelength (Angstrom)')
+  plt.ylabel('Flux (erg/cm2/s/A)')
+  plt.plot(spec.wavelength, spec.flux)
+  plt.show()
+
+
+.. image:: img/read_1d.png
+
 
 Creating a Custom Loader
 ------------------------
