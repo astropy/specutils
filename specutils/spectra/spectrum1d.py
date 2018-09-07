@@ -201,6 +201,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
+    def _format_array_summary(self, label, array):
+        mean = np.mean(array)
+        s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
+        return s.format(label, array[0], array[-1], mean)
+
     def __str__(self):
         result = "Spectrum1D "
         # Handle case of single value flux
@@ -212,17 +217,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         result += "(length={})\n".format(len(self.spectral_axis))
         if self.flux.ndim > 1:
             for i, flux in enumerate(self.flux):
-                result += "flux{:2}:           range: {:.5} ... {:.5}\n".format(
-                    i, flux[0], flux[-1])
+                label = 'flux{:2}'.format(i)
+                result += self._format_array_summary(label, flux) + '\n'
         else:
-            result += "flux:             range: {:.5} ... {:.5}\n".format(
-                self.flux[0], self.flux[-1])
+            result += self._format_array_summary('flux', self.flux) + '\n'
         # Add information about spectral axis
-        result += "spectral axis:    range: {:.5} ... {:.5}\n".format(
-            self.spectral_axis[0], self.spectral_axis[-1])
+        result += self._format_array_summary('spectral axis', self.spectral_axis)
         # Add information about uncertainties if available
         if self.uncertainty:
-            result += "uncertainty:      range: {} ... {}\n".format(
+            result += "\nuncertainty:      [ {}, ..., {} ]\n".format(
                 self.uncertainty[0], self.uncertainty[-1])
         return result
 
