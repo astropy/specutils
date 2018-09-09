@@ -100,9 +100,9 @@ class GWCSAdapter(WCSAdapter):
         """
         Returns the rest frequency defined in the WCS.
         """
-        logging.warning("GWCS does not store rest frequency information. "
-                        "Please define the rest value explicitly in the "
-                        "`Spectrum1D` object.")
+        logging.debug("GWCS does not store rest frequency information. "
+                      "Please define the rest value explicitly in the "
+                      "`Spectrum1D` object.")
 
         return self._rest_frequency
 
@@ -111,9 +111,9 @@ class GWCSAdapter(WCSAdapter):
         """
         Returns the rest wavelength defined in the WCS.
         """
-        logging.warning("GWCS does not store rest wavelength information. "
-                        "Please define the rest value explicitly in the "
-                        "`Spectrum1D` object.")
+        logging.debug("GWCS does not store rest wavelength information. "
+                      "Please define the rest value explicitly in the "
+                      "`Spectrum1D` object.")
 
         return self._rest_wavelength
 
