@@ -7,7 +7,7 @@ import pytest
 from ..tests.spectral_examples import simulated_spectra
 from ..spectra.spectrum1d import Spectrum1D
 import astropy.units as u
-from ..analysis import equivalent_width, snr
+from ..analysis import equivalent_width, snr, centroid
 from ..manipulation import noise_region_uncertainty
 from ..spectra import SpectralRegion
 from astropy.nddata import StdDevUncertainty
@@ -43,7 +43,7 @@ def test_snr(simulated_spectra):
     """
 
     np.random.seed(42)
-    
+
     #
     #  Set up the data and add the uncertainty and calculate the expected SNR
     #
@@ -192,7 +192,7 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
 
     region = SpectralRegion(0.52*u.um, 0.59*u.um)
     noise_region = SpectralRegion(0.40*u.um, 0.45*u.um)
-    
+
     #
     #  Set up the data
     #
@@ -220,3 +220,66 @@ def test_snr_single_region_with_noise_region(simulated_spectra):
     assert np.allclose(spec_snr.value, spec_snr_expected.value)
 
 
+def test_centroid(simulated_spectra):
+    """
+    Test the simple version of the spectral centroid.
+    """
+
+    np.random.seed(42)
+
+    #
+    #  Set up the data and add the uncertainty and calculate the expected SNR
+    #
+
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    wavelengths = spectrum.spectral_axis
+    flux = spectrum.flux
+
+    spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(flux)
+
+    #
+    # SNR of the whole spectrum
+    #
+
+    spec_centroid = centroid(spectrum, None)
+
+    assert isinstance(spec_centroid, u.Quantity)
+    assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
+
+
+def test_inverted_centroid(simulated_spectra):
+    """
+    Ensures the centroid calculation also works for *inverted* spectra - i.e.
+    continuum-subtracted absorption lines.
+    """
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    spec_centroid_expected = (np.sum(spectrum.flux * spectrum.spectral_axis) /
+                              np.sum(spectrum.flux))
+
+    spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+                                   flux=-spectrum.flux)
+    spec_centroid_inverted = centroid(spectrum_inverted, None)
+    assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
+
+
+def test_centroid_multiple_flux(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR, with multiple flux per single dispersion.
+    """
+
+    #
+    #  Set up the data and add the uncertainty and calculate the expected SNR
+    #
+
+    np.random.seed(42)
+
+    spec = Spectrum1D(spectral_axis=np.arange(10) * u.um,
+                      flux=np.random.sample((5, 10)) * u.Jy)
+
+    centroid_spec = centroid(spec, None)
+
+    assert np.allclose(centroid_spec.value, np.array([4.46190995, 4.17223565, 4.37778249, 4.51595259, 4.7429066]))
+    assert centroid_spec.unit == u.um

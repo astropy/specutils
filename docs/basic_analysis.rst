@@ -42,6 +42,39 @@ Currently, specutils supports basic signal-to-noise ratio calculations.
     >>> snr(spec) #doctest:+SKIP
     <Quantity 149.97247134>
 
+Centroid
+--------
+
+Currently, specutils supports basic centroid calculations.
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils.spectra import Spectrum1D
+    >>> from astropy.nddata import StdDevUncertainty
+    >>> from specutils.analysis import centroid
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(3+np.random.randn(50))*u.Jy)
+    >>> centroid(spec, region=None) #doctest:+SKIP
+    <Quantity 24.39045495 Angstrom>
+
+And if the spectrum contains a continuum, then it should be subtracted first:
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils.spectra import Spectrum1D
+    >>> from astropy.nddata import StdDevUncertainty
+    >>> from specutils.fitting import fit_generic_continuum
+    >>> from specutils.analysis import centroid
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(10+np.random.randn(50))*u.Jy)
+    >>> continuum_baseline = fit_generic_continuum(spec) #doctest:+SKIP
+    >>> continuum_flux = continuum_baseline(spec.spectral_axis.value) #doctest:+SKIP
+    >>> continuum = Spectrum1D(spectral_axis=spec.spectral_axis, flux=continuum_flux) #doctest:+SKIP
+    >>> c = centroid(spec-continuum, region=None) #doctest:+SKIP
+
 Reference/API
 -------------
 .. automodapi:: specutils.analysis
