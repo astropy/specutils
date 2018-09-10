@@ -70,7 +70,7 @@ And if the spectrum contains a continuum, then it should be subtracted first:
     >>> from specutils.analysis import centroid
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(50), flux=(10+np.random.randn(50))*u.Jy)
-    >>> continuum_baseline = fit_generic_continuum(spec)
+    >>> continuum_baseline = fit_generic_continuum(spec) #doctest:+SKIP
     >>> continuum_flux = continuum_baseline(spec.spectral_axis.value)
     >>> continuum = Spectrum1D(spectral_axis=spec.spectral_axis, flux=continuum_flux)
     >>> c = centroid(spec-continuum, region=None) #doctest:+SKIP
