@@ -110,7 +110,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
-            wcs=wcs, *args, **kwargs)
+            wcs=wcs, **kwargs)
 
     @property
     def frequency(self):
