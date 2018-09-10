@@ -9,8 +9,8 @@ from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..analysis import (equivalent_width, snr, centroid, sigma_full_width,
-                        full_width_half_max)
+from ..analysis import (equivalent_width, snr, centroid, gaussian_sigma_width,
+                        gaussian_fwhm)
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
@@ -249,7 +249,7 @@ def test_centroid_multiple_flux(simulated_spectra):
     assert centroid_spec.unit == u.um
 
 
-def test_sigma_full_width():
+def test_gaussian_sigma_width():
 
     np.random.seed(42)
 
@@ -260,12 +260,12 @@ def test_sigma_full_width():
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
 
-    result = sigma_full_width(spectrum)
+    result = gaussian_sigma_width(spectrum)
 
     assert quantity_allclose(result, g1.stddev*2, atol=0.01*u.GHz)
 
 
-def test_sigma_full_width_regions():
+def test_gaussian_sigma_width_regions():
 
     np.random.seed(42)
 
@@ -278,31 +278,31 @@ def test_sigma_full_width_regions():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
     region1 = SpectralRegion(lower=5*u.GHz, upper=15*u.GHz)
-    result1 = sigma_full_width(spectrum, region=region1)
+    result1 = gaussian_sigma_width(spectrum, region=region1)
 
     exp1 = g1.stddev*2
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(lower=1*u.GHz, upper=3*u.GHz)
-    result2 = sigma_full_width(spectrum, region=region2)
+    result2 = gaussian_sigma_width(spectrum, region=region2)
 
     exp2 = g2.stddev*2
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(lower=40*u.GHz, upper=100*u.GHz)
-    result3 = sigma_full_width(spectrum, region=region3)
+    result3 = gaussian_sigma_width(spectrum, region=region3)
 
     exp3 = g3.stddev*2
     assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
-    result_list = sigma_full_width(spectrum, region=[region1, region2, region3])
+    result_list = gaussian_sigma_width(spectrum, region=[region1, region2, region3])
     for model, result in zip((g1, g2, g3), result_list):
         exp = model.stddev*2
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-def test_sigma_full_width_multi_spectrum():
+def test_gaussian_sigma_width_multi_spectrum():
 
     np.random.seed(42)
 
@@ -319,14 +319,14 @@ def test_sigma_full_width_multi_spectrum():
 
     spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
-    results = sigma_full_width(spectra)
+    results = gaussian_sigma_width(spectra)
 
     expected = (g1.stddev*2, g2.stddev*2, g3.stddev*2)
     for result, exp in zip(results, expected):
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-def test_full_width_half_max():
+def test_gaussian_fwhm():
 
     np.random.seed(42)
 
@@ -337,7 +337,7 @@ def test_full_width_half_max():
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
 
-    result = full_width_half_max(spectrum)
+    result = gaussian_fwhm(spectrum)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
