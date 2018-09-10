@@ -10,7 +10,7 @@ from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (equivalent_width, snr, centroid, gaussian_sigma_width,
-                        gaussian_fwhm)
+                        gaussian_fwhm, fwhm)
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
@@ -341,3 +341,44 @@ def test_gaussian_fwhm():
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+def test_fwhm():
+
+    np.random.seed(42)
+
+    # Create an (uncentered) spectrum for testing
+    frequencies = np.linspace(1, 10, 1000) * u.GHz
+    stddev = 0.8*u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = fwhm(spectrum)
+
+    expected = stddev * gaussian_sigma_to_fwhm
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+def test_fwhm_multi_spectrum():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    stddevs = [0.8, 5, 10]*u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=5*u.GHz, stddev=stddevs[0])
+    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=stddevs[1])
+    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=83*u.GHz, stddev=stddevs[2])
+
+    flux = np.ndarray((3, len(frequencies)))
+
+    flux[0] = g1(frequencies)
+    flux[1] = g2(frequencies)
+    flux[2] = g3(frequencies)
+
+    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    results = fwhm(spectra)
+
+    expected = stddevs * gaussian_sigma_to_fwhm
+    assert quantity_allclose(results, expected, atol=0.01*u.GHz)
