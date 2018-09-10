@@ -176,22 +176,37 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return True
 
     def __add__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other, unit=self.unit)
+
         return self.add(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __sub__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other, unit=self.unit)
+
         return self.subtract(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __mul__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.multiply(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __div__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __truediv__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
