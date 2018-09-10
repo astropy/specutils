@@ -92,9 +92,9 @@ def _compute_full_width_half_max(spectrum, region=None):
         calc_spectrum = spectrum
 
     flux = calc_spectrum.flux
-    frequencies = calc_spectrum.frequency
+    spectrum = calc_spectrum.spectral_axis
 
-    dx = frequencies - np.mean(frequencies)
+    dx = spectrum - np.mean(spectrum)
     fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
 
     return fwhm
