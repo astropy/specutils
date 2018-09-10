@@ -104,7 +104,7 @@ class OneDSpectrumMixin(object):
 
         Returns
         -------
-        `~astropy.units.Spectrum1D`
+        `~specutils.Spectrum1D`
             A new spectrum with the converted flux array
         """
         new_spec = deepcopy(self)
