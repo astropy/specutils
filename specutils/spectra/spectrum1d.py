@@ -204,7 +204,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def _format_array_summary(self, label, array):
         mean = np.mean(array)
         s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
-        return s.format(label, array[0], array[-1], mean)
+        return s.format(label+':', array[0], array[-1], mean)
 
     def __str__(self):
         result = "Spectrum1D "
@@ -225,7 +225,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         result += self._format_array_summary('spectral axis', self.spectral_axis)
         # Add information about uncertainties if available
         if self.uncertainty:
-            result += "\nuncertainty:      [ {}, ..., {} ]\n".format(
+            result += "\nuncertainty:      [ {}, ..., {} ]".format(
                 self.uncertainty[0], self.uncertainty[-1])
         return result
 
