@@ -20,17 +20,18 @@ Using specutils
 ---------------
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   installation
-   getting_started
-   custom_loading
-   spectrum_collection
-   basic_analysis
-   arithmetic
-   smoothing
-   fitting
-   spectral_regions
+    installation
+    getting_started
+    spectrum_collection
+    spectral_regions
+    custom_loading
+    basic_analysis
+    arithmetic
+    smoothing
+    fitting
+    contributing
 
 .. toctree::
     :maxdepth: 1
