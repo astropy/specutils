@@ -1,11 +1,9 @@
 ******************************
-Getting Started with specutils
+Getting Started with Specutils
 ******************************
 
-Creating Spectra
-----------------
-
-Generating a spectrum object is quite easy. The simplest way is to simply do:
+Basic Spectrum Creation
+-----------------------
 
 .. plot::
     :include-source:
@@ -70,7 +68,7 @@ user need not be awrae that the WCS object is being used, and is can interact
 with the :class:`~specutils.Spectrum1D` object as if it were only a simple
 data container.
 
-Currently, specutils understands two WCS formats: FITSWCS and GWCS. When a user
+Currently, specutils understands two WCS formats: FITS WCS and GWCS. When a user
 does not explicitly supply a WCS object, specutils will fallback on an internal
 GWCS object it will create.
 
@@ -78,8 +76,8 @@ GWCS object it will create.
           FITSWCS or GWCS), please see the documentation on WCS Adapter classes.
 
 
-Providing a FITSWCS
-~~~~~~~~~~~~~~~~~~~
+Providing a FITS-style WCS
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
