@@ -121,28 +121,29 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def frequency(self):
         """
-        The frequency as a `~astropy.Quantity` in units of GHz
+        The frequency as a `~astropy.units.Quantity` in units of GHz
         """
         return self.spectral_axis.to(u.GHz, u.spectral())
 
     @property
     def wavelength(self):
         """
-        The wavelength as a `~astropy.Quantity` in units of Angstroms
+        The wavelength as a `~astropy.units.Quantity` in units of Angstroms
         """
         return self.spectral_axis.to(u.AA, u.spectral())
 
     @property
     def energy(self):
         """
-        The energy of the spectral axis as a `~astropy.Quantity` in units of eV
+        The energy of the spectral axis as a `~astropy.units.Quantity` in units
+        of eV.
         """
         return self.spectral_axis.to(u.eV, u.spectral())
 
     @property
     def photon_flux(self):
         """
-        The flux density of photons as a `~astropy.Quantity`, in units of
+        The flux density of photons as a `~astropy.units.Quantity`, in units of
         photons per cm^2 per second per spectral_axis unit
         """
         flux_in_spectral_axis_units = self.flux.to(u.W * u.cm**-2 * self.spectral_axis.unit**-1, u.spectral_density(self.spectral_axis))
