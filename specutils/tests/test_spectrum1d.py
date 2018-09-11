@@ -122,6 +122,29 @@ def test_flux_unit_conversion():
     assert s.flux[0] == 26.0 * u.uJy
 
 
+def test_wcs_transformations():
+    # Test with a GWCS
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.randn(49))
+
+    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
+    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
+
+    assert isinstance(pix_axis, np.ndarray)
+    assert isinstance(disp_axis, u.Quantity)
+
+    # Test with a FITS WCS
+    my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
+                                 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
+
+    spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
+
+    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
+    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
+
+    assert isinstance(pix_axis, np.ndarray)
+    assert isinstance(disp_axis, u.Quantity)
+
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
                                  'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
