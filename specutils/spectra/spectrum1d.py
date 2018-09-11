@@ -201,6 +201,43 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
+    def _format_array_summary(self, label, array):
+        mean = np.mean(array)
+        s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
+        return s.format(label+':', array[0], array[-1], mean)
+
+    def __str__(self):
+        result = "Spectrum1D "
+        # Handle case of single value flux
+        if self.flux.ndim == 0:
+            result += "(length=1)\n"
+            return result + "flux:   {}".format(self.flux)
+
+        # Handle case of multiple flux arrays
+        result += "(length={})\n".format(len(self.spectral_axis))
+        if self.flux.ndim > 1:
+            for i, flux in enumerate(self.flux):
+                label = 'flux{:2}'.format(i)
+                result += self._format_array_summary(label, flux) + '\n'
+        else:
+            result += self._format_array_summary('flux', self.flux) + '\n'
+        # Add information about spectral axis
+        result += self._format_array_summary('spectral axis', self.spectral_axis)
+        # Add information about uncertainties if available
+        if self.uncertainty:
+            result += "\nuncertainty:      [ {}, ..., {} ]".format(
+                self.uncertainty[0], self.uncertainty[-1])
+        return result
+
+    def __repr__(self):
+        if self.wcs:
+            result = "<Spectrum1D(flux={}, spectral_axis={})>".format(
+                repr(self.flux), repr(self.spectral_axis))
+        else:
+            result = "<Spectrum1D(flux={})>".format(repr(self.flux))
+        return result
+
+
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
