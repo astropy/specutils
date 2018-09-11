@@ -65,9 +65,13 @@ def gaussian_fwhm(spectrum, region=None):
 
 def fwhm(spectrum, region=None):
     """
-    Compute the true full width half max of the spectrum. This makes no
-    assumptions about the shape of the spectrum (e.g. whether it is Gaussian).
-    This will be calculated over the regions, if they are specified.
+    Compute the true full width half max of the spectrum.
+    
+    This makes no assumptions about the shape of the spectrum (e.g. whether it
+    is Gaussian). It finds the maximum of the spectrum, and then locates the
+    point closest to half max on either side of the maximum, and
+    measures the distance between them. This will be calculated over the
+    regions, if they are specified. 
 
     Parameters
     ----------
