@@ -102,6 +102,7 @@ Consider the following noisy gaussian spectrum as an example:
 
 .. plot::
    :include-source: true
+   :context:
 
    >>> import numpy as np
    >>> from astropy import units as u
@@ -132,6 +133,39 @@ Each of the width analysis functions are applied to this spectrum below:
    <Quantity 1.87987569 GHz>
    >>> fwhm(noisy_gaussian)
    <Quantity 1.85929648 GHz>
+
+For uncentered spectra, `~fwhm` will generally provide a more accurate value
+than either `~gaussian_sigma_width` or `~gaussian_fwhm`. Consider the following
+example:
+
+.. plot::
+   :include-source: true
+   :context:
+
+   >>> np.random.seed(0)
+
+   >>> spectral_axis = np.linspace(0., 10., 200) * u.GHz
+   >>> # Note that the spectrum is not centered on the spectral axis
+   >>> spectral_model = models.Gaussian1D(amplitude=3*u.Jy, mean=2*u.GHz, stddev=1.2*u.GHz)
+   >>> flux = spectral_model(spectral_axis)
+   >>> # Add noise
+   >>> flux += np.random.normal(0., 0.2, spectral_axis.shape) * u.Jy
+   >>> uncentered_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
+
+   >>> plt.clf()
+   >>> plt.plot(uncentered_gaussian.spectral_axis, uncentered_gaussian.flux)
+
+Note that in this case, the `~fwhm` estimate is reasonable, whereas the others
+are not:
+
+.. code-block:: python
+
+   >>> gaussian_sigma_width(uncentered_gaussian)
+   <Quantity 5.23511731 GHz>
+   >>> gaussian_fwhm(uncentered_gaussian)
+   <Quantity 6.16387959 GHz>
+   >>> fwhm(uncentered_gaussian)
+   <Quantity 2.7638191 GHz>
 
 Reference/API
 -------------
