@@ -58,12 +58,7 @@ class OneDSpectrumMixin(object):
         """
         Returns a Quantity array with the values of the spectral axis.
         """
-        # Construct the spectral_axis array.
-        # TODO: Should applying the spectral axis unit occur in the adapter?
-        spectral_axis = self.wcs.pixel_to_world(
-            np.arange(self.flux.shape[-1])) * self.wcs.spectral_axis_unit
-
-        return spectral_axis
+        return self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
 
     @property
     def spectral_axis_unit(self):

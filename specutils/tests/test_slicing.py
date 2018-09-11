@@ -81,4 +81,4 @@ def test_slicing_with_fits():
 
     assert isinstance(spec_slice, Spectrum1D)
     assert spec_slice.flux.size == 4
-    assert np.allclose(spec_slice.wcs.pixel_to_world([6, 7, 8, 9]), spec.wcs.pixel_to_world([6, 7, 8, 9]))
+    assert np.allclose(spec_slice.wcs.pixel_to_world([6, 7, 8, 9]).value, spec.wcs.pixel_to_world([6, 7, 8, 9]).value)
