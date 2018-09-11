@@ -3,3 +3,4 @@ numpydoc
 scipy
 gwcs
 astropy>=3.0
+matplotlib

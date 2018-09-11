@@ -216,19 +216,19 @@ def test_energy_photon_flux():
 
 def test_repr():
     spec_with_wcs = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                               flux=np.random.random(10))
+                               flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
     assert 'spectral_axis=<Quantity [' in result
 
-    spec_without_wcs = Spectrum1D(np.random.random(10))
+    spec_without_wcs = Spectrum1D(np.random.random(10) * u.Jy)
     result = repr(spec_without_wcs)
     assert result == '<Spectrum1D(flux={})>'.format(repr(spec_without_wcs.flux))
 
 
 def test_str():
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                               flux=np.random.random(10))
+                               flux=np.random.random(10) * u.Jy)
     result = str(spec)
     # Sanity check for contents of string representation
     assert result.startswith('Spectrum1D (length={})'.format(len(spec.flux)))
@@ -244,8 +244,8 @@ def test_str():
     assert 'mean={:5}'.format(np.mean(sa)) in lines[2]
 
     # Test string representation with uncertainty
-    spec_with_uncertainty = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10)
-                                       * u.nm, flux=np.random.random(10),
+    spec_with_uncertainty = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                                       flux=np.random.random(10) * u.Jy,
                                        uncertainty=np.random.random(10))
     result = str(spec_with_uncertainty)
     lines = result.split('\n')
@@ -257,7 +257,7 @@ def test_str():
 
     # Test string representation with multiple flux
     spec_multi_flux = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                                 flux=np.random.random((3,10)))
+                                 flux=np.random.random((3,10)) * u.Jy)
     result = str(spec_multi_flux)
     lines = result.split('\n')
     assert len(lines) == 5
@@ -265,6 +265,6 @@ def test_str():
         assert line.startswith('flux{:2}:'.format(i))
 
     # Test string representation with single-dimensional flux
-    spec_single_flux = Spectrum1D(1)
+    spec_single_flux = Spectrum1D(1 * u.Jy)
     result = str(spec_single_flux)
     assert result == 'Spectrum1D (length=1)\nflux:   {}'.format(spec_single_flux.flux)
