@@ -150,7 +150,7 @@ class SpectralRegion:
         del self._subregions[item]
 
     def _valid(self):
-        return all(x[0] < x[1] for x in self._subregions)
+        return all(x[0] <= x[1] for x in self._subregions)
 
     def _is_2_element(self, value):
         """

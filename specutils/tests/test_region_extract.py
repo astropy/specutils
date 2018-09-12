@@ -57,6 +57,38 @@ def test_region_simple_check_ends(simulated_spectra):
     assert sub_spectrum.spectral_axis.value[-1] == 15
 
 
+def test_region_empty(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR.
+    """
+
+    np.random.seed(42)
+
+    # Region past upper range of spectrum
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    region = SpectralRegion(28*u.um, 30*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum is None
+
+    # Region below lower range of spectrum
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    region = SpectralRegion(0.1*u.um, 0.3*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum is None
+
+    # Region below lower range of spectrum and upper range in the spectrum.
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    region = SpectralRegion(0.1*u.um, 3.3*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum is not None
+
+    # Region has lower and upper bound the same
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    region = SpectralRegion(3*u.um, 3*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum is not None
+
+
 def test_region_two_sub(simulated_spectra):
     """
     Test the simple version of the spectral SNR.
