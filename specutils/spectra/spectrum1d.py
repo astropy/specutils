@@ -151,7 +151,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @property
     def shape(self):
-        return (self.spectral_axis.size, self.flux.size)
+        return self.flux.shape
 
     @staticmethod
     def _compare_wcs(this_operand, other_operand):

@@ -10,8 +10,8 @@ sets of data.
 Currently, all :class:`~specutils.SpectrumCollection` items must be the same
 shape. No assumptions are made about the dispersion solutions, and users are
 encouraged to ensure their spectrum collections make sense either by resampling
-them beforehand, or being aware that they do not defautly share the same
-dispersion solution.
+them beforehand, or being aware that they do not share the same dispersion
+solution.
 
 .. code:: python
 
@@ -19,6 +19,7 @@ dispersion solution.
     >>> import astropy.units as u
     >>> from astropy.nddata import StdDevUncertainty
     >>> from specutils import SpectrumCollection
+    >>> from specutils.wcs.wcs_wrapper import WCSWrapper
 
     >>> flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     >>> spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
@@ -28,8 +29,8 @@ dispersion solution.
     >>> meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
 
     >>> spec_coll = SpectrumCollection(
-    >>>     flux=flux, spectral_axis=spectral_axis, wcs=wcs,
-    >>>     uncertainty=uncertainty, mask=mask, meta=meta)
+    ... flux=flux, spectral_axis=spectral_axis, wcs=wcs,
+    ... uncertainty=uncertainty, mask=mask, meta=meta)
 
     >>> spec_coll.shape
     (5, 10)
@@ -52,11 +53,11 @@ a list of :class:`~specutils.Spectrum1D`:
     >>> import astropy.units as u
     >>> import numpy as np
     >>> spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
-    >>>                   flux=np.random.randn(50) * u.Jy,
-    >>>                   uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    ...                   flux=np.random.randn(50) * u.Jy,
+    ...                   uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
     >>> spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
-    >>>                    flux=np.random.randn(50) * u.Jy,
-    >>>                    uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    ...                    flux=np.random.randn(50) * u.Jy,
+    ...                    uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     >>> spec_coll = SpectrumCollection.from_spectra([spec, spec1])
 
