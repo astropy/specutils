@@ -131,7 +131,7 @@ def test_flux_unit_conversion():
 def test_wcs_transformations():
     # Test with a GWCS
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
     disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
