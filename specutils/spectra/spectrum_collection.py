@@ -30,17 +30,60 @@ class SpectrumCollection(NDIOMixin):
         A list of :class:`~specutils.Spectrum1D` objects to be held in the
         collection.
     """
-    def __init__(self, spectra):
+    def __init__(self, flux, spectral_axis, wcs=None, uncertainty=None, 
+                 mask=None, meta=None):
+        # Ensure that the input values are the same shape
+        if not (flux.shape == spectral_axis.shape == wcs.shape == 
+                mask.shape == meta.shape):
+            raise Exception("Shape of all elements must be the same.")
+
+        # Check for quantity
+        if not isinstance(flux, u.Quantity):
+            raise u.UnitsError("Flux must be a `Quantity`.")
+
+        if not isinstance(spectral_axis, u.Quantity):
+            raise u.UnitsError("Spectral axis must be a `Quantity`.")
+
+        self._flux = flux
+        self._spectral_axis = spectral_axis
+        self._wcs = wcs
+        self._uncertainty = uncertainty
+        self._mask = mask
+        self._meta = meta
+
+    def __getitem__(self, key):
+        if isinstance(key, int) and self.ndim > 2:
+            raise ValueError("Currently only 1D data structures may be "
+                             "returned from slice operations.")
+
+        return Spectrum1D(flux=self.flux[key], 
+                          spectral_axis=self.spectral_axis[key],
+                          uncertainty=self.uncertainty[key],
+                          wcs=self.wcs[key],
+                          mask=self.mask[key],
+                          meta=self.meta[key])
+
+    @staticmethod
+    def from_spectra(spectra):
         # Enforce that the shape of each item must be the same
         if not all((x.shape == spectra[0].shape for x in spectra)):
             raise Exception("Shape of all elements must be the same.")
 
-        self._flux = np.vstack(
+        # Compose multi-dimensional ndarrays for each property
+        flux = np.vstack(
             [spec.flux for spec in spectra]) * spectra[0].flux.unit
-        self._spectral_axis = np.vstack(
+        spectral_axis = np.vstack(
             [spec.spectral_axis for spec in spectra]) * spectra[0].spectral_axis.unit
-        self._uncertainty = spectra[0].uncertainty.__class__(
+        uncertainty = spectra[0].uncertainty.__class__(
             np.vstack([spec.uncertainty.array for spec in spectra]))
+        mask = np.vstack([spec.mask for spec in spectra])
+
+        # Store the wcs and meta as lists
+        wcs = [spec.wcs for spec in spectra]
+        meta = [spec.meta for spec in spectra]
+
+        return SpectrumCollection(flux, spectral_axis, uncertainty=uncertainty,
+                                  wcs=wcs, mask=mask, meta=meta)
 
     @property
     def flux(self):
@@ -65,6 +108,10 @@ class SpectrumCollection(NDIOMixin):
     @property
     def shape(self):
         return self.flux.shape
+
+    @property
+    def ndim(self):
+        return self.flux.ndim
 
     @property
     def uncertainty(self):
