@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..manipulation.extract_spectral_region import extract_region
+from ..manipulation import extract_region
 from .spectral_examples import simulated_spectra
 
 
@@ -33,7 +33,7 @@ def test_region_simple(simulated_spectra):
              1423.11195734, 1226.74494917, 1572.31888312, 1311.50503403, 1474.05051673,
              1335.39944397, 1420.61880528, 1433.18623759, 1290.26966668, 1605.67341284,
              1528.52281708, 1592.74392861, 1568.74162534, 1435.29407808, 1536.68040935,
-             1157.33825995, 1136.12679394,  999.92394692, 1038.61546167])
+             1157.33825995, 1136.12679394,  999.92394692, 1038.61546167, 1011.60297294])
 
     assert np.allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
@@ -55,16 +55,25 @@ def test_region_two_sub(simulated_spectra):
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
 
-    sub_spectrum = region.extract(spectrum)
+    sub_spectra = extract_region(spectrum, region)
 
-    # TODO: Add in spectral_axis ck, but after PR #272 is in place
+    # Confirm the end points of the subspectra are correct
+    assert np.allclose(sub_spectra[0].spectral_axis.value[[0, -1]],
+                       np.array([0.6035353535353536, 0.793939393939394]))
 
-    sub_spectrum_flux_expected = np.array(
+    assert np.allclose(sub_spectra[1].spectral_axis.value[[0, -1]],
+                       np.array([0.8661616161616162, 0.8858585858585859]))
+
+    sub_spectrum_0_flux_expected = np.array(
             [1605.71612173, 1651.41650744, 2057.65798618, 2066.73502361, 1955.75832537,
              1670.52711471, 1491.10034446, 1637.08084112, 1471.28982259, 1299.19484483,
              1423.11195734, 1226.74494917, 1572.31888312, 1311.50503403, 1474.05051673,
              1335.39944397, 1420.61880528, 1433.18623759, 1290.26966668, 1605.67341284,
              1528.52281708, 1592.74392861, 1568.74162534, 1435.29407808, 1536.68040935,
-             1157.33825995, 1136.12679394,  999.92394692, 1038.61546167])
+             1157.33825995, 1136.12679394,  999.92394692, 1038.61546167, 1011.60297294])
 
-    assert np.allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+    sub_spectrum_1_flux_expected = np.array(
+            [1337.65312465, 1263.48914109, 1589.81797876, 1548.46068415])
+
+    assert np.allclose(sub_spectra[0].flux.value, sub_spectrum_0_flux_expected)
+    assert np.allclose(sub_spectra[1].flux.value, sub_spectrum_1_flux_expected)

@@ -23,7 +23,7 @@ def to_pixel(subregion, spectrum):
     """
 
     left_index = int(np.ceil(spectrum.wcs.world_to_pixel([subregion[0]])))
-    right_index = int(np.floor(spectrum.wcs.world_to_pixel([subregion[1]])))
+    right_index = int(np.ceil(spectrum.wcs.world_to_pixel([subregion[1]])))
 
     return left_index, right_index
 
@@ -51,13 +51,14 @@ def extract_region(spectrum, region):
 
     """
 
-    extracted_spectrum = None
+    extracted_spectrum = []
     for subregion in region._subregions:
         left_index, right_index = to_pixel(subregion, spectrum)
+        extracted_spectrum.append(spectrum[left_index:right_index])
 
-        if extracted_spectrum is None:
-            extracted_spectrum = spectrum[left_index:right_index]
-        else:
-            extracted_spectrum += spectrum[left_index:right_index]
+    # If there is only one subregion in the region then we will
+    # just return a spectrum.
+    if len(region) == 1:
+        extracted_spectrum = extracted_spectrum[0]
 
     return extracted_spectrum

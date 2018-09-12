@@ -140,7 +140,6 @@ def test_snr_single_region(simulated_spectra):
     assert np.allclose(spec_snr.value, spec_snr_expected.value)
 
 
-@pytest.mark.xfail
 def test_snr_two_regions(simulated_spectra):
     """
     Test the simple version of the spectral SNR within two regions.
@@ -169,7 +168,7 @@ def test_snr_two_regions(simulated_spectra):
     for region in regions:
 
         l = np.nonzero(wavelengths >= region.lower)[0][0]
-        r = np.nonzero(wavelengths <= region.upper)[0][-1]
+        r = np.nonzero(wavelengths <= region.upper)[0][-1]+1
 
         spec_snr_expected.append(np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit)))
 
@@ -180,44 +179,6 @@ def test_snr_two_regions(simulated_spectra):
     spec_snr = snr(spectrum, regions)
 
     assert np.allclose(spec_snr, spec_snr_expected)
-
-
-@pytest.mark.xfail
-def test_snr_single_region_with_noise_region(simulated_spectra):
-    """
-    Test the simple version of the spectral SNR over a region of the spectrum.
-    """
-
-    np.random.seed(42)
-
-    region = SpectralRegion(0.52*u.um, 0.59*u.um)
-    noise_region = SpectralRegion(0.40*u.um, 0.45*u.um)
-
-    #
-    #  Set up the data
-    #
-
-    spectrum = simulated_spectra.s1_um_mJy_e1
-    spectrum_uncertainty = noise_region_uncertainty(spectrum, noise_region)
-
-    wavelengths = spectrum.spectral_axis
-    flux = spectrum.flux
-
-    l = np.nonzero(wavelengths>=region.lower)[0][0]
-    r = np.nonzero(wavelengths<region.upper)[0][-1]
-
-    noise_l = np.nonzero(wavelengths>=noise_region.lower)[0][0]
-    noise_r = np.nonzero(wavelengths<noise_region.upper)[0][-1]
-
-    spec_snr_expected = np.mean(flux[l:r] / np.std(flux[noise_l:noise_r]))
-
-    #
-    # SNR of the whole spectrum
-    #
-
-    spec_snr = snr(spectrum_uncertainty, region)
-
-    assert np.allclose(spec_snr.value, spec_snr_expected.value)
 
 
 def test_centroid(simulated_spectra):
