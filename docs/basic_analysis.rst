@@ -63,6 +63,7 @@ Currently, specutils supports basic centroid calculations.
     <Quantity 24.39045495 Angstrom>
 
 And if the spectrum contains a continuum, then it should be subtracted first:
+
 .. code-block:: python
 
     >>> import numpy as np
@@ -76,7 +77,8 @@ And if the spectrum contains a continuum, then it should be subtracted first:
     >>> continuum_baseline = fit_generic_continuum(spec) #doctest:+SKIP
     >>> continuum_flux = continuum_baseline(spec.spectral_axis.value) #doctest:+SKIP
     >>> continuum = Spectrum1D(spectral_axis=spec.spectral_axis, flux=continuum_flux) #doctest:+SKIP
-    >>> c = centroid(spec-continuum, region=None) #doctest:+SKIP
+    >>> c = centroid(spec-continuum, region=None)
+    <Quantity 10.64463738 Angstrom>
 
 Width
 -----
