@@ -2,10 +2,10 @@
 Spectrum Collection
 ===================
 
-A spectrum collection is a way to keep a set of :class:`~specutils.Spectrum1D`
-objects together and have the collection behave as if it were a single spectrum
-object. This means that it can be used in regular analysis functions to perform
-operations over entire sets of data.
+A spectrum collection is a way to keep a set of spectra data together and have
+the collection behave as if it were a single spectrum object. This means that
+it can be used in regular analysis functions to perform operations over entire
+sets of data.
 
 Currently, all :class:`~specutils.SpectrumCollection` items must be the same
 shape. No assumptions are made about the dispersion solutions, and users are
@@ -15,33 +15,56 @@ dispersion solution.
 
 .. code:: python
 
+    >>> from specutils import SpectrumCollection
+
+    >>> flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
+    >>> spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
+    >>> wcs = np.array([WCSWrapper.from_array(x).wcs for x in spectral_axis])
+    >>> uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
+    >>> mask = np.ones((5, 10)).astype(bool)
+    >>> meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
+
+    >>> spec_coll = SpectrumCollection(
+    >>>     flux=flux, spectral_axis=spectral_axis, wcs=wcs,
+    >>>     uncertainty=uncertainty, mask=mask, meta=meta)
+
+    >>> spec_coll.shape
+    (5, 10)
+    >>> spec_coll.flux.unit
+    Unit("Jy")
+    >>> spec_coll.wavelength.shape
+    (5, 10)
+    >>> spec_coll.wavelength.unit
+    Unit("Angstrom")
+
+Collections from 1D spectra
+---------------------------
+
+It is also possible to create a :class:`~specutils.SpectrumCollection` from
+a list of :class:`~specutils.Spectrum1D`:
+
+.. code:: python
+
     >>> from specutils import Spectrum1D, SpectrumCollection
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> spec1 = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA, flux=np.random.randn(50) * u.Jy)
-    >>> spec2 = Spectrum1D(spectral_axis=np.linspace(25, 76, 50) * u.AA, flux=np.random.randn(50) * u.Jy)
-    >>> spec_coll = SpectrumCollection([spec1, spec2])
-    >>> print(spec_coll.shape)
-    [(50, 50), (50, 50)]
+    >>> spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+    >>>                   flux=np.random.randn(50) * u.Jy,
+    >>>                   uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    >>> spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+    >>>                    flux=np.random.randn(50) * u.Jy,
+    >>>                    uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
-.. plot::
+    >>> spec_coll = SpectrumCollection.from_spectra([spec, spec1])
 
-    import matplotlib.pyplot as plt
-    from specutils import Spectrum1D, SpectrumCollection
-    import astropy.units as u
-
-    spec1 = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
-                       flux=np.random.randn(50) * u.Jy)
-    spec2 = Spectrum1D(spectral_axis=np.linspace(25, 76, 50) * u.AA,
-                       flux=np.random.randn(50) * u.Jy)
-    spec_coll = SpectrumCollection([spec1, spec2])
-
-    f, (ax1, ax2) = plt.subplots(2, 1)
-
-    ax1.plot(spec1.wavelength, spec1.flux, label="High-res")
-    ax1.plot(spec2.wavelength, spec2.flux, label="Low-res")
-    ax2.plot(spec_coll.wavelength[0], spec_coll.flux[0])
-    ax2.plot(spec_coll.wavelength[1], spec_coll.flux[1])
+    >>> spec_coll.shape
+    (2, 50)
+    >>> spec_coll.flux.unit
+    Unit("Jy")
+    >>> spec_coll.wavelength.shape
+    (2, 50)
+    >>> spec_coll.wavelength.unit
+    Unit("Angstrom")
 
 :class:`~specutils.SpectrumCollection` objects can be treated just like
 :class:`~specutils.Spectrum1D` objects; calling a particular attribute on the
@@ -66,12 +89,6 @@ and ``M`` is the length of the output dispersion grid.
     (50,)
     >>> print(spec_coll.flux.shape)
     (2, 50)
-
-The items stored in the :class:`~specutils.SpectrumCollection` object are the
-*original* input spectra. Iterating over a :class:`~specutils.SpectrumCollection`
-will yield these original input spectra. Only when calling an attribute will
-the user be returned a set of values -- either numpy arrays, or lists of objects
-(e.g. in the case of the spectra's wcs).
 
 
 Reference/API
