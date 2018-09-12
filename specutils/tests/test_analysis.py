@@ -1,14 +1,11 @@
 import astropy.units as u
-import astropy.wcs as fitswcs
-import gwcs
 import numpy as np
 import pytest
 
 from ..tests.spectral_examples import simulated_spectra
 from ..spectra.spectrum1d import Spectrum1D
-import astropy.units as u
 from ..analysis import equivalent_width, snr, centroid
-from ..manipulation import noise_region_uncertainty
+from ..manipulation import noise_region_uncertainty, extract_region
 from ..spectra import SpectralRegion
 from astropy.nddata import StdDevUncertainty
 
@@ -108,7 +105,6 @@ def test_snr_multiple_flux(simulated_spectra):
     assert np.allclose(np.array(snr_spec), 31.325265361800415)
 
 
-@pytest.mark.xfail
 def test_snr_single_region(simulated_spectra):
     """
     Test the simple version of the spectral SNR over a region of the spectrum.
@@ -129,8 +125,9 @@ def test_snr_single_region(simulated_spectra):
     wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
+    # +1 because we want to include it in the calculation
     l = np.nonzero(wavelengths>region.lower)[0][0]
-    r = np.nonzero(wavelengths<region.upper)[0][-1]
+    r = np.nonzero(wavelengths<region.upper)[0][-1]+1
 
     spec_snr_expected = np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit))
 
