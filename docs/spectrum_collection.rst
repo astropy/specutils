@@ -15,6 +15,9 @@ dispersion solution.
 
 .. code:: python
 
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from astropy.nddata import StdDevUncertainty
     >>> from specutils import SpectrumCollection
 
     >>> flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
