@@ -23,7 +23,7 @@ def to_pixel(subregion, spectrum):
     """
 
     left_index = int(np.ceil(spectrum.wcs.world_to_pixel([subregion[0]])))
-    right_index = int(np.ceil(spectrum.wcs.world_to_pixel([subregion[1]])))
+    right_index = int(np.floor(spectrum.wcs.world_to_pixel([subregion[1]]))) + 1
 
     return left_index, right_index
 

@@ -37,6 +37,25 @@ def test_region_simple(simulated_spectra):
 
     assert np.allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
+def test_region_simple_check_ends(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR.
+    """
+
+    np.random.seed(42)
+
+    #
+    #  Set up the data and add the uncertainty and calculate the expected SNR
+    #
+
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    region = SpectralRegion(8*u.um, 15*u.um)
+
+    sub_spectrum = extract_region(spectrum, region)
+
+    assert sub_spectrum.spectral_axis.value[0] == 8
+    assert sub_spectrum.spectral_axis.value[-1] == 15
+
 
 def test_region_two_sub(simulated_spectra):
     """

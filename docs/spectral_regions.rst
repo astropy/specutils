@@ -144,6 +144,51 @@ defines the baseline/noise regions:
     >>> sr_inverted #doctest:+SKIP
     SpectralRegion: 0.05 um - 0.15 um, 0.2 um - 0.3 um, 0.4 um - 0.45 um, 0.6 um - 0.8 um, 0.9 um - 1.0 um, 1.2 um - 1 .3 um, 1.5 um - 3.0 um
 
+
+Region Extraction
+-----------------
+
+Given a `~specutils.SpectralRegion`, one can extract a sub-spectrum
+from a `~specutils.Spectrum1D` object. If the `~specutils.SpectralRegion`
+has multiple sub-regions then a list of `~specutils.Spectrum1D` objects will
+be returned.
+
+An example of a single sub-region `~specutils.SpectralRegion`:
+
+.. code-block:: python
+
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils.manipulation import extract_region
+
+    >>> region = SpectralRegion(8*u.nm, 22*u.nm)
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> sub_spectrum = extract_region(spectrum, region)
+    >>> sub_spectrum.spectral_axis
+    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
+               21., 22.] nm>
+
+
+An example of a multiple sub-region `~specutils.SpectralRegion`:
+
+.. code-block:: python
+
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils.manipulation import extract_region
+
+    >>> region = SpectralRegion([(8*u.nm, 22*u.nm), (34*u.nm, 40*u.nm)])
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> sub_spectra = extract_region(spectrum, region)
+    >>> sub_spectra[0].spectral_axis
+    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
+               21., 22.] nm>
+    >>> sub_spectra[1].spectral_axis
+    <Quantity [34., 35., 36., 37., 38., 39., 40.] nm>
+
+
 Reference/API
 -------------
 
