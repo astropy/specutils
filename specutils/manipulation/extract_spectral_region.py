@@ -49,6 +49,17 @@ def extract_region(spectrum, region):
     The region extracted is a discrete subset of the input spectrum. No interpolation is done
     on the left and right side of the spectrum.
 
+    The region is assumed to be a closed interval (as opposed to Python which is open
+    on the upper end).  For example:
+
+        Given:
+           A ``spectrum`` with spectral_axis of ``[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]*u.um``.
+
+           A ``region`` defined as ``SpectralRegion(0.2*u.um, 0.5*u.um)``
+
+        And we calculate ``sub_spectrum = extract_region(spectrum, region)``, then the ``sub_spectrum``
+        spectral axis will be ``[0.2, 0.3, 0.4, 0.5] * u.um``.
+
     """
 
     extracted_spectrum = []
