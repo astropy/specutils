@@ -31,7 +31,7 @@ def to_pixel(subregion, spectrum):
 def extract_region(spectrum, region):
     """
     Extract a region from the input `~specutils.spectra.spectrum1d.Spectrum1D`
-    defined by the `lower` and `upper` bounds defined by this SpectralRegion
+    defined by the lower and upper bounds defined by this SpectralRegion
     instance.  The extracted region will be returned.
 
     Parameters
