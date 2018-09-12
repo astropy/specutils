@@ -119,8 +119,8 @@ Consider the following noisy gaussian spectrum as an example:
    >>> flux += np.random.normal(0., 0.2, spectral_axis.shape) * u.Jy
    >>> noisy_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
 
-   >>> import matplotlib.pyplot as plt
-   >>> plt.plot(noisy_gaussian.spectral_axis, noisy_gaussian.flux)
+   >>> import matplotlib.pyplot as plt #doctest:+SKIP
+   >>> plt.plot(noisy_gaussian.spectral_axis, noisy_gaussian.flux) #doctest:+SKIP
 
 Each of the width analysis functions are applied to this spectrum below:
 
@@ -152,8 +152,8 @@ example:
    >>> flux += np.random.normal(0., 0.2, spectral_axis.shape) * u.Jy
    >>> uncentered_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
 
-   >>> plt.clf()
-   >>> plt.plot(uncentered_gaussian.spectral_axis, uncentered_gaussian.flux)
+   >>> plt.clf() #doctest:+SKIP
+   >>> plt.plot(uncentered_gaussian.spectral_axis, uncentered_gaussian.flux) #doctest:+SKIP
 
 Note that in this case, the `~fwhm` estimate is reasonable, whereas the others
 are not:
