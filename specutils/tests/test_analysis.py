@@ -9,8 +9,8 @@ from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..analysis import (equivalent_width, snr, centroid, gaussian_sigma_width,
-                        gaussian_fwhm, fwhm)
+from ..analysis import (line_flux, equivalent_width, snr, centroid,
+                        gaussian_sigma_width, gaussian_fwhm, fwhm)
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
@@ -18,6 +18,24 @@ from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import equivalent_width, snr, centroid, sigma_full_width
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
+
+
+def test_line_flux():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.1, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = line_flux(spectrum)
+
+    expected = 1 * u.GHz * u.Jy
+
+    assert quantity_allclose(result, expected)
 
 
 def test_equivalent_width():
