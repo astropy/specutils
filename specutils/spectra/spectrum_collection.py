@@ -56,18 +56,18 @@ class SpectrumCollection:
 
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
-                raise Exception("Shape of all data elements must be the same.")
+                raise ValueError("Shape of all data elements must be the same.")
 
         if uncertainty is not None and uncertainty.array.shape != flux.shape:
-            raise Exception("Uncertainty must be the same shape as flux and "
+            raise ValueError("Uncertainty must be the same shape as flux and "
                             "spectral axis.")
 
         if mask is not None and mask.shape != flux.shape:
-            raise Exception("Mask must be the same shape as flux and "
+            raise ValueError("Mask must be the same shape as flux and "
                             "spectral axis.")
 
         if wcs is not None and len(wcs) != len(flux):
-            raise Exception("All spectra must be associated with a single WCS.")
+            raise ValueError("All spectra must be associated with a single WCS.")
 
         # Convert uncertainties to standard deviations if not already defined
         # to be of some type
@@ -114,7 +114,7 @@ class SpectrumCollection:
         """
         # Enforce that the shape of each item must be the same
         if not all((x.shape == spectra[0].shape for x in spectra)):
-            raise Exception("Shape of all elements must be the same.")
+            raise ValueError("Shape of all elements must be the same.")
 
         # Compose multi-dimensional ndarrays for each property
         flux = np.vstack(
