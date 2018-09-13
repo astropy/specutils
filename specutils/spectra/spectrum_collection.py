@@ -100,8 +100,8 @@ class SpectrumCollection:
                           mask=self.mask[key],
                           meta=self.meta[key])
 
-    @staticmethod
-    def from_spectra(spectra):
+    @classmethod
+    def from_spectra(cls, spectra):
         """
         Create a spectrum collection from a set of individual
         :class:`specutils.Spectrum1D` objects.
@@ -150,8 +150,8 @@ class SpectrumCollection:
         wcs = [spec.wcs for spec in spectra]
         meta = [spec.meta for spec in spectra]
 
-        return SpectrumCollection(flux, spectral_axis, uncertainty=uncertainty,
-                                  wcs=wcs, mask=mask, meta=meta)
+        return cls(flux=flux, spectral_axis=spectral_axis,
+                   uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta)
 
     @property
     def flux(self):
