@@ -29,9 +29,9 @@ class SpectrumCollection:
     spectral_axis : :class:`astropy.units.Quantity`
         The spectral axes of the spectra (e.g., wavelength).  Must match the
         dimensionality of ``flux``.
-    wcs : list or None
-        A list of the input WCS associated with each set of spectrum of the
-        collection (if needed).
+    wcs : wcs object or None
+        A wcs object (if available) for the collection of spectra.  The object
+        must follow standard indexing rules to get a sub-wcs if it is provided.
     uncertainty : :class:`astropy.nddata.NDUncertainty` or ndarray
         The uncertainties associated with each spectrum of the collection. In
         the case that only an n-dimensional quantity or ndaray is provided,
@@ -65,11 +65,6 @@ class SpectrumCollection:
         if mask is not None and mask.shape != flux.shape:
             raise ValueError("Mask must be the same shape as flux and "
                             "spectral axis.")
-
-        if wcs is not None:
-            wcs = np.array(wcs, copy=False, dtype=object)
-            if wcs.shape != flux.shape:
-                raise ValueError("All spectra must be associated with a single WCS.")
 
         # Convert uncertainties to standard deviations if not already defined
         # to be of some type
@@ -216,13 +211,28 @@ class SpectrumCollection:
 
     @property
     def shape(self):
-        """The shape of the collection."""
-        return self.flux.shape
+        """
+        The shape of the collection. This is *not* the same as
+        the shape of the flux et al., because the trailing (spectral)
+        dimension is not included here.
+        """
+        return self.flux.shape[:-1]
 
     @property
     def ndim(self):
-        """The dimensionality of the collection."""
-        return self.flux.ndim
+        """
+        The dimensionality of the collection. This is *not* the same as
+        the dimensionality of the flux et al., because the trailing (spectral)
+        dimension is not included here.
+        """
+        return self.flux.ndim - 1
+
+    @property
+    def nspectral(self):
+        """
+        The length of the spectral dimension.
+        """
+        return self.flux.shape[-1]
 
     def __repr__(self):
         return """SpectrumCollection(ndim={}, shape={})

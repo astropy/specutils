@@ -26,8 +26,9 @@ def spectrum_collection():
 
 
 def test_create_spectrum_collection(spectrum_collection):
-    assert spectrum_collection.ndim == 2
-    assert spectrum_collection.shape == (5, 10)
+    assert spectrum_collection.ndim == 1
+    assert spectrum_collection.shape == (5, )
+    assert spectrum_collection.nspectral == 10
     assert isinstance(spectrum_collection.flux, u.Quantity)
     assert isinstance(spectrum_collection.spectral_axis, u.Quantity)
     assert spectrum_collection.wavelength.unit.physical_type == 'length'
@@ -61,7 +62,8 @@ def test_create_collection_from_spectrum1D():
 
     spec_coll = SpectrumCollection.from_spectra([spec, spec1])
 
-    assert spec_coll.ndim == 2
-    assert spec_coll.shape == (2, 50)
+    assert spec_coll.ndim == 1
+    assert spec_coll.shape == (2, )
+    assert spec_coll.nspectral == 50
     assert isinstance(spec_coll.flux, u.Quantity)
     assert isinstance(spec_coll.spectral_axis, u.Quantity)
