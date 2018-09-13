@@ -66,8 +66,10 @@ class SpectrumCollection:
             raise ValueError("Mask must be the same shape as flux and "
                             "spectral axis.")
 
-        if wcs is not None and len(wcs) != len(flux):
-            raise ValueError("All spectra must be associated with a single WCS.")
+        if wcs is not None:
+            wcs = np.array(wcs, copy=False, dtype=object)
+            if wcs.shape != flux.shape:
+                raise ValueError("All spectra must be associated with a single WCS.")
 
         # Convert uncertainties to standard deviations if not already defined
         # to be of some type
