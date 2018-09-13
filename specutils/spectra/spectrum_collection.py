@@ -91,16 +91,23 @@ class SpectrumCollection:
         self._meta = meta
 
     def __getitem__(self, key):
-        if isinstance(key, int) and self.ndim > 2:
+        flux = self.flux[key]
+        if flux.ndim != 1:
             raise ValueError("Currently only 1D data structures may be "
                              "returned from slice operations.")
+        spectral_axis = self.spectral_axis[key]
+        uncertainty = None if self.uncertainty is None else self.uncertainty[key]
+        wcs = None if self.wcs is None else self.wcs[key]
+        mask = None if self.mask is None else self.mask[key]
+        try:
+            meta = self.meta[key]
+        except:
+            # just pass through meta raw - this includes the None case
+            meta = self.meta
 
-        return Spectrum1D(flux=self.flux[key],
-                          spectral_axis=self.spectral_axis[key],
-                          uncertainty=self.uncertainty[key],
-                          wcs=self.wcs[key],
-                          mask=self.mask[key],
-                          meta=self.meta[key])
+        return Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+                          uncertainty=uncertainty, wcs=wcs, mask=mask,
+                          meta=meta)
 
     @classmethod
     def from_spectra(cls, spectra):
