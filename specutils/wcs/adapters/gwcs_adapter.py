@@ -77,8 +77,8 @@ class GWCSAdapter(WCSAdapter):
         Method for performing the world to pixel transformations.
         """
         # Convert world array to the wcs unit for the conversion
-        world_array = u.Quantity(world_array, unit=self._wcs_unit,
-                                 equivalencies=u.spectral())
+        with u.set_enabled_equivalencies(u.spectral()):
+            world_array = u.Quantity(world_array, unit=self._wcs_unit)
 
         return self.wcs.invert(world_array.value)
 
