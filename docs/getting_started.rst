@@ -18,28 +18,10 @@ Generating a spectrum object is quite easy. The simplest way is to simply do:
     >>> flux = np.random.randn(200)*u.Jy
     >>> wavelength = np.arange(5100, 5300)*u.AA
     >>> spec1d = Spectrum1D(spectral_axis=wavelength, flux=flux)
-    >>> plot = plt.plot(spec1d.spectral_axis, spec1d.flux)
-
-    >>> import numpy as np
-    >>> from specutils import Spectrum1D
-    >>> flux = np.random.sample(200)
-    >>> wave = np.arange(1100, 1300)
-    >>> spec1d = Spectrum1D(flux, spectral_axis=wave)
-
-.. plot::
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from specutils import Spectrum1D
-    flux = np.random.sample(200)
-    wave = np.arange(1100, 1300)
-    spec1d = Spectrum1D(flux, spectral_axis=wave)
-
-    f, ax = plt.subplots()
-
-    ax.plot(spec1d.wavelength, spec1d.flux)
-    ax.set_xlabel("Dispersion")
-    ax.set_ylabel("Flux")
+    >>> ax = plt.subplots()[1]  # doctest: +SKIP
+    >>> ax.plot(spec1d.spectral_axis, spec1d.flux)  # doctest: +SKIP
+    >>> ax.set_xlabel("Dispersion")  # doctest: +SKIP
+    >>> ax.set_ylabel("Flux")  # doctest: +SKIP
 
 Including Uncertainties
 -----------------------
@@ -75,43 +57,8 @@ encouraged to :doc:`create their own loader </custom_loading>`.
 .. code-block:: python
 
     >>> from specutils import Spectrum1D
-
     >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
 
-
-
-Spectra with Units
-------------------
-
-It's also possible to include units. This can be done either by passing in
-:class:`astropy.units.Quantity` arrays, or by specifying the units explicitly.
-
-.. code-block:: python
-
-    >>> import numpy as np
-    >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
-    >>> flux = np.random.sample(200)
-    >>> wave = np.arange(1100, 1300)
-    >>> # Specifying units explicitly
-    >>> spec1d = Spectrum1D(flux, spectral_axis=wave, unit=u.Jy, spectral_axis_unit=u.AA)
-    >>> # Using astropy quantities
-    >>> spec1d = Spectrum1D(flux * u.Jy, spectral_axis=wave * u.AA)
-
-.. plot::
-
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import astropy.units as u
-    from specutils import Spectrum1D
-
-    spec1d = Spectrum1D(np.random.sample(200), spectral_axis=np.arange(1100, 1300), unit=u.Jy, spectral_axis_unit=u.AA)
-
-    f, ax = plt.subplots()
-
-    ax.plot(spec1d.wavelength, spec1d.flux)
-    ax.set_xlabel("Dispersion [{}]".format(spec1d.wavelength.unit))
-    ax.set_ylabel("Flux [{}]".format(spec1d.flux.unit))
 
 
 Defining WCS
