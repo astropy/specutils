@@ -164,57 +164,64 @@ class SpectrumCollection:
 
     @property
     def flux(self):
-        """Return the n-dimensional flux quantity object."""
+        """The flux in the spectrum as a `~astropy.units.Quantity`."""
         return self._flux
 
     @property
     def spectral_axis(self):
-        """Return the n-dimensional spectral axis quantity object."""
+        """The spectral axes as a `~astropy.units.Quantity`."""
         return self._spectral_axis
 
     @property
     def frequency(self):
-        """Converts and returns the spectral axis in frequency space."""
+        """
+        The spectral axis as a frequency `~astropy.units.Quantity` (in GHz).
+        """
         return self.spectral_axis.to(u.GHz, u.spectral())
 
     @property
     def wavelength(self):
-        """Converts and returns the spectral axis in wavelength space."""
+        """
+        The spectral axis as a wavelength `~astropy.units.Quantity` (in
+        Angstroms).
+        """
         return self.spectral_axis.to(u.AA, u.spectral())
 
     @property
     def energy(self):
-        """Converts and returns the spectral axis in energy space."""
+        """
+        The spectral axis as an energy `~astropy.units.Quantity` (in eV).
+        """
         return self.spectral_axis.to(u.eV, u.spectral())
 
     @property
     def wcs(self):
-        """Return the list of wcs objects."""
+        """The WCS's as an object array"""
         return self._wcs
 
     @property
     def uncertainty(self):
-        """Return the n-dimensional uncertainty object."""
+        """The uncertainty in the spectrum as a `~astropy.units.Quantity`."""
         return self._uncertainty
 
     @property
     def mask(self):
-        """Return the n-dimesional mask object, or `None`."""
+        """The mask array for the spectrum."""
         return self._mask
 
     @property
     def meta(self):
-        """Return the list of meta dictionary objects, or `None`."""
+        """A dictionary of metadata for theis spectrum collection, or `None`."""
         return self._meta
 
     @property
     def shape(self):
-        """Get the shape of the collection."""
+        """The shape of the collection."""
         return self.flux.shape
 
     @property
     def ndim(self):
-        """Get the dimensionality of the collection."""
+        """The dimensionality of the collection."""
         return self.flux.ndim
 
     def __repr__(self):
