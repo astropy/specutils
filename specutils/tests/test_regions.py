@@ -130,7 +130,7 @@ def test_invert():
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
     # Invert from spectrum.
-    spectrum = Spectrum1D(spectral_axis=np.linspace(0.05, 3, 20)*u.um, flux=np.random.random(20))
+    spectrum = Spectrum1D(spectral_axis=np.linspace(0.05, 3, 20)*u.um, flux=np.random.random(20)*u.Jy)
     sr_inverted = sr.invert_from_spectrum(spectrum)
     for ii, expected in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
