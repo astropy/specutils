@@ -38,3 +38,12 @@ try:
     TESTED_VERSIONS[packagename] = version
 except NameError:   # Needed to support Astropy <= 1.0.0
     pass
+
+
+# makes sure matplotlib doesn't try to pop up plots
+try:
+    import matplotlib
+except ImportError:
+    pass
+else:
+    matplotlib.use('Agg')

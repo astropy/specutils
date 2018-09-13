@@ -19,21 +19,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     Parameters
     ----------
-    flux : `numpy.ndarray`-like or `astropy.units.Quantity` or astropy.nddata.NDData`-like
+    flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quantity`
+    spectral_axis : `astropy.units.Quantity`
         Dispersion information with the same shape as the last (or only)
         dimension of flux.
     wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
         WCS information object.
-    unit : str or `astropy.units.Unit`
-        The unit for the flux data. Must be parseable by `astropy.units.Unit`.
-        If ``flux`` is supplied as a `~astropy.units.Quantity`, this
-        is superceded by the defined unit.
-    spectral_axis_unit : str or `astropy.units.Unit`
-        The unit for the spectral axis. Must be parseable by `astropy.units.Unit`.
-        If ``spectral_axis`` is supplied as a `~astropy.units.Quantity`, this
-        is superceded by the defined unit.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
     rest_value : `~astropy.units.Quantity`
@@ -48,34 +40,38 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
     """
-
-    def __init__(self, flux=None, spectral_axis=None, wcs=None, unit=None,
-                 spectral_axis_unit=None, velocity_convention=None,
-                 rest_value=None, *args, **kwargs):
-        # In cases of slicing, new objects will be initialized with `data`
-        # instead of `flux`. Ensure we grab the `data` argument.
-        if flux is None and 'data' in kwargs:
-            flux = kwargs.pop('data')
-
+    def __init__(self, flux=None, spectral_axis=None, wcs=None,
+                 velocity_convention=None, rest_value=None, *args, **kwargs):
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if issubclass(flux.__class__, NDDataRef):
+        if isinstance(flux, NDDataRef):
             self._velocity_convention = flux._velocity_convention
             self._rest_value = flux._rest_value
 
             super(Spectrum1D, self).__init__(flux)
             return
 
+        # Ensure that the flux argument is an astropy quantity
+        if flux is not None and not isinstance(flux, u.Quantity):
+            raise ValueError("Flux must be a `Quantity` object.")
+
+        # Insure that the unit information codified in the quantity object is
+        # the One True Unit.
+        kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
+                                            else kwargs.get('unit'))
+
+        # In cases of slicing, new objects will be initialized with `data`
+        # instead of `flux`. Ensure we grab the `data` argument.
+        if flux is None and 'data' in kwargs:
+            flux = kwargs.pop('data')
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if spectral_axis is not None:
+            # Ensure that the spectral axis is an astropy quantity
             if not isinstance(spectral_axis, u.Quantity):
-                spectral_axis = u.Quantity(spectral_axis,
-                                           unit=spectral_axis_unit or u.AA)
-
-                logging.warning("No spectral axis units given, assuming "
-                                "{}".format(spectral_axis.unit))
+                raise ValueError("Spectral axis must be a `Quantity` object.")
 
             wcs = WCSWrapper.from_array(spectral_axis)
         elif wcs is not None:
@@ -91,9 +87,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # If no wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
-
-        if not isinstance(flux, u.Quantity):
-            flux = u.Quantity(flux, unit=unit or "Jy")
 
         self._velocity_convention = velocity_convention
 
@@ -115,8 +108,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
-        super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
-                                         wcs=wcs, *args, **kwargs)
+        super(Spectrum1D, self).__init__(
+            data=flux.value if isinstance(flux, u.Quantity) else flux,
+            wcs=wcs, **kwargs)
 
     @property
     def frequency(self):
@@ -182,22 +176,37 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return True
 
     def __add__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other, unit=self.unit)
+
         return self.add(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __sub__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other, unit=self.unit)
+
         return self.subtract(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __mul__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.multiply(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __div__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __truediv__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 

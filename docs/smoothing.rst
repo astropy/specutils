@@ -32,7 +32,7 @@ implemented are: :func:`~specutils.manipulation.box_smooth`
     >>> import numpy as np
     >>> from specutils.manipulation import (box_smooth, gaussian_smooth, trapezoid_smooth)
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
@@ -63,7 +63,7 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 
     >>> box1d_kernel = Box1DKernel(width=3)
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49) * u.Jy)
     >>> spec1_bsmooth2 = convolution_smooth(spec1, box1d_kernel)
 
 In this case, the ``spec1_bsmooth2`` result should be equivalent to the ``spec1_bsmooth`` in
@@ -86,7 +86,7 @@ Note: This method is not flux conserving.
     >>> import numpy as np
     >>> from specutils.manipulation import median_smooth
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49) * u.Jy)
     >>> spec1_msmooth = median_smooth(spec1, width=3)
 
 

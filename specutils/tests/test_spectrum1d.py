@@ -12,8 +12,8 @@ from ..spectra.spectrum1d import Spectrum1D
 
 
 def test_create_from_arrays():
-    spec = Spectrum1D(spectral_axis=np.arange(50),
-                      flux=np.random.randn(50))
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.size == 50
@@ -39,7 +39,7 @@ def test_create_from_multidimensional_arrays():
 
 def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit == u.nm
@@ -47,40 +47,44 @@ def test_create_from_quantities():
 
 
 def test_create_implicit_wcs():
-    spec = Spectrum1D(spectral_axis=np.arange(50),
-                      flux=np.random.randn(50))
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
 
     assert isinstance(spec.wcs.wcs, gwcs.wcs.WCS)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
     assert pix2world.size == 5
+    assert isinstance(pix2world, np.ndarray)
 
 
 def test_create_implicit_wcs_with_spectral_unit():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     assert isinstance(spec.wcs.wcs, gwcs.wcs.WCS)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
     assert pix2world.size == 5
+    assert isinstance(pix2world, np.ndarray)
 
 
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
-    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500]))
+    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
+                      spectral_axis=np.array([400, 500]) * u.AA)
+
     assert np.all(spec.spectral_axis == np.array([400, 500]) * u.angstrom)
     assert spec.spectral_axis.unit == u.angstrom
 
-    spec = Spectrum1D(spectral_axis=np.arange(50),
-                      flux=np.random.randn(50))
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
 
     assert spec.wavelength.unit == u.AA
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     assert spec.frequency.unit == u.GHz
 
@@ -88,14 +92,15 @@ def test_spectral_axis_conversions():
         spec.velocity
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     new_spec = spec.with_spectral_unit(u.GHz)
 
 
 def test_flux_unit_conversion():
     # By default the flux units should be set to Jy
-    s = Spectrum1D(flux=np.array([26.0, 44.5]), spectral_axis=np.array([400, 500]) * u.nm)
+    s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
+                   spectral_axis=np.array([400, 500]) * u.nm)
     assert np.all(s.flux == np.array([26.0, 44.5]) * u.Jy)
     assert s.flux.unit == u.Jy
 
@@ -109,7 +114,8 @@ def test_flux_unit_conversion():
         s.new_flux_unit(unit=u.m)
 
     # Pass custom equivalencies
-    s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500]) * u.nm)
+    s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
+                   spectral_axis=np.array([400, 500]) * u.nm)
     eq = [[u.Jy, u.m,
           lambda x: np.full_like(np.array(x), 1000.0, dtype=np.double),
           lambda x: np.full_like(np.array(x), 0.001, dtype=np.double)]]
@@ -125,7 +131,7 @@ def test_flux_unit_conversion():
 def test_wcs_transformations():
     # Test with a GWCS
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(49))
+                      flux=np.random.randn(49) * u.Jy)
 
     pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
     disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
@@ -174,7 +180,7 @@ def test_create_explicit_fitswcs():
 
 def test_create_with_uncertainty():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.sample(49),
+                      flux=np.random.sample(49) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(49) * 0.1))
 
     assert isinstance(spec.uncertainty, StdDevUncertainty)
@@ -202,7 +208,7 @@ def test_read_linear_solution():
 
 def test_energy_photon_flux():
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                      flux=np.random.randn(10))
+                      flux=np.random.randn(10)*u.Jy)
     assert spec.energy.size == 10
     assert spec.photon_flux.size == 10
     assert spec.photon_flux.unit == u.photon * u.cm**-2
@@ -210,19 +216,19 @@ def test_energy_photon_flux():
 
 def test_repr():
     spec_with_wcs = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                               flux=np.random.random(10))
+                               flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
     assert 'spectral_axis=<Quantity [' in result
 
-    spec_without_wcs = Spectrum1D(np.random.random(10))
+    spec_without_wcs = Spectrum1D(np.random.random(10) * u.Jy)
     result = repr(spec_without_wcs)
     assert result == '<Spectrum1D(flux={})>'.format(repr(spec_without_wcs.flux))
 
 
 def test_str():
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                               flux=np.random.random(10))
+                               flux=np.random.random(10) * u.Jy)
     result = str(spec)
     # Sanity check for contents of string representation
     assert result.startswith('Spectrum1D (length={})'.format(len(spec.flux)))
@@ -238,8 +244,8 @@ def test_str():
     assert 'mean={:5}'.format(np.mean(sa)) in lines[2]
 
     # Test string representation with uncertainty
-    spec_with_uncertainty = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10)
-                                       * u.nm, flux=np.random.random(10),
+    spec_with_uncertainty = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                                       flux=np.random.random(10) * u.Jy,
                                        uncertainty=np.random.random(10))
     result = str(spec_with_uncertainty)
     lines = result.split('\n')
@@ -251,7 +257,7 @@ def test_str():
 
     # Test string representation with multiple flux
     spec_multi_flux = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                                 flux=np.random.random((3,10)))
+                                 flux=np.random.random((3,10)) * u.Jy)
     result = str(spec_multi_flux)
     lines = result.split('\n')
     assert len(lines) == 5
@@ -259,6 +265,6 @@ def test_str():
         assert line.startswith('flux{:2}:'.format(i))
 
     # Test string representation with single-dimensional flux
-    spec_single_flux = Spectrum1D(1)
+    spec_single_flux = Spectrum1D(1 * u.Jy)
     result = str(spec_single_flux)
     assert result == 'Spectrum1D (length=1)\nflux:   {}'.format(spec_single_flux.flux)

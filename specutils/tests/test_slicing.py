@@ -8,7 +8,7 @@ from ..spectra.spectrum1d import Spectrum1D
 
 def test_spectral_axes():
     spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=np.random.sample(49) * 100)
+                       flux=np.random.sample(49) * 100 * u.Jy)
 
     sliced_spec1 = spec1[0]
 
@@ -18,7 +18,7 @@ def test_spectral_axes():
     flux2 = np.random.sample((10, 49)) * 100
 
     spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                       flux=flux2)
+                       flux=flux2 * u.Jy)
 
     sliced_spec2 = spec2[0]
 
