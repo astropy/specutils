@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty
@@ -83,10 +84,8 @@ def test_region_empty(simulated_spectra):
     assert sub_spectrum is not None
 
     # Region has lower and upper bound the same
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
-    region = SpectralRegion(3*u.um, 3*u.um)
-    sub_spectrum = extract_region(spectrum, region)
-    assert sub_spectrum is not None
+    with pytest.raises(Exception) as e_info:
+        region = SpectralRegion(3*u.um, 3*u.um)
 
 
 def test_region_two_sub(simulated_spectra):

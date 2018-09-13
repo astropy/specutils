@@ -150,7 +150,12 @@ class SpectralRegion:
         del self._subregions[item]
 
     def _valid(self):
-        return all(x[0] <= x[1] for x in self._subregions)
+
+        # Lower bound < Upper bound for all sub regions
+        if any(x[0] >= x[1] for x in self._subregions):
+            raise ValueError('Lower bound must be strictly less than the upper bound')
+
+        return True
 
     def _is_2_element(self, value):
         """
