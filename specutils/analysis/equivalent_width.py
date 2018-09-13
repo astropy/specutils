@@ -1,12 +1,13 @@
 from __future__ import division
 
 import numpy as np
+from .utils import computation_wrapper
 
 
 __all__ = ['equivalent_width']
 
 
-def equivalent_width(spectrum):
+def equivalent_width(spectrum, region=None):
     """
     Does a naive equivalent width measures on the spectrum object.
 
@@ -22,6 +23,16 @@ def equivalent_width(spectrum):
 
     TODO:  what frame of reference do you want the spectral_axis to be in ???
     """
+    return computation_wrapper(_compute_equivalent_width, spectrum, region)
+
+
+def _compute_equivalent_width(spectrum, region=None):
+
+    if region is not None:
+        calc_spectrum = region.extract(spectrum)
+    else:
+        calc_spectrum = spectrum
+
     # Continuum is always assumed to be 1.0
     avg_cont = np.median(spectrum.flux)
 
