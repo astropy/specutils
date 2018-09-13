@@ -1,5 +1,4 @@
 import logging
-from collections import MutableSequence
 
 import astropy.units as u
 import numpy as np
@@ -12,33 +11,35 @@ __all__ = ['SpectrumCollection']
 
 class SpectrumCollection:
     """
-    A container class for :class:`~specutils.Spectrum1D` objects. This allows
-    for operations to be performed over a set of spectrum objects. This class
-    behaves similarly to a :class:`~specutils.Spectrum1D`, providing properties
-    of the input spectra as n-dimensional :class:`~astropy.units.Quantity`.
+    A class to represent a heterogeneous set of spectra that are the same length
+    but have different spectral axes. Spectra that meet this requirement can be
+    stored as multidimensional arrays, and thus can have operations performed
+    on them faster than if they are treated as individual
+    :class:`~specutils.Spectrum1D` objects.
 
-    Notes
-    -----
-    Items in this collection must currently be the same shape. Items are not
-    automatically resampled onto a shared grid. Currently, users should resample
-    their spectra prior to creating a :class:`~specutils.SpectrumCollection`
-    object.
+    The attributes on this class uses the same names and conventions as
+    :class:`~specutils.Spectrum1D`, allowing some operations to work the same.
+    Where this does not work, the user can use standard indexing notation to
+    access individual :class:`~specutils.Spectrum1D` objects.
 
     Parameters
     ----------
     flux : :class:`astropy.units.Quantity`
-        The n-dimensional flux data.
+        The flux data. The trailing dimension should be the spectral dimension.
     spectral_axis : :class:`astropy.units.Quantity`
-        The n-dimensional spectral axis data.
-    wcs : list
+        The spectral axes of the spectra (e.g., wavelength).  Must match the
+        dimensionality of ``flux``.
+    wcs : list or None
         A list of the input WCS associated with each set of spectrum of the
-        collection.
+        collection (if needed).
     uncertainty : :class:`astropy.nddata.NDUncertainty` or ndarray
         The uncertainties associated with each spectrum of the collection. In
         the case that only an n-dimensional quantity or ndaray is provided,
-        the uncertainties are assumed to be standard deviations.
-    mask : ndarray
-        The n-dimensional mask information associated with each spectrum.
+        the uncertainties are assumed to be standard deviations. Must match the
+        dimensionality of ``flux``.
+    mask : ndarray or None
+        The n-dimensional mask information associated with each spectrum. If
+        present, must match the dimensionality of ``flux``.
     meta : list
         The list of dictionaries containing meta data to be associated with
         each spectrum in the collection.
@@ -204,7 +205,7 @@ class SpectrumCollection:
 
     @property
     def ndim(self):
-        """Get the dimesionality of the collection."""
+        """Get the dimensionality of the collection."""
         return self.flux.ndim
 
     def __repr__(self):
