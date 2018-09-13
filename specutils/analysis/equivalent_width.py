@@ -65,13 +65,10 @@ def _compute_equivalent_width(spectrum, region=None):
     else:
         calc_spectrum = spectrum
 
-    # Continuum is always assumed to be 1.0
-    avg_cont = np.median(spectrum.flux)
-
-    # Average dispersion in the line region
-    avg_dx = np.mean(spectrum.wavelength[1:] - spectrum.wavelength[:-1])
+    spectral_axis = calc_spectrum.spectral_axis
+    dx = spectral_axis[-1] - spectral_axis[0]
 
     # Calculate equivalent width
-    ew = ((avg_cont - spectrum.flux) * (avg_dx / avg_cont)).sum()
+    ew =  dx - _compute_line_flux(spectrum, region)
 
     return ew
