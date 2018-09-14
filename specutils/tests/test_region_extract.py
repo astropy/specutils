@@ -51,9 +51,9 @@ def test_region_ghz(simulated_spectra):
 
     spectrum = simulated_spectra.s1_um_mJy_e1
     spectrum = Spectrum1D(flux=simulated_spectra.s1_um_mJy_e1,
-                          simulated_spectar=simulated_spectra.s1_um_mJy_e1.spectral_axis.frequency)
+                          spectral_axis=simulated_spectra.s1_um_mJy_e1.frequency)
 
-    region = SpectralRegion(0.6*u.um, 0.8*u.um)
+    region = SpectralRegion(374740.5725*u.GHz, 499654.09666667*u.GHz)
 
     sub_spectrum = extract_region(spectrum, region)
 

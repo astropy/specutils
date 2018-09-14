@@ -86,6 +86,9 @@ def extract_region(spectrum, region):
             if right_index is None:
                 right_index = len(spectrum.spectral_axis)
 
+            if left_index > right_index:
+                left_index, right_index = right_index, left_index
+
             extracted_spectrum.append(spectrum[left_index:right_index])
 
     # If there is only one subregion in the region then we will
