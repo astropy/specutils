@@ -14,11 +14,6 @@ from ..analysis import (line_flux, equivalent_width, snr, centroid,
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
-from ..spectra import Spectrum1D, SpectralRegion
-from ..analysis import equivalent_width, snr, centroid, sigma_full_width
-from ..manipulation import noise_region_uncertainty
-from ..tests.spectral_examples import simulated_spectra
-
 
 def test_line_flux():
 
