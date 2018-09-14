@@ -23,8 +23,9 @@ def _computation_wrapper(func, spectrum, region):
 
 def gaussian_sigma_width(spectrum, region=None):
     """
-    Estimate the full width of the spectrum based on an approximate value of
-    sigma.  This will be calculated over the regions, if they are specified.
+    Estimate the width of the spectrum using a second-moment analysis, scaled
+    to match the sigma/standard deviation parameter of a standard Gaussian
+    profile. This will be calculated over the regions, if they are specified.
 
     Parameters
     ----------
@@ -32,7 +33,8 @@ def gaussian_sigma_width(spectrum, region=None):
         The spectrum object over which the width will be calculated.
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
-        Region within the spectrum to calculate the gaussian sigma width.
+        Region within the spectrum to calculate the gaussian sigma width. If
+        region is `None`, computation is performed over entire spectrum.
 
     Returns
     -------
@@ -44,8 +46,9 @@ def gaussian_sigma_width(spectrum, region=None):
 
 def gaussian_fwhm(spectrum, region=None):
     """
-    Estimate the full width half max of the spectrum assuming it is gaussian.
-    This will be calculated over the regions, if they are specified.
+    Estimate the width of the spectrum using a second-moment analysis scaled to
+    match the full width at half max of a standard Gaussian profile.  This will
+    be calculated over the regions, if they are specified.
 
     Parameters
     ----------
@@ -53,7 +56,8 @@ def gaussian_fwhm(spectrum, region=None):
         The spectrum object overwhich the width will be calculated.
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
-        Region within the spectrum to calculate the FWHM value.
+        Region within the spectrum to calculate the FWHM value. If region is
+        `None`, computation is performed over entire spectrum.
 
     Returns
     -------
@@ -79,7 +83,8 @@ def fwhm(spectrum, region=None):
         The spectrum object over which the width will be calculated.
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
-        Region within the spectrum to calculate the FWHM value.
+        Region within the spectrum to calculate the FWHM value. If region is
+        `None`, computation is performed over entire spectrum.
 
     Returns
     -------
@@ -118,9 +123,9 @@ def _compute_gaussian_fwhm(spectrum, region=None):
         calc_spectrum = spectrum
 
     flux = calc_spectrum.flux
-    spectrum = calc_spectrum.spectral_axis
+    spectral_axis = calc_spectrum.spectral_axis
 
-    dx = spectrum - np.mean(spectrum)
+    dx = spectral_axis - np.mean(spectral_axis)
     fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
 
     return fwhm
@@ -163,7 +168,7 @@ def _arghalf(array, halfval):
     return np.abs(array - halfval).argmin()
 
 
-def _compute_single_fwhm(flux, spectrum):
+def _compute_single_fwhm(flux, spectral_axis):
 
     argmax = np.argmax(flux)
     halfval = flux[argmax] / 2
@@ -172,7 +177,7 @@ def _compute_single_fwhm(flux, spectrum):
     l_idx = _arghalf(flux[:argmax], halfval) if argmax > 0 else 0
     r_idx = _arghalf(flux[argmax+1:], halfval) + argmax+1 if argmax < max_idx else max_idx
 
-    return spectrum[r_idx] - spectrum[l_idx]
+    return spectral_axis[r_idx] - spectral_axis[l_idx]
 
 
 def _compute_fwhm(spectrum, region=None):
@@ -204,9 +209,9 @@ def _compute_fwhm(spectrum, region=None):
         calc_spectrum = spectrum
 
     flux = calc_spectrum.flux
-    spectrum = calc_spectrum.spectral_axis
+    spectral_axis = calc_spectrum.spectral_axis
 
     if flux.ndim > 1:
-        return [_compute_single_fwhm(x, spectrum) for x in flux]
+        return [_compute_single_fwhm(x, spectral_axis) for x in flux]
     else:
-        return _compute_single_fwhm(flux, spectrum)
+        return _compute_single_fwhm(flux, spectral_axis)
