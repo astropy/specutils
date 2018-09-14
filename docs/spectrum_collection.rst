@@ -33,7 +33,7 @@ solution.
     ... uncertainty=uncertainty, mask=mask, meta=meta)
 
     >>> spec_coll.shape
-    (5, 10)
+    (5,)
     >>> spec_coll.flux.unit
     Unit("Jy")
     >>> spec_coll.wavelength.shape
@@ -62,7 +62,7 @@ a list of :class:`~specutils.Spectrum1D`:
     >>> spec_coll = SpectrumCollection.from_spectra([spec, spec1])
 
     >>> spec_coll.shape
-    (2, 50)
+    (2,)
     >>> spec_coll.flux.unit
     Unit("Jy")
     >>> spec_coll.wavelength.shape
