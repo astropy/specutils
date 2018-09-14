@@ -29,8 +29,8 @@ class SpectralRegion:
 
     """
 
-    @staticmethod
-    def from_center(center=None, width=None):
+    @classmethod
+    def from_center(cls, center=None, width=None):
         """
         SpectralRegion class method that enables the definition of a `SpectralRegion`
         from the center and width rather than lower and upper bounds.
@@ -45,7 +45,7 @@ class SpectralRegion:
            The width of the spectral region.
         """
 
-        return SpectralRegion(center - width, center + width)
+        return cls(lower=center - width, upper=center + width)
 
     def __init__(self, *args):
         """
