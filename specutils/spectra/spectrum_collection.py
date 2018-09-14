@@ -94,11 +94,13 @@ class SpectrumCollection:
         uncertainty = None if self.uncertainty is None else self.uncertainty[key]
         wcs = None if self.wcs is None else self.wcs[key]
         mask = None if self.mask is None else self.mask[key]
-        try:
-            meta = self.meta[key]
-        except:
-            # just pass through meta raw - this includes the None case
-            meta = self.meta
+        if self.meta is None:
+            meta = None
+        else:
+            try:
+                meta = self.meta[key]
+            except KeyError:
+                meta = self.meta
 
         return Spectrum1D(flux=flux, spectral_axis=spectral_axis,
                           uncertainty=uncertainty, wcs=wcs, mask=mask,
