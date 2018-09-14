@@ -30,6 +30,7 @@ Using specutils
    arithmetic
    smoothing
    fitting
+   spectral_regions
 
 .. toctree::
     :maxdepth: 1

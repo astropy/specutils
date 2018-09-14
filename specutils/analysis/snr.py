@@ -1,5 +1,6 @@
 import numpy as np
 from ..spectra import SpectralRegion
+from ..manipulation import extract_region
 
 __all__ = ['snr']
 
@@ -72,7 +73,7 @@ def _snr_single_region(spectrum, region=None):
     """
 
     if region is not None:
-        calc_spectrum = region.extract(spectrum)
+        calc_spectrum = extract_region(spectrum, region)
     else:
         calc_spectrum = spectrum
 
