@@ -311,7 +311,7 @@ def test_gaussian_sigma_width_multi_spectrum():
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=5*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=10*u.GHz)
 
-    flux = np.ndarray((3, len(frequencies)))
+    flux = np.ndarray((3, len(frequencies))) * u.Jy
 
     flux[0] = g1(frequencies)
     flux[1] = g2(frequencies)
@@ -388,7 +388,7 @@ def test_fwhm_multi_spectrum():
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=stddevs[1])
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=83*u.GHz, stddev=stddevs[2])
 
-    flux = np.ndarray((3, len(frequencies)))
+    flux = np.ndarray((3, len(frequencies))) * u.Jy
 
     flux[0] = g1(frequencies)
     flux[1] = g2(frequencies)
