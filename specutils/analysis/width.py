@@ -1,6 +1,7 @@
 import numpy as np
-from astropy.stats.funcs import gaussian_fwhm_to_sigma
+from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from ..spectra import SpectralRegion
+from . import centroid
 
 
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm']
@@ -117,16 +118,7 @@ def _compute_gaussian_fwhm(spectrum, region=None):
 
     """
 
-    if region is not None:
-        calc_spectrum = region.extract(spectrum)
-    else:
-        calc_spectrum = spectrum
-
-    flux = calc_spectrum.flux
-    spectral_axis = calc_spectrum.spectral_axis
-
-    dx = spectral_axis - np.mean(spectral_axis)
-    fwhm = 2 * np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+    fwhm = _compute_gaussian_sigma_width(spectrum, region) * gaussian_sigma_to_fwhm
 
     return fwhm
 
@@ -155,10 +147,18 @@ def _compute_gaussian_sigma_width(spectrum, region=None):
 
     """
 
-    fwhm = _compute_gaussian_fwhm(spectrum, region)
-    sigma = fwhm * gaussian_fwhm_to_sigma
+    if region is not None:
+        calc_spectrum = region.extract(spectrum)
+    else:
+        calc_spectrum = spectrum
 
-    return sigma * 2
+    flux = calc_spectrum.flux
+    spectral_axis = calc_spectrum.spectral_axis
+
+    dx = spectral_axis - centroid(spectrum, region)
+    sigma = np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+
+    return sigma
 
 
 def _arghalf(array, halfval):

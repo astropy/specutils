@@ -262,7 +262,7 @@ def test_gaussian_sigma_width():
 
     result = gaussian_sigma_width(spectrum)
 
-    assert quantity_allclose(result, g1.stddev*2, atol=0.01*u.GHz)
+    assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
 
 
 def test_gaussian_sigma_width_regions():
@@ -280,25 +280,25 @@ def test_gaussian_sigma_width_regions():
     region1 = SpectralRegion(lower=5*u.GHz, upper=15*u.GHz)
     result1 = gaussian_sigma_width(spectrum, region=region1)
 
-    exp1 = g1.stddev*2
+    exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(lower=1*u.GHz, upper=3*u.GHz)
     result2 = gaussian_sigma_width(spectrum, region=region2)
 
-    exp2 = g2.stddev*2
+    exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(lower=40*u.GHz, upper=100*u.GHz)
     result3 = gaussian_sigma_width(spectrum, region=region3)
 
-    exp3 = g3.stddev*2
+    exp3 = g3.stddev
     assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
     result_list = gaussian_sigma_width(spectrum, region=[region1, region2, region3])
     for model, result in zip((g1, g2, g3), result_list):
-        exp = model.stddev*2
+        exp = model.stddev
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
@@ -321,7 +321,7 @@ def test_gaussian_sigma_width_multi_spectrum():
 
     results = gaussian_sigma_width(spectra)
 
-    expected = (g1.stddev*2, g2.stddev*2, g3.stddev*2)
+    expected = (g1.stddev, g2.stddev, g3.stddev)
     for result, exp in zip(results, expected):
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
