@@ -58,12 +58,13 @@ def test_equivalent_width():
 
     ew = equivalent_width(spec)
 
-    assert isinstance(ew, u.Quantity)
-    assert np.allclose(ew.value, 6.8278704893358)
+    assert ew.unit.is_equivalent(spec.spectral_axis.unit)
+    assert quantity_allclose(ew, 6.8278704893358*spec.spectral_axis_unit)
 
     ew = equivalent_width(spec[10:20])
 
-    assert np.allclose(ew.value, 15.37809622)
+    assert ew.unit.is_equivalent(spec.spectral_axis.unit)
+    assert quantity_allclose(ew, 15.37809622*spec.spectral_axis_unit)
 
 
 def test_snr(simulated_spectra):
