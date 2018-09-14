@@ -277,19 +277,19 @@ def test_gaussian_sigma_width_regions():
     compound = g1 + g2 + g3
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
-    region1 = SpectralRegion(lower=5*u.GHz, upper=15*u.GHz)
+    region1 = SpectralRegion(5*u.GHz, 15*u.GHz)
     result1 = gaussian_sigma_width(spectrum, region=region1)
 
     exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
-    region2 = SpectralRegion(lower=1*u.GHz, upper=3*u.GHz)
+    region2 = SpectralRegion(1*u.GHz, 3*u.GHz)
     result2 = gaussian_sigma_width(spectrum, region=region2)
 
     exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
-    region3 = SpectralRegion(lower=40*u.GHz, upper=100*u.GHz)
+    region3 = SpectralRegion(40*u.GHz, 100*u.GHz)
     result3 = gaussian_sigma_width(spectrum, region=region3)
 
     exp3 = g3.stddev

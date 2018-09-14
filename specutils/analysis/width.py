@@ -1,6 +1,7 @@
 import numpy as np
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from ..spectra import SpectralRegion
+from ..manipulation import extract_region
 from . import centroid
 
 
@@ -126,7 +127,7 @@ def _compute_gaussian_sigma_width(spectrum, region=None):
     """
 
     if region is not None:
-        calc_spectrum = region.extract(spectrum)
+        calc_spectrum = extract_region(spectrum, region)
     else:
         calc_spectrum = spectrum
 
@@ -164,7 +165,7 @@ def _compute_fwhm(spectrum, region=None):
     """
 
     if region is not None:
-        calc_spectrum = region.extract(spectrum)
+        calc_spectrum = extract_region(spectrum, region)
     else:
         calc_spectrum = spectrum
 
