@@ -163,7 +163,7 @@ An example of a single sub-region `~specutils.SpectralRegion`:
     >>> from specutils.manipulation import extract_region
 
     >>> region = SpectralRegion(8*u.nm, 22*u.nm)
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49))
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> sub_spectrum = extract_region(spectrum, region)
     >>> sub_spectrum.spectral_axis
     <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
