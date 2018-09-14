@@ -22,10 +22,10 @@ Using specutils
 .. toctree::
    :maxdepth: 2
 
-   contributing
    installation
    getting_started
    custom_loading
+   spectrum_collection
    basic_analysis
    arithmetic
    smoothing
@@ -41,6 +41,10 @@ Using specutils
 Get Involved
 ------------
 
-
 Please see :doc:`contributing` for information on bug reporting and
 contributing to the specutils project.
+
+.. toctree::
+   :maxdepth: 2
+
+   contributing

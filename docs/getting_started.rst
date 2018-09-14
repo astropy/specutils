@@ -18,8 +18,10 @@ Generating a spectrum object is quite easy. The simplest way is to simply do:
     >>> flux = np.random.randn(200)*u.Jy
     >>> wavelength = np.arange(5100, 5300)*u.AA
     >>> spec1d = Spectrum1D(spectral_axis=wavelength, flux=flux)
-    >>> plot = plt.plot(spec1d.spectral_axis, spec1d.flux)
-
+    >>> ax = plt.subplots()[1]  # doctest: +SKIP
+    >>> ax.plot(spec1d.spectral_axis, spec1d.flux)  # doctest: +SKIP
+    >>> ax.set_xlabel("Dispersion")  # doctest: +SKIP
+    >>> ax.set_ylabel("Flux")  # doctest: +SKIP
 
 Including Uncertainties
 -----------------------
@@ -55,8 +57,8 @@ encouraged to :doc:`create their own loader </custom_loading>`.
 .. code-block:: python
 
     >>> from specutils import Spectrum1D
-
     >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
+
 
 
 Defining WCS
@@ -85,7 +87,6 @@ Providing a FITSWCS
     >>> import astropy.wcs as fitswcs
     >>> import astropy.units as u
     >>> import numpy as np
-
     >>> my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom', 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
     >>> spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
     >>> spec.wavelength #doctest:+SKIP
@@ -106,8 +107,9 @@ to allow fast operations on collections of spectra that share the same
 name, this name scheme is meant to communicate the presence of a single
 common spectral axis.
 
-The case where each flux data array is related to a *different* spectral
-axis is currently **not** supported, but is planned for a later update.
+.. note:: The case where each flux data array is related to a *different* spectral
+          axis is encapsulated in the :class:`~specutils.SpectrumCollection`
+          object described in the :doc:`related docs </spectrum_collection>`.
 
 .. code-block:: python
 

@@ -3,7 +3,7 @@ from __future__ import absolute_import, division
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from ..spectra.spectrum1d import Spectrum1D
+from .. import Spectrum1D, SpectrumCollection
 
 
 def test_spectrum1d_GMOSfits():
@@ -20,3 +20,10 @@ def test_specific_spec_axis_unit():
                                    format='wcs1d-fits')
 
     assert optical_spec.spectral_axis.unit == "Angstrom"
+
+
+# def test_spectrum_collection_loader():
+#     stis_fits_file = get_pkg_data_filename('data/odbue5030_x1d.fits')
+#     spec_col = SpectrumCollection.read(stis_fits_file,
+#                                        format='stis-fits')
+
