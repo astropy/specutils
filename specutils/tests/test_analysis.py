@@ -25,17 +25,21 @@ def test_line_flux():
     np.random.seed(42)
 
     frequencies = np.linspace(1, 100, 10000) * u.GHz
-    g = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
-    noise = np.random.normal(0., 0.1, frequencies.shape) * u.Jy
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
     result = line_flux(spectrum)
 
-    expected = 1 * u.GHz * u.Jy
+    assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
 
-    assert quantity_allclose(result, expected)
+    # Account for the fact that Astropy uses a different normalization of the
+    # Gaussian where the integral is not 1
+    expected = np.sqrt(2*np.pi) * u.GHz * u.Jy
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
 
 
 def test_equivalent_width():

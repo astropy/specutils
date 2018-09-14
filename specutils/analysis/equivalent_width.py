@@ -55,6 +55,7 @@ def _compute_line_flux(spectrum, region=None):
 
     line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
 
+    # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
 
 
