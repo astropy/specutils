@@ -70,6 +70,6 @@ def _compute_equivalent_width(spectrum, region=None):
     dx = spectral_axis[-1] - spectral_axis[0]
 
     # Calculate equivalent width
-    ew =  dx - _compute_line_flux(spectrum, region) / calc_spectrum.flux.unit
+    ew =  dx - (_compute_line_flux(spectrum, region) / calc_spectrum.flux.unit)
 
     return ew
