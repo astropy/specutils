@@ -25,9 +25,11 @@ def _computation_wrapper(func, spectrum, region):
 
 def gaussian_sigma_width(spectrum, region=None):
     """
-    Estimate the width of the spectrum using a second-moment analysis, scaled
-    to match the sigma/standard deviation parameter of a standard Gaussian
-    profile. This will be calculated over the regions, if they are specified.
+    Estimate the width of the spectrum using a second-moment analysis.
+    
+    The value is scaled to match the sigma/standard deviation parameter of a
+    standard Gaussian profile. This will be calculated over the regions, if
+    they are specified.
 
     Parameters
     ----------
@@ -40,8 +42,8 @@ def gaussian_sigma_width(spectrum, region=None):
 
     Returns
     -------
-    full_width : `~astropy.units.Quantity` or list (based on region input)
-        Approximate full width of the signal
+    approx_sigma: `~astropy.units.Quantity` or list (based on region input)
+        Approximated sigma value of the spectrum
 
     Notes
     -----
@@ -53,9 +55,11 @@ def gaussian_sigma_width(spectrum, region=None):
 
 def gaussian_fwhm(spectrum, region=None):
     """
-    Estimate the width of the spectrum using a second-moment analysis scaled to
-    match the full width at half max of a standard Gaussian profile.  This will
-    be calculated over the regions, if they are specified.
+    Estimate the width of the spectrum using a second-moment analysis.
+    
+    The value is scaled to match the full width at half max of a standard
+    Gaussian profile.  This will be calculated over the regions, if they are
+    specified.
 
     Parameters
     ----------

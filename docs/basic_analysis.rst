@@ -85,7 +85,7 @@ There are several width statistics that are provided by the
 `~specutils.analysis` submodule.
 
 The `~gaussian_sigma_width` function estimates the width of the spectrum by
-computing an approximation of the standard deviation.
+computing a second-moment-based approximation of the standard deviation.
 
 The `~gaussian_fwhm` function estimates the width of the spectrum at half max,
 again by computing an approximation of the standard deviation.
@@ -125,12 +125,12 @@ Each of the width analysis functions are applied to this spectrum below:
 .. code-block:: python
 
    >>> from specutils.analysis import gaussian_sigma_width, gaussian_fwhm, fwhm
-   >>> gaussian_sigma_width(noisy_gaussian)
-   <Quantity 1.59661941 GHz>
-   >>> gaussian_fwhm(noisy_gaussian)
-   <Quantity 1.87987569 GHz>
-   >>> fwhm(noisy_gaussian)
-   <Quantity 1.85929648 GHz>
+   >>> gaussian_sigma_width(noisy_gaussian) # doctest: +FLOAT_CMP
+   <Quantity 0.93853592 GHz>
+   >>> gaussian_fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
+   <Quantity 2.21008321 GHz>
+   >>> fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
+   <Quantity 1.65829146 GHz>
 
 
 Reference/API
