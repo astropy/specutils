@@ -1,7 +1,6 @@
 from __future__ import division
 
 import numpy as np
-from astropy.units.quantity import Quantity
 from .utils import computation_wrapper
 
 
@@ -10,7 +9,7 @@ __all__ = ['line_flux', 'equivalent_width']
 
 def line_flux(spectrum, regions=None):
     """
-    Computes the flux in a spectrum or region of a spectrum.
+    Computes the integrated flux in a spectrum or region of a spectrum.
 
     Applies to the whole spectrum by default, but can be limited to a specific
     feature (like a spectral line) if a region is given.
@@ -18,7 +17,7 @@ def line_flux(spectrum, regions=None):
     Parameters
     ----------
     spectrum : Spectrum1D
-        The spectrum object over which the line flux will be calculated.
+        The spectrum object over which the summed flux will be calculated.
 
     regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the gaussian sigma width. If
@@ -27,7 +26,13 @@ def line_flux(spectrum, regions=None):
     Returns
     -------
     flux : `~astropy.units.Quantity`
-        Flux in the provided spectrum (or regions)
+        Flux in the provided spectrum (or regions). Unit isthe ``spectrum``'s'
+        ``flux`` unit times ``spectral_axis`` unit.
+
+    Notes
+    -----
+    While the flux can be computed on any spectrum or region, it should be
+    continuum-subtracted to compute actual line fluxes.
     """
     return computation_wrapper(_compute_line_flux, spectrum, regions)
 
@@ -48,13 +53,24 @@ def equivalent_width(spectrum, continuum=1, regions=None):
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
-    continuum : `~astropy.units.Quantity`, optional
-        Constant continuum value
+    continuum : ``1`` or `~astropy.units.Quantity`, optional
+        Value to assume is the continuum level.  For the special value ``1``
+        (without units), ``1`` in whatever the units of the ``spectrum.flux``
+        will be assumed, otherwise units are required and must be the same as
+        the ``spectrum.flux``.
 
     Returns
     -------
     ew : `~astropy.units.Quantity`
-        Equivalent width calculation, in the same units as the spectral axis
+        Equivalent width calculation, in the same units as the ``spectrum``'s
+        ``spectral_axis``.
+
+    Notes
+    -----
+    To do a standard equivalent width measurement, the ``spectrum`` should be
+    continuum-normalized to whatever ``continuum`` is before this function is
+    called.
+
     """
 
     kwargs = dict(continuum=continuum)
