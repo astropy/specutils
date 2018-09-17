@@ -82,13 +82,13 @@ def test_equivalent_width_continuum(continuum):
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
-@pytest.mark.xfail(reason='Need to investigate reason for failure')
 def test_equivalent_width_absorption():
 
     np.random.seed(42)
 
     frequencies = np.linspace(1, 100, 10000) * u.GHz
-    g = models.Gaussian1D(amplitude=0.5*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    amplitude = 0.5
+    g = models.Gaussian1D(amplitude=amplitude*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     continuum = 1*u.Jy
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = continuum - g(frequencies) + noise
@@ -101,7 +101,7 @@ def test_equivalent_width_absorption():
 
     # Since this is an absorption line, we expect the equivalent width value to
     # be positive
-    expected = np.sqrt(2*np.pi) * u.GHz
+    expected = amplitude*np.sqrt(2*np.pi) * u.GHz
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
