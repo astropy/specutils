@@ -59,6 +59,30 @@ def test_equivalent_width():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
+@pytest.mark.xfail(reason='Need to investigate reason for failure')
+def test_equivalent_width_absorption():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=0.5*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    continuum = 1*u.Jy
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = continuum - g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = equivalent_width(spectrum)
+
+    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+
+    # Since this is an absorption line, we expect the equivalent width value to
+    # be positive
+    expected = np.sqrt(2*np.pi) * u.GHz
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
 def test_snr(simulated_spectra):
     """
     Test the simple version of the spectral SNR.
