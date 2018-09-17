@@ -146,21 +146,16 @@ def _compute_gaussian_sigma_width(spectrum, region=None):
     return sigma
 
 
-def _arghalf(array, halfval):
-    """
-    Find index of the item closest to the half max
-    """
-    return np.abs(array - halfval).argmin()
-
-
 def _compute_single_fwhm(flux, spectral_axis):
 
     argmax = np.argmax(flux)
     halfval = flux[argmax] / 2
 
-    max_idx = len(flux) - 1
-    l_idx = _arghalf(flux[:argmax], halfval) if argmax > 0 else 0
-    r_idx = _arghalf(flux[argmax+1:], halfval) + argmax+1 if argmax < max_idx else max_idx
+    left = flux[:argmax] <= halfval
+    right = flux[argmax+1:] <= halfval
+
+    l_idx = np.where(left == True)[0][-1]
+    r_idx = np.where(right == True)[0][0] + argmax
 
     return spectral_axis[r_idx] - spectral_axis[l_idx]
 
