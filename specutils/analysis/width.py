@@ -1,6 +1,10 @@
+"""
+A module for analysis tools focused on determining the width of
+spectral features.
+"""
+
 import numpy as np
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
-from ..spectra import SpectralRegion
 from ..manipulation import extract_region
 from . import centroid
 from .utils import computation_wrapper
@@ -12,7 +16,7 @@ __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm']
 def gaussian_sigma_width(spectrum, region=None):
     """
     Estimate the width of the spectrum using a second-moment analysis.
-    
+
     The value is scaled to match the sigma/standard deviation parameter of a
     standard Gaussian profile. This will be calculated over the regions, if
     they are specified.
@@ -42,7 +46,7 @@ def gaussian_sigma_width(spectrum, region=None):
 def gaussian_fwhm(spectrum, region=None):
     """
     Estimate the width of the spectrum using a second-moment analysis.
-    
+
     The value is scaled to match the full width at half max of a standard
     Gaussian profile.  This will be calculated over the regions, if they are
     specified.
@@ -72,12 +76,12 @@ def gaussian_fwhm(spectrum, region=None):
 def fwhm(spectrum, region=None):
     """
     Compute the true full width half max of the spectrum.
-    
+
     This makes no assumptions about the shape of the spectrum (e.g. whether it
     is Gaussian). It finds the maximum of the spectrum, and then locates the
     point closest to half max on either side of the maximum, and
     measures the distance between them. This will be calculated over the
-    regions, if they are specified. 
+    regions, if they are specified.
 
     Parameters
     ----------

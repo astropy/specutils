@@ -1,4 +1,6 @@
-from __future__ import division
+"""
+A module for analysis tools focused on determining fluxes of spectral features.
+"""
 
 import numpy as np
 from .utils import computation_wrapper

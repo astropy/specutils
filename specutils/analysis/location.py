@@ -1,3 +1,8 @@
+"""
+A module for analysis tools focused on determining the location of
+spectral features.
+"""
+
 import numpy as np
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
@@ -26,7 +31,7 @@ def centroid(spectrum, region):
     Notes
     -----
     The spectrum will need to be continuum subtracted before calling
-    this method. See the 
+    this method. See the
     `analysis documentation <https://specutils.readthedocs.io/en/latest/basic_analysis.html>`_ for more information.
 
     """
