@@ -1,6 +1,7 @@
 from __future__ import division
 
 import numpy as np
+from astropy.units.quantity import Quantity
 from .utils import computation_wrapper
 
 
@@ -24,7 +25,7 @@ def line_flux(spectrum, region=None):
     return computation_wrapper(_compute_line_flux, spectrum, region)
 
 
-def equivalent_width(spectrum, region=None):
+def equivalent_width(spectrum, continuum=1, region=None):
     """
     Does a naive equivalent width measures on the spectrum object.
 
@@ -33,6 +34,9 @@ def equivalent_width(spectrum, region=None):
     spectrum : Spectrum1D
         The spectrum object overwhich the equivalent width will be calculated.
 
+    continuum : `~astropy.units.Quantity`, optional
+        Constant continuum value
+
     Returns
     -------
     ew : `~astropy.units.Quantity`
@@ -40,7 +44,9 @@ def equivalent_width(spectrum, region=None):
 
     TODO:  what frame of reference do you want the spectral_axis to be in ???
     """
-    return computation_wrapper(_compute_equivalent_width, spectrum, region)
+
+    kwargs = dict(continuum=continuum)
+    return computation_wrapper(_compute_equivalent_width, spectrum, region, **kwargs)
 
 
 def _compute_line_flux(spectrum, region=None):
@@ -59,17 +65,23 @@ def _compute_line_flux(spectrum, region=None):
     return line_flux
 
 
-def _compute_equivalent_width(spectrum, region=None):
+def _compute_equivalent_width(spectrum, continuum=1, region=None):
 
     if region is not None:
         calc_spectrum = region.extract(spectrum)
     else:
         calc_spectrum = spectrum
 
+    if continuum == 1:
+        continuum = 1*calc_spectrum.flux.unit
+
     spectral_axis = calc_spectrum.spectral_axis
     dx = spectral_axis[-1] - spectral_axis[0]
 
+
+    line_flux = _compute_line_flux(spectrum, region)
+
     # Calculate equivalent width
-    ew =  dx - (_compute_line_flux(spectrum, region) / calc_spectrum.flux.unit)
+    ew =  dx - (line_flux / continuum)
 
     return ew

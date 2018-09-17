@@ -59,6 +59,29 @@ def test_equivalent_width():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
+@pytest.mark.parametrize('continuum', [1*u.Jy, 2*u.Jy, 5*u.Jy])
+def test_equivalent_width_continuum(continuum):
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise + continuum
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = equivalent_width(spectrum, continuum=continuum)
+
+    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+
+    # Since this is an emission line, we expect the equivalent width value to
+    # be negative
+    expected = -(np.sqrt(2*np.pi) * u.GHz) / continuum.value
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
 @pytest.mark.xfail(reason='Need to investigate reason for failure')
 def test_equivalent_width_absorption():
 
