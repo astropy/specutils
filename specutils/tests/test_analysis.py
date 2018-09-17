@@ -255,7 +255,7 @@ def test_gaussian_sigma_width():
 
     # Create a (centered) gaussian spectrum for testing
     mean = 5
-    frequencies = np.linspace(1, mean*2, 100) * u.GHz
+    frequencies = np.linspace(0, mean*2, 100) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
@@ -269,7 +269,7 @@ def test_gaussian_sigma_width_regions():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(0, 100, 10000) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
@@ -306,7 +306,7 @@ def test_gaussian_sigma_width_multi_spectrum():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(0, 100, 10000) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=5*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=10*u.GHz)
@@ -332,7 +332,7 @@ def test_gaussian_fwhm():
 
     # Create a (centered) gaussian spectrum for testing
     mean = 5
-    frequencies = np.linspace(1, mean*2, 100) * u.GHz
+    frequencies = np.linspace(0, mean*2, 100) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
@@ -350,7 +350,7 @@ def test_gaussian_fwhm_uncentered():
 
     # Create a (centered) gaussian spectrum for testing
     mean = 2
-    frequencies = np.linspace(1, 10, 100) * u.GHz
+    frequencies = np.linspace(0, 10, 1000) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
@@ -366,7 +366,7 @@ def test_fwhm():
     np.random.seed(42)
 
     # Create an (uncentered) spectrum for testing
-    frequencies = np.linspace(1, 10, 1000) * u.GHz
+    frequencies = np.linspace(0, 10, 1000) * u.GHz
     stddev = 0.8*u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
 
@@ -382,7 +382,7 @@ def test_fwhm_multi_spectrum():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(0, 100, 10000) * u.GHz
     stddevs = [0.8, 5, 10]*u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=5*u.GHz, stddev=stddevs[0])
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=stddevs[1])
