@@ -90,13 +90,12 @@ computing an approximation of the standard deviation.
 The `~gaussian_fwhm` function estimates the width of the spectrum at half max,
 again by computing an approximation of the standard deviation.
 
-Both of these functions assume that spectrum is approximately gaussian and that
-it is centered on the spectral axis.
+Both of these functions assume that spectrum is approximately gaussian.
 
 The function `~fwhm` provides an estimate of the full width of the spectrum at
-half max that does not assume the spectrum is gaussian or centered on the
-spectral axis. It locates the maximum, and then locates the value closest to
-half of the maximum on either side, and measures the distance between them.
+half max that does not assume the spectrum is gaussian. It locates the maximum,
+and then locates the value closest to half of the maximum on either side, and
+measures the distance between them.
 
 Consider the following noisy gaussian spectrum as an example:
 
@@ -112,7 +111,6 @@ Consider the following noisy gaussian spectrum as an example:
    >>> np.random.seed(0)
 
    >>> spectral_axis = np.linspace(0., 10., 200) * u.GHz
-   >>> # Note that the gaussian is centered on the spectral axis
    >>> spectral_model = models.Gaussian1D(amplitude=3*u.Jy, mean=5*u.GHz, stddev=0.8*u.GHz)
    >>> flux = spectral_model(spectral_axis)
    >>> # Add noise
@@ -134,38 +132,6 @@ Each of the width analysis functions are applied to this spectrum below:
    >>> fwhm(noisy_gaussian)
    <Quantity 1.85929648 GHz>
 
-For uncentered spectra, `~fwhm` will generally provide a more accurate value
-than either `~gaussian_sigma_width` or `~gaussian_fwhm`. Consider the following
-example:
-
-.. plot::
-   :include-source: true
-   :context:
-
-   >>> np.random.seed(0)
-
-   >>> spectral_axis = np.linspace(0., 10., 200) * u.GHz
-   >>> # Note that the spectrum is not centered on the spectral axis
-   >>> spectral_model = models.Gaussian1D(amplitude=3*u.Jy, mean=2*u.GHz, stddev=1.2*u.GHz)
-   >>> flux = spectral_model(spectral_axis)
-   >>> # Add noise
-   >>> flux += np.random.normal(0., 0.2, spectral_axis.shape) * u.Jy
-   >>> uncentered_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
-
-   >>> plt.clf() #doctest:+SKIP
-   >>> plt.plot(uncentered_gaussian.spectral_axis, uncentered_gaussian.flux) #doctest:+SKIP
-
-Note that in this case, the `~fwhm` estimate is reasonable, whereas the others
-are not:
-
-.. code-block:: python
-
-   >>> gaussian_sigma_width(uncentered_gaussian)
-   <Quantity 5.23511731 GHz>
-   >>> gaussian_fwhm(uncentered_gaussian)
-   <Quantity 6.16387959 GHz>
-   >>> fwhm(uncentered_gaussian)
-   <Quantity 2.7638191 GHz>
 
 Reference/API
 -------------
