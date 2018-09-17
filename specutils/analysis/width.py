@@ -3,24 +3,10 @@ from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
 from . import centroid
+from .utils import computation_wrapper
 
 
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm']
-
-
-def _computation_wrapper(func, spectrum, region):
-
-    # No region, therefore whole spectrum.
-    if region is None:
-        return func(spectrum)
-
-    # Single region
-    elif isinstance(region, SpectralRegion):
-        return func(spectrum, region=region)
-
-    # List of regions
-    elif isinstance(region, list):
-        return [func(spectrum, region=reg) for reg in region]
 
 
 def gaussian_sigma_width(spectrum, region=None):
@@ -50,7 +36,7 @@ def gaussian_sigma_width(spectrum, region=None):
     The spectrum should be continuum subtracted before being passed to this
     function.
     """
-    return _computation_wrapper(_compute_gaussian_sigma_width, spectrum, region)
+    return computation_wrapper(_compute_gaussian_sigma_width, spectrum, region)
 
 
 def gaussian_fwhm(spectrum, region=None):
@@ -80,7 +66,7 @@ def gaussian_fwhm(spectrum, region=None):
     The spectrum should be continuum subtracted before being passed to this
     function.
     """
-    return _computation_wrapper(_compute_gaussian_fwhm, spectrum, region)
+    return computation_wrapper(_compute_gaussian_fwhm, spectrum, region)
 
 
 def fwhm(spectrum, region=None):
@@ -112,7 +98,7 @@ def fwhm(spectrum, region=None):
     The spectrum should be continuum subtracted before being passed to this
     function.
     """
-    return _computation_wrapper(_compute_fwhm, spectrum, region)
+    return computation_wrapper(_compute_fwhm, spectrum, region)
 
 
 def _compute_gaussian_fwhm(spectrum, region=None):
