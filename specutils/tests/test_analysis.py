@@ -9,34 +9,101 @@ from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..analysis import (equivalent_width, snr, centroid, gaussian_sigma_width,
-                        gaussian_fwhm, fwhm)
+from ..analysis import (line_flux, equivalent_width, snr, centroid,
+                        gaussian_sigma_width, gaussian_fwhm, fwhm)
 from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
 
+def test_line_flux():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = line_flux(spectrum)
+
+    assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
+
+    # Account for the fact that Astropy uses a different normalization of the
+    # Gaussian where the integral is not 1
+    expected = np.sqrt(2*np.pi) * u.GHz * u.Jy
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
+
+
 def test_equivalent_width():
-    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
-                      flux=np.array([
-        0.09731049,  0.04101204,  0.09726903,  0.72524453, -0.28105335,
-       -0.93772961, -1.9828759 ,  0.38752423,  0.86006845, -0.08198352,
-       -0.08303639,  0.18421212, -0.50724803, -0.09625829, -1.9318252 ,
-        1.07973092, -0.3189966 , -1.52045995,  1.95926732,  1.71674612,
-        0.28450979,  0.37737352, -1.16525665,  0.29277855, -0.37458935,
-       -1.31719473, -0.31894975, -0.51095169, -0.45959643,  0.77837891,
-        0.91153499,  0.13612405,  0.63433898, -0.91986964, -0.4546604 ,
-       -1.09797558, -1.83641516, -0.94179757, -1.33989398, -0.66452815,
-       -0.71835507, -1.39939311,  0.50070437, -1.03926682,  0.58481419,
-        0.19552929, -0.7862626 ,  0.51592792, -0.95650517, -1.26917689]) * u.Jy)
 
-    ew = equivalent_width(spec)
+    np.random.seed(42)
 
-    assert isinstance(ew, u.Quantity)
-    assert np.allclose(ew.value, 6.8278704893358)
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise + 1*u.Jy
 
-    ew = equivalent_width(spec[10:20])
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
-    assert np.allclose(ew.value, 15.37809622)
+    result = equivalent_width(spectrum)
+
+    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+
+    # Since this is an emission line, we expect the equivalent width value to
+    # be negative
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+@pytest.mark.parametrize('continuum', [1*u.Jy, 2*u.Jy, 5*u.Jy])
+def test_equivalent_width_continuum(continuum):
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise + continuum
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = equivalent_width(spectrum, continuum=continuum)
+
+    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+
+    # Since this is an emission line, we expect the equivalent width value to
+    # be negative
+    expected = -(np.sqrt(2*np.pi) * u.GHz) / continuum.value
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+def test_equivalent_width_absorption():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    amplitude = 0.5
+    g = models.Gaussian1D(amplitude=amplitude*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    continuum = 1*u.Jy
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = continuum - g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = equivalent_width(spectrum)
+
+    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+
+    # Since this is an absorption line, we expect the equivalent width value to
+    # be positive
+    expected = amplitude*np.sqrt(2*np.pi) * u.GHz
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
 def test_snr(simulated_spectra):
