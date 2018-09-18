@@ -60,12 +60,12 @@ proved below.
 
 While they all differ in details of how they address specific multidimensional
 datasets, these objects all share the core features that they carry a "spectral
-axis" and a "flux".  The "spectral axis" (`spectral_axis`) is the physical
+axis" and a "flux".  The "spectral axis" (``Spectrum*.spectral_axis``) is the physical
 interpretation for each pixel (the "world coordinate" in WCS language). For
 astronomical spectra this is usually wavelength, frequency, or photon energy,
-although for un-calibrated spectra it may simply be in pixel units. The "flux" 
-(`flux`) is the spectrum itself - while the name "flux" may seem to imply a
-specific unit, in fact the `flux` can carry any unit - actual flux, surface
+although for un-calibrated spectra it may simply be in pixel units. The "flux"
+(``Spectrum*.flux``) is the spectrum itself - while the name "flux" may seem to imply a
+specific unit, in fact the ``flux`` can carry any unit - actual flux, surface
 brightness in magnitudes, or counts.  However, the best form for representing
 *calibrated* spectra is spectral flux density (power per area per spectral
 spectral axis unit), and the analysis tools often work best if a spectrum is in

@@ -4,7 +4,7 @@ Working with Spectrum1Ds
 
 As described in more detail in :doc:`types_of_spectra`, the core data class in
 specutils for a single spectrum is `~specutils.Spectrum1D`.  This object
-can represent either one or many spectra, all with the same `spectral_axis`.
+can represent either one or many spectra, all with the same ``spectral_axis``.
 This section describes some of the basic features of this class.
 
 Basic Spectrum Creation
@@ -133,5 +133,5 @@ common spectral axis.
            0.50835299, 0.87581725, 0.50270413, 0.08556376, 0.53713355] Jy>
 
 While the above example only shows two dimensions, this concept generalizes to
-any number of dimensions for `Spectrum1D`, as long as the spectral axis is
-always the last.
+any number of dimensions for `~specutils.Spectrum1D`, as long as the spectral
+axis is always the last.
