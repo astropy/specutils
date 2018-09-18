@@ -63,10 +63,19 @@ uncertainties), along with other metadata.  But the list above is exhaustive
 under the assumption that the additional attributes have matched shape to either
 flux or spectral axis (or some combination of the two).
 
+As detailed above, these cases are represented in specutils via two classes:
+`~specutils.Spectrum1D` (Cases 1 and 2, and indirecly 4) and
+`~specutils.SpectrumCollection` (Case 3). A diagram of these data structures is
+proved below.
+
+.. image:: specutils_classes_diagrams.png
+   :alt: diagrams of specutils classes
 
 
 Using specutils
 ---------------
+
+For more details on usage of specutils, see the sections listed below.
 
 .. toctree::
     :maxdepth: 2
