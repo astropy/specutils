@@ -1,15 +1,11 @@
 .. currentmodule:: specutils.analysis
 
-==============
-Basic Analysis
-==============
+========
+Analysis
+========
 
-The specutils package comes with a few basic spectral analytic functions.
-More extensive and involve analysis techniques will be available in another
-package, `specreduce <https://github.com/astropy/specreduce>`_.
-
-Specutils supports some built-in callable functions for basic calculations
-over the given spectrum object.
+The specutils package comes with a set of functions for doing common analysis
+tasks on astronomical spectra.
 
 Equivalent Width
 ----------------

@@ -40,7 +40,7 @@ For more details on usage of specutils, see the sections listed below.
     spectrum1d
     spectrum_collection
     spectral_regions
-    basic_analysis
+    analysis
     fitting
     arithmetic
     smoothing

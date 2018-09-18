@@ -1,6 +1,5 @@
-
-Types of Spectral Representations
----------------------------------
+Overview of How Specutils Represents Spectra
+--------------------------------------------
 
 The core principle of ``specutils`` is to work as a toolbox.  That is, it aims
 to provide the pieces needed to build particular spectroscopic workflows

@@ -1,6 +1,6 @@
-===================
-Spectrum Collection
-===================
+================================
+Working With SpectrumCollections
+================================
 
 A spectrum collection is a way to keep a set of spectra data together and have
 the collection behave as if it were a single spectrum object. This means that
