@@ -1,6 +1,6 @@
-******************************
-Getting Started with Specutils
-******************************
+************************
+Working with Spectrum1Ds
+************************
 
 Basic Spectrum Creation
 -----------------------
