@@ -14,10 +14,10 @@ Specutils Documentation
 
 
 The ``specutils`` package provides a basic interface for the loading,
-manipulation, and low-level analysis of spectroscopic data. The intention is for
-the generic data containers and accompanying modules to provide a basis for the
-astronomical community upon which additional more domain-specific tools can be
-built. To see more details about the underlying principals, see
+manipulation, and common forms of analysis of spectroscopic data. These
+generic data containers and accompanying modules will provide a toolbox that the
+astronomical community can use to build more domain-specific packages. For more
+details about the underlying principles, see
 `APE13 <https://github.com/astropy/astropy-APEs/blob/master/APE13.rst>`_, the
 guiding document for spectroscopic development in the Astropy Project.
 
