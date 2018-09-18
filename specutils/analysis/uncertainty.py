@@ -1,3 +1,8 @@
+"""
+A module for analysis tools dealing with uncertainties or error analysis in
+spectra.
+"""
+
 import numpy as np
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
