@@ -1,7 +1,7 @@
 Overview of How Specutils Represents Spectra
 --------------------------------------------
 
-The core principle of ``specutils`` is to work as a toolbox.  That is, it aims
+The main principle of ``specutils`` is to work as a toolbox.  That is, it aims
 to provide the pieces needed to build particular spectroscopic workflows
 without imposing a specific *required* set of algorithms or approaches to
 spectroscopic analysis.  To that end, it aims to represent several different
@@ -9,10 +9,8 @@ types of ways one might wish to represent sets of spectroscopic data in Python.
 These objects contains logic to handle multi-dimensional flux data, spectral
 axes in various forms (wavelenth, frequency, energy, velocity, etc.), convenient
 and unobtrusive wcs support, and uncertainty handling. The core containers also
-handle units, a framework for reading and writing from various file formats,
-arithmetic operation support, and a variety of analysis and manipulation tools
-that work on them.
-
+handle units, a framework for reading and writing from various file formats, and
+arithmetic operation support.
 
 The core data objects  are primarily distinguished by the different ways of
 storing the flux and the spectral axis . These cases are detailed below, along
@@ -58,3 +56,17 @@ proved below.
 
 .. image:: specutils_classes_diagrams.png
    :alt: diagrams of specutils classes
+
+
+While they all differ in details of how they address specific multidimensional
+datasets, these objects all share the core features that they carry a "spectral
+axis" and a "flux".  The "spectral axis" (`spectral_axis`) is the physical
+interpretation for each pixel (the "world coordinate" in WCS language). For
+astronomical spectra this is usually wavelength, frequency, or photon energy,
+although for un-calibrated spectra it may simply be in pixel units. The "flux" 
+(`flux`) is the spectrum itself - while the name "flux" may seem to imply a
+specific unit, in fact the `flux` can carry any unit - actual flux, surface
+brightness in magnitudes, or counts.  However, the best form for representing
+*calibrated* spectra is spectral flux density (power per area per spectral
+spectral axis unit), and the analysis tools often work best if a spectrum is in
+those units.
