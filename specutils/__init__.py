@@ -27,39 +27,7 @@ if not _ASTROPY_SETUP_:
     # Allow loading spectrum object from top level module
     from .spectra import *
 
-    # Load the default IO functions
+    # Load the IO functions
     from .io.default_loaders import *  # noqa
-
-
-    def load_user():
-        import os
-        # Get the path relative to the user's home directory
-        path = os.path.expanduser("~/.specutils")
-
-        # If the directory doesn't exist, create it
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-        # Import all python files from the directory
-        for file in os.listdir(path):
-            if not file.endswith("py"):
-                continue
-
-            try:
-                import importlib.util as util
-
-                spec = util.spec_from_file_location(file[:-3],
-                                                    os.path.join(path, file))
-                mod = util.module_from_spec(spec)
-                spec.loader.exec_module(mod)
-            except ImportError:
-                from importlib import import_module
-
-                sys.path.insert(0, path)
-
-                try:
-                    import_module(file[:-3])
-                except ModuleNotFoundError:  # noqa
-                    pass
-
-    load_user()
+    from .io.registers import _load_user_io
+    _load_user_io()
