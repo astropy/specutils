@@ -3,6 +3,7 @@ A module for analysis tools focused on determining fluxes of spectral features.
 """
 
 import numpy as np
+from ..manipulation import extract_region
 from .utils import computation_wrapper
 
 
@@ -82,12 +83,12 @@ def equivalent_width(spectrum, continuum=1, regions=None):
 def _compute_line_flux(spectrum, regions=None):
 
     if regions is not None:
-        calc_spectrum = regions.extract(spectrum)
+        calc_spectrum = extract_region(spectrum, regions)
     else:
         calc_spectrum = spectrum
 
     # Average dispersion in the line region
-    avg_dx = np.diff(spectrum.spectral_axis)
+    avg_dx = np.diff(calc_spectrum.spectral_axis)
 
     line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
 
@@ -98,7 +99,7 @@ def _compute_line_flux(spectrum, regions=None):
 def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
     if regions is not None:
-        calc_spectrum = regions.extract(spectrum)
+        calc_spectrum = extract_region(spectrum, regions)
     else:
         calc_spectrum = spectrum
 

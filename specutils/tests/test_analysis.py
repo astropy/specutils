@@ -345,25 +345,25 @@ def test_gaussian_sigma_width_regions():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
     region1 = SpectralRegion(5*u.GHz, 15*u.GHz)
-    result1 = gaussian_sigma_width(spectrum, region=region1)
+    result1 = gaussian_sigma_width(spectrum, regions=region1)
 
     exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(1*u.GHz, 3*u.GHz)
-    result2 = gaussian_sigma_width(spectrum, region=region2)
+    result2 = gaussian_sigma_width(spectrum, regions=region2)
 
     exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(40*u.GHz, 100*u.GHz)
-    result3 = gaussian_sigma_width(spectrum, region=region3)
+    result3 = gaussian_sigma_width(spectrum, regions=region3)
 
     exp3 = g3.stddev
     assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
-    result_list = gaussian_sigma_width(spectrum, region=[region1, region2, region3])
+    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3])
     for model, result in zip((g1, g2, g3), result_list):
         exp = model.stddev
         assert quantity_allclose(result, exp, atol=0.25*exp)
