@@ -438,6 +438,8 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
     plt.title('Double Peak - Single Models and Exclude Region')
     plt.grid('on')
 
+.. _specutils-continuum-fitting:
+
 Continuum Fitting
 -----------------
 
