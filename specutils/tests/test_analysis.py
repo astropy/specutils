@@ -59,6 +59,24 @@ def test_equivalent_width():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
+def test_equivalent_width_regions():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise + 1*u.Jy
+
+    spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    cont_norm_spec = spec / np.median(spec.flux)  # TODO: replace this with fit_generic_continuum
+    result = equivalent_width(spec, regions=SpectralRegion(3*u.GHz, 97*u.GHz))
+
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
 @pytest.mark.parametrize('continuum', [1*u.Jy, 2*u.Jy, 5*u.Jy])
 def test_equivalent_width_continuum(continuum):
 
