@@ -103,8 +103,8 @@ For more details on usage of specutils, see the sections listed below.
     spectral_regions
     analysis
     fitting
+    manipulation
     arithmetic
-    smoothing
     custom_loading
     contributing
 

@@ -1,9 +1,26 @@
-==================
-Spectral Smoothing
-==================
+====================
+Manipulating Spectra
+====================
 
-The spectral smoothing has two forms, 1) convolution based smoothing
-using the `astropy.convolution` package and 2) median filter
+While there are myriad ways you might want to alter a spectrum, `specutils`
+provides some specific functionality that is commonly used in astronomy.  These
+tools are detailed here, but it is important to bear in mind that this is *not*
+intended to be exhaustive - the point of `specutils` is to provide a framework
+you can use to do your data analysis.  Hence the functionality described here is
+best thought of as pieces you might string together with your own functionality
+to build a tailor-made spectral analysis environment.
+
+In general, however, `specutils` is designed around the idea that spectral
+manipulations generally yield *new* spectrum objects, rather than in-place
+operations.  This is not a true restriction, but is a guideline that is
+recommended primarily to keep you from accidentally modifying a spectrum you
+didn't mean to change.
+
+Smoothing
+---------
+
+Specutils provides smoothing for spectra in two forms: 1) convolution based
+using smoothing `astropy.convolution` and 2) median filtering
 using the :func:`scipy.signal.medfilt`.  Each of these act on the flux
 of the :class:`~specutils.Spectrum1D` object.
 
@@ -11,7 +28,7 @@ of the :class:`~specutils.Spectrum1D` object.
              in units of pixels and not ``Quantity``.
 
 Convolution Based Smoothing
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 While any kernel supported by `astropy.convolution` will work (using the
 `~specutils.manipulation.convolution_smooth` function), several
@@ -55,10 +72,7 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
-    >>> import astropy.units as u
     >>> from astropy.convolution import Box1DKernel
-    >>> import numpy as np
     >>> from specutils.manipulation import convolution_smooth
 
     >>> box1d_kernel = Box1DKernel(width=3)
@@ -71,7 +85,7 @@ the section above (assuming the flux data of the input ``spec`` is the same).
 
 
 Median Smoothing
-----------------
+^^^^^^^^^^^^^^^^
 
 The median based smoothing  is implemented using `scipy.signal.medfilt` and
 has a similar call structure to the convolution-based smoothing methods. This
@@ -81,14 +95,44 @@ Note: This method is not flux conserving.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
-    >>> import astropy.units as u
-    >>> import numpy as np
     >>> from specutils.manipulation import median_smooth
 
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49) * u.Jy)
     >>> spec1_msmooth = median_smooth(spec1, width=3)
 
+
+Uncertainty Estimation
+----------------------
+
+Some of the machinery in `specutils` (e.g. `~specutils.analysis.snr`) requires
+an uncertainty to be present.  While some data reduction pipelines generate this
+as part of the reduction process, sometimes it's necessary to estimate the
+uncertainty in a spectrum using the spectral data itself. Currently `specutils`
+provides the straightforward `~specutils.manipulation.noise_region_uncertainty`
+function:
+
+
+.. code-block:: python
+
+    First we build a spectrum like that used in :doc:`analysis`, but without a
+    known uncertainty:
+
+    >>> from astropy.modeling import models
+    >>> np.random.seed(42)
+    >>> spectral_axis = np.linspace(0., 10., 200) * u.GHz
+    >>> spectral_model = models.Gaussian1D(amplitude=3*u.Jy, mean=5*u.GHz, stddev=0.8*u.GHz)
+    >>> flux = spectral_model(spectral_axis)
+    >>> flux += np.random.normal(0., 0.2, spectral_axis.shape) * u.Jy
+    >>> noisy_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
+
+    Now we estimate the uncertainty from the region that does *not* contain
+    the line:
+
+    >>> from specutils import SpectralRegion
+    >>> from specutils.manipulation import noise_region_uncertainty
+    >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, SpectralRegion(0*u.GHz, 3*u.GHz))
+    >>> spec_w_unc.uncertainty # doctest: +ELLIPSIS
+    StdDevUncertainty([0.2, ..., 0.2]
 
 Reference/API
 -------------

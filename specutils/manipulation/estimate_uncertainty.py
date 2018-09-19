@@ -4,6 +4,9 @@ from astropy.nddata import StdDevUncertainty
 from .extract_spectral_region import extract_region
 
 
+__all__ = ['noise_region_uncertainty']
+
+
 def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     """
     Generates a new spectrum with an uncertainty from the noise in a particular
