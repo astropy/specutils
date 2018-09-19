@@ -26,6 +26,64 @@ guiding document for spectroscopic development in the Astropy Project.
     development stage that some interfaces may change if user feedback and
     experience warrants it.
 
+Getting started with `specutils`
+================================
+
+As a basic example, consider an emission line galaxy spectrum from the
+`SDSS <https://www.sdss.org/>`_.  We will use this as a proxy for a spectrum you
+may have downloaded from some archive, or reduced from your own observations.
+
+.. plot::
+    :include-source:
+    :align: center
+    :context:
+
+    We begin with some basic  imports:
+
+    >>> from astropy.io import fits
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from matplotlib import pyplot as plt
+    >>> from astropy.visualization import quantity_support
+    >>> quantity_support()  # for getting units on the axes below
+
+    Now we load the dataset from it's canonical source:
+
+    >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12') # doctest: +ELLIPSIS
+    Downloading ...
+
+    Then we re-format this dataset into astropy quantities, and create a
+    `~specutils.Spectrum1D` object:
+
+    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> lamb = 10**f[1].data['loglam'] * u.AA
+    >>> flux = f[1].data['flux'] * 10**-17 *u.erg *u.s**-1*u.cm**-2 / u.AA
+    >>> spec = Spectrum1D(spectral_axis=lamb, flux=flux)
+    >>> spec
+
+    And we plot it:
+
+    >>> lines = plt.step(spec.spectral_axis, spec.flux)
+
+Now maybe you want the equivalent width of a spectral line (which requires
+normalizing by a continuum estimate):
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    >>> from specutils.analysis import equivalent_width
+    >>> cont_norm_spec = spec / np.median(spec.flux)  # TODO: replace this with fit_generic_continuum
+    >>> cont_norm_spec.flux
+    >>> lines = plt.step(cont_norm_spec.wavelength, cont_norm_spec.flux)
+    >>> plt.xlim(654*u.nm, 660*u.nm)
+    >>> equivalent_width(spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
+    <Quantity -10.58691406 Angstrom>
+
+While there are other tools and spectral representations detailed more below,
+this gives a test of the sort of analysis `specutils` enables.
+
 
 Using `specutils`
 =================
