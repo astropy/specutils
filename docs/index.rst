@@ -45,21 +45,23 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> import numpy as np
     >>> from matplotlib import pyplot as plt
     >>> from astropy.visualization import quantity_support
-    >>> quantity_support()  # for getting units on the axes below
+    >>> quantity_support()  # for getting units on the axes below # doctest: +ELLIPSIS
+    <astropy.visualization.units.quantity_support...>
 
     Now we load the dataset from it's canonical source:
 
     >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12') # doctest: +ELLIPSIS
     Downloading ...
+    >>> specdata = f[1].data
+    >>> f.close()
 
     Then we re-format this dataset into astropy quantities, and create a
     `~specutils.Spectrum1D` object:
 
-    >>> from specutils import Spectrum1D, SpectralRegion
-    >>> lamb = 10**f[1].data['loglam'] * u.AA
-    >>> flux = f[1].data['flux'] * 10**-17 *u.erg *u.s**-1*u.cm**-2 / u.AA
+    >>> from specutils import Spectrum1D
+    >>> lamb = 10**specdata['loglam'] * u.AA
+    >>> flux = specdata['flux'] * 10**-17 *u.erg *u.s**-1*u.cm**-2 / u.AA
     >>> spec = Spectrum1D(spectral_axis=lamb, flux=flux)
-    >>> spec
 
     And we plot it:
 
@@ -71,11 +73,12 @@ normalizing by a continuum estimate):
 .. plot::
     :include-source:
     :align: center
-    :context: close-figs
+    :context:
 
+    >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
     >>> cont_norm_spec = spec / np.median(spec.flux)  # TODO: replace this with fit_generic_continuum
-    >>> cont_norm_spec.flux
+    >>> fig = plt.figure()
     >>> lines = plt.step(cont_norm_spec.wavelength, cont_norm_spec.flux)
     >>> plt.xlim(654*u.nm, 660*u.nm)
     >>> equivalent_width(spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
