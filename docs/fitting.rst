@@ -480,4 +480,9 @@ convenience functions to perform exactly this task.  An example is shown below.
     plt.title('Continuum Fitting')
     plt.grid('on')
 
+
+Reference/API
+-------------
+
 .. automodapi:: specutils.fitting
+    :no-heading:

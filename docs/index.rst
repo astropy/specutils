@@ -36,7 +36,7 @@ may have downloaded from some archive, or reduced from your own observations.
 .. plot::
     :include-source:
     :align: center
-    :context:
+    :context: close-figs
 
     We begin with some basic  imports:
 
@@ -73,7 +73,7 @@ normalizing by a continuum estimate):
 .. plot::
     :include-source:
     :align: center
-    :context:
+    :context: close-figs
 
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
@@ -107,11 +107,6 @@ For more details on usage of specutils, see the sections listed below.
     smoothing
     custom_loading
     contributing
-
-.. toctree::
-    :maxdepth: 1
-
-    high-level_API.rst
 
 
 Get Involved

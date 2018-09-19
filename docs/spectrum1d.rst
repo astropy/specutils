@@ -135,3 +135,11 @@ common spectral axis.
 While the above example only shows two dimensions, this concept generalizes to
 any number of dimensions for `~specutils.Spectrum1D`, as long as the spectral
 axis is always the last.
+
+
+
+Reference/API
+-------------
+
+.. automodapi:: specutils.spectra.spectrum1d
+    :no-heading:
