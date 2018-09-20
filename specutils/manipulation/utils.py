@@ -151,3 +151,42 @@ def excise_region(spectrum, region, exciser=linear_exciser):
     #
 
     return exciser(spectrum, region)
+
+
+def spectrum_from_model(model_input, spectrum):
+    """
+    This method will create a `~specutils.Spectrum1D` object
+    with the flux defined by calling the input ``model``. All
+    other parameters for the output `~specutils.Spectrum1D` object
+    will be the same as the input `~specutils.Spectrum1D` object.
+
+    Parameters
+    ----------
+    model : `~astropy.modeling.Model`
+        The input model or compound model from which flux is calculated.
+
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+
+    Returns
+    -------
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+
+    """
+
+    # If the input model has units then we will call it normally.
+    if model_input.uses_quantity:
+        flux = model_input(spectrum.spectral_axis)
+
+    # If the input model does not have units, then assume it is in
+    # the same units as the input spectrum.
+    else:
+        flux = model_input(spectrum.spectral_axis.value)*spectrum.flux.unit
+
+    return Spectrum1D(flux=flux,
+                      spectral_axis=spectrum.spectral_axis,
+                      uncertainty=spectrum.uncertainty,
+                      wcs=spectrum.wcs,
+                      velocity_convention=spectrum.velocity_convention,
+                      rest_value=spectrum.rest_value)
