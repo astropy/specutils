@@ -1,6 +1,7 @@
 import numpy as np
 from specutils.spectra import Spectrum1D
 from astropy.nddata import StdDevUncertainty
+from .extract_spectral_region import extract_region
 
 
 def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
@@ -30,7 +31,7 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     """
 
     # Extract the sub spectrum based on the region
-    sub_spectrum = spectral_region.extract(spectrum)
+    sub_spectrum = extract_region(spectrum, spectral_region)
 
     # Compute the standard deviation of the flux.
     noise = noise_func(sub_spectrum.flux)
