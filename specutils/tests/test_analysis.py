@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 
 import astropy.units as u
-from astropy.units import quantity
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
@@ -11,7 +10,6 @@ from astropy.tests.helper import quantity_allclose
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm)
-from ..manipulation import noise_region_uncertainty
 from ..tests.spectral_examples import simulated_spectra
 
 
