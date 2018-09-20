@@ -69,7 +69,7 @@ def test_equivalent_width_regions():
     flux = g(frequencies) + noise + 1*u.Jy
 
     spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
-    cont_norm_spec = spec / np.median(spec.flux)  # TODO: replace this with fit_generic_continuum
+    cont_norm_spec = spec / np.median(spec.flux)
     result = equivalent_width(spec, regions=SpectralRegion(3*u.GHz, 97*u.GHz))
 
     expected = -(np.sqrt(2*np.pi) * u.GHz)
