@@ -20,8 +20,8 @@ def computation_wrapper(func, spectrum, region, **kwargs):
 
     # Single region
     elif isinstance(region, SpectralRegion):
-        return func(spectrum, region=region, **kwargs)
+        return func(spectrum, regions=region, **kwargs)
 
     # List of regions
     elif isinstance(region, list):
-        return [func(spectrum, region=reg, **kwargs) for reg in region]
+        return [func(spectrum, regions=reg, **kwargs) for reg in region]

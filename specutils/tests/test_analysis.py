@@ -59,6 +59,24 @@ def test_equivalent_width():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
+def test_equivalent_width_regions():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise + 1*u.Jy
+
+    spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    cont_norm_spec = spec / np.median(spec.flux)
+    result = equivalent_width(spec, regions=SpectralRegion(3*u.GHz, 97*u.GHz))
+
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
 @pytest.mark.parametrize('continuum', [1*u.Jy, 2*u.Jy, 5*u.Jy])
 def test_equivalent_width_continuum(continuum):
 
@@ -345,25 +363,25 @@ def test_gaussian_sigma_width_regions():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
     region1 = SpectralRegion(5*u.GHz, 15*u.GHz)
-    result1 = gaussian_sigma_width(spectrum, region=region1)
+    result1 = gaussian_sigma_width(spectrum, regions=region1)
 
     exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(1*u.GHz, 3*u.GHz)
-    result2 = gaussian_sigma_width(spectrum, region=region2)
+    result2 = gaussian_sigma_width(spectrum, regions=region2)
 
     exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(40*u.GHz, 100*u.GHz)
-    result3 = gaussian_sigma_width(spectrum, region=region3)
+    result3 = gaussian_sigma_width(spectrum, regions=region3)
 
     exp3 = g3.stddev
     assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
-    result_list = gaussian_sigma_width(spectrum, region=[region1, region2, region3])
+    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3])
     for model, result in zip((g1, g2, g3), result_list):
         exp = model.stddev
         assert quantity_allclose(result, exp, atol=0.25*exp)
