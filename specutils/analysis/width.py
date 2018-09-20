@@ -131,7 +131,7 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
     centroid_result = centroid(spectrum, regions)
 
     if flux.ndim > 1:
-        spectral_axis = np.broadcast_to(spectral_axis, flux.shape) * spectral_axis.unit
+        spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
         centroid_result = centroid_result[:, np.newaxis]
 
     dx = spectral_axis - centroid_result
