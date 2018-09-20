@@ -1,6 +1,6 @@
 from astropy import units as u
 from astropy import modeling
-from .utils import UnitedModel
+from specutils.utils import UnitedModel
 
 
 def test_united_model():
@@ -8,4 +8,3 @@ def test_united_model():
     uc = UnitedModel(c, u.AA, u.km)
 
     assert uc(10*u.nm).to(u.m) == 0*u.m
-

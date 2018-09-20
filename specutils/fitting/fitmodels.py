@@ -1,6 +1,5 @@
 from __future__ import division
 
-import functools
 import operator
 
 import numpy as np
@@ -8,6 +7,7 @@ import astropy.units as u
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.utils import excise_regions
+from ..utils import UnitedModel
 from astropy.modeling import fitting, Model, models
 
 
@@ -478,6 +478,9 @@ def _add_units_to_model(model_in, model_orig, spectrum):
         model_out = _combine_postfix(model_out_stack)
     else:
         model_out = model_out_stack[0]
+
+    if not model_orig.uses_quantity:
+        model_out = UnitedModel(model_out, spectrum.spectral_axis.unit, spectrum.flux.unit)
 
     return model_out
 
