@@ -274,36 +274,3 @@ def test_str():
     spec_single_flux = Spectrum1D(1 * u.Jy)
     result = str(spec_single_flux)
     assert result == 'Spectrum1D (length=1)\nflux:   {}'.format(spec_single_flux.flux)
-
-
-def test_noise_estimate_uncertainty():
-
-    np.random.seed(42)
-
-    # Create values for spectrum.
-    frequencies = np.linspace(1, 100, 10000) * u.um
-    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.um, stddev=1*u.um)
-    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
-    flux = g(frequencies) + noise
-
-    # Create the spectrum, spectral region and assign uncertainties
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
-    spectral_region = SpectralRegion(50*u.um, 80*u.um)
-    spectrum_with_uncertainty = noise_region_uncertainty(spectrum, spectral_region)
-
-    # Compute the expected.
-    indices = np.nonzero((frequencies >= 50*u.um) & (frequencies <= 80*u.um))
-    expected_uncertainty = np.std(flux[indices])*np.ones(len(frequencies))
-
-    assert quantity_allclose(spectrum_with_uncertainty.uncertainty.array,
-                             expected_uncertainty.value)
-
-    # Same idea, but now with variance.  Create the spectrum, spectral region and assign uncertainties
-    spectrum_with_uncertainty = noise_region_uncertainty(spectrum, spectral_region, np.var)
-
-    # Compute the expected.
-    indices = np.nonzero((frequencies >= 50*u.um) & (frequencies <= 80*u.um))
-    expected_uncertainty = np.var(flux[indices])*np.ones(len(frequencies))
-
-    assert quantity_allclose(spectrum_with_uncertainty.uncertainty.array,
-                             expected_uncertainty.value)
