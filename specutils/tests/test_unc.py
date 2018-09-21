@@ -23,12 +23,12 @@ def test_noise_region_unc():
     nspec = pure_noise_spectrum()
 
     region = SpectralRegion(5000*u.AA, 6000*u.AA)
-
     unc_spec = noise_region_uncertainty(nspec, region)
 
-    assert quantity_allclose(unc_spec.uncertainty, 1*u.mJy, atol=.1) #this is a guess at the atol... need to finalize with real data
+    assert np.allclose(unc_spec.uncertainty.array, 1, atol=0.1)
 
 
+@pytest.mark.xfail
 def test_noise_region_unc_multi():
     nspec = pure_noise_spectrum()
 
