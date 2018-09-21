@@ -31,3 +31,5 @@ if not _ASTROPY_SETUP_:
     from .io.default_loaders import *  # noqa
     from .io.registers import _load_user_io
     _load_user_io()
+
+__citation__ = 'https://doi.org/10.5281/zenodo.1421356'
