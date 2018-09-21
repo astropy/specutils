@@ -2,7 +2,7 @@ import numpy as np
 
 from ..spectra import Spectrum1D, SpectralRegion
 
-__all__ = ['excise_regions', 'linear_exciser']
+__all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
 
 def linear_exciser(spectrum, region):
@@ -166,7 +166,7 @@ def spectrum_from_model(model_input, spectrum):
         The input model or compound model from which flux is calculated.
 
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to use as the model template.
 
     Returns
     -------
@@ -186,7 +186,6 @@ def spectrum_from_model(model_input, spectrum):
 
     return Spectrum1D(flux=flux,
                       spectral_axis=spectrum.spectral_axis,
-                      uncertainty=spectrum.uncertainty,
                       wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
