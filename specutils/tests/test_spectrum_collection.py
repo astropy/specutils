@@ -52,6 +52,29 @@ def test_spectrum_collection_slicing(spectrum_collection):
     assert isinstance(single_spec.uncertainty, StdDevUncertainty)
 
 
+def test_collection_without_optional_arguments():
+    # Without uncertainties
+    flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
+    spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
+    uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
+    wcs = np.array([WCSWrapper.from_array(x).wcs for x in spectral_axis])
+    mask = np.ones((5, 10)).astype(bool)
+    meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
+
+    spec_coll = SpectrumCollection(
+        flux=flux, spectral_axis=spectral_axis, wcs=wcs, mask=mask, meta=meta)
+
+    # Without mask
+    spec_coll = SpectrumCollection(
+        flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, 
+        wcs=wcs, meta=meta)
+
+    # Without meta
+    spec_coll = SpectrumCollection(
+        flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, 
+        wcs=wcs, mask=mask)
+
+
 def test_create_collection_from_spectrum1D():
     spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
                       flux=np.random.randn(50) * u.Jy,
@@ -67,3 +90,12 @@ def test_create_collection_from_spectrum1D():
     assert spec_coll.nspectral == 50
     assert isinstance(spec_coll.flux, u.Quantity)
     assert isinstance(spec_coll.spectral_axis, u.Quantity)
+
+
+def test_create_collection_from_spectra_without_uncertainties():
+    spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy)
+    spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+                       flux=np.random.randn(50) * u.Jy)
+
+    spec_coll = SpectrumCollection.from_spectra([spec, spec1])

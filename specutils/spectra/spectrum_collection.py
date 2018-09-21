@@ -68,7 +68,7 @@ class SpectrumCollection:
 
         # Convert uncertainties to standard deviations if not already defined
         # to be of some type
-        if not isinstance(uncertainty, NDUncertainty):
+        if uncertainty is not None and not isinstance(uncertainty, NDUncertainty):
             # If the uncertainties are not provided a unit, raise a warning
             # and use the flux units
             if not isinstance(uncertainty, u.Quantity):
@@ -134,7 +134,8 @@ class SpectrumCollection:
         if not all((x.uncertainty is None for x in spectra)) and \
             any((x.uncertainty is not None for x in spectra)):
             uncertainty = spectra[0].uncertainty.__class__(
-                np.vstack([spec.uncertainty.array for spec in spectra]))
+                np.vstack([spec.uncertainty.array for spec in spectra]),
+                unit=spectra[0].uncertainty.unit)
         else:
             uncertainty = None
 
