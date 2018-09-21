@@ -219,10 +219,10 @@ class SpectralRegion:
 
     def invert(self, lower_bound, upper_bound):
         """
-        Given a set of sub-regions this SpectralRegion defines,
-        create a new SpectralRegion such that the sub-regions
-        are defined in the new one as regions *not* in this
-        SpectralRegion.
+        Invert this spectral region.  That is, given a set of sub-regions this
+        object defines, create a new `SpectralRegion` such that the sub-regions
+        are defined in the new one as regions *not* in this `SpectralRegion`.
+
 
         Parameters
         ----------
@@ -240,16 +240,16 @@ class SpectralRegion:
 
         Notes
         -----
+        This is applicable if, for example, a `SpectralRegion` has sub-regions
+        defined for peaks in a spectrum and then one wants to create a
+        `SpectralRegion` defined as all the *non*-peaks, then one could use this
+        function.
 
-        For example, if this SpectralRegion is defined as:
-           sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
-
-        and we call ``sr_invert = sr.invert(0.3*u.um, 1.0*u.um)`` then
-        ``sr_invert`` will be SpectralRegion([(0.3*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um), (0.9*u.um, 1*u.um)])
-
-        This could be useful if a SpectralRegion has sub-regions defined
-        for peaks in a spectrum and then one wants to create a SpectralRegion
-        defined as all the *non*-peaks, then one could use this function.
+        As an example, assume this SpectralRegion is defined as
+        ``sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])``.
+        If we call ``sr_invert = sr.invert(0.3*u.um, 1.0*u.um)`` then
+        ``sr_invert`` will be
+        ``SpectralRegion([(0.3*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um), (0.9*u.um, 1*u.um)])``
 
         """
 
