@@ -71,8 +71,8 @@ of a spectrum.  Both are demonstrated below:
     >>> from specutils.analysis import line_flux
     >>> line_flux(noisy_gaussian).to(u.erg * u.cm**-2 * u.s**-1)  # doctest:+FLOAT_CMP
     <Quantity 5.92896407e-14 erg / (cm2 s)>
-    >>> #line_flux(noisy_gaussian, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 6e-14 erg / (cm2 s)>
+    >>> line_flux(noisy_gaussian, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 5.91678867 GHz Jy>
 
 For the equivalen width, note the need to add a continuum level:
 
@@ -127,11 +127,11 @@ Each of the width analysis functions are applied to this spectrum below:
 
    >>> from specutils.analysis import gaussian_sigma_width, gaussian_fwhm, fwhm
    >>> gaussian_sigma_width(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 0.93853592 GHz>
+   <Quantity 0.68924908 GHz>
    >>> gaussian_fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 2.21008321 GHz>
+   <Quantity 1.62305756 GHz>
    >>> fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 1.65829146 GHz>
+   <Quantity 1.80904523 GHz>
 
 
 Reference/API
