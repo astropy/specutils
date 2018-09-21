@@ -1,5 +1,5 @@
 import numpy as np
-from specutils.spectra import Spectrum1D
+from ..spectra import Spectrum1D
 from astropy.nddata import StdDevUncertainty
 
 

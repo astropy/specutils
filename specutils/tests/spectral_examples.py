@@ -1,20 +1,20 @@
 import numpy as np
 import astropy.units as u
 from astropy.modeling import models
-from specutils.spectra import Spectrum1D
+from ..spectra import Spectrum1D
 import pytest
 
 
 class SpectraExamples(object):
     """
     The ``SpectralExamples`` class is a *container class* that has
-    several examples of simple spectra that are to be used in the tests 
+    several examples of simple spectra that are to be used in the tests
     (e.g., arithmetic tests, smoothing tests etc).
-    
-    The purpose of this being a test class instead of using a `Spectrum1D` 
-    directly is that it contains both the `Spectrum1D` object and the flux 
-    that was used to *create* the Spectrum.  That's for tests that ensure 
-    the simpler operations just on the flux arrays are carried through to 
+
+    The purpose of this being a test class instead of using a `Spectrum1D`
+    directly is that it contains both the `Spectrum1D` object and the flux
+    that was used to *create* the Spectrum.  That's for tests that ensure
+    the simpler operations just on the flux arrays are carried through to
     the `Spectrum1D` operations.
 
     Each of the spectra are created from a base noise-less spectrum
@@ -157,4 +157,3 @@ def simulated_spectra():
     """
 
     return SpectraExamples()
-
