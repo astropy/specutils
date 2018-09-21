@@ -172,6 +172,7 @@ def spectrum_from_model(model_input, spectrum):
     -------
     spectrum : `~specutils.Spectrum1D`
         Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+        The uncertainty will not be copied as it is not necessarily the same.
 
     """
 
