@@ -1,11 +1,11 @@
-__all__ = ['UnitedModel']
-
 from astropy import units as u
 
+__all__ = ['QuantityModel']
 
-class UnitedModel:
+
+class QuantityModel:
     """
-    The UnitedModel was created to wrap `~astropy.modeling.models` that do not have
+    The QuantityModel was created to wrap `~astropy.modeling.models` that do not have
     the ability to use `~astropy.units` in the parameters.
 
     Parameters
@@ -64,7 +64,7 @@ class UnitedModel:
         return sorted(thisdir + modeldir)
 
     def __repr__(self):
-        return ('<UnitedModel {}, input_units={}, '
+        return ('<QuantityModel {}, input_units={}, '
                 'return_units={}>'.format(repr(self.unitless_model)[1:-1],
                                           self.input_units, self.return_units))
 

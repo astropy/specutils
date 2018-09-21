@@ -5,9 +5,8 @@ import operator
 import numpy as np
 import astropy.units as u
 
-from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.utils import excise_regions
-from ..utils import UnitedModel
+from ..utils import QuantityModel
 from astropy.modeling import fitting, Model, models
 
 
@@ -483,7 +482,7 @@ def _add_units_to_model(model_in, model_orig, spectrum):
     # none of them are. (It would be inconsistent for fitting to have a model that
     # has some parameters as Quantities and some values).
     if getattr(model_orig, model_orig.param_names[0]).unit is None:
-        model_out = UnitedModel(model_out, spectrum.spectral_axis.unit, spectrum.flux.unit)
+        model_out = QuantityModel(model_out, spectrum.spectral_axis.unit, spectrum.flux.unit)
 
     return model_out
 
