@@ -46,13 +46,13 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> from matplotlib import pyplot as plt
     >>> from astropy.visualization import quantity_support
     >>> quantity_support()  # for getting units on the axes below # doctest: +ELLIPSIS
-    <astropy.visualization.units.quantity_support...>
+    <...>
 
     Now we load the dataset from it's canonical source:
 
     >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12') # doctest: +ELLIPSIS
     Downloading ...
-    >>> specdata = f[1].data
+    >>> specdata = f[1].data # The spectrum is in the second HDU of this file.
     >>> f.close()
 
     Then we re-format this dataset into astropy quantities, and create a
@@ -60,7 +60,7 @@ may have downloaded from some archive, or reduced from your own observations.
 
     >>> from specutils import Spectrum1D
     >>> lamb = 10**specdata['loglam'] * u.AA
-    >>> flux = specdata['flux'] * 10**-17 *u.erg *u.s**-1*u.cm**-2 / u.AA
+    >>> flux = specdata['flux'] * 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
     >>> spec = Spectrum1D(spectral_axis=lamb, flux=flux)
 
     And we plot it:
@@ -70,6 +70,10 @@ may have downloaded from some archive, or reduced from your own observations.
 Now maybe you want the equivalent width of a spectral line (which requires
 normalizing by a continuum estimate):
 
+.. testsetup::
+
+    >>> fig = plt.figure()  # necessary because otherwise the doctests fail due to quantity_support and the flux units being different from the last figure
+
 .. plot::
     :include-source:
     :align: center
@@ -78,9 +82,9 @@ normalizing by a continuum estimate):
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
     >>> cont_norm_spec = spec / np.median(spec.flux)  # TODO: replace this with fit_generic_continuum
-    >>> fig = plt.figure()
     >>> lines = plt.step(cont_norm_spec.wavelength, cont_norm_spec.flux)
-    >>> plt.xlim(654*u.nm, 660*u.nm)
+    >>> plt.xlim(654*u.nm, 660*u.nm)  # doctest: +FLOAT_CMP
+    (6540., 6600.)
     >>> equivalent_width(spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
     <Quantity -10.58691406 Angstrom>
 
