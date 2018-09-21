@@ -438,6 +438,8 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
     plt.title('Double Peak - Single Models and Exclude Region')
     plt.grid('on')
 
+.. _specutils-continuum-fitting:
+
 Continuum Fitting
 -----------------
 
@@ -478,4 +480,9 @@ convenience functions to perform exactly this task.  An example is shown below.
     plt.title('Continuum Fitting')
     plt.grid('on')
 
+
+Reference/API
+-------------
+
 .. automodapi:: specutils.fitting
+    :no-heading:

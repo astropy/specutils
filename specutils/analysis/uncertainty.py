@@ -31,8 +31,9 @@ def snr(spectrum, region=None):
 
     Notes
     -----
-    The spectrum will need to have the uncertainty defined in order
-    for the SNR to be calculated.
+    The spectrum will need to have the uncertainty defined in order for the SNR
+    to be calculated. If the goal is instead signal to noise *per pixel*, this
+    should be computed directly as ``spectrum.flux / spectrum.uncertainty``.
 
     """
 

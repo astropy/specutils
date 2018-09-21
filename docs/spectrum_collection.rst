@@ -1,6 +1,6 @@
-===================
-Spectrum Collection
-===================
+================================
+Working With SpectrumCollections
+================================
 
 A spectrum collection is a way to keep a set of spectra data together and have
 the collection behave as if it were a single spectrum object. This means that
@@ -98,5 +98,12 @@ and ``M`` is the length of the output dispersion grid.
 Reference/API
 -------------
 
-.. automodapi:: specutils.spectra.spectrum_collection
+.. automodapi:: specutils
+    :no-main-docstr:
     :no-heading:
+    :no-inheritance-diagram:
+
+    :skip: test
+    :skip: Spectrum1D
+    :skip: SpectralRegion
+    :skip: UnsupportedPythonError

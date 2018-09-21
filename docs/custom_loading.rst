@@ -1,6 +1,6 @@
-**************
-Custom Loading
-**************
+*************************************************
+Loading and Defining Custom Spectral File Formats
+*************************************************
 
 Loading From a File
 -------------------

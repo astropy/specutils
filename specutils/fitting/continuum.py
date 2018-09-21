@@ -34,8 +34,8 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
 
     Returns
     -------
-    continuum_spectrum : Spectrum `~specutils.Spectrum1D`
-        Underlying continuum based on a Chebyshev1D fit (default).
+    continuum_model
+        Fitted continuum as a model of whatever class ``model`` provides.
 
     Notes
     -----

@@ -63,12 +63,12 @@ def test_equivalent_width_regions():
 
     frequencies = np.linspace(1, 100, 10000) * u.GHz
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
-    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    noise = np.random.normal(0., 0.001, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + 1*u.Jy
 
     spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
     cont_norm_spec = spec / np.median(spec.flux)
-    result = equivalent_width(spec, regions=SpectralRegion(3*u.GHz, 97*u.GHz))
+    result = equivalent_width(cont_norm_spec, regions=SpectralRegion(3*u.GHz, 97*u.GHz))
 
     expected = -(np.sqrt(2*np.pi) * u.GHz)
 
