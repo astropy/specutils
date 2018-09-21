@@ -29,6 +29,7 @@ import datetime
 import os
 import six
 import sys
+import shutil
 
 try:
     import astropy_helpers
@@ -212,3 +213,15 @@ for line in open('nitpick-exceptions'):
     dtype, target = line.split(None, 1)
     target = target.strip()
     nitpick_ignore.append((dtype, six.u(target)))
+
+
+# Necessary for the hacky approach to getting autosummary to work for the
+# specutils base objects
+templates_path = ['.']
+
+# this copies over the class template from sphinx_automodapi
+import sphinx_automodapi
+ama_path = os.path.split(sphinx_automodapi.__file__)[0]
+origin = os.path.join(ama_path, 'templates', 'autosummary_core', 'class.rst')
+confpydir = os.path.split(os.path.abspath(__file__))[0]
+shutil.copy(origin, os.path.join(confpydir, 'automodapi_class.templ'))
