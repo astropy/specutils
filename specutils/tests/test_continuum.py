@@ -2,8 +2,8 @@ import numpy as np
 
 import astropy.units as u
 
-from specutils.spectra.spectrum1d import Spectrum1D
-from specutils.fitting.continuum import fit_generic_continuum
+from ..spectra.spectrum1d import Spectrum1D
+from ..fitting.continuum import fit_generic_continuum
 
 
 def single_peak_continuum():

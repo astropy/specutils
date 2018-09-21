@@ -1,10 +1,10 @@
-from astropy.modeling import models, fitting
-import astropy.units as u
 import numpy as np
 
-from specutils.tests.spectral_examples import simulated_spectra
-from specutils.spectra import Spectrum1D, SpectralRegion
-from specutils.fitting import fit_lines
+import astropy.units as u
+from astropy.modeling import models
+
+from ..spectra import Spectrum1D, SpectralRegion
+from ..fitting import fit_lines
 
 
 def single_peak():
