@@ -82,8 +82,8 @@ For the equivalen width, note the need to add a continuum level:
     >>> noisy_gaussian_with_continuum = noisy_gaussian + 1*u.Jy
     >>> equivalent_width(noisy_gaussian_with_continuum)  # doctest:+FLOAT_CMP
     <Quantity -5.92896407 GHz>
-    >>> equivalent_width(noisy_gaussian_with_continuum, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity -5 GHz>
+    >>> equivalent_width(noisy_gaussian_with_continuum, regions=SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity -5.91678867 GHz>
 
 
 Centroid
