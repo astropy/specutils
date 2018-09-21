@@ -479,7 +479,10 @@ def _add_units_to_model(model_in, model_orig, spectrum):
     else:
         model_out = model_out_stack[0]
 
-    if not model_orig.uses_quantity:
+    # If the first parameter is not a Quantity, then at this point we will assume
+    # none of them are. (It would be inconsistent for fitting to have a model that
+    # has some parameters as Quantities and some values).
+    if getattr(model_orig, model_orig.param_names[0]).unit is None:
         model_out = UnitedModel(model_out, spectrum.spectral_axis.unit, spectrum.flux.unit)
 
     return model_out
