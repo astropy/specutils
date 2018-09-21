@@ -3,15 +3,14 @@ Spectral Regions
 ================
 
 A spectral region may be defined and may encompass one, or more,
-sub-regions. They are independent of a `~specutils.Spectrum1D`
-object.  There, one may define a spectral region and it may be used
-on `~specutils.Spectrum1D` objects of different dispersion
-sampling.
+sub-regions. They are defined independently of a `~specutils.Spectrum1D`
+object in the sense that spectral regions like "near the Halpha line rest
+wavelength" have meaning independent of the details of a particular spectrum.
 
-Spectral regions can be defined either as a single region by passing 
-two `~astropy.units.Quantity`'s or by passing a list of 2-tuples.  By
-definition the `~specutils.SpectralRegion` will be ordered
-based on the lower bound of each 2-tuple.
+Spectral regions can be defined either as a single region by passing
+two `~astropy.units.Quantity`'s or by passing a list of 2-tuples. Note that
+the units of these quantites can be any valid spectral unit *or* ``u.pixel``
+(which indicates to use indexing directly).
 
 .. code-block:: python
 
@@ -126,7 +125,7 @@ There is also the ability to iterate:
     SpectralRegion: 1.3 um - 1.5 um
 
 
-And, lastly, there is the ability to invert a `~specutils.SpectralRegion` given a 
+And, lastly, there is the ability to invert a `~specutils.SpectralRegion` given a
 lower and upper bound. For example, if a set of ranges are defined each defining a range
 around lines, then calling invert will return a `~specutils.SpectralRegion` that
 defines the baseline/noise regions:
@@ -168,6 +167,30 @@ An example of a single sub-region `~specutils.SpectralRegion`:
     >>> sub_spectrum.spectral_axis
     <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
                21., 22.] nm>
+
+
+Extraction also correctly interprets different kinds of spectral region units
+as would be expected:
+
+.. code-block:: python
+
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils.manipulation import extract_region
+
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> region_angstroms = SpectralRegion(80*u.AA, 220*u.AA)
+    >>> sub_spectrum = extract_region(spectrum, region_angstroms)
+    >>> sub_spectrum.spectral_axis
+    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
+               21., 22.] nm>
+    >>> region_pixels = SpectralRegion(7.5*u.pixel, 21.5*u.pixel)
+    >>> sub_spectrum = extract_region(spectrum, region_pixels)
+    >>> sub_spectrum.spectral_axis
+    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
+               21., 22.] nm>
+
 
 
 An example of a multiple sub-region `~specutils.SpectralRegion`:
