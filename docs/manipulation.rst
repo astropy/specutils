@@ -130,9 +130,17 @@ function:
 
     >>> from specutils import SpectralRegion
     >>> from specutils.manipulation import noise_region_uncertainty
-    >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, SpectralRegion(0*u.GHz, 3*u.GHz))
+    >>> noise_region = SpectralRegion([(0, 3), (7, 10)]*u.GHz)
+    >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, noise_region)
     >>> spec_w_unc.uncertainty # doctest: +ELLIPSIS
-    StdDevUncertainty([0.2, ..., 0.2]
+    StdDevUncertainty([0.18461457, ..., 0.18461457])
+
+    Or similarly, expressed in pixels:
+
+    >>> noise_region = SpectralRegion([(0, 25), (175, 200)]*u.pix)
+    >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, noise_region)
+    >>> spec_w_unc.uncertainty # doctest: +ELLIPSIS
+    StdDevUncertainty([0.18714535, ..., 0.18714535])
 
 Reference/API
 -------------
