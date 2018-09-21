@@ -177,7 +177,7 @@ def spectrum_from_model(model_input, spectrum):
     """
 
     # If the input model has units then we will call it normally.
-    if model_input.uses_quantity:
+    if getattr(model_input, model_input.param_names[0]).unit is not None:
         flux = model_input(spectrum.spectral_axis)
 
     # If the input model does not have units, then assume it is in
