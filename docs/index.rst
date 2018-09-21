@@ -81,7 +81,8 @@ normalizing by a continuum estimate:
     :align: center
     :context: close-figs
 
-    >>> cont_norm_spec = spec / np.median(spec.flux)  # TODO: replace this with fit_generic_continuum
+    >>> from specutils.fitting import fit_generic_continuum
+    >>> cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis)
     >>> lines = plt.step(cont_norm_spec.wavelength, cont_norm_spec.flux)
     >>> plt.xlim(654*u.nm, 660*u.nm)  # doctest: +FLOAT_CMP
     (6540., 6600.)
@@ -94,7 +95,7 @@ containing the line:
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
     >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
-    <Quantity -14.92715911 Angstrom>
+    <Quantity -14.78092438 Angstrom>
 
 
 
