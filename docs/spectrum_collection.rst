@@ -98,5 +98,12 @@ and ``M`` is the length of the output dispersion grid.
 Reference/API
 -------------
 
-.. automodapi:: specutils.spectra.spectrum_collection
+.. automodapi:: specutils
+    :no-main-docstr:
     :no-heading:
+    :no-inheritance-diagram:
+
+    :skip: test
+    :skip: Spectrum1D
+    :skip: SpectralRegion
+    :skip: UnsupportedPythonError

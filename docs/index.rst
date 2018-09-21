@@ -10,6 +10,8 @@
 Specutils Documentation
 ***********************
 
+.. py:function:: specutils
+
 .. image:: img/logo.png
 
 

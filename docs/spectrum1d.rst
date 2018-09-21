@@ -141,5 +141,12 @@ axis is always the last.
 Reference/API
 -------------
 
-.. automodapi:: specutils.spectra.spectrum1d
+.. automodapi:: specutils
+    :no-main-docstr:
     :no-heading:
+    :headings: -~
+
+    :skip: test
+    :skip: SpectrumCollection
+    :skip: SpectralRegion
+    :skip: UnsupportedPythonError

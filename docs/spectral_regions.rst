@@ -215,5 +215,12 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
 Reference/API
 -------------
 
-.. automodapi:: specutils.spectra.spectral_region
+.. automodapi:: specutils
+    :no-main-docstr:
     :no-heading:
+    :no-inheritance-diagram:
+
+    :skip: test
+    :skip: Spectrum1D
+    :skip: SpectrumCollection
+    :skip: UnsupportedPythonError
