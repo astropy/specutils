@@ -143,6 +143,13 @@ def test_region_two_sub(simulated_spectra):
     assert quantity_allclose(sub_spectra[0].flux, sub_spectrum_0_flux_expected)
     assert quantity_allclose(sub_spectra[1].flux, sub_spectrum_1_flux_expected)
 
+    # also ensure this works if the multi-region is expressed as a single
+    # Quantity
+    region2 = SpectralRegion([(0.6, 0.8), (0.86, 0.89)]*u.um)
+    sub_spectra2 = extract_region(spectrum, region2)
+    assert quantity_allclose(sub_spectra[0].flux, sub_spectra2[0].flux)
+    assert quantity_allclose(sub_spectra[1].flux, sub_spectra2[1].flux)
+
 
 def test_extract_region_pixels():
     spectrum = Spectrum1D(spectral_axis=np.linspace(4000, 10000, 25)*u.AA,
