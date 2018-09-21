@@ -93,8 +93,8 @@ containing the line:
 
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
-    >>> equivalent_width(spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
-    <Quantity -10.58691406 Angstrom>
+    >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
+    <Quantity -14.92715911 Angstrom>
 
 
 

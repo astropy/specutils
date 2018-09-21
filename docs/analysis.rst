@@ -80,9 +80,9 @@ For the equivalen width, note the need to add a continuum level:
 
     >>> from specutils.analysis import equivalent_width
     >>> noisy_gaussian_with_continuum = noisy_gaussian + 1*u.Jy
-    >>> equivalent_width(noisy_gaussian)  # doctest:+FLOAT_CMP
-    <Quantity 4.07103593 GHz>
-    >>> equivalent_width(noisy_gaussian, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
+    >>> equivalent_width(noisy_gaussian_with_continuum)  # doctest:+FLOAT_CMP
+    <Quantity -5.92896407 GHz>
+    >>> equivalent_width(noisy_gaussian_with_continuum, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
     <Quantity -5 GHz>
 
 
