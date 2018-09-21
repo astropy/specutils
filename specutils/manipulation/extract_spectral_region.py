@@ -1,9 +1,13 @@
+from math import floor, ceil  # faster than int(np.floor/ceil(float))
+
 import numpy as np
+
+from astropy import units as u
 
 __all__ = ['extract_region']
 
 
-def to_pixel(subregion, spectrum):
+def _to_edge_pixel(subregion, spectrum):
     """
     Calculate and return the left and right indices defined
     by the lower and upper bounds and based on the input
@@ -22,24 +26,33 @@ def to_pixel(subregion, spectrum):
 
     """
 
-    try:
-        left_index = int(np.ceil(spectrum.wcs.world_to_pixel([subregion[0]])))
-    except Exception as e:
-        left_index = None
+    if subregion[0].unit.is_equivalent(u.pix):
+        left_index = floor(subregion[0].value)
+    else:
+        left_reg_in_spec_unit = subregion[0].to(spectrum.spectral_axis.unit, u.spectral())
+        try:
+            left_index = int(np.ceil(spectrum.wcs.world_to_pixel([left_reg_in_spec_unit])))
+        except Exception as e:
+            left_index = None
 
-    try:
-        right_index = int(np.floor(spectrum.wcs.world_to_pixel([subregion[1]]))) + 1
-    except Exception as e:
-        right_index = None
+    if subregion[1].unit.is_equivalent(u.pix):
+        right_index = ceil(subregion[1].value)
+    else:
+        right_reg_in_spec_unit = subregion[1].to(spectrum.spectral_axis.unit, u.spectral())
+        try:
+            right_index = int(np.floor(spectrum.wcs.world_to_pixel([right_reg_in_spec_unit]))) + 1
+        except Exception as e:
+            right_index = None
 
     return left_index, right_index
 
 
 def extract_region(spectrum, region):
     """
-    Extract a region from the input `~specutils.spectra.spectrum1d.Spectrum1D`
-    defined by the lower and upper bounds defined by this SpectralRegion
-    instance.  The extracted region will be returned.
+    Extract a region from the input `~specutils.Spectrum1D`
+    defined by the lower and upper bounds defined by the ``region``
+    instance.  The extracted region will be returned as a new
+    `~specutils.Spectrum1D`.
 
     Parameters
     ----------
@@ -71,7 +84,7 @@ def extract_region(spectrum, region):
 
     extracted_spectrum = []
     for subregion in region._subregions:
-        left_index, right_index = to_pixel(subregion, spectrum)
+        left_index, right_index = _to_edge_pixel(subregion, spectrum)
 
         # If both indices are out of bounds then return None
         if left_index is None and right_index is None:

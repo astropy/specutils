@@ -3,6 +3,7 @@ import pytest
 
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty
+from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..manipulation import extract_region
@@ -10,15 +11,7 @@ from .spectral_examples import simulated_spectra
 
 
 def test_region_simple(simulated_spectra):
-    """
-    Test the simple version of the spectral SNR.
-    """
-
     np.random.seed(42)
-
-    #
-    #  Set up the data and add the uncertainty and calculate the expected SNR
-    #
 
     spectrum = simulated_spectra.s1_um_mJy_e1
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
@@ -38,18 +31,8 @@ def test_region_simple(simulated_spectra):
 
     assert np.allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
+
 def test_region_ghz(simulated_spectra):
-    """
-    Test the simple version of the spectral SNR.
-    """
-
-    np.random.seed(42)
-
-    #
-    #  Set up the data and add the uncertainty and calculate the expected SNR
-    #
-
-    spectrum = simulated_spectra.s1_um_mJy_e1
     spectrum = Spectrum1D(flux=simulated_spectra.s1_um_mJy_e1,
                           spectral_axis=simulated_spectra.s1_um_mJy_e1.frequency)
 
@@ -67,16 +50,9 @@ def test_region_ghz(simulated_spectra):
 
     assert np.allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
+
 def test_region_simple_check_ends(simulated_spectra):
-    """
-    Test the simple version of the spectral SNR.
-    """
-
     np.random.seed(42)
-
-    #
-    #  Set up the data and add the uncertainty and calculate the expected SNR
-    #
 
     spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
     region = SpectralRegion(8*u.um, 15*u.um)
@@ -88,10 +64,6 @@ def test_region_simple_check_ends(simulated_spectra):
 
 
 def test_region_empty(simulated_spectra):
-    """
-    Test the simple version of the spectral SNR.
-    """
-
     np.random.seed(42)
 
     # Region past upper range of spectrum
@@ -118,15 +90,7 @@ def test_region_empty(simulated_spectra):
 
 
 def test_region_two_sub(simulated_spectra):
-    """
-    Test the simple version of the spectral SNR.
-    """
-
     np.random.seed(42)
-
-    #
-    #  Set up the data and add the uncertainty and calculate the expected SNR
-    #
 
     spectrum = simulated_spectra.s1_um_mJy_e1
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
@@ -156,3 +120,26 @@ def test_region_two_sub(simulated_spectra):
 
     assert np.allclose(sub_spectra[0].flux.value, sub_spectrum_0_flux_expected)
     assert np.allclose(sub_spectra[1].flux.value, sub_spectrum_1_flux_expected)
+
+
+def test_extract_region_pixels():
+    spectrum = Spectrum1D(spectral_axis=np.linspace(4000, 10000, 25)*u.AA,
+                          flux=np.arange(25)*u.Jy)
+    region = SpectralRegion(10*u.pixel, 12*u.pixel)
+
+    extracted = extract_region(spectrum, region)
+
+    assert quantity_allclose(extracted.flux, [10, 11]*u.Jy)
+
+
+def test_extract_region_mismatched_units():
+    spectrum = Spectrum1D(spectral_axis=np.arange(25)*u.nm,
+                          flux=np.arange(25)*u.Jy)
+
+    region = SpectralRegion(100*u.AA, 119*u.AA)
+
+    extracted = extract_region(spectrum, region)
+
+    print(extracted.flux)
+
+    assert quantity_allclose(extracted.flux, [10, 11]*u.Jy)
