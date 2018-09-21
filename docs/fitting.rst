@@ -471,7 +471,7 @@ convenience functions to perform exactly this task.  An example is shown below.
 
     g1_fit = fit_generic_continuum(spectrum)
 
-    y_continuum_fitted = g1_fit(x)
+    y_continuum_fitted = g1_fit(x*u.um)
 
     plt.plot(x, y)
     plt.plot(x, y_continuum_fitted)
