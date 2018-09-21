@@ -4,6 +4,27 @@ from astropy import units as u
 
 
 class UnitedModel:
+    """
+    The UnitedModel was created to wrap `~astropy.modeling.models` that do not have
+    the ability to use `~astropy.units` in the parameters.
+
+    Parameters
+    ----------
+    unitless_model: `~astropy.modeling.Model`
+       A model that does not have units
+
+    input_units: `~astropy.units`
+      Units for the dispersion axis
+
+    return_units: `~astropy.units`
+      Units for the flux axis
+
+    Notes
+    -----
+    When Astropy's modeling is updated so *all* models have the ability
+    to have `~astropy.units.Quantity` on all parameters, then this will
+    not be needed.
+    """
 
     def __init__(self, unitless_model, input_units, return_units):
         self.unitless_model = unitless_model  # should  check that it's unitless somehow!
