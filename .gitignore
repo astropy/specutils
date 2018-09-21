@@ -18,7 +18,6 @@ MANIFEST
 .ipynb_checkpoints
 
 # Sphinx
-docs/automodapi*.templ
 docs/api
 docs/_build
 

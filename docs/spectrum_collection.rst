@@ -98,15 +98,5 @@ and ``M`` is the length of the output dispersion grid.
 Reference/API
 -------------
 
-.. The invocations below are used instead of automodapi because the page is
-.. specific to this one class. If more things need to be documented here it
-.. should be switched to automodapi but with some added cleverness to make
-.. the public api be "specutils" instead of the actual location of the class
-
-.. currentmodule:: specutils
-
-.. autosummary::
-    :toctree: api
-    :template: automodapi_class.templ
-
-    SpectrumCollection
+.. automodapi:: specutils.spectra.spectrum_collection
+    :no-heading:
