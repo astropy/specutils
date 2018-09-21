@@ -1,13 +1,12 @@
 from __future__ import division
 
-import functools
 import operator
 
 import numpy as np
 import astropy.units as u
 
-from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.utils import excise_regions
+from ..utils import QuantityModel
 from astropy.modeling import fitting, Model, models
 
 
@@ -478,6 +477,12 @@ def _add_units_to_model(model_in, model_orig, spectrum):
         model_out = _combine_postfix(model_out_stack)
     else:
         model_out = model_out_stack[0]
+
+    # If the first parameter is not a Quantity, then at this point we will assume
+    # none of them are. (It would be inconsistent for fitting to have a model that
+    # has some parameters as Quantities and some values).
+    if getattr(model_orig, model_orig.param_names[0]).unit is None:
+        model_out = QuantityModel(model_out, spectrum.spectral_axis.unit, spectrum.flux.unit)
 
     return model_out
 
