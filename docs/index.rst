@@ -52,8 +52,7 @@ may have downloaded from some archive, or reduced from your own observations.
 
     Now we load the dataset from it's canonical source:
 
-    >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12') # doctest: +ELLIPSIS
-    Downloading ...
+    >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12')  # doctest: +IGNORE_OUTPUT
     >>> specdata = f[1].data # The spectrum is in the second HDU of this file.
     >>> f.close()
 
