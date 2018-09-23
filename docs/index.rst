@@ -47,8 +47,7 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> import numpy as np
     >>> from matplotlib import pyplot as plt
     >>> from astropy.visualization import quantity_support
-    >>> quantity_support()  # for getting units on the axes below # doctest: +ELLIPSIS
-    <...>
+    >>> quantity_support()  # for getting units on the axes below  # doctest: +IGNORE_OUTPUT
 
     Now we load the dataset from it's canonical source:
 
@@ -83,8 +82,7 @@ normalizing by a continuum estimate:
     >>> from specutils.fitting import fit_generic_continuum
     >>> cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis)
     >>> lines = plt.step(cont_norm_spec.wavelength, cont_norm_spec.flux)
-    >>> plt.xlim(654*u.nm, 660*u.nm)  # doctest: +FLOAT_CMP
-    (6540., 6600.)
+    >>> plt.xlim(654*u.nm, 660*u.nm)  # doctest: +IGNORE_OUTPUT
 
 But then you can apply a single function over the region of the spectrum
 containing the line:
@@ -95,7 +93,6 @@ containing the line:
     >>> from specutils.analysis import equivalent_width
     >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA))
     <Quantity -14.78092438 Angstrom>
-
 
 
 
