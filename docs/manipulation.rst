@@ -109,13 +109,12 @@ an uncertainty to be present.  While some data reduction pipelines generate this
 as part of the reduction process, sometimes it's necessary to estimate the
 uncertainty in a spectrum using the spectral data itself. Currently `specutils`
 provides the straightforward `~specutils.manipulation.noise_region_uncertainty`
-function:
+function.
 
+First we build a spectrum like that used in :doc:`analysis`, but without a
+known uncertainty:
 
 .. code-block:: python
-
-    First we build a spectrum like that used in :doc:`analysis`, but without a
-    known uncertainty:
 
     >>> from astropy.modeling import models
     >>> np.random.seed(42)
@@ -125,8 +124,10 @@ function:
     >>> flux += np.random.normal(0., 0.2, spectral_axis.shape) * u.Jy
     >>> noisy_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
 
-    Now we estimate the uncertainty from the region that does *not* contain
-    the line:
+Now we estimate the uncertainty from the region that does *not* contain
+the line:
+
+.. code-block:: python
 
     >>> from specutils import SpectralRegion
     >>> from specutils.manipulation import noise_region_uncertainty
@@ -135,7 +136,9 @@ function:
     >>> spec_w_unc.uncertainty # doctest: +ELLIPSIS
     StdDevUncertainty([0.18461457, ..., 0.18461457])
 
-    Or similarly, expressed in pixels:
+Or similarly, expressed in pixels:
+
+.. code-block:: python
 
     >>> noise_region = SpectralRegion([(0, 25), (175, 200)]*u.pix)
     >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, noise_region)
