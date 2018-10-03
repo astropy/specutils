@@ -2,19 +2,21 @@
 Manipulating Spectra
 ====================
 
-While there are myriad ways you might want to alter a spectrum, `specutils`
-provides some specific functionality that is commonly used in astronomy.  These
-tools are detailed here, but it is important to bear in mind that this is *not*
-intended to be exhaustive - the point of `specutils` is to provide a framework
-you can use to do your data analysis.  Hence the functionality described here is
-best thought of as pieces you might string together with your own functionality
-to build a tailor-made spectral analysis environment.
+While there are myriad ways you might want to alter a spectrum,
+:ref:`specutils <specutils>` provides some specific functionality that
+is commonly used in astronomy.  These tools are detailed here, but it
+is important to bear in mind that this is *not* intended to be
+exhaustive - the point of :ref:`specutils <specutils>` is to provide a
+framework you can use to do your data analysis.  Hence the
+functionality described here is best thought of as pieces you might
+string together with your own functionality to build a tailor-made
+spectral analysis environment.
 
-In general, however, `specutils` is designed around the idea that spectral
-manipulations generally yield *new* spectrum objects, rather than in-place
-operations.  This is not a true restriction, but is a guideline that is
-recommended primarily to keep you from accidentally modifying a spectrum you
-didn't mean to change.
+In general, however, :ref:`specutils <specutils>` is designed around
+the idea that spectral manipulations generally yield *new* spectrum
+objects, rather than in-place operations.  This is not a true
+restriction, but is a guideline that is recommended primarily to keep
+you from accidentally modifying a spectrum you didn't mean to change.
 
 Smoothing
 ---------
@@ -104,12 +106,13 @@ Note: This method is not flux conserving.
 Uncertainty Estimation
 ----------------------
 
-Some of the machinery in `specutils` (e.g. `~specutils.analysis.snr`) requires
-an uncertainty to be present.  While some data reduction pipelines generate this
-as part of the reduction process, sometimes it's necessary to estimate the
-uncertainty in a spectrum using the spectral data itself. Currently `specutils`
-provides the straightforward `~specutils.manipulation.noise_region_uncertainty`
-function.
+Some of the machinery in :ref:`specutils <specutils>` (e.g.
+`~specutils.analysis.snr`) requires an uncertainty to be present.
+While some data reduction pipelines generate this as part of the
+reduction process, sometimes it's necessary to estimate the
+uncertainty in a spectrum using the spectral data itself. Currently
+:ref:`specutils <specutils>` provides the straightforward
+`~specutils.manipulation.noise_region_uncertainty` function.
 
 First we build a spectrum like that used in :doc:`analysis`, but without a
 known uncertainty:
