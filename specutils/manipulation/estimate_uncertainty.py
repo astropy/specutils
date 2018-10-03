@@ -18,22 +18,21 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     Parameters
     ----------
 
-    spectrum: `~specutils.spectra.Spectrum1D
+    spectrum : `~specutils.Spectrum1D`
         The spectrum to which we want to set the uncertainty.
 
-    spectral_region: `~specutils.spectra.SpectralRegion`
+    spectral_region : `~specutils.SpectralRegion`
         The region to use to calculate the standard deviation.
 
-    noise_func: callable
+    noise_func : callable
         A function which takes the (1D) flux in the ``spectral_region`` and
         yields a *single* value for the noise to use in the result spectrum.
 
-    Return
-    ------
-    spectrum_uncertainty: `~specutils.spectra.Spectrum1D
+    Returns
+    -------
+    spectrum_uncertainty : `~specutils.Spectrum1D`
         The ``spectrum``, but with a constant uncertainty set by the result of
         the noise region calculation
-
     """
 
     # Extract the sub spectrum based on the region

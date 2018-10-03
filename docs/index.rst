@@ -10,7 +10,7 @@
 Specutils Documentation
 ***********************
 
-.. py:function:: specutils
+.. _specutils:
 
 .. image:: img/logo.png
 
@@ -28,8 +28,8 @@ guiding document for spectroscopic development in the Astropy Project.
     development stage that some interfaces may change if user feedback and
     experience warrants it.
 
-Getting started with `specutils`
-================================
+Getting started with :ref:`specutils <specutils>`
+=================================================
 
 As a basic example, consider an emission line galaxy spectrum from the
 `SDSS <https://www.sdss.org/>`_.  We will use this as a proxy for a spectrum you
@@ -97,11 +97,11 @@ containing the line:
 
 
 While there are other tools and spectral representations detailed more below,
-this gives a test of the sort of analysis `specutils` enables.
+this gives a test of the sort of analysis :ref:`specutils <specutils>` enables.
 
 
-Using `specutils`
-=================
+Using :ref:`specutils <specutils>`
+==================================
 
 For more details on usage of specutils, see the sections listed below.
 
