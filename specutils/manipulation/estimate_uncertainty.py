@@ -28,8 +28,8 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
         A function which takes the (1D) flux in the ``spectral_region`` and
         yields a *single* value for the noise to use in the result spectrum.
 
-    Return
-    ------
+    Returns
+    -------
     spectrum_uncertainty: `~specutils.spectra.Spectrum1D
         The ``spectrum``, but with a constant uncertainty set by the result of
         the noise region calculation
