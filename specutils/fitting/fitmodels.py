@@ -343,7 +343,6 @@ def _strip_units_from_model(model_in, spectrum):
             #
             # Convert teh bounds parameter
             #
-            print(sub_model.bounds[pn])
             new_bounds = []
             for a in sub_model.bounds[pn]:
                 v = _convert_and_dequantify(a, dispersion_unit, dispersion, flux_unit)
