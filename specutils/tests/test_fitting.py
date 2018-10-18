@@ -277,6 +277,12 @@ def test_double_peak_fit_with_exclusion():
     assert np.allclose(y1_double_fit.value[::10], y1_double_fit_expected, atol=1e-5)
 
 
+def tie_center(model):
+    """ Dummy method for testing passing of tied parameter """
+    mean = 50 * model.stddev
+    return mean
+
+
 def test_fixed_parameters():
     """
     Test to confirm fixed parameters do not change.
@@ -287,7 +293,19 @@ def test_fixed_parameters():
     y += np.random.normal(0., 0.2, x.shape)
     spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
-    g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um, fixed={'mean': True})
+    # Test passing fixed and bounds parameters
+    g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
+                               fixed={'mean': True},
+                               bounds={'amplitude': (2, 5)*u.Jy})
+
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.mean == 6.1*u.um
+    assert g_fit.bounds == g_init.bounds
+
+    # Test passing of tied parameter
+    g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
+                               tied={'mean': tie_center})
+    g_fit = fit_lines(spectrum, g_init)
+
+    assert g_fit.tied == g_init.tied
