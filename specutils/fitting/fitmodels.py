@@ -316,6 +316,12 @@ def _strip_units_from_model(model_in, spectrum):
 
             setattr(new_sub_model, pn, v)
 
+            #
+            # Set the fixed parameter
+            #
+
+            new_sub_model.fixed[pn] = sub_model.fixed[pn]
+
         # The new model now has unitless information in it but has
         # been converted to spectral unit scale.
         model_out_stack.append(new_sub_model)
@@ -458,6 +464,12 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             #
 
             setattr(new_sub_model, pn, v)
+
+            #
+            # Set the fixed parameter
+            #
+
+            new_sub_model.fixed[pn] = m_orig.fixed[pn]
 
         #
         # Add the new unit-filled model onto the stack.
