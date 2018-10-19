@@ -5,6 +5,9 @@ from astropy.modeling import models
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..fitting import fit_lines
+from specutils.tests.spectral_examples import simulated_spectra
+from specutils.spectra import Spectrum1D, SpectralRegion
+from specutils.fitting import fit_lines, find_lines_derivative, find_lines_threshold
 
 
 def single_peak():
@@ -40,6 +43,35 @@ def double_peak():
     x = np.linspace(0, 10, 200)
     y_double = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
     return x, y_double
+
+
+def double_peak_absorption_and_emission():
+    np.random.seed(42)
+    g1 = models.Gaussian1D(1, 4.6, 0.2)
+    g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+    g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
+    x = np.linspace(0, 10, 200)
+    y_double = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+    return x, y_double
+
+
+def test_find_lines_derivative():
+
+    # Create the spectrum to fit
+    x_double, y_double = double_peak_absorption_and_emission()
+    spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+
+    # Threshold method
+    emission_lines, absorption_lines = find_lines_threshold(spectrum, sigma=0.75)
+
+    assert emission_lines == [91, 109]
+    assert absorption_lines == [163]
+
+    # Derivative method
+    emission_lines, absorption_lines = find_lines_derivative(spectrum, sigma=0.75)
+
+    assert emission_lines == [90, 109]
+    assert absorption_lines == [163]
 
 
 def test_single_peak_fit():

@@ -3,8 +3,9 @@ from __future__ import division
 import operator
 
 import numpy as np
+from scipy.signal import convolve
 import astropy.units as u
-from astropy.modeling import optimizers
+from astropy.stats import sigma_clipped_stats
 
 from ..manipulation.utils import excise_regions
 from ..utils import QuantityModel
@@ -14,7 +15,117 @@ from ..spectra.spectrum1d import Spectrum1D
 from astropy.modeling import fitting, Model, models
 
 
-__all__ = ['fit_lines']
+__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines']
+
+
+def _consecutive(data, stepsize=1):
+    return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
+
+
+def find_lines_threshold(spectrum, sigma=3):
+    """
+    Find the emission and absorption lines in a spectrum. The method
+    here is a very simple threshold based on the standard deviation
+    of the noise.
+
+    Parameters
+    ----------
+    spectrum : Spectrum1D
+        The spectrum object over which the equivalent width will be calculated.
+
+    exclude_regions : list of `~specutils.SpectralRegion`
+        List of regions to exclude in the fitting.
+
+    Returns
+    -------
+    emission_lines, absorption_lines : two list of floats or Quantities
+        List of emission lines and list of absorption lines.
+    """
+
+    inds = np.where(np.abs(spectrum.flux) > sigma*spectrum.flux.unit)[0]
+    pos_inds = inds[spectrum.flux.value[inds] > 0]
+    line_inds_grouped = _consecutive(pos_inds, stepsize=1)
+
+    if len(line_inds_grouped[0]) > 0:
+        emission_lines = [inds[np.argmax(spectrum.flux.value[inds])] for inds in line_inds_grouped]
+    else:
+        emission_lines = []
+
+    neg_inds = inds[spectrum.flux.value[inds] < 0]
+    line_inds_grouped = _consecutive(neg_inds, stepsize=1)
+
+    if len(line_inds_grouped[0]) > 0:
+        absorption_lines = [inds[np.argmin(spectrum.flux.value[inds])] for inds in line_inds_grouped]
+    else:
+        absorption_lines = []
+
+    return emission_lines, absorption_lines
+
+
+def find_lines_derivative(spectrum, sigma):
+    """
+    Find the emission and absorption lines in a spectrum. The method
+    here is a very simple threshold based on the standard deviation
+    of the noise.
+
+    Parameters
+    ----------
+    spectrum : Spectrum1D
+        The spectrum object over which the equivalent width will be calculated.
+
+    exclude_regions : list of `~specutils.SpectralRegion`
+        List of regions to exclude in the fitting.
+
+    Returns
+    -------
+    emission_lines, absorption_lines : two list of floats or Quantities
+        List of emission lines and list of absorption lines.
+    """
+
+    # Take the derivative to find the zero crossings which correspond to
+    # the peaks (positive or negative)
+    kernel = [1, 0, -1]
+    dY = convolve(spectrum.flux, kernel, 'valid')
+
+    # Use sign flipping to determine direction of change
+    S = np.sign(dY)
+    ddS = convolve(S, kernel, 'valid')
+
+    #
+    # Emmision lines
+    #
+
+    # Find all the indices that appear to be part of a +ve peak
+    candidates = np.where(dY > 0)[0] + (len(kernel) - 1)
+    line_inds = sorted(set(candidates).intersection(np.where(ddS == -2)[0] + 1))
+    line_inds = np.array(line_inds)[spectrum.flux[line_inds] > sigma*spectrum.flux.unit]
+
+    # Now group them and find the max highest point.
+    line_inds_grouped = _consecutive(line_inds, stepsize=1)
+
+    if len(line_inds_grouped[0]) > 0:
+        emission_lines = [inds[np.argmax(spectrum.flux[inds])] for inds in line_inds_grouped]
+    else:
+        emission_lines = []
+
+    #
+    # Absorption lines
+    #
+
+    # Find all the indices that appear to be part of a -ve peak
+    candidates = np.where(dY < 0)[0] + (len(kernel) - 1)
+    line_inds = sorted(set(candidates).intersection(np.where(ddS == 2)[0] + 1))
+    line_inds = np.array(line_inds)[spectrum.flux[line_inds] < -sigma*spectrum.flux.unit]
+
+    # Now group them and find the max highest point.
+    line_inds_grouped = _consecutive(line_inds, stepsize=1)
+
+    if len(line_inds_grouped[0]) > 0:
+        absorption_lines = [inds[np.argmin(spectrum.flux[inds])] for inds in line_inds_grouped]
+    else:
+        absorption_lines = []
+
+    return emission_lines, absorption_lines
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
