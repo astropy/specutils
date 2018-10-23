@@ -1,6 +1,7 @@
 from __future__ import division
 
 import operator
+import itertools
 
 import numpy as np
 from scipy.signal import convolve
@@ -13,6 +14,7 @@ from ..manipulation import extract_region
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
 from astropy.modeling import fitting, Model, models
+from astropy.table import QTable
 
 
 __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines']
@@ -33,33 +35,51 @@ def find_lines_threshold(spectrum, sigma=3):
     spectrum : Spectrum1D
         The spectrum object over which the equivalent width will be calculated.
 
-    exclude_regions : list of `~specutils.SpectralRegion`
-        List of regions to exclude in the fitting.
+    sigma : float
+        Threshold on line finding.
 
     Returns
     -------
-    emission_lines, absorption_lines : two list of floats or Quantities
-        List of emission lines and list of absorption lines.
+    qtable: `~astropy.table.QTable`
+        Table of emission and absorption lines. Spectral axis values, line type and indices stored.
     """
+
+    #
+    # Find the emission lines
+    #
 
     inds = np.where(np.abs(spectrum.flux) > sigma*spectrum.flux.unit)[0]
     pos_inds = inds[spectrum.flux.value[inds] > 0]
     line_inds_grouped = _consecutive(pos_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        emission_lines = [inds[np.argmax(spectrum.flux.value[inds])] for inds in line_inds_grouped]
+        emission_inds = [inds[np.argmax(spectrum.flux.value[inds])] for inds in line_inds_grouped]
     else:
-        emission_lines = []
+        emission_inds = []
+
+    #
+    # Find the absorption lines
+    #
 
     neg_inds = inds[spectrum.flux.value[inds] < 0]
     line_inds_grouped = _consecutive(neg_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        absorption_lines = [inds[np.argmin(spectrum.flux.value[inds])] for inds in line_inds_grouped]
+        absorption_inds = [inds[np.argmin(spectrum.flux.value[inds])] for inds in line_inds_grouped]
     else:
-        absorption_lines = []
+        absorption_inds = []
 
-    return emission_lines, absorption_lines
+    #
+    # Create the QTable to return the lines
+    #
+
+    qtable = QTable()
+    qtable['lines'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
+                                             spectrum.spectral_axis.value[absorption_inds]]))*spectrum.spectral_axis.unit
+    qtable['line_type'] = ['emission']*len(emission_inds) + ['absorption']*len(absorption_inds)
+    qtable['index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
+
+    return qtable
 
 
 def find_lines_derivative(spectrum, sigma):
@@ -73,13 +93,13 @@ def find_lines_derivative(spectrum, sigma):
     spectrum : Spectrum1D
         The spectrum object over which the equivalent width will be calculated.
 
-    exclude_regions : list of `~specutils.SpectralRegion`
-        List of regions to exclude in the fitting.
+    sigma : float
+        Threshold on line finding.
 
     Returns
     -------
-    emission_lines, absorption_lines : two list of floats or Quantities
-        List of emission lines and list of absorption lines.
+    qtable: `~astropy.table.QTable`
+        Table of emission and absorption lines. Spectral axis values, line type and indices stored.
     """
 
     # Take the derivative to find the zero crossings which correspond to
@@ -104,9 +124,9 @@ def find_lines_derivative(spectrum, sigma):
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        emission_lines = [inds[np.argmax(spectrum.flux[inds])] for inds in line_inds_grouped]
+        emission_inds = [inds[np.argmax(spectrum.flux[inds])] for inds in line_inds_grouped]
     else:
-        emission_lines = []
+        emission_inds = []
 
     #
     # Absorption lines
@@ -121,11 +141,21 @@ def find_lines_derivative(spectrum, sigma):
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        absorption_lines = [inds[np.argmin(spectrum.flux[inds])] for inds in line_inds_grouped]
+        absorption_inds = [inds[np.argmin(spectrum.flux[inds])] for inds in line_inds_grouped]
     else:
-        absorption_lines = []
+        absorption_inds = []
 
-    return emission_lines, absorption_lines
+    #
+    # Create the QTable to return the lines
+    #
+
+    qtable = QTable()
+    qtable['lines'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
+                                             spectrum.spectral_axis.value[absorption_inds]]))*spectrum.spectral_axis.unit
+    qtable['line_type'] = ['emission']*len(emission_inds) + ['absorption']*len(absorption_inds)
+    qtable['index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
+
+    return qtable
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
