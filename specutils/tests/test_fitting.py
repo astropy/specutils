@@ -62,16 +62,22 @@ def test_find_lines_derivative():
     spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
 
     # Threshold method
-    emission_lines, absorption_lines = find_lines_threshold(spectrum, sigma=0.75)
+    lines = find_lines_threshold(spectrum, sigma=0.75)
 
-    assert emission_lines == [91, 109]
-    assert absorption_lines == [163]
+    emission_lines = lines[lines['line_type'] == 'emission']
+    absorption_lines = lines[lines['line_type'] == 'absorption']
+
+    assert emission_lines['index'].tolist() == [91, 109]
+    assert absorption_lines['index'].tolist() == [163]
 
     # Derivative method
-    emission_lines, absorption_lines = find_lines_derivative(spectrum, sigma=0.75)
+    lines = find_lines_derivative(spectrum, sigma=0.75)
 
-    assert emission_lines == [90, 109]
-    assert absorption_lines == [163]
+    emission_lines = lines[lines['line_type'] == 'emission']
+    absorption_lines = lines[lines['line_type'] == 'absorption']
+
+    assert emission_lines['index'].tolist() == [90, 109]
+    assert absorption_lines['index'].tolist() == [163]
 
 
 def test_single_peak_fit():
