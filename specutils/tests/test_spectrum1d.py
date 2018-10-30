@@ -307,3 +307,18 @@ def test_noise_estimate_uncertainty():
 
     assert quantity_allclose(spectrum_with_uncertainty.uncertainty.array,
                              expected_uncertainty.value)
+
+
+def test_empty_spectrum():
+    s1 = Spectrum1D(spectral_axis=[] * u.nm,
+                    flux=[] * u.Jy)
+
+    assert s1.shape == (0,)
+    assert s1.spectral_axis.value.shape == (0,)
+    assert s1.flux.value.shape == (0,)
+
+    s2 = Spectrum1D(spectral_axis=[] * u.nm,
+                    flux=[] * u.Jy,
+                    uncertainty=[])
+    assert s2.shape == (0,)
+    assert s2.uncertainty.array.shape == (0,)
