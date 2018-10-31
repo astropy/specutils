@@ -9,6 +9,7 @@ import astropy.units as u
 from astropy.stats import sigma_clipped_stats
 
 from ..manipulation.utils import excise_regions
+from ..analysis import fwhm, centroid
 from ..utils import QuantityModel
 from ..manipulation import extract_region
 from ..spectra.spectral_region import SpectralRegion
@@ -17,8 +18,60 @@ from astropy.modeling import fitting, Model, models
 from astropy.table import QTable
 
 
-__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines']
+__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines', 'estimate_parameters']
 
+# Define the initial estimators
+#   This is the default methods to use to estimate astropy model
+#   parameters. This is based on only a small subset of the astropy
+#   models but it was determined that this is a decent start as most
+#   fitting will probably use one of these.
+#
+#   Each method list must take a Spectrum1D object and should return
+#   a Quantity.
+
+parameter_estimators = {
+    'Gaussian1D': {
+        'amplitude': lambda s: max(s.flux),
+        'mean': lambda s: centroid(s, region=None),
+        'stddev': lambda s: fwhm(s) 
+    },
+    'Lorentzian1D': {
+        'amplitude': None,
+        'x_0': None,
+        'fwhm':None 
+    },
+    'Voigt1D': {
+        'x_0': None,
+        'amplitude_L': None,
+        'fwhm_L': None,
+        'fwhm_G': None 
+    },
+    'Const1D': {
+        'amplitude': None 
+    }
+}
+
+def _set_parameter_estimators(model):
+    if model.__class__.__name__ in parameter_estimators:
+        model._constraints['parameter_estimator'] = parameter_estimators[model.__class__.__name__]
+    return model
+
+def estimate_parameters(spectrum, model):
+
+    if not 'parameter_estimator' in model._constraints:
+        model = _set_parameter_estimators(model)
+
+    # Estimate the parameters based on the estimators already
+    # attached to the model
+    if 'parameter_estimator' in model._constraints:
+        for param, estimator in model._constraints['parameter_estimator'].items():
+            setattr(model, param, estimator(spectrum))
+
+    # No estimators.
+    else:
+        raise Exception('No method to estimate parameters')
+
+    return model
 
 def _consecutive(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)

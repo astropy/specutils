@@ -8,6 +8,7 @@ from ..fitting import fit_lines
 from specutils.tests.spectral_examples import simulated_spectra
 from specutils.spectra import Spectrum1D, SpectralRegion
 from specutils.fitting import fit_lines, find_lines_derivative, find_lines_threshold
+from ..fitting import fit_lines, find_lines_derivative, find_lines_threshold, estimate_parameters
 
 
 def single_peak():
@@ -79,10 +80,30 @@ def test_find_lines_derivative():
     assert emission_lines['index'].tolist() == [90, 109]
     assert absorption_lines['index'].tolist() == [163]
 
+def test_single_peak_estimate():
+    """
+    Single Peak fit.
+    """
+
+    # Create the spectrum
+    x_single, y_single = single_peak()
+    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+
+    # Fit the spectrum
+    g_init = estimate_parameters(s_single, models.Gaussian1D())
+
+    assert np.isclose(g_init.amplitude.value, 3.354169257846847)
+    assert np.isclose(g_init.mean.value, 6.218588636687762)
+    assert np.isclose(g_init.stddev.value, 1.608040201005025)
+
+    assert g_init.amplitude.unit == u.Jy
+    assert g_init.mean.unit == u.um
+    assert g_init.stddev.unit == u.um
+
 
 def test_single_peak_fit():
     """
-    Single Peak fit.
+    Single peak fit
     """
 
     # Create the spectrum
