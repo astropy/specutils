@@ -98,7 +98,7 @@ def apVisit_loader(file_name, **kwargs):
                       meta=meta)
 
 
-@data_loader(label="APOGEE apStar", identifier=apStar_identify)
+@data_loader(label="APOGEE apStar", identifier=apStar_identify, extensions=['fits'])
 def apStar_loader(file_name, **kwargs):
     """
     Loader for APOGEE apStar files.
@@ -140,7 +140,7 @@ def apStar_loader(file_name, **kwargs):
                       wcs=wcs)
 
 
-@data_loader(label="APOGEE aspcapStar", identifier=aspcapStar_identify)
+@data_loader(label="APOGEE aspcapStar", identifier=aspcapStar_identify, extensions=['fits'])
 def aspcapStar_loader(file_name, **kwargs):
     """
     Loader for APOGEE aspcapStar files.
