@@ -13,7 +13,8 @@ from ..spectra.spectrum1d import Spectrum1D
 __all__ = ['data_loader', 'custom_writer']
 
 
-def data_loader(label, identifier=None, dtype=Spectrum1D):
+def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
+                priority=0):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
     file reading.
@@ -27,10 +28,40 @@ def data_loader(label, identifier=None, dtype=Spectrum1D):
         particular file.
     dtype : class
         A class reference for which the data loader should be store.
+    extensions : list
+        A list of file extensions this loader supports loading from. In the
+        case that no identifier function is defined, but a list of file
+        extensions is, a simple identifier function will be created to check
+        for consistency with the extensions.
+    priority : int
+        Set the priority of the loader. Currently influences the sorting of the
+        returned loaders for a dtype.
     """
     def decorator(func):
         io_registry.register_reader(label, dtype, func)
-        io_registry.register_identifier(label, dtype, identifier)
+
+        # If the identifier is not defined, but the extensions are, create
+        # a simple identifier based off file extension.
+        if identifier is None and extensions is not None:
+            io_registry.register_identifier(
+                label, dtype, lambda *args, **kwargs: any([args[0].endswith(x)
+                                                           for x in extensions]))
+        else:
+            io_registry.register_identifier(label, dtype, identifier)
+
+        # Include the file extensions as attributes on the function object
+        func.extensions = extensions
+
+        # Include priority on the loader function attribute
+        func.priority = priority
+
+        # Sort the io_registry based on priority
+        sorted_loaders = sorted(io_registry._readers.items(),
+                                key=lambda item: getattr(item[1], 'priority', 0))
+
+        # Update the registry with the sorted dictionary
+        io_registry._readers.clear()
+        io_registry._readers.update(sorted_loaders)
 
         logging.debug("Successfully loaded reader \"{}\".".format(label))
 
