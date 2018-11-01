@@ -77,7 +77,8 @@ ensure that the data file being loaded is compatible with the loader function.
                 os.path.splitext(args[0].lower())[1] == '.fits')
 
 
-    @data_loader("my-format", identifier=identify_generic_fits)
+    @data_loader("my-format", identifier=identify_generic_fits,
+                 extensions=['fits'])
     def generic_fits(file_name, **kwargs):
         name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
@@ -93,6 +94,10 @@ ensure that the data file being loaded is compatible with the loader function.
 
         return Spectrum1D(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)
 
+
+An ``extensions`` keyword can be provided. This allows for basic filename
+extension matching in the case that the ``identifier`` function is not
+provided.
 
 After placing this python file in the user's ``~/.specutils`` directory, it
 can be utilized by referencing its name in the ``read`` method of the

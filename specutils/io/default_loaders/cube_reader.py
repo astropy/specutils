@@ -25,7 +25,7 @@ def identify_generic_fits(origin, *args, **kwargs):
             fits.getheader(args[0])['NAXIS'] == 3)
 
 
-@data_loader("cubetest1", identifier=identify_generic_fits)
+@data_loader("cubetest1", identifier=identify_generic_fits, extensions=['fits'])
 def generic_fits(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 

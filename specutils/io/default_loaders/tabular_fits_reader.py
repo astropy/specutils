@@ -26,7 +26,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
             )
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
-             dtype=Spectrum1D)
+             dtype=Spectrum1D, extensions=['fits'])
 def tabular_fits(file_name, **kwargs):
     logging.info("Spectrum file looks like tabular-fits")
     # name is not used; what was it for?

@@ -29,7 +29,7 @@ def identify_muscles_sed_fits(origin, *args, **kwargs):
 
 
 @data_loader("muscles_sed_fits", identifier=identify_muscles_sed_fits,
-             dtype=Spectrum1D)
+             dtype=Spectrum1D, extensions=['fits'])
 def muscles_sed_fits(file_name, **kwargs):
     logging.info("Spectrum file looks like MUSCLES SED fits")
     # name is not used; what was it for?
