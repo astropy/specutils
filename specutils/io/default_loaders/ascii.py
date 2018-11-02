@@ -10,7 +10,7 @@ from specutils.io.registers import data_loader
 __all__ = ['ascii_identify', 'ascii_loader', 'ipac_identify', 'ipac_loader']
 
 
-def ascii_identify(*args, **kwargs):
+def ascii_identify(origin, *args, **kwargs):
     """Check if it's an ASCII file."""
     name = os.path.basename(args[0])
 

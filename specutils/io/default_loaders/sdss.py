@@ -24,7 +24,7 @@ _spSpec_pattern = re.compile(r'spSpec-\d{5}-\d{4}-\d{3}\.fit')
 _spec_pattern = re.compile(r'spec-\d{4,5}-\d{5}-\d{4}\.fits')
 
 
-def spec_identify(*args, **kwargs):
+def spec_identify(origin, *args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
     Registry.
@@ -33,7 +33,7 @@ def spec_identify(*args, **kwargs):
             _spec_pattern.match(args[0]) is not None)
 
 
-def spSpec_identify(*args, **kwargs):
+def spSpec_identify(origin, *args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
     Registry.

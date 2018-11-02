@@ -22,7 +22,7 @@ __all__ = ['apVisit_identify', 'apStar_identify', 'aspcapStar_identify',
            'apVisit_loader', 'apStar_loader', 'aspcapStar_loader']
 
 
-def apVisit_identify(*args, **kwargs):
+def apVisit_identify(origin, *args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
     Registry.
@@ -32,7 +32,7 @@ def apVisit_identify(*args, **kwargs):
             args[0].startswith('apVisit'))
 
 
-def apStar_identify(*args, **kwargs):
+def apStar_identify(origin, *args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
     Registry.
@@ -42,7 +42,7 @@ def apStar_identify(*args, **kwargs):
             args[0].startswith('apStar'))
 
 
-def aspcapStar_identify(*args, **kwargs):
+def aspcapStar_identify(origin, *args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
     Registry.

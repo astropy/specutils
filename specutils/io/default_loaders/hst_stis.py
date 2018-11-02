@@ -10,7 +10,7 @@ from specutils import Spectrum1D
 __all__ = ['stis_identify', 'stis_spectrum_loader']
 
 
-def stis_identify(*args, **kwargs):
+def stis_identify(origin, *args, **kwargs):
     """Check whether given file contains HST/STIS spectral data."""
     with fits.open(args[0]) as hdu:
         if hdu[0].header['TELESCOP'] == 'HST' and hdu[0].header['INSTRUME'] == 'STIS':

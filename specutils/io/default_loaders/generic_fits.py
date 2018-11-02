@@ -15,7 +15,7 @@ from specutils import Spectrum1D
 __all__ = ['simple_generic_loader', 'simple_generic_writer']
 
 
-def fits_identify(*args, **kwargs):
+def fits_identify(origin, *args, **kwargs):
     """
     Check whether given filename is FITS. This is used for Astropy I/O
     Registry.

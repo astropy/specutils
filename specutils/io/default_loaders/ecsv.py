@@ -8,7 +8,7 @@ from specutils import Spectrum1D
 __all__ = ['ecsv_identify', 'ecsv_spectrum_loader']
 
 
-def ecsv_identify(*args, **kwargs):
+def ecsv_identify(origin, *args, **kwargs):
     """Check if it's an ECSV file."""
     name = os.path.basename(args[0])
 
