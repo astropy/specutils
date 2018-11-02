@@ -5,9 +5,12 @@ import six
 from astropy import units as u
 from astropy.io import fits
 from astropy.wcs import WCS
+from astropy.table import Table
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader
+from ..registers import data_loader, custom_writer
+
+__all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer']
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
@@ -24,14 +27,14 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
+def wcs1d_fits_loader(file_name, spectral_axis_unit=None, **kwargs):
     """
-       Parameters
-       ----------
-       file_name : str
+    Parameters
+    ----------
+    file_name : str
 
-        spectral_axis_unit: str or unit, optional
-            Optional string or unit object to specify units of spectral axis.
+    spectral_axis_unit: str or unit, optional
+        Optional string or unit object to specify units of spectral axis.
     """
     logging.info("Spectrum file looks like wcs1d-fits")
 
@@ -50,3 +53,14 @@ def wcs1d_fits(file_name, spectral_axis_unit=None, **kwargs):
         meta = {'header': header}
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
+
+
+@custom_writer("wcs-fits")
+def wcs1d_fits_writer(spectrum, file_name, **kwargs):
+    flux = spectrum.flux.value
+    disp = spectrum.dispersion.value
+    meta = spectrum.meta
+
+    tab = Table([disp, flux], names=("dispersion", "flux"), meta=meta)
+
+    tab.write(file_name, format="fits")

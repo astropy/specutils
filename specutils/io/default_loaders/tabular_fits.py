@@ -9,7 +9,9 @@ from astropy.units import Unit
 from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader
+from ..registers import data_loader, custom_writer
+
+__all__ = ['tabular_fits_loader', '']
 
 
 def identify_tabular_fits(origin, *args, **kwargs):
@@ -27,7 +29,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def tabular_fits(file_name, **kwargs):
+def tabular_fits_loader(file_name, **kwargs):
     logging.info("Spectrum file looks like tabular-fits")
     # name is not used; what was it for?
     # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
@@ -43,3 +45,14 @@ def tabular_fits(file_name, **kwargs):
         data = tab["flux"] * Unit("Jy")
 
     return Spectrum1D(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)
+
+
+@custom_writer("tabular-fits")
+def tabular_fits_writer(spectrum, file_name, **kwargs):
+    flux = spectrum.flux.value
+    disp = spectrum.dispersion.value
+    meta = spectrum.meta
+
+    tab = Table([disp, flux], names=("dispersion", "flux"), meta=meta)
+
+    tab.write(file_name, format="fits")
