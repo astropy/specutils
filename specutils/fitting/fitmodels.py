@@ -341,6 +341,12 @@ def _strip_units_from_model(model_in, spectrum):
             new_sub_model.tied[pn] = sub_model.tied[pn]
 
             #
+            # Copy over all the constraints (e.g., tied, fixed...)
+            #
+            for k, v in sub_model._constraints.items():
+                new_sub_model._constraints[k] = v
+
+            #
             # Convert teh bounds parameter
             #
             new_bounds = []
@@ -349,6 +355,7 @@ def _strip_units_from_model(model_in, spectrum):
                 new_bounds.append(v)
 
             new_sub_model.bounds[pn] = tuple(new_bounds)
+
 
         # The new model now has unitless information in it but has
         # been converted to spectral unit scale.
@@ -494,12 +501,10 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             setattr(new_sub_model, pn, v)
 
             #
-            # Set the fixed parameter
+            # Copy over all the constraints (e.g., tied, fixed, bounds...)
             #
-
-            new_sub_model.fixed[pn] = m_orig.fixed[pn]
-            new_sub_model.bounds[pn] = m_orig.bounds[pn]
-            new_sub_model.tied[pn] = m_orig.tied[pn]
+            for k, v in m_orig._constraints.items():
+                new_sub_model._constraints[k] = v
 
         #
         # Add the new unit-filled model onto the stack.
