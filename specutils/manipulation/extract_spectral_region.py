@@ -3,6 +3,7 @@ from math import floor, ceil  # faster than int(np.floor/ceil(float))
 import numpy as np
 
 from astropy import units as u
+from .. import Spectrum1D
 
 __all__ = ['extract_region']
 
@@ -88,7 +89,9 @@ def extract_region(spectrum, region):
 
         # If both indices are out of bounds then return None
         if left_index is None and right_index is None:
-            extracted_spectrum.append(None)
+            empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit, 
+                                        flux=[]*spectrum.flux.unit)
+            extracted_spectrum.append(empty_spectrum)
         else:
 
             # If only one index is out of bounds then set it to
