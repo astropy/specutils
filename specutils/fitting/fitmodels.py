@@ -334,13 +334,6 @@ def _strip_units_from_model(model_in, spectrum):
             setattr(new_sub_model, pn, v)
 
             #
-            # Set the fixed and tied parameters
-            #
-
-            new_sub_model.fixed[pn] = sub_model.fixed[pn]
-            new_sub_model.tied[pn] = sub_model.tied[pn]
-
-            #
             # Copy over all the constraints (e.g., tied, fixed...)
             #
             for k, v in sub_model._constraints.items():
