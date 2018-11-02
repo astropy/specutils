@@ -1,7 +1,7 @@
 import astropy.units as u
 from astropy.io import fits
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
 
 
@@ -21,18 +21,24 @@ def identify_jwst_fits(origin, *args, **kwargs):
         return False
 
 
-@data_loader("JWST", identifier=identify_jwst_fits, dtype=Spectrum1D)
+@data_loader("JWST", identifier=identify_jwst_fits, dtype=SpectrumList)
 def jwst_loader(filename, spectral_axis_unit=None, **kwargs):
 
+    spectra = []
+
     with fits.open(filename) as hdulist:
-        # TODO: eventually we will pass a SpectrumCollection back, but for now
-        # we just return the first spectrum in the file.
-        hdu = hdulist['EXTRACT1D']
-        wavelength = hdu.data['WAVELENGTH'] * u.Unit(hdu.header['TUNIT1'])
-        flux = hdu.data['FLUX'] * u.Unit(hdu.header['TUNIT2'])
-        error = hdu.data['ERROR'] * u.Unit(hdu.header['TUNIT3'])
+        for hdu in hdulist:
+            if hdu.name != 'EXTRACT1D':
+                continue
 
-        meta = dict(slitname=hdu.header.get('SLTNAME', ''))
+            wavelength = hdu.data['WAVELENGTH'] * u.Unit(hdu.header['TUNIT1'])
+            flux = hdu.data['FLUX'] * u.Unit(hdu.header['TUNIT2'])
+            error = hdu.data['ERROR'] * u.Unit(hdu.header['TUNIT3'])
 
-    # TODO: pass uncertainty using the error from the HDU
-    return Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            meta = dict(slitname=hdu.header.get('SLTNAME', ''))
+
+            # TODO: pass uncertainty using the error from the HDU
+            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spectra.append(spec)
+
+    return SpectrumList(spectra)
