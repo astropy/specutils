@@ -460,6 +460,23 @@ def test_fwhm():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
+    # Highest point at the first point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = (1.0 / wavelengths.value)*u.Jy # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 0.9090909090909092*u.um
+
+    # Highest point at the last point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = wavelengths.value*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 5*u.um
+
+
 def test_fwhm_multi_spectrum():
 
     np.random.seed(42)
