@@ -13,6 +13,16 @@ from ..manipulation import noise_region_uncertainty
 
 from ..spectra import Spectrum1D, SpectralRegion
 
+def test_empty_spectrum():
+    spec = Spectrum1D(spectral_axis=[]*u.um,
+                      flux=[]*u.Jy)
+
+    assert isinstance(spec.spectral_axis, u.Quantity)
+    assert spec.spectral_axis.size == 0
+
+    assert isinstance(spec.flux, u.Quantity)
+    assert spec.flux.size == 0
+
 
 def test_create_from_arrays():
     spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
