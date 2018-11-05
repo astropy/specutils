@@ -211,6 +211,49 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     return fit_model
 
+def _convert(q, dispersion_unit, dispersion, flux_unit):
+    #
+    # Convert the quantity to the spectrum's units, and then we will use
+    # the *value* of it in the new unitless-model.
+    #
+
+    if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
+        quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
+
+    elif q.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
+        quantity = q.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+
+    return quantity
+
+def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_unit):
+    """
+    This method will convert the ``poss_quantity`` value to the proper
+    dispersion or flux units and then strip the units.
+
+    If the ``poss_quantity`` is None, or a number, we just return that...
+
+    Note: This method can be removed along with most of the others here
+          when astropy.fitting will fit models that contain units.
+
+    """
+
+    if poss_quantity is None or isinstance(poss_quantity, (float, int)):
+        return poss_quantity
+
+    if hasattr(poss_quantity, 'quantity') and poss_quantity.quantity is not None:
+        q = poss_quantity.quantity
+
+        quantity = _convert(q, dispersion_unit, dispersion, flux_unit)
+        v = quantity.value
+
+    elif isinstance(poss_quantity, u.Quantity):
+        quantity = _convert(poss_quantity, dispersion_unit, dispersion, flux_unit)
+        v = quantity.value
+
+    else:
+        v = poss_quantity.value
+
+    return v
 
 def _strip_units_from_model(model_in, spectrum):
     """
@@ -286,28 +329,7 @@ def _strip_units_from_model(model_in, spectrum):
         for pn in new_sub_model.param_names:
 
             # This could be a Quantity or Parameter
-            a = getattr(sub_model, pn)
-
-            if hasattr(a, 'quantity') and a.quantity is not None:
-                q = getattr(sub_model, pn).quantity
-
-                #
-                # Convert the quantity to the spectrum's units, and then we will use
-                # the *value* of it in the new unitless-model.
-                #
-
-                if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
-                    quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
-
-                elif q.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
-                    quantity = q.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
-
-                # The value must be a quantity in order to use setattr (below)
-                # as the setter requires a Quantity on the rhs if the parameter
-                # is already a value.
-                v = quantity.value
-            else:
-                v = getattr(sub_model, pn).value
+            v = _convert_and_dequantify(getattr(sub_model, pn), dispersion_unit, dispersion, flux_unit)
 
             #
             # Add this information for the parameter name into the
@@ -315,6 +337,23 @@ def _strip_units_from_model(model_in, spectrum):
             #
 
             setattr(new_sub_model, pn, v)
+
+            #
+            # Copy over all the constraints (e.g., tied, fixed...)
+            #
+            for k, v in sub_model._constraints.items():
+                new_sub_model._constraints[k] = v
+
+            #
+            # Convert teh bounds parameter
+            #
+            new_bounds = []
+            for a in sub_model.bounds[pn]:
+                v = _convert_and_dequantify(a, dispersion_unit, dispersion, flux_unit)
+                new_bounds.append(v)
+
+            new_sub_model.bounds[pn] = tuple(new_bounds)
+
 
         # The new model now has unitless information in it but has
         # been converted to spectral unit scale.
@@ -458,6 +497,12 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             #
 
             setattr(new_sub_model, pn, v)
+
+            #
+            # Copy over all the constraints (e.g., tied, fixed, bounds...)
+            #
+            for k, v in m_orig._constraints.items():
+                new_sub_model._constraints[k] = v
 
         #
         # Add the new unit-filled model onto the stack.
