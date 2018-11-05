@@ -211,6 +211,19 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     return fit_model
 
+def _convert(q, dispersion_unit, dispersion, flux_unit):
+    #
+    # Convert the quantity to the spectrum's units, and then we will use
+    # the *value* of it in the new unitless-model.
+    #
+
+    if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
+        quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
+
+    elif q.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
+        quantity = q.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+
+    return quantity
 
 def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_unit):
     """
@@ -224,27 +237,19 @@ def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_uni
 
     """
 
-    if poss_quantity is None or isinstance(poss_quantity, (float, int, u.Quantity)):
+    if poss_quantity is None or isinstance(poss_quantity, (float, int)):
         return poss_quantity
 
     if hasattr(poss_quantity, 'quantity') and poss_quantity.quantity is not None:
         q = poss_quantity.quantity
 
-        #
-        # Convert the quantity to the spectrum's units, and then we will use
-        # the *value* of it in the new unitless-model.
-        #
-
-        if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
-            quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
-
-        elif q.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
-            quantity = q.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
-
-        # The value must be a quantity in order to use setattr (below)
-        # as the setter requires a Quantity on the rhs if the parameter
-        # is already a value.
+        quantity = _convert(q, dispersion_unit, dispersion, flux_unit)
         v = quantity.value
+
+    elif isinstance(poss_quantity, u.Quantity):
+        quantity = _convert(poss_quantity, dispersion_unit, dispersion, flux_unit)
+        v = quantity.value
+
     else:
         v = poss_quantity.value
 
