@@ -224,7 +224,7 @@ def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_uni
 
     """
 
-    if poss_quantity is None or isinstance(poss_quantity, (float, int)):
+    if poss_quantity is None or isinstance(poss_quantity, (float, int, u.Quantity)):
         return poss_quantity
 
     if hasattr(poss_quantity, 'quantity') and poss_quantity.quantity is not None:
