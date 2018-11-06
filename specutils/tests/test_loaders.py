@@ -6,7 +6,8 @@ import astropy.units as u
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from .. import Spectrum1D, SpectrumCollection
+from .conftest import get_remote_data
+from .. import Spectrum1D
 
 
 def test_spectrum1d_GMOSfits():
@@ -43,8 +44,5 @@ def test_generic_ecsv_reader(tmpdir):
    assert np.alltrue(spectrum.flux == table['flux'])
    assert np.alltrue(spectrum.uncertainty.array == table['uncertainty'])
 
-# def test_spectrum_collection_loader():
-#     stis_fits_file = get_pkg_data_filename('data/odbue5030_x1d.fits')
-#     spec_col = SpectrumCollection.read(stis_fits_file,
-#                                        format='stis-fits')
+
 
