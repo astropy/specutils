@@ -34,6 +34,7 @@ def generic_spectrum_from_table(table, **kwargs):
     Raises
     ------
     Warns if uncertainty has zeros or negative numbers.
+    Raises IOError if it can't figure out the columns.
 
     """
     # Local function to find the wavelength or frequency column
