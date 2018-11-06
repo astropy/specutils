@@ -155,7 +155,7 @@ def _compute_single_fwhm(flux, spectral_axis):
         l_idx = np.where(left == True)[0][-1]
 
     # Highest signal at the last point
-    if sum(right) == -1:
+    if sum(right) == 0:
         r_idx = len(flux)-1
     else:
         r_idx = np.where(right == True)[0][0] + argmax
