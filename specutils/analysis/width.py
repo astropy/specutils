@@ -149,13 +149,13 @@ def _compute_single_fwhm(flux, spectral_axis):
     right = flux[argmax+1:] <= halfval
 
     # Highest signal at the first point
-    if sum(left) == 0:
+    if np.sum(left) == 0:
         l_idx = 0
     else:
         l_idx = np.where(left == True)[0][-1]
 
     # Highest signal at the last point
-    if sum(right) == 0:
+    if np.sum(right) == 0:
         r_idx = len(flux)-1
     else:
         r_idx = np.where(right == True)[0][0] + argmax
