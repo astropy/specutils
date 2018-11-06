@@ -45,7 +45,9 @@ class FITSWCSAdapter(WCSAdapter):
         """
         Method for performing the world to pixel transformations.
         """
-        return self.axes.spectral.all_world2pix(world_array, 0)[0]
+        with u.set_enabled_equivalencies(u.spectral()):
+            world_array=u.Quantity(world_array, unit=self.spectral_axis_unit)
+        return self.axes.spectral.all_world2pix(world_array.value, 0)[0]
 
     def pixel_to_world(self, pixel_array):
         """
