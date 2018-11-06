@@ -1,3 +1,5 @@
+.. currentmodule:: specutils
+
 Overview of How Specutils Represents Spectra
 --------------------------------------------
 
@@ -42,7 +44,11 @@ with their corresponding ``specutils`` representations:
    not rectangular), this case does not have a specific representation in
    ``specutils``.  Instead, this case should be dealt with by making lists (or
    numpy object-arrays) of `~specutils.Spectrum1D` objects, and iterating over
-   them.
+   them. Specutils does provide a `SpectrumList` class which is
+   primarily intended for enabling data loaders that need to read multiple
+   heterogenous spectra (see :ref:`multiple_spectra`). Users should rarely need
+   to use `SpectrumList` directly since a `list` of `Spectrum1D` objects is
+   sufficient for most other purposes.
 
 In all of these cases, the objects have additional attributes (e.g.
 uncertainties), along with other metadata.  But the list above is exhaustive

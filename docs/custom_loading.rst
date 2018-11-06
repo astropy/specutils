@@ -121,6 +121,25 @@ can be utilized by referencing its name in the ``read`` method of the
 
     spec = Spectrum1D.read("path/to/data", format="my-format")
 
+.. _multiple_spectra:
+
+Loading Multiple Spectra
+========================
+
+It is possible to create a loader that reads multiple spectra from the same
+file. For the general case where none of the spectra are assumed to be the same
+length, the loader should return a `~specutils.SpectrumList`. Consider the
+custom JWST data loader as an example:
+
+.. literalinclude:: ../specutils/io/default_loaders/jwst_reader.py
+    :language: python
+
+Note that by default, any loader that uses `dtype=Spectrum1D` will also
+automatically add a reader for `~specutils.SpectrumList`. This enables client
+code to call `~specutils.SpectrumList.read` in all cases if it can't make
+assumptions about whether a loader returns one or many `~specutils.Spectrum1D`
+objects.
+
 
 Creating a Custom Writer
 ------------------------
