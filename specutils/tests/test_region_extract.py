@@ -72,22 +72,34 @@ def test_region_empty(simulated_spectra):
     spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
     region = SpectralRegion(28*u.um, 30*u.um)
     sub_spectrum = extract_region(spectrum, region)
-    assert sub_spectrum.spectral_axis == empty_spectrum.spectral_axis
-    assert sub_spectrum.flux == empty_spectrum.flux
+
+    assert np.allclose(sub_spectrum.spectral_axis.value, empty_spectrum.spectral_axis.value)
+    assert sub_spectrum.spectral_axis.unit == empty_spectrum.spectral_axis.unit
+
+    assert np.allclose(sub_spectrum.flux.value, empty_spectrum.flux.value)
+    assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region below lower range of spectrum
     spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
     region = SpectralRegion(0.1*u.um, 0.3*u.um)
     sub_spectrum = extract_region(spectrum, region)
-    assert sub_spectrum.spectral_axis == empty_spectrum.spectral_axis
-    assert sub_spectrum.flux == empty_spectrum.flux
+
+    assert np.allclose(sub_spectrum.spectral_axis.value, empty_spectrum.spectral_axis.value)
+    assert sub_spectrum.spectral_axis.unit == empty_spectrum.spectral_axis.unit
+
+    assert np.allclose(sub_spectrum.flux.value, empty_spectrum.flux.value)
+    assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region below lower range of spectrum and upper range in the spectrum.
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=2*np.linspace(1, 25, 25)*u.Jy)
     region = SpectralRegion(0.1*u.um, 3.3*u.um)
     sub_spectrum = extract_region(spectrum, region)
-    assert sub_spectrum.spectral_axis == empty_spectrum.spectral_axis
-    assert sub_spectrum.flux == empty_spectrum.flux
+
+    assert np.allclose(sub_spectrum.spectral_axis.value, [1, 2, 3])
+    assert sub_spectrum.spectral_axis.unit == empty_spectrum.spectral_axis.unit
+
+    assert np.allclose(sub_spectrum.flux.value, [2, 4, 6])
+    assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region has lower and upper bound the same
     with pytest.raises(Exception) as e_info:
