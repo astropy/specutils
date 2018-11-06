@@ -68,7 +68,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         # Automatically register a SpectrumList reader for any data_loader that
         # reads Spectrum1D objects. TODO: it's possible that this
         # functionality should be opt-in rather than automatic.
-        if dtype == Spectrum1D:
+        if dtype is Spectrum1D:
             def load_specrum_list(*args, **kwargs):
                 return SpectrumList([ func(*args, **kwargs) ])
 
