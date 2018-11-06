@@ -99,11 +99,15 @@ def generic_spectrum_from_table(table, **kwargs):
 
     # Use the first column that has spectral unit as the dispersion axis
     spectral_axis_column = _find_spectral_axis_column(table,colnames)
+    if spectral_axis_column is None:
+       raise IOError("Could not identify column containing the wavelength, frequency or energy")
     spectral_axis = table[spectral_axis_column].to(table[spectral_axis_column].unit)
     colnames.remove(spectral_axis_column)
 
     # Use the first column that has a spectral_density equivalence as the flux
     flux_column = _find_spectral_column(table,colnames,spectral_axis)
+    if flux_column is None:
+       raise IOError("Could not identify column containing the flux")
     flux = table[flux_column].to(table[flux_column].unit)
     colnames.remove(flux_column)
 
@@ -114,17 +118,14 @@ def generic_spectrum_from_table(table, **kwargs):
         if table[c].unit == table[flux_column].unit:
             err_column = c
             break
-    err = StdDevUncertainty(table[err_column].to(table[err_column].unit))
-    if np.min(table[err_column]) <= 0.:
-        warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
+    if err_column is not None:
+        err = StdDevUncertainty(table[err_column].to(table[err_column].unit))
+        if np.min(table[err_column]) <= 0.:
+            warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
 
     # Create the Spectrum1D object and return it
-    if spectral_axis_column is None:
-       raise IOError("Could not identify column containing the wavelength, frequency or energy")
-    if flux_column is None:
-       raise IOError("Could not identify column containing the flux")
     if spectral_axis_column is not None and flux_column is not None:
-       if err is not None:
+       if err_column is not None:
            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
                uncertainty=err,meta=table.meta)
        else:
