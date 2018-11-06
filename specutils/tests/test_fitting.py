@@ -309,3 +309,77 @@ def test_fixed_parameters():
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.tied == g_init.tied
+
+
+def test_ignore_units():
+    """
+    Ignore the units
+    """
+
+    #
+    #  Ignore the units based on flag
+    #
+
+    # Create the spectrum
+    x_single, y_single = single_peak()
+    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+
+    # Fit the spectrum
+    g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um)
+    g_fit = fit_lines(s_single, g_init, ignore_units=True)
+    y_single_fit = g_fit(x_single)
+
+    # Comparing every 10th value.
+    y_single_fit_expected = np.array([3.69669474e-13, 3.57992454e-11, 2.36719426e-09, 1.06879318e-07,
+               3.29498310e-06, 6.93605383e-05, 9.96945607e-04, 9.78431032e-03,
+               6.55675141e-02, 3.00017760e-01, 9.37356842e-01, 1.99969007e+00,
+               2.91286375e+00, 2.89719280e+00, 1.96758892e+00, 9.12412206e-01,
+               2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04])
+
+    assert np.allclose(y_single_fit[::10], y_single_fit_expected, atol=1e-5)
+
+
+    #
+    #  Ignore the units based on there not being units on the model
+    #
+
+    # Create the spectrum
+    x_single, y_single = single_peak()
+    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+
+    # Fit the spectrum
+    g_init = models.Gaussian1D(amplitude=3, mean=6.1, stddev=1.)
+    g_fit = fit_lines(s_single, g_init, ignore_units=True)
+    y_single_fit = g_fit(x_single)
+
+    # Comparing every 10th value.
+    y_single_fit_expected = np.array([3.69669474e-13, 3.57992454e-11, 2.36719426e-09, 1.06879318e-07,
+               3.29498310e-06, 6.93605383e-05, 9.96945607e-04, 9.78431032e-03,
+               6.55675141e-02, 3.00017760e-01, 9.37356842e-01, 1.99969007e+00,
+               2.91286375e+00, 2.89719280e+00, 1.96758892e+00, 9.12412206e-01,
+               2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04])
+
+    assert np.allclose(y_single_fit[::10], y_single_fit_expected, atol=1e-5)
+
+    #
+    # Ignore the units based on not being in the model
+    #
+
+    # Create the spectrum to fit
+    x_double, y_double = double_peak()
+    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+
+    # Fit the spectrum
+    g1_init = models.Gaussian1D(amplitude=2.3, mean=5.6, stddev=0.1)
+    g2_init = models.Gaussian1D(amplitude=1., mean=4.4, stddev=0.1)
+    g12_fit = fit_lines(s_double, g1_init+g2_init, ignore_units=True)
+    y12_double_fit = g12_fit(x_double)
+
+    # Comparing every 10th value.
+    y12_double_fit_expected = np.array([2.86790780e-130, 2.12984643e-103, 1.20060032e-079, 5.13707226e-059,
+                                        1.66839912e-041, 4.11292970e-027, 7.69608184e-016, 1.09308800e-007,
+                                        1.17844042e-002, 9.64333366e-001, 6.04322205e-002, 2.22653307e+000,
+                                        5.51964567e-005, 8.13581859e-018, 6.37320251e-038, 8.85834856e-055,
+                                        1.05230522e-074, 9.48850399e-098, 6.49412764e-124, 3.37373489e-153])
+
+    assert np.allclose(y12_double_fit[::10], y12_double_fit_expected, atol=1e-5)

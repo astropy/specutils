@@ -14,7 +14,7 @@ __all__ = ['fit_lines']
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-              exclude_regions=None, weights=None, window=None):
+              exclude_regions=None, weights=None, window=None, ignore_units=False):
     """
     Fit the input models to the spectrum. The parameter values of the
     input models will be used as the initial conditions for the fit.
@@ -36,6 +36,10 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
+
+    ignore_units : bool
+        If True, then ignore any units on the input model.
+        (This would effectively be assuming the model and spectrum have the same units.)
 
     Returns
     -------
@@ -101,7 +105,8 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
             model_window = None
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
-                               exclude_regions, weights, model_window)
+                               exclude_regions, weights, model_window,
+                               ignore_units)
 
         fitted_models.append(fit_model)
 
@@ -112,7 +117,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-               exclude_regions=None, weights=None, window=None):
+               exclude_regions=None, weights=None, window=None, ignore_units=False):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
@@ -136,6 +141,10 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
+
+    ignore_units : bool
+        If True, then ignore any units on the input model.
+        (This would effectively be assuming the model and spectrum have the same units.)
 
     Returns
     -------
@@ -195,7 +204,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # units and then remove the units
     #
 
-    model_unitless, dispersion_unitless, flux_unitless = _strip_units_from_model(model, spectrum)
+    model_unitless, dispersion_unitless, flux_unitless = _strip_units_from_model(model, spectrum, convert=not ignore_units)
 
     #
     # Do the fitting of spectrum to the model.
@@ -207,7 +216,10 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # Now add the units back onto the model....
     #
 
-    fit_model = _add_units_to_model(fit_model_unitless, model, spectrum)
+    if not ignore_units:
+        fit_model = _add_units_to_model(fit_model_unitless, model, spectrum)
+    else:
+        fit_model = fit_model_unitless
 
     return fit_model
 
@@ -225,7 +237,7 @@ def _convert(q, dispersion_unit, dispersion, flux_unit):
 
     return quantity
 
-def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_unit):
+def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_unit, convert=True):
     """
     This method will convert the ``poss_quantity`` value to the proper
     dispersion or flux units and then strip the units.
@@ -240,13 +252,13 @@ def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_uni
     if poss_quantity is None or isinstance(poss_quantity, (float, int)):
         return poss_quantity
 
-    if hasattr(poss_quantity, 'quantity') and poss_quantity.quantity is not None:
+    if convert and hasattr(poss_quantity, 'quantity') and poss_quantity.quantity is not None:
         q = poss_quantity.quantity
 
         quantity = _convert(q, dispersion_unit, dispersion, flux_unit)
         v = quantity.value
 
-    elif isinstance(poss_quantity, u.Quantity):
+    elif convert and isinstance(poss_quantity, u.Quantity):
         quantity = _convert(poss_quantity, dispersion_unit, dispersion, flux_unit)
         v = quantity.value
 
@@ -255,7 +267,7 @@ def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_uni
 
     return v
 
-def _strip_units_from_model(model_in, spectrum):
+def _strip_units_from_model(model_in, spectrum, convert=True):
     """
     This method strips the units from the model, so the result can
     be passed to the fitting routine. This is necessary as CoumpoundModel
@@ -269,6 +281,9 @@ def _strip_units_from_model(model_in, spectrum):
           require the ``degree`` parameter when instantiating the class, and
           "everything else" that does not require an "extra" parameter for
           class instantiation.
+
+    Note: If convert is False, then we will *not* do the conversion of units
+          to the units of the Spectrum1D object.  Otherwise we will convert.
     """
 
     #
@@ -329,7 +344,7 @@ def _strip_units_from_model(model_in, spectrum):
         for pn in new_sub_model.param_names:
 
             # This could be a Quantity or Parameter
-            v = _convert_and_dequantify(getattr(sub_model, pn), dispersion_unit, dispersion, flux_unit)
+            v = _convert_and_dequantify(getattr(sub_model, pn), dispersion_unit, dispersion, flux_unit, convert=convert)
 
             #
             # Add this information for the parameter name into the
@@ -349,7 +364,7 @@ def _strip_units_from_model(model_in, spectrum):
             #
             new_bounds = []
             for a in sub_model.bounds[pn]:
-                v = _convert_and_dequantify(a, dispersion_unit, dispersion, flux_unit)
+                v = _convert_and_dequantify(a, dispersion_unit, dispersion, flux_unit, convert=convert)
                 new_bounds.append(v)
 
             new_sub_model.bounds[pn] = tuple(new_bounds)
