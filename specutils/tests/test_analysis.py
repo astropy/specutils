@@ -476,6 +476,14 @@ def test_fwhm():
     result = fwhm(spectrum)
     assert result == 5*u.um
 
+    # Flat spectrum
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 9*u.um
+
 
 def test_fwhm_multi_spectrum():
 
