@@ -4,6 +4,7 @@ import operator
 
 import numpy as np
 import astropy.units as u
+from astropy.modeling import optimizers
 
 from ..manipulation.utils import excise_regions
 from ..utils import QuantityModel
@@ -17,7 +18,10 @@ __all__ = ['fit_lines']
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-              exclude_regions=None, weights=None, window=None, ignore_units=False):
+              exclude_regions=None, weights=None, window=None, ignore_units=False,
+              maxiter=optimizers.DEFAULT_MAXITER,
+              acc=optimizers.DEFAULT_ACC,
+              epsilon=optimizers.DEFAULT_EPS):
     """
     Fit the input models to the spectrum. The parameter values of the
     input models will be used as the initial conditions for the fit.
@@ -109,7 +113,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
-                               ignore_units)
+                               ignore_units, maxiter, acc, epsilon)
 
         fitted_models.append(fit_model)
 
@@ -120,7 +124,10 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-               exclude_regions=None, weights=None, window=None, ignore_units=False):
+               exclude_regions=None, weights=None, window=None, ignore_units=False,
+               maxiter=optimizers.DEFAULT_MAXITER,
+               acc=optimizers.DEFAULT_ACC,
+               epsilon=optimizers.DEFAULT_EPS):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
@@ -225,6 +232,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
                           wcs=input_spectrum.wcs,
                           velocity_convention=input_spectrum.velocity_convention,
                           rest_value=input_spectrum.rest_value)
+
     #
     # Compound models with units can not be fit.
     #
@@ -238,7 +246,8 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # Do the fitting of spectrum to the model.
     #
 
-    fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless)
+    fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless,
+                                maxiter=maxiter, acc=acc, epsilon=epsilon)
 
     #
     # Now add the units back onto the model....
