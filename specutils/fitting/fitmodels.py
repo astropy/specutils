@@ -48,6 +48,19 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         If True, then ignore any units on the input model.
         (This would effectively be assuming the model and spectrum have the same units.)
 
+    maxiter : int
+        maximum number of iterations
+
+    acc : float
+        Relative error desired in the approximate solution
+
+    epsilon : float
+        A suitable step length for the forward-difference
+        approximation of the Jacobian (if model.fjac=None). If
+        epsfcn is less than the machine precision, it is
+        assumed that the relative errors in the functions are
+        of the order of the machine precision.
+
     Returns
     -------
     models : Compound model of `~astropy.modeling.Model`
@@ -155,6 +168,19 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     ignore_units : bool
         If True, then ignore any units on the input model.
         (This would effectively be assuming the model and spectrum have the same units.)
+
+    maxiter : int
+        maximum number of iterations
+
+    acc : float
+        Relative error desired in the approximate solution
+
+    epsilon : float
+        A suitable step length for the forward-difference
+        approximation of the Jacobian (if model.fjac=None). If
+        epsfcn is less than the machine precision, it is
+        assumed that the relative errors in the functions are
+        of the order of the machine precision.
 
     Returns
     -------
