@@ -288,15 +288,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
 def _combined_region_data(spec):
     if isinstance(spec, list):
-        x = []
-        y = []
-        for i in range(len(spec)):
-            if spec[i] is None:
-                continue
-            x += list(spec[i].spectral_axis.value)
-            y += list(spec[i].flux.value)
-        x = np.array(x)
-        y = np.array(y)
+
+        # Merge sub-spec spectral_axis and flux values.
+        x = np.array([sv for subspec in spec if subspec is not None 
+                         for sv in subspec.spectral_axis.value])
+        y = np.array([sv for subspec in spec if subspec is not None 
+                         for sv in subspec.spectral_axis.flux])
     else:
         if spec is None:
             return
