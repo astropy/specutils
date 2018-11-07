@@ -1,12 +1,16 @@
 from __future__ import division
 
 import operator
+from copy import deepcopy
 
 import numpy as np
 import astropy.units as u
 
 from ..manipulation.utils import excise_regions
 from ..utils import QuantityModel
+from ..manipulation import extract_region
+from ..spectra.spectral_region import SpectralRegion
+from ..spectra.spectrum1d import Spectrum1D
 from astropy.modeling import fitting, Model, models
 
 
@@ -168,7 +172,10 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         spectrum = excise_regions(spectrum, exclude_regions)
 
     dispersion = spectrum.spectral_axis
+    dispersion_unit = spectrum.spectral_axis.unit
+
     flux = spectrum.flux
+    flux_unit = spectrum.flux.unit
 
     #
     # Determine the window if it is not None.  There
@@ -197,6 +204,28 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         dispersion = dispersion[indices]
         flux = flux[indices]
 
+    elif window is not None and isinstance(window, SpectralRegion):
+        try:
+            idx1, idx2 = window.bounds
+            if idx1 == idx2:
+                raise Exception("Bad selected region.")
+            extracted_regions = extract_region(spectrum, window)
+            dispersion, flux = _combined_region_data(extracted_regions)
+            dispersion = dispersion * dispersion_unit
+            flux = flux * flux_unit
+        except ValueError as e:
+            return
+
+    if flux is None or len(flux) == 0:
+        raise Exception("Spectrum flux is empty or None.")
+
+    input_spectrum = spectrum
+
+    spectrum = Spectrum1D(flux=flux.value * flux_unit,
+                          spectral_axis=dispersion.value * dispersion_unit,
+                          wcs=input_spectrum.wcs,
+                          velocity_convention=input_spectrum.velocity_convention,
+                          rest_value=input_spectrum.rest_value)
     #
     # Compound models with units can not be fit.
     #
@@ -222,6 +251,28 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         fit_model = fit_model_unitless
 
     return fit_model
+
+def _combined_region_data(spec):
+    if isinstance(spec, list):
+        x = []
+        y = []
+        for i in range(len(spec)):
+            if spec[i] is None:
+                continue
+            x += list(spec[i].spectral_axis.value)
+            y += list(spec[i].flux.value)
+        x = np.array(x)
+        y = np.array(y)
+    else:
+        if spec is None:
+            return
+        x = spec.spectral_axis.value
+        y = spec.flux.value
+
+    if len(x) == 0:
+        return
+
+    return x, y
 
 def _convert(q, dispersion_unit, dispersion, flux_unit):
     #
