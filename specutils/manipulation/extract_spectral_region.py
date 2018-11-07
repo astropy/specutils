@@ -105,6 +105,9 @@ def extract_region(spectrum, region):
         And we calculate ``sub_spectrum = extract_region(spectrum, region)``, then the ``sub_spectrum``
         spectral axis will be ``[0.2, 0.3, 0.4, 0.5] * u.um``.
 
+    If the ``region`` does not overlap with the ``spectrum`` then an empty Spectrum1D object
+    will be returned.
+
     """
 
     extracted_spectrum = []
