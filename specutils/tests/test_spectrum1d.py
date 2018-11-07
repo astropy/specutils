@@ -168,7 +168,7 @@ def test_wcs_transformations():
     assert isinstance(pix_axis, np.ndarray)
     assert isinstance(disp_axis, u.Quantity)
 
-    assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA]), [461.2])
+    assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA, 700*u.nm]), [461.2, 461.2])
 
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
