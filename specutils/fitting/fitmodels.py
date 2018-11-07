@@ -1,7 +1,6 @@
 from __future__ import division
 
 import operator
-from copy import deepcopy
 
 import numpy as np
 import astropy.units as u
