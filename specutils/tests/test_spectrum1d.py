@@ -10,6 +10,7 @@ from astropy.utils.data import get_pkg_data_filename
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
 from ..manipulation import noise_region_uncertainty
+from ..wcs.adapters import fitswcs_adapter
 
 from ..spectra import Spectrum1D, SpectralRegion
 
@@ -166,6 +167,8 @@ def test_wcs_transformations():
 
     assert isinstance(pix_axis, np.ndarray)
     assert isinstance(disp_axis, u.Quantity)
+
+    assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA, 700*u.nm]), [461.2, 461.2])
 
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',

@@ -229,9 +229,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def _format_array_summary(self, label, array):
-        mean = np.mean(array)
-        s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
-        return s.format(label+':', array[0], array[-1], mean)
+        if len(array) > 0:
+            mean = np.mean(array)
+            s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
+            return s.format(label+':', array[0], array[-1], mean)
+        else:
+            return "{:17} [ ],  mean= n/a".format(label+':')
 
     def __str__(self):
         result = "Spectrum1D "

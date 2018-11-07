@@ -3,6 +3,7 @@ from math import floor, ceil  # faster than int(np.floor/ceil(float))
 import numpy as np
 
 from astropy import units as u
+from .. import Spectrum1D
 
 __all__ = ['extract_region']
 
@@ -26,23 +27,47 @@ def _to_edge_pixel(subregion, spectrum):
 
     """
 
+    #
+    # Left/lower side of sub region
+    #
     if subregion[0].unit.is_equivalent(u.pix):
         left_index = floor(subregion[0].value)
     else:
-        left_reg_in_spec_unit = subregion[0].to(spectrum.spectral_axis.unit, u.spectral())
-        try:
-            left_index = int(np.ceil(spectrum.wcs.world_to_pixel([left_reg_in_spec_unit])))
-        except Exception as e:
-            left_index = None
 
+        # Convert lower value to spectrum spectral_axis units
+        left_reg_in_spec_unit = subregion[0].to(spectrum.spectral_axis.unit, u.spectral())
+
+        if left_reg_in_spec_unit < spectrum.spectral_axis[0]:
+            left_index = 0
+        elif left_reg_in_spec_unit > spectrum.spectral_axis[-1]:
+            left_index = len(spectrum.spectral_axis)-1
+        else:
+            try:
+                left_index = int(np.ceil(spectrum.wcs.world_to_pixel([left_reg_in_spec_unit])))
+            except Exception as e:
+                raise ValueError("Lower value, {}, could not convert using spectrum's WCS {}".format(
+                    left_reg_in_spec_unit, spectrum.wcs))
+
+    #
+    # Right/upper side of sub region
+    #
     if subregion[1].unit.is_equivalent(u.pix):
         right_index = ceil(subregion[1].value)
     else:
+
+        # Convert upper value to spectrum spectral_axis units
         right_reg_in_spec_unit = subregion[1].to(spectrum.spectral_axis.unit, u.spectral())
-        try:
-            right_index = int(np.floor(spectrum.wcs.world_to_pixel([right_reg_in_spec_unit]))) + 1
-        except Exception as e:
-            right_index = None
+
+        if right_reg_in_spec_unit > spectrum.spectral_axis[-1]:
+            right_index = len(spectrum.spectral_axis)-1
+        elif right_reg_in_spec_unit < spectrum.spectral_axis[0]:
+            right_index = 0 
+        else:
+            try:
+                right_index = int(np.floor(spectrum.wcs.world_to_pixel([right_reg_in_spec_unit]))) + 1
+            except Exception as e:
+                raise ValueError("Upper value, {}, could not convert using spectrum's WCS {}".format(
+                    right_reg_in_spec_unit, spectrum.wcs))
 
     return left_index, right_index
 
@@ -80,6 +105,9 @@ def extract_region(spectrum, region):
         And we calculate ``sub_spectrum = extract_region(spectrum, region)``, then the ``sub_spectrum``
         spectral axis will be ``[0.2, 0.3, 0.4, 0.5] * u.um``.
 
+    If the ``region`` does not overlap with the ``spectrum`` then an empty Spectrum1D object
+    will be returned.
+
     """
 
     extracted_spectrum = []
@@ -88,7 +116,9 @@ def extract_region(spectrum, region):
 
         # If both indices are out of bounds then return None
         if left_index is None and right_index is None:
-            extracted_spectrum.append(None)
+            empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit, 
+                                        flux=[]*spectrum.flux.unit)
+            extracted_spectrum.append(empty_spectrum)
         else:
 
             # If only one index is out of bounds then set it to
