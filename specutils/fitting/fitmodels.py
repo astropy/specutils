@@ -4,9 +4,13 @@ import operator
 
 import numpy as np
 import astropy.units as u
+from astropy.modeling import optimizers
 
 from ..manipulation.utils import excise_regions
 from ..utils import QuantityModel
+from ..manipulation import extract_region
+from ..spectra.spectral_region import SpectralRegion
+from ..spectra.spectrum1d import Spectrum1D
 from astropy.modeling import fitting, Model, models
 
 
@@ -14,7 +18,10 @@ __all__ = ['fit_lines']
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-              exclude_regions=None, weights=None, window=None, ignore_units=False):
+              exclude_regions=None, weights=None, window=None, ignore_units=False,
+              maxiter=optimizers.DEFAULT_MAXITER,
+              acc=optimizers.DEFAULT_ACC,
+              epsilon=optimizers.DEFAULT_EPS):
     """
     Fit the input models to the spectrum. The parameter values of the
     input models will be used as the initial conditions for the fit.
@@ -40,6 +47,19 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     ignore_units : bool
         If True, then ignore any units on the input model.
         (This would effectively be assuming the model and spectrum have the same units.)
+
+    maxiter : int
+        maximum number of iterations
+
+    acc : float
+        Relative error desired in the approximate solution
+
+    epsilon : float
+        A suitable step length for the forward-difference
+        approximation of the Jacobian (if model.fjac=None). If
+        epsfcn is less than the machine precision, it is
+        assumed that the relative errors in the functions are
+        of the order of the machine precision.
 
     Returns
     -------
@@ -106,7 +126,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
-                               ignore_units)
+                               ignore_units, maxiter, acc, epsilon)
 
         fitted_models.append(fit_model)
 
@@ -117,7 +137,10 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-               exclude_regions=None, weights=None, window=None, ignore_units=False):
+               exclude_regions=None, weights=None, window=None, ignore_units=False,
+               maxiter=optimizers.DEFAULT_MAXITER,
+               acc=optimizers.DEFAULT_ACC,
+               epsilon=optimizers.DEFAULT_EPS):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
@@ -146,6 +169,19 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         If True, then ignore any units on the input model.
         (This would effectively be assuming the model and spectrum have the same units.)
 
+    maxiter : int
+        maximum number of iterations
+
+    acc : float
+        Relative error desired in the approximate solution
+
+    epsilon : float
+        A suitable step length for the forward-difference
+        approximation of the Jacobian (if model.fjac=None). If
+        epsfcn is less than the machine precision, it is
+        assumed that the relative errors in the functions are
+        of the order of the machine precision.
+
     Returns
     -------
     model : Compound model of `~astropy.modeling.Model`
@@ -168,7 +204,10 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         spectrum = excise_regions(spectrum, exclude_regions)
 
     dispersion = spectrum.spectral_axis
+    dispersion_unit = spectrum.spectral_axis.unit
+
     flux = spectrum.flux
+    flux_unit = spectrum.flux.unit
 
     #
     # Determine the window if it is not None.  There
@@ -197,6 +236,29 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         dispersion = dispersion[indices]
         flux = flux[indices]
 
+    elif window is not None and isinstance(window, SpectralRegion):
+        try:
+            idx1, idx2 = window.bounds
+            if idx1 == idx2:
+                raise Exception("Bad selected region.")
+            extracted_regions = extract_region(spectrum, window)
+            dispersion, flux = _combined_region_data(extracted_regions)
+            dispersion = dispersion * dispersion_unit
+            flux = flux * flux_unit
+        except ValueError as e:
+            return
+
+    if flux is None or len(flux) == 0:
+        raise Exception("Spectrum flux is empty or None.")
+
+    input_spectrum = spectrum
+
+    spectrum = Spectrum1D(flux=flux.value * flux_unit,
+                          spectral_axis=dispersion.value * dispersion_unit,
+                          wcs=input_spectrum.wcs,
+                          velocity_convention=input_spectrum.velocity_convention,
+                          rest_value=input_spectrum.rest_value)
+
     #
     # Compound models with units can not be fit.
     #
@@ -210,7 +272,8 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # Do the fitting of spectrum to the model.
     #
 
-    fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless)
+    fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless,
+                                maxiter=maxiter, acc=acc, epsilon=epsilon)
 
     #
     # Now add the units back onto the model....
@@ -222,6 +285,28 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         fit_model = fit_model_unitless
 
     return fit_model
+
+def _combined_region_data(spec):
+    if isinstance(spec, list):
+        x = []
+        y = []
+        for i in range(len(spec)):
+            if spec[i] is None:
+                continue
+            x += list(spec[i].spectral_axis.value)
+            y += list(spec[i].flux.value)
+        x = np.array(x)
+        y = np.array(y)
+    else:
+        if spec is None:
+            return
+        x = spec.spectral_axis.value
+        y = spec.flux.value
+
+    if len(x) == 0:
+        return
+
+    return x, y
 
 def _convert(q, dispersion_unit, dispersion, flux_unit):
     #
