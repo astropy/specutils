@@ -296,7 +296,7 @@ def _combined_region_data(spec):
         x = np.array([sv for subspec in spec if subspec is not None 
                          for sv in subspec.spectral_axis.value])
         y = np.array([sv for subspec in spec if subspec is not None 
-                         for sv in subspec.spectral_axis.flux])
+                         for sv in subspec.flux.value])
     else:
         if spec is None:
             return
