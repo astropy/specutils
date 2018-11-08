@@ -10,7 +10,7 @@ from astropy.io import registry as io_registry
 from ..spectra.spectrum1d import Spectrum1D
 
 
-__all__ = ['data_loader', 'custom_writer']
+__all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension']
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
@@ -81,6 +81,27 @@ def custom_writer(label, dtype=Spectrum1D):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def get_loaders_by_extension(extension):
+    """
+    Retrieve a list of loader labels associated with a given extension.
+
+    Parameters
+    ----------
+    extension : str
+        The extension for which associated loaders will be matched against.
+
+    Returns
+    -------
+    loaders : list
+        A list of loader names that are associated with the extension.
+    """
+    return [fmt for (fmt, cls), func in io_registry._readers.items()
+            if issubclass(cls, Spectrum1D) and
+            func.extensions is not None and
+            extension in func.extensions]
+
 
 def _load_user_io():
     # Get the path relative to the user's home directory
