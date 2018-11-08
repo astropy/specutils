@@ -4,7 +4,7 @@ import os
 
 import tempfile
 
-ZENODO_ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
+ZENODO_ACCESS_TOKEN = os.environ.get("ZENODO_ACCESS_TOKEN")
 
 
 @pytest.fixture(scope='module')
