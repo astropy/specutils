@@ -1,5 +1,8 @@
 from __future__ import absolute_import, division
 
+import numpy as np
+from astropy.table import Table
+import astropy.units as u
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
@@ -21,6 +24,24 @@ def test_specific_spec_axis_unit():
 
     assert optical_spec.spectral_axis.unit == "Angstrom"
 
+def test_generic_ecsv_reader(tmpdir):
+   # Create a small data set
+   wave = np.arange(1,1.1,0.01)*u.AA
+   flux = np.ones(len(wave))*1.e-14*u.Jy
+   uncertainty = 0.01*flux
+   table = Table([wave,flux,uncertainty],names=["wave","flux","uncertainty"])
+   tmpfile = str(tmpdir.join('_tst.ecsv'))
+   table.write(tmpfile,format='ascii.ecsv')
+
+   # Read it in and check against the original
+   spectrum = Spectrum1D.read(tmpfile,format='generic-ecsv')
+   assert spectrum.spectral_axis.unit == table['wave'].unit
+   assert spectrum.flux.unit == table['flux'].unit
+   assert spectrum.uncertainty.unit == table['uncertainty'].unit
+   assert spectrum.spectral_axis.unit == table['wave'].unit
+   assert np.alltrue(spectrum.spectral_axis == table['wave'])
+   assert np.alltrue(spectrum.flux == table['flux'])
+   assert np.alltrue(spectrum.uncertainty.array == table['uncertainty'])
 
 # def test_spectrum_collection_loader():
 #     stis_fits_file = get_pkg_data_filename('data/odbue5030_x1d.fits')
