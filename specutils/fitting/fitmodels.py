@@ -42,19 +42,6 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
 
-    maxiter : int
-        maximum number of iterations
-
-    acc : float
-        Relative error desired in the approximate solution
-
-    epsilon : float
-        A suitable step length for the forward-difference
-        approximation of the Jacobian (if model.fjac=None). If
-        epsfcn is less than the machine precision, it is
-        assumed that the relative errors in the functions are
-        of the order of the machine precision.
-
     Returns
     -------
     models : Compound model of `~astropy.modeling.Model`
@@ -67,6 +54,9 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
        * The models in the list of ``model`` are added
           together and passed as a compound model to the
           `~astropy.modeling.fitting.Fitter` class instance.
+
+       * Additional keyword arguments are passed directly into 
+         the call to the ``fitter``.
 
     """
 
@@ -165,7 +155,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         whole spectrum will be used in the fitting.
 
     ignore_units : bool
-        If True, then ignore any units on the input model.
+        If True, then ignore any units on the input model parameters.
         (This would effectively be assuming the model and spectrum have the same units.)
 
     Returns
@@ -176,6 +166,9 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     Notes
     -----
        * Could add functionality to set the bounds in ``model`` if they are not set.
+
+       * Additional keyword arguments are passed directly into 
+         the call to the ``fitter``.
 
     """
 
