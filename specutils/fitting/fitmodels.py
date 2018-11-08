@@ -18,7 +18,7 @@ __all__ = ['fit_lines']
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-              exclude_regions=None, weights=None, window=None, ignore_units=False,
+              exclude_regions=None, weights=None, window=None,
               maxiter=optimizers.DEFAULT_MAXITER,
               acc=optimizers.DEFAULT_ACC,
               epsilon=optimizers.DEFAULT_EPS):
@@ -43,10 +43,6 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
-
-    ignore_units : bool
-        If True, then ignore any units on the input model.
-        (This would effectively be assuming the model and spectrum have the same units.)
 
     maxiter : int
         maximum number of iterations
@@ -123,6 +119,13 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
             model_window = window
         else:
             model_window = None
+
+        #
+        # Check to see if the model has units. If it does not 
+        # have units then we are going to ignore them.
+        #
+
+        ignore_units = getattr(model_guess, model_guess.param_names[0]).unit is None
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
@@ -282,7 +285,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     if not ignore_units:
         fit_model = _add_units_to_model(fit_model_unitless, model, spectrum)
     else:
-        fit_model = fit_model_unitless
+        fit_model = QuantityModel(fit_model_unitless, spectrum.spectral_axis.unit, spectrum.flux.unit)
 
     return fit_model
 
