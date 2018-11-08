@@ -99,6 +99,18 @@ An ``extensions`` keyword can be provided. This allows for basic filename
 extension matching in the case that the ``identifier`` function is not
 provided.
 
+It is possible to query the registry to return the list of loaders associated
+with a particular extension.
+
+.. code-block:: python
+
+    from specutils.io import get_loaders_by_extension
+
+    loaders = get_loaders_by_extension('fits')
+
+The returned list contains the format labels that can be fed into the ``format``
+keyword argument of the ``Spectrum1D.read`` method.
+
 After placing this python file in the user's ``~/.specutils`` directory, it
 can be utilized by referencing its name in the ``read`` method of the
 :class:`~specutils.Spectrum1D` class
