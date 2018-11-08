@@ -19,9 +19,7 @@ __all__ = ['fit_lines']
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
               exclude_regions=None, weights=None, window=None,
-              maxiter=optimizers.DEFAULT_MAXITER,
-              acc=optimizers.DEFAULT_ACC,
-              epsilon=optimizers.DEFAULT_EPS):
+              **kwargs):
     """
     Fit the input models to the spectrum. The parameter values of the
     input models will be used as the initial conditions for the fit.
@@ -129,7 +127,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
-                               ignore_units, maxiter, acc, epsilon)
+                               ignore_units, **kwargs)
 
         fitted_models.append(fit_model)
 
@@ -141,9 +139,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
                exclude_regions=None, weights=None, window=None, ignore_units=False,
-               maxiter=optimizers.DEFAULT_MAXITER,
-               acc=optimizers.DEFAULT_ACC,
-               epsilon=optimizers.DEFAULT_EPS):
+               **kwargs):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
@@ -171,19 +167,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     ignore_units : bool
         If True, then ignore any units on the input model.
         (This would effectively be assuming the model and spectrum have the same units.)
-
-    maxiter : int
-        maximum number of iterations
-
-    acc : float
-        Relative error desired in the approximate solution
-
-    epsilon : float
-        A suitable step length for the forward-difference
-        approximation of the Jacobian (if model.fjac=None). If
-        epsfcn is less than the machine precision, it is
-        assumed that the relative errors in the functions are
-        of the order of the machine precision.
 
     Returns
     -------
@@ -276,7 +259,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     #
 
     fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless,
-                                maxiter=maxiter, acc=acc, epsilon=epsilon)
+                                **kwargs)
 
     #
     # Now add the units back onto the model....
