@@ -6,7 +6,7 @@ import astropy.units as u
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from .conftest import get_remote_data
+from .conftest import remote_data
 from .. import Spectrum1D
 
 
@@ -44,5 +44,6 @@ def test_generic_ecsv_reader(tmpdir):
    assert np.alltrue(spectrum.flux == table['flux'])
    assert np.alltrue(spectrum.uncertainty.array == table['uncertainty'])
 
-
-
+def test_auto_load(remote_data):
+    # spec = Spectrum1D.read(remote_data)
+    print(remote_data)
