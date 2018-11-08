@@ -42,6 +42,9 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
 
+    Additional keyword arguments are passed directly into the call to the
+    ``fitter``.
+
     Returns
     -------
     models : Compound model of `~astropy.modeling.Model`
@@ -54,9 +57,6 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
        * The models in the list of ``model`` are added
           together and passed as a compound model to the
           `~astropy.modeling.fitting.Fitter` class instance.
-
-       * Additional keyword arguments are passed directly into 
-         the call to the ``fitter``.
 
     """
 
@@ -109,7 +109,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
             model_window = None
 
         #
-        # Check to see if the model has units. If it does not 
+        # Check to see if the model has units. If it does not
         # have units then we are going to ignore them.
         #
 
@@ -167,7 +167,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     -----
        * Could add functionality to set the bounds in ``model`` if they are not set.
 
-       * Additional keyword arguments are passed directly into 
+       * Additional keyword arguments are passed directly into
          the call to the ``fitter``.
 
     """
@@ -269,9 +269,9 @@ def _combined_region_data(spec):
     if isinstance(spec, list):
 
         # Merge sub-spec spectral_axis and flux values.
-        x = np.array([sv for subspec in spec if subspec is not None 
+        x = np.array([sv for subspec in spec if subspec is not None
                          for sv in subspec.spectral_axis.value])
-        y = np.array([sv for subspec in spec if subspec is not None 
+        y = np.array([sv for subspec in spec if subspec is not None
                          for sv in subspec.flux.value])
     else:
         if spec is None:
