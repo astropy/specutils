@@ -9,7 +9,7 @@ from specutils.spectra import Spectrum1D
 
 def generic_spectrum_from_table(table, **kwargs):
     """
-    Load spectrum an Astropy table.
+    Load spectrum from an Astropy table into a Spectrum1D object.
     Uses the following logic to figure out which column is which:
 
      * Spectral axis (dispersion) is the first column with units
@@ -58,7 +58,7 @@ def generic_spectrum_from_table(table, **kwargs):
                 continue
 
         # If no success there, check for other possible length units
-        if found_column == None:
+        if found_column is None:
             for c in columns_to_search:
                 if table[c].unit in additional_valid_units:
                     found_column = c
@@ -87,7 +87,7 @@ def generic_spectrum_from_table(table, **kwargs):
                 continue
 
         # If no success there, check for other possible flux units
-        if found_column == None:
+        if found_column is None:
             for c in columns_to_search:
                 if table[c].unit in additional_valid_units:
                     found_column = c
