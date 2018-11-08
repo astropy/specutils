@@ -6,24 +6,28 @@ from astropy.utils.data import get_pkg_data_filename
 
 from .. import Spectrum1D
 from .conftest import remote_data_path
+from ..io import get_loaders_by_extension
 
 
-@pytest.mark.parametrize('remote_data_path',
-                         [
-                             {'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}
-                         ],
-                         indirect=True, scope='function')
+remote_access = lambda argvals: pytest.mark.parametrize(
+    'remote_data_path', argvals, indirect=True,  scope='function')
+
+
+def test_get_loaders_by_extension():
+    loader_labels = get_loaders_by_extension('fits')
+
+    assert loader_labels > 0
+    assert isinstance(loader_labels[0], str)
+
+
+@remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_spectrum1d_GMOSfits(remote_data_path):
     optical_spec_2 = Spectrum1D.read(remote_data_path, format='wcs1d-fits')
 
     assert len(optical_spec_2.data) == 3020
 
 
-@pytest.mark.parametrize('remote_data_path',
-                         [
-                             {'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}
-                         ],
-                         indirect=True, scope='function')
+@remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_specific_spec_axis_unit(remote_data_path):
     optical_spec = Spectrum1D.read(remote_data_path,
                                    spectral_axis_unit="Angstrom",
@@ -50,12 +54,8 @@ def test_generic_ecsv_reader(tmpdir):
    assert np.alltrue(spectrum.flux == table['flux'])
    assert np.alltrue(spectrum.uncertainty.array == table['uncertainty'])
 
-@pytest.mark.parametrize('remote_data_path',
-                         [
-                             {'id': '1481119', 'filename': 'COS_FUV.fits'},
-                             {'id': '1481181', 'filename': 'COS_NUV.fits'}
-                         ],
-                         indirect=True, scope='function')
+@remote_access([{'id': '1481119', 'filename': 'COS_FUV.fits'},
+                {'id': '1481181', 'filename': 'COS_NUV.fits'}])
 def test_hst_cos(remote_data_path):
     spec = Spectrum1D.read(remote_data_path, format='HST/COS')
 
@@ -63,13 +63,9 @@ def test_hst_cos(remote_data_path):
     assert spec.flux.size > 0
 
 
-@pytest.mark.parametrize('remote_data_path',
-                         [
-                             {'id': '1481192', 'filename':'STIS_FUV.fits'},
-                             {'id': '1481185', 'filename': 'STIS_NUV.fits'},
-                             {'id': '1481183', 'filename': 'STIS_CCD.fits'},
-                         ],
-                         indirect=True, scope='function')
+@remote_access([{'id': '1481192', 'filename':'STIS_FUV.fits'},
+                {'id': '1481185', 'filename': 'STIS_NUV.fits'},
+                {'id': '1481183', 'filename': 'STIS_CCD.fits'}])
 def test_hst_stis(remote_data_path):
     spec = Spectrum1D.read(remote_data_path, format='HST/STIS')
 
