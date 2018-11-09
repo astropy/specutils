@@ -36,6 +36,7 @@ env:
         - EVENT_TYPE='pull_request push'
         - CONDA_DEPENDENCIES=''
         - CONDA_CHANNELS='astropy-ci-extras'
+        - secure: DaTQPHvyBcWPW0APYoYKKC1TwtMEJjmbFWf7pgE0kBN8ZMfsELlMRqXdTsCkSNpsX2Zgm1WshkL7BMpv8BO5AaiScHcugGpb1mVp2gYFqPUnjyDYNDHRuXc1hDf+4dxdawLOnpk48i6YkZkreKkxjYPDUH1Vg+2axZkFUh8xwkw=
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
