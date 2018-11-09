@@ -41,6 +41,14 @@ class FITSWCSAdapter(WCSAdapter):
         """Pass slicing information to the internal `FITSWCS` object."""
         return self.wcs[item]
 
+    def __deepcopy__(self, *args, **kwargs):
+        """
+        Ensure deepcopy is passed through to the underlying fits wcs object.
+        Doing so allows for proper memoization handling in the astropy fits
+        machinery.
+        """
+        return self.__class__(self.wcs.__deepcopy__(*args, **kwargs))
+
     def world_to_pixel(self, world_array):
         """
         Method for performing the world to pixel transformations.

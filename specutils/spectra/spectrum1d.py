@@ -55,15 +55,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if flux is not None and not isinstance(flux, u.Quantity):
             raise ValueError("Flux must be a `Quantity` object.")
 
-        # Insure that the unit information codified in the quantity object is
-        # the One True Unit.
-        kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
-                                            else kwargs.get('unit'))
-
         # In cases of slicing, new objects will be initialized with `data`
         # instead of `flux`. Ensure we grab the `data` argument.
         if flux is None and 'data' in kwargs:
             flux = kwargs.pop('data')
+
+        # Ensure that the unit information codified in the quantity object is
+        # the One True Unit.
+        kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
+                                            else kwargs.get('unit'))
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
