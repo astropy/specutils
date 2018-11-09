@@ -25,8 +25,8 @@ def remote_data_path(request):
     # Directly download the data file link returned from the deposition info
     f = requests.get(r.json()['links']['download'], params={'access_token': ZENODO_ACCESS_TOKEN})
 
-    # Creating a temporary directory that is automatically cleaned up when the
-    # context is existed, removing any temporarily stored data.
+    # Create a temporary directory that is automatically cleaned up when the
+    # context is exited, removing any temporarily stored data.
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_path = os.path.join(tmp_dir, file_name)
 

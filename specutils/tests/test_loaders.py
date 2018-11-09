@@ -10,7 +10,7 @@ from ..io import get_loaders_by_extension
 
 
 remote_access = lambda argvals: pytest.mark.parametrize(
-    'remote_data_path', argvals, indirect=True,  scope='function')
+    'remote_data_path', argvals, indirect=True, scope='function')
 
 
 def test_get_loaders_by_extension():
@@ -35,6 +35,7 @@ def test_specific_spec_axis_unit(remote_data_path):
 
     assert optical_spec.spectral_axis.unit == "Angstrom"
 
+
 def test_generic_ecsv_reader(tmpdir):
    # Create a small data set
    wave = np.arange(1,1.1,0.01)*u.AA
@@ -53,6 +54,7 @@ def test_generic_ecsv_reader(tmpdir):
    assert np.alltrue(spectrum.spectral_axis == table['wave'])
    assert np.alltrue(spectrum.flux == table['flux'])
    assert np.alltrue(spectrum.uncertainty.array == table['uncertainty'])
+
 
 @remote_access([{'id': '1481119', 'filename': 'COS_FUV.fits'},
                 {'id': '1481181', 'filename': 'COS_NUV.fits'}])
