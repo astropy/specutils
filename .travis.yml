@@ -32,7 +32,7 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='six gwcs scipy matplotlib'
+        - PIP_DEPENDENCIES='six gwcs scipy matplotlib requests'
         - EVENT_TYPE='pull_request push'
         - CONDA_DEPENDENCIES=''
         - CONDA_CHANNELS='astropy-ci-extras'

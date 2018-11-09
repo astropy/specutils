@@ -16,7 +16,7 @@ remote_access = lambda argvals: pytest.mark.parametrize(
 def test_get_loaders_by_extension():
     loader_labels = get_loaders_by_extension('fits')
 
-    assert loader_labels > 0
+    assert len(loader_labels) > 0
     assert isinstance(loader_labels[0], str)
 
 
