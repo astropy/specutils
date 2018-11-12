@@ -90,11 +90,12 @@ def _snr_single_region(spectrum, region=None):
     # and single-dispersion, multiple-flux
     return np.mean(flux / uncertainty, axis=-1)
 
+
 def snr_der(spectrum, region=None):
     """
     This function computes the signal to noise ratio DER_SNR following the
     definition set forth by the Spectral Container Working Group of ST-ECF,
-    MAST and CADC
+    MAST and CADC.
 
     Parameters
     ----------
@@ -112,16 +113,13 @@ def snr_der(spectrum, region=None):
     Notes
     -----
     The DER_SNR algorithm is an unbiased estimator describing the spectrum
-    as a whole as long as
-       * the noise is uncorrelated in wavelength bins spaced 
-         two pixels apart
-       * the noise is Normal distributed
-       * for large wavelength regions, the signal over the scale of 5 or
-	 more pixels can be approximated by a straight line
+    as a whole as long as the noise is uncorrelated in wavelength bins spaced
+    two pixels apart, the noise is Normal distributed, for large wavelength
+    regions, the signal over the scale of 5 or more pixels can be approximated
+    by a straight line.
 
     Code and some docs copied from 
-    http://www.stecf.org/software/ASTROsoft/DER_SNR/der_snr.py
-
+    ``http://www.stecf.org/software/ASTROsoft/DER_SNR/der_snr.py``
     """
 
     # No region, therefore whole spectrum.
