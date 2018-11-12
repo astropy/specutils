@@ -175,8 +175,8 @@ def _snr_der(spectrum, region=None):
 
     # For spectra shorter than this, no value can be returned
     if (n>4):
-        signal = np.median(flux.value)
-        noise  = 0.6052697 * np.median(np.abs(2.0 * flux.value[2:n-2] - flux.value[0:n-4] - flux.value[4:n]))
+        signal = np.median(flux)
+        noise  = 0.6052697 * np.median(np.abs(2.0 * flux[2:n-2] - flux[0:n-4] - flux[4:n]))
         return signal / noise
     else:
         return 0.0
