@@ -4,8 +4,9 @@ import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
 
-from specutils import Spectrum1D
-from specutils.io.registers import data_loader
+from ... import Spectrum1D
+from ..registers import data_loader
+from ..generic_spectrum_from_table import generic_spectrum_from_table
 
 __all__ = ['ascii_identify', 'ascii_loader', 'ipac_identify', 'ipac_loader']
 
@@ -21,51 +22,56 @@ def ascii_identify(origin, *args, **kwargs):
 
 
 @data_loader(label="ASCII", identifier=ascii_identify, extensions=['txt', 'ascii'])
-def ascii_loader(file_name, **kwargs):
+def ascii_loader(file_name, column_mapping=None, **kwargs):
     """
-    Load spectrum from ASCII file
+    Load spectrum from ASCII file.
 
     Parameters
     ----------
     file_name: str
         The path to the ASCII file
+    column_mapping : dict
+        A dictionary describing the relation between the ASCII file columns
+        and the arguments of the `Spectrum1D` class, along with unit
+        information. The dictionary keys should be the ASCII file column names
+        while the values should be a two-tuple where the first element is the
+        associated `Spectrum1D` keyword argument, and the second element is the
+        unit for the ASCII file column::
+
+            column_mapping = {'FLUX': ('flux': 'Jy')}
 
     Returns
     -------
     data: Spectrum1D
-        The data.
+        The spectrum that is represented by the data in this table.
     """
-    table = Table.read(file_name, format='ascii')
+    tab = Table.read(file_name, format='ascii')
 
-    flux = None
-    dispersion = None
-    uncertainty = None
+    # If not column mapping is given, attempt to parse the ascii files using
+    # unit information
+    if column_mapping is None:
+        return generic_spectrum_from_table(tab, **kwargs)
 
-    # If there are more than two columns, assume that the first is wavelength,
-    # and the second is flux
-    if len(table.columns) > 1:
-        disp_unit = u.Unit("Angstrom")
-        dispersion = table.columns[0] * disp_unit
+    spec_kwargs = {}
 
-        unit = u.Unit("Jy")
-        flux = table.columns[1] * unit
+    # Associate columns of the file with the appropriate spectrum1d arguments
+    for col_name, (kwarg_name, unit) in column_mapping.items():
+        if unit is None:
+            kwarg_val = tab[column_mapping]
+        else:
+            kwarg_val = u.Quantity(tab[column_mapping], unit)
 
-        # If there are more than two columns, assume the third is uncertainty
-        if len(table.columns) >= 2:
-            uncertainty = StdDevUncertainty(table.columns[2] * unit)
-    # If there is only one column, assume it's just flux.
-    elif len(table.columns) == 1:
-        unit = u.Unit("Jy")
-        flux = table.columns[0] * unit
+        spec_kwargs.setdefault(kwarg_name, kwarg_val)
 
-    return Spectrum1D(flux=flux,
-                      spectral_axis=dispersion,
-                      meta=table.meta,
-                      uncertainty=uncertainty)
+    # Ensure that the uncertainties are a subclass of NDUncertainty
+    if spec_kwargs.get('uncertainty') is not None:
+        spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
+
+    return Spectrum1D(**spec_kwargs, meta=tab.meta)
 
 
 def ipac_identify(*args, **kwargs):
-    """Check if it's an ASCII file."""
+    """Check if it's an IPAC-style ASCII file."""
     name = os.path.basename(args[0])
 
     if name.lower().split('.')[-1] in ['txt', 'dat']:
@@ -75,40 +81,49 @@ def ipac_identify(*args, **kwargs):
 
 
 @data_loader(label="IPAC", identifier=ipac_identify, extensions=['txt', 'dat'])
-def ipac_loader(file_name, **kwargs):
+def ipac_loader(file_name, column_mapping=None, **kwargs):
     """
-    Load spectrum from ASCII file
+    Load spectrum from IPAC-style ASCII file
 
     Parameters
     ----------
     file_name: str
-        The path to the ASCII file
+        The path to the IPAC-style ASCII file.
+    column_mapping : dict
+        A dictionary describing the relation between the IPAC-style ASCII
+        file columns and the arguments of the `Spectrum1D` class, along with
+        unit information. The dictionary keys should be the IPAC-style ASCII
+        file column names while the values should be a two-tuple where the
+        first element is the associated `Spectrum1D` keyword argument, and the
+        second element is the unit for the IPAC-style ASCII file column::
+
+            column_mapping = {'FLUX': ('flux': 'Jy')}
 
     Returns
     -------
     data: Spectrum1D
-        The data.
+        The spectrum that is represented by the data in this table.
     """
-    table = Table.read(file_name, format='ascii.ipac')
+    tab = Table.read(file_name, format='ascii.ipac')
 
-    flux = None
-    dispersion = None
-    uncertainty = None
+    # If not column mapping is given, attempt to parse the ascii files using
+    # unit information
+    if column_mapping is None:
+        return generic_spectrum_from_table(tab, **kwargs)
 
-    # If there are more than two columns, assume that the first is wavelength,
-    # and the second is flux
-    if len(table.columns) > 1:
-        dispersion = u.Quantity(table.columns[0])
-        flux = u.Quantity(table.columns[1])
+    spec_kwargs = {}
 
-        # If there are more than two columns, assume the third is uncertainty
-        if len(table.columns) >= 2:
-            uncertainty = StdDevUncertainty(u.Quantity(table.columns[2]))
-    # If there is only one column, assume it's just flux.
-    elif len(table.columns) == 1:
-        flux = u.Quantity(table.columns[0])
+    # Associate columns of the file with the appropriate spectrum1d arguments
+    for col_name, (kwarg_name, unit) in column_mapping.items():
+        if unit is None:
+            kwarg_val = tab[column_mapping]
+        else:
+            kwarg_val = u.Quantity(tab[column_mapping], unit)
 
-    return Spectrum1D(flux=flux,
-                      spectral_axis=dispersion,
-                      meta=table.meta,
-                      uncertainty=uncertainty)
+        spec_kwargs.setdefault(kwarg_name, kwarg_val)
+
+    # Ensure that the uncertainties are a subclass of NDUncertainty
+    if spec_kwargs.get('uncertainty') is not None:
+        spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
+
+    return Spectrum1D(**spec_kwargs, meta=tab.meta)
