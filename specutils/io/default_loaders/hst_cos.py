@@ -22,7 +22,7 @@ def cos_identify(origin, *args, **kwargs):
 @data_loader(label="HST/COS", identifier=cos_identify, extensions=['FITS', 'FIT', 'fits', 'fit'])
 def cos_spectrum_loader(file_name, **kwargs):
     """
-    Load file from COS spectral data into a spectrum object.
+    Load COS spectral data from the MAST archive into a spectrum object.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ def cos_spectrum_loader(file_name, **kwargs):
     Returns
     -------
     data: Spectrum1D
-        The data.
+        The spectrum that is represented by the data in this table.
     """
 
     name = os.path.basename(file_name)

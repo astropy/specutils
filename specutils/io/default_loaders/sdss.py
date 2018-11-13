@@ -45,7 +45,7 @@ def spSpec_identify(origin, *args, **kwargs):
 @data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
 def spec_loader(file_name, **kwargs):
     """
-    Loader for SDSS-III/IV spec files.
+    Loader for SDSS-III/IV optical spectrum "spec" files.
 
     Parameters
     ----------
@@ -54,8 +54,8 @@ def spec_loader(file_name, **kwargs):
 
     Returns
     -------
-    data: Spectrum1DRef
-        The data.
+    data: Spectrum1D
+        The spectrum that is represented by the data in this table.
     """
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
@@ -96,8 +96,8 @@ def spSpec_loader(file_name, **kwargs):
 
     Returns
     -------
-    data: Spectrum1DRef
-        The data.
+    data: Spectrum1D
+        The spectrum that is represented by the data in this table.
     """
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)

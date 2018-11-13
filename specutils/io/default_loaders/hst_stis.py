@@ -22,7 +22,7 @@ def stis_identify(origin, *args, **kwargs):
 @data_loader(label="HST/STIS",identifier=stis_identify, extensions=['FITS', 'FIT', 'fits', 'fit'])
 def stis_spectrum_loader(file_name, **kwargs):
     """
-    Load file from STIS spectral data into a spectrum object
+    Load STIS spectral data from the MAST archive into a spectrum object.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ def stis_spectrum_loader(file_name, **kwargs):
     Returns
     -------
     data: Spectrum1D
-        The data.
+        The spectrum that is represented by the data in this table.
     """
 
     name = os.path.basename(file_name)

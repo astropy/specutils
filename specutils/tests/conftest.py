@@ -1,6 +1,6 @@
 import pytest
-import requests
 import os
+import urllib
 
 import tempfile
 
@@ -13,15 +13,15 @@ def remote_data_path(request):
     """
     file_id, file_name = request.param.values()
 
-    f = requests.get("https://zenodo.org/record/{}/files/{}?download=1".format(
-        file_id, file_name))
+    url = "https://zenodo.org/record/{}/files/{}?download=1".format(
+        file_id, file_name)
 
     # Create a temporary directory that is automatically cleaned up when the
     # context is exited, removing any temporarily stored data.
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_path = os.path.join(tmp_dir, file_name)
 
-        with open(file_path, 'wb') as tmp_file:
-            tmp_file.write(f.content)
+        with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
+            tmp_file.write(r.read())
 
             yield file_path

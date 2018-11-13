@@ -64,8 +64,8 @@ def apVisit_loader(file_name, **kwargs):
 
     Returns
     -------
-    data: Spectrum1DRef
-        The data.
+    data: Spectrum1D
+        The spectrum that is represented by the data in this table.
     """
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
@@ -110,8 +110,8 @@ def apStar_loader(file_name, **kwargs):
 
     Returns
     -------
-    data: Spectrum1DRef
-        The data.
+    data: Spectrum1D
+        The spectrum that is represented by the data in this table.
     """
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
@@ -152,8 +152,8 @@ def aspcapStar_loader(file_name, **kwargs):
 
     Returns
     -------
-    data: Spectrum1DRef
-        The data.
+    data: Spectrum1D
+        The spectrum that is represented by the data in this table.
     """
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)

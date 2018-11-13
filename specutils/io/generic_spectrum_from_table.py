@@ -29,7 +29,7 @@ def generic_spectrum_from_table(table, **kwargs):
     Returns
     -------
     data: Spectrum1D
-        The data.
+        The spectrum that is represented by the data in this table.
 
     Raises
     ------
