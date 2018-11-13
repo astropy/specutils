@@ -2,7 +2,9 @@ import numpy as np
 from astropy.table import Table
 import astropy.units as u
 import pytest
-from astropy.utils.data import get_pkg_data_filename
+import urllib
+import shutil
+import tempfile
 
 from .. import Spectrum1D
 from .conftest import remote_data_path
@@ -70,6 +72,17 @@ def test_hst_cos(remote_data_path):
                 {'id': '1481183', 'filename': 'STIS_CCD.fits'}])
 def test_hst_stis(remote_data_path):
     spec = Spectrum1D.read(remote_data_path, format='HST/STIS')
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+
+
+def test_sdss():
+    with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
+
+            spec = Spectrum1D.read(tmp_file.name, format="SDSS-III/IV spec")
 
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
