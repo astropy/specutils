@@ -29,12 +29,20 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
              dtype=Spectrum1D, extensions=['fits'])
 def wcs1d_fits_loader(file_name, spectral_axis_unit=None, **kwargs):
     """
+    Loader for spectra in FITS-files with defined WCS. Attempted to parse
+    specific keywords to determine unit information. Optional spectral axis
+    unit definition can be provided.
+
     Parameters
     ----------
     file_name : str
-
+        The path to the FITS file.
     spectral_axis_unit: str or unit, optional
         Optional string or unit object to specify units of spectral axis.
+
+    Notes
+    -----
+    Loader contributed by Kelle Cruz.
     """
     logging.info("Spectrum file looks like wcs1d-fits")
 

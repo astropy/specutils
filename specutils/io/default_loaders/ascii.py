@@ -29,7 +29,7 @@ def ascii_loader(file_name, column_mapping=None, **kwargs):
     Parameters
     ----------
     file_name: str
-        The path to the ASCII file
+        The path to the ASCII file.
     column_mapping : dict
         A dictionary describing the relation between the ASCII file columns
         and the arguments of the `Spectrum1D` class, along with unit
