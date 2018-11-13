@@ -77,12 +77,23 @@ def test_hst_stis(remote_data_path):
     assert spec.flux.size > 0
 
 
-def test_sdss():
+def test_sdss_spec():
     with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile() as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
             spec = Spectrum1D.read(tmp_file.name, format="SDSS-III/IV spec")
 
-    assert isinstance(spec, Spectrum1D)
-    assert spec.flux.size > 0
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+
+
+def test_sdss_spspec():
+    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
+
+            spec = Spectrum1D.read(tmp_file.name, format="SDSS-I/II spSpec")
+
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
