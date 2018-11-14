@@ -12,7 +12,7 @@ from ...spectra import Spectrum1D
 from ..registers import data_loader
 
 
-def identify_muscles_sed_fits(origin, *args, **kwargs):
+def identify_muscles_sed(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
     # fits.open(args[0]) = hdulist
@@ -28,10 +28,22 @@ def identify_muscles_sed_fits(origin, *args, **kwargs):
             )
 
 
-@data_loader("muscles_sed_fits", identifier=identify_muscles_sed_fits,
+@data_loader("muscles-sed", identifier=identify_muscles_sed,
              dtype=Spectrum1D, extensions=['fits'])
-def muscles_sed_fits(file_name, **kwargs):
-    logging.info("Spectrum file looks like MUSCLES SED fits")
+def muscles_sed(file_name, **kwargs):
+    """
+    Load spectrum from a MUSCLES SED FITS file.
+
+    Parameters
+    ----------
+    file_name: str
+        The path to the FITS file.
+
+    Returns
+    -------
+    data: Spectrum1D
+        The spectrum that is represented by the data in this table.
+    """
     # name is not used; what was it for?
     # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 

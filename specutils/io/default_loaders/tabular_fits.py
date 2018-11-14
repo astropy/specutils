@@ -11,7 +11,8 @@ from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader, custom_writer
-from ..generic_spectrum_from_table import generic_spectrum_from_table
+from ..parsing_utils import (generic_spectrum_from_table, 
+                             spectrum_from_column_mapping)
 
 __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 
@@ -48,7 +49,7 @@ def tabular_fits_loader(file_name, column_mapping=None, **kwargs):
         associated `Spectrum1D` keyword argument, and the second element is the
         unit for the ASCII file column::
 
-            column_mapping = {'FLUX': ('flux': 'Jy')}
+            column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------
@@ -62,27 +63,12 @@ def tabular_fits_loader(file_name, column_mapping=None, **kwargs):
 
     tab = Table.read(file_name, format='fits')
 
-    # If not column mapping is given, attempt to parse the file using
+    # If no column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
         return generic_spectrum_from_table(tab, wcs=wcs, **kwargs)
 
-    spec_kwargs = {}
-
-    # Associate columns of the file with the appropriate spectrum1d arguments
-    for col_name, (kwarg_name, unit) in column_mapping.items():
-        if unit is None:
-            kwarg_val = tab[column_mapping]
-        else:
-            kwarg_val = u.Quantity(tab[column_mapping], unit)
-
-        spec_kwargs.setdefault(kwarg_name, kwarg_val)
-
-    # Ensure that the uncertainties are a subclass of NDUncertainty
-    if spec_kwargs.get('uncertainty') is not None:
-        spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
-
-    return Spectrum1D(**spec_kwargs, meta=tab.meta)
+    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs)
 
 
 @custom_writer("tabular-fits")

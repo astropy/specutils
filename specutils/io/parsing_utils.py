@@ -7,6 +7,51 @@ import warnings
 
 from specutils.spectra import Spectrum1D
 
+
+def spectrum_from_column_mapping(table, column_mapping, wcs=None):
+    """
+    Given a table and a mapping of the table column names to attributes
+    on the Spectrum1D object, parse the information into a Spectrum1D.
+
+    Parameters
+    ----------
+    table : :class:`~astropy.table.Table`
+        The table object returned from parsing the data file.
+    column_mapping : dict
+        A dictionary describing the relation between the file columns
+        and the arguments of the `Spectrum1D` class, along with unit
+        information. The dictionary keys should be the file column names
+        while the values should be a two-tuple where the first element is the
+        associated `Spectrum1D` keyword argument, and the second element is the
+        unit for the file column::
+
+            column_mapping = {'FLUX': ('flux', 'Jy')}
+
+    wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
+        WCS object passed to the Spectrum1D initializer.
+    """
+    spec_kwargs = {}
+
+    # Associate columns of the file with the appropriate spectrum1d arguments
+    for col_name, (kwarg_name, unit) in column_mapping.items():
+        # If the table object couldn't parse any unit information,
+        # fallback to the column mapper defined unit
+        unit = table[col_name].unit if table[col_name].unit else unit
+
+        if unit is not None:
+            kwarg_val = u.Quantity(table[col_name], unit)
+        else:
+            kwarg_val = table[col_name]
+
+        spec_kwargs.setdefault(kwarg_name, kwarg_val)
+
+    # Ensure that the uncertainties are a subclass of NDUncertainty
+    if spec_kwargs.get('uncertainty') is not None:
+        spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
+
+    return Spectrum1D(**spec_kwargs, wcs=wcs, meta=table.meta)
+
+
 def generic_spectrum_from_table(table, wcs=None, **kwargs):
     """
     Load spectrum from an Astropy table into a Spectrum1D object.

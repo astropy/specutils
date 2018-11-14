@@ -4,7 +4,7 @@ import os
 from ...spectra import Spectrum1D
 from ..registers import data_loader
 from astropy.table import Table
-from ..generic_spectrum_from_table import generic_spectrum_from_table
+from ..parsing_utils import generic_spectrum_from_table
 
 
 def identify_ecsv(origin, *args, **kwargs):
