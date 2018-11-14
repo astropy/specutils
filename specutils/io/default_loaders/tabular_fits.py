@@ -7,6 +7,7 @@ from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
 import astropy.units as u
 import numpy as np
+from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader, custom_writer
@@ -54,12 +55,17 @@ def tabular_fits_loader(file_name, column_mapping=None, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
+    # Parse the wcs information. The wcs will be passed to the column finding
+    # routines to search for spectral axis information in the file.
+    with fits.open(file_name) as hdulist:
+        wcs = WCS(hdulist[0].header)
+
     tab = Table.read(file_name, format='fits')
 
     # If not column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, **kwargs)
+        return generic_spectrum_from_table(tab, wcs=wcs, **kwargs)
 
     spec_kwargs = {}
 

@@ -7,7 +7,7 @@ import warnings
 
 from specutils.spectra import Spectrum1D
 
-def generic_spectrum_from_table(table, **kwargs):
+def generic_spectrum_from_table(table, wcs=None, **kwargs):
     """
     Load spectrum from an Astropy table into a Spectrum1D object.
     Uses the following logic to figure out which column is which:
@@ -25,6 +25,9 @@ def generic_spectrum_from_table(table, **kwargs):
     ----------
     file_name: str
         The path to the ECSV file
+    wcs : :class:`~astropy.wcs.WCS`
+        A FITS WCS object. If this is present, the machinery will fall back
+        to using the wcs to find the dispersion information.
 
     Returns
     -------
@@ -99,11 +102,15 @@ def generic_spectrum_from_table(table, **kwargs):
     colnames = table.colnames.copy()
 
     # Use the first column that has spectral unit as the dispersion axis
-    spectral_axis_column = _find_spectral_axis_column(table,colnames)
-    if spectral_axis_column is None:
+    spectral_axis_column = _find_spectral_axis_column(table, colnames)
+
+    if spectral_axis_column is None and wcs is None:
        raise IOError("Could not identify column containing the wavelength, frequency or energy")
-    spectral_axis = table[spectral_axis_column].to(table[spectral_axis_column].unit)
-    colnames.remove(spectral_axis_column)
+    elif wcs is not None:
+        spectral_axis = None
+    else:
+        spectral_axis = table[spectral_axis_column].to(table[spectral_axis_column].unit)
+        colnames.remove(spectral_axis_column)
 
     # Use the first column that has a spectral_density equivalence as the flux
     flux_column = _find_spectral_column(table,colnames,spectral_axis)
@@ -125,10 +132,12 @@ def generic_spectrum_from_table(table, **kwargs):
             warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
 
     # Create the Spectrum1D object and return it
-    if spectral_axis_column is not None and flux_column is not None:
+    if wcs is not None or spectral_axis_column is not None and flux_column is not None:
        if err_column is not None:
            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-               uncertainty=err,meta=table.meta)
+                                 uncertainty=err, meta=table.meta, wcs=wcs)
        else:
-           spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,meta=table.meta)
+           spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+                                 meta=table.meta, wcs=wcs)
+
     return spectrum
