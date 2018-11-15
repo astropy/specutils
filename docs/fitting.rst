@@ -119,7 +119,7 @@ For example:
    >>> s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
    >>> # Estimate parameter Gaussian1D
-   >>> g_init = estimate_line_parameters(s_single, models.Gaussian1D()) #doctest:#SKIP
+   >>> g_init = estimate_line_parameters(s_single, models.Gaussian1D()) #doctest:+SKIP
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
