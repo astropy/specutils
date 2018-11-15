@@ -33,6 +33,12 @@ An example using the `~specutils.fitting.find_lines_threshold`:
 
 .. code-block:: python
 
+   >>> import numpy as np
+   >>> from astropy.modeling import models
+   >>> from specutils import Spectrum1D, SpectralRegion
+   >>> from specutils.manipulation import noise_region_uncertainty
+   >>> from specutils.fitting import find_lines_threshold
+
    >>> # Define the spectrum
    >>> np.random.seed(42)
    >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
@@ -67,6 +73,12 @@ An example using the `~specutils.fitting.find_lines_threshold`:
 An example using the `~specutils.fitting.find_lines_derivative`:
 
 .. code-block:: python
+
+   >>> import numpy as np
+   >>> from astropy.modeling import models
+   >>> from specutils import Spectrum1D, SpectralRegion
+   >>> from specutils.manipulation import noise_region_uncertainty
+   >>> from specutils.fitting import find_lines_derivative
 
    >>> # Define the spectrum
    >>> np.random.seed(42)
@@ -111,6 +123,11 @@ For example:
 
 .. code-block:: python
 
+   >>> import numpy as np
+   >>> from astropy.modeling import models
+   >>> from specutils import Spectrum1D
+   >>> from specutils.fitting import estimate_line_parameters
+
    >>> # Define the spectrum
    >>> np.random.seed(0)
    >>> x = np.linspace(0., 10., 200)
@@ -134,6 +151,11 @@ For example:
 An example where the parameter estimators are defined:
 
 .. code-block:: python
+
+   >>> import numpy as np
+   >>> from astropy.modeling import models
+   >>> from specutils import Spectrum1D
+   >>> from specutils.fitting import estimate_line_parameters
 
    >>> # Define the spectrum
    >>> np.random.seed(0)
