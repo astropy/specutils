@@ -48,7 +48,7 @@ def test_generic_ecsv_reader(tmpdir):
    table.write(tmpfile,format='ascii.ecsv')
 
    # Read it in and check against the original
-   spectrum = Spectrum1D.read(tmpfile,format='generic-ecsv')
+   spectrum = Spectrum1D.read(tmpfile,format='ECSV')
    assert spectrum.spectral_axis.unit == table['wave'].unit
    assert spectrum.flux.unit == table['flux'].unit
    assert spectrum.uncertainty.unit == table['uncertainty'].unit
