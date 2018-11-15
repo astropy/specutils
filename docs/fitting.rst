@@ -46,8 +46,8 @@ An example using the `~specutils.fitting.find_lines_threshold`:
    >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
    >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
    >>> x = np.linspace(0, 10, 200)
-   >>> y_double = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+   >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
    >>> # Define a noise region for adding the uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
@@ -88,8 +88,8 @@ An example using the `~specutils.fitting.find_lines_derivative`:
    >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
    >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
    >>> x = np.linspace(0, 10, 200)
-   >>> y_double = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+   >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
    >>> # Define a noise region for adding the uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
