@@ -15,6 +15,154 @@ initial guesses.  This model is then actually fit to the spectrum's ``flux``,
 yielding a single composite model result (which can be split back into its
 components if desired).
 
+Line Finding
+------------
+
+There are two methods implemented in order to find emission and/or absorption
+lines in a `~specutils.Spectrum1D` spectrum.
+
+The first method is `~specutils.fitting.find_lines_threshold` that will
+find lines by thresholding the flux based on a factor applied to the
+spectrum uncertainty.  The second method is
+`~specutils.fitting.find_lines_derivative` that will find the lines based
+on calculating the derivative and then thresholding based on it.  Both methods 
+return an `~astropy.table.QTable` that contains columns ``line_center``, 
+``line_type`` and ``line_center_index``.
+
+An example using the `~specutils.fitting.find_lines_threshold`:
+
+.. code-block:: python
+
+   >>> # Define the spectrum
+   >>> np.random.seed(42)
+   >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
+   >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+   >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
+   >>> x = np.linspace(0, 10, 200)
+   >>> y_double = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+
+   >>> # Define a noise region for adding the uncertainty
+   >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
+   >>> spectrum = noise_region_uncertainty(spectrum, noise_region)
+
+   >>> # Derivative method
+   >>> lines = find_lines_threshold(spectrum, noise_factor=3)
+
+   >>> emission_lines = lines[lines['line_type'] == 'emission'] #doctest:+SKIP
+         line_center    line_type line_center_index
+              um                                   
+      ----------------- --------- -----------------
+      4.572864321608041  emission                91
+      4.824120603015076  emission                96
+      5.477386934673367  emission               109
+       8.99497487437186  emission               179
+
+   >>> absorption_lines = lines[lines['line_type'] == 'absorption'] #doctest:+SKIP
+         line_center    line_type  line_center_index
+              um
+      ----------------- ---------- -----------------
+      8.190954773869347 absorption               163
+
+An example using the `~specutils.fitting.find_lines_derivative`:
+
+.. code-block:: python
+
+   >>> # Define the spectrum
+   >>> np.random.seed(42)
+   >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
+   >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+   >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
+   >>> x = np.linspace(0, 10, 200)
+   >>> y_double = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+
+   >>> # Define a noise region for adding the uncertainty
+   >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
+
+   >>> # Derivative method
+   >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)
+
+   >>> emission_lines = lines[lines['line_type'] == 'emission'] #doctest:+SKIP
+         line_center    line_type line_center_index
+              um                                   
+      ----------------- --------- -----------------
+      4.522613065326634  emission                90
+      5.477386934673367  emission               109
+
+   >>> absorption_lines = lines[lines['line_type'] == 'absorption'] #doctest:+SKIP
+         line_center    line_type  line_center_index
+              um                                    
+      ----------------- ---------- -----------------
+      8.190954773869347 absorption               163
+
+
+Parameter Estimation
+--------------------
+
+Given a spectrum with a set of lines, the `~specutils.fitting.estimate_line_parameters`
+can be called to estimate the `~astropy.modeling.Model` parameters given a spectrum.
+
+For the `~astropy.modeling.models.Gaussian1D`, `~astropy.modeling.models.Voigt1D`, and
+`~astropy.modeling.models.Lorentz1D` models, there are predefined estimators for each 
+of the parameters. For all other models one must define the estimators (see example below).
+
+For example:
+
+.. code-block:: python
+
+   >>> # Define the spectrum
+   >>> np.random.seed(0)
+   >>> x = np.linspace(0., 10., 200)
+   >>> y_single = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
+   >>> y_single += np.random.normal(0., 0.2, x.shape)
+   >>> s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+
+   >>> # Estimate parameter Gaussian1D
+   >>> g_init = estimate_line_parameters(s_single, models.Gaussian1D()) #doctest:#SKIP
+      Model: Gaussian1D
+      Inputs: ('x',)
+      Outputs: ('y',)
+      Model set size: 1
+      Parameters:
+              amplitude            mean             stddev     
+                  Jy                um                um       
+          ----------------- ----------------- -----------------
+          3.354169257846847 6.218588636687762 1.608040201005025
+
+
+An example where the parameter estimators are defined:
+
+.. code-block:: python
+
+   >>> # Define the spectrum
+   >>> np.random.seed(0)
+   >>> x = np.linspace(0., 10., 200)
+   >>> y_single = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
+   >>> y_single += np.random.normal(0., 0.2, x.shape)
+   >>> s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+
+   >>> # Estimate parameter MexicanHat1D
+   >>> mh = models.MexicanHat1D()
+   >>> estimators = {
+   >>>   'amplitude': lambda s: max(s.flux),
+   >>>   'x_0': lambda s: centroid(s, region=None),
+   >>>   'stddev': lambda s: fwhm(s)
+   >>> }
+   >>> mh._constraints['parameter_estimator'] = estimators
+
+   >>> g_init = estimate_line_parameters(s_single, mh) #doctest:+SKIP
+      Model: MexicanHat1D
+      Inputs: ('x',)
+      Outputs: ('y',)
+      Model set size: 1
+      Parameters:
+              amplitude            x_0        sigma
+                  Jy                um             
+          ----------------- ----------------- -----
+          3.354169257846847 6.218588636687762   1.0
+
+
 Model (Line) Fitting
 --------------------
 

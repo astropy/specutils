@@ -11,14 +11,15 @@ from astropy.stats import sigma_clipped_stats
 from ..manipulation.utils import excise_regions
 from ..analysis import fwhm, centroid
 from ..utils import QuantityModel
-from ..manipulation import extract_region
+from ..manipulation import extract_region, noise_region_uncertainty
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
 from astropy.modeling import fitting, Model, models
 from astropy.table import QTable
 
 
-__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines', 'estimate_parameters']
+__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines', 
+           'estimate_line_parameters']
 
 # Define the initial estimators
 #   This is the default methods to use to estimate astropy model
@@ -29,34 +30,53 @@ __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines', 'estima
 #   Each method list must take a Spectrum1D object and should return
 #   a Quantity.
 
-parameter_estimators = {
+_parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
         'mean': lambda s: centroid(s, region=None),
         'stddev': lambda s: fwhm(s) 
     },
-    'Lorentzian1D': {
-        'amplitude': None,
-        'x_0': None,
-        'fwhm':None 
+    'Lorentz1D': {
+        'amplitude': lambda s: max(s.flux),
+        'x_0': lambda s: centroid(s, region=None),
+        'fwhm': lambda s: fwhm(s) 
     },
     'Voigt1D': {
-        'x_0': None,
-        'amplitude_L': None,
-        'fwhm_L': None,
-        'fwhm_G': None 
-    },
-    'Const1D': {
-        'amplitude': None 
+        'x_0': lambda s: centroid(s, region=None),
+        'amplitude_L': lambda s: max(s.flux),
+        'fwhm_L': lambda s: fwhm(s) / np.sqrt(2),
+        'fwhm_G': lambda s: fwhm(s) / np.sqrt(2) 
     }
 }
 
+
 def _set_parameter_estimators(model):
-    if model.__class__.__name__ in parameter_estimators:
-        model._constraints['parameter_estimator'] = parameter_estimators[model.__class__.__name__]
+    """
+    Helper method used in method below.
+    """
+    if model.__class__.__name__ in _parameter_estimators:
+        model._constraints['parameter_estimator'] = _parameter_estimators[model.__class__.__name__]
     return model
 
-def estimate_parameters(spectrum, model):
+
+def estimate_line_parameters(spectrum, model):
+    """
+    The input ``model`` parameters will be estimated from the input ``spectrum``. The
+    ``model`` can be specified with default parameters, for example ``Gaussian1D()``.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.Spectrum1D`
+        The spectrum object from which we will estimate the model parameters.
+
+    model : `~astropy.modeling.models.Model`
+        Model for which we want to estimate parameters from the spectrum.
+
+    Returns
+    -------
+    model : `~astropy.modeling.models.Model`
+        Model with parameters estimated.
+    """
 
     if not 'parameter_estimator' in model._constraints:
         model = _set_parameter_estimators(model)
@@ -73,35 +93,41 @@ def estimate_parameters(spectrum, model):
 
     return model
 
+
 def _consecutive(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 
-def find_lines_threshold(spectrum, sigma=3):
+def find_lines_threshold(spectrum, noise_factor=1):
     """
     Find the emission and absorption lines in a spectrum. The method
     here is a very simple threshold based on the standard deviation
     of the noise.
 
+    This method only works with continuum-subtracted spectra and the uncertainty
+    must be defined on the spectrum. To add the uncertainty, one could use
+    `~specutils.manipulation.noise_region_uncertainty` to add the uncertainty.
+
     Parameters
     ----------
-    spectrum : Spectrum1D
-        The spectrum object over which the equivalent width will be calculated.
+    spectrum : `~specutils.Spectrum1D`
+        The spectrum object in which the lines will be found.
 
-    sigma : float
-        Threshold on line finding.
+    noise_factor : float
+        ``noise_factor`` multiplied by noise estimate from ``noise_region``, used for
+        thresholding.
 
     Returns
     -------
     qtable: `~astropy.table.QTable`
-        Table of emission and absorption lines. Spectral axis values, line type and indices stored.
+        Table of emission and absorption lines. Line center (``line_center``),
+        line type (``line_type``) and index of line center (``line_center_index``) 
+        are stored for each line.
     """
 
-    #
-    # Find the emission lines
-    #
-
-    inds = np.where(np.abs(spectrum.flux) > sigma*spectrum.flux.unit)[0]
+    # Threshold based on noise estimate and factor.
+    uncertainty = spectrum.uncertainty
+    inds = np.where(np.abs(spectrum.flux) > (noise_factor*uncertainty.array)*spectrum.flux.unit)[0]
     pos_inds = inds[spectrum.flux.value[inds] > 0]
     line_inds_grouped = _consecutive(pos_inds, stepsize=1)
 
@@ -127,32 +153,34 @@ def find_lines_threshold(spectrum, sigma=3):
     #
 
     qtable = QTable()
-    qtable['lines'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
+    qtable['line_center'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
                                              spectrum.spectral_axis.value[absorption_inds]]))*spectrum.spectral_axis.unit
     qtable['line_type'] = ['emission']*len(emission_inds) + ['absorption']*len(absorption_inds)
-    qtable['index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
+    qtable['line_center_index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
 
     return qtable
 
 
-def find_lines_derivative(spectrum, sigma):
+def find_lines_derivative(spectrum, flux_threshold):
     """
     Find the emission and absorption lines in a spectrum. The method
-    here is a very simple threshold based on the standard deviation
-    of the noise.
+    here is a based on finding the zero crossings in the derivative 
+    of the spectrum.
 
     Parameters
     ----------
     spectrum : Spectrum1D
         The spectrum object over which the equivalent width will be calculated.
 
-    sigma : float
+    flux_threshold : float or `~astropy.units.Quantity`
         Threshold on line finding.
 
     Returns
     -------
     qtable: `~astropy.table.QTable`
-        Table of emission and absorption lines. Spectral axis values, line type and indices stored.
+        Table of emission and absorption lines. Line center (``line_center``),
+        line type (``line_type``) and index of line center (``line_center_index``) 
+        are stored for each line.
     """
 
     # Take the derivative to find the zero crossings which correspond to
@@ -164,6 +192,10 @@ def find_lines_derivative(spectrum, sigma):
     S = np.sign(dY)
     ddS = convolve(S, kernel, 'valid')
 
+    # Add units if needed.
+    if isinstance(flux_threshold, (int, float)):
+        flux_threshold = float(flux_threshold) * spectrum.flux.unit
+
     #
     # Emmision lines
     #
@@ -171,7 +203,7 @@ def find_lines_derivative(spectrum, sigma):
     # Find all the indices that appear to be part of a +ve peak
     candidates = np.where(dY > 0)[0] + (len(kernel) - 1)
     line_inds = sorted(set(candidates).intersection(np.where(ddS == -2)[0] + 1))
-    line_inds = np.array(line_inds)[spectrum.flux[line_inds] > sigma*spectrum.flux.unit]
+    line_inds = np.array(line_inds)[spectrum.flux[line_inds] > flux_threshold]
 
     # Now group them and find the max highest point.
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
@@ -188,7 +220,7 @@ def find_lines_derivative(spectrum, sigma):
     # Find all the indices that appear to be part of a -ve peak
     candidates = np.where(dY < 0)[0] + (len(kernel) - 1)
     line_inds = sorted(set(candidates).intersection(np.where(ddS == 2)[0] + 1))
-    line_inds = np.array(line_inds)[spectrum.flux[line_inds] < -sigma*spectrum.flux.unit]
+    line_inds = np.array(line_inds)[spectrum.flux[line_inds] < -flux_threshold]
 
     # Now group them and find the max highest point.
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
@@ -203,10 +235,10 @@ def find_lines_derivative(spectrum, sigma):
     #
 
     qtable = QTable()
-    qtable['lines'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
+    qtable['line_center'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
                                              spectrum.spectral_axis.value[absorption_inds]]))*spectrum.spectral_axis.unit
     qtable['line_type'] = ['emission']*len(emission_inds) + ['absorption']*len(absorption_inds)
-    qtable['index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
+    qtable['line_center_index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
 
     return qtable
 
