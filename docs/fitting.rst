@@ -35,6 +35,7 @@ An example using the `~specutils.fitting.find_lines_threshold`:
 
    >>> import numpy as np
    >>> from astropy.modeling import models
+   >>> import astropy.units as u
    >>> from specutils import Spectrum1D, SpectralRegion
    >>> from specutils.manipulation import noise_region_uncertainty
    >>> from specutils.fitting import find_lines_threshold
@@ -76,6 +77,7 @@ An example using the `~specutils.fitting.find_lines_derivative`:
 
    >>> import numpy as np
    >>> from astropy.modeling import models
+   >>> import astropy.units as u
    >>> from specutils import Spectrum1D, SpectralRegion
    >>> from specutils.manipulation import noise_region_uncertainty
    >>> from specutils.fitting import find_lines_derivative
@@ -125,6 +127,7 @@ For example:
 
    >>> import numpy as np
    >>> from astropy.modeling import models
+   >>> import astropy.units as u
    >>> from specutils import Spectrum1D
    >>> from specutils.fitting import estimate_line_parameters
 
@@ -154,6 +157,7 @@ An example where the parameter estimators are defined:
 
    >>> import numpy as np
    >>> from astropy.modeling import models
+   >>> import astropy.units as u
    >>> from specutils import Spectrum1D
    >>> from specutils.fitting import estimate_line_parameters
 
