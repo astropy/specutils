@@ -134,12 +134,12 @@ For example:
    >>> # Define the spectrum
    >>> np.random.seed(0)
    >>> x = np.linspace(0., 10., 200)
-   >>> y_single = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
-   >>> y_single += np.random.normal(0., 0.2, x.shape)
-   >>> s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+   >>> y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
+   >>> y += np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
    >>> # Estimate parameter Gaussian1D
-   >>> g_init = estimate_line_parameters(s_single, models.Gaussian1D()) #doctest:+SKIP
+   >>> g_init = estimate_line_parameters(spectrum, models.Gaussian1D()) #doctest:+SKIP
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
@@ -164,9 +164,9 @@ An example where the parameter estimators are defined:
    >>> # Define the spectrum
    >>> np.random.seed(0)
    >>> x = np.linspace(0., 10., 200)
-   >>> y_single = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
-   >>> y_single += np.random.normal(0., 0.2, x.shape)
-   >>> s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+   >>> y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
+   >>> y += np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
    >>> # Estimate parameter MexicanHat1D
    >>> mh = models.MexicanHat1D()
@@ -177,7 +177,7 @@ An example where the parameter estimators are defined:
    >>> }
    >>> mh._constraints['parameter_estimator'] = estimators
 
-   >>> g_init = estimate_line_parameters(s_single, mh) #doctest:+SKIP
+   >>> g_init = estimate_line_parameters(spectrum, mh) #doctest:+SKIP
       Model: MexicanHat1D
       Inputs: ('x',)
       Outputs: ('y',)
