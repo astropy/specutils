@@ -69,12 +69,12 @@ def estimate_line_parameters(spectrum, model):
     spectrum : `~specutils.Spectrum1D`
         The spectrum object from which we will estimate the model parameters.
 
-    model : `~astropy.modeling.models.Model`
+    model : `~astropy.modeling.Model`
         Model for which we want to estimate parameters from the spectrum.
 
     Returns
     -------
-    model : `~astropy.modeling.models.Model`
+    model : `~astropy.modeling.Model`
         Model with parameters estimated.
     """
 
