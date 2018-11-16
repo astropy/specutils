@@ -117,8 +117,9 @@ Parameter Estimation
 Given a spectrum with a set of lines, the `~specutils.fitting.estimate_line_parameters`
 can be called to estimate the `~astropy.modeling.Model` parameters given a spectrum.
 
-For the `~astropy.modeling.models.Gaussian1D`, `~astropy.modeling.models.Voigt1D`, and
-`~astropy.modeling.models.Lorentz1D` models, there are predefined estimators for each 
+For the `~astropy.modeling.functional_models.Gaussian1D`, 
+`~astropy.modeling.functional_models.Voigt1D`, and
+`~astropy.modeling.functional_models.Lorentz1D` models, there are predefined estimators for each 
 of the parameters. For all other models one must define the estimators (see example below).
 
 For example:
