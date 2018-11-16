@@ -170,11 +170,7 @@ An example where the parameter estimators are defined:
 
    >>> # Estimate parameter MexicanHat1D
    >>> mh = models.MexicanHat1D()
-   >>> estimators = {
-   >>>   'amplitude': lambda s: max(s.flux),
-   >>>   'x_0': lambda s: centroid(s, region=None),
-   >>>   'stddev': lambda s: fwhm(s)
-   >>> }
+   >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'stddev': lambda s: fwhm(s) }
    >>> mh._constraints['parameter_estimator'] = estimators
 
    >>> g_init = estimate_line_parameters(spectrum, mh) #doctest:+SKIP
