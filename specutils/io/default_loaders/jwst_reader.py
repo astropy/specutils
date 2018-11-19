@@ -6,6 +6,13 @@ from ..registers import data_loader
 
 
 def identify_jwst_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST spectral data product.
+
+    This check is fairly simple. It expects FITS files that contain an ASDF
+    header (which is not used here, but indicates a JWST data product). It then
+    looks for at least one EXTRACT1D header, which contains spectral data.
+    """
 
     try:
         with fits.open(args[0]) as hdulist:
@@ -21,8 +28,22 @@ def identify_jwst_fits(origin, *args, **kwargs):
         return False
 
 
-@data_loader("JWST", identifier=identify_jwst_fits, dtype=SpectrumList)
+@data_loader("JWST", identifier=identify_jwst_fits, dtype=SpectrumList,
+             extensions=['fits'])
 def jwst_loader(filename, spectral_axis_unit=None, **kwargs):
+    """
+    Loader for JWST data files.
+
+    Parameters
+    ----------
+    file_name: str
+        The path to the FITS file
+
+    Returns
+    -------
+    data: SpectrumList
+        A list of the spectra that are contained in this file.
+    """
 
     spectra = []
 
