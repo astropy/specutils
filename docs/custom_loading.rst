@@ -59,7 +59,6 @@ ensure that the data file being loaded is compatible with the loader function.
 
     # ~/.specutils/my_custom_loader.py
     import os
-    import six
 
     from astropy.io import fits
     from astropy.nddata import StdDevUncertainty
@@ -73,7 +72,7 @@ ensure that the data file being loaded is compatible with the loader function.
     # Define an optional identifier. If made specific enough, this circumvents the
     # need to add ``format="my-format"`` in the ``Spectrum1D.read`` call.
     def identify_generic_fits(origin, *args, **kwargs):
-        return (isinstance(args[0], six.string_types) and
+        return (isinstance(args[0], str) and
                 os.path.splitext(args[0].lower())[1] == '.fits')
 
 

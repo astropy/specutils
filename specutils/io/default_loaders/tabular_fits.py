@@ -1,12 +1,12 @@
 import logging
 import os
 
-import six
+import numpy as np
+
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
 import astropy.units as u
-import numpy as np
 from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
@@ -21,7 +21,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
     # fits.open(args[0]) = hdulist
-    return (isinstance(args[0], six.string_types) and
+    return (isinstance(args[0], str) and
             # check if file is .fits
             os.path.splitext(args[0].lower())[1] == '.fits' and
             # check hdulist has more than one extension
