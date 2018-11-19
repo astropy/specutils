@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import, division
 """
 Utilities for parsing, converting, and manipulating astropy FITS-WCS objects
 (i.e., wcsutils objects compliant with Griesen 2006 FITS Paper III)

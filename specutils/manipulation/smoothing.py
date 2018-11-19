@@ -1,5 +1,3 @@
-from __future__ import division
-
 import astropy.units as u
 from astropy import convolution
 from scipy.signal import medfilt

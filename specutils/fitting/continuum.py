@@ -1,5 +1,3 @@
-from __future__ import division
-
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.modeling.fitting import LevMarLSQFitter
 
