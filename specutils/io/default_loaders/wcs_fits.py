@@ -27,7 +27,8 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def wcs1d_fits_loader(file_name, spectral_axis_unit=None, hdu_idx=0, **kwargs):
+def wcs1d_fits_loader(file_name, spectral_axis_unit=None, flux_unit=None,
+                      hdu_idx=0, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
     axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
@@ -38,8 +39,14 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, hdu_idx=0, **kwargs):
     ----------
     file_name : str
         The path to the FITS file.
-    spectral_axis_unit: str or unit, optional
-        Optional string or unit object to specify units of spectral axis.
+    spectral_axis_unit: str or `~astropy.Unit`, optional
+        Units of the spectral axis. If not given (or None), the unit will be
+        inferred from the CUNIT in the WCS.  Not that if this is providded it
+        will *override* any units the CUNIT provides.
+    flux_unit: str or `~astropy.Unit`, optional
+        Units of the flux for this spectrum. If not given (or None), the unit
+        will be inferred from the BUNIT keyword in the header. Note that this
+        unit will attempt to convert from BUNIT if BUNIT is present
     hdu_idx : int
         The index of the HDU to load into this spectrum.
 
@@ -53,13 +60,18 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, hdu_idx=0, **kwargs):
         header = hdulist[hdu_idx].header
         wcs = WCS(header)
 
+        if w.naxis != 1:
+            raise ValueError('FITS fle input to wcs1d_fits_loader is not 1D')
+
         if 'BUNIT' in header:
-            data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
+            data = u.Quantity(hdulist[hdu_idx].data, unit=header['BUNIT'])
+            if flux_unit is not None:
+                data = data.to(flux_unit)
         else:
-            data = hdulist[hdu_idx].data
+            data = u.Quantity(hdulist[hdu_idx].data, unit=flux_unit)
 
         if spectral_axis_unit is not None:
-            wcs.wcs.cunit[0] = spectral_axis_unit
+            wcs.wcs.cunit[0] = str(spectral_axis_unit)
 
         meta = {'header': header}
 
