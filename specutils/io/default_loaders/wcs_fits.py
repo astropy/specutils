@@ -60,7 +60,7 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, flux_unit=None,
         header = hdulist[hdu_idx].header
         wcs = WCS(header)
 
-        if w.naxis != 1:
+        if wcs.naxis != 1:
             raise ValueError('FITS fle input to wcs1d_fits_loader is not 1D')
 
         if 'BUNIT' in header:
