@@ -5,17 +5,19 @@
 #
 #  21-apr-2016  Peter Teuben    hackday at "SPECTROSCOPY TOOLS IN PYTHON WORKSHOP" STSCI
 
+import logging
 #
 import os
-import six
-import numpy as np
 
+import numpy as np
+import six
 from astropy.io import fits
 from astropy.units import Unit
 from astropy.wcs import WCS
 
 from ..registers import data_loader
 from ...spectra import Spectrum1D
+
 
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
@@ -25,7 +27,8 @@ def identify_generic_fits(origin, *args, **kwargs):
             fits.getheader(args[0])['NAXIS'] == 3)
 
 
-@data_loader("cubetest1", identifier=identify_generic_fits)
+# not yet ready because it's not generic enough and does not use column_mapping
+# @data_loader("Cube", identifier=identify_generic_fits, extensions=['fits'])
 def generic_fits(file_name, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
@@ -52,8 +55,7 @@ def generic_fits(file_name, **kwargs):
             # if len(data.shape) != 1:
             #    raise Exception,"not a true cube"
         else:
-            print("Unexpected shape",shape)
-            #
+            logging.error("Unexpected shape %s.", shape)
 
         # store some meta data
         meta = {'header': header}

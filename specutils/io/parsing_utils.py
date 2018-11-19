@@ -4,10 +4,77 @@ import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import warnings
+import logging
 
 from specutils.spectra import Spectrum1D
 
-def generic_spectrum_from_table(table, **kwargs):
+
+def spectrum_from_column_mapping(table, column_mapping, wcs=None):
+    """
+    Given a table and a mapping of the table column names to attributes
+    on the Spectrum1D object, parse the information into a Spectrum1D.
+
+    Parameters
+    ----------
+    table : :class:`~astropy.table.Table`
+        The table object returned from parsing the data file.
+    column_mapping : dict
+        A dictionary describing the relation between the file columns
+        and the arguments of the `Spectrum1D` class, along with unit
+        information. The dictionary keys should be the file column names
+        while the values should be a two-tuple where the first element is the
+        associated `Spectrum1D` keyword argument, and the second element is the
+        unit for the file column::
+
+            column_mapping = {'FLUX': ('flux', 'Jy')}
+
+    wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
+        WCS object passed to the Spectrum1D initializer.
+    """
+    spec_kwargs = {}
+
+    # Associate columns of the file with the appropriate spectrum1d arguments
+    for col_name, (kwarg_name, cm_unit) in column_mapping.items():
+        # If the table object couldn't parse any unit information,
+        # fallback to the column mapper defined unit
+        tab_unit = table[col_name].unit
+
+        if tab_unit and cm_unit is not None:
+            # If the table unit is defined, retrieve the quantity array for
+            # the column
+            kwarg_val = u.Quantity(table[col_name], tab_unit)
+
+            # Attempt to convert the table unit to the user-defined unit.
+            logging.debug("Attempting auto-convert of table unit '%s' to "
+                          "user-provided unit '%s'.", tab_unit, cm_unit)
+
+            if cm_unit.physical_type in ('length', 'frequency'):
+                # Spectral axis column information
+                kwarg_val = kwarg_val.to(cm_unit, equivalence=u.spectral())
+            elif 'spectral flux' in cm_unit.physical_type:
+                # Flux/error column information
+                kwarg_val = kwarg_val.to(
+                    cm_unit, equivalencies=u.spectral_density(1 * u.AA))
+        elif cm_unit is not None:
+            # In this case, the user has defined a unit in the column mapping
+            # but no unit has been defined in the table object.
+            kwarg_val = u.Quantity(table[col_name], cm_unit)
+        else:
+            # Neither the column mapping nor the table contain unit information.
+            # This may be desired e.g. for the mask or bit flag arrays.
+            kwarg_val = table[col_name]
+
+        spec_kwargs.setdefault(kwarg_name, kwarg_val)
+
+    # Ensure that the uncertainties are a subclass of NDUncertainty
+    if spec_kwargs.get('uncertainty') is not None:
+        spec_kwargs['uncertainty'] = StdDevUncertainty(
+            spec_kwargs.get('uncertainty'))
+
+    return Spectrum1D(**spec_kwargs, wcs=wcs, meta=table.meta)
+
+
+def generic_spectrum_from_table(table, wcs=None, **kwargs):
     """
     Load spectrum from an Astropy table into a Spectrum1D object.
     Uses the following logic to figure out which column is which:
@@ -25,11 +92,14 @@ def generic_spectrum_from_table(table, **kwargs):
     ----------
     file_name: str
         The path to the ECSV file
+    wcs : :class:`~astropy.wcs.WCS`
+        A FITS WCS object. If this is present, the machinery will fall back
+        to using the wcs to find the dispersion information.
 
     Returns
     -------
     data: Spectrum1D
-        The data.
+        The spectrum that is represented by the data in this table.
 
     Raises
     ------
@@ -99,11 +169,15 @@ def generic_spectrum_from_table(table, **kwargs):
     colnames = table.colnames.copy()
 
     # Use the first column that has spectral unit as the dispersion axis
-    spectral_axis_column = _find_spectral_axis_column(table,colnames)
-    if spectral_axis_column is None:
+    spectral_axis_column = _find_spectral_axis_column(table, colnames)
+
+    if spectral_axis_column is None and wcs is None:
        raise IOError("Could not identify column containing the wavelength, frequency or energy")
-    spectral_axis = table[spectral_axis_column].to(table[spectral_axis_column].unit)
-    colnames.remove(spectral_axis_column)
+    elif wcs is not None:
+        spectral_axis = None
+    else:
+        spectral_axis = table[spectral_axis_column].to(table[spectral_axis_column].unit)
+        colnames.remove(spectral_axis_column)
 
     # Use the first column that has a spectral_density equivalence as the flux
     flux_column = _find_spectral_column(table,colnames,spectral_axis)
@@ -125,10 +199,12 @@ def generic_spectrum_from_table(table, **kwargs):
             warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
 
     # Create the Spectrum1D object and return it
-    if spectral_axis_column is not None and flux_column is not None:
+    if wcs is not None or spectral_axis_column is not None and flux_column is not None:
        if err_column is not None:
            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-               uncertainty=err,meta=table.meta)
+                                 uncertainty=err, meta=table.meta, wcs=wcs)
        else:
-           spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,meta=table.meta)
+           spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+                                 meta=table.meta, wcs=wcs)
+
     return spectrum
