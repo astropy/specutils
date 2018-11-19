@@ -48,7 +48,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             logging.debug("Attempting auto-convert of table unit '%s' to "
                           "user-provided unit '%s'.", tab_unit, cm_unit)
 
-            if cm_unit.physical_type in ['length', 'frequency']:
+            if cm_unit.physical_type in ('length', 'frequency'):
                 # Spectral axis column information
                 kwarg_val = kwarg_val.to(cm_unit, equivalence=u.spectral())
             elif 'spectral flux' in cm_unit.physical_type:
