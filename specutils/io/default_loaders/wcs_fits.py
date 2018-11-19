@@ -27,7 +27,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def wcs1d_fits_loader(file_name, spectral_axis_unit=None, **kwargs):
+def wcs1d_fits_loader(file_name, spectral_axis_unit=None, hdu_idx=0, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
     axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
@@ -40,6 +40,8 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, **kwargs):
         The path to the FITS file.
     spectral_axis_unit: str or unit, optional
         Optional string or unit object to specify units of spectral axis.
+    hdu_idx : int
+        The index of the HDU to load into this spectrum.
 
     Notes
     -----
@@ -48,13 +50,13 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, **kwargs):
     logging.info("Spectrum file looks like wcs1d-fits")
 
     with fits.open(file_name, **kwargs) as hdulist:
-        header = hdulist[0].header
+        header = hdulist[hdu_idx].header
         wcs = WCS(header)
 
         if 'BUNIT' in header:
             data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
         else:
-            data = hdulist[0].data
+            data = hdulist[hdu_idx].data
 
         if spectral_axis_unit is not None:
             wcs.wcs.cunit[0] = spectral_axis_unit
