@@ -29,9 +29,10 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
              dtype=Spectrum1D, extensions=['fits'])
 def wcs1d_fits_loader(file_name, spectral_axis_unit=None, **kwargs):
     """
-    Loader for spectra in FITS-files with defined WCS. Attempted to parse
-    specific keywords to determine unit information. Optional spectral axis
-    unit definition can be provided.
+    Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
+    axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
+    determined by the 'BUNIT' keyword of the HDU (if present), while the
+    spectral axis unit is set by the WCS's 'CUNIT'.
 
     Parameters
     ----------
