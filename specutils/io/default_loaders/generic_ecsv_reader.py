@@ -1,16 +1,17 @@
-import logging
-import six
 import os
+import logging
+
+from astropy.table import Table
+
 from ...spectra import Spectrum1D
 from ..registers import data_loader
-from astropy.table import Table
 from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping)
 
 
 def identify_ecsv(origin, *args, **kwargs):
     """Check if it's an ECSV file."""
-    return (isinstance(args[0], six.string_types) and
+    return (isinstance(args[0], str) and
             os.path.splitext(args[0].lower())[1] == '.ecsv')
 
 

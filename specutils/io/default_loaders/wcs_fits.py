@@ -1,7 +1,6 @@
 import logging
 import os
 
-import six
 from astropy import units as u
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -16,7 +15,7 @@ __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer']
 def identify_wcs1d_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
-    return (isinstance(args[0], six.string_types) and
+    return (isinstance(args[0], str) and
             os.path.splitext(args[0].lower())[1] == '.fits' and
             # check if number of axes is one
             fits.getheader(args[0])['NAXIS'] == 1 and

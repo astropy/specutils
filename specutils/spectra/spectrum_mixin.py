@@ -16,7 +16,7 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 __all__ = ['OneDSpectrumMixin']
 
 
-class OneDSpectrumMixin(object):
+class OneDSpectrumMixin:
     @property
     def _spectral_axis_numpy_index(self):
         return self.data.ndim - 1 - self.wcs.wcs.spec
@@ -290,7 +290,7 @@ class OneDSpectrumMixin(object):
         return new_wcs, meta
 
 
-class InplaceModificationMixin(object):
+class InplaceModificationMixin:
     # Example methods follow to demonstrate how methods can be written to be
     # agnostic of the non-spectral dimensions.
 

@@ -1,7 +1,6 @@
 import logging
 import os
 
-import six
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
@@ -16,7 +15,7 @@ def identify_muscles_sed(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
     # fits.open(args[0]) = hdulist
-    return (isinstance(args[0], six.string_types) and
+    return (isinstance(args[0], str) and
             # check if file is .fits
             args[0].endswith('sed.fits') and
             # check hdulist has more than one extension

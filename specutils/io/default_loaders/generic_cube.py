@@ -10,7 +10,6 @@ import logging
 import os
 
 import numpy as np
-import six
 from astropy.io import fits
 from astropy.units import Unit
 from astropy.wcs import WCS
@@ -22,7 +21,7 @@ from ...spectra import Spectrum1D
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
-    return (isinstance(args[0], six.string_types) and
+    return (isinstance(args[0], str) and
             os.path.splitext(args[0].lower())[1] == '.fits' and
             fits.getheader(args[0])['NAXIS'] == 3)
 

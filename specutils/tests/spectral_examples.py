@@ -5,7 +5,7 @@ from ..spectra import Spectrum1D
 import pytest
 
 
-class SpectraExamples(object):
+class SpectraExamples:
     """
     The ``SpectralExamples`` class is a *container class* that has
     several examples of simple spectra that are to be used in the tests
