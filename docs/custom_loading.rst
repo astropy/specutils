@@ -136,9 +136,10 @@ custom JWST data loader as an example:
 
 Note that by default, any loader that uses ``dtype=Spectrum1D`` will also
 automatically add a reader for `~specutils.SpectrumList`. This enables user
-code to call ``specutils.SpectrumList.read`` in all cases if it can't make
+code to call `specutils.SpectrumList.read` in all cases if it can't make
 assumptions about whether a loader returns one or many `~specutils.Spectrum1D`
-objects.
+objects. This method is available since `~specutils.SpectrumList` makes use of
+the Astropy IO registry.
 
 
 Creating a Custom Writer
