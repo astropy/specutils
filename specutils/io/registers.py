@@ -69,10 +69,14 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         # reads Spectrum1D objects. TODO: it's possible that this
         # functionality should be opt-in rather than automatic.
         if dtype is Spectrum1D:
-            def load_specrum_list(*args, **kwargs):
+            def load_spectrum_list(*args, **kwargs):
                 return SpectrumList([ func(*args, **kwargs) ])
 
-            io_registry.register_reader(label, SpectrumList, load_specrum_list)
+            # Add these attributes to the SpectrumList reader as well
+            load_spectrum_list.extensions = extensions
+            load_spectrum_list.priority = priority
+
+            io_registry.register_reader(label, SpectrumList, load_spectrum_list)
             logging.debug("Created SpectrumList reader for \"{}\".".format(label))
 
         @wraps(func)
