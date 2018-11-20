@@ -135,7 +135,7 @@ custom JWST data loader as an example:
     :language: python
 
 Note that by default, any loader that uses ``dtype=Spectrum1D`` will also
-automatically add a reader for `~specutils.SpectrumList`. This enables client
+automatically add a reader for `~specutils.SpectrumList`. This enables user
 code to call ``specutils.SpectrumList.read`` in all cases if it can't make
 assumptions about whether a loader returns one or many `~specutils.Spectrum1D`
 objects.
