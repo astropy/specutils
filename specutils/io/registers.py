@@ -7,7 +7,7 @@ from functools import wraps
 
 from astropy.io import registry as io_registry
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra import Spectrum1D, SpectrumList
 
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension']
@@ -64,6 +64,16 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         io_registry._readers.update(sorted_loaders)
 
         logging.debug("Successfully loaded reader \"{}\".".format(label))
+
+        # Automatically register a SpectrumList reader for any data_loader that
+        # reads Spectrum1D objects. TODO: it's possible that this
+        # functionality should be opt-in rather than automatic.
+        if dtype is Spectrum1D:
+            def load_specrum_list(*args, **kwargs):
+                return SpectrumList([ func(*args, **kwargs) ])
+
+            io_registry.register_reader(label, SpectrumList, load_specrum_list)
+            logging.debug("Created SpectrumList reader for \"{}\".".format(label))
 
         @wraps(func)
         def wrapper(*args, **kwargs):

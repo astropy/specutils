@@ -5,10 +5,19 @@ import pytest
 import urllib
 import shutil
 import tempfile
+import warnings
+
+import pytest
+
+from astropy.units import UnitsWarning
+from astropy.wcs import FITSFixedWarning
+from astropy.io.fits.verify import VerifyWarning
+from astropy.utils.data import get_pkg_data_filename
 
 from .. import Spectrum1D
 from .conftest import remote_data_path
 from ..io import get_loaders_by_extension
+from .. import Spectrum1D, SpectrumList
 
 
 remote_access = lambda argvals: pytest.mark.parametrize(
@@ -24,16 +33,33 @@ def test_get_loaders_by_extension():
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_spectrum1d_GMOSfits(remote_data_path):
-    optical_spec_2 = Spectrum1D.read(remote_data_path, format='wcs1d-fits')
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
+        optical_spec_2 = Spectrum1D.read(remote_data_path, format='wcs1d-fits')
 
     assert len(optical_spec_2.data) == 3020
 
 
+def test_spectrumlist_GMOSfits():
+    optical_fits_file = get_pkg_data_filename('data/L5g_0355+11_Cruz09.fits')
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
+        spectrum_list = SpectrumList.read(optical_fits_file, format='wcs1d-fits')
+
+    assert len(spectrum_list) == 1
+
+    spec = spectrum_list[0]
+    assert len(spec.data) == 3020
+
+
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_specific_spec_axis_unit(remote_data_path):
-    optical_spec = Spectrum1D.read(remote_data_path,
-                                   spectral_axis_unit="Angstrom",
-                                   format='wcs1d-fits')
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
+        optical_spec = Spectrum1D.read(remote_data_path,
+                                       spectral_axis_unit="Angstrom",
+                                       format='wcs1d-fits')
 
     assert optical_spec.spectral_axis.unit == "Angstrom"
 
@@ -93,7 +119,9 @@ def test_sdss_spspec():
         with tempfile.NamedTemporaryFile() as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            spec = Spectrum1D.read(tmp_file.name, format="SDSS-I/II spSpec")
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                spec = Spectrum1D.read(tmp_file.name, format="SDSS-I/II spSpec")
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
