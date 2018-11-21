@@ -1,19 +1,12 @@
-import os
-
 import astropy.units as u
 import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
-from astropy.utils.data import get_pkg_data_filename
-from astropy.modeling import models
-from astropy.tests.helper import quantity_allclose
-from ..manipulation import noise_region_uncertainty
-from ..wcs.adapters import fitswcs_adapter
-from .conftest import remote_data_path, remote_access
 
-from ..spectra import Spectrum1D, SpectralRegion
+from .conftest import remote_access
+from ..spectra import Spectrum1D
 
 
 def test_empty_spectrum():

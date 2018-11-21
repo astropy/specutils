@@ -1,23 +1,18 @@
-import numpy as np
-from astropy.table import Table
-import astropy.units as u
-import pytest
-import urllib
 import shutil
 import tempfile
+import urllib
 import warnings
 
-import pytest
-
+import astropy.units as u
+import numpy as np
+from astropy.io.fits.verify import VerifyWarning
+from astropy.table import Table
 from astropy.units import UnitsWarning
 from astropy.wcs import FITSFixedWarning
-from astropy.io.fits.verify import VerifyWarning
-from astropy.utils.data import get_pkg_data_filename
 
-from .. import Spectrum1D
-from .conftest import remote_data_path, remote_access
-from ..io import get_loaders_by_extension
+from .conftest import remote_access
 from .. import Spectrum1D, SpectrumList
+from ..io import get_loaders_by_extension
 
 
 def test_get_loaders_by_extension():
