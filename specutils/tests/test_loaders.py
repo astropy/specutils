@@ -40,12 +40,11 @@ def test_spectrum1d_GMOSfits(remote_data_path):
     assert len(optical_spec_2.data) == 3020
 
 
-def test_spectrumlist_GMOSfits():
-    optical_fits_file = get_pkg_data_filename('data/L5g_0355+11_Cruz09.fits')
-
+@remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
+def test_spectrumlist_GMOSfits(remote_data_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
-        spectrum_list = SpectrumList.read(optical_fits_file, format='wcs1d-fits')
+        spectrum_list = SpectrumList.read(remote_data_path, format='wcs1d-fits')
 
     assert len(spectrum_list) == 1
 
