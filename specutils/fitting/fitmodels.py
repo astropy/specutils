@@ -176,7 +176,8 @@ def find_lines_derivative(spectrum, flux_threshold=None):
         The threshold a pixel must be above to be considered part of a line. If
         a float, will assume the same units as ``spectrum.flux``. This threshold
         is above and beyond the derivative searching step. Default is None so no
-        thresholding.
+        thresholding. The threshold is positive for emission lines and negative
+        for absorption lines.
 
     Returns
     -------
