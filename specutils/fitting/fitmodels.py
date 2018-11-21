@@ -161,7 +161,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
     return qtable
 
 
-def find_lines_derivative(spectrum, flux_threshold=0):
+def find_lines_derivative(spectrum, flux_threshold=None):
     """
     Find the emission and absorption lines in a spectrum. The method
     here is based on finding the zero crossings in the derivative 
@@ -172,10 +172,10 @@ def find_lines_derivative(spectrum, flux_threshold=0):
     spectrum : Spectrum1D
         The spectrum object over which the equivalent width will be calculated.
 
-    flux_threshold : float or `~astropy.units.Quantity`
+    flux_threshold : float, `~astropy.units.Quantity` or None
         The threshold a pixel must be above to be considered part of a line. If
         a float, will assume the same units as ``spectrum.flux``. This threshold
-        is above and beyond the derivative searching step. Default is 0 so no
+        is above and beyond the derivative searching step. Default is None so no
         thresholding.
 
     Returns
@@ -196,7 +196,7 @@ def find_lines_derivative(spectrum, flux_threshold=0):
     ddS = convolve(S, kernel, 'valid')
 
     # Add units if needed.
-    if isinstance(flux_threshold, (int, float)):
+    if flux_threshold is not None and isinstance(flux_threshold, (int, float)):
         flux_threshold = float(flux_threshold) * spectrum.flux.unit
 
     #
@@ -206,7 +206,9 @@ def find_lines_derivative(spectrum, flux_threshold=0):
     # Find all the indices that appear to be part of a +ve peak
     candidates = np.where(dY > 0)[0] + (len(kernel) - 1)
     line_inds = sorted(set(candidates).intersection(np.where(ddS == -2)[0] + 1))
-    line_inds = np.array(line_inds)[spectrum.flux[line_inds] > flux_threshold]
+
+    if flux_threshold is not None:
+        line_inds = np.array(line_inds)[spectrum.flux[line_inds] > flux_threshold]
 
     # Now group them and find the max highest point.
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
@@ -223,7 +225,9 @@ def find_lines_derivative(spectrum, flux_threshold=0):
     # Find all the indices that appear to be part of a -ve peak
     candidates = np.where(dY < 0)[0] + (len(kernel) - 1)
     line_inds = sorted(set(candidates).intersection(np.where(ddS == 2)[0] + 1))
-    line_inds = np.array(line_inds)[spectrum.flux[line_inds] < -flux_threshold]
+
+    if flux_threshold is not None:
+        line_inds = np.array(line_inds)[spectrum.flux[line_inds] < -flux_threshold]
 
     # Now group them and find the max highest point.
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
