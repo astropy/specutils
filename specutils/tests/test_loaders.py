@@ -15,13 +15,9 @@ from astropy.io.fits.verify import VerifyWarning
 from astropy.utils.data import get_pkg_data_filename
 
 from .. import Spectrum1D
-from .conftest import remote_data_path
+from .conftest import remote_data_path, remote_access
 from ..io import get_loaders_by_extension
 from .. import Spectrum1D, SpectrumList
-
-
-remote_access = lambda argvals: pytest.mark.parametrize(
-    'remote_data_path', argvals, indirect=True, scope='function')
 
 
 def test_get_loaders_by_extension():

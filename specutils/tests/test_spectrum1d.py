@@ -11,7 +11,7 @@ from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
 from ..manipulation import noise_region_uncertainty
 from ..wcs.adapters import fitswcs_adapter
-from .conftest import remote_data_path
+from .conftest import remote_data_path, remote_access
 
 from ..spectra import Spectrum1D, SpectralRegion
 

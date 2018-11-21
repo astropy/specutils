@@ -5,6 +5,10 @@ import urllib
 import tempfile
 
 
+remote_access = lambda argvals: pytest.mark.parametrize(
+    'remote_data_path', argvals, indirect=True, scope='function')
+
+
 @pytest.fixture(scope='module')
 def remote_data_path(request):
     """
