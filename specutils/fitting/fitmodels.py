@@ -101,8 +101,8 @@ def _consecutive(data, stepsize=1):
 def find_lines_threshold(spectrum, noise_factor=1):
     """
     Find the emission and absorption lines in a spectrum. The method
-    here is a very simple threshold based on the standard deviation
-    of the noise.
+    here is based on deviations larger than the spectrum's uncertainty by the
+    ``noise_factor``.
 
     This method only works with continuum-subtracted spectra and the uncertainty
     must be defined on the spectrum. To add the uncertainty, one could use
@@ -161,10 +161,10 @@ def find_lines_threshold(spectrum, noise_factor=1):
     return qtable
 
 
-def find_lines_derivative(spectrum, flux_threshold):
+def find_lines_derivative(spectrum, flux_threshold=0):
     """
     Find the emission and absorption lines in a spectrum. The method
-    here is a based on finding the zero crossings in the derivative 
+    here is based on finding the zero crossings in the derivative 
     of the spectrum.
 
     Parameters
@@ -173,7 +173,10 @@ def find_lines_derivative(spectrum, flux_threshold):
         The spectrum object over which the equivalent width will be calculated.
 
     flux_threshold : float or `~astropy.units.Quantity`
-        Threshold on line finding.
+        The threshold a pixel must be above to be considered part of a line. If
+        a float, will assume the same units as ``spectrum.flux``. This threshold
+        is above and beyond the derivative searching step. Default is 0 so no
+        thresholding.
 
     Returns
     -------

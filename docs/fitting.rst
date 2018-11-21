@@ -18,18 +18,18 @@ components if desired).
 Line Finding
 ------------
 
-There are two methods implemented in order to find emission and/or absorption
+There are two techniques implemented in order to find emission and/or absorption
 lines in a `~specutils.Spectrum1D` spectrum.
 
-The first method is `~specutils.fitting.find_lines_threshold` that will
+The first technique is `~specutils.fitting.find_lines_threshold` that will
 find lines by thresholding the flux based on a factor applied to the
-spectrum uncertainty.  The second method is
+spectrum uncertainty.  The second technique is
 `~specutils.fitting.find_lines_derivative` that will find the lines based
-on calculating the derivative and then thresholding based on it.  Both methods 
+on calculating the derivative and then thresholding based on it.  Both techniques 
 return an `~astropy.table.QTable` that contains columns ``line_center``, 
 ``line_type`` and ``line_center_index``.
 
-An example using the `~specutils.fitting.find_lines_threshold`:
+Given we start with a spectrum:
 
 .. code-block:: python
 
@@ -49,11 +49,41 @@ An example using the `~specutils.fitting.find_lines_threshold`:
    >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
+.. plot::
+
+   >>> from matplotlib import pyplot as plt
+   >>> import numpy as np
+   >>> from astropy.modeling import models
+   >>> import astropy.units as u
+   >>> from specutils import Spectrum1D, SpectralRegion
+   >>> from specutils.manipulation import noise_region_uncertainty
+   >>> from specutils.fitting import find_lines_threshold
+
+   >>> # Define the spectrum
+   >>> np.random.seed(42)
+   >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
+   >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+   >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
+   >>> x = np.linspace(0, 10, 200)
+   >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+   >>> plt.figure(1)
+   >>> plt.plot(spectrum.spectral_axis, spectrum.flux)
+   >>> plt.xlabel('Spectral Axis ({})'.format(spectrum.spectral_axis.unit))
+   >>> plt.ylabel('Flux Axis({})'.format(spectrum.flux.unit))
+   >>> plt.grid('on')
+
+An example using the `~specutils.fitting.find_lines_threshold` where the uncertainty
+is not predefined in the spectrum but is added by calling the 
+`~specutils.manipulation.noise_region_uncertainty` method:
+
+.. code-block:: python
+
    >>> # Define a noise region for adding the uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
    >>> spectrum = noise_region_uncertainty(spectrum, noise_region)
 
-   >>> # Derivative method
+   >>> # Derivative technique
    >>> lines = find_lines_threshold(spectrum, noise_factor=3)
 
    >>> emission_lines = lines[lines['line_type'] == 'emission'] #doctest:+SKIP
@@ -75,26 +105,10 @@ An example using the `~specutils.fitting.find_lines_derivative`:
 
 .. code-block:: python
 
-   >>> import numpy as np
-   >>> from astropy.modeling import models
-   >>> import astropy.units as u
-   >>> from specutils import Spectrum1D, SpectralRegion
-   >>> from specutils.manipulation import noise_region_uncertainty
-   >>> from specutils.fitting import find_lines_derivative
-
-   >>> # Define the spectrum
-   >>> np.random.seed(42)
-   >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
-   >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
-   >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
-   >>> x = np.linspace(0, 10, 200)
-   >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
-
    >>> # Define a noise region for adding the uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
 
-   >>> # Derivative method
+   >>> # Derivative technique
    >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)
 
    >>> emission_lines = lines[lines['line_type'] == 'emission'] #doctest:+SKIP
@@ -111,6 +125,12 @@ An example using the `~specutils.fitting.find_lines_derivative`:
       8.190954773869347 absorption               163
 
 
+While it might be surprising that these tables do not contain more information
+about the lines, this is because the "toolbox" philosophy of ``specutils`` aims to
+keep such functionality in separate distinct functions.  See :doc:`analysis` for
+functions that can be used to fill out common line measurements more
+completely.
+
 Parameter Estimation
 --------------------
 
@@ -121,53 +141,51 @@ For the `~astropy.modeling.functional_models.Gaussian1D`,
 `~astropy.modeling.functional_models.Voigt1D`, and
 `~astropy.modeling.functional_models.Lorentz1D` models, there are predefined estimators for each 
 of the parameters. For all other models one must define the estimators (see example below).
+Note that in many (most?) cases where another model is needed, it may be better to create
+your own template models tailored to your specific spectra and skip this function entirely.
 
-For example:
+
+For example, based on the spectrum defined above:
 
 .. code-block:: python
 
-   >>> import numpy as np
-   >>> from astropy.modeling import models
-   >>> import astropy.units as u
-   >>> from specutils import Spectrum1D
+   >>> from specutils import SpectralRegion
    >>> from specutils.fitting import estimate_line_parameters
+   >>> from specutils.manipulation import extract_region
 
-   >>> # Define the spectrum
-   >>> np.random.seed(0)
-   >>> x = np.linspace(0., 10., 200)
-   >>> y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
-   >>> y += np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+   >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
+   >>> sub_spectrum = extract_region(spectrum, sub_region)
 
    >>> # Estimate parameter Gaussian1D
-   >>> g_init = estimate_line_parameters(spectrum, models.Gaussian1D()) #doctest:+SKIP
+   >>> g_init = estimate_line_parameters(sub_spectrum, models.Gaussian1D()) #doctest:+SKIP
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
       Model set size: 1
       Parameters:
-              amplitude            mean             stddev     
-                  Jy                um                um       
-          ----------------- ----------------- -----------------
-          3.354169257846847 6.218588636687762 1.608040201005025
+              amplitude            mean             stddev
+                  Jy                um                um
+          ------------------ ---------------- ------------------
+          1.1845669151078486 4.57517271067525 0.3015075376884422
 
 
-An example where the parameter estimators are defined:
+If an `~astropy.modeling.Model` is used that does not have the predefined parameter
+estimators, or if one wants to use different parameter estimators then one can create
+a dictionary where the key is the parameter name and the value is a lambda
+function that operates on a spectrum. For example if one wants to estimate the line
+parmaeters of a `~astropy.modeling.functional_models.MexicanHat1D` one can
+define the ``estimators`` dictionary and attach in the model's ``_constraints`` 
+dictionary.  (This behavior may change in future versions of astropy or specutils).
 
 .. code-block:: python
 
-   >>> import numpy as np
-   >>> from astropy.modeling import models
-   >>> import astropy.units as u
-   >>> from specutils import Spectrum1D
+   >>> from specutils import SpectralRegion
    >>> from specutils.fitting import estimate_line_parameters
+   >>> from specutils.manipulation import extract_region
+   >>> from specutils.analysis import centroid, fwhm
 
-   >>> # Define the spectrum
-   >>> np.random.seed(0)
-   >>> x = np.linspace(0., 10., 200)
-   >>> y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
-   >>> y += np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+   >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
+   >>> sub_spectrum = extract_region(spectrum, sub_region)
 
    >>> # Estimate parameter MexicanHat1D
    >>> mh = models.MexicanHat1D()
@@ -180,10 +198,11 @@ An example where the parameter estimators are defined:
       Outputs: ('y',)
       Model set size: 1
       Parameters:
-              amplitude            x_0        sigma
-                  Jy                um             
-          ----------------- ----------------- -----
-          3.354169257846847 6.218588636687762   1.0
+              amplitude             x_0         sigma
+                  Jy                 um
+          ------------------ ------------------ -----
+          2.4220683957581444 3.6045476935889362   1.0
+
 
 
 Model (Line) Fitting
