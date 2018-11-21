@@ -15,6 +15,192 @@ initial guesses.  This model is then actually fit to the spectrum's ``flux``,
 yielding a single composite model result (which can be split back into its
 components if desired).
 
+Line Finding
+------------
+
+There are two techniques implemented in order to find emission and/or absorption
+lines in a `~specutils.Spectrum1D` spectrum.
+
+The first technique is `~specutils.fitting.find_lines_threshold` that will
+find lines by thresholding the flux based on a factor applied to the
+spectrum uncertainty.  The second technique is
+`~specutils.fitting.find_lines_derivative` that will find the lines based
+on calculating the derivative and then thresholding based on it.  Both techniques
+return an `~astropy.table.QTable` that contains columns ``line_center``,
+``line_type`` and ``line_center_index``.
+
+We start with a synthetic spectrum:
+
+.. plot::
+   :include-source:
+   :align: center
+
+   >>> import numpy as np
+   >>> from astropy.modeling import models
+   >>> import astropy.units as u
+   >>> from specutils import Spectrum1D, SpectralRegion
+
+   >>> np.random.seed(42)
+   >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
+   >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+   >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
+   >>> x = np.linspace(0, 10, 200)
+   >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+
+   >>> from matplotlib import pyplot as plt
+   >>> plt.plot(spectrum.spectral_axis, spectrum.flux) # doctest: +IGNORE_OUTPUT
+   >>> plt.xlabel('Spectral Axis ({})'.format(spectrum.spectral_axis.unit)) # doctest: +IGNORE_OUTPUT
+   >>> plt.ylabel('Flux Axis({})'.format(spectrum.flux.unit)) # doctest: +IGNORE_OUTPUT
+   >>> plt.grid('on') # doctest: +IGNORE_OUTPUT
+
+While we know the true uncertainty here, this is often not the case with real
+data.  Therefore, since `~specutils.fitting.find_lines_threshold` requires an
+uncertainty, we will produce an estimate of the uncertainty by calling the
+`~specutils.manipulation.noise_region_uncertainty` function:
+
+.. code-block:: python
+
+   >>> from specutils.manipulation import noise_region_uncertainty
+   >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
+   >>> spectrum = noise_region_uncertainty(spectrum, noise_region)
+
+   >>> from specutils.fitting import find_lines_threshold
+   >>> lines = find_lines_threshold(spectrum, noise_factor=3)
+
+   >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
+   <QTable length=4>
+      line_center    line_type line_center_index
+           um
+        float64        str10         int64
+   ----------------- --------- -----------------
+   4.572864321608041  emission                91
+   4.824120603015076  emission                96
+   5.477386934673367  emission               109
+    8.99497487437186  emission               179
+
+   >>> lines[lines['line_type'] == 'absorption']  # doctest:+FLOAT_CMP
+   <QTable length=1>
+      line_center    line_type  line_center_index
+           um
+        float64        str10          int64
+   ----------------- ---------- -----------------
+   8.190954773869347 absorption               163
+
+An example using the `~specutils.fitting.find_lines_derivative`:
+
+.. code-block:: python
+
+   >>> # Define a noise region for adding the uncertainty
+   >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
+
+   >>> # Derivative technique
+   >>> from specutils.fitting import find_lines_derivative
+   >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)
+
+   >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
+   <QTable length=2>
+      line_center    line_type line_center_index
+           um
+        float64        str10         int64
+   ----------------- --------- -----------------
+   4.522613065326634  emission                90
+   5.477386934673367  emission               109
+
+   >>> lines[lines['line_type'] == 'absorption']  # doctest:+FLOAT_CMP
+   <QTable length=1>
+      line_center    line_type  line_center_index
+           um
+        float64        str10          int64
+   ----------------- ---------- -----------------
+   8.190954773869347 absorption               163
+
+
+While it might be surprising that these tables do not contain more information
+about the lines, this is because the "toolbox" philosophy of ``specutils`` aims to
+keep such functionality in separate distinct functions.  See :doc:`analysis` for
+functions that can be used to fill out common line measurements more
+completely.
+
+Parameter Estimation
+--------------------
+
+Given a spectrum with a set of lines, the `~specutils.fitting.estimate_line_parameters`
+can be called to estimate the `~astropy.modeling.Model` parameters given a spectrum.
+
+For the `~astropy.modeling.functional_models.Gaussian1D`,
+`~astropy.modeling.functional_models.Voigt1D`, and
+`~astropy.modeling.functional_models.Lorentz1D` models, there are predefined estimators for each
+of the parameters. For all other models one must define the estimators (see example below).
+Note that in many (most?) cases where another model is needed, it may be better to create
+your own template models tailored to your specific spectra and skip this function entirely.
+
+
+For example, based on the spectrum defined above we can first select a region:
+
+.. code-block:: python
+
+   >>> from specutils import SpectralRegion
+   >>> from specutils.fitting import estimate_line_parameters
+   >>> from specutils.manipulation import extract_region
+
+   >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
+   >>> sub_spectrum = extract_region(spectrum, sub_region)
+
+Then estimate the line  parameters it it for a Gaussian line profile::
+
+   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest:+FLOAT_CMP
+      Model: Gaussian1D
+      Inputs: ('x',)
+      Outputs: ('y',)
+      Model set size: 1
+      Parameters:
+              amplitude            mean             stddev
+                  Jy                um                um
+          ------------------ ---------------- ------------------
+          1.1845669151078486 4.57517271067525 0.3015075376884422
+
+
+If an `~astropy.modeling.Model` is used that does not have the predefined
+parameter estimators, or if one wants to use different parameter estimators then
+one can create a dictionary where the key is the parameter name and the value is
+a function that operates on a spectrum (lambda functions are very useful for
+this purpose). For example if one wants to estimate the line parameters of a
+line fit for a `~astropy.modeling.functional_models.MexicanHat1D` one can
+define the ``estimators`` dictionary and attach in the model's ``_constraints``
+dictionary:
+
+.. code-block:: python
+
+   >>> from specutils import SpectralRegion
+   >>> from specutils.fitting import estimate_line_parameters
+   >>> from specutils.manipulation import extract_region
+   >>> from specutils.analysis import centroid, fwhm
+
+   >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
+   >>> sub_spectrum = extract_region(spectrum, sub_region)
+
+   >>> mh = models.MexicanHat1D()
+   >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'stddev': lambda s: fwhm(s) }
+   >>> mh._constraints['parameter_estimator'] = estimators
+
+   >>> print(estimate_line_parameters(spectrum, mh))  # doctest:+FLOAT_CMP
+   Model: MexicanHat1D
+   Inputs: ('x',)
+   Outputs: ('y',)
+   Model set size: 1
+   Parameters:
+           amplitude             x_0         sigma
+               Jy                 um
+       ------------------ ------------------ -----
+       2.4220683957581444 3.6045476935889367   1.0
+
+.. warning::
+   Be aware the use of ``_constraints`` to store the estimators may change in
+   future versions of astropy or specutils to something more natural (i.e., not
+   a "private" attribute), as this is a workaround for a known limitation in
+   `astropy.modeling`.
+
 Model (Line) Fitting
 --------------------
 

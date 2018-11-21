@@ -4,7 +4,10 @@ import astropy.units as u
 from astropy.modeling import models
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..fitting import fit_lines
+from ..fitting import (fit_lines, find_lines_derivative, 
+                       find_lines_threshold, estimate_line_parameters)
+from ..analysis import fwhm, centroid
+from ..manipulation import noise_region_uncertainty
 
 
 def single_peak():
@@ -42,9 +45,129 @@ def double_peak():
     return x, y_double
 
 
-def test_single_peak_fit():
+def double_peak_absorption_and_emission():
+    np.random.seed(42)
+    g1 = models.Gaussian1D(1, 4.6, 0.2)
+    g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+    g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
+    x = np.linspace(0, 10, 200)
+    y_double = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
+    return x, y_double
+
+
+def test_find_lines_derivative():
+
+    # Create the spectrum to fit
+    x_double, y_double = double_peak_absorption_and_emission()
+    spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+
+    # Derivative method
+    lines = find_lines_derivative(spectrum, flux_threshold=0.75)
+
+    emission_lines = lines[lines['line_type'] == 'emission']
+    absorption_lines = lines[lines['line_type'] == 'absorption']
+
+    assert emission_lines['line_center_index'].tolist() == [90, 109]
+    assert absorption_lines['line_center_index'].tolist() == [163]
+
+
+def test_find_lines_threshold():
+
+    # Create the spectrum to fit
+    x_double, y_double = double_peak_absorption_and_emission()
+    spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+
+    # Derivative method
+    noise_region = SpectralRegion(0*u.um, 3*u.um)
+    spectrum = noise_region_uncertainty(spectrum, noise_region)
+    lines = find_lines_threshold(spectrum, noise_factor=3)
+
+    emission_lines = lines[lines['line_type'] == 'emission']
+    absorption_lines = lines[lines['line_type'] == 'absorption']
+
+    assert emission_lines['line_center_index'].tolist() == [91, 96, 109, 179]
+    assert absorption_lines['line_center_index'].tolist() == [163]
+
+
+def test_single_peak_estimate():
     """
     Single Peak fit.
+    """
+
+    # Create the spectrum
+    x_single, y_single = single_peak()
+    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+
+    #
+    # Estimate parameter Gaussian1D
+    #
+
+    g_init = estimate_line_parameters(s_single, models.Gaussian1D())
+
+    assert np.isclose(g_init.amplitude.value, 3.354169257846847)
+    assert np.isclose(g_init.mean.value, 6.218588636687762)
+    assert np.isclose(g_init.stddev.value, 1.608040201005025)
+
+    assert g_init.amplitude.unit == u.Jy
+    assert g_init.mean.unit == u.um
+    assert g_init.stddev.unit == u.um
+
+    #
+    # Estimate parameter Lorentz1D
+    #
+
+    g_init = estimate_line_parameters(s_single, models.Lorentz1D())
+
+    assert np.isclose(g_init.amplitude.value, 3.354169257846847)
+    assert np.isclose(g_init.x_0.value, 6.218588636687762)
+    assert np.isclose(g_init.fwhm.value, 1.608040201005025)
+
+    assert g_init.amplitude.unit == u.Jy
+    assert g_init.x_0.unit == u.um
+    assert g_init.fwhm.unit == u.um
+
+    #
+    # Estimate parameter Voigt1D
+    #
+
+    g_init = estimate_line_parameters(s_single, models.Voigt1D())
+
+    assert np.isclose(g_init.amplitude_L.value, 3.354169257846847)
+    assert np.isclose(g_init.x_0.value, 6.218588636687762)
+    assert np.isclose(g_init.fwhm_L.value, 1.1370561305512321)
+    assert np.isclose(g_init.fwhm_G.value, 1.1370561305512321)
+
+    assert g_init.amplitude_L.unit == u.Jy
+    assert g_init.x_0.unit == u.um
+    assert g_init.fwhm_L.unit == u.um
+    assert g_init.fwhm_G.unit == u.um
+
+
+    #
+    # Estimate parameter MexicanHat1D
+    #
+    mh = models.MexicanHat1D()
+    estimators = {
+        'amplitude': lambda s: max(s.flux),
+        'x_0': lambda s: centroid(s, region=None),
+        'stddev': lambda s: fwhm(s)
+    }
+    mh._constraints['parameter_estimator'] = estimators
+
+    g_init = estimate_line_parameters(s_single, mh)
+
+    assert np.isclose(g_init.amplitude.value, 3.354169257846847)
+    assert np.isclose(g_init.x_0.value, 6.218588636687762)
+    assert np.isclose(g_init.stddev.value, 1.608040201005025)
+
+    assert g_init.amplitude.unit == u.Jy
+    assert g_init.x_0.unit == u.um
+    assert g_init.stddev.unit == u.um
+
+
+def test_single_peak_fit():
+    """
+    Single peak fit
     """
 
     # Create the spectrum
