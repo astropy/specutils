@@ -85,20 +85,24 @@ is not predefined in the spectrum but is added by calling the
    >>> from specutils.fitting import find_lines_threshold
    >>> lines = find_lines_threshold(spectrum, noise_factor=3)
 
-   >>> emission_lines = lines[lines['line_type'] == 'emission'] #doctest:+SKIP
-         line_center    line_type line_center_index
-              um
-      ----------------- --------- -----------------
-      4.572864321608041  emission                91
-      4.824120603015076  emission                96
-      5.477386934673367  emission               109
-       8.99497487437186  emission               179
+   >>> lines[lines['line_type'] == 'emission']
+   <QTable length=4>
+      line_center    line_type line_center_index
+           um
+        float64        str10         int64
+   ----------------- --------- -----------------
+   4.572864321608041  emission                91
+   4.824120603015076  emission                96
+   5.477386934673367  emission               109
+    8.99497487437186  emission               179
 
-   >>> absorption_lines = lines[lines['line_type'] == 'absorption'] #doctest:+SKIP
-         line_center    line_type  line_center_index
-              um
-      ----------------- ---------- -----------------
-      8.190954773869347 absorption               163
+   >>> lines[lines['line_type'] == 'absorption']
+   <QTable length=1>
+      line_center    line_type  line_center_index
+           um
+        float64        str10          int64
+   ----------------- ---------- -----------------
+   8.190954773869347 absorption               163
 
 An example using the `~specutils.fitting.find_lines_derivative`:
 
@@ -111,18 +115,22 @@ An example using the `~specutils.fitting.find_lines_derivative`:
    >>> from specutils.fitting import find_lines_derivative
    >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)
 
-   >>> emission_lines = lines[lines['line_type'] == 'emission'] #doctest:+SKIP
-         line_center    line_type line_center_index
-              um
-      ----------------- --------- -----------------
-      4.522613065326634  emission                90
-      5.477386934673367  emission               109
+   >>> lines[lines['line_type'] == 'emission']
+   <QTable length=2>
+      line_center    line_type line_center_index
+           um
+        float64        str10         int64
+   ----------------- --------- -----------------
+   4.522613065326634  emission                90
+   5.477386934673367  emission               109
 
-   >>> absorption_lines = lines[lines['line_type'] == 'absorption'] #doctest:+SKIP
-         line_center    line_type  line_center_index
-              um
-      ----------------- ---------- -----------------
-      8.190954773869347 absorption               163
+   >>> lines[lines['line_type'] == 'absorption']
+   <QTable length=1>
+      line_center    line_type  line_center_index
+           um
+        float64        str10          int64
+   ----------------- ---------- -----------------
+   8.190954773869347 absorption               163
 
 
 While it might be surprising that these tables do not contain more information
@@ -158,7 +166,7 @@ For example, based on the spectrum defined above we can first select a region:
 
 Then estimate the line  parameters it it for a Gaussian line profile::
 
-   >>> g_init = estimate_line_parameters(sub_spectrum, models.Gaussian1D()) #doctest:+SKIP
+   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
@@ -193,16 +201,16 @@ dictionary.
    >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'stddev': lambda s: fwhm(s) }
    >>> mh._constraints['parameter_estimator'] = estimators
 
-   >>> g_init = estimate_line_parameters(spectrum, mh) #doctest:+SKIP
-      Model: MexicanHat1D
-      Inputs: ('x',)
-      Outputs: ('y',)
-      Model set size: 1
-      Parameters:
-              amplitude             x_0         sigma
-                  Jy                 um
-          ------------------ ------------------ -----
-          2.4220683957581444 3.6045476935889362   1.0
+   >>> print(estimate_line_parameters(spectrum, mh))
+   Model: MexicanHat1D
+   Inputs: ('x',)
+   Outputs: ('y',)
+   Model set size: 1
+   Parameters:
+           amplitude             x_0         sigma
+               Jy                 um
+       ------------------ ------------------ -----
+       2.4220683957581444 3.6045476935889367   1.0
 
 .. warning::
    Be aware the use of ``_constraints`` may change in
