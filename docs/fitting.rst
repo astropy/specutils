@@ -145,7 +145,7 @@ Note that in many (most?) cases where another model is needed, it may be better 
 your own template models tailored to your specific spectra and skip this function entirely.
 
 
-For example, based on the spectrum defined above:
+For example, based on the spectrum defined above we can first select a region:
 
 .. code-block:: python
 
@@ -156,7 +156,8 @@ For example, based on the spectrum defined above:
    >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
    >>> sub_spectrum = extract_region(spectrum, sub_region)
 
-   >>> # Estimate parameter Gaussian1D
+Then estimate the line  parameters it it for a Gaussian line profile::
+
    >>> g_init = estimate_line_parameters(sub_spectrum, models.Gaussian1D()) #doctest:+SKIP
       Model: Gaussian1D
       Inputs: ('x',)
@@ -173,9 +174,9 @@ If an `~astropy.modeling.Model` is used that does not have the predefined parame
 estimators, or if one wants to use different parameter estimators then one can create
 a dictionary where the key is the parameter name and the value is a lambda
 function that operates on a spectrum. For example if one wants to estimate the line
-parmaeters of a `~astropy.modeling.functional_models.MexicanHat1D` one can
+parameters of a `~astropy.modeling.functional_models.MexicanHat1D` one can
 define the ``estimators`` dictionary and attach in the model's ``_constraints``
-dictionary.  (This behavior may change in future versions of astropy or specutils).
+dictionary.
 
 .. code-block:: python
 
@@ -203,7 +204,10 @@ dictionary.  (This behavior may change in future versions of astropy or specutil
           ------------------ ------------------ -----
           2.4220683957581444 3.6045476935889362   1.0
 
-
+.. warning::
+   Be aware the use of ``_constraints`` may change in
+   future versions of astropy or specutils, as this is a work around for a known
+   limitation in `astropy.modeling`.
 
 Model (Line) Fitting
 --------------------
