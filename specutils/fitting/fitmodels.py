@@ -114,7 +114,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
         The spectrum object in which the lines will be found.
 
     noise_factor : float
-        ``noise_factor`` multiplied by noise estimate from ``noise_region``, used for
+       ``noise_factor`` multiplied by the spectrum's``uncertainty``, used for
         thresholding.
 
     Returns
