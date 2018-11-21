@@ -50,6 +50,8 @@ Given we start with a spectrum:
    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
 .. plot::
+    :include-source:
+    :align: center
 
    >>> from matplotlib import pyplot as plt
    >>> import numpy as np
@@ -67,7 +69,6 @@ Given we start with a spectrum:
    >>> x = np.linspace(0, 10, 200)
    >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
-   >>> plt.figure(1)
    >>> plt.plot(spectrum.spectral_axis, spectrum.flux)
    >>> plt.xlabel('Spectral Axis ({})'.format(spectrum.spectral_axis.unit))
    >>> plt.ylabel('Flux Axis({})'.format(spectrum.flux.unit))
