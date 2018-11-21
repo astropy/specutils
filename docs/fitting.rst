@@ -29,37 +29,17 @@ on calculating the derivative and then thresholding based on it.  Both technique
 return an `~astropy.table.QTable` that contains columns ``line_center``,
 ``line_type`` and ``line_center_index``.
 
-Given we start with a spectrum:
-
-.. code-block:: python
-
-   >>> import numpy as np
-   >>> from astropy.modeling import models
-   >>> import astropy.units as u
-   >>> from specutils import Spectrum1D, SpectralRegion
-   >>> from specutils.manipulation import noise_region_uncertainty
-
-   >>> # Define the spectrum
-   >>> np.random.seed(42)
-   >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
-   >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
-   >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
-   >>> x = np.linspace(0, 10, 200)
-   >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+We start with a synthetic spectrum:
 
 .. plot::
-    :include-source:
-    :align: center
+   :include-source:
+   :align: center
 
-   >>> from matplotlib import pyplot as plt
    >>> import numpy as np
    >>> from astropy.modeling import models
    >>> import astropy.units as u
    >>> from specutils import Spectrum1D, SpectralRegion
-   >>> from specutils.manipulation import noise_region_uncertainty
 
-   >>> # Define the spectrum
    >>> np.random.seed(42)
    >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
    >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
@@ -67,18 +47,21 @@ Given we start with a spectrum:
    >>> x = np.linspace(0, 10, 200)
    >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+
+   >>> from matplotlib import pyplot as plt
    >>> plt.plot(spectrum.spectral_axis, spectrum.flux) # doctest: +IGNORE_OUTPUT
    >>> plt.xlabel('Spectral Axis ({})'.format(spectrum.spectral_axis.unit)) # doctest: +IGNORE_OUTPUT
    >>> plt.ylabel('Flux Axis({})'.format(spectrum.flux.unit)) # doctest: +IGNORE_OUTPUT
    >>> plt.grid('on') # doctest: +IGNORE_OUTPUT
 
-An example using the `~specutils.fitting.find_lines_threshold` where the uncertainty
-is not predefined in the spectrum but is added by calling the
-`~specutils.manipulation.noise_region_uncertainty` method:
+While we know the true uncertainty here, this is often not the case with real
+data.  Therefore, since `~specutils.fitting.find_lines_threshold` requires an
+uncertainty, we will produce an estimate of the uncertainty by calling the
+`~specutils.manipulation.noise_region_uncertainty` function:
 
 .. code-block:: python
 
-   >>> # Define a noise region for adding the uncertainty
+   >>> from specutils.manipulation import noise_region_uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
    >>> spectrum = noise_region_uncertainty(spectrum, noise_region)
 
@@ -178,13 +161,14 @@ Then estimate the line  parameters it it for a Gaussian line profile::
           1.1845669151078486 4.57517271067525 0.3015075376884422
 
 
-If an `~astropy.modeling.Model` is used that does not have the predefined parameter
-estimators, or if one wants to use different parameter estimators then one can create
-a dictionary where the key is the parameter name and the value is a lambda
-function that operates on a spectrum. For example if one wants to estimate the line
-parameters of a `~astropy.modeling.functional_models.MexicanHat1D` one can
+If an `~astropy.modeling.Model` is used that does not have the predefined
+parameter estimators, or if one wants to use different parameter estimators then
+one can create a dictionary where the key is the parameter name and the value is
+a function that operates on a spectrum (lambda functions are very useful for
+this purpose). For example if one wants to estimate the line parameters of a
+line fit for a `~astropy.modeling.functional_models.MexicanHat1D` one can
 define the ``estimators`` dictionary and attach in the model's ``_constraints``
-dictionary.
+dictionary:
 
 .. code-block:: python
 
@@ -196,7 +180,6 @@ dictionary.
    >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
    >>> sub_spectrum = extract_region(spectrum, sub_region)
 
-   >>> # Estimate parameter MexicanHat1D
    >>> mh = models.MexicanHat1D()
    >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'stddev': lambda s: fwhm(s) }
    >>> mh._constraints['parameter_estimator'] = estimators
@@ -213,9 +196,10 @@ dictionary.
        2.4220683957581444 3.6045476935889367   1.0
 
 .. warning::
-   Be aware the use of ``_constraints`` may change in
-   future versions of astropy or specutils, as this is a work around for a known
-   limitation in `astropy.modeling`.
+   Be aware the use of ``_constraints`` to store the estimators may change in
+   future versions of astropy or specutils to something more natural (i.e., not
+   a "private" attribute), as this is a workaround for a known limitation in
+   `astropy.modeling`.
 
 Model (Line) Fitting
 --------------------
