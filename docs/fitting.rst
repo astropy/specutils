@@ -68,7 +68,7 @@ uncertainty, we will produce an estimate of the uncertainty by calling the
    >>> from specutils.fitting import find_lines_threshold
    >>> lines = find_lines_threshold(spectrum, noise_factor=3)
 
-   >>> lines[lines['line_type'] == 'emission']
+   >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
    <QTable length=4>
       line_center    line_type line_center_index
            um
@@ -79,7 +79,7 @@ uncertainty, we will produce an estimate of the uncertainty by calling the
    5.477386934673367  emission               109
     8.99497487437186  emission               179
 
-   >>> lines[lines['line_type'] == 'absorption']
+   >>> lines[lines['line_type'] == 'absorption']  # doctest:+FLOAT_CMP
    <QTable length=1>
       line_center    line_type  line_center_index
            um
@@ -98,7 +98,7 @@ An example using the `~specutils.fitting.find_lines_derivative`:
    >>> from specutils.fitting import find_lines_derivative
    >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)
 
-   >>> lines[lines['line_type'] == 'emission']
+   >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
    <QTable length=2>
       line_center    line_type line_center_index
            um
@@ -107,7 +107,7 @@ An example using the `~specutils.fitting.find_lines_derivative`:
    4.522613065326634  emission                90
    5.477386934673367  emission               109
 
-   >>> lines[lines['line_type'] == 'absorption']
+   >>> lines[lines['line_type'] == 'absorption']  # doctest:+FLOAT_CMP
    <QTable length=1>
       line_center    line_type  line_center_index
            um
@@ -149,7 +149,7 @@ For example, based on the spectrum defined above we can first select a region:
 
 Then estimate the line  parameters it it for a Gaussian line profile::
 
-   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))
+   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest:+FLOAT_CMP
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
@@ -184,7 +184,7 @@ dictionary:
    >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'stddev': lambda s: fwhm(s) }
    >>> mh._constraints['parameter_estimator'] = estimators
 
-   >>> print(estimate_line_parameters(spectrum, mh))
+   >>> print(estimate_line_parameters(spectrum, mh))  # doctest:+FLOAT_CMP
    Model: MexicanHat1D
    Inputs: ('x',)
    Outputs: ('y',)
