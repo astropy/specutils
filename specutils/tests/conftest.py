@@ -11,6 +11,11 @@ def remote_data_path(request):
     Remotely access the Zenodo deposition archive to retrieve the versioned
     test data.
     """
+    # Make use of configuration option from pytest-remotedata in order to
+    # control access to remote data.
+    if request.config.getoption('remote_data', 'any') != 'any':
+        pytest.skip()
+
     file_id, file_name = request.param.values()
 
     url = "https://zenodo.org/record/{}/files/{}?download=1".format(
