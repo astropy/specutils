@@ -1,27 +1,18 @@
-import numpy as np
-from astropy.table import Table
-import astropy.units as u
-import pytest
-import urllib
 import shutil
 import tempfile
+import urllib
 import warnings
 
-import pytest
-
+import astropy.units as u
+import numpy as np
+from astropy.io.fits.verify import VerifyWarning
+from astropy.table import Table
 from astropy.units import UnitsWarning
 from astropy.wcs import FITSFixedWarning
-from astropy.io.fits.verify import VerifyWarning
-from astropy.utils.data import get_pkg_data_filename
 
-from .. import Spectrum1D
-from .conftest import remote_data_path
-from ..io import get_loaders_by_extension
+from .conftest import remote_access
 from .. import Spectrum1D, SpectrumList
-
-
-remote_access = lambda argvals: pytest.mark.parametrize(
-    'remote_data_path', argvals, indirect=True, scope='function')
+from ..io import get_loaders_by_extension
 
 
 def test_get_loaders_by_extension():
@@ -40,12 +31,11 @@ def test_spectrum1d_GMOSfits(remote_data_path):
     assert len(optical_spec_2.data) == 3020
 
 
-def test_spectrumlist_GMOSfits():
-    optical_fits_file = get_pkg_data_filename('data/L5g_0355+11_Cruz09.fits')
-
+@remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
+def test_spectrumlist_GMOSfits(remote_data_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
-        spectrum_list = SpectrumList.read(optical_fits_file, format='wcs1d-fits')
+        spectrum_list = SpectrumList.read(remote_data_path, format='wcs1d-fits')
 
     assert len(spectrum_list) == 1
 

@@ -1,18 +1,13 @@
-import os
-
 import astropy.units as u
 import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
-from astropy.utils.data import get_pkg_data_filename
-from astropy.modeling import models
-from astropy.tests.helper import quantity_allclose
-from ..manipulation import noise_region_uncertainty
-from ..wcs.adapters import fitswcs_adapter
 
-from ..spectra import Spectrum1D, SpectralRegion
+from .conftest import remote_access
+from ..spectra import Spectrum1D
+
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
@@ -211,10 +206,9 @@ def test_create_with_uncertainty():
     assert spec.flux.unit == spec.uncertainty.unit
 
 
-def test_read_linear_solution():
-    file_path = get_pkg_data_filename('data/L5g_0355+11_Cruz09.fits')
-
-    spec = Spectrum1D.read(file_path, format='wcs1d-fits')
+@remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
+def test_read_linear_solution(remote_data_path):
+    spec = Spectrum1D.read(remote_data_path, format='wcs1d-fits')
 
     assert isinstance(spec, Spectrum1D)
 
