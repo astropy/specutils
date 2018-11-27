@@ -70,7 +70,8 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.5 ASTROPY_VERSION=lts
+          # pytest>=3.7,<4 is not supported by Astropy LTS
+          env: PYTHON_VERSION=3.5 ASTROPY_VERSION=lts PYTEST_VERSION=3.6
         - os: linux
           env: NUMPY_VERSION=1.14
         - os: linux
