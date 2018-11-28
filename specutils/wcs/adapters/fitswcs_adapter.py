@@ -1,8 +1,10 @@
+import logging
 import astropy.units as u
 from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
                          WCSSUB_STOKES, InvalidSubimageSpecificationError)
 
+from astropy.utils.exceptions import AstropyUserWarning
 # Use this once in specutils
 from ...utils.wcs_utils import (convert_spectral_axis,
                                 determine_ctype_from_vconv)
@@ -14,9 +16,17 @@ __all__ = ['FITSWCSAdapter']
 class FITSWCSAdapter(WCSAdapter):
     """
     Adapter class that adds support for FITSWCS objects.
+
+    In the wild, fits WCS headers are often non-standard compliant, but
+    can be interpreted with little ambiguity (e.g. the CTYPE of the
+    wavelength axis is called "Wavelength" instead of the standard fits
+    "WAVE"). In some common cases, this class will thus read files that
+    are not fully compliant. In these cases, it prints a warning message.
     """
     wrapped_class = WCS
     axes = None
+
+    substitute_spec_axis_names = ['linear', 'wavelength']
 
     def __init__(self, wcs):
         super(FITSWCSAdapter, self).__init__(wcs)
@@ -71,16 +81,17 @@ class FITSWCSAdapter(WCSAdapter):
         """
         self._spec_axis = self.wcs.wcs.spec
 
-        if self._spec_axis < 0:
-            try:
-                idx = list(self.wcs.wcs.ctype).index('LINEAR')
-            except ValueError:
+        if (self._spec_axis < 0) and (self._wcs.wcs.spec) < 0:
+            ctypelist = [c.lower() for c in self.wcs.wcs.ctype]
+            for n in self.substitute_spec_axis_names:
+                if n in ctypelist:
+                    self._spec_axis = ctypelist.index(n)
+                    logging.warning("WCS has a non-standards spectral axis, 'ctype's might be incorrect. Assuming the axis {} labelled '{}' is spectral and proceeding.".format(self._spec_axis, n))
+                    break
+            else:
                 raise InvalidSubimageSpecificationError(
                     "Cannot find a spectral axis in the provided WCS."
                     "Are your 'ctype's correct?")
-
-            if self._wcs.wcs.spec < 0:
-                self._spec_axis = idx
 
         return self._spec_axis
 
