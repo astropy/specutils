@@ -47,7 +47,8 @@ def linear_exciser(spectrum, region):
     # linear range
     #
 
-    s, e = max(inclusive_indices[0]-1, 0), inclusive_indices[-1]+1
+    s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
+                                               wavelengths.size-1)
 
     flux = spectrum.flux.value
     modified_flux = flux
