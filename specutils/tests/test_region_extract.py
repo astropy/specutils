@@ -170,5 +170,7 @@ def test_linear_excise_invert_from_spectrum():
 
     excised_spec = linear_exciser(spec, exc_regs)
 
-    assert quantity_allclose(np.diff(excised_spec[50:61].flux), 0.00854853 * u.Jy)
-    assert quantity_allclose(np.diff(excised_spec[80:91].flux), 0.00854853 * u.Jy)
+    assert quantity_allclose(np.diff(excised_spec[50:60].flux),
+                             np.diff(excised_spec[51:61].flux))
+    assert quantity_allclose(np.diff(excised_spec[80:90].flux),
+                             np.diff(excised_spec[81:91].flux))
