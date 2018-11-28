@@ -7,6 +7,7 @@ from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..manipulation import extract_region
+from ..manipulation.utils import linear_exciser
 from .spectral_examples import simulated_spectra
 
 
@@ -157,6 +158,19 @@ def test_extract_region_mismatched_units():
 
     extracted = extract_region(spectrum, region)
 
-    print(extracted.flux)
-
     assert quantity_allclose(extracted.flux, [10, 11]*u.Jy)
+
+
+def test_linear_excise_invert_from_spectrum():
+    spec = Spectrum1D(flux=np.random.sample(100) * u.Jy,
+                      spectral_axis=np.arange(100) * u.AA)
+    inc_regs = SpectralRegion(80 * u.AA, 90 * u.AA) + \
+               SpectralRegion(50 * u.AA, 60 * u.AA)
+    exc_regs = inc_regs.invert_from_spectrum(spec)
+
+    excised_spec = linear_exciser(spec, exc_regs)
+
+    assert quantity_allclose(np.diff(excised_spec[50:60].flux),
+                             np.diff(excised_spec[51:61].flux))
+    assert quantity_allclose(np.diff(excised_spec[80:90].flux),
+                             np.diff(excised_spec[81:91].flux))

@@ -47,11 +47,12 @@ def linear_exciser(spectrum, region):
     # linear range
     #
 
-    s, e = inclusive_indices[0]-1, inclusive_indices[-1]+1
+    s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
+                                               wavelengths.size-1)
 
     flux = spectrum.flux.value
     modified_flux = flux
-    modified_flux[s:e] = np.linspace(flux[s], flux[e], len(inclusive_indices)+1)
+    modified_flux[s:e] = np.linspace(flux[s], flux[e], modified_flux[s:e].size)
 
     # Return a new object with the regions excised.
     return Spectrum1D(flux=modified_flux*spectrum.flux.unit,
