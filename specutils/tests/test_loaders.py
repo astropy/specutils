@@ -3,6 +3,8 @@ import tempfile
 import urllib
 import warnings
 
+import pytest
+
 import astropy.units as u
 import numpy as np
 from astropy.io.fits.verify import VerifyWarning
