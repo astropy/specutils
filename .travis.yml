@@ -31,10 +31,10 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
-        - SETUP_CMD='test'
+        - SETUP_CMD='test --remote-data=any'
         - PIP_DEPENDENCIES='gwcs scipy matplotlib'
         - EVENT_TYPE='pull_request push'
-        - CONDA_DEPENDENCIES=''
+        - CONDA_DEPENDENCIES='pytest-remotedata'
         - CONDA_CHANNELS='astropy-ci-extras'
 
         # If there are matplotlib or other GUI tests, uncomment the following
@@ -53,11 +53,11 @@ matrix:
     include:
         # Try MacOS X
         - os: osx
-          env: SETUP_CMD='test'
+          env: SETUP_CMD='test --remote-data=any'
 
         # Do a coverage test.
         - os: linux
-          env: SETUP_CMD='test --coverage'
+          env: SETUP_CMD='test --coverage --remote-data=any'
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
@@ -70,7 +70,7 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.5 ASTROPY_VERSION=lts
+          env: PYTHON_VERSION=3.5
         - os: linux
           env: NUMPY_VERSION=1.14
         - os: linux
