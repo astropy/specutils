@@ -28,18 +28,21 @@ def remote_data_path(request):
     url = "https://zenodo.org/record/{}/files/{}?download=1".format(
         file_id, file_name)
 
-    # Create a temporary directory that is automatically cleaned up when the
-    # context is exited, removing any temporarily stored data.
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        file_path = os.path.join(tmp_dir, file_name)
+    for _ in range(NUM_ATTEMPTS):
+        with urllib.request.urlopen(url) as r:
+            # Take a brief timeout if the request failed
+            if r.status != 200:
+                time.sleep(3)
+                continue
 
-        for _ in range(NUM_ATTEMPTS):
-            with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
-                if r.status == 200:
+            # Create a temporary directory that is automatically cleaned up
+            # when the context is exited, removing any temporarily stored data.
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                file_path = os.path.join(tmp_dir, file_name)
+                with open(file_path, 'wb') as tmp_file:
                     tmp_file.write(r.read())
                     yield file_path
                     break
 
-                time.sleep(3)
-        else:
-            raise ConnectionError("Failed to access remote data at {}".format(url))
+    else:
+        raise ConnectionError("Failed to access remote data at {}".format(url))
