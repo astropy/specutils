@@ -1,9 +1,12 @@
-import pytest
 import os
+import time
 import urllib
 
+import pytest
 import tempfile
 
+
+NUM_ATTEMPTS = 3
 
 remote_access = lambda argvals: pytest.mark.parametrize(
     'remote_data_path', argvals, indirect=True, scope='function')
@@ -30,7 +33,13 @@ def remote_data_path(request):
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_path = os.path.join(tmp_dir, file_name)
 
-        with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
-            tmp_file.write(r.read())
+        for _ in range(NUM_ATTEMPTS):
+            with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
+                if r.status == 200:
+                    tmp_file.write(r.read())
+                    yield file_path
+                    break
 
-            yield file_path
+                time.sleep(3)
+        else:
+            raise ConnectionError("Failed to access remote data at {}".format(url))
