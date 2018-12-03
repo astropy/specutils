@@ -10,7 +10,7 @@ from astropy.tests.helper import quantity_allclose
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
-                        snr_der)
+                        snr_derived)
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -268,20 +268,20 @@ def test_snr_two_regions(simulated_spectra):
     assert np.allclose(spec_snr, spec_snr_expected)
 
 
-def test_snr_der():
+def test_snr_derived():
     np.random.seed(42)
 
     x = np.arange(1, 101) * u.um
     y = np.random.random(len(x))*u.Jy
     spectrum = Spectrum1D(spectral_axis=x, flux=y)
 
-    assert np.allclose(snr_der(spectrum), 1.604666860424951)
+    assert np.allclose(snr_derived(spectrum), 1.604666860424951)
 
     sr = SpectralRegion(38*u.um, 48*u.um)
-    assert np.allclose(snr_der(spectrum, sr), 2.330463630828406)
+    assert np.allclose(snr_derived(spectrum, sr), 2.330463630828406)
 
     sr2 = SpectralRegion(48*u.um, 57*u.um)
-    assert np.allclose(snr_der(spectrum, [sr, sr2]), [2.330463630828406, 2.9673559890209305])
+    assert np.allclose(snr_derived(spectrum, [sr, sr2]), [2.330463630828406, 2.9673559890209305])
 
 
 def test_centroid(simulated_spectra):
