@@ -17,10 +17,10 @@ class SpectralRegion:
     Parameters
     ----------
 
-    lower: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+    lower : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
        The lower bound of the region.
 
-    upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+    upper : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
        The upper bound of the region.
 
     Notes
@@ -38,10 +38,10 @@ class SpectralRegion:
         Parameters
         ----------
 
-        center: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+        center : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The center of the spectral region.
 
-        Width: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+        width : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The width of the spectral region.
         """
 
@@ -227,15 +227,15 @@ class SpectralRegion:
         Parameters
         ----------
 
-        lower: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+        lower : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The lower bound of the region.
 
-        upper: Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+        upper : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The upper bound of the region.
 
         Returns
         -------
-        spectral_region: `~specutils.SpectralRegion`
+        spectral_region : `~specutils.SpectralRegion`
            Spectral region of the non-selected regions
 
         Notes
