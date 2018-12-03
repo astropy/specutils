@@ -63,9 +63,9 @@ code at http://www.stecf.org/software/ASTROsoft/DER_SNR/.
 
 The conditions on the data for this implementation for it to be an unbiased estimator of the SNR 
 are strict.  In particular:
-* the noise is uncorrelated in wavelength bins spaced two pixels apart
-* for large wavelength regions, the signal over the scale of 5 or 
-  more pixels can be approximated by a straight line 
+
+  * the noise is uncorrelated in wavelength bins spaced two pixels apart
+  * for large wavelength regions, the signal over the scale of 5 or more pixels can be approximated by a straight line 
 
 
 Line Flux Estimates
