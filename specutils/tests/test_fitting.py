@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.modeling import models
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..fitting import (fit_lines, find_lines_derivative, 
+from ..fitting import (fit_lines, find_lines_derivative,
                        find_lines_threshold, estimate_line_parameters)
 from ..analysis import fwhm, centroid
 from ..manipulation import noise_region_uncertainty
@@ -512,5 +512,3 @@ def test_fitter_parameters():
                2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04]) * u.Jy
 
     assert np.allclose(y_single_fit.value[::10], y_single_fit_expected.value, atol=1e-5)
-
-

@@ -6,7 +6,7 @@ from astropy.table import Table
 
 from ... import Spectrum1D
 from ..registers import data_loader
-from ..parsing_utils import (generic_spectrum_from_table, 
+from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping)
 
 __all__ = ['ascii_identify', 'ascii_loader', 'ipac_identify', 'ipac_loader']
@@ -17,7 +17,7 @@ def ascii_identify(origin, *args, **kwargs):
     name = os.path.basename(args[0])
 
     if name.lower().split('.')[-1] in ['txt', 'ascii']:
-       return True
+        return True
 
     return False
 

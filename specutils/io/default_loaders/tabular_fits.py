@@ -11,7 +11,7 @@ from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader, custom_writer
-from ..parsing_utils import (generic_spectrum_from_table, 
+from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping)
 
 __all__ = ['tabular_fits_loader', 'tabular_fits_writer']

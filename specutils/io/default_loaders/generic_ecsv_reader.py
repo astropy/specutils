@@ -21,7 +21,7 @@ def generic_ecsv(file_name, column_mapping=None, **kwargs):
     Read a spectrum from an ECSV file, using generic_spectrum_from_table_loader()
     to try to figure out which column is which.
     The ECSV columns must have units, as `generic_spectrum_from_table_loader`
-    depends on this to determine the meaning of the columns.  For manual 
+    depends on this to determine the meaning of the columns.  For manual
     control over the column to spectrum mapping, use the ASCII loader.
 
     Parameters
