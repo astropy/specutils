@@ -86,11 +86,6 @@ matrix:
           env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
 
     allow_failures:
-        # Do a PEP8 test with pycodestyle
-        # (allow to fail unless your code completely compliant)
-        - os: linux
-          env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
-
         # Try development version of Astropy
         - os: linux
           env: ASTROPY_VERSION=dev
