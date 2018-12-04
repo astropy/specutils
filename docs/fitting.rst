@@ -666,6 +666,10 @@ convenience functions to perform exactly this task.  An example is shown below.
     plt.title('Continuum Fitting')
     plt.grid('on')
 
+    # construct normalized spectrum by dividing the old spectrum
+    # by the continuum
+    spec_normalized = spectrum / y_continuum_fitted
+
 
 Reference/API
 -------------
