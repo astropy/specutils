@@ -541,10 +541,12 @@ class AreaResponse(object):
         The ARF is a single vector encoding the effective area information
         about the detector. A such, applying the ARF is a simple
         multiplication with the input spectrum.
+
         Parameters
         ----------
         spec : numpy.ndarray
             The (model) spectrum to be folded
+
         exposure : float, default None
             Value for the exposure time. By default, `apply_arf` will use the
             exposure keyword from the ARF file. If this exposure time is not
@@ -552,6 +554,7 @@ class AreaResponse(object):
             time and the ARF from a real observation), one can override the
             default exposure by setting the `exposure` keyword to the correct
             value.
+
         Returns
         -------
         s_arf : numpy.ndarray
