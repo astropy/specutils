@@ -11,7 +11,7 @@ def test_create_from_arrays():
     elo = energy[:-1]
     ehi = energy[1:]
     emid = 0.5 * (elo + ehi)
-    counts = np.random.poisson(lam=powlaw0(emid), size=len(emid))
+    counts = np.random.poisson(lam=powlaw0(emid), size=len(emid)) * u.ct
     test_spec = XraySpectrum1D(elo, ehi, u.keV, counts, exposure=1.0)
     return test_spec
 
