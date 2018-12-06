@@ -5,12 +5,15 @@ from astropy import units as u
 from astropy.io import fits
 from .spectrum1d import Spectrum1D
 
-__all__ = ['XraySpectrum1D', 'ARF', 'RMF']
+__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix']
 
 # For dealing with varied unit string choices
 EV   = ['eV', 'ev']
 KEV  = ['kev', 'keV']
 ANGS = ['angs', 'Angs', 'Angstrom', 'angstrom', 'Angstroms', 'angstroms', 'A', 'a']
+
+## An introduction to X-ray analysis can be found here:
+## http://cxc.cfa.harvard.edu/xrayschool/talks/intro_xray_analysis.pdf
 
 def _unit_parser(unit_string):
     """
@@ -44,12 +47,12 @@ class XraySpectrum1D(Spectrum1D):
     exposure : float
         Exposure time for the dataset
 
-    arf : specutils.ARF or string, default None
-        Strings will be passed to ARF.__init__
+    arf : specutils.AreaResponse or string, default None
+        Strings will be passed to AreaResponse.__init__
         All other input types are stored as arf attribute
 
-    rmf : specutils.RMF or string, default None
-        Strings will be passed to RMF.__init__
+    rmf : specutils.ResponseMatrix or string, default None
+        Strings will be passed to ResponseMatrix.__init__
         All other input types are stored as rmf attribute
 
     rest_value : astropy.units.Quantity, default 0 Angstrom
@@ -76,7 +79,7 @@ class XraySpectrum1D(Spectrum1D):
                  arf=None, rmf=None, rest_value=0.0 * u.angstrom, **kwargs):
         try:
             axis_unit = u.Unit(bin_unit)
-        except:
+        except ValueError:
             axis_unit = _unit_parser(bin_unit)
 
         bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
@@ -88,7 +91,6 @@ class XraySpectrum1D(Spectrum1D):
         self.exposure = exposure
         self.assign_rmf(rmf)
         self.assign_arf(arf)
-        return
 
     # Convenience function for Xray people
     @property
@@ -97,47 +99,46 @@ class XraySpectrum1D(Spectrum1D):
 
     def assign_arf(self, arf_inp):
         """
-        Assign an ARF object to the XraySpectrum1D object
+        Assign an area response file (ARF) object to the XraySpectrum1D object
 
         Input
         -----
         arf_inp : string
-            File name for the ARF (FITS file)
+            File name for the area response file (FITS file)
 
         Returns
         -------
         Modifies the XraySpectrum1D.arf attribute
         """
         if isinstance(arf_inp, str):
-            self.arf = ARF(arf_inp)
+            self.arf = AreaResponse(arf_inp)
         else:
             self.arf = arf_inp
-        return
 
     def assign_rmf(self, rmf_inp):
         """
-        Assign an RMF object to the XraySpectrum1D object
+        Assign a response matrix file (RMF) object to the XraySpectrum1D object
 
         Input
         -----
         rmf_inp : string
-            File name for the RMF (FITS file)
+            File name for the response matrix file (FITS file)
 
         Returns
         -------
         Modifies the XraySpectrum1D.rmf attribute
         """
         if isinstance(rmf_inp, str):
-            self.rmf = RMF(rmf_inp)
+            self.rmf = ResponseMatrix(rmf_inp)
         else:
             self.rmf = rmf_inp
         return
 
-    def apply_resp(self, mflux, exposure=None):
+    def apply_response(self, mflux, exposure=None):
         """
         Given a model flux spectrum, apply the response. In cases where the
-        spectrum has both an ARF and an RMF, apply both. Otherwise, apply
-        whatever response is in RMF.
+        spectrum has both an area response file (ARF) and a response matrix
+        file (RMF), apply both. Otherwise, apply whatever response is in RMF.
 
         The model flux spectrum *must* be created using the same units and
         bins as in the ARF (where the ARF exists)!
@@ -184,19 +185,19 @@ class XraySpectrum1D(Spectrum1D):
 
 ## ----  Supporting response file objects
 
-class RMF(object):
+class ResponseMatrix(object):
     def __init__(self, filename):
-        self._load_rmf(filename)
-        pass
-
-    def _load_rmf(self, filename):
         """
-        Load an RMF from a FITS file.
+        Load a response matrix file (RMF) from a FITS file.
 
         Parameters
         ----------
         filename : str
             The file name with the RMF file
+
+        extension : str (default None)
+            FITS file extension keyword, if the response matrix is stored
+            under an extension other than "MATRIX" or "SPECRESP MATRIX"
 
         Attributes
         ----------
@@ -233,21 +234,41 @@ class RMF(object):
             The number of channels in the detector
 
         """
+        self.filename = filename
+        self.offset = None
+        self.n_grp = None
+        self.f_chan = None
+        self.n_chan = None
+        self.matrix = None
+        self.energ_lo = None
+        self.energ_hi = None
+        self.energ_unit = None
+        self.detchans = None
+        self._load_rmf(filename)
+
+    def _load_rmf(self, filename, extension=None):
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
         hdulist = fits.open(filename)
-        self.filename = filename
 
         # get all the extension names
         extnames = np.array([h.name for h in hdulist])
 
         # figure out the right extension to use
-        if "MATRIX" in extnames:
+        if extension is not None:
+            h = hdulist[extension]
+
+        elif "MATRIX" in extnames:
             h = hdulist["MATRIX"]
 
         elif "SPECRESP MATRIX" in extnames:
             h = hdulist["SPECRESP MATRIX"]
+
+        else:
+            print("Cannot find common FITS file extension for response matrix values")
+            print("Please set the `extension` keyword")
+            return
 
         data = h.data
         hdr = h.header
@@ -437,21 +458,16 @@ class RMF(object):
         return counts[:self.detchans]
 
 
-class ARF(object):
+class AreaResponse(object):
 
     def __init__(self, filename):
-
-        self._load_arf(filename)
-        pass
-
-    def _load_arf(self, filename):
         """
-        Load an ARF from a FITS file.
+        Load an area response file (ARF) from a FITS file.
 
         Parameters
         ----------
         filename : str
-            The file name with the RMF file
+            The file name with the ARF file
 
         Attributes
         ----------
@@ -480,11 +496,20 @@ class ARF(object):
             Average exposure time for the dataset
             (takes telescope dithering into account)
         """
+        self.filename = filename
+        self.e_low = None
+        self.e_high = None
+        self.e_unit = None
+        self.specresp = None
+        self.fracexpo = None
+        self.exposure = None
+        self._load_arf(filename)
+
+    def _load_arf(self, filename):
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
         hdulist = fits.open(filename)
-        self.filename = filename
 
         h = hdulist["SPECRESP"]
         data = h.data
@@ -512,7 +537,7 @@ class ARF(object):
 
     def apply_arf(self, spec, exposure=None):
         """
-        Fold the spectrum through the ARF.
+        Fold the spectrum through the area response file (ARF).
         The ARF is a single vector encoding the effective area information
         about the detector. A such, applying the ARF is a simple
         multiplication with the input spectrum.

@@ -29,6 +29,6 @@ def test_apply_model():
     test_spec = test_create_from_arrays()
     new_model = PowerLaw1D(amplitude=5.e-3, alpha=1.8, x_0=1.e3)
     model_flux = new_model(test_spec.spectral_axis.value)
-    ymodel = test_spec.apply_resp(model_flux)
+    ymodel = test_spec.apply_response(model_flux)
     assert len(ymodel) == len(test_spec.spectral_axis)
     return
