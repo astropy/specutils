@@ -31,10 +31,10 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
-        - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='six gwcs scipy'
+        - SETUP_CMD='test --remote-data=any'
+        - PIP_DEPENDENCIES='gwcs scipy matplotlib'
         - EVENT_TYPE='pull_request push'
-        - CONDA_DEPENDENCIES=''
+        - CONDA_DEPENDENCIES='pytest-remotedata'
         - CONDA_CHANNELS='astropy-ci-extras'
 
         # If there are matplotlib or other GUI tests, uncomment the following
@@ -43,9 +43,7 @@ env:
 
     matrix:
         # Make sure that egg_info works without dependencies
-        - PYTHON_VERSION=3.4 SETUP_CMD='egg_info'
-        - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
-        - PYTHON_VERSION=3.6 SETUP_CMD='egg_info'
+        - PYTHON_VERSION=3.7 SETUP_CMD='egg_info'
 
 matrix:
 
@@ -55,11 +53,11 @@ matrix:
     include:
         # Try MacOS X
         - os: osx
-          env: SETUP_CMD='test'
+          env: SETUP_CMD='test --remote-data=any'
 
         # Do a coverage test.
         - os: linux
-          env: SETUP_CMD='test --coverage'
+          env: SETUP_CMD='test --coverage --remote-data=any'
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
@@ -72,11 +70,11 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.9
+          env: PYTHON_VERSION=3.5
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
+          env: NUMPY_VERSION=1.14
         - os: linux
-          env: NUMPY_VERSION=1.11
+          env: PYTHON_VERSION=3.7
 
         # Try numpy pre-release
         - os: linux
@@ -92,6 +90,11 @@ matrix:
         # (allow to fail unless your code completely compliant)
         - os: linux
           env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
+
+        # Try development version of Astropy
+        - os: linux
+          env: ASTROPY_VERSION=dev
+
 
 install:
     - git clone git://github.com/astropy/ci-helpers.git

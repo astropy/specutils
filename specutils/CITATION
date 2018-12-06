@@ -1,0 +1,10 @@
+If you use Specutils for work/research presented in a publication (whether
+directly, or as a dependency to another package), please cite the Zenodo DOI
+for the appopriate version of Specutils.  The versions (and their BibTeX
+entries) can be found at:
+
+https://doi.org/10.5281/zenodo.1421356
+
+We also encourage the acknowledgement of Astropy, which is a dependency of
+Specutils.  See http://www.astropy.org/acknowledging.html for more on the
+recommendations for this.

@@ -10,6 +10,8 @@ from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
 
+__doctest_skip__ = ['Spectrum1D.spectral_resolution']
+
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
@@ -17,28 +19,20 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     Parameters
     ----------
-    flux : `numpy.ndarray`-like or `astropy.units.Quantity` or astropy.nddata.NDData`-like
+    flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `numpy.ndarray`-like or `astropy.units.Quanitty`
+    spectral_axis : `astropy.units.Quantity`
         Dispersion information with the same shape as the last (or only)
         dimension of flux.
-    wcs : `astropy.wcs.WCS` or `gwcs.WCS`
+    wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
         WCS information object.
-    unit : str or `astropy.units.Unit`
-        The unit for the flux data. Must be parseable by `astropy.units.Unit`.
-        If `flux` is supplied as a `astropy.units.Quantity`, this
-        is superceded by the defined unit.
-    spectral_axis_unit : str or `astropy.units.Unit`
-        The unit for the spectral axis. Must be parseable by `astropy.units.Unit`.
-        If `spectral_axis` is supplied as a `astropy.units.Quantity`, this
-        is superceded by the defined unit.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
-    rest_value : ~`astropy.units.Quantity`
+    rest_value : `~astropy.units.Quantity`
         Any quantity supported by the standard spectral equivalencies
         (wavelength, energy, frequency, wave number). Describes the rest value
         of the spectral axis for use with velocity conversions.
-    uncertainty : ~`astropy.nddata.NDUncertainty`
+    uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
         the unit defined in the flux.
@@ -46,34 +40,38 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
     """
-
-    def __init__(self, flux=None, spectral_axis=None, wcs=None, unit=None,
-                 spectral_axis_unit=None, velocity_convention=None,
-                 rest_value=None, *args, **kwargs):
-        # In cases of slicing, new objects will be initialized with `data`
-        # instead of `flux`. Ensure we grab the `data` argument.
-        if flux is None and 'data' in kwargs:
-            flux = kwargs.pop('data')
-
+    def __init__(self, flux=None, spectral_axis=None, wcs=None,
+                 velocity_convention=None, rest_value=None, *args, **kwargs):
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if issubclass(flux.__class__, NDDataRef):
+        if isinstance(flux, NDDataRef):
             self._velocity_convention = flux._velocity_convention
             self._rest_value = flux._rest_value
 
             super(Spectrum1D, self).__init__(flux)
             return
 
+        # Ensure that the flux argument is an astropy quantity
+        if flux is not None and not isinstance(flux, u.Quantity):
+            raise ValueError("Flux must be a `Quantity` object.")
+
+        # In cases of slicing, new objects will be initialized with `data`
+        # instead of `flux`. Ensure we grab the `data` argument.
+        if flux is None and 'data' in kwargs:
+            flux = kwargs.pop('data')
+
+        # Ensure that the unit information codified in the quantity object is
+        # the One True Unit.
+        kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
+                                            else kwargs.get('unit'))
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if spectral_axis is not None:
+            # Ensure that the spectral axis is an astropy quantity
             if not isinstance(spectral_axis, u.Quantity):
-                spectral_axis = u.Quantity(spectral_axis,
-                                           unit=spectral_axis_unit or u.AA)
-
-                logging.warning("No spectral axis units given, assuming "
-                                "{}".format(spectral_axis.unit))
+                raise ValueError("Spectral axis must be a `Quantity` object.")
 
             wcs = WCSWrapper.from_array(spectral_axis)
         elif wcs is not None:
@@ -86,12 +84,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(data=flux)
             return
         else:
-            # If not wcs and no spectral axis has been given, raise an error
+            # If no wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
-
-        if not isinstance(flux, u.Quantity):
-            flux = u.Quantity(flux, unit=unit or "Jy")
 
         self._velocity_convention = velocity_convention
 
@@ -113,24 +108,50 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
-        super(Spectrum1D, self).__init__(data=flux.value, unit=flux.unit,
-                                         wcs=wcs, *args, **kwargs)
+        super(Spectrum1D, self).__init__(
+            data=flux.value if isinstance(flux, u.Quantity) else flux,
+            wcs=wcs, **kwargs)
 
     @property
     def frequency(self):
+        """
+        The frequency as a `~astropy.units.Quantity` in units of GHz
+        """
         return self.spectral_axis.to(u.GHz, u.spectral())
 
     @property
     def wavelength(self):
+        """
+        The wavelength as a `~astropy.units.Quantity` in units of Angstroms
+        """
         return self.spectral_axis.to(u.AA, u.spectral())
 
     @property
     def energy(self):
+        """
+        The energy of the spectral axis as a `~astropy.units.Quantity` in units
+        of eV.
+        """
         return self.spectral_axis.to(u.eV, u.spectral())
+
+    @property
+    def photon_flux(self):
+        """
+        The flux density of photons as a `~astropy.units.Quantity`, in units of
+        photons per cm^2 per second per spectral_axis unit
+        """
+        flux_in_spectral_axis_units = self.flux.to(u.W * u.cm**-2 * self.spectral_axis.unit**-1, u.spectral_density(self.spectral_axis))
+        photon_flux_density = flux_in_spectral_axis_units / (self.energy / u.photon)
+        return photon_flux_density.to(u.photon * u.cm**-2 * u.s**-1 *
+                                      self.spectral_axis.unit**-1)
 
     @lazyproperty
     def bin_edges(self):
         return self.wcs.bin_edges()
+
+    @property
+    def shape(self):
+        return self.flux.shape
 
     @staticmethod
     def _compare_wcs(this_operand, other_operand):
@@ -173,51 +194,109 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         return True
 
     def __add__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other, unit=self.unit)
+
         return self.add(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __sub__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other, unit=self.unit)
+
         return self.subtract(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __mul__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.multiply(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __div__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def __truediv__(self, other):
+        if not isinstance(other, NDDataRef):
+            other = u.Quantity(other)
+
         return self.divide(
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+
+    def _format_array_summary(self, label, array):
+        if len(array) > 0:
+            mean = np.mean(array)
+            s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
+            return s.format(label+':', array[0], array[-1], mean)
+        else:
+            return "{:17} [ ],  mean= n/a".format(label+':')
+
+    def __str__(self):
+        result = "Spectrum1D "
+        # Handle case of single value flux
+        if self.flux.ndim == 0:
+            result += "(length=1)\n"
+            return result + "flux:   {}".format(self.flux)
+
+        # Handle case of multiple flux arrays
+        result += "(length={})\n".format(len(self.spectral_axis))
+        if self.flux.ndim > 1:
+            for i, flux in enumerate(self.flux):
+                label = 'flux{:2}'.format(i)
+                result += self._format_array_summary(label, flux) + '\n'
+        else:
+            result += self._format_array_summary('flux', self.flux) + '\n'
+        # Add information about spectral axis
+        result += self._format_array_summary('spectral axis', self.spectral_axis)
+        # Add information about uncertainties if available
+        if self.uncertainty:
+            result += "\nuncertainty:      [ {}, ..., {} ]".format(
+                self.uncertainty[0], self.uncertainty[-1])
+        return result
+
+    def __repr__(self):
+        if self.wcs:
+            result = "<Spectrum1D(flux={}, spectral_axis={})>".format(
+                repr(self.flux), repr(self.spectral_axis))
+        else:
+            result = "<Spectrum1D(flux={})>".format(repr(self.flux))
+        return result
+
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
 
-        For example, to tabulate a binned resolution function at 6000A
-        covering +/-10A in 0.2A steps::
+        Examples
+        --------
 
-        R = spectrum1d.spectral_resolution(
-        ... 6000 * u.Angstrom, np.linspace(-10, 10, 51) * u.Angstrom)
-        assert R.shape == (50,)
-        assert np.allclose(R.sum(), 1.)
+        To tabulate a binned resolution function at 6000A covering +/-10A in
+        0.2A steps:
+
+        >>> R = spectrum1d.spectral_resolution(
+        ...     6000 * u.Angstrom, np.linspace(-10, 10, 51) * u.Angstrom)
+        >>> assert R.shape == (50,)
+        >>> assert np.allclose(R.sum(), 1.)
 
         To build a sparse resolution matrix for true wavelengths 4000-8000A
-        in 0.1A steps::
+        in 0.1A steps:
 
-        R = spectrum1d.spectral_resolution(
-        ... np.linspace(4000, 8000, 40001)[:, np.newaxis] * u.Angstrom,
-        ... np.linspace(-10, +10, 201) * u.Angstrom)
-        assert R.shape == (40000, 200)
-        assert np.allclose(R.sum(axis=1), 1.)
+        >>> R = spectrum1d.spectral_resolution(
+        ...     np.linspace(4000, 8000, 40001)[:, np.newaxis] * u.Angstrom,
+        ...     np.linspace(-10, +10, 201) * u.Angstrom)
+        >>> assert R.shape == (40000, 200)
+        >>> assert np.allclose(R.sum(axis=1), 1.)
 
         Parameters
         ----------
-        true_dispersion : ~`astropy.units.Quantity`
+        true_dispersion : `~astropy.units.Quantity`
             True value(s) of dispersion for which the resolution should be
             evaluated.
-        delta_dispersion : ~`astropy.units.Quantity`
+        delta_dispersion : `~astropy.units.Quantity`
             Array of (observed - true) dispersion bin edges to integrate the
             resolution probability density over.
         axis : int
@@ -231,5 +310,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             Array of dimensionless probabilities calculated as the integral of
             P(observed | true) over each bin in (observed - true). The output
             shape is the result of broadcasting the input shapes.
+
         """
         pass

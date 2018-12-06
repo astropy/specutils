@@ -1,10 +1,11 @@
+import astropy.units as u
 from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
-                         WCSSUB_STOKES)
-from astropy.wcs import InvalidSubimageSpecificationError
+                         WCSSUB_STOKES, InvalidSubimageSpecificationError)
 
 # Use this once in specutils
-from ...utils.wcs_utils import convert_spectral_axis, determine_ctype_from_vconv
+from ...utils.wcs_utils import (convert_spectral_axis,
+                                determine_ctype_from_vconv)
 from ..wcs_adapter import WCSAdapter, WCSAxes
 
 __all__ = ['FITSWCSAdapter']
@@ -36,17 +37,32 @@ class FITSWCSAdapter(WCSAdapter):
         if self.axes.spectral.naxis == 0:
             self.axes = self.axes._replace(spectral=self.wcs.sub([self.spec_axis + 1]))
 
+    def __getitem__(self, item):
+        """Pass slicing information to the internal `FITSWCS` object."""
+        return self.wcs[item]
+
+    def __deepcopy__(self, *args, **kwargs):
+        """
+        Ensure deepcopy is passed through to the underlying fits wcs object.
+        Doing so allows for proper memoization handling in the astropy fits
+        machinery.
+        """
+        return self.__class__(self.wcs.__deepcopy__(*args, **kwargs))
+
     def world_to_pixel(self, world_array):
         """
         Method for performing the world to pixel transformations.
         """
-        return self.axes.spectral.all_world2pix(world_array, 0)[0]
+        with u.set_enabled_equivalencies(u.spectral()):
+            world_array = u.Quantity(world_array, unit=self.spectral_axis_unit)
+        return self.axes.spectral.all_world2pix(world_array.value, 0)[0]
 
     def pixel_to_world(self, pixel_array):
         """
         Method for performing the pixel to world transformations.
         """
-        return self.axes.spectral.all_pix2world(pixel_array, 0)[0]
+        return u.Quantity(self.axes.spectral.all_pix2world(pixel_array, 0)[0],
+                          self.spectral_axis_unit)
 
     @property
     def spec_axis(self):

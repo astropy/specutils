@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import, division
-
 from astropy import wcs
 from astropy.io import fits
 from astropy import units as u
@@ -520,7 +518,7 @@ def test_byhand_awav2wav():
     assert not (mywcs.wcs.crval[0] == newwcs.wcs.crval[0]
                 and mywcs.wcs.crpix[0] == newwcs.wcs.crpix[0])
 
-class test_nir_sinfoni_base(object):
+class test_nir_sinfoni_base:
     def setup_method(self, method):
         CD3_3   = 0.000245000002905726 # CD rotation matrix
         CTYPE3  = 'WAVE    '           # wavelength axis in microns

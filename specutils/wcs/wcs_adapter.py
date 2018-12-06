@@ -103,6 +103,10 @@ class WCSAdapter(metaclass=type('WCSAdapterMetaProxy',
     def with_spectral_unit(self):
         pass
 
+    @abc.abstractmethod
+    def __getitem__(self, item):
+        pass
+
     def __repr__(self):
         return "<Identity Transform WCS: pixel - {} transformation>".format(
             self.spectral_axis_unit)

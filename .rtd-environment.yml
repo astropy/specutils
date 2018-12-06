@@ -1,0 +1,14 @@
+name: specutils
+
+channels:
+    - astropy
+
+dependencies:
+    - python>=3
+    - astropy>=2.0
+    - sphinx
+    - numpy
+    - scipy
+    - gwcs
+    - matplotlib
+    - sphinx-astropy

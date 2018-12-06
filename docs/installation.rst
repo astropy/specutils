@@ -8,19 +8,29 @@ Installation
 Stable release
 --------------
 
-To install Specutils, run this command in your terminal:
+If you use anaconda_ to manage your Python environment, run this command in your
+terminal:
+
+.. code-block:: console
+
+    $ conda install -c conda-forge specutils
+
+Otherwise, the recommended method is using pip_:
 
 .. code-block:: console
 
     $ pip install specutils
 
-This is the preferred method to install Specutils, as it will always install the most recent stable release.
-
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
+If you don't have pip_ installed, this `Python installation guide`_ can guide
 you through the process.
+
+These are the preferred methods to install Specutils, as they will always
+install the most recent stable release.
+
 
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
+.. _anaconda: https://www.anaconda.com/
 
 
 From sources
