@@ -41,7 +41,7 @@ class XraySpectrum1D(Spectrum1D):
     bin_unit : string OR astropy.units.Unit
         Unit for the bin values
 
-    counts : numpy.ndarray
+    counts : astropy.Quantity array
         Counts histogram for the X-ray spectrum
 
     exposure : float
@@ -374,10 +374,13 @@ class ResponseMatrix(object):
         vector, there exists one or more sets of channels that this
         flux is redistributed into. The additional arrays `n_grp`,
         `f_chan` and `n_chan` store this information:
+        
             * `n_group` stores the number of channel groups for each
               energy bin
+
             * `f_chan` stores the *first channel* that each channel
               for each channel set
+
             * `n_chan` stores the number of channels in each channel
               set
 
