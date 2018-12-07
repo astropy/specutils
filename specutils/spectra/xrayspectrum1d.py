@@ -72,7 +72,7 @@ class XraySpectrum1D(Spectrum1D):
 
     rmf
     """
-    def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
+    def __init__(self, bin_lo, bin_hi, counts, exposure,
                  arf=None, rmf=None, rest_value=0.0 * u.angstrom, **kwargs):
 
         bin_mid = 0.5 * (bin_lo + bin_hi)
