@@ -46,7 +46,7 @@ def hetg_spectrum_loader(file_name, arf=None, rmf=None):
         bin_hi   = data['BIN_HI']
 
         bin_unit = data.columns['BIN_LO'].unit
-        counts   = data['COUNTS'] * u.ct
+        counts   = data['COUNTS'] * Unit('ct')
         exposure = hdu[1].header['EXPOSURE']  # seconds
 
     return XraySpectrum1D(bin_lo, bin_hi, bin_unit, counts,
