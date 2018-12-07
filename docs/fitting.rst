@@ -52,7 +52,7 @@ We start with a synthetic spectrum:
    >>> plt.plot(spectrum.spectral_axis, spectrum.flux) # doctest: +IGNORE_OUTPUT
    >>> plt.xlabel('Spectral Axis ({})'.format(spectrum.spectral_axis.unit)) # doctest: +IGNORE_OUTPUT
    >>> plt.ylabel('Flux Axis({})'.format(spectrum.flux.unit)) # doctest: +IGNORE_OUTPUT
-   >>> plt.grid('on') # doctest: +IGNORE_OUTPUT
+   >>> plt.grid(True) # doctest: +IGNORE_OUTPUT
 
 While we know the true uncertainty here, this is often not the case with real
 data.  Therefore, since `~specutils.fitting.find_lines_threshold` requires an
@@ -252,7 +252,7 @@ initial guess.
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Single fit peak')
-    plt.grid('on')
+    plt.grid(True)
     plt.legend('Original Spectrum', 'Specutils Fit Result')
 
 
@@ -293,7 +293,7 @@ output the fitted model in the spectrum units.
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Single fit peak, different model units')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Single Peak Fit Within a Window (Defined by Center)
@@ -332,7 +332,7 @@ mean of the model initial guess (so ``2*u.um`` around ``5.5*u.um``).
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Single fit peak window')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Single Peak Fit Within a Window (Defined by Left and Right)
@@ -371,7 +371,7 @@ Single peak fit using spectral data *only* within the window
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Single fit peak window')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Double Peak Fit
@@ -413,7 +413,7 @@ model out.
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Double Peak Fit')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Double Peak Fit Within a Window
@@ -453,7 +453,7 @@ Double peak fit using data in the spectrum from ``4.3*u.um`` to ``5.3*u.um``, on
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Double Peak Fit Within a Window')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Double Peak Fit Within Around a Center Window
@@ -493,7 +493,7 @@ Double peak fit using data in the spectrum centered on ``4.7*u.um`` +/- ``0.3*u.
     plt.plot(x, y)
     plt.plot(x, y_fit)
     plt.title('Double Peak Fit Around a Center Window')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Double Peak Fit - Two Separate Peaks
@@ -537,7 +537,7 @@ each within ``0.2*u.um`` of the model's mean.
     plt.plot(x, yl_fit)
     plt.plot(x, yr_fit)
     plt.title('Double Peak - Two Models')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Double Peak Fit - Two Separate Peaks With Two Windows
@@ -581,7 +581,7 @@ the corresponding window.
     plt.plot(x, yl_fit)
     plt.plot(x, yr_fit)
     plt.title('Double Peak - Two Models and Two Windows')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Double Peak Fit - Exclude One Region
@@ -622,7 +622,7 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
     plt.plot(x, y)
     plt.plot(x, yl_fit)
     plt.title('Double Peak - Single Models and Exclude Region')
-    plt.grid('on')
+    plt.grid(True)
 
 .. _specutils-continuum-fitting:
 
@@ -664,7 +664,7 @@ convenience functions to perform exactly this task.  An example is shown below.
     plt.plot(x, y)
     plt.plot(x, y_continuum_fitted)
     plt.title('Continuum Fitting')
-    plt.grid('on')
+    plt.grid(True)
 
 
 Reference/API
