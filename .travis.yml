@@ -85,6 +85,10 @@ matrix:
         - os: linux
           env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
 
+        # Try development version of Astropy
+        - os: linux
+          env: ASTROPY_VERSION=dev
+
     allow_failures:
         # Try development version of Astropy
         - os: linux
