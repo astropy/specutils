@@ -45,15 +45,15 @@ def hetg_spectrum_loader(file_name, arf=None, rmf=None):
 
     with fits.open(file_name) as hdu:
         header = hdu[0].header
-        meta = {'header': header}
+        meta   = {'header': header}
+        data   = hdu[1].data
 
-        data     = hdu[1].data
-        bin_lo   = data['BIN_LO']
-        bin_hi   = data['BIN_HI']
+        bin_unit = Unit(data.columns['BIN_LO'].unit)
+        bin_lo   = data['BIN_LO'] * bin_unit
+        bin_hi   = data['BIN_HI'] * bin_unit
 
-        bin_unit = data.columns['BIN_LO'].unit
         counts   = data['COUNTS'] * Unit('ct')
         exposure = hdu[1].header['EXPOSURE'] * Unit('second')
 
-    return XraySpectrum1D(bin_lo, bin_hi, bin_unit, counts,
+    return XraySpectrum1D(bin_lo, bin_hi, counts,
                           exposure=exposure, arf=arf, rmf=rmf)
