@@ -20,7 +20,7 @@ def chandra_identify(origin, *args, **kwargs):
     return False
 
 @data_loader(label="chandra_hetg", identifier=chandra_identify, extensions=['pha','pha2', 'FITS', 'FIT', 'fits', 'fit'])
-def hetg_spectrum_loader(file_name. arf=None, rmf=None):
+def hetg_spectrum_loader(file_name, arf=None, rmf=None):
     """
     Load Chandra HETG spectral data from a file into a spectrum object.
 
