@@ -32,19 +32,16 @@ class XraySpectrum1D(Spectrum1D):
 
     Parameters
     ----------
-    bin_lo : numpy.ndarray
+    bin_lo : astropy.Quantity
         The left edges for bin values
 
-    bin_hi : numpy.ndarray
+    bin_hi : astropy.Quantity
         The right edges for bin values
 
-    bin_unit : string OR astropy.units.Unit
-        Unit for the bin values
-
-    counts : astropy.Quantity array
+    counts : astropy.Quantity
         Counts histogram for the X-ray spectrum
 
-    exposure : float
+    exposure : astropy.Quantity
         Exposure time for the dataset
 
     arf : specutils.AreaResponse or string, default None
@@ -77,12 +74,8 @@ class XraySpectrum1D(Spectrum1D):
     """
     def __init__(self, bin_lo, bin_hi, bin_unit, counts, exposure,
                  arf=None, rmf=None, rest_value=0.0 * u.angstrom, **kwargs):
-        try:
-            axis_unit = u.Unit(bin_unit)
-        except ValueError:
-            axis_unit = _unit_parser(bin_unit)
 
-        bin_mid = 0.5 * (bin_lo + bin_hi) * axis_unit
+        bin_mid = 0.5 * (bin_lo + bin_hi)
         Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts,
                             rest_value=rest_value, **kwargs)
 
