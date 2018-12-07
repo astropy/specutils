@@ -16,7 +16,7 @@ from astropy.modeling import fitting, Model, models
 from astropy.table import QTable
 
 
-__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines', 
+__all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
            'estimate_line_parameters']
 
 # Define the initial estimators
@@ -32,18 +32,18 @@ _parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
         'mean': lambda s: centroid(s, region=None),
-        'stddev': lambda s: fwhm(s) 
+        'stddev': lambda s: fwhm(s)
     },
     'Lorentz1D': {
         'amplitude': lambda s: max(s.flux),
         'x_0': lambda s: centroid(s, region=None),
-        'fwhm': lambda s: fwhm(s) 
+        'fwhm': lambda s: fwhm(s)
     },
     'Voigt1D': {
         'x_0': lambda s: centroid(s, region=None),
         'amplitude_L': lambda s: max(s.flux),
         'fwhm_L': lambda s: fwhm(s) / np.sqrt(2),
-        'fwhm_G': lambda s: fwhm(s) / np.sqrt(2) 
+        'fwhm_G': lambda s: fwhm(s) / np.sqrt(2)
     }
 }
 
@@ -119,7 +119,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
     -------
     qtable: `~astropy.table.QTable`
         Table of emission and absorption lines. Line center (``line_center``),
-        line type (``line_type``) and index of line center (``line_center_index``) 
+        line type (``line_type``) and index of line center (``line_center_index``)
         are stored for each line.
     """
 
@@ -162,7 +162,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
 def find_lines_derivative(spectrum, flux_threshold=None):
     """
     Find the emission and absorption lines in a spectrum. The method
-    here is based on finding the zero crossings in the derivative 
+    here is based on finding the zero crossings in the derivative
     of the spectrum.
 
     Parameters
@@ -181,7 +181,7 @@ def find_lines_derivative(spectrum, flux_threshold=None):
     -------
     qtable: `~astropy.table.QTable`
         Table of emission and absorption lines. Line center (``line_center``),
-        line type (``line_type``) and index of line center (``line_center_index``) 
+        line type (``line_type``) and index of line center (``line_center_index``)
         are stored for each line.
     """
 

@@ -14,7 +14,7 @@ def cos_identify(origin, *args, **kwargs):
     """Check whether given file contains HST/COS spectral data."""
     with fits.open(args[0]) as hdu:
         if hdu[0].header['TELESCOP'] == 'HST' and hdu[0].header['INSTRUME'] == 'COS':
-           return True
+            return True
 
     return False
 

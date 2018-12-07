@@ -6,8 +6,8 @@ import astropy.units as u
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
 
-from ..manipulation.smoothing import (convolution_smooth, box_smooth, 
-                                      gaussian_smooth, trapezoid_smooth, 
+from ..manipulation.smoothing import (convolution_smooth, box_smooth,
+                                      gaussian_smooth, trapezoid_smooth,
                                       median_smooth)
 
 def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
@@ -15,12 +15,12 @@ def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
     There are two things to compare for each set of smoothing:
 
     1. Compare the smoothed flux from the astropy machinery vs
-       the smoothed flux from specutils.  This is done by 
+       the smoothed flux from specutils.  This is done by
        comparing flux_smooth1 and flux_smooth2.
 
     2. Next we want to compare the smoothed flux to the original
        flux.  This is a little more difficult as smoothing will
-       make a difference for median filter, but less so for 
+       make a difference for median filter, but less so for
        convolution based smoothing if the kernel is normalized
        (area under the kernel = 1).
 
@@ -62,7 +62,7 @@ def test_smooth_box_good(simulated_spectra, width):
     """
     Test Box1DKernel smoothing with correct parmaeters.
 
-    Width values need to be a number greater than 0. 
+    Width values need to be a number greater than 0.
     """
 
     # Create the original spectrum
@@ -86,7 +86,7 @@ def test_smooth_box_bad(simulated_spectra, width):
     """
     Test Box1DKernel smoothing with incorrect parmaeters.
 
-    Width values need to be a number greater than 0. 
+    Width values need to be a number greater than 0.
     """
 
     #  Create the spectrum
@@ -102,7 +102,7 @@ def test_smooth_gaussian_good(simulated_spectra, stddev):
     """
     Test Gaussian1DKernel smoothing with correct parmaeters.
 
-    Standard deviation values need to be a number greater than 0. 
+    Standard deviation values need to be a number greater than 0.
     """
 
     #  Create the spectrum
@@ -127,7 +127,7 @@ def test_smooth_gaussian_bad(simulated_spectra, stddev):
     """
     Test MexicanHat1DKernel smoothing with incorrect parmaeters.
 
-    Standard deviation values need to be a number greater than 0. 
+    Standard deviation values need to be a number greater than 0.
     """
 
     #  Create the spectrum
@@ -143,7 +143,7 @@ def test_smooth_trapezoid_good(simulated_spectra, stddev):
     """
     Test Trapezoid1DKernel smoothing with correct parmaeters.
 
-    Standard deviation values need to be a number greater than 0. 
+    Standard deviation values need to be a number greater than 0.
     """
 
     #  Create the spectrum
@@ -168,7 +168,7 @@ def test_smooth_trapezoid_bad(simulated_spectra, stddev):
     """
     Test Trapezoid1DKernel smoothing with incorrect parmaeters.
 
-    Standard deviation values need to be a number greater than 0. 
+    Standard deviation values need to be a number greater than 0.
     """
 
     #  Create the spectrum
@@ -184,7 +184,7 @@ def test_smooth_median_good(simulated_spectra, width):
     """
     Test Median smoothing with correct parmaeters.
 
-    Width values need to be a number greater than 0. 
+    Width values need to be a number greater than 0.
     """
 
     #  Create the spectrum
@@ -208,7 +208,7 @@ def test_smooth_median_bad(simulated_spectra, width):
     """
     Test Median smoothing with incorrect parmaeters.
 
-    Width values need to be a number greater than 0. 
+    Width values need to be a number greater than 0.
     """
 
     #  Create the spectrum

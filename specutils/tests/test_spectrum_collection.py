@@ -66,12 +66,12 @@ def test_collection_without_optional_arguments():
 
     # Without mask
     spec_coll = SpectrumCollection(
-        flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, 
+        flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty,
         wcs=wcs, meta=meta)
 
     # Without meta
     spec_coll = SpectrumCollection(
-        flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, 
+        flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty,
         wcs=wcs, mask=mask)
 
 

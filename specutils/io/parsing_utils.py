@@ -172,7 +172,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     spectral_axis_column = _find_spectral_axis_column(table, colnames)
 
     if spectral_axis_column is None and wcs is None:
-       raise IOError("Could not identify column containing the wavelength, frequency or energy")
+        raise IOError("Could not identify column containing the wavelength, frequency or energy")
     elif wcs is not None:
         spectral_axis = None
     else:
@@ -182,7 +182,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     # Use the first column that has a spectral_density equivalence as the flux
     flux_column = _find_spectral_column(table,colnames,spectral_axis)
     if flux_column is None:
-       raise IOError("Could not identify column containing the flux")
+        raise IOError("Could not identify column containing the flux")
     flux = table[flux_column].to(table[flux_column].unit)
     colnames.remove(flux_column)
 
@@ -200,11 +200,11 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
 
     # Create the Spectrum1D object and return it
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
-       if err_column is not None:
-           spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                                 uncertainty=err, meta=table.meta, wcs=wcs)
-       else:
-           spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                                 meta=table.meta, wcs=wcs)
+        if err_column is not None:
+            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+                                  uncertainty=err, meta=table.meta, wcs=wcs)
+        else:
+            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+                                  meta=table.meta, wcs=wcs)
 
     return spectrum

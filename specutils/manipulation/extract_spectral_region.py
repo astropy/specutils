@@ -61,7 +61,7 @@ def _to_edge_pixel(subregion, spectrum):
         if right_reg_in_spec_unit > spectrum.spectral_axis[-1]:
             right_index = len(spectrum.spectral_axis)-1
         elif right_reg_in_spec_unit < spectrum.spectral_axis[0]:
-            right_index = 0 
+            right_index = 0
         else:
             try:
                 right_index = int(np.floor(spectrum.wcs.world_to_pixel([right_reg_in_spec_unit]))) + 1
@@ -116,7 +116,7 @@ def extract_region(spectrum, region):
 
         # If both indices are out of bounds then return None
         if left_index is None and right_index is None:
-            empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit, 
+            empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit,
                                         flux=[]*spectrum.flux.unit)
             extracted_spectrum.append(empty_spectrum)
         else:

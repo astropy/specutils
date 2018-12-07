@@ -130,7 +130,7 @@ def test_byhand_f2v():
                                                   rest=restfreq)
     # this should be EXACT
     assert cdeltv_computed == cdeltv_computed_byfunction
-    
+
     assert_allclose(crvalv_computed, crvalv, rtol=1.e-3)
     assert_allclose(cdeltv_computed, cdeltv, rtol=1.e-3)
 
@@ -146,7 +146,7 @@ def test_byhand_f2v():
     cdeltf_computed = -(cdeltv_computed * constants.c * restfreq /
                         ((constants.c+crvalv_computed)*(constants.c**2 -
                                                crvalv_computed**2)**0.5))
-    
+
     assert_allclose(crvalf_computed, crvalf, rtol=1.e-2)
     assert_allclose(cdeltf_computed, cdeltf, rtol=1.e-2)
 
@@ -179,7 +179,7 @@ def test_byhand_vrad():
     # (<Quantity 97647.75 Hz>, <Quantity 97647.75 Hz>, <Quantity -20609.645482954576 m / s>, <Quantity -20609.645482954576 m / s>)
     crvalv_computed = crvalf.to(CUNIT3R, u.doppler_radio(restfreq))
     cdeltv_computed = -(cdeltf / restfreq)*constants.c
-    
+
     assert_allclose(crvalv_computed, crvalv, rtol=1.e-3)
     assert_allclose(cdeltv_computed, cdeltv, rtol=1.e-3)
 
@@ -241,7 +241,7 @@ def test_byhand_vopt():
                                                   outtype='speed',
                                                   rest=restwav,
                                                   linear=True)
-    
+
     # Disagreement is 2.5e-7: good, but not really great...
     #assert np.abs((crvalv_computed-crvalv)/crvalv) < 1e-6
     assert_allclose(crvalv_computed, crvalv, rtol=1.e-2)
@@ -267,7 +267,7 @@ def test_byhand_vopt():
 
     assert_allclose(crvalf_computed, crvalf, rtol=1.e-3)
     assert_allclose(cdeltf_computed, cdeltf, rtol=1.e-3)
-    
+
     cdeltf_computed_byfunction = cdelt_derivative(crvalw_computed, cdeltw_computed,
                                                   intype='length',
                                                   outtype='frequency',
@@ -286,10 +286,10 @@ def test_byhand_f2w():
     CRVAL3F = 1.37847121643E+09
     CDELT3F = 9.764775E+04
     CUNIT3F = 'Hz'
-    #CTYPE3W = 'WAVE-F2W'  
-    CRVAL3W = 0.217481841062  
-    CDELT3W = -1.5405916E-05  
-    CUNIT3W = 'm' 
+    #CTYPE3W = 'WAVE-F2W'
+    CRVAL3W = 0.217481841062
+    CDELT3W = -1.5405916E-05
+    CUNIT3W = 'm'
 
     crvalf = CRVAL3F * u.Unit(CUNIT3F)
     crvalw = CRVAL3W * u.Unit(CUNIT3W)
@@ -298,7 +298,7 @@ def test_byhand_f2w():
 
     crvalf_computed = crvalw.to(CUNIT3F, u.spectral())
     cdeltf_computed = -constants.c * cdeltw / crvalw**2
-    
+
     assert_allclose(crvalf_computed, crvalf, rtol=0.1)
     assert_allclose(cdeltf_computed, cdeltf, rtol=0.1)
 
@@ -359,7 +359,7 @@ def test_vopt_to_freq(name):
     assert wcs0.wcs.ctype[wcs0.wcs.spec] == 'VOPT'
 
     out_ctype = determine_ctype_from_vconv('VOPT', u.Hz)
-    
+
     wcs1 = convert_spectral_axis(wcs0, u.Hz, out_ctype)
 
     assert wcs1.wcs.ctype[wcs1.wcs.spec] == 'FREQ-W2F'
@@ -420,7 +420,7 @@ air_vac = {
     '[S II]':(6716.44, 6718.29)*u.AA,
     '[S II]':(6730.82, 6732.68)*u.AA,
 }
-           
+
 
 @pytest.mark.parametrize(('air','vac'), air_vac.values())
 def test_air_to_vac(air, vac):
@@ -466,7 +466,7 @@ def test_byhand_awav2vel():
                                    determine_ctype_from_vconv(mywcs.wcs.ctype[0],
                                                               u.km/u.s,
                                                               'optical'))
-    
+
     newwcs.wcs.set()
     assert newwcs.wcs.cunit[0] == 'm / s'
     np.testing.assert_almost_equal(newwcs.wcs.crval,
