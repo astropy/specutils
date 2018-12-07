@@ -186,7 +186,7 @@ class XraySpectrum1D(Spectrum1D):
 ## ----  Supporting response file objects
 
 class ResponseMatrix(object):
-    def __init__(self, filename):
+    def __init__(self, filename, extension=None):
         """
         Load a response matrix file (RMF) from a FITS file.
 
@@ -244,7 +244,7 @@ class ResponseMatrix(object):
         self.energ_hi = None
         self.energ_unit = None
         self.detchans = None
-        self._load_rmf(filename)
+        self._load_rmf(filename, extension=extension)
 
     def _load_rmf(self, filename, extension=None):
         # open the FITS file and extract the MATRIX extension
@@ -463,7 +463,7 @@ class ResponseMatrix(object):
 
 class AreaResponse(object):
 
-    def __init__(self, filename):
+    def __init__(self, filename, extension=None):
         """
         Load an area response file (ARF) from a FITS file.
 
@@ -471,6 +471,10 @@ class AreaResponse(object):
         ----------
         filename : str
             The file name with the ARF file
+
+        extension : str (default None)
+            FITS file extension keyword, if the spectral response is stored
+            under an extension other than "SPECRESP"
 
         Attributes
         ----------
@@ -506,7 +510,7 @@ class AreaResponse(object):
         self.specresp = None
         self.fracexpo = None
         self.exposure = None
-        self._load_arf(filename)
+        self._load_arf(filename, extension=extension)
 
     def _load_arf(self, filename, extension=None):
         # open the FITS file and extract the SPECRESP extension
