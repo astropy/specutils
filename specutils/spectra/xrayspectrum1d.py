@@ -374,7 +374,7 @@ class ResponseMatrix(object):
         vector, there exists one or more sets of channels that this
         flux is redistributed into. The additional arrays `n_grp`,
         `f_chan` and `n_chan` store this information:
-        
+
             * `n_group` stores the number of channel groups for each
               energy bin
 
@@ -508,13 +508,26 @@ class AreaResponse(object):
         self.exposure = None
         self._load_arf(filename)
 
-    def _load_arf(self, filename):
-        # open the FITS file and extract the MATRIX extension
-        # which contains the redistribution matrix and
-        # anxillary information
+    def _load_arf(self, filename, extension=None):
+        # open the FITS file and extract the SPECRESP extension
+        # which contains the spectral response for the telescope
         hdulist = fits.open(filename)
 
-        h = hdulist["SPECRESP"]
+        # get all the extension names
+        extnames = np.array([h.name for h in hdulist])
+
+        # figure out the right extension to use
+        if extension is not None:
+            h = hdulist[extension]
+
+        elif 'SPECRESP' in extnames:
+            h = hdulist['SPECRESP']
+
+        else:
+            print("Cannot find common FITS file extension for spectral response")
+            print("Please set the `extension` keyword")
+            return
+
         data = h.data
         hdr = h.header
         hdulist.close()
