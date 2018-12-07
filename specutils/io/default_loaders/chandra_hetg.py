@@ -29,9 +29,15 @@ def hetg_spectrum_loader(file_name, arf=None, rmf=None):
     file_name: str
         The path to the FITS file
 
+    arf : str OR AreaResponse
+        Filename for the area response file (ARF) or a pre-loaded AreaResponse object
+
+    rmf : str OR ResponseMatrix
+        Filename for the response matrix file (RMF) or a pre-loaded ResponseMatrix object
+
     Returns
     -------
-    data: Spectrum1D
+    data: XraySpectrum1D
         The spectrum that is represented by the data in this table.
     """
 
@@ -47,7 +53,7 @@ def hetg_spectrum_loader(file_name, arf=None, rmf=None):
 
         bin_unit = data.columns['BIN_LO'].unit
         counts   = data['COUNTS'] * Unit('ct')
-        exposure = hdu[1].header['EXPOSURE']  # seconds
+        exposure = hdu[1].header['EXPOSURE'] * Unit('second')
 
     return XraySpectrum1D(bin_lo, bin_hi, bin_unit, counts,
                           exposure=exposure, arf=arf, rmf=rmf)
