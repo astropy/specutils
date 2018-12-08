@@ -637,6 +637,7 @@ convenience functions to perform exactly this task.  An example is shown below.
 .. plot::
     :include-source:
     :align: center
+    :context: close-figs
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -666,11 +667,21 @@ convenience functions to perform exactly this task.  An example is shown below.
     plt.title('Continuum Fitting')
     plt.grid('on')
 
-    # construct normalized spectrum by dividing the old spectrum
-    # by the continuum
+The normalized spectrum is simply the old spectrum devided by the
+fitted continuum, which returns a new object:
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
     spec_normalized = spectrum / y_continuum_fitted
 
+    plt.plot(spec_normalized.spectral_axis, spec_normalized.flux)
+    plt.title('Continuum normalized spectrum')
+    plt.grid('on')
 
+    
 Reference/API
 -------------
 
