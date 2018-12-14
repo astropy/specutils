@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from astropy.io import fits, misc
+from astropy.utils.data import get_pkg_data_filename
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation import align_spectra
 from .spectral_examples import simulated_spectra
@@ -11,7 +12,7 @@ from .spectral_examples import simulated_spectra
 
 def test_aligning():
 
-    data = misc.fnunpickle('data/mos-nrs1.pck')
+    data = misc.fnunpickle(get_pkg_data_filename('data/mos-nrs1.pck'))
     
     wave1 = data['spectrum1']['wavelengths']
     spec1 = data['spectrum1']['flux']
