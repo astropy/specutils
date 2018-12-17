@@ -28,7 +28,7 @@ def _interpolate_spectrum(wavelengths, spectral_flux, out_wavelengths):
     spectral_flux : `~astropy.units.Quantity` array or numpy array
         The spectral flux values of the spectrum
 
-    out_wavelengths : `~astropy.units.Quantity` array or numpy array 
+    out_wavelengths : `~astropy.units.Quantity` array or numpy array
         The spectral wavelengths of the desired output spectrum
 
     Returns
@@ -46,7 +46,7 @@ def _interpolate_spectrum(wavelengths, spectral_flux, out_wavelengths):
 
 def _fit_metric(poly_coefs, old_wave, spec2, out_wave, spec1_scaled):
     """
-    Method whose output should be minimized. Used by the fitting 
+    Method whose output should be minimized. Used by the fitting
     program in the alignment method.
     """
 
@@ -94,13 +94,13 @@ def align_spectra(spectrum1, spectrum2):
 
     #
     # Grab the underlying data.
-    # 
+    #
 
     wave1, spec1 = spectrum1.spectral_axis, spectrum1.flux
     wave2, spec2 = spectrum2.spectral_axis, spectrum2.flux
 
     #
-    # Since the spectra might be of different shapes, we need to isolate the portions 
+    # Since the spectra might be of different shapes, we need to isolate the portions
     # of the spectra where they overlap
     #
 
@@ -109,7 +109,7 @@ def align_spectra(spectrum1, spectrum2):
     wave2_overlap = (wave2 >= wave_lo) & (wave2 <= wave_hi) & (spec2 != 0.0)
 
     #
-    # We also need to normalize the fluxes to make our wavelength fits 
+    # We also need to normalize the fluxes to make our wavelength fits
     # better.
     #
 
@@ -118,7 +118,7 @@ def align_spectra(spectrum1, spectrum2):
     normalized_spec = interp_spec2 / spec1[wave1_overlap]
 
     #
-    # If the spectra are not already well-aligned, more robust fitting 
+    # If the spectra are not already well-aligned, more robust fitting
     # methods, probably including outlier rejection, would be necessary.
     #
 
@@ -136,7 +136,7 @@ def align_spectra(spectrum1, spectrum2):
     # be any size, depending on what degree polynomial you wish to fit.
     #
 
-    pixel_fit = minimize(_fit_metric, np.array([0., 1., 0.]), 
+    pixel_fit = minimize(_fit_metric, np.array([0., 1., 0.]),
                          args=(wave2.value[wave2_overlap],spec2[wave2_overlap], out_wave, spec1_scaled, ), method='Nelder-Mead')
 
     alt_wave2 = np.polyval(pixel_fit.x, wave2.value[wave2_overlap])

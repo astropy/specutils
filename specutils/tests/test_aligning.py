@@ -10,7 +10,7 @@ from ..manipulation import align_spectra
 def test_aligning():
 
     data = misc.fnunpickle(get_pkg_data_filename('data/mos-nrs1.pck'))
-    
+
     wave1 = data['spectrum1']['wavelengths']
     spec1 = data['spectrum1']['flux']
 
