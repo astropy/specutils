@@ -1,13 +1,10 @@
-import os
 import astropy.units as u
 import numpy as np
-import pytest
 
 from astropy.io import fits, misc
 from astropy.utils.data import get_pkg_data_filename
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation import align_spectra
-from .spectral_examples import simulated_spectra
 
 
 def test_aligning():
