@@ -2,14 +2,13 @@ import os
 
 from astropy.io import fits
 from astropy.units import Unit
-#from astropy.nddata import StdDevUncertainty
 
 from specutils.io.registers import data_loader
 from specutils import XraySpectrum1D
 
-__all__ = ['chandra_identify', 'hetg_spectrum_loader']
+__all__ = ['chandra_hetg_identify', 'hetg_spectrum_loader']
 
-def chandra_identify(origin, *args, **kwargs):
+def chandra_hetg_identify(origin, *args, **kwargs):
     """Check whether given file contains Chandra HETG spectral data."""
     with fits.open(args[0]) as hdu:
         # Check that it is a Chandra spectrum file
@@ -19,7 +18,7 @@ def chandra_identify(origin, *args, **kwargs):
                 return True
     return False
 
-@data_loader(label="chandra_hetg", identifier=chandra_identify, extensions=['pha','pha2', 'PHA', 'PHA2', 'FITS', 'FIT', 'fits', 'fit'])
+@data_loader(label="chandra_hetg", identifier=chandra_hetg_identify, extensions=['pha','pha2', 'PHA', 'PHA2', 'FITS', 'FIT', 'fits', 'fit'])
 def hetg_spectrum_loader(file_name, arf=None, rmf=None):
     """
     Load Chandra HETG spectral data from a file into a spectrum object.

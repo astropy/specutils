@@ -5,7 +5,7 @@ from astropy import units as u
 from astropy.io import fits
 from .spectrum1d import Spectrum1D
 
-__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix']
+__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix', 'arf_loader']
 
 # For dealing with varied unit string choices
 EV   = ['eV', 'ev']
@@ -90,7 +90,7 @@ class XraySpectrum1D(Spectrum1D):
     def counts(self):
         return self.flux
 
-    def assign_arf(self, arf_inp):
+    def assign_arf(self, arf_inp, **kwargs):
         """
         Assign an area response file (ARF) object to the XraySpectrum1D object
 
@@ -104,7 +104,7 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.arf attribute
         """
         if isinstance(arf_inp, str):
-            self.arf = AreaResponse(arf_inp)
+            self.arf = arf_loader(arf_inp, **kwargs)
         else:
             self.arf = arf_inp
 
@@ -139,7 +139,7 @@ class XraySpectrum1D(Spectrum1D):
         Parameters
         ----------
         mflux : iterable
-            A list or array with the model flux values in ergs/keV/s/cm^-2
+            A list or array with the model flux values in phot/s/cm^-2
 
         exposure : float, default None
             By default, the exposure stored in the ARF will be used to compute
@@ -163,15 +163,13 @@ class XraySpectrum1D(Spectrum1D):
         """
 
         if self.arf is not None:
-            mrate  = self.arf.apply_arf(mflux, exposure=exposure)
+            mrate  = self.arf.apply_arf(mflux, exposure=exposure) # ct/bin with no RMF applied
         else:
-            #print("Caution: no ARF file specified")
-            mrate = mflux
+            mrate = mflux # assumes ct/bin is the input with no RMF applied
 
         if self.rmf is not None:
-            result = self.rmf.apply_rmf(mrate)
+            result = self.rmf.apply_rmf(mrate.value)
         else:
-            #print("Caution: no RMF file specified")
             result = mrate
 
         return result
@@ -358,27 +356,27 @@ class ResponseMatrix(object):
 
         return n_grp, f_chan_flat, n_chan_flat, matrix_flat
 
-    def apply_rmf(self, spec):
+    def apply_rmf(self, model):
         """
         Fold the spectrum through the redistribution matrix.
 
         The redistribution matrix is saved as a flattened 1-dimensional
         vector to save space. In reality, for each entry in the flux
         vector, there exists one or more sets of channels that this
-        flux is redistributed into. The additional arrays `n_grp`,
-        `f_chan` and `n_chan` store this information:
+        flux is redistributed into. The additional arrays n_grp,
+        f_chan and n_chan store this information:
 
-            * `n_group` stores the number of channel groups for each
+            * n_group stores the number of channel groups for each
               energy bin
 
-            * `f_chan` stores the *first channel* that each channel
+            * f_chan stores the *first channel* that each channel
               for each channel set
 
-            * `n_chan` stores the number of channels in each channel
+            * n_chan stores the number of channels in each channel
               set
 
         As a result, for a given energy bin i, we need to look up the
-        number of channel sets in `n_grp` for that energy bin. We
+        number of channel sets in n_grp for that energy bin. We
         then need to loop over the number of channel sets. For each
         channel set, we look up the first channel into which flux
         will be distributed as well as the number of channels in the
@@ -391,7 +389,7 @@ class ResponseMatrix(object):
 
         Parameters
         ----------
-        spec : numpy.ndarray
+        model : numpy.ndarray
             The (model) spectrum to be folded
 
         Returns
@@ -402,7 +400,7 @@ class ResponseMatrix(object):
 
         """
         # get the number of channels in the data
-        nchannels = spec.shape[0]
+        nchannels = model.shape[0]
 
         # an empty array for the output counts
         counts = np.zeros(nchannels)
@@ -418,7 +416,7 @@ class ResponseMatrix(object):
 
             # this is the current bin in the flux spectrum to
             # be folded
-            source_bin_i = spec[i]
+            source_bin_i = model[i]
 
             # get the current number of groups
             current_num_groups = self.n_grp[i]
@@ -455,100 +453,49 @@ class ResponseMatrix(object):
 
 
 class AreaResponse(object):
-
-    def __init__(self, filename, extension=None):
+    def __init__(self, e_low, e_high, eff_area,
+                 exposure=None, fracexpo=1.0, filename=None):
         """
         Load an area response file (ARF) from a FITS file.
 
-        Parameters
-        ----------
-        filename : str
-            The file name with the ARF file
-
-        extension : str (default None)
-            FITS file extension keyword, if the spectral response is stored
-            under an extension other than "SPECRESP"
-
         Attributes
         ----------
-        filename : str
-            The file name that the ARF was drawn from
-
-        e_low : numpy.ndarray
+        e_low : astropy.units.Quantity
             The lower edges of the energy bins
 
-        e_high : numpy.ndarray
+        e_high : astropy.units.Quantity
             The upper edges of the energy bins
 
-        e_unit : astropy.units.Unit
-            Description of the energy units used
+        eff_area : astropy.units.Quantity
+            Description of the energy dependent telescope effective area
 
-        specresp : numpy.ndarray
-            Description of the energy dependent telescope response area
+        exposure :
+            Average exposure time for the dataset
+            (which takes telescope dithering into account).
 
         fracexpo : float or numpy.ndarray
             Fractional exposure time for the spectrum
             (sometimes constant, sometimes dependent on spectral channel).
             These values are stored for reference; generally, they are already
-            accounted for in the specresp array.
+            accounted for in the eff_area array.
 
-        exposure :
-            Average exposure time for the dataset
-            (takes telescope dithering into account)
+        filename : str
+            Stores the name of the file from which the ARF was loaded.
+
+        e_mid : Property that returns the middle of each energy bin
         """
         self.filename = filename
-        self.e_low = None
-        self.e_high = None
-        self.e_unit = None
-        self.specresp = None
-        self.fracexpo = None
-        self.exposure = None
-        self._load_arf(filename, extension=extension)
+        self.e_low    = e_low
+        self.e_high   = e_high
+        self.eff_area = eff_area
+        self.fracexpo = fracexpo
+        self.exposure = exposure
 
-    def _load_arf(self, filename, extension=None):
-        # open the FITS file and extract the SPECRESP extension
-        # which contains the spectral response for the telescope
-        hdulist = fits.open(filename)
+    @property
+    def e_mid(self):
+        return 0.5 * (self.e_low + self.e_high)
 
-        # get all the extension names
-        extnames = np.array([h.name for h in hdulist])
-
-        # figure out the right extension to use
-        if extension is not None:
-            h = hdulist[extension]
-
-        elif 'SPECRESP' in extnames:
-            h = hdulist['SPECRESP']
-
-        else:
-            print("Cannot find common FITS file extension for spectral response")
-            print("Please set the `extension` keyword")
-            return
-
-        data = h.data
-        hdr = h.header
-        hdulist.close()
-
-        # extract + store the attributes described in the docstring
-
-        self.e_low  = np.array(data.field("ENERG_LO"))
-        self.e_high = np.array(data.field("ENERG_HI"))
-        self.e_unit = _unit_parser(data.columns["ENERG_LO"].unit)
-        self.specresp = np.array(data.field("SPECRESP"))
-
-        if "EXPOSURE" in list(hdr.keys()):
-            self.exposure = hdr["EXPOSURE"]
-        else:
-            self.exposure = 1.0
-
-        if "FRACEXPO" in data.columns.names:
-            self.fracexpo = data["FRACEXPO"]
-        else:
-            self.fracexpo = 1.0
-
-        return
-
-    def apply_arf(self, spec, exposure=None):
+    def apply_arf(self, model, exposure=None):
         """
         Fold the spectrum through the area response file (ARF).
         The ARF is a single vector encoding the effective area information
@@ -557,8 +504,8 @@ class AreaResponse(object):
 
         Parameters
         ----------
-        spec : numpy.ndarray
-            The (model) spectrum to be folded
+        model : numpy.ndarray
+            The model spectrum to which the arf will be applied
 
         exposure : float, default None
             Value for the exposure time. By default, `apply_arf` will use the
@@ -574,10 +521,60 @@ class AreaResponse(object):
             The (model) spectrum after folding, in
             counts/s/channel
         """
-        assert spec.shape[0] == self.specresp.shape[0], "The input spectrum must " \
+        assert model.shape[0] == self.eff_area.shape[0], "The input spectrum must " \
                                                       "be of same size as the " \
                                                       "ARF array."
         if exposure is None:
-            return np.array(spec) * self.specresp * self.exposure
+            return model * self.eff_area * self.exposure
         else:
-            return np.array(spec) * self.specresp * exposure
+            return model * self.eff_area * exposure
+
+## ----- Convenience functions for loading ARFs and RMFs
+def arf_loader(filename, block='SPECRESP'):
+    """
+    Load a AreaResponse object from FITS file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the FITS file
+
+    block : str
+        FITS file block keyword, if the spectral response is stored
+        under an extension other than "SPECRESP"
+
+    Returns
+    -------
+    AreaResponse
+        The ARF that is represented by the FITS file
+    """
+    # open the FITS file and extract the SPECRESP block
+    # which contains the spectral response for the telescope
+    hdulist = fits.open(filename)
+
+    # Get the data from the appropriate extension
+    blocknames = np.array([h.name for h in hdulist])
+    assert block in blocknames, "Could not fine {} block in FITS file".format(block)
+    h = hdulist[block]
+
+    data = h.data
+    hdr = h.header
+    hdulist.close()
+
+    e_unit = u.Unit(data.columns["ENERG_LO"].unit)
+    e_low  = np.array(data.field("ENERG_LO")) * e_unit
+    e_high = np.array(data.field("ENERG_HI")) * e_unit
+
+    area_unit = u.Unit(data.columns['SPECRESP'].unit) * u.ct # usually ct cm^2 / phot
+    specresp  = np.array(data.field("SPECRESP")) * area_unit
+
+    exposure = None
+    if "EXPOSURE" in list(hdr.keys()):
+        exposure = hdr["EXPOSURE"]
+
+    fracexpo = 1.0
+    if "FRACEXPO" in data.columns.names:
+        fracexpo = data["FRACEXPO"]
+
+    return AreaResponse(e_low, e_high, specresp,
+                        exposure=exposure, fracexpo=fracexpo, filename=filename)
