@@ -184,8 +184,6 @@ class ResponseMatrix(object):
         """
         Load a response matrix file (RMF) from a FITS file.
 
-        Parameters
-        ----------
         filename : str
             The file name with the RMF file
 
@@ -193,10 +191,19 @@ class ResponseMatrix(object):
             FITS file extension keyword, if the response matrix is stored
             under an extension other than "MATRIX" or "SPECRESP MATRIX"
 
-        Attributes
-        ----------
-        filename : str
-            The file name that the RMF was drawn from
+        energ_lo : numpy.ndarray
+            The lower edges of the energy bins
+
+        energ_hi : numpy.ndarray
+            The upper edges of the energy bins
+
+        matrix : numpy.ndarray
+            The redistribution matrix as a flattened 1D vector
+
+        energ_unit : astropy.units.Unit
+            Description of the energy units used
+
+        offset : float
 
         n_grp : numpy.ndarray
             the Array with the number of channels in each
@@ -212,21 +219,8 @@ class ResponseMatrix(object):
             The number of channels in each channel group. The same
             logic as for f_chan applies
 
-        matrix : numpy.ndarray
-            The redistribution matrix as a flattened 1D vector
-
-        energ_lo : numpy.ndarray
-            The lower edges of the energy bins
-
-        energ_hi : numpy.ndarray
-            The upper edges of the energy bins
-
-        energ_unit : astropy.units.Unit
-            Description of the energy units used
-
         detchans : int
             The number of channels in the detector
-
         """
         self.filename = filename
         self.offset = offset
