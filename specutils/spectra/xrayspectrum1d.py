@@ -568,7 +568,7 @@ def arf_loader(filename, block='SPECRESP'):
 
     exposure = None
     if "EXPOSURE" in list(hdr.keys()):
-        exposure = hdr["EXPOSURE"]
+        exposure = hdr["EXPOSURE"] * u.second
 
     fracexpo = 1.0
     if "FRACEXPO" in data.columns.names:
