@@ -138,19 +138,17 @@ class XraySpectrum1D(Spectrum1D):
 
         Parameters
         ----------
-        mflux : iterable
-            A list or array with the model flux values in phot/s/cm^-2
+        mflux : astropy.units.Quantity
+            A list or array with the model flux values,
+            typically with units of phot/s/cm^-2
 
-        exposure : float, default None
+        exposure : astropy.units.Quantity (default: None)
             By default, the exposure stored in the ARF will be used to compute
             the total counts per bin over the effective observation time.
             In cases where this might be incorrect (e.g. for simulated spectra
             where the pha file might have a different exposure value than the
             ARF), this keyword provides the functionality to override the
             default behaviour and manually set the exposure time to use.
-
-        store_model_counts : bool
-            If True, the output will also be stored in self.model_counts
 
         Returns
         -------
@@ -182,7 +180,7 @@ class ResponseMatrix(object):
                  offset=0.0, n_grp=np.array([]), f_chan=np.array([]),
                  n_chan=np.array([]), detchans=0):
         """
-        Load a response matrix file (RMF) from a FITS file.
+        The response matrix file (RMF) for an X-ray observation.
 
         filename : str
             The file name with the RMF file
@@ -321,10 +319,6 @@ class ResponseMatrix(object):
 
         # stack all non-zero rows in the matrix
         matrix_flat = np.hstack(matrix[nz_idx])
-
-        # stack all nonzero rows in n_chan and f_chan
-        #n_chan_flat = np.hstack(n_chan[nz_idx])
-        #f_chan_flat = np.hstack(f_chan[nz_idx])
 
         # some matrices actually have more elements
         # than groups in `n_grp`, so we'll only pick out
