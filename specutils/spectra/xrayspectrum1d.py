@@ -177,7 +177,10 @@ class XraySpectrum1D(Spectrum1D):
 ## ----  Supporting response file objects
 
 class ResponseMatrix(object):
-    def __init__(self, filename, extension=None):
+    def __init__(self, filename=None, extension=None,
+                 energ_lo=None, energ_hi=None, matrix=None, energ_unit=None,
+                 offset=0.0, n_grp=np.array([]), f_chan=np.array([]),
+                 n_chan=np.array([]), detchans=0):
         """
         Load a response matrix file (RMF) from a FITS file.
 
@@ -226,16 +229,17 @@ class ResponseMatrix(object):
 
         """
         self.filename = filename
-        self.offset = None
-        self.n_grp = None
-        self.f_chan = None
-        self.n_chan = None
-        self.matrix = None
-        self.energ_lo = None
-        self.energ_hi = None
-        self.energ_unit = None
-        self.detchans = None
-        self._load_rmf(filename, extension=extension)
+        self.offset = offset
+        self.n_grp = n_grp
+        self.f_chan = f_chan
+        self.n_chan = n_chan
+        self.matrix = matrix
+        self.energ_lo = energ_lo
+        self.energ_hi = energ_hi
+        self.energ_unit = energ_unit
+        self.detchans = detchans
+        if filename is not None:
+            self._load_rmf(filename, extension=extension)
 
     def _load_rmf(self, filename, extension=None):
         # open the FITS file and extract the MATRIX extension
@@ -273,7 +277,7 @@ class ResponseMatrix(object):
 
         self.energ_lo = np.array(data.field("ENERG_LO"))
         self.energ_hi = np.array(data.field("ENERG_HI"))
-        self.energ_unit = _unit_parser(data.columns["ENERG_LO"].unit)
+        self.energ_unit = u.Unit(data.columns["ENERG_LO"].unit)
         self.detchans = hdr["DETCHANS"]
         self.offset = self.__get_tlmin(h)
 
