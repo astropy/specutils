@@ -5,7 +5,7 @@ from astropy import units as u
 from astropy.io import fits
 from .spectrum1d import Spectrum1D
 
-__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix']
+__all__ = ['XraySpectrum1D', 'ARF', 'RMF']
 
 # For dealing with varied unit string choices
 EV   = ['eV', 'ev']
@@ -33,12 +33,12 @@ class XraySpectrum1D(Spectrum1D):
     exposure : astropy.Quantity
         Exposure time for the dataset
 
-    arf : specutils.AreaResponse or string, default None
-        Strings will be passed to AreaResponse.__init__
+    arf : specutils.ARF or string, default None
+        Strings will be passed to ARF.__init__
         All other input types are stored as arf attribute
 
-    rmf : specutils.ResponseMatrix or string, default None
-        Strings will be passed to ResponseMatrix.__init__
+    rmf : specutils.RMF or string, default None
+        Strings will be passed to RMF.__init__
         All other input types are stored as rmf attribute
 
     rest_value : astropy.units.Quantity, default 0 Angstrom
@@ -81,7 +81,7 @@ class XraySpectrum1D(Spectrum1D):
 
     def assign_arf(self, arf_inp, **kwargs):
         """
-        Assign an area response file (ARF) object to the XraySpectrum1D object
+        Assign an auxiliary response file (ARF) object to the XraySpectrum1D object
 
         Input
         -----
@@ -93,13 +93,13 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.arf attribute
         """
         if isinstance(arf_inp, str):
-            self.arf = AreaResponse.read(arf_inp, **kwargs)
+            self.arf = ARF.read(arf_inp, **kwargs)
         else:
             self.arf = arf_inp
 
     def assign_rmf(self, rmf_inp):
         """
-        Assign a response matrix file (RMF) object to the XraySpectrum1D object
+        Assign a redistribution matrix file (RMF) object to the XraySpectrum1D object
 
         Input
         -----
@@ -111,7 +111,7 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.rmf attribute
         """
         if isinstance(rmf_inp, str):
-            self.rmf = ResponseMatrix.read(rmf_inp)
+            self.rmf = RMF.read(rmf_inp)
         else:
             self.rmf = rmf_inp
         return
@@ -119,7 +119,7 @@ class XraySpectrum1D(Spectrum1D):
     def apply_response(self, mflux, exposure=None):
         """
         Given a model flux spectrum, apply the response. In cases where the
-        spectrum has both an area response file (ARF) and a response matrix
+        spectrum has both an auxiliary response file (ARF) and a redistribution matrix
         file (RMF), apply both. Otherwise, apply whatever response is in RMF.
 
         The model flux spectrum *must* be created using the same units and
@@ -163,17 +163,17 @@ class XraySpectrum1D(Spectrum1D):
 
 ## ----  Supporting response file objects
 
-class ResponseMatrix(object):
+class RMF(object):
     def __init__(self, energ_lo=None, energ_hi=None, matrix=None, energ_unit=None,
                  offset=0.0, n_grp=np.array([]), f_chan=np.array([]),
                  n_chan=np.array([]), detchans=0):
         """
-        The response matrix file (RMF) for an X-ray observation.
+        Redistribution Matrix File (RMF) for an X-ray spectrum.
 
         Attributes
         ----------
         filename : str
-            Stores the filename used with ResponseMatrix.read
+            Stores the filename used with RMF.read
 
         energ_lo : numpy.ndarray
             The lower edges of the energy bins
@@ -219,7 +219,7 @@ class ResponseMatrix(object):
 
     @staticmethod
     def read(filename, extension=None):
-        result = ResponseMatrix()
+        result = RMF()
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
@@ -430,16 +430,16 @@ class ResponseMatrix(object):
         return counts[:self.detchans]
 
 
-class AreaResponse(object):
+class ARF(object):
     def __init__(self, e_low, e_high, eff_area,
                  exposure=None, fracexpo=1.0):
         """
-        Load an area response file (ARF) from a FITS file.
+        Auxiliary Response File (ARF) for an X-ray spectrum.
 
         Attributes
         ----------
         filename : str
-            Stores the filename used with AreaResponse.read
+            Stores the filename used with ARF.read
 
         e_low : astropy.units.Quantity
             The lower edges of the energy bins
@@ -476,7 +476,7 @@ class AreaResponse(object):
     @staticmethod
     def read(filename, block='SPECRESP'):
         """
-        Load a AreaResponse object from FITS file.
+        Load an ARF object from FITS file.
 
         Parameters
         ----------
@@ -489,8 +489,7 @@ class AreaResponse(object):
 
         Returns
         -------
-        AreaResponse
-            The ARF that is represented by the FITS file
+        The ARF object that is represented by the FITS file
         """
         # open the FITS file and extract the SPECRESP block
         # which contains the spectral response for the telescope
@@ -520,14 +519,14 @@ class AreaResponse(object):
         if "FRACEXPO" in data.columns.names:
             fracexpo = data["FRACEXPO"]
 
-        result = AreaResponse(e_low, e_high, specresp,
+        result = ARF(e_low, e_high, specresp,
                               exposure=exposure, fracexpo=fracexpo)
         result.filename = filename
         return result
 
     def apply_arf(self, model, exposure=None):
         """
-        Fold the spectrum through the area response file (ARF).
+        Fold the spectrum through the auxiliary response file (ARF).
         The ARF is a single vector encoding the effective area information
         about the detector. A such, applying the ARF is a simple
         multiplication with the input spectrum.
