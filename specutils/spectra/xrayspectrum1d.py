@@ -5,7 +5,7 @@ from astropy import units as u
 from astropy.io import fits
 from .spectrum1d import Spectrum1D
 
-__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix', 'arf_loader']
+__all__ = ['XraySpectrum1D', 'AreaResponse', 'ResponseMatrix']
 
 # For dealing with varied unit string choices
 EV   = ['eV', 'ev']
@@ -14,17 +14,6 @@ ANGS = ['angs', 'Angs', 'Angstrom', 'angstrom', 'Angstroms', 'angstroms', 'A', '
 
 ## An introduction to X-ray analysis can be found here:
 ## http://cxc.cfa.harvard.edu/xrayschool/talks/intro_xray_analysis.pdf
-
-def _unit_parser(unit_string):
-    """
-    A function for matching unit strings to the correct Astropy unit
-    """
-    if unit_string in EV:
-        return u.eV
-    if unit_string in KEV:
-        return u.keV
-    if unit_string in ANGS:
-        return u.angstrom
 
 class XraySpectrum1D(Spectrum1D):
     """
@@ -104,7 +93,7 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.arf attribute
         """
         if isinstance(arf_inp, str):
-            self.arf = arf_loader(arf_inp, **kwargs)
+            self.arf = AreaResponse.read(arf_inp, **kwargs)
         else:
             self.arf = arf_inp
 
@@ -122,7 +111,7 @@ class XraySpectrum1D(Spectrum1D):
         Modifies the XraySpectrum1D.rmf attribute
         """
         if isinstance(rmf_inp, str):
-            self.rmf = ResponseMatrix(rmf_inp)
+            self.rmf = ResponseMatrix.read(rmf_inp)
         else:
             self.rmf = rmf_inp
         return
@@ -175,19 +164,16 @@ class XraySpectrum1D(Spectrum1D):
 ## ----  Supporting response file objects
 
 class ResponseMatrix(object):
-    def __init__(self, filename=None, extension=None,
-                 energ_lo=None, energ_hi=None, matrix=None, energ_unit=None,
+    def __init__(self, energ_lo=None, energ_hi=None, matrix=None, energ_unit=None,
                  offset=0.0, n_grp=np.array([]), f_chan=np.array([]),
                  n_chan=np.array([]), detchans=0):
         """
         The response matrix file (RMF) for an X-ray observation.
 
+        Attributes
+        ----------
         filename : str
-            The file name with the RMF file
-
-        extension : str (default None)
-            FITS file extension keyword, if the response matrix is stored
-            under an extension other than "MATRIX" or "SPECRESP MATRIX"
+            Stores the filename used with ResponseMatrix.read
 
         energ_lo : numpy.ndarray
             The lower edges of the energy bins
@@ -220,7 +206,7 @@ class ResponseMatrix(object):
         detchans : int
             The number of channels in the detector
         """
-        self.filename = filename
+        self.filename = None
         self.offset = offset
         self.n_grp = n_grp
         self.f_chan = f_chan
@@ -230,10 +216,10 @@ class ResponseMatrix(object):
         self.energ_hi = energ_hi
         self.energ_unit = energ_unit
         self.detchans = detchans
-        if filename is not None:
-            self._load_rmf(filename, extension=extension)
 
-    def _load_rmf(self, filename, extension=None):
+    @staticmethod
+    def read(filename, extension=None):
+        result = ResponseMatrix()
         # open the FITS file and extract the MATRIX extension
         # which contains the redistribution matrix and
         # anxillary information
@@ -267,17 +253,17 @@ class ResponseMatrix(object):
         n_chan = np.array(data.field("N_CHAN"))
         matrix = np.array(data.field("MATRIX"))
 
-        self.energ_lo = np.array(data.field("ENERG_LO"))
-        self.energ_hi = np.array(data.field("ENERG_HI"))
-        self.energ_unit = u.Unit(data.columns["ENERG_LO"].unit)
-        self.detchans = hdr["DETCHANS"]
-        self.offset = self.__get_tlmin(h)
+        result.energ_lo = np.array(data.field("ENERG_LO"))
+        result.energ_hi = np.array(data.field("ENERG_HI"))
+        result.energ_unit = u.Unit(data.columns["ENERG_LO"].unit)
+        result.detchans = hdr["DETCHANS"]
+        result.offset = result.__get_tlmin(h)
 
         # flatten the variable-length arrays
-        self.n_grp, self.f_chan, self.n_chan, self.matrix = \
-                self._flatten_arrays(n_grp, f_chan, n_chan, matrix)
+        result.n_grp, result.f_chan, result.n_chan, result.matrix = \
+                result._flatten_arrays(n_grp, f_chan, n_chan, matrix)
 
-        return
+        return result
 
     def __get_tlmin(self, h):
         """
@@ -446,12 +432,15 @@ class ResponseMatrix(object):
 
 class AreaResponse(object):
     def __init__(self, e_low, e_high, eff_area,
-                 exposure=None, fracexpo=1.0, filename=None):
+                 exposure=None, fracexpo=1.0):
         """
         Load an area response file (ARF) from a FITS file.
 
         Attributes
         ----------
+        filename : str
+            Stores the filename used with AreaResponse.read
+
         e_low : astropy.units.Quantity
             The lower edges of the energy bins
 
@@ -471,12 +460,9 @@ class AreaResponse(object):
             These values are stored for reference; generally, they are already
             accounted for in the eff_area array.
 
-        filename : str
-            Stores the name of the file from which the ARF was loaded.
-
         e_mid : Property that returns the middle of each energy bin
         """
-        self.filename = filename
+        self.filename = None
         self.e_low    = e_low
         self.e_high   = e_high
         self.eff_area = eff_area
@@ -486,6 +472,58 @@ class AreaResponse(object):
     @property
     def e_mid(self):
         return 0.5 * (self.e_low + self.e_high)
+
+    @staticmethod
+    def read(filename, block='SPECRESP'):
+        """
+        Load a AreaResponse object from FITS file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the FITS file
+
+        block : str
+            FITS file block keyword, if the spectral response is stored
+            under an extension other than "SPECRESP"
+
+        Returns
+        -------
+        AreaResponse
+            The ARF that is represented by the FITS file
+        """
+        # open the FITS file and extract the SPECRESP block
+        # which contains the spectral response for the telescope
+        hdulist = fits.open(filename)
+
+        # Get the data from the appropriate extension
+        blocknames = np.array([h.name for h in hdulist])
+        assert block in blocknames, "Could not fine {} block in FITS file".format(block)
+        h = hdulist[block]
+
+        data = h.data
+        hdr = h.header
+        hdulist.close()
+
+        e_unit = u.Unit(data.columns["ENERG_LO"].unit)
+        e_low  = np.array(data.field("ENERG_LO")) * e_unit
+        e_high = np.array(data.field("ENERG_HI")) * e_unit
+
+        area_unit = u.Unit(data.columns['SPECRESP'].unit) * u.ct # usually ct cm^2 / phot
+        specresp  = np.array(data.field("SPECRESP")) * area_unit
+
+        exposure = None
+        if "EXPOSURE" in list(hdr.keys()):
+            exposure = hdr["EXPOSURE"] * u.second
+
+        fracexpo = 1.0
+        if "FRACEXPO" in data.columns.names:
+            fracexpo = data["FRACEXPO"]
+
+        result = AreaResponse(e_low, e_high, specresp,
+                              exposure=exposure, fracexpo=fracexpo)
+        result.filename = filename
+        return result
 
     def apply_arf(self, model, exposure=None):
         """
@@ -520,53 +558,3 @@ class AreaResponse(object):
             return model * self.eff_area * self.exposure
         else:
             return model * self.eff_area * exposure
-
-## ----- Convenience functions for loading ARFs and RMFs
-def arf_loader(filename, block='SPECRESP'):
-    """
-    Load a AreaResponse object from FITS file.
-
-    Parameters
-    ----------
-    filename : str
-        Path to the FITS file
-
-    block : str
-        FITS file block keyword, if the spectral response is stored
-        under an extension other than "SPECRESP"
-
-    Returns
-    -------
-    AreaResponse
-        The ARF that is represented by the FITS file
-    """
-    # open the FITS file and extract the SPECRESP block
-    # which contains the spectral response for the telescope
-    hdulist = fits.open(filename)
-
-    # Get the data from the appropriate extension
-    blocknames = np.array([h.name for h in hdulist])
-    assert block in blocknames, "Could not fine {} block in FITS file".format(block)
-    h = hdulist[block]
-
-    data = h.data
-    hdr = h.header
-    hdulist.close()
-
-    e_unit = u.Unit(data.columns["ENERG_LO"].unit)
-    e_low  = np.array(data.field("ENERG_LO")) * e_unit
-    e_high = np.array(data.field("ENERG_HI")) * e_unit
-
-    area_unit = u.Unit(data.columns['SPECRESP'].unit) * u.ct # usually ct cm^2 / phot
-    specresp  = np.array(data.field("SPECRESP")) * area_unit
-
-    exposure = None
-    if "EXPOSURE" in list(hdr.keys()):
-        exposure = hdr["EXPOSURE"] * u.second
-
-    fracexpo = 1.0
-    if "FRACEXPO" in data.columns.names:
-        fracexpo = data["FRACEXPO"]
-
-    return AreaResponse(e_low, e_high, specresp,
-                        exposure=exposure, fracexpo=fracexpo, filename=filename)
