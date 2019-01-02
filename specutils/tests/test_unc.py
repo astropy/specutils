@@ -71,3 +71,8 @@ def test_noise_estimate_uncertainty():
 
     assert quantity_allclose(spectrum_with_uncertainty.uncertainty.array,
                              expected_uncertainty.value)
+
+    # Now try with something that does not return Std, Var or IVar type of noise estimation
+    with pytest.raises(ValueError) as e_info:
+        spectrum_with_uncertainty = noise_region_uncertainty(spectrum, spectral_region, lambda x: np.std(x)**3)
+
