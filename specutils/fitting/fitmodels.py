@@ -8,7 +8,7 @@ import astropy.units as u
 from astropy.stats import sigma_clipped_stats
 
 from ..manipulation.utils import excise_regions
-from ..analysis import fwhm, centroid, warn_continuum_below_threshold
+from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
 from ..utils import QuantityModel
 from ..manipulation import extract_region, noise_region_uncertainty
 from ..spectra.spectral_region import SpectralRegion
@@ -30,7 +30,7 @@ _parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
         'mean': lambda s: centroid(s, region=None),
-        'stddev': lambda s: fwhm(s)
+        'stddev': lambda s: gaussian_sigma_width(s)
     },
     'Lorentz1D': {
         'amplitude': lambda s: max(s.flux),

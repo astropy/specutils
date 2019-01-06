@@ -110,7 +110,7 @@ def test_single_peak_estimate():
 
     assert np.isclose(g_init.amplitude.value, 3., rtol=.2)
     assert np.isclose(g_init.mean.value, 6.3, rtol=.1)
-    assert np.isclose(g_init.stddev.value, 0.8, rtol=.1)
+    assert np.isclose(g_init.stddev.value, 0.8, rtol=.3)
 
     assert g_init.amplitude.unit == u.Jy
     assert g_init.mean.unit == u.um
