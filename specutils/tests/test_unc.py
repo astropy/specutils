@@ -74,7 +74,7 @@ def test_noise_estimate_uncertainty():
     assert isinstance(spectrum_with_uncertainty.uncertainty, VarianceUncertainty)
 
     # Same idea, but now with inverse variance.
-    spectrum_with_uncertainty = noise_region_uncertainty(spectrum, spectral_region, 
+    spectrum_with_uncertainty = noise_region_uncertainty(spectrum, spectral_region,
                                                          lambda x: 1/np.var(x))
 
     indices = np.nonzero((frequencies >= 50*u.um) & (frequencies <= 80*u.um))
