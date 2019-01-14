@@ -300,13 +300,6 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         spectrum = excise_regions(spectrum, exclude_regions)
 
     #
-    # Get the dispersion and flux to fit.
-    #
-
-    dispersion = spectrum.wavelength
-    flux = spectrum.flux
-
-    #
     # Make the model a list if not already
     #
 
