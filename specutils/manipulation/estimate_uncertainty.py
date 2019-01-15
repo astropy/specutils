@@ -3,7 +3,7 @@ import numpy as np
 from astropy import units as u
 
 from .. import Spectrum1D, SpectralRegion
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata.nduncertainty import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from .extract_spectral_region import extract_region
 
 
@@ -38,7 +38,6 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     # Extract the sub spectrum based on the region
     sub_spectra = extract_region(spectrum, spectral_region)
 
-
     # TODO: make this work right for multi-dimensional spectrum1D's?
     if not isinstance(sub_spectra, list):
         sub_spectra = [sub_spectra]
@@ -48,7 +47,16 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     # Compute the standard deviation of the flux.
     noise = noise_func(sub_flux)
 
-    uncertainty = StdDevUncertainty(noise*np.ones(spectrum.flux.shape))
+    # Uncertainty type will be selected based on the unit coming from the
+    # noise function compared to the original spectral flux units.
+    if noise.unit == spectrum.flux.unit:
+        uncertainty = StdDevUncertainty(noise*np.ones(spectrum.flux.shape))
+    elif noise.unit == spectrum.flux.unit**2:
+        uncertainty = VarianceUncertainty(noise*np.ones(spectrum.flux.shape))
+    elif noise.unit == 1/(spectrum.flux.unit**2):
+        uncertainty = InverseVariance(noise*np.ones(spectrum.flux.shape))
+    else:
+        raise ValueError('Can not determine correct NDData Uncertainty based on units {} relative to the flux units {}'.format(noise.unit, spectrum.flux.unit))
 
     # Return new specturm with uncertainty set.
     return Spectrum1D(flux=spectrum.flux, spectral_axis=spectrum.spectral_axis,
