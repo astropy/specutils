@@ -1,5 +1,3 @@
-import os
-
 from astropy.io import fits
 from astropy.units import Unit
 
@@ -39,8 +37,6 @@ def hetg_spectrum_loader(file_name, arf=None, rmf=None):
     data: XraySpectrum1D
         The spectrum that is represented by the data in this table.
     """
-
-    name = os.path.basename(file_name)
 
     with fits.open(file_name) as hdu:
         header = hdu[0].header
