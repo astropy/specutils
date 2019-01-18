@@ -1,7 +1,7 @@
 import numpy as np
 import astropy.units as u
 from astropy.modeling.powerlaws import PowerLaw1D
-from specutils import XraySpectrum1D, AreaResponse, ResponseMatrix
+from specutils import XraySpectrum1D, ARF, RMF
 
 def test_create_from_arrays():
     # Test that XraySpectrum1D can be initialized
@@ -36,7 +36,7 @@ def test_apply_model():
 
     # Now add an arf
     specresp = np.ones_like(test_spec.bin_lo.value) * 2.0
-    arf = AreaResponse(test_spec.bin_lo, test_spec.bin_hi,
+    arf = ARF(test_spec.bin_lo, test_spec.bin_hi,
                        specresp, test_spec.exposure)
     test_spec.assign_arf(arf)
 
@@ -51,5 +51,5 @@ def test_apply_model():
 ## Currently there is no RMF check because it requires a test data file
 ## However, we can test that it can be initialized with empty values
 def test_init_rmf():
-    rmf = ResponseMatrix()
+    rmf = RMF()
     return
