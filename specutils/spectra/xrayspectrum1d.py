@@ -62,11 +62,10 @@ class XraySpectrum1D(Spectrum1D):
     rmf
     """
     def __init__(self, bin_lo, bin_hi, counts, exposure,
-                 arf=None, rmf=None, rest_value=0.0 * u.angstrom, **kwargs):
+                 arf=None, rmf=None, **kwargs):
 
         bin_mid = 0.5 * (bin_lo + bin_hi)
-        Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts,
-                            rest_value=rest_value, **kwargs)
+        Spectrum1D.__init__(self, spectral_axis=bin_mid, flux=counts, **kwargs)
 
         self.bin_lo = bin_lo
         self.bin_hi = bin_hi
