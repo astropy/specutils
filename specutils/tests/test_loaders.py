@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 import urllib
@@ -11,8 +12,9 @@ from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy.units import UnitsWarning
 from astropy.wcs import FITSFixedWarning
+from astropy.io.registry import IORegistryError
 
-from .conftest import remote_access
+from .conftest import remote_data_path, remote_access
 from .. import Spectrum1D, SpectrumList
 from ..io import get_loaders_by_extension
 
@@ -119,3 +121,21 @@ def test_sdss_spspec():
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
+
+
+@pytest.mark.parametrize("name", ['file.fit', 'file.fits', 'file.dat'])
+def test_no_reader_matches(name):
+    '''If no reader matches a file, check that the correct error is raised.
+    This test serves a second purpose: A badly written identifier
+    function might raise an error as supposed to returning False when
+    it cannot identify a file.  The fact that this test passes means
+    that at the very least all identifier functions that have been
+    tried for that file ending did not fail with an error.
+    '''
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        filename = os.path.join(tmpdirname, name)
+        with open(filename, 'w') as fp:
+            fp.write('asdfadasdadvzxcv')
+
+        with pytest.raises(IORegistryError):
+            spec = Spectrum1D.read(filename)

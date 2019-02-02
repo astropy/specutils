@@ -37,6 +37,19 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         Set the priority of the loader. Currently influences the sorting of the
         returned loaders for a dtype.
     """
+    def identifier_wrapper(ident):
+        def wrapper(*args, **kwargs):
+            '''In case the identifier function raises an exception, log that and continue'''
+            try:
+                return ident(*args, **kwargs)
+            except Exception as e:
+                logging.debug("Tried to read this as {} file, but could not.".format(label))
+                logging.debug(e, exc_info=True)
+                return False
+        return wrapper
+
+    identifier = identifier_wrapper(identifier)
+
     def decorator(func):
         io_registry.register_reader(label, dtype, func)
 
