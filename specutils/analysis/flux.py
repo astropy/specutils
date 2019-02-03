@@ -22,7 +22,7 @@ def line_flux(spectrum, regions=None):
     spectrum : Spectrum1D
         The spectrum object over which the summed flux will be calculated.
 
-    regions : `~specutils.spectra.spectral_region.SpectralRegion` or list of `~specutils.spectra.spectral_region.SpectralRegion`
+    regions : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
@@ -52,7 +52,7 @@ def equivalent_width(spectrum, continuum=1, regions=None):
     spectrum : Spectrum1D
         The spectrum object overwhich the equivalent width will be calculated.
 
-    regions: `~specutils.spectra.spectral_region.SpectralRegion` or list of `~specutils.spectra.spectral_region.SpectralRegion`
+    regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
