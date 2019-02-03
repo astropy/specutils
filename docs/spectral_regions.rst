@@ -87,6 +87,7 @@ maximum of the upper bounds:
     <Quantity 0.8 um>
 
 One can also delete a sub-region:
+
 .. code-block:: python
 
     >>> from astropy import units as u
