@@ -18,5 +18,8 @@ class SpecutilsTypeMeta(ExtensionTypeMeta):
 
 
 class SpecutilsType(CustomType, metaclass=SpecutilsTypeMeta):
+    """
+    Parent class of all specutils tag implementations used by ASDF
+    """
     organization = 'astropy.org'
     standard = 'specutils'
