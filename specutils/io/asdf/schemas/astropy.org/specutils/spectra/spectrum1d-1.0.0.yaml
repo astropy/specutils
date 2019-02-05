@@ -1,0 +1,23 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0"
+tag: "tag:astropy.org:specutils/spectra/spectrum1d-1.0.0"
+
+title: >
+  Represents a one-dimensional spectrum
+description: |
+  This schema represents a Spectrum1D object from specutils.
+
+type: object
+properties:
+  flux:
+    description: |
+      Quantity that represents the flux component of the spectrum
+    $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
+  spectral_axis:
+    description: |
+      Quantity that represents the spectral axis of the spectrum
+    $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
+required: [flux, spectral_axis]
+...
