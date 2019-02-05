@@ -44,8 +44,15 @@ class SpectrumListType(SpecutilsType):
 
     @classmethod
     def to_tree(cls, obj, ctx):
-        pass
+        return [custom_tree_to_tagged_tree(spectrum, ctx) for spectrum in obj]
 
     @classmethod
     def from_tree(cls, tree, ctx):
-        pass
+        spectra = [tagged_tree_to_custom_tree(node, ctx) for node in tree]
+        return SpectrumList(spectra)
+
+    @classmethod
+    def assert_equal(cls, old, new):
+        assert len(old) == len(new)
+        for x, y in zip(old, new):
+            Spectrum1DType.assert_equal(x, y)
