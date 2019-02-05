@@ -2,6 +2,8 @@
 # by importing them here in conftest.py they are discoverable by py.test
 # no matter how it is invoked within the source tree.
 
+from importlib.util import find_spec
+
 from astropy.version import version as astropy_version
 from astropy.tests.plugins.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
 from astropy.tests.helper import enable_deprecations_as_exceptions
@@ -22,6 +24,11 @@ try:
     del PYTEST_HEADER_MODULES['Matplotlib']
 except (NameError, KeyError):  # NameError is needed to support Astropy < 1.0
     pass
+
+# Use ASDF schema tester plugin if ASDF is installed
+if find_spec('asdf') is not None:
+    pytest_plugins = ['asdf.tests.schema_tester']
+    PYTEST_HEADER_MODULES['Asdf'] = 'asdf'
 
 # Uncomment the following lines to display the version number of the
 # package rather than the version number of Astropy in the top line when
