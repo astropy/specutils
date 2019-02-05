@@ -1,3 +1,7 @@
+import pytest
+# Make sure these tests do not run if ASDF is not installed
+pytest.importorskip('asdf')
+
 import numpy as np
 
 import astropy.units as u
