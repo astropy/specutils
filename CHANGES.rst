@@ -4,15 +4,34 @@
 API Changes
 ^^^^^^^^^^^
 
+
 New Features
 ^^^^^^^^^^^^
 
 Bug Fixes
 ^^^^^^^^^
 
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+0.5.2 (2019-02-06)
+----------------
+
+Bug Fixes
+^^^^^^^^^
+- Bugfixes for astropy helpers, pep8 syntax checking, and plotting in docs [#416,#417,#419]
+
+- All automatically generated ``SpectrumList`` loaders now have identifiers. [#440]
+
+- ``SpectralRange.from_center`` parameters corrected after change to SpectralRange interface. [#433]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Improve explanation on creating spectrum continua. [#420]
+
+- Wrap IO identifier functions to ensure they always return True or False and log any errors. [#404]
 
 
 0.5.1 (2018-11-29)
