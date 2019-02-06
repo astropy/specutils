@@ -90,6 +90,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             load_spectrum_list.priority = priority
 
             io_registry.register_reader(label, SpectrumList, load_spectrum_list)
+            io_registry.register_identifier(label, SpectrumList, identifier)
             logging.debug("Created SpectrumList reader for \"{}\".".format(label))
 
         @wraps(func)

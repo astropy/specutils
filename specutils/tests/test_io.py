@@ -5,6 +5,7 @@ This module tests SpecUtils io routines
 """
 
 from ..io.parsing_utils import generic_spectrum_from_table # or something like that
+from astropy.io import registry
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
 from astropy.tests.helper import catch_warnings
@@ -12,6 +13,9 @@ import astropy.units as u
 import numpy as np
 import pytest
 import warnings
+
+from specutils import SpectrumList
+
 
 def test_generic_spectrum_from_table(recwarn):
     """
@@ -61,3 +65,9 @@ def test_generic_spectrum_from_table(recwarn):
     with pytest.raises(IOError) as exc:
         spectrum = generic_spectrum_from_table(table)
         assert 'Could not identify column containing the wavelength, frequency or energy' in exc
+
+
+def test_speclist_autoidentify():
+
+    formats = registry.get_formats(SpectrumList)
+    assert (formats['Auto-identify'] == 'Yes').all()
