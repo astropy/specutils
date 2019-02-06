@@ -45,7 +45,10 @@ class SpectralRegion:
            The width of the spectral region.
         """
 
-        return cls(lower=center - width, upper=center + width)
+        if width.value <= 0:
+            raise ValueError('SpectralRegion width must be positive.')
+
+        return cls(center - width, center + width)
 
     def __init__(self, *args):
         """

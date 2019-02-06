@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 
 import astropy.units as u
@@ -30,6 +31,21 @@ def test_lower_upper():
     assert sr[0].lower == 0.04*u.um
     assert sr[0].upper == 0.05*u.um
 
+
+def test_from_center():
+
+    # Spectral region from center with width
+    sr = SpectralRegion.from_center(center=6563*u.AA, width=10*u.AA)
+    assert sr.lower == 6553.0*u.AA
+    assert sr.upper == 6573.0*u.AA
+
+    # Check the exception if the width is negative.
+    with pytest.raises(ValueError) as exc:
+        sr = SpectralRegion.from_center(center=6563*u.AA, width=-10*u.AA)
+
+    # Check the exception if the width is 0.
+    with pytest.raises(ValueError) as exc:
+        sr = SpectralRegion.from_center(center=6563*u.AA, width=0*u.AA)
 
 def test_adding_spectral_regions():
 
