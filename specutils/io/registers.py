@@ -55,10 +55,17 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             # If the identifier is not defined, but the extensions are, create
             # a simple identifier based off file extension.
             if extensions is not None:
+                logging.info("'{}' data loader provided for {} without "
+                             "explicit identifier. Creating identifier using "
+                             "list of compatible extensions".format(
+                                 label, dtype.__name__))
                 id_func = lambda *args, **kwargs: any([args[0].endswith(x)
                                                           for x in extensions])
             # Otherwise, create a dummy identifier
             else:
+                logging.warning("'{}' data loader provided for {} without "
+                             "explicit identifier or list of compatible "
+                             "extensions".format(label, dtype.__name__))
                 id_func = lambda *args, **kwargs: False
         else:
             id_func = identifier_wrapper(identifier)
