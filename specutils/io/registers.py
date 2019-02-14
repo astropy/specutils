@@ -48,19 +48,22 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
                 return False
         return wrapper
 
-    identifier = identifier_wrapper(identifier)
-
     def decorator(func):
         io_registry.register_reader(label, dtype, func)
 
-        # If the identifier is not defined, but the extensions are, create
-        # a simple identifier based off file extension.
-        if identifier is None and extensions is not None:
-            io_registry.register_identifier(
-                label, dtype, lambda *args, **kwargs: any([args[0].endswith(x)
-                                                           for x in extensions]))
+        if identifier is None:
+            # If the identifier is not defined, but the extensions are, create
+            # a simple identifier based off file extension.
+            if extensions is not None:
+                id_func = lambda *args, **kwargs: any([args[0].endswith(x)
+                                                          for x in extensions])
+            # Otherwise, create a dummy identifier
+            else:
+                id_func = lambda *args, **kwargs: False
         else:
-            io_registry.register_identifier(label, dtype, identifier)
+            id_func = identifier_wrapper(identifier)
+
+        io_registry.register_identifier(label, dtype, id_func)
 
         # Include the file extensions as attributes on the function object
         func.extensions = extensions
@@ -90,7 +93,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             load_spectrum_list.priority = priority
 
             io_registry.register_reader(label, SpectrumList, load_spectrum_list)
-            io_registry.register_identifier(label, SpectrumList, identifier)
+            io_registry.register_identifier(label, SpectrumList, id_func)
             logging.debug("Created SpectrumList reader for \"{}\".".format(label))
 
         @wraps(func)
