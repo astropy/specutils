@@ -87,14 +87,39 @@ def test_default_identifier(tmpdir):
         """Doesn't actually get used."""
         return
 
-    # Test Spectrum1D identifier
-    fmts = registry.identify_format('read', Spectrum1D, fname, None, [], {})
-    assert format_name in fmts
+    for datatype in [Spectrum1D, SpectrumList]:
+        fmts = registry.identify_format('read', datatype, fname, None, [], {})
+        assert format_name in fmts
 
-    # Test SpectrumList identifier
-    fmts = registry.identify_format('read', SpectrumList, fname, None, [], {})
-    assert format_name in fmts
+        # Clean up after ourselves
+        registry.unregister_reader(format_name, datatype)
+        registry.unregister_identifier(format_name, datatype)
+
+
+def test_default_identifier_extension(tmpdir):
+
+    good_fname = str(tmpdir.join('empty.fits'))
+    bad_fname = str(tmpdir.join('empty.txt'))
+
+    # Create test data files.
+    for name in [good_fname, bad_fname]:
+        with open(name, 'w') as ff:
+            ff.write('\n')
+
+    format_name = 'default_identifier_extension_test'
+
+    @data_loader(format_name, extensions=['fits'])
+    def reader(*args, **kwargs):
+        """Doesn't actually get used."""
+        return
 
     for datatype in [Spectrum1D, SpectrumList]:
+        fmts = registry.identify_format('read', datatype, good_fname, None, [], {})
+        assert format_name in fmts
+
+        fmts = registry.identify_format('read', datatype, bad_fname, None, [], {})
+        assert format_name not in fmts
+
+        # Clean up after ourselves
         registry.unregister_reader(format_name, datatype)
         registry.unregister_identifier(format_name, datatype)
