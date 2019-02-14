@@ -14,7 +14,8 @@ import numpy as np
 import pytest
 import warnings
 
-from specutils import SpectrumList
+from specutils import Spectrum1D, SpectrumList
+from specutils.io import data_loader
 
 
 def test_generic_spectrum_from_table(recwarn):
@@ -71,3 +72,29 @@ def test_speclist_autoidentify():
 
     formats = registry.get_formats(SpectrumList)
     assert (formats['Auto-identify'] == 'Yes').all()
+
+
+def test_default_identifier(tmpdir):
+
+    fname = str(tmpdir.join('empty.txt'))
+    with open(fname, 'w') as ff:
+        ff.write('\n')
+
+    format_name = 'default_identifier_test'
+
+    @data_loader(format_name)
+    def reader(*args, **kwargs):
+        """Doesn't actually get used."""
+        return
+
+    # Test Spectrum1D identifier
+    fmts = registry.identify_format('read', Spectrum1D, fname, None, [], {})
+    assert format_name in fmts
+
+    # Test SpectrumList identifier
+    fmts = registry.identify_format('read', SpectrumList, fname, None, [], {})
+    assert format_name in fmts
+
+    for datatype in [Spectrum1D, SpectrumList]:
+        registry.unregister_reader(format_name, datatype)
+        registry.unregister_identifier(format_name, datatype)
