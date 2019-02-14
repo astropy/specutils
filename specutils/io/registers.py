@@ -66,7 +66,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
                 logging.warning("'{}' data loader provided for {} without "
                              "explicit identifier or list of compatible "
                              "extensions".format(label, dtype.__name__))
-                id_func = lambda *args, **kwargs: False
+                id_func = lambda *args, **kwargs: True
         else:
             id_func = identifier_wrapper(identifier)
 
