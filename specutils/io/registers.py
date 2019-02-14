@@ -59,7 +59,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
                              "explicit identifier. Creating identifier using "
                              "list of compatible extensions".format(
                                  label, dtype.__name__))
-                id_func = lambda *args, **kwargs: any([args[0].endswith(x)
+                id_func = lambda *args, **kwargs: any([args[1].endswith(x)
                                                           for x in extensions])
             # Otherwise, create a dummy identifier
             else:
