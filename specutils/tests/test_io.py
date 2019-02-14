@@ -123,3 +123,36 @@ def test_default_identifier_extension(tmpdir):
         # Clean up after ourselves
         registry.unregister_reader(format_name, datatype)
         registry.unregister_identifier(format_name, datatype)
+
+
+def test_custom_identifier(tmpdir):
+
+    good_fname = str(tmpdir.join('good.txt'))
+    bad_fname = str(tmpdir.join('bad.txt'))
+
+    # Create test data files.
+    for name in [good_fname, bad_fname]:
+        with open(name, 'w') as ff:
+            ff.write('\n')
+
+    format_name = 'custom_identifier_test'
+
+    def identifier(origin, *args, **kwargs):
+        fname = args[0]
+        return 'good' in fname
+
+    @data_loader(format_name, identifier=identifier)
+    def reader(*args, **kwargs):
+        """Doesn't actually get used."""
+        return
+
+    for datatype in [Spectrum1D, SpectrumList]:
+        fmts = registry.identify_format('read', datatype, good_fname, None, [], {})
+        assert format_name in fmts
+
+        fmts = registry.identify_format('read', datatype, bad_fname, None, [], {})
+        assert format_name not in fmts
+
+        # Clean up after ourselves
+        registry.unregister_reader(format_name, datatype)
+        registry.unregister_identifier(format_name, datatype)
