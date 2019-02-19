@@ -363,26 +363,175 @@ def cdelt_derivative(crval, cdelt, intype, outtype, linear=False, rest=None):
         raise ValueError("Invalid in/out frames")
 
 
-def air_to_vac(wavelength):
+def refraction_index(wavelength, method='Griesen2006', co2=None):
     """
-    Implements the air to vacuum wavelength conversion described in eqn 65 of
-    Griesen 2006
-    """
-    wlum = wavelength.to(u.um).value
-    return (1+1e-6*(287.6155+1.62887/wlum**2+0.01360/wlum**4)) * wavelength
+    Calculates the index of refraction of dry air at standard temperature
+    and pressure, at different wavelengths, using different methods.
 
-def vac_to_air(wavelength):
-    """
-    Griesen 2006 reports that the error in naively inverting Eqn 65 is less
-    than 10^-9 and therefore acceptable.  This is therefore eqn 67
-    """
-    wlum = wavelength.to(u.um).value
-    nl = (1+1e-6*(287.6155+1.62887/wlum**2+0.01360/wlum**4))
-    return wavelength/nl
+    Parameters
+    ----------
+    wavelength : `Quantity` object (number or sequence)
+        Vacuum wavelengths with an astropy.unit.
+    method : str, optional
+        Method used to convert wavelengths. Options are:
+        'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747),
+            eqn. 65, standard used by International Unionof Geodesy and Geophysics
+        'Edlen1953' - from Edlen (1953, J. Opt. Soc. Am, 43, 339). Standard
+            adopted by IAU (resolution No. C15, Commission 44, XXI GA, 1991),
+            which refers to Oosterhoff (1957) that uses Edlen (1953). Also used
+            by Morton (1991, ApJS, 77, 119), which is frequently cited as IAU source.
+        'Edlen1966' - from Edlen (1966, Metrologia 2, 71), rederived constants
+            from optical and near UV data.
+        'PeckReeder1972' - from Peck & Reeder (1972, J. Opt. Soc. 62), derived
+            from additional infrared measurements (up to 1700 nm).
+        'Morton2000' - from Morton (2000, ApJS, 130, 403), eqn 8. Used by VALD,
+            the Vienna Atomic Line Database. Very similar to Edlen (1966).
+        'Ciddor1996' - from Ciddor (1996, Appl. Opt. 35, 1566). Based on
+            Peck & Reeder (1972), but updated to account for the changes in
+            the international temperature scale and adjust the results for
+            CO2 concentration. Arguably most accurate conversion available.
+    co2 : number, optional
+        CO2 concentration in ppm. Only used for method='Ciddor1996'. If not
+        given, a default concentration of 450 ppm is used.
 
-def air_to_vac_deriv(wavelength):
+    Returns
+    -------
+    refr : number or sequence
+        Index of refraction at each given air wavelength.
     """
-    Eqn 66 of Greisen 2006
+    VALID_METHODS = ['Griesen2006', 'Edlen1953', 'Edlen1966', 'Morton2000',
+                     'PeckReeder1972', 'Ciddor1996']
+    assert isinstance(method, str), 'method must be a string'
+    method = method.lower()
+    sigma2 = (1 / wavelength.to(u.um).value)**2
+    if method == 'griesen2006':
+        refr = 1e-6 * (287.6155 + 1.62887 * sigma2 + 0.01360 * sigma2**2)
+    elif method == 'edlen1953':
+        refr = 6.4328e-5 + 2.94981e-2 / (146 - sigma2) + 2.5540e-4 / (41 - sigma2)
+    elif method == 'edlen1966':
+        refr = 8.34213e-5 + 2.406030e-2 / (130 - sigma2) + 1.5997e-4 / (38.9 - sigma2)
+    elif method == 'morton2000':
+        refr = 8.34254e-5 + 2.406147e-2 / (130 - sigma2) + 1.5998e-4 / (38.9 - sigma2)
+    elif method == 'peckreeder1972':
+        refr = 5.791817e-2 / (238.0185 - sigma2) + 1.67909e-3 / (57.362 - sigma2)
+    elif method == 'ciddor1996':
+        refr = 5.792105e-2 / (238.0185 - sigma2) + 1.67917e-3 / (57.362 - sigma2)
+        if co2:
+            refr *= 1 + 0.534e-6 * (co2 - 450)
+    else:
+        raise ValueError("Method must be one of " + ", ".join(VALID_METHODS))
+    return refr + 1
+
+
+def vac_to_air(wavelength, method='Griesen2006', co2=None):
     """
+    Converts vacuum to air wavelengths using different methods.
+
+    Parameters
+    ----------
+    wavelength : `Quantity` object (number or sequence)
+        Vacuum wavelengths with an astropy.unit.
+    method : str, optional
+        One of the methods in refraction_index().
+    co2 : number, optional
+        Atmospheric CO2 concentration in ppm. Only used for method='Ciddor1996'.
+        If not given, a default concentration of 450 ppm is used.
+
+    Returns
+    -------
+    air_wavelength : `Quantity` object (number or sequence)
+        Air wavelengths with the same unit as wavelength.
+    """
+    refr = refraction_index(wavelength, method=method, co2=co2)
+    return wavelength / refr
+
+
+def air_to_vac(wavelength, scheme='inversion', method='Griesen2006', co2=None,
+               precision=1e-12, maxiter=30):
+    """
+    Converts air to vacuum wavelengths using different methods.
+
+    Parameters
+    ----------
+    wavelength : `Quantity` object (number or sequence)
+        Air wavelengths with an astropy.unit.
+    scheme : str, optional
+        How to convert from vacuum to air wavelengths. Options are:
+        'inversion' (default) - result is simply the inversion (1 / n) of the
+            refraction index of air. Griesen et al. (2006) report that the error
+            in naively inverting is less than 10^-9.
+        'Piskunov' - uses an analytical solution derived by Nikolai Piskunov
+            and used by the Vienna Atomic Line Database (VALD).
+        'iteration' - uses an iterative scheme to invert the index of refraction.
+    method : str, optional
+        Only used if scheme is 'inversion' or 'iteration'. One of the methods
+        in refraction_index().
+    co2 : number, optional
+        Atmospheric CO2 concentration in ppm. Only used if scheme='inversion' and
+        method='Ciddor1996'. If not given, a default concentration of 450 ppm is used.
+    precision : float
+        Maximum fractional value in refraction conversion beyond at which iteration will
+        be stopped. Only used if scheme='iteration'.
+    maxiter : integer
+        Maximum number of iterations to run. Only used if scheme='iteration'.
+
+    Returns
+    -------
+    vac_wavelength : `Quantity` object (number or sequence)
+        Vacuum wavelengths with the same unit as wavelength.
+    """
+    VALID_SCHEMES = ['inversion', 'iteration', 'piskunov']
+    assert isinstance(scheme, str), 'scheme must be a string'
+    scheme = scheme.lower()
+    if scheme == 'inversion':
+        refr = refraction_index(wavelength, method=method, co2=co2)
+    elif scheme == 'piskunov':
+        wlum = wavelength.to(u.angstrom).value
+        sigma2 = (1e4 / wlum)**2
+        refr = (8.336624212083e-5 + 2.408926869968e-2 / (130.1065924522 - sigma2) +
+                1.599740894897e-4 / (38.92568793293 - sigma2)) + 1
+    elif scheme == 'iteration':
+        # Refraction index is a function of vacuum wavelengths.
+        # Iterate to get index of refraction that gives air wavelength that
+        # is consistent with the reverse transformation.
+        counter = 0
+        result = wavelength.copy()
+        refr = refraction_index(wavelength, method=method, co2=co2)
+        while True:
+            counter += 1
+            diff = wavelength * refr - result
+            if abs(diff.max().value) < precision:
+                break
+                #return wavelength * conv
+            if counter > maxiter:
+                raise RuntimeError("Reached maximum number of iterations "
+                                   "without reaching desired precision level.")
+            result += diff
+            refr = refraction_index(result, method=method, co2=co2)
+    else:
+        raise ValueError("Method must be one of " + ", ".join(VALID_SCHEMES))
+    return wavelength * refr
+
+
+def air_to_vac_deriv(wavelength, method='Griesen2006'):
+    """
+    Calculates the derivative d(wave_vacuum) / d(wave_air) using different
+    methods.
+
+    Parameters
+    ----------
+    wavelength : `Quantity` object (number or sequence)
+        Air wavelengths with an astropy.unit.
+    method : str, optional
+        Method used to convert wavelength derivative. Options are:
+        'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747),
+            eqn. 66.
+
+    Returns
+    -------
+    wave_deriv : `Quantity` object (number or sequence)
+        Derivative d(wave_vacuum) / d(wave_air).
+    """
+    assert method.lower() == 'griesen2006', "Only supported method is 'Griesen2006'"
     wlum = wavelength.to(u.um).value
-    return (1+1e-6*(287.6155 - 1.62887/wlum**2 - 0.04080/wlum**4))
+    return (1 + 1e-6 * (287.6155 - 1.62887 / wlum**2 - 0.04080 / wlum**4))
