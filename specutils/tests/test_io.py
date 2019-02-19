@@ -14,7 +14,8 @@ import numpy as np
 import pytest
 import warnings
 
-from specutils import SpectrumList
+from specutils import Spectrum1D, SpectrumList
+from specutils.io import data_loader
 
 
 def test_generic_spectrum_from_table(recwarn):
@@ -71,3 +72,87 @@ def test_speclist_autoidentify():
 
     formats = registry.get_formats(SpectrumList)
     assert (formats['Auto-identify'] == 'Yes').all()
+
+
+def test_default_identifier(tmpdir):
+
+    fname = str(tmpdir.join('empty.txt'))
+    with open(fname, 'w') as ff:
+        ff.write('\n')
+
+    format_name = 'default_identifier_test'
+
+    @data_loader(format_name)
+    def reader(*args, **kwargs):
+        """Doesn't actually get used."""
+        return
+
+    for datatype in [Spectrum1D, SpectrumList]:
+        fmts = registry.identify_format('read', datatype, fname, None, [], {})
+        assert format_name in fmts
+
+        # Clean up after ourselves
+        registry.unregister_reader(format_name, datatype)
+        registry.unregister_identifier(format_name, datatype)
+
+
+def test_default_identifier_extension(tmpdir):
+
+    good_fname = str(tmpdir.join('empty.fits'))
+    bad_fname = str(tmpdir.join('empty.txt'))
+
+    # Create test data files.
+    for name in [good_fname, bad_fname]:
+        with open(name, 'w') as ff:
+            ff.write('\n')
+
+    format_name = 'default_identifier_extension_test'
+
+    @data_loader(format_name, extensions=['fits'])
+    def reader(*args, **kwargs):
+        """Doesn't actually get used."""
+        return
+
+    for datatype in [Spectrum1D, SpectrumList]:
+        fmts = registry.identify_format('read', datatype, good_fname, None, [], {})
+        assert format_name in fmts
+
+        fmts = registry.identify_format('read', datatype, bad_fname, None, [], {})
+        assert format_name not in fmts
+
+        # Clean up after ourselves
+        registry.unregister_reader(format_name, datatype)
+        registry.unregister_identifier(format_name, datatype)
+
+
+def test_custom_identifier(tmpdir):
+
+    good_fname = str(tmpdir.join('good.txt'))
+    bad_fname = str(tmpdir.join('bad.txt'))
+
+    # Create test data files.
+    for name in [good_fname, bad_fname]:
+        with open(name, 'w') as ff:
+            ff.write('\n')
+
+    format_name = 'custom_identifier_test'
+
+    def identifier(origin, *args, **kwargs):
+        fname = args[0]
+        return 'good' in fname
+
+    @data_loader(format_name, identifier=identifier)
+    def reader(*args, **kwargs):
+        """Doesn't actually get used."""
+        return
+
+    for datatype in [Spectrum1D, SpectrumList]:
+        fmts = registry.identify_format('read', datatype, good_fname, None, [], {})
+        assert format_name in fmts
+
+        fmts = registry.identify_format('read', datatype, bad_fname, None, [], {})
+        assert format_name not in fmts
+
+        # Clean up after ourselves
+        registry.unregister_reader(format_name, datatype)
+        registry.unregister_identifier(format_name, datatype)
