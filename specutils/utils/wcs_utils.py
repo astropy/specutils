@@ -456,21 +456,21 @@ def air_to_vac(wavelength, scheme='inversion', method='Griesen2006', co2=None,
     wavelength : `Quantity` object (number or sequence)
         Air wavelengths with an astropy.unit.
     scheme : str, optional
-        How the to convert from vacuum to air wavelengths. Options are:
+        How to convert from vacuum to air wavelengths. Options are:
         'inversion' (default) - result is simply the inversion (1 / n) of the
             refraction index of air. Griesen et al. (2006) report that the error
             in naively inverting is less than 10^-9.
-        'Piskunov' - uses an analytical solution used derived by Nikolai Piskunov
+        'Piskunov' - uses an analytical solution derived by Nikolai Piskunov
             and used by the Vienna Atomic Line Database (VALD).
         'iteration' - uses an iterative scheme to invert the index of refraction.
     method : str, optional
         Only used if scheme is 'inversion' or 'iteration'. One of the methods
         in refraction_index().
     co2 : number, optional
-        Atmospheric CO2 concentration in ppm. Only used of scheme='inversion' and
+        Atmospheric CO2 concentration in ppm. Only used if scheme='inversion' and
         method='Ciddor1996'. If not given, a default concentration of 450 ppm is used.
     precision : float
-        Maximum fractional in refraction conversion beyond which iteration will
+        Maximum fractional value in refraction conversion beyond at which iteration will
         be stopped. Only used if scheme='iteration'.
     maxiter : integer
         Maximum number of iterations to run. Only used if scheme='iteration'.
@@ -485,13 +485,11 @@ def air_to_vac(wavelength, scheme='inversion', method='Griesen2006', co2=None,
     scheme = scheme.lower()
     if scheme == 'inversion':
         refr = refraction_index(wavelength, method=method, co2=co2)
-        #return wavelength * refr
     elif scheme == 'piskunov':
         wlum = wavelength.to(u.angstrom).value
         sigma2 = (1e4 / wlum)**2
         refr = (8.336624212083e-5 + 2.408926869968e-2 / (130.1065924522 - sigma2) +
                 1.599740894897e-4 / (38.92568793293 - sigma2)) + 1
-        #return wavelength * refr
     elif scheme == 'iteration':
         # Refraction index is a function of vacuum wavelengths.
         # Iterate to get index of refraction that gives air wavelength that
