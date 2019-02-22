@@ -103,6 +103,7 @@ package_info['package_data'][PACKAGENAME].append('data/*')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
+entry_points['asdf_extensions'] = 'specutils = specutils.io.asdf.extension:SpecutilsExtension'
 
 if conf.has_section('entry_points'):
     entry_point_list = conf.items('entry_points')
