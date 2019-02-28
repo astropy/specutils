@@ -35,3 +35,4 @@ following these steps.
 12. Push to Github with  “--tags” parameter (you may need to lift direct master push restrictions on the GitHub repo)
 13. Do "release" with new tag on GitHub repo.
 14. If there is a milestone for this release, "close" the milestone on GitHub.
+15. Double-check (and fix if necessary) that relevant conda builds have proceeded sucessfully (e.g. https://github.com/conda-forge/specutils-feedstock)
