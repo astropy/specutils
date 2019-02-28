@@ -4,7 +4,7 @@
 Release Instructions
 ====================
 
-You will need to set up a gpg key, PyPI account, and install twine before
+You will need to set up a gpg key (see the `astropy docs section on this <http://docs.astropy.org/en/stable/development/releasing.html#key-signing-info>`_ for more), PyPI account, and install twine before
 following these steps.
 
 1. Ensure all of the issues slated for this release on GitHub are either closed or moved to a new milestone.
