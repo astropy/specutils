@@ -119,11 +119,9 @@ For more details on usage of specutils, see the sections listed below.
     manipulation
     arithmetic
     custom_loading
-    contributing
 
-
-Get Involved
-------------
+Get Involved - Developer Docs
+-----------------------------
 
 Please see :doc:`contributing` for information on bug reporting and
 contributing to the specutils project.
@@ -132,3 +130,4 @@ contributing to the specutils project.
    :maxdepth: 2
 
    contributing
+   releasing
