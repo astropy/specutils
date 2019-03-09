@@ -9,6 +9,7 @@ from astropy.utils.decorators import lazyproperty
 
 from ..wcs import WCSAdapter, WCSWrapper
 from .spectrum_mixin import OneDSpectrumMixin
+from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
 
@@ -88,10 +89,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             if not isinstance(spectral_axis, u.Quantity):
                 raise ValueError("Spectral axis must be a `Quantity` object.")
 
-            wcs = WCSWrapper.from_array(spectral_axis)
-        elif wcs is not None:
-            if not issubclass(wcs.__class__, WCSAdapter):
-                wcs = WCSWrapper(wcs)
+            wcs = gwcs_from_array(spectral_axis)
         elif isinstance(flux, float) or isinstance(flux, int) or isinstance(flux, np.ndarray):
             # In the case where the arithmetic operation is being performed with
             # a single float, int, or array object, just go ahead and ignore wcs
@@ -112,9 +110,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         self._velocity_convention = velocity_convention
 
         if rest_value is None:
-            if wcs.rest_frequency != 0:
+            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
                 self._rest_value = wcs.rest_frequency * u.Hz
-            elif wcs.rest_wavelength != 0:
+            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
                 self._rest_value = wcs.rest_wavelength * u.AA
             else:
                 self._rest_value = 0 * u.AA

@@ -74,7 +74,7 @@ def test_create_implicit_wcs():
     spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
                       flux=np.random.randn(50) * u.Jy)
 
-    assert isinstance(spec.wcs.wcs, gwcs.wcs.WCS)
+    assert isinstance(spec.wcs, gwcs.wcs.WCS)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 
@@ -86,7 +86,7 @@ def test_create_implicit_wcs_with_spectral_unit():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    assert isinstance(spec.wcs.wcs, gwcs.wcs.WCS)
+    assert isinstance(spec.wcs, gwcs.wcs.WCS)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
 

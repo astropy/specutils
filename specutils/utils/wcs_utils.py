@@ -6,6 +6,11 @@ Utilities for parsing, converting, and manipulating astropy FITS-WCS objects
 from astropy import units as u
 from astropy import constants
 import warnings
+from astropy.modeling.tabular import Tabular1D
+from gwcs import coordinate_frames as cf
+import gwcs
+import numpy as np
+
 
 def _parse_velocity_convention(vc):
     if vc in (u.doppler_radio, 'radio', 'RADIO', 'VRAD', 'F', 'FREQ'):
@@ -535,3 +540,24 @@ def air_to_vac_deriv(wavelength, method='Griesen2006'):
     assert method.lower() == 'griesen2006', "Only supported method is 'Griesen2006'"
     wlum = wavelength.to(u.um).value
     return (1 + 1e-6 * (287.6155 - 1.62887 / wlum**2 - 0.04080 / wlum**4))
+
+
+def gwcs_from_array(array):
+    """
+    Create a new WCS from provided tabular data. This defaults to being
+    a GWCS object.
+    """
+    array = u.Quantity(array)
+
+    coord_frame = cf.CoordinateFrame(naxes=1,
+                                     axes_type=('SPECTRAL',),
+                                     axes_order=(0,))
+    spec_frame = cf.SpectralFrame(unit=array.unit, axes_order=(0,))
+    forward_transform = Tabular1D(np.arange(len(array)), array.value)
+    forward_transform.inverse = Tabular1D(array.value, np.arange(len(array)))
+
+    tabular_gwcs = gwcs.wcs.WCS(forward_transform=forward_transform,
+                                input_frame=coord_frame,
+                                output_frame=spec_frame)
+
+    return tabular_gwcs

@@ -61,16 +61,17 @@ class OneDSpectrumMixin:
         """
 
         if len(self.flux) > 0:
-            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]), with_units=True)
         else:
             # After some discussion it was suggested to create the empty spectral
             # axis this way to better use the WCS infrastructure. This is to prepare
             # for a future where pixel_to_world might yield something more than
             # just a raw Quantity, which is planned for the mid-term in astropy and
             # possible gwcs.  Such changes might necessitate a revisit of this code.
-            dummy_spectrum = self.__class__(spectral_axis=[1,2]*self.wcs.spectral_axis_unit,
+            print(self.wcs.unit)
+            dummy_spectrum = self.__class__(spectral_axis=[1,2]*self.wcs.unit[0],
                                             flux=[1,2]*self.flux.unit)
-            spectral_axis = dummy_spectrum.wcs.pixel_to_world([0])[1:]
+            spectral_axis = dummy_spectrum.wcs.pixel_to_world([0], with_units=True)[1:]
 
         return spectral_axis
 
@@ -291,7 +292,7 @@ class OneDSpectrumMixin:
         meta = self._meta.copy()
 
         if 'original_unit' not in self._meta:
-            meta['original_unit'] = self.wcs.spectral_axis_unit
+            meta['original_unit'] = self.wcs.unit[0]
 
         # Create the new wcs object
         new_wcs = self.wcs.with_spectral_unit(unit=unit,
