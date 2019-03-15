@@ -1,10 +1,12 @@
 import logging
 from copy import deepcopy
 
+import astropy.units.equivalencies as eq
 import numpy as np
 from astropy import units as u
-import astropy.units.equivalencies as eq
 from astropy.utils.decorators import lazyproperty
+
+from specutils.utils.wcs_utils import gwcs_from_array
 
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
@@ -61,17 +63,16 @@ class OneDSpectrumMixin:
         """
 
         if len(self.flux) > 0:
-            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]), with_units=True)
+            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
         else:
             # After some discussion it was suggested to create the empty spectral
             # axis this way to better use the WCS infrastructure. This is to prepare
             # for a future where pixel_to_world might yield something more than
             # just a raw Quantity, which is planned for the mid-term in astropy and
             # possible gwcs.  Such changes might necessitate a revisit of this code.
-            print(self.wcs.unit)
             dummy_spectrum = self.__class__(spectral_axis=[1,2]*self.wcs.unit[0],
                                             flux=[1,2]*self.flux.unit)
-            spectral_axis = dummy_spectrum.wcs.pixel_to_world([0], with_units=True)[1:]
+            spectral_axis = dummy_spectrum.wcs.pixel_to_world([0])[1:]
 
         return spectral_axis
 
@@ -102,7 +103,7 @@ class OneDSpectrumMixin:
         Parameters
         ----------
         unit : str or `~astropy.units.Unit`
-            The unit to conver the flux array to.
+            The unit to convert the flux array to.
 
         equivalencies : list of equivalencies
             Custom equivalencies to apply to conversions.
@@ -295,11 +296,12 @@ class OneDSpectrumMixin:
             meta['original_unit'] = self.wcs.unit[0]
 
         # Create the new wcs object
-        new_wcs = self.wcs.with_spectral_unit(unit=unit,
-                                         rest_value=rest_value,
-                                         velocity_convention=velocity_convention)
+        if isinstance(unit, u.UnitBase) and unit.is_equivalent(
+                self.wcs.unit[0], equivalencies=u.spectral()):
+            return gwcs_from_array(self.spectral_axis), meta
 
-        return new_wcs, meta
+        logging.error("WCS units incompatible: {} and {}.".format(
+            unit, self._wcs_unit))
 
 
 class InplaceModificationMixin:

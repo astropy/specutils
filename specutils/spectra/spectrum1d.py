@@ -90,13 +90,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise ValueError("Spectral axis must be a `Quantity` object.")
 
             wcs = gwcs_from_array(spectral_axis)
-        elif isinstance(flux, float) or isinstance(flux, int) or isinstance(flux, np.ndarray):
+        elif isinstance(flux, float) or isinstance(flux, int) or not isinstance(flux, u.Quantity):
             # In the case where the arithmetic operation is being performed with
             # a single float, int, or array object, just go ahead and ignore wcs
             # requirements
             super(Spectrum1D, self).__init__(data=flux)
             return
-        else:
+        elif wcs is None:
             # If no wcs and no spectral axis has been given, raise an error
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")

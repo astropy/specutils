@@ -6,10 +6,12 @@ Utilities for parsing, converting, and manipulating astropy FITS-WCS objects
 from astropy import units as u
 from astropy import constants
 import warnings
+from astropy.modeling.models import Shift
 from astropy.modeling.tabular import Tabular1D
 from gwcs import coordinate_frames as cf
 import gwcs
 import numpy as np
+import copy
 
 
 def _parse_velocity_convention(vc):
@@ -556,8 +558,48 @@ def gwcs_from_array(array):
     forward_transform = Tabular1D(np.arange(len(array)), array.value)
     forward_transform.inverse = Tabular1D(array.value, np.arange(len(array)))
 
-    tabular_gwcs = gwcs.wcs.WCS(forward_transform=forward_transform,
-                                input_frame=coord_frame,
-                                output_frame=spec_frame)
+    # Manually insert slicing as a workaround until gwcs properly supports it
+    TabularGWCS = type("WCS", (gwcs.wcs.WCS,), {'__getitem__': gwcs_slice})
+
+    tabular_gwcs = TabularGWCS(forward_transform=forward_transform,
+                               input_frame=coord_frame,
+                               output_frame=spec_frame)
 
     return tabular_gwcs
+
+
+def gwcs_slice(self, item):
+    """
+    This is a bit of a hack in order to fix the slicing of the WCS
+    in the spectral dispersion direction.  The NDData slices properly
+    but the spectral dispersion result was not.
+    There is code slightly downstream that sets the *number* of entries
+    in the dispersion axis, this is just needed to shift to the correct
+    starting element.
+    When WCS gets the ability to do slicing then we might be able to
+    remove this code.
+    """
+
+    # Create shift of x-axis
+    if isinstance(item, int):
+        shift = item
+    elif isinstance(item, slice):
+        shift = item.start
+    else:
+        raise TypeError('Unknown index type {}, must be int or slice.'.format(item))
+
+    # Create copy as we need to modify this and return it.
+    newwcs = copy.deepcopy(self)
+
+    if shift == 0:
+        return newwcs
+
+    shifter = Shift(shift)
+
+    # Get the current forward transform
+    forward = newwcs._wcs.forward_transform
+
+    # Set the new transform
+    newwcs.wcs.set_transform(newwcs._wcs.input_frame, newwcs._wcs.output_frame, shifter|forward)
+
+    return newwcs
