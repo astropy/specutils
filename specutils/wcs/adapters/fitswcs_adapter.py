@@ -112,7 +112,7 @@ class FITSWCSAdapter(WCSAdapter):
 
         return self.pixel_to_world(edge_indices, 0)
 
-    def with_spectral_unit(self, unit, rest_value, velocity_convention):
+    def with_spectral_unit(self, unit, rest_value=None, velocity_convention=None):
         # Shorter versions to keep lines under 80
         ctype_from_vconv = determine_ctype_from_vconv
 

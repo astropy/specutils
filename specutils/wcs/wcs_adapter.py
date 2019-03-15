@@ -100,7 +100,7 @@ class WCSAdapter(metaclass=type('WCSAdapterMetaProxy',
         pass
 
     @abc.abstractmethod
-    def with_spectral_unit(self):
+    def with_spectral_unit(self, rest_value, velocity_convention):
         pass
 
     @abc.abstractmethod
