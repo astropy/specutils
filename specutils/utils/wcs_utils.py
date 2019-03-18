@@ -555,8 +555,8 @@ def gwcs_from_array(array):
                                      axes_type=('SPECTRAL',),
                                      axes_order=(0,))
     spec_frame = cf.SpectralFrame(unit=array.unit, axes_order=(0,))
-    forward_transform = Tabular1D(np.arange(len(array)), array.value)
-    forward_transform.inverse = Tabular1D(array.value, np.arange(len(array)))
+    forward_transform = Tabular1D(np.arange(len(array)) * u.pix, array)
+    forward_transform.inverse = Tabular1D(array, np.arange(len(array)) * u.pix)
 
     # Manually insert slicing as a workaround until gwcs properly supports it
     TabularGWCS = type("WCS", (gwcs.wcs.WCS,), {'__getitem__': gwcs_slice})
@@ -573,13 +573,14 @@ def gwcs_slice(self, item):
     This is a bit of a hack in order to fix the slicing of the WCS
     in the spectral dispersion direction.  The NDData slices properly
     but the spectral dispersion result was not.
+
     There is code slightly downstream that sets the *number* of entries
     in the dispersion axis, this is just needed to shift to the correct
     starting element.
+
     When WCS gets the ability to do slicing then we might be able to
     remove this code.
     """
-
     # Create shift of x-axis
     if isinstance(item, int):
         shift = item
