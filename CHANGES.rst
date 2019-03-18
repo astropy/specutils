@@ -22,6 +22,7 @@ Bug Fixes
 ^^^^^^^^^
 
 - Fix comparison of FITSWCS objects in arithmetic operations.
+
 - Fix example documentation when run in python interpreter.
 
 
