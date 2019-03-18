@@ -66,7 +66,8 @@ may have downloaded from some archive, or reduced from your own observations.
 
     And we plot it:
 
-    >>> lines = plt.step(spec.spectral_axis, spec.flux) # doctest: +REMOTE_DATA
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(spec.spectral_axis, spec.flux) # doctest: +IGNORE_OUTPUT
 
 Now maybe you want the equivalent width of a spectral line.  That requires
 normalizing by a continuum estimate:
@@ -81,9 +82,10 @@ normalizing by a continuum estimate:
     :context: close-figs
 
     >>> from specutils.fitting import fit_generic_continuum
-    >>> cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis) # doctest: +REMOTE_DATA
-    >>> lines = plt.step(cont_norm_spec.wavelength, cont_norm_spec.flux) # doctest: +REMOTE_DATA
-    >>> plt.xlim(654*u.nm, 660*u.nm)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    >>> cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis)
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(cont_norm_spec.wavelength, cont_norm_spec.flux)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_xlim(654*u.nm, 660*u.nm)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
 But then you can apply a single function over the region of the spectrum
 containing the line:
@@ -94,7 +96,6 @@ containing the line:
     >>> from specutils.analysis import equivalent_width
     >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA)) # doctest: +REMOTE_DATA
     <Quantity -14.78092438 Angstrom>
-
 
 
 While there are other tools and spectral representations detailed more below,

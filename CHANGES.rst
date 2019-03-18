@@ -15,6 +15,16 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.3
+-----
+
+Bug Fixes
+^^^^^^^^^
+
+- Fix comparison of FITSWCS objects in arithmetic operations.
+
+- Fix example documentation when run in python interpreter.
+
 
 0.5.2 (2019-02-06)
 ----------------
