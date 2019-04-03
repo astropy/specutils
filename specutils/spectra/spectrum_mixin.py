@@ -63,7 +63,7 @@ class OneDSpectrumMixin:
         """
 
         if len(self.flux) > 0:
-            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]) * u.pix)
         else:
             # After some discussion it was suggested to create the empty spectral
             # axis this way to better use the WCS infrastructure. This is to prepare
@@ -119,6 +119,7 @@ class OneDSpectrumMixin:
             A new spectrum with the converted flux array
         """
         new_spec = deepcopy(self)
+
         if not suppress_conversion:
             if equivalencies is None:
                 equivalencies = eq.spectral_density(self.spectral_axis)
