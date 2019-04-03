@@ -97,9 +97,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(data=flux)
             return
         elif wcs is None:
+            # If no spectral axis or wcs information is provided, initialize a
+            # with an empty gwcs
+            wcs = gwcs_from_array(np.arange(len(flux)) * u.Unit(""))
             # If no wcs and no spectral axis has been given, raise an error
-            raise LookupError("No WCS object or spectral axis information has "
-                              "been given. Please provide one.")
+            # raise LookupError("No WCS object or spectral axis information has "
+            #                   "been given. Please provide one.")
 
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
@@ -355,7 +358,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def _format_array_summary(self, label, array):
-        if len(array) > 0:
+        if len(array) == 1:
+            mean = np.mean(array)
+            s = "{:17} [ {:.5} ],  mean={:.5}"
+            return s.format(label+':', array[0], array[-1], mean)
+        elif len(array) > 1:
             mean = np.mean(array)
             s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
             return s.format(label+':', array[0], array[-1], mean)
