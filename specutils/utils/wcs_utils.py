@@ -6,6 +6,7 @@ Utilities for parsing, converting, and manipulating astropy FITS-WCS objects
 from astropy import units as u
 from astropy import constants
 import warnings
+from astropy.modeling import Fittable1DModel
 from astropy.modeling.models import Shift
 from astropy.modeling.tabular import Tabular1D
 from gwcs import coordinate_frames as cf
@@ -555,11 +556,19 @@ def gwcs_from_array(array):
                                      axes_type=('SPECTRAL',),
                                      axes_order=(0,))
     spec_frame = cf.SpectralFrame(unit=array.unit, axes_order=(0,))
-    forward_transform = Tabular1D(np.arange(len(array)) * u.pix, array)
-    forward_transform.inverse = Tabular1D(array, np.arange(len(array)) * u.pix)
+
+    # In order for the world_to_pixel transformation to automatically convert
+    # input units, the equivalencies in the look up table have to be extended
+    # with spectral unit information.
+    SpectralTabular1D = type("SpectralTabular1D", (Tabular1D,),
+                             {'input_units_equivalencies': {'x0': u.spectral()}})
+
+    forward_transform = SpectralTabular1D(np.arange(len(array)) * u.pix, lookup_table=array)
+    forward_transform.inverse = SpectralTabular1D(array, lookup_table=np.arange(len(array)) * u.pix)
 
     # Manually insert slicing as a workaround until gwcs properly supports it
-    TabularGWCS = type("WCS", (gwcs.wcs.WCS,), {'__getitem__': gwcs_slice})
+    TabularGWCS = type("TabularGWCS", (gwcs.wcs.WCS,),
+                       {'__getitem__': gwcs_slice})
 
     tabular_gwcs = TabularGWCS(forward_transform=forward_transform,
                                input_frame=coord_frame,
