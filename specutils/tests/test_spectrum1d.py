@@ -88,7 +88,7 @@ def test_create_implicit_wcs_with_spectral_unit():
 
     assert isinstance(spec.wcs, gwcs.wcs.WCS)
 
-    pix2world = spec.wcs.pixel_to_world(np.arange(5, 10))
+    pix2world = spec.wcs.pixel_to_world(np.arange(5, 10) * u.pix)
 
     assert pix2world.size == 5
     assert isinstance(pix2world, np.ndarray)
@@ -214,8 +214,8 @@ def test_wcs_transformations():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
-    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
+    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30) * u.nm)
+    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.pix)
 
     assert isinstance(pix_axis, np.ndarray)
     assert isinstance(disp_axis, u.Quantity)
@@ -229,13 +229,13 @@ def test_wcs_transformations():
 
     spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
 
-    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
-    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
+    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30) * u.um)
+    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.pix)
 
     assert isinstance(pix_axis, np.ndarray)
     assert isinstance(disp_axis, u.Quantity)
 
-    assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA, 700*u.nm]), [461.2, 461.2])
+    assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA, 700*u.nm]), [461.2 * u.pix, 461.2 * u.pix])
 
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
@@ -365,6 +365,10 @@ def test_str():
         assert line.startswith('flux{:2}:'.format(i))
 
     # Test string representation with single-dimensional flux
-    spec_single_flux = Spectrum1D(1 * u.Jy)
+    spec_single_flux = Spectrum1D([1] * u.Jy, [0] * u.nm)
     result = str(spec_single_flux)
-    assert result == 'Spectrum1D (length=1)\nflux:   {}'.format(spec_single_flux.flux)
+    print(spec_single_flux.spectral_axis)
+    assert result == \
+"""Spectrum1D (length=1)
+flux:             [ 1.0 Jy ],  mean=1.0 Jy
+spectral axis:    [ nan nm ],  mean=nan nm"""
