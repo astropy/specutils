@@ -1,19 +1,19 @@
 import astropy.units as u
 import numpy as np
 import pytest
-
 from astropy.nddata import StdDevUncertainty
+from gwcs.wcs import WCS as GWCS
+
 from ..spectra.spectrum1d import Spectrum1D
 from ..spectra.spectrum_collection import SpectrumCollection
-from ..wcs.wcs_wrapper import WCSWrapper
-from ..wcs.wcs_adapter import WCSAdapter
+from ..utils.wcs_utils import gwcs_from_array
 
 
 @pytest.fixture
 def spectrum_collection():
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
-    wcs = np.array([WCSWrapper.from_array(x).wcs for x in spectral_axis])
+    wcs = np.array([gwcs_from_array(x).wcs for x in spectral_axis])
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     mask = np.ones((5, 10)).astype(bool)
     meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
@@ -46,7 +46,7 @@ def test_spectrum_collection_slicing(spectrum_collection):
     assert isinstance(single_spec.flux, u.Quantity)
     assert isinstance(single_spec.spectral_axis, u.Quantity)
     assert single_spec.flux.shape == spectrum_collection.flux.shape[1:]
-    assert isinstance(single_spec.wcs, WCSAdapter)
+    assert isinstance(single_spec.wcs, GWCS)
     assert single_spec.mask.shape == single_spec.flux.shape
     assert len(single_spec.meta) == len(spectrum_collection.meta[0])
     assert isinstance(single_spec.uncertainty, StdDevUncertainty)
@@ -57,7 +57,7 @@ def test_collection_without_optional_arguments():
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
-    wcs = np.array([WCSWrapper.from_array(x).wcs for x in spectral_axis])
+    wcs = np.array([gwcs_from_array(x).wcs for x in spectral_axis])
     mask = np.ones((5, 10)).astype(bool)
     meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
 
