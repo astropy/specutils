@@ -563,10 +563,13 @@ def gwcs_from_array(array):
     SpectralTabular1D = type("SpectralTabular1D", (Tabular1D,),
                              {'input_units_equivalencies': {'x0': u.spectral()}})
 
-    forward_transform = SpectralTabular1D(np.arange(len(array)) * u.pix, lookup_table=array)
-    forward_transform.inverse = SpectralTabular1D(array, lookup_table=np.arange(len(array)) * u.pix)
+    forward_transform = SpectralTabular1D(np.arange(len(array)),
+                                          lookup_table=array)
+    forward_transform.inverse = SpectralTabular1D(
+        array, lookup_table=np.arange(len(array)))
 
-    # Manually insert slicing as a workaround until gwcs properly supports it
+    # TODO: Manually insert slicing as a workaround until gwcs properly
+    # supports it
     TabularGWCS = type("TabularGWCS", (gwcs.wcs.WCS,),
                        {'__getitem__': gwcs_slice})
 
@@ -610,6 +613,8 @@ def gwcs_slice(self, item):
     forward = newwcs._wcs.forward_transform
 
     # Set the new transform
-    newwcs.wcs.set_transform(newwcs._wcs.input_frame, newwcs._wcs.output_frame, shifter|forward)
+    newwcs.wcs.set_transform(newwcs._wcs.input_frame,
+                             newwcs._wcs.output_frame,
+                             shifter|forward)
 
     return newwcs
