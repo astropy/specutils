@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import astropy.units as u
+from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
@@ -41,3 +42,37 @@ def test_expanded_grid_fluxconserving():
     assert np.allclose(np.array(results.flux),
                         np.array([0., 3., 6.13043478, 7., 6.33333333, 10.,
                                   20., 0., 0.]))
+
+
+def delta_wl(saxis):
+    """
+    A helper function that computes the "size" of a bin given the bin centers
+    for testing the flux conservation
+    """
+    l_widths = (saxis[1] - saxis[0])
+    r_widths = (saxis[-1] - saxis[-2])
+    # if three bins 0,1,2; want width of central bin.  width is avg of 1/2 minus
+    # average of 0/1: (i1 + i2)/2 - (i0 + i1)/2 = (i2 - i0)/2
+    mid_widths = (saxis[2:] - saxis[:-2]) / 2
+
+    return np.concatenate([[l_widths.value], mid_widths.value, [r_widths.value]])*saxis.unit
+
+
+@pytest.mark.parametrize("specflux,specwave,outwave", [
+    ([1, 3, 2], [4000, 5000, 6000], np.linspace(4000, 6000, 4)),
+    ([1, 3, 2,1], np.linspace(4000, 6000, 4), [4000, 5000, 6000])
+    ])
+def test_flux_conservation(specflux, specwave, outwave):
+    """
+    A few simple cases to programatically ensure flux is conserved in the
+    resampling algorithm
+    """
+    in_spec = Spectrum1D(spectral_axis=specwave*u.AA, flux=specflux*u.AB)
+    out_spec = FluxConservingResample()(in_spec, outwave*u.AA, weights=None)
+
+    in_dwl = delta_wl(in_spec.spectral_axis)
+    out_dwl = delta_wl(out_spec.spectral_axis)
+
+    assert assert_quantity_allclose(np.sum(in_spec.flux * in_dwl),
+                                    np.sum(out_spec.flux * out_dwl))
+
