@@ -5,6 +5,9 @@ from astropy.units import Quantity
 
 from ..spectra import Spectrum1D
 
+__all__ = ['ResampleBase','FluxConservingResample']
+
+
 class ResampleBase(ABC):
     """
     Base class for resample classes.  The algorithms and needs for difference
@@ -27,10 +30,14 @@ class ResampleBase(ABC):
         return NotImplemented
 
     @staticmethod
-    def bin_edges(x):
+    def _bin_edges(x):
         """
         Calculate the bin edge values of an input dispersion axis. Input values
         are assumed to be the center of the bins.
+
+        todo: this should live in the main spectrum object, but we're still
+        figuring out the details to that implementation, so leaving here
+        for now.
 
         Parameters
         ----------
@@ -52,6 +59,8 @@ class ResampleBase(ABC):
 class FluxConservingResample(ResampleBase):
     """
     todo: fill out this docstring
+
+    paper: https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
     """
 
     def __call__(self, orig_spectrum, fin_lamb, weights='unc'):
@@ -63,7 +72,7 @@ class FluxConservingResample(ResampleBase):
     def _resample_matrix(self, orig_lamb, fin_lamb, weights=None):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way
-        that conserves flux. This is adapted from *this* paper (ref TBD). This
+        that conserves flux. This is adapted from *this* paper (DOI if exists, if not ref TBD). This
         code was heavily influenced by Nick Earl's resample rough draft
 
         Parameters
@@ -79,8 +88,8 @@ class FluxConservingResample(ResampleBase):
             An [[N_{fin_lamb}, M_{orig_lamb}]] matrix.
         """
         # Lower bin and upper bin edges
-        orig_edges = self.bin_edges(orig_lamb)
-        fin_edges = self.bin_edges(fin_lamb)
+        orig_edges = self._bin_edges(orig_lamb)
+        fin_edges = self._bin_edges(fin_lamb)
 
         # I could get rid of these alias variables,
         # but it does add readability

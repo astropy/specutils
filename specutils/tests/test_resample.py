@@ -75,4 +75,3 @@ def test_flux_conservation(specflux, specwave, outwave):
 
     assert assert_quantity_allclose(np.sum(in_spec.flux * in_dwl),
                                     np.sum(out_spec.flux * out_dwl))
-
