@@ -137,6 +137,7 @@ class FluxConservingResampler(ResamplerBase):
 
         # set bins that don't overlap 100% with original bins
         # to zero by checking edges, and applying generated mask
+        # to zero by checking edges, and applying generated mask
         left_clip = np.where(fin_edges[:-1] - orig_edges[0] < 0, 0, 1)
         right_clip = np.where(orig_edges[-1] - fin_edges[1:] < 0, 0, 1)
         keep_overlapping_matrix = left_clip * right_clip
