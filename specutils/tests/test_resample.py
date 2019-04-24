@@ -58,20 +58,29 @@ def delta_wl(saxis):
     return np.concatenate([[l_widths.value], mid_widths.value, [r_widths.value]])*saxis.unit
 
 
-@pytest.mark.parametrize("specflux,specwave,outwave", [
-    ([1, 3, 2], [4000, 5000, 6000], np.linspace(4000, 6000, 4)),
-    ([1, 3, 2,1], np.linspace(4000, 6000, 4), [4000, 5000, 6000])
+@pytest.mark.parametrize("specflux,specwavebins,outwavebins", [
+    ([1, 3, 2], [4000, 5000, 6000, 7000], np.linspace(4000, 7000, 5)),
+    ([1, 3, 2,1], np.linspace(4000, 7000, 5), [4000, 5000, 6000, 7000])
     ])
-def test_flux_conservation(specflux, specwave, outwave):
+def test_flux_conservation(specflux, specwavebins, outwavebins):
     """
     A few simple cases to programatically ensure flux is conserved in the
     resampling algorithm
     """
-    in_spec = Spectrum1D(spectral_axis=specwave*u.AA, flux=specflux*u.AB)
-    out_spec = FluxConservingResample()(in_spec, outwave*u.AA, weights=None)
+    specwavebins = specwavebins*u.AA
+    outwavebins = outwavebins*u.AA
+    specflux = specflux*u.AB
+
+    specwave = (specwavebins[:-1] + specwavebins[1:])/2
+    outwave = (outwavebins[:-1] + outwavebins[1:])/2
+
+    in_spec = Spectrum1D(spectral_axis=specwave, flux=specflux)
+    out_spec = FluxConservingResample()(in_spec, outwave, weights=None)
 
     in_dwl = delta_wl(in_spec.spectral_axis)
     out_dwl = delta_wl(out_spec.spectral_axis)
 
-    assert assert_quantity_allclose(np.sum(in_spec.flux * in_dwl),
-                                    np.sum(out_spec.flux * out_dwl))
+    flux_in = np.sum(in_spec.flux * in_dwl)
+    flux_out = np.sum(out_spec.flux * out_dwl)
+
+    assert_quantity_allclose(flux_in, flux_out)
