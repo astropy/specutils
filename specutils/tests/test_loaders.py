@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import tempfile
@@ -36,7 +37,7 @@ def test_spectrum1d_GMOSfits(remote_data_path):
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
-def test_spectrumlist_GMOSfits(remote_data_path):
+def test_spectrumlist_GMOSfits(remote_data_path, caplog):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
         spectrum_list = SpectrumList.read(remote_data_path, format='wcs1d-fits')
@@ -45,6 +46,11 @@ def test_spectrumlist_GMOSfits(remote_data_path):
 
     spec = spectrum_list[0]
     assert len(spec.data) == 3020
+
+    logmsg = caplog.record_tuples[0]
+    assert logmsg[1] == logging.WARN
+    assert "Assuming the axis 0 labeled 'linear' is spectral" in logmsg[2]
+
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
@@ -56,6 +62,15 @@ def test_specific_spec_axis_unit(remote_data_path):
                                        format='wcs1d-fits')
 
     assert optical_spec.spectral_axis.unit == "Angstrom"
+
+@remote_access([{'id': '2656720', 'filename': '_v1410ori_20181204_261_Forrest%20Sims.fit'}])
+def test_ctypye_not_compliant(remote_data_path, caplog):
+    optical_spec = Spectrum1D.read(remote_data_path,
+                                   spectral_axis_unit="Angstrom",
+                                   format='wcs1d-fits')
+    logmsg = caplog.record_tuples[0]
+    assert logmsg[1] == logging.WARN
+    assert "Assuming the axis 0 labeled 'wavelength' is spectral" in logmsg[2]
 
 
 def test_generic_ecsv_reader(tmpdir):
