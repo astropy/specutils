@@ -4,7 +4,6 @@ from astropy.wcs import (WCS, WCSSUB_CELESTIAL, WCSSUB_CUBEFACE,
                          WCSSUB_LATITUDE, WCSSUB_LONGITUDE, WCSSUB_SPECTRAL,
                          WCSSUB_STOKES, InvalidSubimageSpecificationError)
 
-from astropy.utils.exceptions import AstropyUserWarning
 # Use this once in specutils
 from ...utils.wcs_utils import (convert_spectral_axis,
                                 determine_ctype_from_vconv)
@@ -86,7 +85,7 @@ class FITSWCSAdapter(WCSAdapter):
             for n in self.substitute_spec_axis_names:
                 if n in ctypelist:
                     self._spec_axis = ctypelist.index(n)
-                    logging.warning("WCS has a non-standards spectral axis, 'ctype's might be incorrect. Assuming the axis {} labelled '{}' is spectral and proceeding.".format(self._spec_axis, n))
+                    logging.warning("WCS has a non-standard spectral axis, 'ctype's might be incorrect. Assuming the axis {} labeled '{}' is spectral and proceeding.".format(self._spec_axis, n))
                     break
             else:
                 raise InvalidSubimageSpecificationError(

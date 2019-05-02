@@ -49,7 +49,7 @@ def test_spectrumlist_GMOSfits(remote_data_path, caplog):
 
     logmsg = caplog.record_tuples[0]
     assert logmsg[1] == logging.WARN
-    assert "Assuming the axis 0 labelled 'linear' is spectral" in logmsg[2]
+    assert "Assuming the axis 0 labeled 'linear' is spectral" in logmsg[2]
 
 
 
@@ -70,7 +70,7 @@ def test_ctypye_not_compliant(remote_data_path, caplog):
                                    format='wcs1d-fits')
     logmsg = caplog.record_tuples[0]
     assert logmsg[1] == logging.WARN
-    assert "Assuming the axis 0 labelled 'wavelength' is spectral" in logmsg[2]
+    assert "Assuming the axis 0 labeled 'wavelength' is spectral" in logmsg[2]
 
 
 def test_generic_ecsv_reader(tmpdir):
