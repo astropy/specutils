@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from astropy.units import Quantity
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from ..spectra import Spectrum1D
 
-__all__ = ['ResampleBase','FluxConservingResample']
+__all__ = ['ResampleBase', 'FluxConservingResample']
 
 
 class ResampleBase(ABC):
@@ -22,7 +23,7 @@ class ResampleBase(ABC):
         return NotImplemented
 
     @abstractmethod
-    def resample(self, orig_spectrum, fin_lamb, weights='unc'):
+    def resample1D(self, orig_spectrum, fin_lamb):
         """
         Workhorse method that will return the resampled Spectrum1D
         object.
@@ -58,22 +59,24 @@ class ResampleBase(ABC):
 
 class FluxConservingResample(ResampleBase):
     """
-    todo: fill out this docstring
-
-    paper: https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
+    This resample algorithim conserves overall flux (as opposed to flux density).
+    Algorithim based on the equations documented in the following paper:
+    https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
     """
 
-    def __call__(self, orig_spectrum, fin_lamb, weights='unc'):
+    def __call__(self, orig_spectrum, fin_lamb):
         """
         Return the resulting `~specutils.Spectrum1D` of the resampling.
         """
-        return self.resample(orig_spectrum, fin_lamb, weights=weights)
+        return self.resample1D(orig_spectrum, fin_lamb)
 
-    def _resample_matrix(self, orig_lamb, fin_lamb, weights=None):
+    def _resample_matrix(self, orig_lamb, fin_lamb):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way
-        that conserves flux. This is adapted from *this* paper (DOI if exists, if not ref TBD). This
-        code was heavily influenced by Nick Earl's resample rough draft
+        that conserves flux. This is adapted from
+        https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/references,
+        eprint arXiv:1705.05165. This code was heavily influenced by Nick Earl's
+        resample rough draft.
 
         Parameters
         ----------
@@ -105,10 +108,6 @@ class FluxConservingResample(ResampleBase):
         l_sup = np.where(orig_upp < fin_upp[:, np.newaxis],
                          orig_upp, fin_upp[:, np.newaxis])
 
-        # If no weights specified, use all ones
-        if not weights:
-            weights = np.ones(len(orig_lamb))
-
         resamp_mat = (l_sup - l_inf).clip(0)
         resamp_mat *= (orig_upp - orig_low)
 
@@ -119,14 +118,16 @@ class FluxConservingResample(ResampleBase):
         keep_overlapping_matrix = left_clip * right_clip
 
         resamp_mat *= keep_overlapping_matrix[:, np.newaxis]
-        resamp_mat *= weights
 
         return resamp_mat
 
-    def resample(self, orig_spectrum, fin_lamb,  weights='unc'):
+    def resample1D(self, orig_spectrum, fin_lamb):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way
-        that conserves flux. This is adapted from *this* paper (ref TBD)
+        that conserves flux. This is adapted from *this* paper (ref TBD). If
+        an uncertainty is present in the input spectra it will be propagated
+        through to the final resampled output spectra as an InverseVariance
+        uncertainty.
 
         Parameters
         ----------
@@ -134,11 +135,6 @@ class FluxConservingResample(ResampleBase):
             The original 1D spectrum.
         fin_lamb : ndarray
             The desired dispersion array.
-        weights : str or ndarray
-            Uncertainty handeling.  The default string 'unc' will use the
-            inverse variance from the uncertainty as the weights. No uncertainty
-            will be calculated if set to None.  If ndarray is provided, this
-            will be used for weights.
 
         Returns
         -------
@@ -153,29 +149,34 @@ class FluxConservingResample(ResampleBase):
                 return ValueError("Original spectrum dispersion grid and new"
                                   "dispersion grid must have the same units.")
 
-        # todo: Generate uncertainty if none provided and weights='unc' chosen?
-        # todo: We should populate an output uncertainty, but what do we do if input
-        # spectrum has populated uncertainty, but a different weighting is
-        # provided in the weights keyword?
+        # todo: Would be good to return uncertainty in type it was provided?
+        # todo: add in weighting options
 
-        # If weight is provided, turn into float array and check if it's the
-        # same length as input spectrum
-        if weights not in (None,'unc'):
-            try:
-                weights = np.asfarray(weights)
-            except ValueError as e:
-                return ValueError("Could not convert weight array to Ndarray: {}".format(e))
+        # Get provided uncertainty into variance
+        if orig_spectrum.uncertainty is not None:
+            if isinstance(orig_spectrum.uncertainty, StdDevUncertainty):
+                pixel_uncer = np.square(orig_spectrum.uncertainty.array)
+            elif isinstance(orig_spectrum.uncertainty, VarianceUncertainty):
+                pixel_uncer = orig_spectrum.uncertainty.array
+            elif isinstance(orig_spectrum.uncertainty, InverseVariance):
+                pixel_uncer = np.reciprocal(orig_spectrum.uncertainty.array)
+        else:
+            pixel_uncer = None
 
-            if len(weights) != len(orig_spectrum.flux):
-                return ValueError("Provided weight array must be the same "
-                                  "length as the input spectrum.")
-
-        # todo, line 74 doesn't like the inputs being quantity objects, may
+        # todo: Current code doesn't like the inputs being quantity objects, may
         # want to look into this more in the future
         resample_grid = self._resample_matrix(np.array(orig_spectrum.wavelength),
-                                              np.array(fin_lamb), weights=weights)
+                                              np.array(fin_lamb))
         out_flux = np.sum(orig_spectrum.flux * resample_grid, axis=1) / np.sum(
             resample_grid, axis=1)
+
+        # Calculate output uncertainty
+        if pixel_uncer is not None:
+            out_variance = np.sum(pixel_uncer * resample_grid**2, axis=1) / np.sum(
+                resample_grid**2, axis=1)
+            out_uncertainty = InverseVariance(np.reciprocal(out_variance))
+        else:
+            out_uncertainty = None
 
         # todo: for now, use the units from the pre-resampled
         # spectra, although if a unit is defined for fin_lamb and it doesn't
@@ -184,6 +185,7 @@ class FluxConservingResample(ResampleBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux),
-                                        np.array(fin_lamb) * orig_spectrum.wavelength.unit)
+                                        np.array(fin_lamb) * orig_spectrum.wavelength.unit,
+                                        uncertainty=np.nan_to_num(out_uncertainty))
 
         return resampled_spectrum
