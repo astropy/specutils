@@ -13,7 +13,14 @@ class ResampleBase(ABC):
     """
     Base class for resample classes.  The algorithms and needs for difference
     resamples will vary quite a bit, so this class is relatively sparse.
+
+
+    Init paramtere here is not yet hooked up to the rest of the code, but to
+    show how we will want to use it in the future.
     """
+    def __init__(self, bin_edges="zero_fill"):
+        self.bin_edges = bin_edges
+
 
     @abstractmethod
     def __call__(self, orig_spectrum, fin_lamb):
@@ -31,7 +38,7 @@ class ResampleBase(ABC):
         return NotImplemented
 
     @staticmethod
-    def _bin_edges(x):
+    def _calc_bin_edges(x):
         """
         Calculate the bin edge values of an input dispersion axis. Input values
         are assumed to be the center of the bins.
@@ -91,8 +98,8 @@ class FluxConservingResample(ResampleBase):
             An [[N_{fin_lamb}, M_{orig_lamb}]] matrix.
         """
         # Lower bin and upper bin edges
-        orig_edges = self._bin_edges(orig_lamb)
-        fin_edges = self._bin_edges(fin_lamb)
+        orig_edges = self._calc_bin_edges(orig_lamb)
+        fin_edges = self._calc_bin_edges(fin_lamb)
 
         # I could get rid of these alias variables,
         # but it does add readability
@@ -167,13 +174,32 @@ class FluxConservingResample(ResampleBase):
         # want to look into this more in the future
         resample_grid = self._resample_matrix(np.array(orig_spectrum.wavelength),
                                               np.array(fin_lamb))
-        out_flux = np.sum(orig_spectrum.flux * resample_grid, axis=1) / np.sum(
-            resample_grid, axis=1)
+
+        # Now for some broadcasting magic to handle multi dimensional flux inputs
+        # Essentially this part is inserting length one dimensions as fillers
+        # For example, if we have a (5,6,10) input flux, and an output grid
+        # of 3, flux will be broadcast to (5,6,1,10) and resample_grid will
+        # Be broadcast to (1,1,3,10).  The sum then reduces down the 10, the
+        # original dispersion grid, leaving 3, the new dispersion grid, as
+        # the last index.
+        new_flux_shape = list(orig_spectrum.flux.shape)
+        new_flux_shape.insert(-1, 1)
+        in_flux = orig_spectrum.flux.reshape(new_flux_shape)
+
+        ones = [1] * len(orig_spectrum.flux.shape[:-1])
+        new_shape_resample_grid = ones + list(resample_grid.shape)
+        resample_grid = resample_grid.reshape(new_shape_resample_grid)
+
+        # Calculate final flux
+        out_flux = np.sum(in_flux * resample_grid, axis=-1) / np.sum(
+            resample_grid, axis=-1)
 
         # Calculate output uncertainty
         if pixel_uncer is not None:
-            out_variance = np.sum(pixel_uncer * resample_grid**2, axis=1) / np.sum(
-                resample_grid**2, axis=1)
+            pixel_uncer = pixel_uncer.reshape(new_flux_shape)
+
+            out_variance = np.sum(pixel_uncer * resample_grid**2, axis=-1) / np.sum(
+                resample_grid**2, axis=-1)
             out_uncertainty = InverseVariance(np.reciprocal(out_variance))
         else:
             out_uncertainty = None

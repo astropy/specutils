@@ -43,9 +43,8 @@ def test_expanded_grid_fluxconserving():
     inst = FluxConservingResample()
     results = inst(input_spectra, resamp_grid)
 
-    assert results.flux.unit == u.mJy
-    assert np.allclose(np.array(results.flux),
-                       np.array([0., 3., 6.13043478, 7., 6.33333333, 10., 20., 0., 0.]))
+    assert_quantity_allclose(results.flux,
+                            np.array([0., 3., 6.13043478, 7., 6.33333333, 10., 20., 0., 0.])*u.mJy)
 
 
 def test_stddev_uncert_propogation():
@@ -104,3 +103,27 @@ def test_flux_conservation(specflux, specwavebins, outwavebins):
     flux_out = np.sum(out_spec.flux * out_dwl)
 
     assert_quantity_allclose(flux_in, flux_out)
+
+
+def test_multi_dim_spectrum1D():
+    """
+    Test for input spectrum1Ds that have a two dimensional flux and
+    uncertainty.
+    """
+    flux_2d = np.array([np.ones(10) * 5, np.ones(10) * 6, np.ones(10) * 7])
+
+    input_spectra = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
+                      flux=flux_2d * u.Jy,
+                      uncertainty=StdDevUncertainty(flux_2d / 10))
+
+    inst = FluxConservingResample()
+    results = inst(input_spectra, np.array([5001, 5003, 5005, 5007]))
+
+    assert_quantity_allclose(results.flux,
+                            np.array([[5., 5., 5., 5.],
+                                      [6., 6., 6., 6.],
+                                      [7., 7., 7., 7.]]) * u.Jy)
+    assert np.allclose(results.uncertainty.array,
+                       np.array([[4., 4., 4., 4.],
+                                 [2.77777778, 2.77777778, 2.77777778, 2.77777778],
+                                 [2.04081633, 2.04081633, 2.04081633, 2.04081633]] ))
