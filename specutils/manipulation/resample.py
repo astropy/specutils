@@ -6,9 +6,9 @@ from astropy.units import Quantity
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from ..spectra import Spectrum1D
+from ..spectra.spectrum_collection import runs_on_spectrum_collection
 
-__all__ = ['ResamplerBase', 'FluxConservingResampler',
-           'LinearInterpolatedResampler', 'SplineInterpolatedResampler']
+__all__ = ['ResamplerBase', 'FluxConservingResampler', 'LinearInterpolatedResampler', 'SplineInterpolatedResampler']
 
 
 class ResamplerBase(ABC):
@@ -146,6 +146,7 @@ class FluxConservingResampler(ResamplerBase):
 
         return resamp_mat
 
+    @runs_on_spectrum_collection
     def resample1d(self, orig_spectrum, fin_lamb):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way

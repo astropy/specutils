@@ -1,4 +1,5 @@
 import logging
+import functools
 
 import astropy.units as u
 import numpy as np
@@ -244,3 +245,34 @@ class SpectrumCollection:
     Uncertainty type:    {}""".format(
             self.ndim, self.shape, self.flux.unit, self.spectral_axis.unit,
             self.uncertainty.uncertainty_type if self.uncertainty is not None else None)
+
+
+def runs_on_spectrum_collection(func):
+    """
+    Decorator to wrap Spectrum1D manipulation functionality so that it can
+    run on a SpectrumCollection
+
+    For this decorator to work, the first argument in your function/method
+    should be the Spectrum1D or SpectrumCollection object, although if it's
+    not it will simply pass the original function.
+
+    Another fallout, right now it's expecting this to be attached to a class
+    method, since it's expecting the first argument to be  self, and the second
+    argument to be the spectrum1D or SpectrumCollection
+    """
+    @functools.wraps(func)
+
+    def wrapper(sarg, farg, *args, **kwargs):
+
+        if isinstance(farg, SpectrumCollection):
+            new_spectra = []
+
+            for spec in farg:
+                new_spectra.append(func(sarg, spec, *args, **kwargs))
+
+            return SpectrumCollection.from_spectra(new_spectra)
+
+        else:
+            return func(sarg, farg, *args, **kwargs)
+
+    return wrapper

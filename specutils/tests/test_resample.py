@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.nddata import InverseVariance, StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra  import Spectrum1D, SpectrumCollection
 from ..tests.spectral_examples import simulated_spectra
 from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
@@ -162,3 +162,20 @@ def test_expanded_grid_interp_spline():
     assert_quantity_allclose(results.flux,
                             np.array([np.nan, 3.98808594, 6.94042969, 6.45869141,
                                       5.89921875, 7.29736328, np.nan, np.nan, np.nan])*u.mJy)
+
+
+def test_spectrum_collection():
+    """
+    Test if spectrum collection decorator is working with resample
+    """
+
+    spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+                      flux = np.random.randn(50) * u.Jy,
+                      uncertainty = StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+                       flux = np.random.randn(50) * u.Jy,
+                       uncertainty = StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    spec_coll = SpectrumCollection.from_spectra([spec, spec1])
+
+    inst = FluxConservingResampler()
+    results = inst(spec_coll, np.linspace(20,40,40))
