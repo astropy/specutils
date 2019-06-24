@@ -6,7 +6,7 @@ from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
-from ..manipulation.resample import FluxConservingResample
+from ..manipulation.resample import FluxConservingResample, LinearInterpolatedResample, SplineInterpolatedResample
 
 # todo: Should add tests for different weighting options once those
 # are more solidified.
@@ -127,3 +127,38 @@ def test_multi_dim_spectrum1D():
                        np.array([[4., 4., 4., 4.],
                                  [2.77777778, 2.77777778, 2.77777778, 2.77777778],
                                  [2.04081633, 2.04081633, 2.04081633, 2.04081633]] ))
+
+
+def test_expanded_grid_interp_linear():
+    """
+    New dispersion axis has more bins then input dispersion axis
+    """
+
+    flux_val = np.array([1, 3, 7, 6, 20])
+    wave_val = np.array([2, 4, 12, 16, 20])
+    input_spectra = Spectrum1D(flux_val * u.mJy, wave_val * u.AA)
+    resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
+
+    inst = LinearInterpolatedResample()
+    results = inst(input_spectra, resamp_grid)
+
+    assert_quantity_allclose(results.flux,
+                            np.array([0., 3.5, 5.5, 6.75, 6.5, 9.5, 0., 0., 0.])*u.mJy)
+
+
+def test_expanded_grid_interp_spline():
+    """
+    New dispersion axis has more bins then input dispersion axis
+    """
+
+    flux_val = np.array([1, 3, 7, 6, 20])
+    wave_val = np.array([2, 4, 12, 16, 20])
+    input_spectra = Spectrum1D(flux_val * u.mJy, wave_val * u.AA)
+    resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
+
+    inst = SplineInterpolatedResample()
+    results = inst(input_spectra, resamp_grid)
+
+    assert_quantity_allclose(results.flux,
+                            np.array([0., 3.98808594, 6.94042969, 6.45869141,
+                                      5.89921875, 7.29736328, 0., 0., 0.])*u.mJy)
