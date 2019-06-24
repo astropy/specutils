@@ -15,7 +15,7 @@ def line_flux(spectrum, regions=None):
     Computes the integrated flux in a spectrum or region of a spectrum.
 
     Applies to the whole spectrum by default, but can be limited to a specific
-    feature (like a spectral line) if a region is given.
+    feature (such as a spectral line) if a region is given.
 
     Parameters
     ----------
@@ -29,7 +29,7 @@ def line_flux(spectrum, regions=None):
     Returns
     -------
     flux : `~astropy.units.Quantity`
-        Flux in the provided spectrum (or regions). Unit isthe ``spectrum``'s'
+        Flux in the provided spectrum (or regions). Unit is the ``spectrum``'s'
         ``flux`` unit times ``spectral_axis`` unit.
 
     Notes
@@ -45,7 +45,7 @@ def equivalent_width(spectrum, continuum=1, regions=None):
     Computes the equivalent width of a region of the spectrum.
 
     Applies to the whole spectrum by default, but can be limited to a specific
-    feature (like a spectral line) if a region is given.
+    feature (such as a spectral line) if a region is given.
 
     Parameters
     ----------
@@ -87,13 +87,14 @@ def _compute_line_flux(spectrum, regions=None):
     else:
         calc_spectrum = spectrum
 
-    # Average dispersion in the line region
-    avg_dx = np.diff(calc_spectrum.spectral_axis)
+    sign = 1
+    # Account for cases with decreasing wavelength
+    if calc_spectrum.spectral_axis[0] > calc_spectrum.spectral_axis[-1]:
+        sign = -1
 
-    line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
-
-    # TODO: we may want to consider converting to erg / cm^2 / sec by default
-    return line_flux
+    flux = np.trapz(calc_spectrum.flux, x=calc_spectrum.spectral_axis.value)
+    flux_units = calc_spectrum.flux.unit * calc_spectrum.spectral_axis.unit
+    return flux * sign * flux_units
 
 
 def _compute_equivalent_width(spectrum, continuum=1, regions=None):
@@ -104,15 +105,13 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
         calc_spectrum = spectrum
 
     if continuum == 1:
-        continuum = 1*calc_spectrum.flux.unit
+        continuum = 1 * calc_spectrum.flux.unit
 
-    spectral_axis = calc_spectrum.spectral_axis
-    dx = spectral_axis[-1] - spectral_axis[0]
+    sign = 1
+    # Account for cases with decreasing wavelength
+    if calc_spectrum.spectral_axis[0] > calc_spectrum.spectral_axis[-1]:
+        sign = -1
 
-
-    line_flux = _compute_line_flux(spectrum, regions)
-
-    # Calculate equivalent width
-    ew =  dx - (line_flux / continuum)
-
-    return ew.to(calc_spectrum.spectral_axis.unit)
+    ew = np.trapz(1 - calc_spectrum.flux / continuum, x=calc_spectrum.spectral_axis.value)
+    ew_units = calc_spectrum.spectral_axis.unit
+    return ew * sign * ew_units
