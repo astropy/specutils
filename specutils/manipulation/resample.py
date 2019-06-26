@@ -7,7 +7,8 @@ from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVarian
 
 from ..spectra import Spectrum1D
 
-__all__ = ['ResampleBase', 'FluxConservingResample']
+__all__ = ['ResampleBase', 'FluxConservingResample',
+           'LinearInterpolatedResample', 'SplineInterpolatedResample']
 
 
 class ResampleBase(ABC):
@@ -65,8 +66,9 @@ class ResampleBase(ABC):
 
 class FluxConservingResample(ResampleBase):
     """
-    This resample algorithim conserves overall flux (as opposed to flux density).
-    Algorithim based on the equations documented in the following paper:
+    This resample algorithim conserves overall integrated flux (as opposed to
+    flux density). Algorithim based on the equations documented in the
+    following paper:
     https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
     """
 
@@ -151,7 +153,7 @@ class FluxConservingResample(ResampleBase):
         # Check if units on original spectrum and new wavelength (if defined)
         # match
         if isinstance(fin_lamb, Quantity):
-            if orig_spectrum.wavelength.unit != fin_lamb.unit:
+            if orig_spectrum.spectral_axis_unit != fin_lamb.unit:
                 return ValueError("Original spectrum dispersion grid and new"
                                   "dispersion grid must have the same units.")
 
@@ -171,7 +173,7 @@ class FluxConservingResample(ResampleBase):
 
         # todo: Current code doesn't like the inputs being quantity objects, may
         # want to look into this more in the future
-        resample_grid = self._resample_matrix(np.array(orig_spectrum.wavelength),
+        resample_grid = self._resample_matrix(np.array(orig_spectrum.spectral_axis),
                                               np.array(fin_lamb))
 
         # Now for some broadcasting magic to handle multi dimensional flux inputs
@@ -210,7 +212,7 @@ class FluxConservingResample(ResampleBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux),
-                                        np.array(fin_lamb) * orig_spectrum.wavelength.unit,
+                                        np.array(fin_lamb) * orig_spectrum.spectral_axis_unit,
                                         uncertainty=np.nan_to_num(out_uncertainty))
 
         return resampled_spectrum
@@ -268,7 +270,7 @@ class LinearInterpolatedResample(ResampleBase):
         resample_spectrum : `~specutils.Spectrum1D`
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
-        out_flux = self._interpolation(orig_spectrum.wavelength, orig_spectrum.flux,
+        out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
                                   fin_lamb)
 
         # todo: for now, use the units from the pre-resampled
@@ -279,7 +281,7 @@ class LinearInterpolatedResample(ResampleBase):
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
         resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux) * orig_spectrum.flux.unit,
-                                        np.array(fin_lamb) * orig_spectrum.wavelength.unit)
+                                        np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
 
         return resampled_spectrum
 
@@ -338,7 +340,7 @@ class SplineInterpolatedResample(ResampleBase):
         resample_spectrum : `~specutils.Spectrum1D`
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
-        out_flux = self._interpolation(orig_spectrum.wavelength, orig_spectrum.flux,
+        out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
                                   fin_lamb)
 
         # todo: for now, use the units from the pre-resampled
@@ -349,6 +351,6 @@ class SplineInterpolatedResample(ResampleBase):
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
         resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux) * orig_spectrum.flux.unit,
-                                        np.array(fin_lamb) * orig_spectrum.wavelength.unit)
+                                        np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
 
         return resampled_spectrum

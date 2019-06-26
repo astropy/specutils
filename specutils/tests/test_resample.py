@@ -22,7 +22,7 @@ def test_same_grid_fluxconserving(simulated_spectra):
 
     inst = FluxConservingResample()
     results = inst(input_spectra,
-                   simulated_spectra.s1_um_mJy_e1.wavelength)
+                   simulated_spectra.s1_um_mJy_e1.spectral_axis)
 
     assert np.allclose(np.array(simulated_spectra.s1_um_mJy_e1.flux),
                        np.array(results.flux))
@@ -37,7 +37,7 @@ def test_expanded_grid_fluxconserving():
 
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
-    input_spectra = Spectrum1D(flux_val * u.mJy, wave_val * u.AA)
+    input_spectra = Spectrum1D(flux=flux_val * u.mJy, spectral_axis=wave_val * u.nm)
     resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
 
     inst = FluxConservingResample()
@@ -53,7 +53,7 @@ def test_stddev_uncert_propogation():
     """
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([20, 30, 40, 50, 60])
-    input_spectra = Spectrum1D(flux_val * u.mJy, wave_val * u.AA,
+    input_spectra = Spectrum1D(flux=flux_val * u.mJy, spectral_axis=wave_val * u.AA,
                                uncertainty=StdDevUncertainty([0.1, 0.25, 0.1, 0.25, 0.1]))
 
     inst = FluxConservingResample()
@@ -136,7 +136,7 @@ def test_expanded_grid_interp_linear():
 
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
-    input_spectra = Spectrum1D(flux_val * u.mJy, wave_val * u.AA)
+    input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
 
     inst = LinearInterpolatedResample()
@@ -153,7 +153,7 @@ def test_expanded_grid_interp_spline():
 
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
-    input_spectra = Spectrum1D(flux_val * u.mJy, wave_val * u.AA)
+    input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
 
     inst = SplineInterpolatedResample()
