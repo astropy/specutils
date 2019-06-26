@@ -102,6 +102,64 @@ Note: This method is not flux conserving.
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49) * u.Jy)
     >>> spec1_msmooth = median_smooth(spec1, width=3)
 
+Resampling
+----------
+:ref:`specutils <specutils>` contains several classes for resampling the flux
+in a :class:`~specutils.Spectrum1D` object.  Currently supported methods of
+resampling are integrated flux conserving with :class:`~specutils.manipulation.FluxConservingResample`,
+linear interpolation with :class:`~specutils.manipulation.LinearInterpolatedResample`,
+and cubic spline with :class:`~specutils.manipulation.SplineInterpolatedResample`.
+Each of these classes takes in a :class:`~specutils.Spectrum1D` and a user
+defined output dispersion grid, and returns a new :class:`~specutils.Spectrum1D`
+with the resampled flux. Currently the resampling classes expect the new
+dispersion grid unit to be the same as the input spectrum's dispersion grid unit.
+
+If the input :class:`~specutils.Spectrum1D` contains an uncertainty,
+:class:`~specutils.manipulation.FluxConservingResample` will propogate the
+uncertainty to the final output :class:`~specutils.Spectrum1D`. However, the
+other two implemented resampling classes (:class:`~specutils.manipulation.LinearInterpolatedResample`
+and :class:`~specutils.manipulation.SplineInterpolatedResample`) will ignore
+any input uncertainty.
+
+Here's a set of simple examples showing each of the three types of resampling:
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+    >>> import astropy.units as u
+    >>> import numpy as np
+    >>> from specutils.manipulation import FluxConservingResample, LinearInterpolatedResample, SplineInterpolatedResample
+
+    >>> input_spec = Spectrum1D(spectral_axis=np.arange(1, 20, 2) * u.nm, flux=np.random.sample(10)*u.Jy)
+    >>> new_disp_grid = np.arange(1.5,20.5)
+
+    >>> fluxcon = FluxConservingResample()
+    >>> new_spec = fluxcon(input_spec, new_disp_grid)
+    >>> new_spec.spectral_axis #doctest:+SKIP
+    <Quantity [ 1.5,  2.5,  3.5,  4.5,  5.5,  6.5,  7.5,  8.5,  9.5, 10.5,
+               11.5, 12.5, 13.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5] nm>
+
+    >>> new_spec.flux #doctest:+SKIP
+    <Quantity [0.51712972, 0.10433299, 0.10433299, 0.8832977 , 0.8832977 ,
+               0.9894764 , 0.9894764 , 0.25040808, 0.25040808, 0.10664375,
+               0.10664375, 0.58550929, 0.58550929, 0.50498475, 0.50498475,
+               0.42223018, 0.42223018, 0.75861711, 0.75861711] Jy>
+
+    >>> linear = LinearInterpolatedResample()
+    >>> new_spec2 = linear(input_spec, new_disp_grid)
+    >>> new_spec2.flux #doctest:+SKIP
+    <Quantity [0.41393054, 0.20753217, 0.29907417, 0.68855652, 0.90984238,
+               0.96293173, 0.80470932, 0.43517516, 0.214467  , 0.14258483,
+               0.22636014, 0.4657929 , 0.56537815, 0.52511588, 0.48429611,
+               0.44291882, 0.50632691, 0.67452038, 0.        ] Jy>
+
+    >>> spline = SplineInterpolatedResample()
+    >>> new_spec3 = spline(input_spec, new_disp_grid)
+    >>> new_spec3.flux #doctest:+SKIP
+    <Quantity [0.18278657, 0.01050715, 0.27264392, 0.69624523, 1.01334485,
+               1.07064075, 0.83599236, 0.43168126, 0.12365467, 0.05162207,
+               0.21706343, 0.48931305, 0.62018392, 0.55961905, 0.45844228,
+               0.4132248 , 0.45743191, 0.62178518, 0.        ] Jy>
 
 Uncertainty Estimation
 ----------------------
