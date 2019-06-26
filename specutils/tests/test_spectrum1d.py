@@ -234,9 +234,14 @@ def test_repr():
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
     assert 'spectral_axis=<Quantity [' in result
 
-    spec_without_wcs = Spectrum1D(np.random.random(10) * u.Jy)
-    result = repr(spec_without_wcs)
-    assert result == '<Spectrum1D(flux={})>'.format(repr(spec_without_wcs.flux))
+    spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                               flux=np.random.random(10) * u.Jy,
+                               uncertainty=StdDevUncertainty(
+                                   np.random.sample(50), unit='Jy'))
+    result = repr(spec_with_unc)
+    assert result.startswith('<Spectrum1D(flux=<Quantity [')
+    assert 'spectral_axis=<Quantity [' in result
+    assert 'uncertainty=StdDevUncertainty(' in result
 
 
 def test_str():
