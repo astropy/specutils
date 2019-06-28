@@ -52,9 +52,17 @@ def jwst_loader(filename, spectral_axis_unit=None, **kwargs):
             if hdu.name != 'EXTRACT1D':
                 continue
 
-            wavelength = hdu.data['WAVELENGTH'] * u.Unit(hdu.header['TUNIT1'])
-            flux = hdu.data['FLUX'] * u.Unit(hdu.header['TUNIT2'])
-            error = hdu.data['ERROR'] * u.Unit(hdu.header['TUNIT3'])
+            # Provide reasonable defaults based on the units assigned by the
+            # extract1d step of the JWST pipeline. TUNIT fields should be
+            # populated by the pipeline, but it's apparently possible for them
+            # to be missing in some files.
+            wavelength_units = u.Unit(hdu.header.get('TUNIT1', 'um'))
+            flux_units = u.Unit(hdu.header.get('TUNIT2', 'mJy'))
+            error_units = u.Unit(hdu.header.get('TUNIT3', 'mJy'))
+
+            wavelength = hdu.data['WAVELENGTH'] * wavelength_units
+            flux = hdu.data['FLUX'] * flux_units
+            error = hdu.data['ERROR'] * error_units
 
             meta = dict(slitname=hdu.header.get('SLTNAME', ''))
 
