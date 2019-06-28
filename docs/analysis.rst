@@ -47,6 +47,26 @@ spectrum:
     <Quantity 9.84136331>
 
 
+A second method to calculate SNR does not require the uncertainty defined
+on the `~specutils.Spectrum1D` object. This computes the signal to noise 
+ratio DER_SNR following the definition set forth by the Spectral 
+Container Working Group of ST-ECF, MAST and CADC. This is based on the
+code at http://www.stecf.org/software/ASTROsoft/DER_SNR/.
+
+.. code-block:: python
+
+    >>> from specutils.analysis import snr_derived
+    >>> snr_derived(noisy_gaussian)  # doctest:+FLOAT_CMP
+    <Quantity 1.0448650809155666>
+    >>> snr_derived(noisy_gaussian, SpectralRegion(4*u.GHz, 6*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 40.53528208761309>
+
+The conditions on the data for this implementation for it to be an unbiased estimator of the SNR 
+are strict.  In particular:
+
+  * the noise is uncorrelated in wavelength bins spaced two pixels apart
+  * for large wavelength regions, the signal over the scale of 5 or more pixels can be approximated by a straight line 
+
 
 Line Flux Estimates
 -------------------

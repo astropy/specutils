@@ -7,7 +7,7 @@ import numpy as np
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
 
-__all__ = ['snr']
+__all__ = ['snr', 'snr_derived']
 
 
 def snr(spectrum, region=None):
@@ -89,3 +89,92 @@ def _snr_single_region(spectrum, region=None):
     # the axis=-1 will enable this to run on single-dispersion, single-flux
     # and single-dispersion, multiple-flux
     return np.mean(flux / uncertainty, axis=-1)
+
+
+def snr_derived(spectrum, region=None):
+    """
+    This function computes the signal to noise ratio DER_SNR following the
+    definition set forth by the Spectral Container Working Group of ST-ECF,
+    MAST and CADC.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object overwhich the equivalent width will be calculated.
+
+    region: `~specutils.utils.SpectralRegion`
+        Region within the spectrum to calculate the SNR.
+
+    Returns
+    -------
+    snr : `~astropy.units.Quantity` or list (based on region input)
+        Signal to noise ratio of the spectrum or within the regions
+
+    Notes
+    -----
+    The DER_SNR algorithm is an unbiased estimator describing the spectrum
+    as a whole as long as the noise is uncorrelated in wavelength bins spaced
+    two pixels apart, the noise is Normal distributed, for large wavelength
+    regions, the signal over the scale of 5 or more pixels can be approximated
+    by a straight line.
+
+    Code and some docs copied from
+    ``http://www.stecf.org/software/ASTROsoft/DER_SNR/der_snr.py``
+    """
+
+    # No region, therefore whole spectrum.
+    if region is None:
+        return _snr_derived(spectrum)
+
+    # Single region
+    elif isinstance(region, SpectralRegion):
+        return _snr_derived(spectrum, region=region)
+
+    # List of regions
+    elif isinstance(region, list):
+        return [_snr_derived(spectrum, region=reg)
+                for reg in region]
+
+
+def _snr_derived(spectrum, region=None):
+    """
+    This function computes the signal to noise ratio DER_SNR following the
+    definition set forth by the Spectral Container Working Group of ST-ECF,
+    MAST and CADC
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object overwhich the equivalent width will be calculated.
+
+    region: `~specutils.utils.SpectralRegion`
+        Region within the spectrum to calculate the SNR.
+
+    Returns
+    -------
+    snr : `~astropy.units.Quantity` or list (based on region input)
+        Signal to noise ratio of the spectrum or within the regions
+
+    Notes
+    -----
+    This is a helper function for the above `snr_derived()` method.
+
+    """
+
+    if region is not None:
+        calc_spectrum = extract_region(spectrum, region)
+    else:
+        calc_spectrum = spectrum
+
+    flux = calc_spectrum.flux
+
+    # Values that are exactly zero (padded) are skipped
+    n = len(flux)
+
+    # For spectra shorter than this, no value can be returned
+    if n > 4:
+        signal = np.median(flux)
+        noise  = 0.6052697 * np.median(np.abs(2.0 * flux[2:n-2] - flux[0:n-4] - flux[4:n]))
+        return signal / noise
+    else:
+        return 0.0
