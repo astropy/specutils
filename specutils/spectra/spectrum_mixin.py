@@ -51,6 +51,9 @@ class OneDSpectrumMixin:
 
     @property
     def spectral_wcs(self):
+        """
+        Returns the spectral axes of the WCS
+        """
         return self.wcs.axes.spectral
 
     @lazyproperty
@@ -132,6 +135,9 @@ class OneDSpectrumMixin:
 
     @property
     def velocity_convention(self):
+        """
+        Returns the velocity convention
+        """
         return self._velocity_convention
 
     def with_velocity_convention(self, velocity_convention):

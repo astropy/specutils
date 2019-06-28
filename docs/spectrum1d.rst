@@ -143,6 +143,7 @@ Reference/API
 
 .. automodapi:: specutils
     :no-main-docstr:
+    :inherited-members:
     :no-heading:
     :headings: -~
 
