@@ -63,6 +63,7 @@ matrix:
         # may run for a long time
         - os: linux
           env: SETUP_CMD='build_docs -w'
+               PIP_DEPENDENCIES='gwcs scipy matplotlib sphinx-astropy'
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different

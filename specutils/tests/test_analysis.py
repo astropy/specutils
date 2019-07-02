@@ -524,4 +524,3 @@ def test_fwhm_multi_spectrum():
 
     expected = stddevs * gaussian_sigma_to_fwhm
     assert quantity_allclose(results, expected, atol=0.01*u.GHz)
-
