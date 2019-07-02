@@ -69,6 +69,7 @@ ensure that the data file being loaded is compatible with the loader function.
     from specutils.io.registers import data_loader
     from specutils import Spectrum1D
 
+
     # Define an optional identifier. If made specific enough, this circumvents the
     # need to add ``format="my-format"`` in the ``Spectrum1D.read`` call.
     def identify_generic_fits(origin, *args, **kwargs):
@@ -79,8 +80,6 @@ ensure that the data file being loaded is compatible with the loader function.
     @data_loader("my-format", identifier=identify_generic_fits,
                  extensions=['fits'])
     def generic_fits(file_name, **kwargs):
-        name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
-
         with fits.open(file_name, **kwargs) as hdulist:
             header = hdulist[0].header
 
