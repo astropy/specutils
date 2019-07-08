@@ -7,7 +7,7 @@ from ..spectra import Spectrum1D, SpectralRegion
 from ..fitting import (fit_lines, find_lines_derivative,
                        find_lines_threshold, estimate_line_parameters)
 from ..analysis import fwhm, centroid
-from ..manipulation import noise_region_uncertainty
+from ..manipulation import noise_region_uncertainty, spectrum_from_model
 
 
 def single_peak():
@@ -512,3 +512,45 @@ def test_fitter_parameters():
                2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04]) * u.Jy
 
     assert np.allclose(y_single_fit.value[::10], y_single_fit_expected.value, atol=1e-5)
+
+
+def test_spectrum_from_model():
+    """
+    This test fits the the first simulated spectrum from the fixture.  The
+    initial guesses are manually set here with bounds that essentially make
+    sense as the functionality of the test is to make sure the fit works and
+    we get a reasonable answer out **given** good initial guesses.
+    """
+
+    np.random.seed(0)
+    x = np.linspace(0., 10., 200)
+    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
+    y += np.random.normal(0., 0.2, x.shape)
+
+    y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    y += y_continuum
+
+    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+
+    # Unitless test
+    chebyshev = models.Chebyshev1D(3, c0=0.1, c1=4, c2=5)
+    spectrum_chebyshev = spectrum_from_model(chebyshev, spectrum)
+
+    flux_expected = np.array([-4.90000000e+00, -3.64760991e-01,  9.22085553e+00,  2.38568496e+01,
+                              4.35432211e+01,  6.82799702e+01,  9.80670968e+01,  1.32904601e+02,
+                              1.72792483e+02,  2.17730742e+02,  2.67719378e+02,  3.22758392e+02,
+                              3.82847784e+02,  4.47987553e+02,  5.18177700e+02,  5.93418224e+02,
+                              6.73709126e+02,  7.59050405e+02,  8.49442062e+02,  9.44884096e+02])
+
+    assert np.allclose(spectrum_chebyshev.flux.value[::10], flux_expected, atol=1e-5)
+
+    # Unitfull test
+    gaussian = models.Gaussian1D(amplitude=5*u.Jy, mean=4*u.um, stddev=2.3*u.um)
+    spectrum_gaussian = spectrum_from_model(gaussian, spectrum)
+
+    flux_expected = np.array([1.1020263, 1.57342489, 2.14175093, 2.77946243, 3.4389158,
+                              4.05649712, 4.56194132, 4.89121902, 4.99980906, 4.872576,
+                              4.52723165, 4.01028933, 3.3867847, 2.72689468, 2.09323522,
+                              1.5319218, 1.06886794, 0.71101768, 0.45092638, 0.27264641])
+
+    assert np.allclose(spectrum_gaussian.flux.value[::10], flux_expected, atol=1e-5)

@@ -2,13 +2,13 @@ import numpy as np
 
 from ..spectra import Spectrum1D, SpectralRegion
 
-__all__ = ['excise_regions', 'linear_exciser']
+__all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
 
 def linear_exciser(spectrum, region):
     """
     Basic spectral excise method where the spectral region defined by the
-    2-tuple parameter `region` (start and end wavelengths) will result
+    2-tuple parameter ``region`` (start and end wavelengths) will result
     in the flux between those regions set to a linear ramp of the
     two points immediately before and after the start and end regions.
 
@@ -30,12 +30,12 @@ def linear_exciser(spectrum, region):
     Raises
     ------
     ValueError
-       In the case that ``spectrum`` and ``regions`` are not the correct types.
+       In the case that ``spectrum`` and ``region`` are not the correct types.
 
     """
 
     #
-    # Find the indices of the wavelengths in the range `range`
+    # Find the indices of the wavelengths in the range ``range``
     #
 
     wavelengths = spectrum.spectral_axis
@@ -77,7 +77,7 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
 
     regions : list of `~specutils.SpectralRegion`
         Each element of the list is a `~specutils.SpectralRegion`. The flux
-        between these wavelengths will be "cut out" using the `exciser`
+        between these wavelengths will be "cut out" using the ``exciser``
         method.
 
     exciser: method
@@ -151,3 +151,42 @@ def excise_region(spectrum, region, exciser=linear_exciser):
     #
 
     return exciser(spectrum, region)
+
+
+def spectrum_from_model(model_input, spectrum):
+    """
+    This method will create a `~specutils.Spectrum1D` object
+    with the flux defined by calling the input ``model``. All
+    other parameters for the output `~specutils.Spectrum1D` object
+    will be the same as the input `~specutils.Spectrum1D` object.
+
+    Parameters
+    ----------
+    model : `~astropy.modeling.Model`
+        The input model or compound model from which flux is calculated.
+
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to use as the model template.
+
+    Returns
+    -------
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+        The uncertainty will not be copied as it is not necessarily the same.
+
+    """
+
+    # If the input model has units then we will call it normally.
+    if getattr(model_input, model_input.param_names[0]).unit is not None:
+        flux = model_input(spectrum.spectral_axis)
+
+    # If the input model does not have units, then assume it is in
+    # the same units as the input spectrum.
+    else:
+        flux = model_input(spectrum.spectral_axis.value)*spectrum.flux.unit
+
+    return Spectrum1D(flux=flux,
+                      spectral_axis=spectrum.spectral_axis,
+                      wcs=spectrum.wcs,
+                      velocity_convention=spectrum.velocity_convention,
+                      rest_value=spectrum.rest_value)
