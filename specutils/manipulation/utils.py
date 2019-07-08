@@ -8,7 +8,7 @@ __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 def linear_exciser(spectrum, region):
     """
     Basic spectral excise method where the spectral region defined by the
-    2-tuple parameter `region` (start and end wavelengths) will result
+    2-tuple parameter ``region`` (start and end wavelengths) will result
     in the flux between those regions set to a linear ramp of the
     two points immediately before and after the start and end regions.
 
@@ -30,12 +30,12 @@ def linear_exciser(spectrum, region):
     Raises
     ------
     ValueError
-       In the case that ``spectrum`` and ``regions`` are not the correct types.
+       In the case that ``spectrum`` and ``region`` are not the correct types.
 
     """
 
     #
-    # Find the indices of the wavelengths in the range `range`
+    # Find the indices of the wavelengths in the range ``range``
     #
 
     wavelengths = spectrum.spectral_axis
