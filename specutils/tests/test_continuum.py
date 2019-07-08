@@ -59,4 +59,3 @@ def test_continuum_calculation():
                                             0.91909416, 0.89662208, 1.01458511, 0.96124191, 0.94847744])
 
     assert np.allclose(spectrum_normalized.flux.value[::10], y_continuum_fitted_expected, atol=1e-5)
-
