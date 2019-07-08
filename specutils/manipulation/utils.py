@@ -77,7 +77,7 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
 
     regions : list of `~specutils.SpectralRegion`
         Each element of the list is a `~specutils.SpectralRegion`. The flux
-        between these wavelengths will be "cut out" using the `exciser`
+        between these wavelengths will be "cut out" using the ``exciser``
         method.
 
     exciser: method
