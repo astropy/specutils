@@ -7,7 +7,7 @@ from ..spectra import Spectrum1D, SpectralRegion
 from ..fitting import (fit_lines, find_lines_derivative,
                        find_lines_threshold, estimate_line_parameters)
 from ..analysis import fwhm, centroid
-from ..manipulation import noise_region_uncertainty
+from ..manipulation import noise_region_uncertainty, spectrum_from_model
 
 
 def single_peak():
