@@ -36,6 +36,8 @@ env:
         - EVENT_TYPE='pull_request push'
         - CONDA_DEPENDENCIES='pytest-remotedata'
         - CONDA_CHANNELS='astropy-ci-extras'
+        - GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+        - ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
 
         # If there are matplotlib or other GUI tests, uncomment the following
         # line to use the X virtual framebuffer.
@@ -88,12 +90,12 @@ matrix:
 
         # Try development version of Astropy
         - os: linux
-          env: ASTROPY_VERSION=dev
+          env: ASTROPY_VERSION=dev "PIP_DEPENDENCIES=$GWCS_DEV $ASDF_DEV"
 
     allow_failures:
         # Try development version of Astropy
         - os: linux
-          env: ASTROPY_VERSION=dev
+          env: ASTROPY_VERSION=dev "PIP_DEPENDENCIES=$GWCS_DEV $ASDF_DEV"
 
 
 install:
