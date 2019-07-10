@@ -5,9 +5,11 @@ spectral features.
 
 import numpy as np
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
+from astropy.modeling.models import Gaussian1D
 from ..manipulation import extract_region
 from . import centroid
 from .utils import computation_wrapper
+from scipy.signal import chirp, find_peaks, peak_widths
 
 
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm']
@@ -103,6 +105,60 @@ def fwhm(spectrum, regions=None):
     function.
     """
     return computation_wrapper(_compute_fwhm, spectrum, regions)
+
+
+def fwzi(spectrum, regions=None):
+    """
+    Compute the true full width at zero intensity (i.e. the continuum level)
+    of the spectrum.
+
+    This makes no assumptions about the shape of the spectrum. It uses the
+    scipy peak-finding to determine centroid, and then calculates width at that
+    base of the feature.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object over which the width will be calculated.
+
+    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+        Region within the spectrum to calculate the FWHM value. If regions is
+        `None`, computation is performed over entire spectrum.
+
+    Returns
+    -------
+    `~astropy.units.Quantity` or list (based on region input)
+        Full width of the signal at zero intensity.
+
+    Notes
+    -----
+    The spectrum must be continuum subtracted before being passed to this
+    function.
+    """
+    return computation_wrapper(_compute_fwzi, spectrum, regions)
+
+
+def _compute_fwzi(spectrum, regions=None):
+    if regions is not None:
+        calc_spectrum = extract_region(spectrum, regions)
+    else:
+        calc_spectrum = spectrum
+
+    disp, flux = calc_spectrum.spectral_axis, calc_spectrum.flux
+
+    amplitude = np.max(flux)
+    mean = centroid(spectrum, regions)
+    stddev = _compute_gaussian_sigma_width(spectrum, regions)
+
+    g = Gaussian1D(amplitude=amplitude, mean=mean, stddev=stddev)
+    data = g(disp)
+
+    peak_ind = np.argmin(np.abs(centroid(spectrum, regions) - disp))
+
+    widths, _, _, _ = \
+        peak_widths(flux, [peak_ind], rel_height=0.99999999)[0]
+
+    return widths[0] * disp.unit
 
 
 def _compute_gaussian_fwhm(spectrum, regions=None):

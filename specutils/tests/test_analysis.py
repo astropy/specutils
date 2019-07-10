@@ -524,3 +524,67 @@ def test_fwhm_multi_spectrum():
 
     expected = stddevs * gaussian_sigma_to_fwhm
     assert quantity_allclose(results, expected, atol=0.01*u.GHz)
+
+
+def test_fwzi():
+    np.random.seed(42)
+
+    # Create an (uncentered) spectrum for testing
+    frequencies = np.linspace(0, 10, 1000) * u.GHz
+    stddev = 0.8*u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = fwhm(spectrum)
+
+    expected = stddev * gaussian_sigma_to_fwhm
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+    # Highest point at the first point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = (1.0 / wavelengths.value)*u.Jy # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 0.9090909090909092*u.um
+
+    # Highest point at the last point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = wavelengths.value*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 5*u.um
+
+    # Flat spectrum
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 9*u.um
+
+
+def test_fwzi_multi_spectrum():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(0, 100, 10000) * u.GHz
+    stddevs = [0.8, 5, 10]*u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=5*u.GHz, stddev=stddevs[0])
+    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=stddevs[1])
+    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=83*u.GHz, stddev=stddevs[2])
+
+    flux = np.ndarray((3, len(frequencies))) * u.Jy
+
+    flux[0] = g1(frequencies)
+    flux[1] = g2(frequencies)
+    flux[2] = g3(frequencies)
+
+    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    results = fwhm(spectra)
+
+    expected = stddevs * gaussian_sigma_to_fwhm
+    assert quantity_allclose(results, expected, atol=0.01*u.GHz)
