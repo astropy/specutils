@@ -12,7 +12,7 @@ from .utils import computation_wrapper
 from scipy.signal import chirp, find_peaks, peak_widths
 
 
-__all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm']
+__all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm', 'fwzi']
 
 
 def gaussian_sigma_width(spectrum, regions=None):
@@ -113,8 +113,8 @@ def fwzi(spectrum, regions=None):
     of the spectrum.
 
     This makes no assumptions about the shape of the spectrum. It uses the
-    scipy peak-finding to determine centroid, and then calculates width at that
-    base of the feature.
+    scipy peak-finding to determine the index of the highest flux value, and
+    then calculates width at that base of the feature.
 
     Parameters
     ----------
@@ -144,21 +144,37 @@ def _compute_fwzi(spectrum, regions=None):
     else:
         calc_spectrum = spectrum
 
-    disp, flux = calc_spectrum.spectral_axis, calc_spectrum.flux
+    # Create a copy of the flux array to ensure the value on the spectrum
+    # object is not altered.
+    disp, flux = calc_spectrum.spectral_axis, calc_spectrum.flux.copy()
 
-    amplitude = np.max(flux)
-    mean = centroid(spectrum, regions)
-    stddev = _compute_gaussian_sigma_width(spectrum, regions)
+    # For noisy data, ensure that the search from the centroid stops on
+    # either side once the flux value reaches zero.
+    flux[flux < 0] = 0
 
-    g = Gaussian1D(amplitude=amplitude, mean=mean, stddev=stddev)
-    data = g(disp)
+    def find_width(data):
+        # Find the peaks in the flux data
+        peaks, _ = find_peaks(data)
 
-    peak_ind = np.argmin(np.abs(centroid(spectrum, regions) - disp))
+        # Find the index of the maximum peak value in the found peak list
+        peak_ind = [peaks[np.argmin(np.abs(
+            np.array(peaks) - np.argmin(np.abs(data - np.max(data)))))]]
 
-    widths, _, _, _ = \
-        peak_widths(flux, [peak_ind], rel_height=0.99999999)[0]
+        # Calculate the width for the given feature
+        widths, _, _, _ = \
+            peak_widths(data, peak_ind, rel_height=1-1e-7)
 
-    return widths[0] * disp.unit
+        return widths[0] * disp.unit
+
+    if flux.ndim > 1:
+        tot_widths = []
+
+        for i in range(flux.shape[0]):
+            tot_widths.append(find_width(flux[i]))
+
+        return tot_widths
+
+    return find_width(flux)
 
 
 def _compute_gaussian_fwhm(spectrum, regions=None):
