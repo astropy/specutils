@@ -10,7 +10,7 @@ from astropy.tests.helper import quantity_allclose
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
-                        snr_derived)
+                        snr_derived, fwzi)
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -529,62 +529,39 @@ def test_fwhm_multi_spectrum():
 def test_fwzi():
     np.random.seed(42)
 
-    # Create an (uncentered) spectrum for testing
-    frequencies = np.linspace(0, 10, 1000) * u.GHz
-    stddev = 0.8*u.GHz
-    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
+    disp = np.linspace(0, 100, 1000) * u.AA
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    g = models.Gaussian1D(mean=np.mean(disp),
+                          amplitude=1 * u.Jy,
+                          stddev=2 * u.AA)
 
-    result = fwhm(spectrum)
+    flux = g(disp)
+    flux_with_noise = g(disp) + ((np.random.sample(disp.size) - 0.5) * 0.1) * u.Jy
 
-    expected = stddev * gaussian_sigma_to_fwhm
-    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+    spec = Spectrum1D(spectral_axis=disp, flux=flux)
+    spec_with_noise = Spectrum1D(spectral_axis=disp, flux=flux_with_noise)
 
-    # Highest point at the first point
-    wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = (1.0 / wavelengths.value)*u.Jy # highest point first.
-
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
-    result = fwhm(spectrum)
-    assert result == 0.9090909090909092*u.um
-
-    # Highest point at the last point
-    wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = wavelengths.value*u.Jy # highest point last.
-
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
-    result = fwhm(spectrum)
-    assert result == 5*u.um
-
-    # Flat spectrum
-    wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
-
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
-    result = fwhm(spectrum)
-    assert result == 9*u.um
+    assert quantity_allclose(fwzi(spec), 226.89732509 * u.AA)
+    assert quantity_allclose(fwzi(spec_with_noise), 106.99998944 * u.AA)
 
 
 def test_fwzi_multi_spectrum():
-
     np.random.seed(42)
 
-    frequencies = np.linspace(0, 100, 10000) * u.GHz
-    stddevs = [0.8, 5, 10]*u.GHz
-    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=5*u.GHz, stddev=stddevs[0])
-    g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=stddevs[1])
-    g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=83*u.GHz, stddev=stddevs[2])
+    disp = np.linspace(0, 100, 1000) * u.AA
 
-    flux = np.ndarray((3, len(frequencies))) * u.Jy
+    amplitudes = [0.1, 1, 10] * u.Jy
+    means = [25, 50, 75] * u.AA
+    stddevs = [1, 5, 10] * u.AA
+    params = list(zip(amplitudes, means, stddevs))
 
-    flux[0] = g1(frequencies)
-    flux[1] = g2(frequencies)
-    flux[2] = g3(frequencies)
+    flux = np.zeros(shape=(3, len(disp)))
 
-    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    for i in range(3):
+        flux[i] = models.Gaussian1D(*params[i])(disp)
 
-    results = fwhm(spectra)
+    spec = Spectrum1D(spectral_axis=disp, flux=flux * u.Jy)
 
-    expected = stddevs * gaussian_sigma_to_fwhm
-    assert quantity_allclose(results, expected, atol=0.01*u.GHz)
+    expected = [113.51706001 * u.AA, 567.21252727 * u.AA, 499.5024546 * u.AA]
+
+    assert quantity_allclose(fwzi(spec), expected)
