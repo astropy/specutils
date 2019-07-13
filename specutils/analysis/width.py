@@ -226,8 +226,8 @@ def _compute_single_fwhm(flux, spectral_axis):
 
     argmax = flux_value.argmax()
     halfval = flux_value[argmax] / 2
-    left = flux_value[:argmax] < halfval
-    right = flux_value[argmax + 1:] < halfval
+    left = flux_value[:argmax] <= halfval
+    right = flux_value[argmax + 1:] <= halfval
 
     # Highest signal at the first point
     i0 = np.nonzero(left)[0]
@@ -248,7 +248,7 @@ def _compute_single_fwhm(flux, spectral_axis):
     if i1.size == 0:
         right_value = spectral_value[-1]
     else:
-        i1 = i1[0] + argmax + 1
+        i1 = i1[0] + argmax
         i0 = i1 - 1
         left_flux = flux_value[i0]
         left_spectral = spectral_value[i0]
