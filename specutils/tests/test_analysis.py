@@ -483,7 +483,11 @@ def test_fwhm():
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
-    assert result == 0.9090909090909092*u.um
+    # Note that this makes a little more sense than the previous version;
+    # since the maximum value occurs at wavelength=1, and the half-value of
+    # flux (0.5) occurs at exactly wavelength=2, the result should be
+    # exactly 1 (2 - 1).
+    assert result == 1.0*u.um
 
     # Highest point at the last point
     wavelengths = np.linspace(1, 10, 100) * u.um

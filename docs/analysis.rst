@@ -159,7 +159,7 @@ Each of the width analysis functions are applied to this spectrum below:
    >>> gaussian_fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 1.81144683 GHz>
    >>> fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 1.90954774 GHz>
+   <Quantity 1.91686888 GHz>
    >>> fwzi(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 89.99999455 GHz>
 
