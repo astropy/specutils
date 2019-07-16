@@ -88,6 +88,7 @@ class FluxConservingResampler(ResamplerBase):
     >>> fluxc_resample = FluxConservingResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
 
+
     """
 
     def __call__(self, orig_spectrum, fin_lamb):
@@ -253,6 +254,7 @@ class LinearInterpolatedResampler(ResamplerBase):
     >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
     >>> fluxc_resample = LinearInterpolatedResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
+
     """
     def __init__(self, bin_edges='nan_fill'):
         super().__init__(bin_edges)
