@@ -122,7 +122,7 @@ def fwzi(spectrum, regions=None):
         The spectrum object over which the width will be calculated.
 
     regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
-        Region within the spectrum to calculate the FWHM value. If regions is
+        Region within the spectrum to calculate the FWZI value. If regions is
         `None`, computation is performed over entire spectrum.
 
     Returns
