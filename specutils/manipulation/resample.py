@@ -70,6 +70,24 @@ class FluxConservingResample(ResampleBase):
     flux density). Algorithim based on the equations documented in the
     following paper:
     https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
+
+    Examples
+    --------
+
+    To resample an input spectrum to a user specified dispersion grid using
+    a flux conserving algorithm:
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils import Spectrum1D
+    >>> from specutils.manipulation import FluxConservingResample
+    >>> input_spectra = Spectrum1D(
+    ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
+    ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
+    >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
+    >>> fluxc_resample = FluxConservingResample()
+    >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
+
     """
 
     def __call__(self, orig_spectrum, fin_lamb):
@@ -221,6 +239,23 @@ class FluxConservingResample(ResampleBase):
 class LinearInterpolatedResample(ResampleBase):
     """
     This resample algorithim uses a linear interpolator.
+
+    Examples
+    --------
+
+    To resample an input spectrum to a user specified dispersion grid using
+    linear interpolation:
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils import Spectrum1D
+    >>> from specutils.manipulation import LinearInterpolatedResample
+    >>> input_spectra = Spectrum1D(
+    ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
+    ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
+    >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
+    >>> fluxc_resample = LinearInterpolatedResample()
+    >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
     """
     def __init__(self, bin_edges='zero_fill'):
         super().__init__(bin_edges)
@@ -290,6 +325,24 @@ class SplineInterpolatedResample(ResampleBase):
     """
     This resample algorithim uses a cubic spline interpolator.  In the future
     this can be expanded to use splines of different degrees.
+
+    Examples
+    --------
+
+    To resample an input spectrum to a user specified dispersion grid using
+    a cubic spline interpolator:
+
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils import Spectrum1D
+    >>> from specutils.manipulation import SplineInterpolatedResample
+    >>> input_spectra = Spectrum1D(
+    ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
+    ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
+    >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
+    >>> fluxc_resample = SplineInterpolatedResample()
+    >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
+
     """
     def __init__(self, bin_edges='zero_fill'):
         super().__init__(bin_edges)
