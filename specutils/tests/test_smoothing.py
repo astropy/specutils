@@ -257,4 +257,3 @@ def test_smooth_custom_kernel_uncertainty(simulated_spectra):
     spec1_smoothed = convolution_smooth(spec1, custom_kernel)
     uncertainty_smoothed_astropy = convolution.convolve(spec1.uncertainty.array, custom_kernel)
     assert np.allclose(spec1_smoothed.uncertainty.array, uncertainty_smoothed_astropy)
-
