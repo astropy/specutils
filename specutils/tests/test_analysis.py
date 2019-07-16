@@ -10,7 +10,7 @@ from astropy.tests.helper import quantity_allclose
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
-                        snr_derived)
+                        snr_derived, fwzi)
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -524,3 +524,44 @@ def test_fwhm_multi_spectrum():
 
     expected = stddevs * gaussian_sigma_to_fwhm
     assert quantity_allclose(results, expected, atol=0.01*u.GHz)
+
+
+def test_fwzi():
+    np.random.seed(42)
+
+    disp = np.linspace(0, 100, 1000) * u.AA
+
+    g = models.Gaussian1D(mean=np.mean(disp),
+                          amplitude=1 * u.Jy,
+                          stddev=2 * u.AA)
+
+    flux = g(disp)
+    flux_with_noise = g(disp) + ((np.random.sample(disp.size) - 0.5) * 0.1) * u.Jy
+
+    spec = Spectrum1D(spectral_axis=disp, flux=flux)
+    spec_with_noise = Spectrum1D(spectral_axis=disp, flux=flux_with_noise)
+
+    assert quantity_allclose(fwzi(spec), 226.89732509 * u.AA)
+    assert quantity_allclose(fwzi(spec_with_noise), 106.99998944 * u.AA)
+
+
+def test_fwzi_multi_spectrum():
+    np.random.seed(42)
+
+    disp = np.linspace(0, 100, 1000) * u.AA
+
+    amplitudes = [0.1, 1, 10] * u.Jy
+    means = [25, 50, 75] * u.AA
+    stddevs = [1, 5, 10] * u.AA
+    params = list(zip(amplitudes, means, stddevs))
+
+    flux = np.zeros(shape=(3, len(disp)))
+
+    for i in range(3):
+        flux[i] = models.Gaussian1D(*params[i])(disp)
+
+    spec = Spectrum1D(spectral_axis=disp, flux=flux * u.Jy)
+
+    expected = [113.51706001 * u.AA, 567.21252727 * u.AA, 499.5024546 * u.AA]
+
+    assert quantity_allclose(fwzi(spec), expected)
