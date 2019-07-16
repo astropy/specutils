@@ -85,6 +85,9 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 In this case, the ``spec1_bsmooth2`` result should be equivalent to the ``spec1_bsmooth`` in
 the section above (assuming the flux data of the input ``spec`` is the same).
 
+The errors are propagated using a standrard "propagation of errors" method, if the uncertainty 
+is defined for the spectrum *and* it is one of StdDevUncertainty, VarianceUncertainty or InverseVariance.
+*Note:* this does *not* consider covariance between points.
 
 Median Smoothing
 ^^^^^^^^^^^^^^^^
@@ -93,7 +96,7 @@ The median based smoothing  is implemented using `scipy.signal.medfilt` and
 has a similar call structure to the convolution-based smoothing methods. This
 method applys the median filter across the flux.
 
-Note: This method is not flux conserving.
+Note: This method is not flux conserving and errors are not propagated.
 
 .. code-block:: python
 
