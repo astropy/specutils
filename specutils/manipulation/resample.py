@@ -19,7 +19,7 @@ class ResampleBase(ABC):
     Init paramtere here is not yet hooked up to the rest of the code, but to
     show how we will want to use it in the future.
     """
-    def __init__(self, bin_edges='zero_fill'):
+    def __init__(self, bin_edges='nan_fill'):
         self.bin_edges = bin_edges
 
     @abstractmethod
@@ -229,9 +229,9 @@ class FluxConservingResample(ResampleBase):
         # more about how to handle that... could convert before and after
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
-        resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux),
-                                        np.array(fin_lamb) * orig_spectrum.spectral_axis_unit,
-                                        uncertainty=np.nan_to_num(out_uncertainty))
+        resampled_spectrum = Spectrum1D(flux=out_flux,
+                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis_unit,
+                                        uncertainty=out_uncertainty)
 
         return resampled_spectrum
 
@@ -257,7 +257,7 @@ class LinearInterpolatedResample(ResampleBase):
     >>> fluxc_resample = LinearInterpolatedResample()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
     """
-    def __init__(self, bin_edges='zero_fill'):
+    def __init__(self, bin_edges='nan_fill'):
         super().__init__(bin_edges)
 
     def __call__(self, orig_spectrum, fin_lamb):
@@ -286,7 +286,7 @@ class LinearInterpolatedResample(ResampleBase):
             The resampled flux array generated from the interpolation.
 
         """
-        return np.interp(fin_lamb, orig_dispersion, flux, left=0, right=0)
+        return np.interp(fin_lamb, orig_dispersion, flux, left=np.nan, right=np.nan)
 
     def resample1d(self, orig_spectrum, fin_lamb):
         """
@@ -315,8 +315,8 @@ class LinearInterpolatedResample(ResampleBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
-        resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux) * orig_spectrum.flux.unit,
-                                        np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
+        resampled_spectrum = Spectrum1D(flux=out_flux * orig_spectrum.flux.unit,
+                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
 
         return resampled_spectrum
 
@@ -344,7 +344,7 @@ class SplineInterpolatedResample(ResampleBase):
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
 
     """
-    def __init__(self, bin_edges='zero_fill'):
+    def __init__(self, bin_edges='nan_fill'):
         super().__init__(bin_edges)
 
     def __call__(self, orig_spectrum, fin_lamb):
@@ -403,7 +403,7 @@ class SplineInterpolatedResample(ResampleBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
-        resampled_spectrum = Spectrum1D(np.nan_to_num(out_flux) * orig_spectrum.flux.unit,
-                                        np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
+        resampled_spectrum = Spectrum1D(flux=out_flux * orig_spectrum.flux.unit,
+                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
 
         return resampled_spectrum
