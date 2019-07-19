@@ -238,7 +238,7 @@ class FluxConservingResample(ResampleBase):
 
 class LinearInterpolatedResample(ResampleBase):
     """
-    This resample algorithim uses a linear interpolator.
+    Resample a spectrum onto a new ``spectral_axis`` using linear interpolation.
 
     Examples
     --------
