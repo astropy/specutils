@@ -5,7 +5,6 @@ import logging
 import numpy as np
 from scipy.signal import convolve
 
-import astropy
 import astropy.units as u
 from astropy.stats import sigma_clipped_stats
 
@@ -81,19 +80,13 @@ def estimate_line_parameters(spectrum, model):
         Model with parameters estimated.
     """
 
-    #if not 'parameter_estimator' in model._constraints:
-        #model = _set_parameter_estimators(model)
     model = _set_parameter_estimators(model)
     # Estimate the parameters based on the estimators already
     # attached to the model
-    #if 'parameter_estimator' in model._constraints:
-        #for param, estimator in model._constraints['parameter_estimator'].items():
-            #setattr(model, param, estimator(spectrum))
     for name in model.param_names:
         par = getattr(model, name)
         try:
             estimator = getattr(par, "estimator")
-            #par.value = estimator(spectrum)
             setattr(model, name, estimator(spectrum))
         except AttributeError:
             raise Exception('No method to estimate parameter {}'.format(name))
