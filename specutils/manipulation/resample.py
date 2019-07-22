@@ -305,6 +305,8 @@ class LinearInterpolatedResample(ResampleBase):
         resample_spectrum : `~specutils.Spectrum1D`
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
+        if orig_spectrum.uncertainty is not None:
+            warn("Linear interpolation currently does not propogate uncertainties")
         out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
                                   fin_lamb)
 
