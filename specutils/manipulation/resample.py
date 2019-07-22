@@ -7,11 +7,11 @@ from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVarian
 
 from ..spectra import Spectrum1D
 
-__all__ = ['ResampleBase', 'FluxConservingResample',
-           'LinearInterpolatedResample', 'SplineInterpolatedResample']
+__all__ = ['ResamplerBase', 'FluxConservingResampler',
+           'LinearInterpolatedResampler', 'SplineInterpolatedResampler']
 
 
-class ResampleBase(ABC):
+class ResamplerBase(ABC):
     """
     Base class for resample classes.  The algorithms and needs for difference
     resamples will vary quite a bit, so this class is relatively sparse.
@@ -64,11 +64,11 @@ class ResampleBase(ABC):
         return edges
 
 
-class FluxConservingResample(ResampleBase):
+class FluxConservingResampler(ResamplerBase):
     """
-    This resample algorithim conserves overall integrated flux (as opposed to
-    flux density). Algorithim based on the equations documented in the
-    following paper:
+    This resampling algorithm conserves overall integrated flux (as opposed to
+    flux density).
+    Algorithm based on the equations documented in the following paper:
     https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
 
     Examples
@@ -80,12 +80,12 @@ class FluxConservingResample(ResampleBase):
     >>> import numpy as np
     >>> import astropy.units as u
     >>> from specutils import Spectrum1D
-    >>> from specutils.manipulation import FluxConservingResample
+    >>> from specutils.manipulation import FluxConservingResampler
     >>> input_spectra = Spectrum1D(
     ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
-    >>> fluxc_resample = FluxConservingResample()
+    >>> fluxc_resample = FluxConservingResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
 
     """
@@ -99,10 +99,8 @@ class FluxConservingResample(ResampleBase):
     def _resample_matrix(self, orig_lamb, fin_lamb):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way
-        that conserves flux. This is adapted from
-        https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/references,
-        eprint arXiv:1705.05165. This code was heavily influenced by Nick Earl's
-        resample rough draft.
+        that conserves flux. This code was heavily influenced by Nick Earl's
+        resample rough draft: nmearl@0ff6ef1.
 
         Parameters
         ----------
@@ -150,10 +148,9 @@ class FluxConservingResample(ResampleBase):
     def resample1d(self, orig_spectrum, fin_lamb):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way
-        that conserves flux. This is adapted from eprint arXiv:1705.05165. If
-        an uncertainty is present in the input spectra it will be propagated
-        through to the final resampled output spectra as an InverseVariance
-        uncertainty.
+        that conserves flux. If an uncertainty is present in the input spectra
+        it will be propagated through to the final resampled output spectra
+        as an InverseVariance uncertainty.
 
         Parameters
         ----------
@@ -236,7 +233,7 @@ class FluxConservingResample(ResampleBase):
         return resampled_spectrum
 
 
-class LinearInterpolatedResample(ResampleBase):
+class LinearInterpolatedResampler(ResamplerBase):
     """
     Resample a spectrum onto a new ``spectral_axis`` using linear interpolation.
 
@@ -249,12 +246,12 @@ class LinearInterpolatedResample(ResampleBase):
     >>> import numpy as np
     >>> import astropy.units as u
     >>> from specutils import Spectrum1D
-    >>> from specutils.manipulation import LinearInterpolatedResample
+    >>> from specutils.manipulation import LinearInterpolatedResampler
     >>> input_spectra = Spectrum1D(
     ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
-    >>> fluxc_resample = LinearInterpolatedResample()
+    >>> fluxc_resample = LinearInterpolatedResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
     """
     def __init__(self, bin_edges='nan_fill'):
@@ -323,7 +320,7 @@ class LinearInterpolatedResample(ResampleBase):
         return resampled_spectrum
 
 
-class SplineInterpolatedResample(ResampleBase):
+class SplineInterpolatedResampler(ResamplerBase):
     """
     This resample algorithim uses a cubic spline interpolator.  In the future
     this can be expanded to use splines of different degrees.
@@ -337,12 +334,12 @@ class SplineInterpolatedResample(ResampleBase):
     >>> import numpy as np
     >>> import astropy.units as u
     >>> from specutils import Spectrum1D
-    >>> from specutils.manipulation import SplineInterpolatedResample
+    >>> from specutils.manipulation import SplineInterpolatedResampler
     >>> input_spectra = Spectrum1D(
     ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
-    >>> fluxc_resample = SplineInterpolatedResample()
+    >>> fluxc_resample = SplineInterpolatedResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
 
     """

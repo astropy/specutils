@@ -6,7 +6,7 @@ from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
-from ..manipulation.resample import FluxConservingResample, LinearInterpolatedResample, SplineInterpolatedResample
+from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
 # todo: Should add tests for different weighting options once those
 # are more solidified.
@@ -20,7 +20,7 @@ def test_same_grid_fluxconserving(simulated_spectra):
     input_spectra = simulated_spectra.s1_um_mJy_e1
     input_spectra.uncertainty = InverseVariance([0.5]*len(simulated_spectra.s1_um_mJy_e1.flux))
 
-    inst = FluxConservingResample()
+    inst = FluxConservingResampler()
     results = inst(input_spectra,
                    simulated_spectra.s1_um_mJy_e1.spectral_axis)
 
@@ -40,7 +40,7 @@ def test_expanded_grid_fluxconserving():
     input_spectra = Spectrum1D(flux=flux_val * u.mJy, spectral_axis=wave_val * u.nm)
     resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
 
-    inst = FluxConservingResample()
+    inst = FluxConservingResampler()
     results = inst(input_spectra, resamp_grid)
 
     assert_quantity_allclose(results.flux,
@@ -56,7 +56,7 @@ def test_stddev_uncert_propogation():
     input_spectra = Spectrum1D(flux=flux_val * u.mJy, spectral_axis=wave_val * u.AA,
                                uncertainty=StdDevUncertainty([0.1, 0.25, 0.1, 0.25, 0.1]))
 
-    inst = FluxConservingResample()
+    inst = FluxConservingResampler()
     results = inst(input_spectra, np.array([25, 35, 50, 55]))
 
     assert np.allclose(results.uncertainty.array,
@@ -94,7 +94,7 @@ def test_flux_conservation(specflux, specwavebins, outwavebins):
     outwave = (outwavebins[:-1] + outwavebins[1:])/2
 
     in_spec = Spectrum1D(spectral_axis=specwave, flux=specflux)
-    out_spec = FluxConservingResample()(in_spec, outwave)
+    out_spec = FluxConservingResampler()(in_spec, outwave)
 
     in_dwl = delta_wl(in_spec.spectral_axis)
     out_dwl = delta_wl(out_spec.spectral_axis)
@@ -116,7 +116,7 @@ def test_multi_dim_spectrum1D():
                       flux=flux_2d * u.Jy,
                       uncertainty=StdDevUncertainty(flux_2d / 10))
 
-    inst = FluxConservingResample()
+    inst = FluxConservingResampler()
     results = inst(input_spectra, np.array([5001, 5003, 5005, 5007]))
 
     assert_quantity_allclose(results.flux,
@@ -139,7 +139,7 @@ def test_expanded_grid_interp_linear():
     input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
 
-    inst = LinearInterpolatedResample()
+    inst = LinearInterpolatedResampler()
     results = inst(input_spectra, resamp_grid)
 
     assert_quantity_allclose(results.flux,
@@ -156,7 +156,7 @@ def test_expanded_grid_interp_spline():
     input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
 
-    inst = SplineInterpolatedResample()
+    inst = SplineInterpolatedResampler()
     results = inst(input_spectra, resamp_grid)
 
     assert_quantity_allclose(results.flux,
