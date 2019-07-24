@@ -122,45 +122,49 @@ def test_spectral_axis_conversions():
 
 
 def test_redshift():
-    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
-                      spectral_axis=np.array([4000, 8000]) * u.AA,
+    spec = Spectrum1D(flux=np.array([26.0, 30., 44.5]) * u.Jy,
+                      spectral_axis=np.array([4000, 6000, 8000]) * u.AA,
                       velocity_convention='optical',
                       rest_value=6000 * u.AA)
 
     assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(-99930.8, 0.5)
-    assert spec.velocity[1].value == pytest.approx(99930.8, 0.5)
+    assert spec.velocity[0].value == pytest.approx(-99930.8, abs=0.5)
+    assert spec.velocity[1].value == pytest.approx(0.0, abs=0.5)
+    assert spec.velocity[2].value == pytest.approx(99930.8, abs=0.5)
 
-    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
-                      spectral_axis=np.array([4000, 8000]) * u.AA,
+    spec = Spectrum1D(flux=np.array([26.0, 30., 44.5]) * u.Jy,
+                      spectral_axis=np.array([4000, 6000, 8000]) * u.AA,
                       velocity_convention='optical',
                       rest_value=6000 * u.AA,
                       redshift = 0.1)
 
     assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(-69930.8, 0.5)
-    assert spec.velocity[1].value == pytest.approx(129930.8, 0.5)
+    assert spec.velocity[0].value == pytest.approx(-69951.3, abs=0.5)
+    assert spec.velocity[1].value == pytest.approx(29979.2, abs=0.5)
+    assert spec.velocity[2].value == pytest.approx(129910.1, abs=0.5)
 
     #-------------------------
 
-    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
-                      spectral_axis=np.array([10.5, 11.5]) * u.GHz,
+    spec = Spectrum1D(flux=np.array([26.0, 30.0, 44.5]) * u.Jy,
+                      spectral_axis=np.array([10.5, 11.0, 11.5]) * u.GHz,
                       velocity_convention='radio',
-                      rest_value=11. * u.GHz)
+                      rest_value=11.0 * u.GHz)
 
     assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(13626., 1.)
-    assert spec.velocity[1].value == pytest.approx(-13626., 1.)
+    assert spec.velocity[0].value == pytest.approx(13626., abs=1.)
+    assert spec.velocity[1].value == pytest.approx(0., abs=1.)
+    assert spec.velocity[2].value == pytest.approx(-13626., abs=1.)
 
-    spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
-                      spectral_axis=np.array([10.5, 11.5]) * u.GHz,
+    spec = Spectrum1D(flux=np.array([26.0, 30.0, 44.5]) * u.Jy,
+                      spectral_axis=np.array([10.5, 11.0, 11.5]) * u.GHz,
                       velocity_convention='radio',
-                      rest_value=11. * u.GHz,
+                      rest_value=11.0 * u.GHz,
                       redshift = 0.1)
 
     assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(43606., 1.)
-    assert spec.velocity[1].value == pytest.approx(16352., 1.)
+    assert spec.velocity[0].value == pytest.approx(43606., abs=1.)
+    assert spec.velocity[1].value == pytest.approx(29979., abs=1.)
+    assert spec.velocity[2].value == pytest.approx(16352., abs=1.)
 
 
 def test_flux_unit_conversion():
