@@ -102,6 +102,98 @@ Note: This method is not flux conserving.
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49) * u.Jy)
     >>> spec1_msmooth = median_smooth(spec1, width=3)
 
+Resampling
+----------
+:ref:`specutils <specutils>` contains several classes for resampling the flux
+in a :class:`~specutils.Spectrum1D` object.  Currently supported methods of
+resampling are integrated flux conserving with :class:`~specutils.manipulation.FluxConservingResampler`,
+linear interpolation with :class:`~specutils.manipulation.LinearInterpolatedResampler`,
+and cubic spline with :class:`~specutils.manipulation.SplineInterpolatedResampler`.
+Each of these classes takes in a :class:`~specutils.Spectrum1D` and a user
+defined output dispersion grid, and returns a new :class:`~specutils.Spectrum1D`
+with the resampled flux. Currently the resampling classes expect the new
+dispersion grid unit to be the same as the input spectrum's dispersion grid unit.
+
+If the input :class:`~specutils.Spectrum1D` contains an uncertainty,
+:class:`~specutils.manipulation.FluxConservingResampler` will propogate the
+uncertainty to the final output :class:`~specutils.Spectrum1D`. However, the
+other two implemented resampling classes (:class:`~specutils.manipulation.LinearInterpolatedResampler`
+and :class:`~specutils.manipulation.SplineInterpolatedResampler`) will ignore
+any input uncertainty.
+
+Here's a set of simple examples showing each of the three types of resampling:
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    First are the imports we will need as well as loading in the example data:
+
+    >>> from astropy.io import fits
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from matplotlib import pyplot as plt
+    >>> from astropy.visualization import quantity_support
+    >>> quantity_support()  # for getting units on the axes below  # doctest: +IGNORE_OUTPUT
+
+    >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    >>> # The spectrum is in the second HDU of this file.
+    >>> specdata = f[1].data[1020:1250] # doctest: +REMOTE_DATA
+    >>> f.close() # doctest: +REMOTE_DATA
+
+    Then we re-format this dataset into astropy quantities, and create a
+    `~specutils.Spectrum1D` object:
+
+    >>> from specutils import Spectrum1D
+    >>> lamb = 10**specdata['loglam'] * u.AA # doctest: +REMOTE_DATA
+    >>> flux = specdata['flux'] * 10**-17 * u.Unit('erg cm-2 s-1 AA-1') # doctest: +REMOTE_DATA
+    >>> input_spec = Spectrum1D(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
+
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(input_spec.spectral_axis, input_spec.flux) # doctest: +IGNORE_OUTPUT
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    Now we show examples and plots of the different resampling currently
+    available.
+
+    >>> from specutils.manipulation import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
+    >>> new_disp_grid = np.arange(4800, 5200,3)
+
+    Flux Conserving Resampler:
+
+    >>> fluxcon = FluxConservingResampler()
+    >>> new_spec_fluxcon = fluxcon(input_spec, new_disp_grid) # doctest: +IGNORE_OUTPUT
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(new_spec_fluxcon.spectral_axis, new_spec_fluxcon.flux) # doctest: +IGNORE_OUTPUT
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    Linear Interpolation Resampler:
+
+    >>> linear = LinearInterpolatedResampler()
+    >>> new_spec_lin = linear(input_spec, new_disp_grid)
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(new_spec_lin.spectral_axis, new_spec_lin.flux) # doctest: +IGNORE_OUTPUT
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    Spline Resampler:
+
+    >>> spline = SplineInterpolatedResampler()
+    >>> new_spec_sp = spline(input_spec, new_disp_grid)
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(new_spec_sp.spectral_axis, new_spec_sp.flux) # doctest: +IGNORE_OUTPUT
 
 Uncertainty Estimation
 ----------------------
