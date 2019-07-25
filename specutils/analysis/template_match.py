@@ -2,6 +2,15 @@ from ..spectra.spectrum1d import Spectrum1D
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..manipulation import FluxConservingResample
 from scipy.stats import chisquare
+import numpy as np
+import math
+
+def _normalize(observed_spectrum, template_spectrum):
+    print(observed_spectrum.uncertainty)
+
+    normalization = math.pow(np.sum((observed_spectrum*template_spectrum)/(observed_spectrum.uncertainty)), 2) \
+                    / math.pow(np.sum((template_spectrum/observed_spectrum.uncertainty)), 2)
+    return normalization
 
 def _template_match(observed_spectrum, template_spectrum):
     """
@@ -17,8 +26,12 @@ def _template_match(observed_spectrum, template_spectrum):
     template_spectrum1D = fluxc_resample(template_spectrum, observed_spectrum.wavelength)
 
     # calculate chi square
-    x2 = chisquare(observed_spectrum.flux, template_spectrum1D.flux)
-    return x2
+    # x2 = chisquare(observed_spectrum.flux, template_spectrum1D.flux)
+
+    normalization = _normalize(observed_spectrum, template_spectrum1D)
+
+    chi2 = np.sum(((observed_spectrum.flux-normalization*template_spectrum1D.flux)/observed_spectrum.uncertainty)**2 )
+    return chi2
 
 def template_match(observed_spectrum, spectral_templates):
     """
