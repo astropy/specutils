@@ -1,16 +1,17 @@
 from ..spectra.spectrum1d import Spectrum1D
 from ..spectra.spectrum_collection import SpectrumCollection
-from ..manipulation import FluxConservingResample
-from scipy.stats import chisquare
+from ..manipulation import FluxConservingResampler
 import numpy as np
-import math
 
 def _normalize(observed_spectrum, template_spectrum):
-    print(observed_spectrum.uncertainty)
+    """
+    The normalization is necessary to bring the template to the same magnitude as the observation and minimize the chi^2
+    """
+    num = np.sum((observed_spectrum.flux*template_spectrum.flux)/(observed_spectrum.uncertainty.array**2))
+    denom = np.sum((template_spectrum.flux/observed_spectrum.uncertainty.array)**2)
+    normalized = num/denom
 
-    normalization = math.pow(np.sum((observed_spectrum*template_spectrum)/(observed_spectrum.uncertainty)), 2) \
-                    / math.pow(np.sum((template_spectrum/observed_spectrum.uncertainty)), 2)
-    return normalization
+    return normalized
 
 def _template_match(observed_spectrum, template_spectrum):
     """
@@ -22,15 +23,24 @@ def _template_match(observed_spectrum, template_spectrum):
         spectrum
     :return: chi square of the flux of the observed spectrum and the flux of the template spectrum
     """
-    fluxc_resample = FluxConservingResample()
+    # Resample template
+    fluxc_resample = FluxConservingResampler()
     template_spectrum1D = fluxc_resample(template_spectrum, observed_spectrum.wavelength)
 
-    # calculate chi square
-    # x2 = chisquare(observed_spectrum.flux, template_spectrum1D.flux)
-
+    # Normalize spectra
     normalization = _normalize(observed_spectrum, template_spectrum1D)
 
-    chi2 = np.sum(((observed_spectrum.flux-normalization*template_spectrum1D.flux)/observed_spectrum.uncertainty)**2 )
+    # Numerator
+    num_right = normalization*template_spectrum1D.flux
+    num = observed_spectrum.flux - num_right
+
+    # Denominator
+    denom = observed_spectrum.uncertainty.array
+
+    # Get chi square
+    result = (num/denom)**2
+    chi2 = np.sum(result)
+
     return chi2
 
 def template_match(observed_spectrum, spectral_templates):
@@ -40,12 +50,9 @@ def template_match(observed_spectrum, spectral_templates):
     if isinstance(spectral_templates, Spectrum1D):
         return Spectrum1D, _template_match(observed_spectrum, spectral_templates)
 
-    elif isinstance(spectral_templates, SpectrumCollection):
-        pass
-
     # Loop through spectra in list and return spectrum with lowest chi square
     # and its corresponding chi square
-    elif isinstance(spectral_templates, list):
+    elif isinstance(spectral_templates, list) or isinstance(spectral_templates, SpectrumCollection):
         chi2_min = None
         smallest_chi_spec = None
         for spectrum in spectral_templates:
