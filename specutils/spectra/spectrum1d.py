@@ -6,14 +6,14 @@ from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from astropy.nddata import NDUncertainty
 from ..wcs import WCSWrapper, WCSAdapter
-from .spectrum_mixin import OneDSpectrumMixin
+from .spectrum_mixin import SpectralDataMixin, SpectralAxisMixin
 
 __all__ = ['Spectrum1D']
 
 __doctest_skip__ = ['Spectrum1D.spectral_resolution']
 
 
-class Spectrum1D(OneDSpectrumMixin, NDDataRef):
+class Spectrum1D(SpectralAxisMixin, SpectralDataMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
 
@@ -271,7 +271,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         result = "<Spectrum1D({})>".format(inner_str)
 
         return result
-
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.

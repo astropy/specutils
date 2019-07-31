@@ -16,7 +16,7 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 __all__ = ['OneDSpectrumMixin']
 
 
-class OneDSpectrumMixin:
+class SpectralAxisMixin:
     @property
     def _spectral_axis_numpy_index(self):
         return self.data.ndim - 1 - self.wcs.wcs.spec
@@ -80,6 +80,110 @@ class OneDSpectrumMixin:
         """
         return self.wcs.spectral_axis_unit
 
+    def with_spectral_unit(self, unit, velocity_convention=None,
+                           rest_value=None):
+        """
+        Returns a new spectrum with a different spectral axis unit.
+
+        Parameters
+        ----------
+        unit : :class:`~astropy.units.Unit`
+            Any valid spectral unit: velocity, (wave)length, or frequency.
+            Only vacuum units are supported.
+        velocity_convention : 'relativistic', 'radio', or 'optical'
+            The velocity convention to use for the output velocity axis.
+            Required if the output type is velocity. This can be either one
+            of the above strings, or an `astropy.units` equivalency.
+        rest_value : :class:`~astropy.units.Quantity`
+            A rest wavelength or frequency with appropriate units.  Required if
+            output type is velocity.  The spectrum's WCS should include this
+            already if the *input* type is velocity, but the WCS's rest
+            wavelength/frequency can be overridden with this parameter.
+
+            .. note: This must be the rest frequency/wavelength *in vacuum*,
+                     even if your spectrum has air wavelength units
+
+        """
+        new_wcs, new_meta = self._new_spectral_wcs(
+            unit=unit,
+            velocity_convention=velocity_convention or self._velocity_convention,
+            rest_value=rest_value or self.rest_value)
+
+        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta)
+
+        return spectrum
+
+    def _new_wcs_argument_validation(self, unit, velocity_convention,
+                                     rest_value):
+        # Allow string specification of units, for example
+        if not isinstance(unit, u.UnitBase):
+            unit = u.Unit(unit)
+
+        # Velocity conventions: required for frq <-> velo
+        # convert_spectral_axis will handle the case of no velocity
+        # convention specified & one is required
+        if velocity_convention in DOPPLER_CONVENTIONS:
+            velocity_convention = DOPPLER_CONVENTIONS[velocity_convention]
+        elif (velocity_convention is not None and
+              velocity_convention not in DOPPLER_CONVENTIONS.values()):
+            raise ValueError("Velocity convention must be radio, optical, "
+                             "or relativistic.")
+
+        # If rest value is specified, it must be a quantity
+        if (rest_value is not None and
+            (not hasattr(rest_value, 'unit') or
+             not rest_value.unit.is_equivalent(u.m, u.spectral()))):
+            raise ValueError("Rest value must be specified as an astropy "
+                             "quantity with spectral equivalence.")
+
+        return unit
+
+    def _new_spectral_wcs(self, unit, velocity_convention=None,
+                          rest_value=None):
+        """
+        Returns a new WCS with a different Spectral Axis unit.
+
+        Parameters
+        ----------
+        unit : :class:`~astropy.units.Unit`
+            Any valid spectral unit: velocity, (wave)length, or frequency.
+            Only vacuum units are supported.
+        velocity_convention : 'relativistic', 'radio', or 'optical'
+            The velocity convention to use for the output velocity axis.
+            Required if the output type is velocity. This can be either one
+            of the above strings, or an `astropy.units` equivalency.
+        rest_value : :class:`~astropy.units.Quantity`
+            A rest wavelength or frequency with appropriate units.  Required if
+            output type is velocity.  The cube's WCS should include this
+            already if the *input* type is velocity, but the WCS's rest
+            wavelength/frequency can be overridden with this parameter.
+
+            .. note: This must be the rest frequency/wavelength *in vacuum*,
+                     even if your cube has air wavelength units
+        """
+
+        unit = self._new_wcs_argument_validation(unit, velocity_convention,
+                                                 rest_value)
+
+        if velocity_convention is not None:
+            equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
+            rest_value.to(unit, equivalencies=equiv)
+
+        # Store the original unit information for posterity
+        meta = self._meta.copy()
+
+        if 'original_unit' not in self._meta:
+            meta['original_unit'] = self.wcs.spectral_axis_unit
+
+        # Create the new wcs object
+        new_wcs = self.wcs.with_spectral_unit(unit=unit,
+                                         rest_value=rest_value,
+                                         velocity_convention=velocity_convention)
+
+        return new_wcs, meta
+
+
+class SpectralDataMixin:
     @property
     def flux(self):
         """
@@ -186,108 +290,6 @@ class OneDSpectrumMixin:
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
         return new_data
-
-    def with_spectral_unit(self, unit, velocity_convention=None,
-                           rest_value=None):
-        """
-        Returns a new spectrum with a different spectral axis unit.
-
-        Parameters
-        ----------
-        unit : :class:`~astropy.units.Unit`
-            Any valid spectral unit: velocity, (wave)length, or frequency.
-            Only vacuum units are supported.
-        velocity_convention : 'relativistic', 'radio', or 'optical'
-            The velocity convention to use for the output velocity axis.
-            Required if the output type is velocity. This can be either one
-            of the above strings, or an `astropy.units` equivalency.
-        rest_value : :class:`~astropy.units.Quantity`
-            A rest wavelength or frequency with appropriate units.  Required if
-            output type is velocity.  The spectrum's WCS should include this
-            already if the *input* type is velocity, but the WCS's rest
-            wavelength/frequency can be overridden with this parameter.
-
-            .. note: This must be the rest frequency/wavelength *in vacuum*,
-                     even if your spectrum has air wavelength units
-
-        """
-        new_wcs, new_meta = self._new_spectral_wcs(
-            unit=unit,
-            velocity_convention=velocity_convention or self._velocity_convention,
-            rest_value=rest_value or self.rest_value)
-
-        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta)
-
-        return spectrum
-
-    def _new_wcs_argument_validation(self, unit, velocity_convention,
-                                     rest_value):
-        # Allow string specification of units, for example
-        if not isinstance(unit, u.UnitBase):
-            unit = u.Unit(unit)
-
-        # Velocity conventions: required for frq <-> velo
-        # convert_spectral_axis will handle the case of no velocity
-        # convention specified & one is required
-        if velocity_convention in DOPPLER_CONVENTIONS:
-            velocity_convention = DOPPLER_CONVENTIONS[velocity_convention]
-        elif (velocity_convention is not None and
-              velocity_convention not in DOPPLER_CONVENTIONS.values()):
-            raise ValueError("Velocity convention must be radio, optical, "
-                             "or relativistic.")
-
-        # If rest value is specified, it must be a quantity
-        if (rest_value is not None and
-            (not hasattr(rest_value, 'unit') or
-             not rest_value.unit.is_equivalent(u.m, u.spectral()))):
-            raise ValueError("Rest value must be specified as an astropy "
-                             "quantity with spectral equivalence.")
-
-        return unit
-
-    def _new_spectral_wcs(self, unit, velocity_convention=None,
-                          rest_value=None):
-        """
-        Returns a new WCS with a different Spectral Axis unit.
-
-        Parameters
-        ----------
-        unit : :class:`~astropy.units.Unit`
-            Any valid spectral unit: velocity, (wave)length, or frequency.
-            Only vacuum units are supported.
-        velocity_convention : 'relativistic', 'radio', or 'optical'
-            The velocity convention to use for the output velocity axis.
-            Required if the output type is velocity. This can be either one
-            of the above strings, or an `astropy.units` equivalency.
-        rest_value : :class:`~astropy.units.Quantity`
-            A rest wavelength or frequency with appropriate units.  Required if
-            output type is velocity.  The cube's WCS should include this
-            already if the *input* type is velocity, but the WCS's rest
-            wavelength/frequency can be overridden with this parameter.
-
-            .. note: This must be the rest frequency/wavelength *in vacuum*,
-                     even if your cube has air wavelength units
-        """
-
-        unit = self._new_wcs_argument_validation(unit, velocity_convention,
-                                                 rest_value)
-
-        if velocity_convention is not None:
-            equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
-            rest_value.to(unit, equivalencies=equiv)
-
-        # Store the original unit information for posterity
-        meta = self._meta.copy()
-
-        if 'original_unit' not in self._meta:
-            meta['original_unit'] = self.wcs.spectral_axis_unit
-
-        # Create the new wcs object
-        new_wcs = self.wcs.with_spectral_unit(unit=unit,
-                                         rest_value=rest_value,
-                                         velocity_convention=velocity_convention)
-
-        return new_wcs, meta
 
 
 class InplaceModificationMixin:
