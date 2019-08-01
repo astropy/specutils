@@ -172,8 +172,9 @@ class SpectralAxisMixin:
         # Store the original unit information for posterity
         meta = self._meta.copy()
         if 'original_unit' not in self._meta:
-            meta['original_unit'] = self.wcs.spectral_axis_unit
-            sid = self.spectral_axis_index
+            sid = -1
+            # TODO: sid = self.spectral_axis_index
+            meta['original_unit'] = self.wcs.world_axis_units[sid]
             meta['original_type'] = self.wcs.world_axis_physical_types[sid]
 
 
