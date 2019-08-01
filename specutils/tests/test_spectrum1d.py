@@ -165,12 +165,14 @@ def test_wcs_transformations():
 
     assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA, 700*u.nm]), [461.2, 461.2])
 
-def test_create_explicit_fitswcs():
+@pytest.mark.parametrize('velocity_convention', ('relativistic', 'radio', 'optical',
+                                                 u.doppler_relativistic, u.doppler_optical, u.doppler_radio))
+def test_create_explicit_fitswcs(velocity_convention):
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
                                  'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
 
     spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
-    spec = spec.with_velocity_convention("relativistic")
+    spec = spec.with_velocity_convention(velocity_convention)
 
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit.is_equivalent(u.AA)
