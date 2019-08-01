@@ -22,6 +22,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
             os.path.splitext(args[0].lower())[1] == '.fits' and
             # check if number of axes is one
             fits.getheader(args[0])['NAXIS'] == 1 and
+            fits.getheader(args[0])['WCSDIM'] == 1 and
             # check if CTYPE1 kep is in the header
             'CTYPE1' in fits.getheader(args[0])
             )
