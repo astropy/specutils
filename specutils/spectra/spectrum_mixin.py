@@ -136,7 +136,8 @@ class SpectralAxisMixin:
             raise ValueError("Rest value must be specified as an astropy "
                              "quantity with spectral equivalence.")
 
-        return unit
+        return unit, velocity_convention
+
 
     def _new_spectral_wcs(self, unit, velocity_convention=None,
                           rest_value=None):
@@ -160,25 +161,25 @@ class SpectralAxisMixin:
 
             .. note: This must be the rest frequency/wavelength *in vacuum*,
                      even if your cube has air wavelength units
+
         """
 
-        unit = self._new_wcs_argument_validation(unit, velocity_convention,
-                                                 rest_value)
-
-        if velocity_convention is not None:
-            equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
-            rest_value.to(unit, equivalencies=equiv)
+        # Allow string specification of units, for example
+        unit, velocity_convention = self._new_wcs_argument_validation(unit,
+                                                                      velocity_convention,
+                                                                      rest_value)
 
         # Store the original unit information for posterity
         meta = self._meta.copy()
-
         if 'original_unit' not in self._meta:
             meta['original_unit'] = self.wcs.spectral_axis_unit
+            # TODO: what about the CTYPE?  How do we get that?
+            # meta['Original Type'] = self._wcs.wcs.ctype[self._wcs.wcs.spec]
+
 
         # Create the new wcs object
-        new_wcs = self.wcs.with_spectral_unit(unit=unit,
-                                         rest_value=rest_value,
-                                         velocity_convention=velocity_convention)
+        new_wcs = self.wcs.with_spectral_unit(unit=unit, rest_value=rest_value,
+                                              velocity_convention=velocity_convention)
 
         return new_wcs, meta
 
