@@ -173,8 +173,7 @@ class SpectralAxisMixin:
         meta = self._meta.copy()
         if 'original_unit' not in self._meta:
             meta['original_unit'] = self.wcs.spectral_axis_unit
-            # TODO: what about the CTYPE?  How do we get that?
-            # meta['Original Type'] = self._wcs.wcs.ctype[self._wcs.wcs.spec]
+            meta['original_type'] = self.wcs.spectral.world_axis_physical_types[0]
 
 
         # Create the new wcs object
