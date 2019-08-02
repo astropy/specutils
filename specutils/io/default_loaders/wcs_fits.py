@@ -23,6 +23,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
             # check if number of axes is one
             fits.getheader(args[0])['NAXIS'] == 1 and
             fits.getheader(args[0])['WCSDIM'] == 1 and
+            'WAT1_001' not in fits.getheader(args[0]) and
             # check if CTYPE1 kep is in the header
             'CTYPE1' in fits.getheader(args[0])
             )
@@ -181,7 +182,7 @@ def _read_linear_iraf_wcs(wcs, dc_flag):
 
     This method read the appropriate keywords. Calls the method _set_math_model
     which decides what is the appropriate mathematical model to be used and
-    creates an then evaluates the model for an array.
+    creates and then evaluates the model for an array.
 
     Parameters
     ----------
@@ -231,7 +232,7 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
     wcsdim : int
         Number of the wcs dimension to be read.
 
-     Returns
+    Returns
     -------
 
     spectral_axis : `~numpy.ndarray`
@@ -264,12 +265,11 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
                     # print(wat_array[i], wat_array[i + 1])
 
     for key in wat_wcs_dict.keys():
-        logging.info("{:d} -{:s}- {:s}".format(wcsdim,
-                                               key,
-                                               wat_wcs_dict[key]))
+        logging.debug("{:d} -{:s}- {:s}".format(wcsdim,
+                                                key,
+                                                wat_wcs_dict[key]))
 
     if 'spec1' in wat_wcs_dict.keys():
-        # print(wat_wcs_dict['spec1'])
         spec = wat_wcs_dict['spec1'].split()
         aperture = int(spec[0])
         beam = int(spec[1])
@@ -286,9 +286,8 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
         order = int(float(spec[12]))
         min_pix_val = int(float(spec[13]))
         max_pix_val = int(float(spec[14]))
-        # resto = list(spec[9:])
+
         params = [float(i) for i in spec[15:]]
-        # TODO (simon): Document wcs_dict (what is what).
         wcs_dict = {'aperture': aperture,
                     'beam': beam,
                     'dtype': disp_type,
@@ -306,26 +305,23 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
                     'pmax': max_pix_val,
                     'fpar': params}
 
-        # This section of the code only shows a plot to see if the code
-        # above actually worked which means this methods has not been fully
-        # developed neither tested
         logging.info('Retrieving model')
         math_model = _set_math_model(wcs_dict=wcs_dict)
 
-        spectral_axis = math_model(range(wcs_dict['pnum']))
+        spectral_axis = math_model(range(1, wcs_dict['pnum'] + 1))
         return spectral_axis
 
 
 def _set_math_model(wcs_dict):
-    """Defines a mathematical model
+    """Defines a mathematical model of the wavelength solution
 
-    Uses 2 keywords to decided which model is to be built and calls the
+    Uses 2 keywords to decide which model is to be built and calls the
     appropriate function.
 
     dtype:
 
-        -1 : None, no wavelength solution available
-        0 : Linear wavelength solution
+        -1: None, no wavelength solution available
+        0: Linear wavelength solution
         1: Log-Linear wavelength solution (not implemented)
         2: Non-Linear solutions
             ftype:
@@ -349,7 +345,8 @@ def _set_math_model(wcs_dict):
     Returns
     -------
 
-    `~astropy.modeling.Model`
+    The mathematical model which describes the transformation from pixel to
+    wavelength. An instance of `~astropy.modeling.Model`.
 
     """
     if wcs_dict['dtype'] == -1:
@@ -383,10 +380,14 @@ def _set_math_model(wcs_dict):
 
 def _none():
     """Required to handle No-wavelength solution
+
     No wavelength solution is considered in the FITS standard (dtype = -1)
     This method is placed here for completeness even though is not
     implemented.
-    Raises:
+
+    Raises
+    ------
+
         NotImplementedError
     """
     raise NotImplementedError
@@ -406,24 +407,19 @@ def _linear_solution(wcs_dict):
 
 
 def _log_linear(wcs_dict):
-    """Not implemented
-    Raises:
+    """Returns a log linear model of the wavelength solution.
+
+    Not implemented
+
+    Raises
+    ------
         NotImplementedError
     """
-    # intercept = np.power(10, wcs_dict['crval'] +
-    #                          wcs_dict['cdelt'] *
-    #                         (wcs_dict['crpix'] - 1))
-    #
-    # slope = np.power(10, wcs_dict['cdelt'])
-    #
-    # model = models.Linear1D(slope=slope,
-    #                              intercept=intercept)
-    # print(model)
     raise NotImplementedError
 
 
 def _chebyshev(wcs_dict):
-    """Returns a chebyshev model
+    """Returns a chebyshev model of the wavelength solution.
 
     Constructs a Chebyshev1D mathematical model
 
@@ -434,15 +430,16 @@ def _chebyshev(wcs_dict):
         Dictionary containing all the wcs information decoded from the header and
         necessary for constructing the Chebyshev1D model.
 
-    Returns:
+    Returns
+    -------
 
-    `~astropy.modeling.Model`
+        `~astropy.modeling.Model`
 
     """
     model = models.Chebyshev1D(degree=wcs_dict['order'] - 1,
                                domain=[wcs_dict['pmin'],
                                        wcs_dict['pmax']], )
-    # model.parameters[0] = wcs_dict['pmin']
+
     for param_index in range(wcs_dict['order']):
         model.parameters[param_index] = wcs_dict['fpar'][
             param_index]
@@ -462,16 +459,16 @@ def _non_linear_legendre(wcs_dict):
         Dictionary containing all the wcs information decoded from the header and
         necessary for constructing the Legendre1D model.
 
-    Returns:
+    Returns
+    -------
 
-    `~astropy.modeling.Model`
+        `~astropy.modeling.Model`
 
     """
-    """Returns a legendre model"""
     model = models.Legendre1D(degree=wcs_dict['order'] - 1,
                               domain=[wcs_dict['pmin'],
                                       wcs_dict['pmax']], )
-    # model.parameters[0] = wcs_dict['pmin']
+
     for param_index in range(wcs_dict['order']):
         model.parameters[param_index] = wcs_dict['fpar'][
             param_index]
@@ -480,16 +477,50 @@ def _non_linear_legendre(wcs_dict):
 
 
 def _non_linear_lspline(wcs_dict):
-    """Not implemented
-    Raises:
+    """Returns a linear spline model of the wavelength solution
+
+    Not implemented
+
+    This function should extract certain parameters from the `wcs_dict`
+    parameter and construct a mathematical model that makes the conversion from
+    pixel to wavelength. All the necessary information is already contained in
+    the dictionary so the only work to be done is to make the instantiation of
+    the appropriate subclass of `~astropy.modeling.Model`.
+
+    Parameters
+    ----------
+
+        wcs_dict : dict
+            Contains all the WCS information decoded from an IRAF fits header.
+
+    Raises
+    ------
+
         NotImplementedError
     """
     raise NotImplementedError('Linear spline is not implemented')
 
 
 def _non_linear_cspline(wcs_dict):
-    """Not implemented
-    Raises:
+    """Returns a cubic spline model of the wavelength solution.
+
+    This function should extract certain parameters from the `wcs_dict`
+    parameter and construct a mathematical model that makes the conversion from
+    pixel to wavelength. All the necessary information is already contained in
+    the dictionary so the only work to be done is to make the instantiation of
+    the appropriate subclass of `~astropy.modeling.Model`.
+
+    Not implemented
+
+     Parameters
+    ----------
+
+        wcs_dict : dict
+            Contains all the WCS information decoded from an IRAF fits header.
+
+    Raises
+    ------
+
         NotImplementedError
     """
     raise NotImplementedError('Cubic spline is not implemented')

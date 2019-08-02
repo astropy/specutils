@@ -14,6 +14,10 @@ from astropy.table import Table
 from astropy.units import UnitsWarning
 from astropy.wcs import FITSFixedWarning
 from astropy.io.registry import IORegistryError
+from astropy.modeling import models
+
+
+from numpy.testing import assert_allclose
 
 from .conftest import remote_data_path, remote_access
 from .. import Spectrum1D, SpectrumList
@@ -154,3 +158,66 @@ def test_no_reader_matches(name):
 
         with pytest.raises(IORegistryError):
             spec = Spectrum1D.read(filename)
+
+
+@remote_access([{'id':'3359174', 'filename':'linear_fits_solution.fits'}])
+def test_iraf_linear(remote_data_path):
+
+    spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
+
+    assert isinstance(spectrum_1d, Spectrum1D)
+    assert spectrum_1d.wavelength[0] == 3514.56625402 * u.angstrom
+    assert spectrum_1d.wavelength[100] == 3514.56625402 * u.angstrom + 0.653432383823 * 100 * u.angstrom
+
+
+@remote_access([{'id':'3359180', 'filename':'log-linear_fits_solution.fits'}])
+def test_iraf_log_linear(remote_data_path):
+
+    with pytest.raises(NotImplementedError):
+        assert Spectrum1D.read(remote_data_path, format='iraf')
+
+
+@remote_access([{'id':'3359190', 'filename':'non-linear_fits_solution_cheb.fits'}])
+def test_iraf_non_linear_chebyshev(remote_data_path):
+    chebyshev_model = models.Chebyshev1D(degree=2, domain=[1616, 3259])
+    chebyshev_model.c0.value = 5115.64008186
+    chebyshev_model.c1.value = 535.515983712
+    chebyshev_model.c2.value = -0.779265625182
+
+    wavelength_axis = chebyshev_model(range(1, 4097)) * u.angstrom
+
+    spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
+
+    assert isinstance(spectrum_1d, Spectrum1D)
+    assert_allclose(wavelength_axis, spectrum_1d.wavelength)
+
+
+@remote_access([{'id':'3359194', 'filename':'non-linear_fits_solution_legendre.fits'}])
+def test_iraf_non_linear_legendre(remote_data_path):
+
+    legendre_model = models.Legendre1D(degree=3, domain=[21, 4048])
+    legendre_model.c0.value = 5468.67555891
+    legendre_model.c1.value = 835.332144466
+    legendre_model.c2.value = -6.02202094803
+    legendre_model.c3.value = -1.13142953897
+
+    wavelength_axis = legendre_model(range(1, 4143)) * u.angstrom
+
+    spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
+
+    assert isinstance(spectrum_1d, Spectrum1D)
+    assert_allclose(wavelength_axis, spectrum_1d.wavelength)
+
+
+@remote_access([{'id':'3359196', 'filename':'non-linear_fits_solution_linear-spline.fits'}])
+def test_iraf_non_linear_linear_spline(remote_data_path):
+
+    with pytest.raises(NotImplementedError):
+        assert Spectrum1D.read(remote_data_path, format='iraf')
+
+
+@remote_access([{'id':'3359200', 'filename':'non-linear_fits_solution_cubic-spline.fits'}])
+def test_iraf_non_linear_cubic_spline(remote_data_path):
+
+    with pytest.raises(NotImplementedError):
+        assert Spectrum1D.read(remote_data_path, format='iraf')
