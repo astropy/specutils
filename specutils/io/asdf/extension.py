@@ -2,6 +2,7 @@
 Defines extension that is used by ASDF for recognizing specutils types
 """
 import os
+import urllib
 
 from asdf.util import filepath_to_url
 from asdf.extension import AsdfExtension
@@ -15,9 +16,9 @@ from .types import _specutils_types
 SCHEMA_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), 'schemas'))
 SPECUTILS_URL_MAPPING = [
-    (ASTROPY_SCHEMA_URI_BASE,
+    (urllib.parse.urljoin(ASTROPY_SCHEMA_URI_BASE, 'specutils/'),
      filepath_to_url(
-         os.path.join(SCHEMA_PATH, 'astropy.org')) +
+         os.path.join(SCHEMA_PATH, 'astropy.org', 'specutils')) +
          '/{url_suffix}.yaml')]
 
 

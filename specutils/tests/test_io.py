@@ -4,7 +4,7 @@
 This module tests SpecUtils io routines
 """
 
-from ..io.parsing_utils import generic_spectrum_from_table # or something like that
+from specutils.io.parsing_utils import generic_spectrum_from_table # or something like that
 from astropy.io import registry
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
