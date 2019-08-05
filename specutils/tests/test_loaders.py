@@ -166,8 +166,8 @@ def test_iraf_linear(remote_data_path):
     spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
 
     assert isinstance(spectrum_1d, Spectrum1D)
-    assert spectrum_1d.wavelength[0] == 3514.56625402 * u.angstrom
-    assert spectrum_1d.wavelength[100] == 3514.56625402 * u.angstrom + 0.653432383823 * 100 * u.angstrom
+    assert spectrum_1d.wavelength[0] == u.Quantity(3514.56625402, unit='Angstrom')
+    assert spectrum_1d.wavelength[100] == u.Quantity(3514.56625402, unit='Angstrom') + u.Quantity(0.653432383823 * 100, unit='Angstrom')
 
 
 @remote_access([{'id':'3359180', 'filename':'log-linear_fits_solution.fits'}])

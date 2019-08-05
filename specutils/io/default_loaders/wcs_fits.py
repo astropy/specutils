@@ -382,15 +382,20 @@ def _none():
     """Required to handle No-wavelength solution
 
     No wavelength solution is considered in the FITS standard (dtype = -1)
-    This method is placed here for completeness even though is not
-    implemented.
 
-    Raises
-    ------
+    This will return the identity function. It does not use
+    `~astropy.modeling.models.Identity` because is not simpler to instantiate.
+    Instead it uses `~astropy.modeling.models.Linear1D`
 
-        NotImplementedError
+    Rretuns
+    -------
+
+        A mathematical model instance of `~astropy.modeling.models.Linear1D`
+        with slope 1 and intercept 0.
     """
-    raise NotImplementedError
+    model = models.Linear1D(slope=1,
+                            intercept=0)
+    return model
 
 
 def _linear_solution(wcs_dict):
