@@ -186,7 +186,10 @@ class OneDSpectrumMixin:
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
         # Redshift-correct velocities using approximate low-z correction.
-        new_data += Quantity((self._redshift * C), new_data.unit)
+        if isinstance(self._redshift_rv, Quantity):
+            new_data += self._redshift_rv
+        else:
+            new_data += Quantity((self._redshift_rv * C), new_data.unit)
 
         return new_data
 

@@ -33,9 +33,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Any quantity supported by the standard spectral equivalencies
         (wavelength, energy, frequency, wave number). Describes the rest value
         of the spectral axis for use with velocity conversions.
-    redshift : float
-        The redshift correction to be applied to the spectral axis for use
-        with velocity conversions.
+    redshift : float or `~astropy.units.Quantity`
+        The redshift/RV correction to be applied to the spectral axis for use
+        with velocity conversions. If float, the value is interpreted as the
+        redshift z. If an instance of `~astropy.units.Quantity` is passed,
+        it is interpreted as a radial velocity with the appropriate velocity units.
     uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
@@ -45,7 +47,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         around with the spectrum container object.
     """
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
-                 velocity_convention=None, rest_value=None, redshift=None,
+                 velocity_convention=None, rest_value=None, redshift_rv=None,
                  **kwargs):
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
@@ -127,9 +129,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
-        self._redshift = redshift
-        if redshift is None:
-            self._redshift = 0.
+        self._redshift_rv = redshift_rv
+        if redshift_rv is None:
+            self._redshift_rv = 0.
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
