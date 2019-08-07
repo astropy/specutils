@@ -5,8 +5,10 @@ pytest.importorskip('asdf')
 import numpy as np
 
 import astropy.units as u
+from astropy.coordinates import FK5
 
 from asdf.tests.helpers import assert_roundtrip_tree
+import asdf
 
 from specutils import Spectrum1D, SpectrumList
 
@@ -46,3 +48,11 @@ def test_asdf_spectrumlist(tmpdir):
 
     tree = dict(spectra=spectra)
     assert_roundtrip_tree(tree, tmpdir)
+
+
+@pytest.mark.filterwarnings("error::UserWarning")
+def test_asdf_url_mapper():
+    """Make sure specutils asdf extension url_mapping doesn't interfere with astropy schemas"""
+    frame = FK5()
+    af = asdf.AsdfFile()
+    af.tree = {'frame': frame}

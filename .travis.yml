@@ -86,16 +86,19 @@ matrix:
 
         # Do a PEP8 test with pycodestyle
         - os: linux
-          env: MAIN_CMD='pycodestyle specutils --count' SETUP_CMD=''
+          env: MAIN_CMD='pycodestyle specutils --count'
+               SETUP_CMD=''
 
         # Try development version of Astropy
         - os: linux
-          env: ASTROPY_VERSION=dev "PIP_DEPENDENCIES=$GWCS_DEV $ASDF_DEV"
+          env: ASTROPY_VERSION=dev
+               PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
 
     allow_failures:
         # Try development version of Astropy
         - os: linux
-          env: ASTROPY_VERSION=dev "PIP_DEPENDENCIES=$GWCS_DEV $ASDF_DEV"
+          env: ASTROPY_VERSION=dev
+               PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
 
 
 install:
