@@ -28,7 +28,7 @@ def get_chi_square(observed_spectrum, template_spectrum):
     num = observed_spectrum.flux - num_right
 
     # Denominator
-    denom = observed_spectrum.uncertainty.array
+    denom = observed_spectrum.uncertainty.array * observed_spectrum.flux.unit
 
     # Get chi square
     result = (num/denom)**2

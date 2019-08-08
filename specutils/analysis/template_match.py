@@ -16,7 +16,7 @@ def _normalize(observed_spectrum, template_spectrum):
 def _template_match(observed_spectrum, template_spectrum):
     """
     Resample the template spectrum to match the wavelength of the observed spectrum.
-    Then, run scipy.stats.chisquare on the flux of the two spectra.
+    Then, run chisquare on the flux of the two spectra.
 
     :param observed_spectrum: The observed spectrum
     :param template_spectrum: The template spectrum, which will be resampled to match the wavelength of the observed
@@ -35,7 +35,7 @@ def _template_match(observed_spectrum, template_spectrum):
     num = observed_spectrum.flux - num_right
 
     # Denominator
-    denom = observed_spectrum.uncertainty.array
+    denom = observed_spectrum.uncertainty.array * observed_spectrum.flux.unit
 
     # Get chi square
     result = (num/denom)**2
