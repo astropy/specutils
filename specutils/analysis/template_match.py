@@ -41,24 +41,29 @@ def _template_match(observed_spectrum, template_spectrum):
     result = (num/denom)**2
     chi2 = np.sum(result)
 
-    return chi2
+    normalized_template_spectrum = Spectrum1D(flux=template_spectrum.flux*normalization,
+                                              spectral_axis=template_spectrum.spectral_axis)
+
+    return chi2, normalized_template_spectrum
 
 def template_match(observed_spectrum, spectral_templates):
     """
     Find what instance collection is and run _template_match accordingly
     """
     if isinstance(spectral_templates, Spectrum1D):
-        return Spectrum1D, _template_match(observed_spectrum, spectral_templates)
+        chi2, normalized_spectral_template = _template_match(observed_spectrum, spectral_templates)
+        return normalized_spectral_template, chi2
 
     # Loop through spectra in list and return spectrum with lowest chi square
     # and its corresponding chi square
     elif isinstance(spectral_templates, list) or isinstance(spectral_templates, SpectrumCollection):
         chi2_min = None
         smallest_chi_spec = None
+
         for spectrum in spectral_templates:
-            chi2 = _template_match(observed_spectrum, spectrum)
+            chi2, normalized_spectral_template = _template_match(observed_spectrum, spectrum)
             if chi2_min is None or chi2 < chi2_min:
                 chi2_min = chi2
-                smallest_chi_spec = spectrum
+                smallest_chi_spec = normalized_spectral_template
 
         return smallest_chi_spec, chi2_min

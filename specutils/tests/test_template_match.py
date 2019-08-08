@@ -16,6 +16,15 @@ def _normalize(observed_spectrum, template_spectrum):
     return normalized
 
 def get_chi_square(observed_spectrum, template_spectrum):
+    """
+    Resample the template spectrum to match the wavelength of the observed spectrum.
+    Then, run chisquare on the flux of the two spectra.
+
+    :param observed_spectrum: The observed spectrum
+    :param template_spectrum: The template spectrum, which will be resampled to match the wavelength of the observed
+        spectrum
+    :return: chi square of the flux of the observed spectrum and the flux of the template spectrum
+    """
     # Resample template
     fluxc_resample = FluxConservingResampler()
     template_spectrum1D = fluxc_resample(template_spectrum, observed_spectrum.wavelength)
@@ -34,7 +43,10 @@ def get_chi_square(observed_spectrum, template_spectrum):
     result = (num/denom)**2
     chi2 = np.sum(result)
 
-    return chi2
+    normalized_template_spectrum = Spectrum1D(flux=template_spectrum.flux*normalization,
+                                              spectral_axis=template_spectrum.spectral_axis)
+
+    return chi2, normalized_template_spectrum
 
 def test_template_match_spectrum():
     """
@@ -56,7 +68,7 @@ def test_template_match_spectrum():
     # Calculate result independently of template_match
     result = get_chi_square(spec, spec1)
 
-    assert result == tm_result[1]
+    assert result[0] == tm_result[1]
 
 def test_template_match_with_resample():
     """
@@ -78,7 +90,7 @@ def test_template_match_with_resample():
 
     result = get_chi_square(spec, spec1)
 
-    assert result == tm_result[1]
+    assert result[0] == tm_result[1]
 
 def test_template_match_list():
     """
@@ -106,16 +118,14 @@ def test_template_match_list():
 
     # Loop through list in order to find out which template spectra has the smallest chi square
     chi2_min = None
-    smallest_chi_spec = None
+
     for spectrum in template_list:
-        chi2 = get_chi_square(spec, spectrum)
+        chi2, normalized_spectral_template = get_chi_square(spec, spectrum)
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
-            smallest_chi_spec = spectrum
 
 
     assert chi2_min == tm_result[1]
-    assert smallest_chi_spec == tm_result[0]
 
 def test_template_match_spectrum_collection():
     """
@@ -143,8 +153,9 @@ def test_template_match_spectrum_collection():
 
     # Loop through SpectrumCollection in order to find out which template spectra has the smallest chi square
     chi2_min = None
+
     for spectrum in spec_coll:
-        chi2 = get_chi_square(spec, spectrum)
+        chi2, normalized_template_spectrum = get_chi_square(spec, spectrum)
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
 
