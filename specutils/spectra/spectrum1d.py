@@ -134,7 +134,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         self._redshift_rv = redshift_rv
         if redshift_rv is None:
             self._redshift_rv = 0.
-
+            
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
