@@ -33,7 +33,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Any quantity supported by the standard spectral equivalencies
         (wavelength, energy, frequency, wave number). Describes the rest value
         of the spectral axis for use with velocity conversions.
-    redshift : float or `~astropy.units.Quantity`
+    redshift_rv : float or `~astropy.units.Quantity`
         The redshift/RV correction to be applied to the spectral axis for use
         with velocity conversions. If float, the value is interpreted as the
         redshift z. If an instance of `~astropy.units.Quantity` is passed,
@@ -129,6 +129,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
+        # redshift may be moved to somewhere else in the future,
+        # perhaps to the object that handles coordinates. 
         self._redshift_rv = redshift_rv
         if redshift_rv is None:
             self._redshift_rv = 0.
