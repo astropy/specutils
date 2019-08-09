@@ -130,11 +130,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
         # redshift may be moved to somewhere else in the future,
-        # perhaps to the object that handles coordinates. 
+        # perhaps to the object that handles coordinates.
         self._redshift_rv = redshift_rv
         if redshift_rv is None:
             self._redshift_rv = 0.
-            
+
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
