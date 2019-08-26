@@ -46,7 +46,7 @@ def get_chi_square(observed_spectrum, template_spectrum):
     normalized_template_spectrum = Spectrum1D(flux=template_spectrum.flux*normalization,
                                               spectral_axis=template_spectrum.spectral_axis)
 
-    return chi2, normalized_template_spectrum
+    return normalized_template_spectrum, chi2
 
 def test_template_match_spectrum():
     """
@@ -68,7 +68,7 @@ def test_template_match_spectrum():
     # Calculate result independently of template_match
     result = get_chi_square(spec, spec1)
 
-    assert result[0] == tm_result[1]
+    assert result[1] == tm_result[1]
 
 def test_template_match_with_resample():
     """
@@ -90,7 +90,7 @@ def test_template_match_with_resample():
 
     result = get_chi_square(spec, spec1)
 
-    assert result[0] == tm_result[1]
+    assert result[1] == tm_result[1]
 
 def test_template_match_list():
     """
@@ -120,7 +120,7 @@ def test_template_match_list():
     chi2_min = None
 
     for spectrum in template_list:
-        chi2, normalized_spectral_template = get_chi_square(spec, spectrum)
+        normalized_spectral_template, chi2 = get_chi_square(spec, spectrum)
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
 
@@ -155,7 +155,7 @@ def test_template_match_spectrum_collection():
     chi2_min = None
 
     for spectrum in spec_coll:
-        chi2, normalized_template_spectrum = get_chi_square(spec, spectrum)
+        normalized_template_spectrum, chi2 = get_chi_square(spec, spectrum)
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
 
