@@ -43,6 +43,7 @@ def get_chi_square(observed_spectrum, template_spectrum):
     result = (num/denom)**2
     chi2 = np.sum(result)
 
+    # Create normalized template spectrum, which will be returned with corresponding chi2
     normalized_template_spectrum = Spectrum1D(flux=template_spectrum.flux*normalization,
                                               spectral_axis=template_spectrum.spectral_axis)
 
