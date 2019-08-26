@@ -41,8 +41,8 @@ def _template_match(observed_spectrum, template_spectrum):
     result = (num/denom)**2
     chi2 = np.sum(result)
 
-    normalized_template_spectrum = Spectrum1D(flux=template_spectrum.flux*normalization,
-                                              spectral_axis=template_spectrum.spectral_axis)
+    normalized_template_spectrum = Spectrum1D(spectral_axis=template_spectrum.spectral_axis,
+                                              flux=template_spectrum.flux*normalization)
 
     return normalized_template_spectrum, chi2
 
