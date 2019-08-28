@@ -11,6 +11,7 @@ def test_template_match_spectrum():
     """
     Test template_match when both observed and template spectra have the same wavelength axis
     """
+    # Seed np.random so that results are consistent
     np.random.seed(42)
 
     # Create test spectra
