@@ -5,33 +5,52 @@ import numpy as np
 
 def _normalize(observed_spectrum, template_spectrum):
     """
-    The normalization is necessary to bring the template to the same magnitude as the observation and minimize the chi^2
+    Calculate a scale factor to be applied to the template spectrum so the total flux in both spectra will be the same.
+
+    Parameters
+    ----------
+    observed_spectrum : `Spectrum1D`
+        the observed spectrum
+    template_spectrum : `Spectrum1D`
+        the template spectrum, which needs to be normalized in order to be compared with the observed_spectrum
+
+    Returns
+    -------
+    `float`
+        A float which will normalize the template spectrum's flux so that it can be compared to the observed spectrum
     """
     num = np.sum((observed_spectrum.flux*template_spectrum.flux)/(observed_spectrum.uncertainty.array**2))
     denom = np.sum((template_spectrum.flux/observed_spectrum.uncertainty.array)**2)
-    normalized = num/denom
-
-    return normalized
+    return num/denom
 
 def _template_match(observed_spectrum, template_spectrum):
     """
     Resample the template spectrum to match the wavelength of the observed spectrum.
-    Then, run chisquare on the flux of the two spectra.
+    Then, calculate chi2 on the flux of the two spectra.
 
-    :param observed_spectrum: The observed spectrum
-    :param template_spectrum: The template spectrum, which will be resampled to match the wavelength of the observed
-        spectrum
-    :return: chi square of the flux of the observed spectrum and the flux of the template spectrum
+    Parameters
+    ----------
+    observed_spectrum : `Spectrum1D`
+        the observed spectrum
+    template_spectrum : `Spectrum1D`
+        the template spectrum, which will be resampled to match the wavelength of the observed_spectrum
+
+    Returns
+    -------
+    normalized_template_spectrum : `Spectrum1D`
+        the template_spectrum that has been normalized
+    chi2 : `float`
+        the chi2 of the flux of the observed_spectrum and the flux of the normalized_template_spectrum
     """
     # Resample template
     fluxc_resample = FluxConservingResampler()
-    template_spectrum1D = fluxc_resample(template_spectrum, observed_spectrum.wavelength)
+    template_obswavelength = fluxc_resample(template_spectrum, observed_spectrum.wavelength)
 
     # Normalize spectra
-    normalization = _normalize(observed_spectrum, template_spectrum1D)
+    normalization = _normalize(observed_spectrum, template_obswavelength)
 
     # Numerator
-    num_right = normalization*template_spectrum1D.flux
+    num_right = normalization*template_obswavelength.flux
     num = observed_spectrum.flux - num_right
 
     # Denominator
@@ -49,7 +68,23 @@ def _template_match(observed_spectrum, template_spectrum):
 
 def template_match(observed_spectrum, spectral_templates):
     """
-    Find what instance collection is and run _template_match accordingly
+    Find what instance spectral_templates is and run _template_match accordingly. If two template_spectra have the same
+    chi2, the first template is returned
+
+    Parameters
+    ----------
+    observed_spectrum : `Spectrum1D`
+        the observed spectrum
+    spectral_templates : `Spectrum1D` or `SpectrumCollection` or `list`
+        the template spectra, which will be resampled and normalized and compared to the observed_spectrum, where the
+        smallest chi2 and normalized_template_spectrum will be returned
+
+    Returns
+    -------
+    normalized_template_spectrum : `Spectrum1D`
+        the template_spectrum that has been normalized
+    chi2 : `float`
+        the chi2 of the flux of the observed_spectrum and the flux of the normalized_template_spectrum
     """
     if isinstance(spectral_templates, Spectrum1D):
         normalized_spectral_template, chi2 = _template_match(observed_spectrum, spectral_templates)
