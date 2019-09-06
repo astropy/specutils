@@ -60,6 +60,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if flux is None and 'data' in kwargs:
             flux = kwargs.pop('data')
 
+        # Check to make sure the wavelength length is the same in both
+        if flux is not None and spectral_axis is not None:
+            if not spectral_axis.shape[0] == flux.shape[-1]:
+                raise ValueError('Spectral axis ({}) and flux axis ({}) lengths must be the same'.format(
+                    spectral_axis.shape[0], flux.shape[-1]))
+
         # Ensure that the unit information codified in the quantity object is
         # the One True Unit.
         kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)

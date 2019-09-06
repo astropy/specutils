@@ -45,6 +45,11 @@ def test_create_from_multidimensional_arrays():
     assert (spec.frequency == freqs).all()
     assert (spec.flux == flux).all()
 
+    # Mis-matched lengths should raise and exception
+    freqs = np.arange(50) * u.GHz
+    flux = np.random.random((5, len(freqs)-1)) * u.Jy
+    with pytest.raises(ValueError) as e_info:
+        spec = Spectrum1D(spectral_axis=freqs, flux=flux)
 
 def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
@@ -53,6 +58,11 @@ def test_create_from_quantities():
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit == u.nm
     assert spec.spectral_axis.size == 49
+
+    # Mis-matched lengths should raise and exception
+    with pytest.raises(ValueError) as e_info:
+        spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.randn(48) * u.Jy)
 
 
 def test_create_implicit_wcs():
