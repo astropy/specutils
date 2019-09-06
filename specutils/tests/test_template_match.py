@@ -5,7 +5,11 @@ from astropy.nddata import StdDevUncertainty
 from ..spectra.spectrum1d import Spectrum1D
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..analysis import template_match
+from astropy.tests.helper import quantity_allclose
 
+
+# TODO: Add some tests that are outliers: where the observed and template do not overlap (what happens?),
+# TODO: where there is minimal overlap (1 point)?
 
 def test_template_match_spectrum():
     """
@@ -27,6 +31,11 @@ def test_template_match_spectrum():
     # Get result from template_match
     tm_result = template_match.template_match(spec, spec1)
 
+    # Create new spectrum for comparison
+    spec_result = Spectrum1D(spectral_axis=spec_axis,
+                       flux=spec1.flux * template_match._normalize(spec, spec1))
+
+    assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     assert tm_result[1] == 40093.28353756253
 
 def test_template_match_with_resample():
@@ -49,6 +58,11 @@ def test_template_match_with_resample():
     # Get result from template_match
     tm_result = template_match.template_match(spec, spec1)
 
+    # Create new spectrum for comparison
+    spec_result = Spectrum1D(spectral_axis=spec_axis1,
+                       flux=spec1.flux * template_match._normalize(spec, spec1))
+
+    assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     assert tm_result[1] == 40093.28353756253
 
 def test_template_match_list():

@@ -9,9 +9,9 @@ def _normalize(observed_spectrum, template_spectrum):
 
     Parameters
     ----------
-    observed_spectrum : `Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum1D`
         the observed spectrum
-    template_spectrum : `Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum1D`
         the template spectrum, which needs to be normalized in order to be compared with the observed_spectrum
 
     Returns
@@ -30,14 +30,14 @@ def _template_match(observed_spectrum, template_spectrum):
 
     Parameters
     ----------
-    observed_spectrum : `Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum1D`
         the observed spectrum
-    template_spectrum : `Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum1D`
         the template spectrum, which will be resampled to match the wavelength of the observed_spectrum
 
     Returns
     -------
-    normalized_template_spectrum : `Spectrum1D`
+    normalized_template_spectrum : :class:`~specutils.Spectrum1D`
         the template_spectrum that has been normalized
     chi2 : `float`
         the chi2 of the flux of the observed_spectrum and the flux of the normalized_template_spectrum
@@ -73,15 +73,15 @@ def template_match(observed_spectrum, spectral_templates):
 
     Parameters
     ----------
-    observed_spectrum : `Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum1D`
         the observed spectrum
-    spectral_templates : `Spectrum1D` or `SpectrumCollection` or `list`
+    spectral_templates : :class:`~specutils.Spectrum1D` or :class:`~specutils.SpectrumCollection` or `list`
         the template spectra, which will be resampled and normalized and compared to the observed_spectrum, where the
         smallest chi2 and normalized_template_spectrum will be returned
 
     Returns
     -------
-    normalized_template_spectrum : `Spectrum1D`
+    normalized_template_spectrum : :class:`~specutils.Spectrum1D`
         the template_spectrum that has been normalized
     chi2 : `float`
         the chi2 of the flux of the observed_spectrum and the flux of the normalized_template_spectrum
