@@ -38,7 +38,14 @@ def snr_threshold(spectrum, value):
     if not hasattr(spectrum, 'uncertainty') or spectrum.uncertainty is None:
         raise Exception("S/N thresholding requires the uncertainty be defined.")
 
-    mask = (spectrum.flux / (spectrum.uncertainty.array*spectrum.uncertainty.unit)) > value
+    if hasattr(spectrum, 'flux'):
+        data = spectrum.flux
+    elif hasattr(spectrum, 'data'):
+        data = spectrum.data * (spectrum.unit if spectrum.unit is not None else 1)
+    else:
+        raise ValueError('Could not find data attribute.')
+
+    mask = (data / (spectrum.uncertainty.array*spectrum.uncertainty.unit)) > value
 
     spectrum.mask = mask
 
