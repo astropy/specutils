@@ -45,7 +45,7 @@ def test_create_from_multidimensional_arrays():
     assert (spec.frequency == freqs).all()
     assert (spec.flux == flux).all()
 
-    # Mis-matched lengths should raise and exception
+    # Mis-matched lengths should raise an exception
     freqs = np.arange(50) * u.GHz
     flux = np.random.random((5, len(freqs)-1)) * u.Jy
     with pytest.raises(ValueError) as e_info:
@@ -59,7 +59,7 @@ def test_create_from_quantities():
     assert spec.spectral_axis.unit == u.nm
     assert spec.spectral_axis.size == 49
 
-    # Mis-matched lengths should raise and exception
+    # Mis-matched lengths should raise an exception
     with pytest.raises(ValueError) as e_info:
         spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(48) * u.Jy)
