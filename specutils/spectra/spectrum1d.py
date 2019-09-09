@@ -120,7 +120,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
-                raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same (or uncertainty must be a singleton)'.format(
+                raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same.'.format(
                     flux.shape, self.uncertainty.array.shape))
 
 
