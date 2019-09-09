@@ -3,6 +3,7 @@ A module for analysis tools dealing with uncertainties or error analysis in
 spectra.
 """
 
+import copy
 import numpy as np
 
 __all__ = ['snr_threshold']
@@ -24,14 +25,13 @@ def snr_threshold(spectrum, value):
 
     Returns
     -------
-    spectrum_masked : `~astropy.units.Quantity` or list (based on region input)
-        Signal to noise ratio of the spectrum or within the regions
+    spectrum: `~specutils.Spectrum1D`
+        Ouput spectrum with ``spectrum.mask`` set based on threshold.
 
     Notes
     -----
     The spectrum will need to have the uncertainty defined in order for the SNR
-    to be calculated. If the goal is instead signal to noise *per pixel*, this
-    should be computed directly as ``spectrum.flux / spectrum.uncertainty``.
+    to be calculated.
 
     """
 
@@ -47,6 +47,7 @@ def snr_threshold(spectrum, value):
 
     mask = (data / (spectrum.uncertainty.array*spectrum.uncertainty.unit)) > value
 
-    spectrum.mask = mask
+    spectrum_out = copy.copy(spectrum)
+    spectrum_out._mask = mask
 
-    return spectrum
+    return spectrum_out
