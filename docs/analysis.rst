@@ -135,24 +135,33 @@ computing a second-moment-based approximation of the standard deviation.
 The `~gaussian_fwhm` function estimates the width of the spectrum at half max,
 again by computing an approximation of the standard deviation.
 
-Both of these functions assume that spectrum is approximately gaussian.
+Both of these functions assume that the spectrum is approximately gaussian.
 
 The function `~fwhm` provides an estimate of the full width of the spectrum at
 half max that does not assume the spectrum is gaussian. It locates the maximum,
 and then locates the value closest to half of the maximum on either side, and
 measures the distance between them.
 
+A function to calculate the full width at zero intensity (i.e. the width of a
+spectral feature at the continuum) is provided as `~fwzi`. Like the `~fwhm`
+calculation, it does not make assumptions about the shape of the feature
+and calculates the width by finding the points at either side of maximum
+that reach the continuum value. In this case, it assumes the provided
+spectrum has been continuum subtracted.
+
 Each of the width analysis functions are applied to this spectrum below:
 
 .. code-block:: python
 
-   >>> from specutils.analysis import gaussian_sigma_width, gaussian_fwhm, fwhm
+   >>> from specutils.analysis import gaussian_sigma_width, gaussian_fwhm, fwhm, fwzi
    >>> gaussian_sigma_width(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 0.76925064 GHz>
    >>> gaussian_fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 1.81144683 GHz>
    >>> fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 1.90954774 GHz>
+   >>> fwzi(noisy_gaussian) # doctest: +FLOAT_CMP
+   <Quantity 89.99999455 GHz>
 
 
 Reference/API

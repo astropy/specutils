@@ -27,7 +27,6 @@ except (NameError, KeyError):  # NameError is needed to support Astropy < 1.0
 
 # Use ASDF schema tester plugin if ASDF is installed
 if find_spec('asdf') is not None:
-    pytest_plugins = ['asdf.tests.schema_tester']
     PYTEST_HEADER_MODULES['Asdf'] = 'asdf'
 
 # Uncomment the following lines to display the version number of the
