@@ -215,6 +215,16 @@ def test_create_with_uncertainty():
 
     assert spec.flux.unit == spec.uncertainty.unit
 
+    # If flux and uncertainty are different sizes then raise exception
+    wavelengths = np.arange(0, 10)
+    flux=100*np.abs(np.random.randn(3, 4, 10))*u.Jy
+    uncertainty = StdDevUncertainty(np.abs(np.random.randn(3, 2, 10))*u.Jy)
+
+    with pytest.raises(ValueError) as e_info:
+        s1d = Spectrum1D(spectral_axis=wavelengths*u.um,
+                         flux=flux,
+                         uncertainty=uncertainty)
+
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_read_linear_solution(remote_data_path):
