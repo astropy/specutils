@@ -88,6 +88,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
 
+        # Check to make sure the wavelength length is the same in both
+        if flux is not None and spectral_axis is not None:
+            if not spectral_axis.shape[0] == flux.shape[-1]:
+                raise ValueError('Spectral axis ({}) and the last flux axis ({}) lengths must be the same'.format(
+                    spectral_axis.shape[0], flux.shape[-1]))
+
         self._velocity_convention = velocity_convention
 
         if rest_value is None:
@@ -111,6 +117,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
+
+        if hasattr(self, 'uncertainty') and self.uncertainty is not None:
+            if not flux.shape == self.uncertainty.array.shape:
+                raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same.'.format(
+                    flux.shape, self.uncertainty.array.shape))
+
 
     @property
     def frequency(self):
