@@ -91,7 +91,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
             if not spectral_axis.shape[0] == flux.shape[-1]:
-                raise ValueError('Spectral axis ({}) and flux axis ({}) lengths must be the same'.format(
+                raise ValueError('Spectral axis ({}) and the last flux axis ({}) lengths must be the same'.format(
                     spectral_axis.shape[0], flux.shape[-1]))
 
         self._velocity_convention = velocity_convention
