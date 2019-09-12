@@ -246,7 +246,7 @@ S/N Threshold Mask
 It is useful to be able to find all the spaxels in an ND spectrum
 in which the signal to noise ratio is greater than some threshold.
 This method implements this functionality so that a `~specutils.Spectrum1D`
-object, `~specutils.SpectrumCollection` or an `~astropy.nddata.NDDdata` derived
+object, `~specutils.SpectrumCollection` or an :class:`~astropy.nddata.NDData` derived
 object may be passed in as the first parameter. The second parameter
 is a floating point threshold. 
 
