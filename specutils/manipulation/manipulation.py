@@ -17,8 +17,8 @@ def snr_threshold(spectrum, value):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
-        The spectrum object overwhich the equivalent width will be calculated.
+    spectrum : `~specutils.Spectrum1D`, `~specutils.SpectrumCollection` or `~astropy.nddata.NDData`
+        The spectrum object overwhich the S/N threshold will be calculated.
 
     value: ``float``
         Threshold value to be applied to flux / uncertainty.
@@ -26,11 +26,11 @@ def snr_threshold(spectrum, value):
     Returns
     -------
     spectrum: `~specutils.Spectrum1D`
-        Ouput spectrum with ``spectrum.mask`` set based on threshold.
+        Ouput object with ``spectrum.mask`` set based on threshold.
 
     Notes
     -----
-    The spectrum will need to have the uncertainty defined in order for the SNR
+    The input object will need to have the uncertainty defined in order for the SNR
     to be calculated.
 
     """
@@ -38,8 +38,11 @@ def snr_threshold(spectrum, value):
     if not hasattr(spectrum, 'uncertainty') or spectrum.uncertainty is None:
         raise Exception("S/N thresholding requires the uncertainty be defined.")
 
+    # Spectrum1D
     if hasattr(spectrum, 'flux'):
         data = spectrum.flux
+
+    # NDData
     elif hasattr(spectrum, 'data'):
         data = spectrum.data * (spectrum.unit if spectrum.unit is not None else 1)
     else:
