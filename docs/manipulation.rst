@@ -255,6 +255,11 @@ then call the ``snr_threshold`` method:
 
 .. code-block:: python
 
+    >>> import numpy as np
+    >>> from astropy.nddata import StdDevUncertainty
+    >>> import astropy.units as u
+    >>> from specutils import Spectrum1D
+    >>> from specutils.manipulation import snr_threshold
     >>> np.random.seed(42)
     >>> wavelengths = np.linspace(0, 10)*u.um
     >>> flux = 100*np.abs(np.random.randn(10))*u.Jy
