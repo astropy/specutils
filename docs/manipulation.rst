@@ -261,7 +261,7 @@ then call the ``snr_threshold`` method:
     >>> from specutils import Spectrum1D
     >>> from specutils.manipulation import snr_threshold
     >>> np.random.seed(42)
-    >>> wavelengths = np.linspace(0, 10)*u.um
+    >>> wavelengths = np.arange(0, 10)*u.um
     >>> flux = 100*np.abs(np.random.randn(10))*u.Jy
     >>> uncertainty = StdDevUncertainty(np.abs(np.random.randn(10))*u.Jy)
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
