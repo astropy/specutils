@@ -2,6 +2,7 @@ import numpy as np
 
 import astropy.units as u
 from astropy.modeling import models
+from astropy.nddata import StdDevUncertainty
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..fitting import (fit_lines, find_lines_derivative,
@@ -187,6 +188,44 @@ def test_single_peak_fit():
                2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04]) * u.Jy
 
     assert np.allclose(y_single_fit.value[::10], y_single_fit_expected.value, atol=1e-5)
+
+
+def test_single_peak_fit_with_uncertainties():
+    """
+    Single peak fit
+    """
+
+    # Create the spectrum
+    line_mod = models.Gaussian1D(amplitude=100,
+                                 mean=6563*u.angstrom,
+                                 stddev=20*u.angstrom) + models.Const1D(10)
+
+    init_mod = models.Gaussian1D(amplitude=85 * u.Jy,
+                                 mean=6550*u.angstrom,
+                                 stddev=30*u.angstrom) + models.Const1D(8 * u.Jy)
+    x = np.linspace(6400, 6700, 300) * u.AA
+
+    def calculate_rms(x, init_mod, implicit_weights):
+        rms = []
+
+        for _ in range(100):
+            ymod = line_mod(x)
+            y = np.random.poisson(ymod)
+            unc = np.sqrt(ymod)
+
+            spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
+                              uncertainty=StdDevUncertainty(unc * u.Jy))
+
+            weights = 'unc' if implicit_weights else 1 / unc
+
+            spec_fit = fit_lines(spec, init_mod, weights=weights)
+
+            rms.append(np.std(spec_fit(x).value - y))
+
+        return np.median(rms)
+
+    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=True), 5.101611033799086)
+    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False), 5.113697654869089)
 
 
 def test_single_peak_fit_window():

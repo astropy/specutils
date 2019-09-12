@@ -1,5 +1,6 @@
 import operator
 import itertools
+import logging
 
 import numpy as np
 from scipy.signal import convolve
@@ -283,10 +284,10 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         Fitter instance to be used when fitting model to spectrum.
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
-    weights : list or {'standard_deviation', 'variance', 'inverse_variance'}, optional
-        If string, defines how the uncertainties are used as weights in the
-        fitting. If list/ndarray, represents the explicit weights to use in
-        the fitting.
+    weights : list or 'unc', optional
+        If 'unc', the unceratinties from the spectrum object are used to
+        to calculate the weights. If list/ndarray, represents the weights to
+        use in the fitting.
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
@@ -305,9 +306,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
        * The models in the list of ``model`` are added
           together and passed as a compound model to the
           `~astropy.modeling.fitting.Fitter` class instance.
-
     """
-
     #
     # If we are to exclude certain regions, then remove them.
     #
@@ -377,16 +376,28 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     spectrum, model -> model
     """
-    if isinstance(weights, str):
-        if weights == 'standard_deviation':
-            
-
     #
     # If we are to exclude certain regions, then remove them.
     #
 
     if exclude_regions is not None:
         spectrum = excise_regions(spectrum, exclude_regions)
+
+    if isinstance(weights, str):
+        if weights == 'unc':
+            uncerts = spectrum.uncertainty
+
+            if uncerts is not None:
+                weights = 1 / uncerts.array
+            else:
+                logging.warning("Uncertainty values are not defined, but are "
+                                "trying to be used in model fitting.")
+        else:
+            raise ValueError("Unrecognized value `%s` in keyword argument.",
+                             weights)
+    elif weights is not None:
+        # Assume that the weights argument is list-like
+        weights = np.array(weights)
 
     dispersion = spectrum.spectral_axis
     dispersion_unit = spectrum.spectral_axis.unit
@@ -415,6 +426,9 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         dispersion = dispersion[indices]
         flux = flux[indices]
 
+        if weights is not None:
+            weights = weights[indices]
+
     # In this case the window is the start and end points of where we
     # should fit
     elif window is not None and isinstance(window, tuple):
@@ -423,6 +437,9 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
         dispersion = dispersion[indices]
         flux = flux[indices]
+
+        if weights is not None:
+            weights = weights[indices]
 
     elif window is not None and isinstance(window, SpectralRegion):
         try:
@@ -463,7 +480,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     #
 
     fit_model_unitless = fitter(model_unitless, dispersion_unitless,
-                                flux_unitless, **kwargs)
+                                flux_unitless, weights=weights, **kwargs)
 
     #
     # Now add the units back onto the model....
