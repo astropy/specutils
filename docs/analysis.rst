@@ -181,7 +181,6 @@ An example of how to use template matching in `specutils.analysis.template_compa
 .. code-block:: python
 
    >>> from specutils.analysis import template_comparison
-
    >>> spec_axis = np.linspace(0, 50, 50) * u.AA
    >>> spec = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
    >>> spec1 = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
