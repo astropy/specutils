@@ -184,7 +184,7 @@ An example of how to do template matching in is:
    >>> from specutils.analysis import template_comparison
    >>> spec_axis = np.linspace(0, 50, 50) * u.AA
    >>> observed_spectrum = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-   >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(2, 50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(2, 50), unit='Jy'))
+   >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(2, 50), unit='Jy'))
    >>> tm_result = template_comparison.template_match(observed_spectrum, spectral_template) # doctest:+FLOAT_CMP
 
 
