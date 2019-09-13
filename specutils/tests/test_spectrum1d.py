@@ -3,7 +3,6 @@ import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
 import pytest
-from astropy.units import Quantity
 from astropy.nddata import StdDevUncertainty
 
 from .conftest import remote_access
@@ -128,21 +127,17 @@ def test_redshift():
                       velocity_convention='optical',
                       rest_value=6000 * u.AA)
 
-    assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(-99930.8, abs=0.5)
-    assert spec.velocity[1].value == pytest.approx(0.0, abs=0.5)
-    assert spec.velocity[2].value == pytest.approx(99930.8, abs=0.5)
+    assert u.allclose(spec.velocity, [-99930.8, 0, 99930.8]*u.km/u.s,
+                     atol=0.5*u.km/u.s)
 
     spec = Spectrum1D(flux=np.array([26.0, 30., 44.5]) * u.Jy,
                       spectral_axis=np.array([4000, 6000, 8000]) * u.AA,
                       velocity_convention='optical',
                       rest_value=6000 * u.AA,
-                      redshift_rv= 0.1)
+                      redshift= 0.1)
 
-    assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(-69951.3, abs=0.5)
-    assert spec.velocity[1].value == pytest.approx(29979.2, abs=0.5)
-    assert spec.velocity[2].value == pytest.approx(129910.1, abs=0.5)
+    assert u.allclose(spec.velocity, [-69951.3, 29979.2, 129910.1]*u.km/u.s,
+                     atol=0.5*u.km/u.s)
 
     #-------------------------
 
@@ -151,21 +146,17 @@ def test_redshift():
                       velocity_convention='radio',
                       rest_value=11.0 * u.GHz)
 
-    assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(13626., abs=1.)
-    assert spec.velocity[1].value == pytest.approx(0., abs=1.)
-    assert spec.velocity[2].value == pytest.approx(-13626., abs=1.)
+    assert u.allclose(spec.velocity, [13626., 0, -13626]*u.km/u.s,
+                     atol=1*u.km/u.s)
 
     spec = Spectrum1D(flux=np.array([26.0, 30.0, 44.5]) * u.Jy,
                       spectral_axis=np.array([10.5, 11.0, 11.5]) * u.GHz,
                       velocity_convention='radio',
                       rest_value=11.0 * u.GHz,
-                      redshift_rv= 0.1)
+                      redshift= 0.1)
 
-    assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(43606., abs=1.)
-    assert spec.velocity[1].value == pytest.approx(29979., abs=1.)
-    assert spec.velocity[2].value == pytest.approx(16352., abs=1.)
+    assert u.allclose(spec.velocity, [43606., 29979., 16352.]*u.km/u.s,
+                      atol=1*u.km/u.s)
 
     #------------------------- radial velocity mode
 
@@ -174,21 +165,17 @@ def test_redshift():
                       velocity_convention='optical',
                       rest_value=6000 * u.AA)
 
-    assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(-99930.8, abs=0.5)
-    assert spec.velocity[1].value == pytest.approx(0.0, abs=0.5)
-    assert spec.velocity[2].value == pytest.approx(99930.8, abs=0.5)
+    assert u.allclose(spec.velocity, [-99930.8, 0.0, 99930.8]*u.km/u.s,
+                      atol=0.5*u.km/u.s)
 
     spec = Spectrum1D(flux=np.array([26.0, 30., 44.5]) * u.Jy,
                       spectral_axis=np.array([4000, 6000, 8000]) * u.AA,
                       velocity_convention='optical',
                       rest_value=6000 * u.AA,
-                      redshift_rv=Quantity(1000., 'km/s'))
+                      radial_velocity=1000.*u.km/u.s)
 
-    assert spec.velocity.unit == u.Unit('km/s')
-    assert spec.velocity[0].value == pytest.approx(-98930.8, abs=0.5)
-    assert spec.velocity[1].value == pytest.approx(1000.0, abs=0.5)
-    assert spec.velocity[2].value == pytest.approx(100930.8, abs=0.5)
+    assert u.allclose(spec.velocity, [-98930.8, 1000.0, 100930.8]*u.km/u.s,
+                      atol=0.5*u.km/u.s)
 
 
 def test_flux_unit_conversion():
