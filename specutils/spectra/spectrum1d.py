@@ -129,6 +129,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
+        super(Spectrum1D, self).__init__(
+            data=flux.value if isinstance(flux, u.Quantity) else flux,
+            wcs=wcs, **kwargs)
+
+        # set redshift after super() - necessary because the shape-checking
+        # requires that the flux be initialized
+
         if redshift is None:
             self.radial_velocity = radial_velocity
         elif radial_velocity is None:
@@ -136,10 +143,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         else:
             raise ValueError('cannot set both radial_velocity and redshift at '
                              'the same time.')
-
-        super(Spectrum1D, self).__init__(
-            data=flux.value if isinstance(flux, u.Quantity) else flux,
-            wcs=wcs, **kwargs)
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
@@ -245,7 +248,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if val is None:
             self._radial_velocity = None
         else:
-            self._radial_velocity = val * cnst.c
+            self.radial_velocity = val * cnst.c
 
     @property
     def radial_velocity(self):
@@ -270,7 +273,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # each other. See https://stackoverflow.com/questions/47243451/checking-if-two-arrays-are-broadcastable-in-python
             input_shape = val.shape
             flux_shape = self.flux.shape[:-1]
-            if all((m == n) or (m == 1) or (n == 1)
+            if not all((m == n) or (m == 1) or (n == 1)
                    for m, n in zip(input_shape[::-1], flux_shape)):
                 raise ValueError("radial_velocity or redshift must have shape that "
                                  "is compatible with this spectrum's flux array")
