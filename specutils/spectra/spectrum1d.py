@@ -71,7 +71,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             raise ValueError("Flux must be a `Quantity` object.")
 
         # In cases of slicing, new objects will be initialized with `data`
-        # instead of `flux`. Ensure we grab the `data` argument.
+        # instead of ``flux``. Ensure we grab the `data` argument.
         if flux is None and 'data' in kwargs:
             flux = kwargs.pop('data')
 
@@ -233,7 +233,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def redshift(self):
         """
         The redshift(s) of the objects represented by this spectrum.  May be
-        scalar (if this spectrum's `flux` is 1D) or vector.  Note that
+        scalar (if this spectrum's ``flux`` is 1D) or vector.  Note that
         the concept of "redshift of a spectrum" can be ambiguous, so the
         interpretation is set to some extent by either the user, or operations
         (like template fitting) that set this attribute when they are run on
@@ -251,7 +251,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def radial_velocity(self):
         """
         The radial velocity(s) of the objects represented by this spectrum.  May
-        be scalar (if this spectrum's `flux` is 1D) or vector.  Note that
+        be scalar (if this spectrum's ``flux`` is 1D) or vector.  Note that
         the concept of "RV of a spectrum" can be ambiguous, so the
         interpretation is set to some extent by either the user, or operations
         (like template fitting) that set this attribute when they are run on
