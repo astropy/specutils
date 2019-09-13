@@ -280,7 +280,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         The spectrum object over which the equivalent width will be calculated.
     model: `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
         The model or list of models that contain the initial guess.
-    fitter : `~astropy.modeling.Fitter`, optional
+    fitter : `~astropy.modeling.fitting.Fitter`, optional
         Fitter instance to be used when fitting model to spectrum.
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
