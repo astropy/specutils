@@ -177,7 +177,7 @@ With one observed spectrum and n template spectra, the process to do template ma
        corresponding template spectrum (normalized) and the index of the template spectrum if the original template
        parameter is iterable
 
-An example of how to use template matching in `specutils.analysis.template_comparison` is:
+An example of how to do template matching in is:
 
 .. code-block:: python
 
