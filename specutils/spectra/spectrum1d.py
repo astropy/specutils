@@ -3,7 +3,8 @@ from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
-from astropy.nddata import NDDataRef, NDUncertainty
+from astropy import constants as cnst
+from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 
 from ..wcs import WCSAdapter, WCSWrapper
@@ -33,11 +34,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Any quantity supported by the standard spectral equivalencies
         (wavelength, energy, frequency, wave number). Describes the rest value
         of the spectral axis for use with velocity conversions.
-    redshift_rv : float or `~astropy.units.Quantity`
-        The redshift/RV correction to be applied to the spectral axis for use
-        with velocity conversions. If float, the value is interpreted as the
-        redshift z. If an instance of `~astropy.units.Quantity` is passed,
-        it is interpreted as a radial velocity with the appropriate velocity units.
+    redshift
+        See `redshift` for more information.
+    radial_velocity
+        See `radial_velocity` for more information.
     uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
@@ -47,8 +47,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         around with the spectrum container object.
     """
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
-                 velocity_convention=None, rest_value=None, redshift_rv=None,
-                 **kwargs):
+                 velocity_convention=None, rest_value=None, redshift=None,
+                 radial_velocity=None, **kwargs):
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
             {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy'})
@@ -129,11 +129,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
                 raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
 
-        # redshift may be moved to somewhere else in the future,
-        # perhaps to the object that handles coordinates.
-        self._redshift_rv = redshift_rv
-        if redshift_rv is None:
-            self._redshift_rv = 0.
+        if redshift is None:
+            self.radial_velocity = radial_velocity
+        elif radial_velocity is None:
+            self.redshift = redshift
+        else:
+            raise ValueError('cannot set both radial_velocity and redshift at '
+                             'the same time.')
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
@@ -226,6 +228,53 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def shape(self):
         return self.flux.shape
+
+    @property
+    def redshift(self):
+        """
+        The redshift(s) of the objects represented by this spectrum.  May be
+        scalar (if this spectrum's `flux` is 1D) or vector.  Note that
+        the concept of "redshift of a spectrum" can be ambiguous, so the
+        interpretation is set to some extent by either the user, or operations
+        (like template fitting) that set this attribute when they are run on
+        a spectrum.
+        """
+        return self._radial_velocity/cnst.c
+    @redshift.setter
+    def redshift(self, val):
+        if val is None:
+            self._radial_velocity = None
+        else:
+            self._radial_velocity = val * cnst.c
+
+    @property
+    def radial_velocity(self):
+        """
+        The radial velocity(s) of the objects represented by this spectrum.  May
+        be scalar (if this spectrum's `flux` is 1D) or vector.  Note that
+        the concept of "RV of a spectrum" can be ambiguous, so the
+        interpretation is set to some extent by either the user, or operations
+        (like template fitting) that set this attribute when they are run on
+        a spectrum.
+        """
+        return self._radial_velocity
+    @radial_velocity.setter
+    def radial_velocity(self, val):
+        if val is None:
+            self._radial_velocity = None
+        else:
+            if not val.unit.is_equivalent(u.km/u.s):
+                raise u.UnitsError('radial_velocity must be a velocity')
+
+            # the trick below checks if the two shapes given are broadcastable onto
+            # each other. See https://stackoverflow.com/questions/47243451/checking-if-two-arrays-are-broadcastable-in-python
+            input_shape = val.shape
+            flux_shape = self.flux.shape[:-1]
+            if all((m == n) or (m == 1) or (n == 1)
+                   for m, n in zip(input_shape[::-1], flux_shape)):
+                raise ValueError("radial_velocity or redshift must have shape that "
+                                 "is compatible with this spectrum's flux array")
+            self._radial_velocity = val
 
     @staticmethod
     def _compare_wcs(this_operand, other_operand):

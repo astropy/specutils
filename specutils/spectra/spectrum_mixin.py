@@ -2,8 +2,6 @@ import logging
 from copy import deepcopy
 
 import numpy as np
-from astropy.units import Quantity
-from astropy.constants import c as C
 from astropy import units as u
 import astropy.units.equivalencies as eq
 from astropy.utils.decorators import lazyproperty
@@ -184,12 +182,6 @@ class OneDSpectrumMixin:
             self.velocity_convention))(self.rest_value)
 
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
-
-        # Redshift-correct velocities using approximate low-z correction.
-        if isinstance(self._redshift_rv, Quantity):
-            new_data += self._redshift_rv
-        else:
-            new_data += Quantity((self._redshift_rv * C), new_data.unit)
 
         return new_data
 
