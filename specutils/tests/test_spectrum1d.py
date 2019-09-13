@@ -30,6 +30,11 @@ def test_create_from_arrays():
     assert isinstance(spec.flux, u.Quantity)
     assert spec.flux.size == 50
 
+    # Test creating spectrum with unknown arguments
+    with pytest.raises(ValueError) as e_info:
+        spec = Spectrum1D(wavelength=np.arange(1, 50) * u.nm,
+                          flux=np.random.randn(48) * u.Jy)
+
 
 def test_create_from_multidimensional_arrays():
     """
