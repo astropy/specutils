@@ -176,6 +176,7 @@ With one observed spectrum and n template spectra, the process to do template ma
     3. Once you have a corresponding chi square for each template spectrum, return the lowest chi square and its
        corresponding template spectrum (normalized) and the index of the template spectrum if the original template
        parameter is iterable
+
 An example of how to use template matching in `specutils.analysis.template_comparison` is:
 
 .. code-block:: python
