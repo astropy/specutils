@@ -112,6 +112,8 @@ def template_match(observed_spectrum, spectral_templates, resample_method="flux_
         the template_spectrum that has been normalized
     chi2 : `float`
         the chi2 of the flux of the observed_spectrum and the flux of the normalized_template_spectrum
+    smallest_chi_index : `int`
+        the index of the spectrum with the smallest chi2 in spectral_templates
     """
     if hasattr(spectral_templates, 'flux') and len(spectral_templates.flux.shape)==1:
         normalized_spectral_template, chi2 = _template_match(observed_spectrum, spectral_templates, resample_method)
@@ -131,7 +133,7 @@ def template_match(observed_spectrum, spectral_templates, resample_method="flux_
                     chi2_min = chi2
                     smallest_chi_spec = normalized_spectral_template
                     smallest_chi_index = index
-                index+=1
+                index += 1
         except Exception as e:
             print("Parameter spectral_templates is not iterable. The following error was fired: {}".format(e))
 
