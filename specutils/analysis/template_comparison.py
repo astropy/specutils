@@ -4,6 +4,7 @@ from ..manipulation import FluxConservingResampler
 from ..manipulation import LinearInterpolatedResampler
 from ..manipulation import SplineInterpolatedResampler
 import numpy as np
+import logging
 
 def _normalize_for_template_matching(observed_spectrum, template_spectrum):
     """
@@ -135,6 +136,6 @@ def template_match(observed_spectrum, spectral_templates, resample_method="flux_
                     smallest_chi_index = index
                 index += 1
         except Exception as e:
-            print("Parameter spectral_templates is not iterable. The following error was fired: {}".format(e))
+            logging.warning("Parameter spectral_templates is not iterable. The following error was fired: {}".format(e))
 
         return smallest_chi_spec, chi2_min, smallest_chi_index
