@@ -38,6 +38,7 @@ def test_template_match_spectrum():
     assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     assert tm_result[1] == 40093.28353756253
 
+
 def test_template_match_with_resample():
     """
     Test template_match when both observed and template spectra have different wavelength axis using resampling
@@ -64,6 +65,7 @@ def test_template_match_with_resample():
 
     assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     assert tm_result[1] == 40093.28353756253
+
 
 def test_template_match_list():
     """
@@ -93,6 +95,7 @@ def test_template_match_list():
 
     assert tm_result[1] == 40093.28353756253
 
+
 def test_template_match_spectrum_collection():
     """
     Test template_match when template spectra are in a SpectrumCollection object
@@ -104,14 +107,13 @@ def test_template_match_spectrum_collection():
     spec_axis2 = np.linspace(0, 50, 50) * u.AA
     spec = Spectrum1D(spectral_axis=spec_axis1,
                       flux=np.random.randn(50) * u.Jy,
-                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-
+                      uncertainty=StdDevUncertainty(np.random.sample(50)))
     spec1 = Spectrum1D(spectral_axis=spec_axis2,
                        flux=np.random.randn(50) * u.Jy,
-                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+                       uncertainty=StdDevUncertainty(np.random.sample(50)))
     spec2 = Spectrum1D(spectral_axis=spec_axis2,
                        flux=np.random.randn(50) * u.Jy,
-                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+                       uncertainty=StdDevUncertainty(np.random.sample(50)))
 
     # Combine spectra into SpectrumCollection object
     spec_coll = SpectrumCollection.from_spectra([spec1, spec2])
@@ -120,3 +122,26 @@ def test_template_match_spectrum_collection():
     tm_result = template_comparison.template_match(spec, spec_coll)
 
     assert tm_result[1] == 40093.28353756253
+
+
+def test_template_match_multidim_spectrum():
+    """
+    Test template matching with a multi-dimensional Spectrum1D object.
+    """
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis1 = np.linspace(0, 50, 50) * u.AA
+    spec_axis2 = np.linspace(0, 50, 50) * u.AA
+
+    spec = Spectrum1D(spectral_axis=spec_axis1,
+                      flux=np.random.sample(50) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(50)))
+    multidim_spec = Spectrum1D(spectral_axis=spec_axis2,
+                               flux=np.random.sample((2, 50)) * u.Jy,
+                               uncertainty=StdDevUncertainty(np.random.sample(50)))
+
+    # Get result from template_match
+    tm_result = template_comparison.template_match(spec, multidim_spec)
+
+    assert tm_result[1] == 250.26870401777543
