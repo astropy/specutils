@@ -134,10 +134,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 ``Spectrum1D`` where all attributes are sliced.
             2.) When flux is multi-dimensional (i.e. several fluxes over the
                 same spectral axis), indexing returns a new ``Spectrum1D`` with
-                the sliced flux range and everything and a deep copy of all 
-                other attributes.
+                the sliced flux range and a deep copy of all other attributes.
 
-        The second case is handled by the inerhited class, whle the former is
+        The first case is handled by the parent class, while the second is
         handled here.
         """
         if len(self.flux.shape) > 1:
@@ -147,7 +146,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     def _copy(self, **kwargs):
         """
-        Peform deepcopy operations on each attribute of the ``Spectrum1D``
+        Peform deep copy operations on each attribute of the ``Spectrum1D``
         object.
         """
         alt_kwargs = dict(
