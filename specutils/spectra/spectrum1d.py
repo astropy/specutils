@@ -1,11 +1,12 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
-from astropy.nddata import NDDataRef
+from astropy.nddata import NDDataRef, NDUncertainty
 from astropy.utils.decorators import lazyproperty
-from astropy.nddata import NDUncertainty
-from ..wcs import WCSWrapper, WCSAdapter
+
+from ..wcs import WCSAdapter, WCSWrapper
 from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
@@ -123,6 +124,46 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same.'.format(
                     flux.shape, self.uncertainty.array.shape))
 
+    def __getitem__(self, item):
+        """
+        Override the class indexer. We do this here because there are two cases
+        for slicing on a ``Spectrum1D``:
+
+            1.) When the flux is one dimensional, indexing represents a single
+                flux value at a particular spectral axis bin, and returns a new
+                ``Spectrum1D`` where all attributes are sliced.
+            2.) When flux is multi-dimensional (i.e. several fluxes over the
+                same spectral axis), indexing returns a new ``Spectrum1D`` with
+                the sliced flux range and everything and a deep copy of all 
+                other attributes.
+
+        The second case is handled by the inerhited class, whle the former is
+        handled here.
+        """
+        if len(self.flux.shape) > 1:
+            return self._copy(flux=self.flux[item])
+
+        return super().__getitem__(item)
+
+    def _copy(self, **kwargs):
+        """
+        Peform deepcopy operations on each attribute of the ``Spectrum1D``
+        object.
+        """
+        alt_kwargs = dict(
+            flux=deepcopy(self.flux),
+            spectral_axis=deepcopy(self.spectral_axis),
+            uncertainty=deepcopy(self.uncertainty),
+            wcs=deepcopy(self.wcs),
+            mask=deepcopy(self.mask),
+            meta=deepcopy(self.meta),
+            unit=deepcopy(self.unit),
+            velocity_convention=deepcopy(self.velocity_convention),
+            rest_value=deepcopy(self.rest_value))
+
+        alt_kwargs.update(kwargs)
+
+        return self.__class__(**alt_kwargs)
 
     @property
     def frequency(self):
@@ -283,7 +324,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         result = "<Spectrum1D({})>".format(inner_str)
 
         return result
-
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.
