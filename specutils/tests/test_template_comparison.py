@@ -139,7 +139,7 @@ def test_template_match_multidim_spectrum():
                       uncertainty=StdDevUncertainty(np.random.sample(50)))
     multidim_spec = Spectrum1D(spectral_axis=spec_axis2,
                                flux=np.random.sample((2, 50)) * u.Jy,
-                               uncertainty=StdDevUncertainty(np.random.sample(50)))
+                               uncertainty=StdDevUncertainty(np.random.sample((2, 50))))
 
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, multidim_spec)
