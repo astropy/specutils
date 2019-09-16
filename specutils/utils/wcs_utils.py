@@ -602,19 +602,19 @@ def gwcs_slice(self, item):
         raise TypeError('Unknown index type {}, must be int or slice.'.format(item))
 
     # Create copy as we need to modify this and return it.
-    newwcs = copy.deepcopy(self)
+    new_wcs = copy.deepcopy(self)
 
     if shift == 0:
-        return newwcs
+        return new_wcs
 
     shifter = Shift(shift)
 
     # Get the current forward transform
-    forward = newwcs._wcs.forward_transform
+    forward = new_wcs.forward_transform
 
     # Set the new transform
-    newwcs.wcs.set_transform(newwcs._wcs.input_frame,
-                             newwcs._wcs.output_frame,
-                             shifter|forward)
+    new_wcs.set_transform(new_wcs.input_frame,
+                          new_wcs.output_frame,
+                          shifter | forward)
 
-    return newwcs
+    return new_wcs
