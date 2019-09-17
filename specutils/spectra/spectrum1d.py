@@ -141,7 +141,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         """
         if len(self.flux.shape) > 1:
             return self._copy(
-                flux=self.flux[item], uncertainty=self.uncertainty[item] 
+                flux=self.flux[item], uncertainty=self.uncertainty[item]
                     if self.uncertainty is not None else None)
 
         return super().__getitem__(item)
