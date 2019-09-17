@@ -5,19 +5,19 @@ __all__ = ['QuantityModel']
 
 class QuantityModel:
     """
-    The QuantityModel was created to wrap `~astropy.modeling.models` that do not have
-    the ability to use `~astropy.units` in the parameters.
+    The QuantityModel was created to wrap `~astropy.modeling.models` that do
+    not have the ability to use `~astropy.units` in the parameters.
 
     Parameters
     ----------
-    unitless_model: `~astropy.modeling.Model`
-       A model that does not have units
+    unitless_model : `~astropy.modeling.Model`
+        A model that does not have units
 
-    input_units: `~astropy.units`
-      Units for the dispersion axis
+    input_units : `~astropy.units`
+        Units for the dispersion axis
 
-    return_units: `~astropy.units`
-      Units for the flux axis
+    return_units : `~astropy.units`
+        Units for the flux axis
 
     Notes
     -----
@@ -25,26 +25,27 @@ class QuantityModel:
     to have `~astropy.units.Quantity` on all parameters, then this will
     not be needed.
     """
-
     def __init__(self, unitless_model, input_units, return_units):
-        self.unitless_model = unitless_model  # should  check that it's unitless somehow!
+        # should  check that it's unitless somehow!
+        self.unitless_model = unitless_model
 
-        # we use the dict because now this "shadows" the unitless model's input_units/ return_units
+        # we use the dict because now this "shadows" the unitless model's
+        # input_units/ return_units
         self.__dict__['input_units'] = input_units
         self.__dict__['return_units'] = return_units
 
     def __hasattr_(self, nm):
-        if nm in self.__dict__:
+        if nm in self.__dict__ or hasattr(self, self.unitless_model):
             return True
-        if hasattr(self, self.unitless_model):
-            return True
+
         return False
 
     def __getattr__(self, nm):
         if hasattr(self.unitless_model, nm):
             return getattr(self.unitless_model, nm)
         else:
-            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, nm))
+            raise AttributeError("'{}' object has no attribute '{}'"
+                                 "".format(self.__class__.__name__, nm))
 
     def __setattr__(self, nm, val):
         if nm != 'unitless_model' and hasattr(self.unitless_model, nm):
@@ -54,14 +55,14 @@ class QuantityModel:
 
     def __delattr__(self, nm):
         if hasattr(self.unitless_model, nm):
-            delattr(self.unitless_model, nm, val)
+            delattr(self.unitless_model, nm)
         else:
-            super().__delattr__(nm, val)
+            super().__delattr__(nm)
 
     def __dir__(self):
         thisdir = super().__dir__()
         modeldir = dir(self.unitless_model)
-        return sorted(thisdir + modeldir)
+        return sorted(list(thisdir) + list(modeldir))
 
     def __repr__(self):
         return ('<QuantityModel {}, input_units={}, '
