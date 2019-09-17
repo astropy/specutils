@@ -41,7 +41,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         around with the spectrum container object.
     """
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
-                 velocity_convention=None, rest_value=None, *args, **kwargs):
+                 velocity_convention=None, rest_value=None, **kwargs):
+        # Check for pre-defined entries in the kwargs dictionary.
+        unknown_kwargs = set(kwargs).difference(
+            {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy'})
+
+        if len(unknown_kwargs) > 0:
+            raise ValueError("Initializer contains unknown arguments(s): {}."
+                             "".format(', '.join(map(str, unknown_kwargs))))
+
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, NDDataRef):
