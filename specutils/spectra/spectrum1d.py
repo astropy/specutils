@@ -1,11 +1,12 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
-from astropy.nddata import NDDataRef
+from astropy.nddata import NDDataRef, NDUncertainty
 from astropy.utils.decorators import lazyproperty
-from astropy.nddata import NDUncertainty
-from ..wcs import WCSWrapper, WCSAdapter
+
+from ..wcs import WCSAdapter, WCSWrapper
 from .spectrum_mixin import OneDSpectrumMixin
 
 __all__ = ['Spectrum1D']
@@ -41,7 +42,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         around with the spectrum container object.
     """
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
-                 velocity_convention=None, rest_value=None, *args, **kwargs):
+                 velocity_convention=None, rest_value=None, **kwargs):
+        # Check for pre-defined entries in the kwargs dictionary.
+        unknown_kwargs = set(kwargs).difference(
+            {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy'})
+
+        if len(unknown_kwargs) > 0:
+            raise ValueError("Initializer contains unknown arguments(s): {}."
+                             "".format(', '.join(map(str, unknown_kwargs))))
+
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, NDDataRef):
@@ -88,6 +97,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             raise LookupError("No WCS object or spectral axis information has "
                               "been given. Please provide one.")
 
+        # Check to make sure the wavelength length is the same in both
+        if flux is not None and spectral_axis is not None:
+            if not spectral_axis.shape[0] == flux.shape[-1]:
+                raise ValueError('Spectral axis ({}) and the last flux axis ({}) lengths must be the same'.format(
+                    spectral_axis.shape[0], flux.shape[-1]))
+
         self._velocity_convention = velocity_convention
 
         if rest_value is None:
@@ -111,6 +126,53 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
+
+        if hasattr(self, 'uncertainty') and self.uncertainty is not None:
+            if not flux.shape == self.uncertainty.array.shape:
+                raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same.'.format(
+                    flux.shape, self.uncertainty.array.shape))
+
+    def __getitem__(self, item):
+        """
+        Override the class indexer. We do this here because there are two cases
+        for slicing on a ``Spectrum1D``:
+
+            1.) When the flux is one dimensional, indexing represents a single
+                flux value at a particular spectral axis bin, and returns a new
+                ``Spectrum1D`` where all attributes are sliced.
+            2.) When flux is multi-dimensional (i.e. several fluxes over the
+                same spectral axis), indexing returns a new ``Spectrum1D`` with
+                the sliced flux range and a deep copy of all other attributes.
+
+        The first case is handled by the parent class, while the second is
+        handled here.
+        """
+        if len(self.flux.shape) > 1:
+            return self._copy(
+                flux=self.flux[item], uncertainty=self.uncertainty[item]
+                    if self.uncertainty is not None else None)
+
+        return super().__getitem__(item)
+
+    def _copy(self, **kwargs):
+        """
+        Peform deep copy operations on each attribute of the ``Spectrum1D``
+        object.
+        """
+        alt_kwargs = dict(
+            flux=deepcopy(self.flux),
+            spectral_axis=deepcopy(self.spectral_axis),
+            uncertainty=deepcopy(self.uncertainty),
+            wcs=deepcopy(self.wcs),
+            mask=deepcopy(self.mask),
+            meta=deepcopy(self.meta),
+            unit=deepcopy(self.unit),
+            velocity_convention=deepcopy(self.velocity_convention),
+            rest_value=deepcopy(self.rest_value))
+
+        alt_kwargs.update(kwargs)
+
+        return self.__class__(**alt_kwargs)
 
     @property
     def frequency(self):
@@ -271,7 +333,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         result = "<Spectrum1D({})>".format(inner_str)
 
         return result
-
 
     def spectral_resolution(self, true_dispersion, delta_dispersion, axis=-1):
         """Evaluate the probability distribution of the spectral resolution.

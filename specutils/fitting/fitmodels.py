@@ -1,5 +1,6 @@
 import operator
 import itertools
+import logging
 
 import numpy as np
 from scipy.signal import convolve
@@ -19,15 +20,12 @@ from astropy.table import QTable
 __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
            'estimate_line_parameters']
 
-# Define the initial estimators
-#   This is the default methods to use to estimate astropy model
-#   parameters. This is based on only a small subset of the astropy
-#   models but it was determined that this is a decent start as most
-#   fitting will probably use one of these.
+# Define the initial estimators. This are the default methods to use to
+# estimate astropy model parameters. This is based on only a small subset of
+# the astropy models but it was determined that this is a decent start as most
+# fitting will probably use one of these.
 #
-#   Each method list must take a Spectrum1D object and should return
-#   a Quantity.
-
+# Each method list must take a Spectrum1D object and should return a Quantity.
 _parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
@@ -53,14 +51,17 @@ def _set_parameter_estimators(model):
     Helper method used in method below.
     """
     if model.__class__.__name__ in _parameter_estimators:
-        model._constraints['parameter_estimator'] = _parameter_estimators[model.__class__.__name__]
+        model._constraints['parameter_estimator'] = _parameter_estimators[
+            model.__class__.__name__]
+
     return model
 
 
 def estimate_line_parameters(spectrum, model):
     """
-    The input ``model`` parameters will be estimated from the input ``spectrum``. The
-    ``model`` can be specified with default parameters, for example ``Gaussian1D()``.
+    The input ``model`` parameters will be estimated from the input
+    ``spectrum``. The ``model`` can be specified with default parameters, for
+    example ``Gaussian1D()``.
 
     Parameters
     ----------
@@ -102,9 +103,10 @@ def find_lines_threshold(spectrum, noise_factor=1):
     here is based on deviations larger than the spectrum's uncertainty by the
     ``noise_factor``.
 
-    This method only works with continuum-subtracted spectra and the uncertainty
-    must be defined on the spectrum. To add the uncertainty, one could use
-    `~specutils.manipulation.noise_region_uncertainty` to add the uncertainty.
+    This method only works with continuum-subtracted spectra and the
+    uncertainty must be defined on the spectrum. To add the uncertainty,
+    one could use `~specutils.manipulation.noise_region_uncertainty` to add
+    the uncertainty.
 
     Parameters
     ----------
@@ -119,18 +121,20 @@ def find_lines_threshold(spectrum, noise_factor=1):
     -------
     qtable: `~astropy.table.QTable`
         Table of emission and absorption lines. Line center (``line_center``),
-        line type (``line_type``) and index of line center (``line_center_index``)
-        are stored for each line.
+        line type (``line_type``) and index of line center
+        (``line_center_index``) are stored for each line.
     """
 
     # Threshold based on noise estimate and factor.
     uncertainty = spectrum.uncertainty
-    inds = np.where(np.abs(spectrum.flux) > (noise_factor*uncertainty.array)*spectrum.flux.unit)[0]
+    inds = np.where(np.abs(spectrum.flux) > (noise_factor*uncertainty.array) *
+                    spectrum.flux.unit)[0]
     pos_inds = inds[spectrum.flux.value[inds] > 0]
     line_inds_grouped = _consecutive(pos_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        emission_inds = [inds[np.argmax(spectrum.flux.value[inds])] for inds in line_inds_grouped]
+        emission_inds = [inds[np.argmax(spectrum.flux.value[inds])]
+                         for inds in line_inds_grouped]
     else:
         emission_inds = []
 
@@ -142,7 +146,8 @@ def find_lines_threshold(spectrum, noise_factor=1):
     line_inds_grouped = _consecutive(neg_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        absorption_inds = [inds[np.argmin(spectrum.flux.value[inds])] for inds in line_inds_grouped]
+        absorption_inds = [inds[np.argmin(spectrum.flux.value[inds])]
+                           for inds in line_inds_grouped]
     else:
         absorption_inds = []
 
@@ -151,10 +156,16 @@ def find_lines_threshold(spectrum, noise_factor=1):
     #
 
     qtable = QTable()
-    qtable['line_center'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
-                                             spectrum.spectral_axis.value[absorption_inds]]))*spectrum.spectral_axis.unit
-    qtable['line_type'] = ['emission']*len(emission_inds) + ['absorption']*len(absorption_inds)
-    qtable['line_center_index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
+    qtable['line_center'] = list(
+        itertools.chain(
+            *[spectrum.spectral_axis.value[emission_inds],
+              spectrum.spectral_axis.value[absorption_inds]]
+        )) * spectrum.spectral_axis.unit
+    qtable['line_type'] = ['emission'] * len(emission_inds) + \
+                          ['absorption'] * len(absorption_inds)
+    qtable['line_center_index'] = list(
+        itertools.chain(
+            *[emission_inds, absorption_inds]))
 
     return qtable
 
@@ -169,20 +180,19 @@ def find_lines_derivative(spectrum, flux_threshold=None):
     ----------
     spectrum : Spectrum1D
         The spectrum object over which the equivalent width will be calculated.
-
     flux_threshold : float, `~astropy.units.Quantity` or None
         The threshold a pixel must be above to be considered part of a line. If
-        a float, will assume the same units as ``spectrum.flux``. This threshold
-        is above and beyond the derivative searching step. Default is None so no
-        thresholding. The threshold is positive for emission lines and negative
-        for absorption lines.
+        a float, will assume the same units as ``spectrum.flux``. This
+        threshold is above and beyond the derivative searching step. Default
+        is None so no thresholding. The threshold is positive for emission
+        lines and negative for absorption lines.
 
     Returns
     -------
     qtable: `~astropy.table.QTable`
         Table of emission and absorption lines. Line center (``line_center``),
-        line type (``line_type``) and index of line center (``line_center_index``)
-        are stored for each line.
+        line type (``line_type``) and index of line center
+        (``line_center_index``) are stored for each line.
     """
 
     # Take the derivative to find the zero crossings which correspond to
@@ -213,7 +223,8 @@ def find_lines_derivative(spectrum, flux_threshold=None):
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        emission_inds = [inds[np.argmax(spectrum.flux[inds])] for inds in line_inds_grouped]
+        emission_inds = [inds[np.argmax(spectrum.flux[inds])]
+                         for inds in line_inds_grouped]
     else:
         emission_inds = []
 
@@ -232,7 +243,8 @@ def find_lines_derivative(spectrum, flux_threshold=None):
     line_inds_grouped = _consecutive(line_inds, stepsize=1)
 
     if len(line_inds_grouped[0]) > 0:
-        absorption_inds = [inds[np.argmin(spectrum.flux[inds])] for inds in line_inds_grouped]
+        absorption_inds = [inds[np.argmin(spectrum.flux[inds])] for inds in
+                           line_inds_grouped]
     else:
         absorption_inds = []
 
@@ -241,10 +253,16 @@ def find_lines_derivative(spectrum, flux_threshold=None):
     #
 
     qtable = QTable()
-    qtable['line_center'] = list(itertools.chain(*[spectrum.spectral_axis.value[emission_inds],
-                                             spectrum.spectral_axis.value[absorption_inds]]))*spectrum.spectral_axis.unit
-    qtable['line_type'] = ['emission']*len(emission_inds) + ['absorption']*len(absorption_inds)
-    qtable['line_center_index'] = list(itertools.chain(*[emission_inds, absorption_inds]))
+    qtable['line_center'] = list(
+        itertools.chain(
+            *[spectrum.spectral_axis.value[emission_inds],
+              spectrum.spectral_axis.value[absorption_inds]]
+        )) * spectrum.spectral_axis.unit
+    qtable['line_type'] = ['emission'] * len(emission_inds) + \
+                          ['absorption'] * len(absorption_inds)
+    qtable['line_center_index'] = list(
+        itertools.chain(
+            *[emission_inds, absorption_inds]))
 
     return qtable
 
@@ -260,20 +278,19 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     ----------
     spectrum : Spectrum1D
         The spectrum object over which the equivalent width will be calculated.
-
     model: `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
         The model or list of models that contain the initial guess.
-
+    fitter : `~astropy.modeling.fitting.Fitter`, optional
+        Fitter instance to be used when fitting model to spectrum.
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
-
-    weights : list  (NOT IMPLEMENTED YET)
-        List of weights to define importance of fitting regions.
-
+    weights : list or 'unc', optional
+        If 'unc', the unceratinties from the spectrum object are used to
+        to calculate the weights. If list/ndarray, represents the weights to
+        use in the fitting.
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
-
     Additional keyword arguments are passed directly into the call to the
     ``fitter``.
 
@@ -289,9 +306,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
        * The models in the list of ``model`` are added
           together and passed as a compound model to the
           `~astropy.modeling.fitting.Fitter` class instance.
-
     """
-
     #
     # If we are to exclude certain regions, then remove them.
     #
@@ -353,59 +368,36 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-               exclude_regions=None, weights=None, window=None, ignore_units=False,
-               **kwargs):
+               exclude_regions=None, weights=None, window=None,
+               ignore_units=False, **kwargs):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
 
     spectrum, model -> model
-
-    Parameters
-    ----------
-    spectrum : Spectrum1D
-        The spectrum object over which the equivalent width will be calculated.
-
-    model: `~astropy.modeling.Model`
-        The model or that contain the initial guess.
-
-    exclude_regions : list of `~specutils.SpectralRegion`
-        List of regions to exclude in the fitting.
-
-    weights : list  (NOT IMPLEMENTED YET)
-        List of weights to define importance of fitting regions.
-
-    window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
-        Regions of the spectrum to use in the fitting. If None, then the
-        whole spectrum will be used in the fitting.
-
-    ignore_units : bool
-        If True, then ignore any units on the input model parameters.
-        (This would effectively be assuming the model and spectrum have the same units.)
-
-    Returns
-    -------
-    model : Compound model of `~astropy.modeling.Model`
-        A compound model of models with fitted parameters.
-
-    Notes
-    -----
-       * Could add functionality to set the bounds in ``model`` if they are not set.
-
-       * Additional keyword arguments are passed directly into
-         the call to the ``fitter``.
-
     """
-
-    if weights is not None:
-        raise NotImplementedError('Weights are not yet implemented.')
-
     #
     # If we are to exclude certain regions, then remove them.
     #
 
     if exclude_regions is not None:
         spectrum = excise_regions(spectrum, exclude_regions)
+
+    if isinstance(weights, str):
+        if weights == 'unc':
+            uncerts = spectrum.uncertainty
+
+            if uncerts is not None:
+                weights = uncerts.array ** -2
+            else:
+                logging.warning("Uncertainty values are not defined, but are "
+                                "trying to be used in model fitting.")
+        else:
+            raise ValueError("Unrecognized value `%s` in keyword argument.",
+                             weights)
+    elif weights is not None:
+        # Assume that the weights argument is list-like
+        weights = np.array(weights)
 
     dispersion = spectrum.spectral_axis
     dispersion_unit = spectrum.spectral_axis.unit
@@ -428,17 +420,26 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # In this case the window defines the area around the center of each model
     if window is not None and isinstance(window, (float, int)):
         center = model.mean
-        indices = np.nonzero((spectrum.spectral_axis >= center-window) & (spectrum.spectral_axis < center+window))
+        indices = np.nonzero((spectrum.spectral_axis >= center-window) &
+                             (spectrum.spectral_axis < center+window))
 
         dispersion = dispersion[indices]
         flux = flux[indices]
 
-    # In this case the window is the start and end points of where we should fit
+        if weights is not None:
+            weights = weights[indices]
+
+    # In this case the window is the start and end points of where we
+    # should fit
     elif window is not None and isinstance(window, tuple):
-        indices = np.nonzero((dispersion >= window[0]) & (dispersion < window[1]))
+        indices = np.nonzero((dispersion >= window[0]) &
+                             (dispersion < window[1]))
 
         dispersion = dispersion[indices]
         flux = flux[indices]
+
+        if weights is not None:
+            weights = weights[indices]
 
     elif window is not None and isinstance(window, SpectralRegion):
         try:
@@ -457,11 +458,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     input_spectrum = spectrum
 
-    spectrum = Spectrum1D(flux=flux.value * flux_unit,
-                          spectral_axis=dispersion.value * dispersion_unit,
-                          wcs=input_spectrum.wcs,
-                          velocity_convention=input_spectrum.velocity_convention,
-                          rest_value=input_spectrum.rest_value)
+    spectrum = Spectrum1D(
+        flux=flux.value * flux_unit,
+        spectral_axis=dispersion.value * dispersion_unit,
+        wcs=input_spectrum.wcs,
+        velocity_convention=input_spectrum.velocity_convention,
+        rest_value=input_spectrum.rest_value)
 
     #
     # Compound models with units can not be fit.
@@ -470,14 +472,15 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # units and then remove the units
     #
 
-    model_unitless, dispersion_unitless, flux_unitless = _strip_units_from_model(model, spectrum, convert=not ignore_units)
+    model_unitless, dispersion_unitless, flux_unitless = \
+        _strip_units_from_model(model, spectrum, convert=not ignore_units)
 
     #
     # Do the fitting of spectrum to the model.
     #
 
-    fit_model_unitless = fitter(model_unitless, dispersion_unitless, flux_unitless,
-                                **kwargs)
+    fit_model_unitless = fitter(model_unitless, dispersion_unitless,
+                                flux_unitless, weights=weights, **kwargs)
 
     #
     # Now add the units back onto the model....
@@ -486,9 +489,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     if not ignore_units:
         fit_model = _add_units_to_model(fit_model_unitless, model, spectrum)
     else:
-        fit_model = QuantityModel(fit_model_unitless, spectrum.spectral_axis.unit, spectrum.flux.unit)
+        fit_model = QuantityModel(fit_model_unitless,
+                                  spectrum.spectral_axis.unit,
+                                  spectrum.flux.unit)
 
     return fit_model
+
 
 def _combined_region_data(spec):
     if isinstance(spec, list):
@@ -509,29 +515,35 @@ def _combined_region_data(spec):
 
     return x, y
 
-def _convert(q, dispersion_unit, dispersion, flux_unit):
-    #
-    # Convert the quantity to the spectrum's units, and then we will use
-    # the *value* of it in the new unitless-model.
-    #
 
-    if q.unit.is_equivalent(dispersion_unit, equivalencies=u.equivalencies.spectral()):
-        quantity = q.to(dispersion_unit, equivalencies=u.equivalencies.spectral())
+def _convert(quantity, dispersion_unit, dispersion, flux_unit):
+    """
+    Convert the quantity to the spectrum's units, and then we will use
+    the *value* of it in the new unitless-model.
+    """
+    with u.set_enabled_equivalencies(u.spectral()):
+        if quantity.unit.is_equivalent(dispersion_unit):
+            quantity = quantity.to(dispersion_unit)
 
-    elif q.unit.is_equivalent(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion)):
-        quantity = q.to(flux_unit, equivalencies=u.equivalencies.spectral_density(dispersion))
+    with u.set_enabled_equivalencies(u.spectral_density(dispersion)):
+        if quantity.unit.is_equivalent(flux_unit):
+            quantity = quantity.to(flux_unit)
 
     return quantity
 
-def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_unit, convert=True):
+
+def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion,
+                            flux_unit, convert=True):
     """
     This method will convert the ``poss_quantity`` value to the proper
     dispersion or flux units and then strip the units.
 
-    If the ``poss_quantity`` is None, or a number, we just return that...
+    If the ``poss_quantity`` is None, or a number, we just return that.
 
-    Note: This method can be removed along with most of the others here
-          when astropy.fitting will fit models that contain units.
+    Notes
+    -----
+        This method can be removed along with most of the others here
+        when astropy.fitting will fit models that contain units.
 
     """
 
@@ -553,23 +565,26 @@ def _convert_and_dequantify(poss_quantity, dispersion_unit, dispersion, flux_uni
 
     return v
 
+
 def _strip_units_from_model(model_in, spectrum, convert=True):
     """
     This method strips the units from the model, so the result can
     be passed to the fitting routine. This is necessary as CoumpoundModel
     with units does not work in the fitters.
 
-    Note:  When CompoundModel with units works in the fitters this method
-           can be removed.
+    Notes
+    -----
+        When CompoundModel with units works in the fitters this method
+        can be removed.
 
-    Note: This assumes there are two types of models, those that are
-          based on `~astropy.modeling.models.PolynomialModel` and therefore
-          require the ``degree`` parameter when instantiating the class, and
-          "everything else" that does not require an "extra" parameter for
-          class instantiation.
+        This assumes there are two types of models, those that are
+        based on `~astropy.modeling.models.PolynomialModel` and therefore
+        require the ``degree`` parameter when instantiating the class, and
+        "everything else" that does not require an "extra" parameter for
+        class instantiation.
 
-    Note: If convert is False, then we will *not* do the conversion of units
-          to the units of the Spectrum1D object.  Otherwise we will convert.
+        If convert is False, then we will *not* do the conversion of units
+        to the units of the Spectrum1D object.  Otherwise we will convert.
     """
 
     #
@@ -622,10 +637,9 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
         else:
             new_sub_model = sub_model.__class__()
 
-        #
         # Now for each parameter in the model determine if a dispersion or
-        # flux type of unit, then convert to spectrum units and then get the value.
-        #
+        # flux type of unit, then convert to spectrum units and then
+        # get the value.
 
         for pn in new_sub_model.param_names:
 
@@ -655,9 +669,8 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
 
             new_sub_model.bounds[pn] = tuple(new_bounds)
 
-
-        # The new model now has unitless information in it but has
-        # been converted to spectral unit scale.
+        # The new model now has unitless information in it but has been
+        # converted to spectral unit scale.
         model_out_stack.append(new_sub_model)
 
     # If a compound model we need to re-create it, otherwise
@@ -677,14 +690,16 @@ def _add_units_to_model(model_in, model_orig, spectrum):
     model passed in.  This is necessary as CoumpoundModel
     with units does not work in the fitters.
 
-    Note:  When CompoundModel with units works in the fitters this method
-           can be removed.
+    Notes
+    -----
+        When CompoundModel with units works in the fitters this method
+        can be removed.
 
-    Note: This assumes there are two types of models, those that are
-          based on `~astropy.modeling.models.PolynomialModel` and therefore
-          require the ``degree`` parameter when instantiating the class, and
-          "everything else" that does not require an "extra" parameter for
-          class instantiation.
+        This assumes there are two types of models, those that are
+        based on `~astropy.modeling.models.PolynomialModel` and therefore
+        require the ``degree`` parameter when instantiating the class, and
+        "everything else" that does not require an "extra" parameter for
+        class instantiation.
     """
 
     dispersion = spectrum.spectral_axis
@@ -764,8 +779,9 @@ def _add_units_to_model(model_in, model_orig, spectrum):
                 if m_orig_param_quantity.unit.is_equivalent(spectrum.spectral_axis.unit,
                                                             equivalencies=u.equivalencies.spectral()):
 
-                    # If it is a compound model, then we need to get the value from the
-                    # actual compound model as the tree is not updated in the fitting
+                    # If it is a compound model, then we need to get the value
+                    # from the actual compound model as the tree is not
+                    # updated in the fitting
                     if compound_model:
                         current_value = getattr(compound_model_in, '{}_{}'.format(pn, model_index)).value *\
                                         spectrum.spectral_axis.unit
@@ -779,8 +795,9 @@ def _add_units_to_model(model_in, model_orig, spectrum):
                 #
                 elif m_orig_param_quantity.unit.is_equivalent(spectrum.flux.unit,
                                                               equivalencies=u.equivalencies.spectral_density(dispersion)):
-                    # If it is a compound model, then we need to get the value from the
-                    # actual compound model as the tree is not updated in the fitting
+                    # If it is a compound model, then we need to get the value
+                    # from the actual compound model as the tree is not
+                    # updated in the fitting
                     if compound_model:
                         current_value = getattr(compound_model_in, '{}_{}'.format(pn, model_index)).value *\
                                         spectrum.flux.unit
@@ -824,23 +841,25 @@ def _add_units_to_model(model_in, model_orig, spectrum):
     else:
         model_out = model_out_stack[0]
 
-    # If the first parameter is not a Quantity, then at this point we will assume
-    # none of them are. (It would be inconsistent for fitting to have a model that
-    # has some parameters as Quantities and some values).
+    # If the first parameter is not a Quantity, then at this point we will
+    # assume none of them are. (It would be inconsistent for fitting to have
+    # a model that has some parameters as Quantities and some values).
     if getattr(model_orig, model_orig.param_names[0]).unit is None:
-        model_out = QuantityModel(model_out, spectrum.spectral_axis.unit, spectrum.flux.unit)
+        model_out = QuantityModel(model_out,
+                                  spectrum.spectral_axis.unit,
+                                  spectrum.flux.unit)
 
     return model_out
 
 
 def _combine_postfix(equation):
     """
-    Given a Python list in post order (RPN) of an equation, convert/apply the operations to evaluate.
-    The list order is the same as what is output from ``model._tree.traverse_postorder()``.
+    Given a Python list in post order (RPN) of an equation, convert/apply the
+    operations to evaluate. The list order is the same as what is output from
+    ``model._tree.traverse_postorder()``.
 
     Structure modified from https://codereview.stackexchange.com/questions/79795/reverse-polish-notation-calculator-in-python
     """
-
     ops = {'+': operator.add,
            '-': operator.sub,
            '*': operator.mul,
@@ -850,6 +869,7 @@ def _combine_postfix(equation):
 
     stack = []
     result = 0
+
     for i in equation:
         if isinstance(i, Model):
             stack.insert(0, i)
@@ -862,4 +882,5 @@ def _combine_postfix(equation):
                 n2 = stack.pop(0)
                 result = ops[i](n1, n2)
                 stack.insert(0, result)
+
     return result

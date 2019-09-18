@@ -164,6 +164,30 @@ Each of the width analysis functions are applied to this spectrum below:
    <Quantity 89.99999455 GHz>
 
 
+Template Comparison
+-------------------
+
+With one observed spectrum and n template spectra, the process to do template matching is:
+
+    1. Move the templates as close as possible to the observed spectrum by doing redshifting, matching the resolution,
+       and matching the wavelength spacing
+    2. Then loop through all of the n template spectra and run chi square on them using the observed spectrum as the
+       expected frequency and the template spectrum as the observed
+    3. Once you have a corresponding chi square for each template spectrum, return the lowest chi square and its
+       corresponding template spectrum (normalized) and the index of the template spectrum if the original template
+       parameter is iterable
+
+An example of how to do template matching in is:
+
+.. code-block:: python
+
+   >>> from specutils.analysis import template_comparison
+   >>> spec_axis = np.linspace(0, 50, 50) * u.AA
+   >>> observed_spectrum = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+   >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+   >>> tm_result = template_comparison.template_match(observed_spectrum, spectral_template) # doctest:+FLOAT_CMP
+
+
 Reference/API
 -------------
 .. automodapi:: specutils.analysis

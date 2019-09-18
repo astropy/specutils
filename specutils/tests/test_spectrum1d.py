@@ -30,6 +30,11 @@ def test_create_from_arrays():
     assert isinstance(spec.flux, u.Quantity)
     assert spec.flux.size == 50
 
+    # Test creating spectrum with unknown arguments
+    with pytest.raises(ValueError) as e_info:
+        spec = Spectrum1D(wavelength=np.arange(1, 50) * u.nm,
+                          flux=np.random.randn(48) * u.Jy)
+
 
 def test_create_from_multidimensional_arrays():
     """
@@ -45,6 +50,11 @@ def test_create_from_multidimensional_arrays():
     assert (spec.frequency == freqs).all()
     assert (spec.flux == flux).all()
 
+    # Mis-matched lengths should raise an exception
+    freqs = np.arange(50) * u.GHz
+    flux = np.random.random((5, len(freqs)-1)) * u.Jy
+    with pytest.raises(ValueError) as e_info:
+        spec = Spectrum1D(spectral_axis=freqs, flux=flux)
 
 def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
@@ -53,6 +63,11 @@ def test_create_from_quantities():
     assert isinstance(spec.spectral_axis, u.Quantity)
     assert spec.spectral_axis.unit == u.nm
     assert spec.spectral_axis.size == 49
+
+    # Mis-matched lengths should raise an exception
+    with pytest.raises(ValueError) as e_info:
+        spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=np.random.randn(48) * u.Jy)
 
 
 def test_create_implicit_wcs():
@@ -205,6 +220,16 @@ def test_create_with_uncertainty():
 
     assert spec.flux.unit == spec.uncertainty.unit
 
+    # If flux and uncertainty are different sizes then raise exception
+    wavelengths = np.arange(0, 10)
+    flux=100*np.abs(np.random.randn(3, 4, 10))*u.Jy
+    uncertainty = StdDevUncertainty(np.abs(np.random.randn(3, 2, 10))*u.Jy)
+
+    with pytest.raises(ValueError) as e_info:
+        s1d = Spectrum1D(spectral_axis=wavelengths*u.um,
+                         flux=flux,
+                         uncertainty=uncertainty)
+
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_read_linear_solution(remote_data_path):
@@ -237,7 +262,7 @@ def test_repr():
     spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy,
                                uncertainty=StdDevUncertainty(
-                                   np.random.sample(50), unit='Jy'))
+                                   np.random.sample(10), unit='Jy'))
     result = repr(spec_with_unc)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
     assert 'spectral_axis=<Quantity [' in result
@@ -286,3 +311,51 @@ def test_str():
     spec_single_flux = Spectrum1D(1 * u.Jy)
     result = str(spec_single_flux)
     assert result == 'Spectrum1D (length=1)\nflux:   {}'.format(spec_single_flux.flux)
+
+
+def test_flux_mask():
+
+    np.random.seed(42)
+    data = np.random.randn(50)
+    mask = np.random.randn(50) > 0.5
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=data * u.Jy,
+                      mask=mask)
+
+    flux_masked = np.array([0.49671415, -0.1382643 , 0.64768854, np.nan, np.nan,
+                            np.nan,  1.57921282,  0.76743473, -0.46947439, np.nan,
+                            -0.46341769, -0.46572975, 0.24196227, -1.91328024, np.nan,
+                            np.nan, -1.01283112, np.nan, -0.90802408, -1.4123037 ,
+                            1.46564877, np.nan,  0.0675282 , np.nan, -0.54438272,
+                            np.nan, -1.15099358,  0.37569802, -0.60063869, -0.29169375,
+                            -0.60170661,  1.85227818, np.nan, -1.05771093,  0.82254491,
+                            -1.22084365, np.nan, -1.95967012, -1.32818605, np.nan,
+                            0.73846658, np.nan, -0.11564828, -0.3011037 , -1.47852199,
+                            -0.71984421, -0.46063877,  1.05712223,  0.34361829, -1.76304016])
+
+    assert np.allclose(flux_masked, spec.flux_masked.value, equal_nan=True)
+    assert spec.flux_masked.unit == u.Jy
+
+
+    np.random.seed(42)
+    uncertainty = np.random.randn(50)
+    mask = np.random.randn(50) > 0.5
+    data = np.random.randn(50)
+    spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
+                      flux=data * u.Jy,
+                      uncertainty=StdDevUncertainty(uncertainty * u.Jy),
+                      mask=mask)
+
+    uncertainty_masked = np.array([0.49671415, -0.1382643 , 0.64768854, np.nan, np.nan,
+                            np.nan,  1.57921282,  0.76743473, -0.46947439, np.nan,
+                            -0.46341769, -0.46572975, 0.24196227, -1.91328024, np.nan,
+                            np.nan, -1.01283112, np.nan, -0.90802408, -1.4123037 ,
+                            1.46564877, np.nan,  0.0675282 , np.nan, -0.54438272,
+                            np.nan, -1.15099358,  0.37569802, -0.60063869, -0.29169375,
+                            -0.60170661,  1.85227818, np.nan, -1.05771093,  0.82254491,
+                            -1.22084365, np.nan, -1.95967012, -1.32818605, np.nan,
+                            0.73846658, np.nan, -0.11564828, -0.3011037 , -1.47852199,
+                            -0.71984421, -0.46063877,  1.05712223,  0.34361829, -1.76304016])
+
+    assert np.allclose(uncertainty_masked, spec.uncertainty_masked.array, equal_nan=True)
+    assert spec.uncertainty_masked.unit == u.Jy

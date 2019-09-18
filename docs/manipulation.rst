@@ -271,6 +271,9 @@ The output ``spectrum_masked`` is a shallow copy of the input ``spectrum``
 with the ``mask`` attribute set to True where the S/N is greater than 50
 and False elsewhere.
 
+.. note:: The mask attribute is the only attribute modified by ``snr_threshold()``. To
+             retrieve the masked flux data use ``spectrum.masked.flux_masked``.
+
 Reference/API
 -------------
 
