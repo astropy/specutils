@@ -2,8 +2,6 @@ import logging
 from copy import deepcopy
 
 import numpy as np
-from astropy.wcs import WCSSUB_SPECTRAL
-from astropy.units import Unit
 from astropy import units as u
 import astropy.units.equivalencies as eq
 from astropy.utils.decorators import lazyproperty
@@ -167,6 +165,9 @@ class OneDSpectrumMixin:
             (wavelength, energy, frequency, wave number).
         type : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
             The type of doppler spectral equivalency.
+        redshift or radial_velocity
+            If present, this shift is applied to the final output velocity to
+            get into the rest frame of the object.
 
         Returns
         -------
@@ -184,6 +185,10 @@ class OneDSpectrumMixin:
             self.velocity_convention))(self.rest_value)
 
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
+
+        # if redshift/rv is present, apply it:
+        if self._radial_velocity is not None:
+            new_data += self.radial_velocity
 
         return new_data
 
