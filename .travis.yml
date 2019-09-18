@@ -87,13 +87,13 @@ matrix:
 
         # Try development version of Astropy
         - os: linux
-          env: ASTROPY_VERSION=dev
+          env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
                PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
 
     allow_failures:
         # Try development version of Astropy
         - os: linux
-          env: ASTROPY_VERSION=dev
+          env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
                PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
 
 
