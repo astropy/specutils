@@ -206,7 +206,7 @@ Model (Line) Fitting
 
 The generic model fitting machinery is well-suited to fitting spectral lines.
 The first step is to create a set of models with initial guesses as the
-parameters. To acheive better fits it may be wise to include a set of bounds for
+parameters. To achieve better fits it may be wise to include a set of bounds for
 each parameter, but that is optional.
 
 .. note::

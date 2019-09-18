@@ -220,7 +220,7 @@ def _compute_single_fwhm(flux, spectral_axis):
     # The .value attribute is used here as the following algorithm does not
     # use any array operations and would otherwise introduce a relatively
     # significant overhead factor.  Two-point linear interpolation is used to
-    # acheive sub-pixel precision.
+    # achieve sub-pixel precision.
     flux_value = flux.value
     spectral_value = spectral_axis.value
 
