@@ -620,3 +620,30 @@ def test_masking():
     # double check that it works with weights as well
     g_fit3 = fit_lines(s_msk, g_init, weights=np.ones_like(s_msk.flux.value))
     assert g_fit2.mean == g_fit3.mean
+
+
+def test_window_extras():
+    """
+    Test that fitting works with masks and weights when a window is present
+    """
+    # similar to the masking test, but add a broad window around the whole thing
+    x, y = double_peak()
+    g_init = models.Gaussian1D(2.5, 5.5, 0.2)
+    window_region = SpectralRegion(4*u.um, 8*u.um)
+    mask = (5.1 < x) & (x < 6.1)
+
+    s_msk = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um, mask=mask)
+
+    g_fit1 = fit_lines(s_msk, g_init, window=window_region)
+    assert u.allclose(g_fit1.mean, 4.6, atol=.1)
+
+    # check that if we weight instead of masking, we get the same result
+    s = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    weights = (~mask).astype(float)
+    g_fit2 = fit_lines(s, g_init, weights=weights, window=window_region)
+    assert u.allclose(g_fit2.mean, 4.6, atol=.1)
+
+    # and the same with both together
+    weights = (~mask).astype(float)
+    g_fit3 = fit_lines(s_msk, g_init, weights=weights, window=window_region)
+    assert u.allclose(g_fit3.mean, 4.6, atol=.1)
