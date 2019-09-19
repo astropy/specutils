@@ -284,10 +284,12 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         Fitter instance to be used when fitting model to spectrum.
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
-    weights : list or 'unc', optional
+    weights : array-like or 'unc', optional
         If 'unc', the unceratinties from the spectrum object are used to
-        to calculate the weights. If list/ndarray, represents the weights to
-        use in the fitting.
+        to calculate the weights. If array-like, represents the weights to
+        use in the fitting.  Not that if a mask is present on the spectrum, it
+        will be applied to the ``weights`` as it would be to the spectrum
+        itself.
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
@@ -399,11 +401,14 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         # Assume that the weights argument is list-like
         weights = np.array(weights)
 
+    mask = spectrum.mask
+
     dispersion = spectrum.spectral_axis
     dispersion_unit = spectrum.spectral_axis.unit
 
     flux = spectrum.flux
     flux_unit = spectrum.flux.unit
+
 
     #
     # Determine the window if it is not None.  There
@@ -426,6 +431,9 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         dispersion = dispersion[indices]
         flux = flux[indices]
 
+        if mask is not None:
+            mask = mask[indices]
+
         if weights is not None:
             weights = weights[indices]
 
@@ -438,10 +446,14 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         dispersion = dispersion[indices]
         flux = flux[indices]
 
+        if mask is not None:
+            mask = mask[indices]
+
         if weights is not None:
             weights = weights[indices]
 
     elif window is not None and isinstance(window, SpectralRegion):
+        # TODO: fix this for weights and masks
         try:
             idx1, idx2 = window.bounds
             if idx1 == idx2:
@@ -478,6 +490,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     #
     # Do the fitting of spectrum to the model.
     #
+    if mask is not None:
+        nmask = ~mask
+        dispersion_unitless = dispersion_unitless[nmask]
+        flux_unitless = flux_unitless[nmask]
+        if weights is not None:
+            weights = weights[nmask]
 
     fit_model_unitless = fitter(model_unitless, dispersion_unitless,
                                 flux_unitless, weights=weights, **kwargs)
