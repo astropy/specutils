@@ -88,7 +88,8 @@ def convolution_smooth(spectrum, kernel):
             # Put back in
             uncertainty.array = prop_ivar_values
         else:
-            warnings.warn("Uncertainty is {} but convolutional error propagation is not defined for that type.".format(type(uncertainty)),
+            uncertainty = None
+            warnings.warn("Uncertainty is {} but convolutional error propagation is not defined for that type. Uncertainty will be dropped in the convolved spectrum.".format(type(uncertainty)),
                           AstropyUserWarning)
 
 
