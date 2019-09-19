@@ -213,26 +213,51 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
 
 
 def _compute_single_fwhm(flux, spectral_axis):
+    """
+    This is a helper function for the above `fwhm()` method.
+    """
 
-    argmax = np.argmax(flux)
-    halfval = flux[argmax] / 2
+    # The .value attribute is used here as the following algorithm does not
+    # use any array operations and would otherwise introduce a relatively
+    # significant overhead factor.  Two-point linear interpolation is used to
+    # achieve sub-pixel precision.
+    flux_value = flux.value
+    spectral_value = spectral_axis.value
 
-    left = flux[:argmax] <= halfval
-    right = flux[argmax+1:] <= halfval
+    argmax = flux_value.argmax()
+    halfval = flux_value[argmax] / 2
+    left = flux_value[:argmax] < halfval
+    right = flux_value[argmax + 1:] < halfval
 
     # Highest signal at the first point
-    if np.sum(left) == 0:
-        l_idx = 0
+    i0 = np.nonzero(left)[0]
+    if i0.size == 0:
+        left_value = spectral_value[0]
     else:
-        l_idx = np.where(left == True)[0][-1]
+        i0 = i0[-1]
+        i1 = i0 + 1
+        left_flux = flux_value[i0]
+        left_spectral = spectral_value[i0]
+        left_value = ((halfval - left_flux)
+                      * (spectral_value[i1] - left_spectral)
+                      / (flux_value[i1] - left_flux)
+                      + left_spectral)
 
     # Highest signal at the last point
-    if np.sum(right) == 0:
-        r_idx = len(flux)-1
+    i1 = np.nonzero(right)[0]
+    if i1.size == 0:
+        right_value = spectral_value[-1]
     else:
-        r_idx = np.where(right == True)[0][0] + argmax
+        i1 = i1[0] + argmax + 1
+        i0 = i1 - 1
+        left_flux = flux_value[i0]
+        left_spectral = spectral_value[i0]
+        right_value = ((halfval - left_flux)
+                       * (spectral_value[i1] - left_spectral)
+                       / (flux_value[i1] - left_flux)
+                       + left_spectral)
 
-    return spectral_axis[r_idx] - spectral_axis[l_idx]
+    return spectral_axis.unit * (right_value - left_value)
 
 
 def _compute_fwhm(spectrum, regions=None):
