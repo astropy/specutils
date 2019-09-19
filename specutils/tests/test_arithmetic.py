@@ -93,3 +93,15 @@ def test_add_diff_spectral_axis(simulated_spectra):
 
     # Calculate using the spectrum1d/nddata code
     spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3
+
+
+def test_masks(simulated_spectra):
+    masked_spec = simulated_spectra.s1_um_mJy_e1_masked
+
+    masked_sum = masked_spec + masked_spec
+    assert np.all(masked_sum.mask == simulated_spectra.s1_um_mJy_e1_masked.mask)
+
+    masked_sum.mask[:50] = True
+    masked_diff = masked_sum - masked_spec
+    assert u.allclose(masked_diff.flux, masked_spec.flux)
+    assert np.all(masked_diff.mask == masked_sum.mask | masked_spec.mask)
