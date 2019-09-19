@@ -3,6 +3,7 @@ import pytest
 from astropy import convolution
 from scipy.signal import medfilt
 import astropy.units as u
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
 
@@ -217,3 +218,42 @@ def test_smooth_median_bad(simulated_spectra, width):
     # Test bad parameters
     with pytest.raises(ValueError):
         median_smooth(spec1, width)
+
+
+def test_smooth_custom_kernel_uncertainty(simulated_spectra):
+    """
+    Test CustomKernel smoothing with correct parmaeters.
+    """
+
+    np.random.seed(42)
+
+    # Create a custom kernel (some weird asymmetric-ness)
+    numpy_kernel = np.array([0.5, 1, 2, 0.5, 0.2])
+    numpy_kernel = numpy_kernel / np.sum(numpy_kernel)
+    custom_kernel = convolution.CustomKernel(numpy_kernel)
+
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    uncertainty = np.abs(np.random.random(spec1.flux.shape))
+
+    # Test StdDevUncertainty
+    spec1.uncertainty = StdDevUncertainty(uncertainty)
+
+    spec1_smoothed = convolution_smooth(spec1, custom_kernel)
+    tt = convolution.convolve(1/(spec1.uncertainty.array**2), custom_kernel)
+    uncertainty_smoothed_astropy = 1/np.sqrt(tt)
+
+    assert np.allclose(spec1_smoothed.uncertainty.array, uncertainty_smoothed_astropy)
+
+    # Test VarianceUncertainty
+    spec1.uncertainty = VarianceUncertainty(uncertainty)
+
+    spec1_smoothed = convolution_smooth(spec1, custom_kernel)
+    uncertainty_smoothed_astropy = 1/convolution.convolve(1/spec1.uncertainty.array, custom_kernel)
+    assert np.allclose(spec1_smoothed.uncertainty.array, uncertainty_smoothed_astropy)
+
+    # Test InverseVariance
+    spec1.uncertainty = InverseVariance(uncertainty)
+
+    spec1_smoothed = convolution_smooth(spec1, custom_kernel)
+    uncertainty_smoothed_astropy = convolution.convolve(spec1.uncertainty.array, custom_kernel)
+    assert np.allclose(spec1_smoothed.uncertainty.array, uncertainty_smoothed_astropy)

@@ -1,6 +1,12 @@
-import astropy.units as u
+import copy
+import warnings
+
 from astropy import convolution
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+import astropy.units as u
+from astropy.utils.exceptions import AstropyUserWarning
 from scipy.signal import medfilt
+import numpy as np
 
 from ..spectra import Spectrum1D
 
@@ -14,6 +20,10 @@ def convolution_smooth(spectrum, kernel):
     of the 1D kernels defined in `astropy.convolution`.
 
     This method can be used along but also is used by other specific methods below.
+
+    If the spectrum uncertainty exists and is StdDevUncertainty, VarianceUncertainty or InverseVariance
+    then the errors will be propagated through the convolution using a standard propagation of errors. The
+    covariance is not considered, currently.
 
     Parameters
     ----------
@@ -43,11 +53,52 @@ def convolution_smooth(spectrum, kernel):
     # Smooth based on the input kernel
     smoothed_flux = convolution.convolve(flux, kernel)
 
+    # Propagate the uncertainty if it exists...
+    uncertainty = copy.deepcopy(spectrum.uncertainty)
+    if uncertainty is not None:
+        if isinstance(uncertainty, StdDevUncertainty):
+            # Convert
+            values = uncertainty.array
+            ivar_values = 1 / values**2
+
+            # Propagate
+            prop_ivar_values = convolution.convolve(ivar_values, kernel)
+
+            # Put back in
+            uncertainty.array = 1 / np.sqrt(prop_ivar_values)
+
+        elif isinstance(uncertainty, VarianceUncertainty):
+            # Convert
+            values = uncertainty.array
+            ivar_values = 1 / values
+
+            # Propagate
+            prop_ivar_values = convolution.convolve(ivar_values, kernel)
+
+            # Put back in
+            uncertainty.array = 1 / prop_ivar_values
+
+        elif isinstance(uncertainty, InverseVariance):
+            # Convert
+            ivar_values = uncertainty.array
+
+            # Propagate
+            prop_ivar_values = convolution.convolve(ivar_values, kernel)
+
+            # Put back in
+            uncertainty.array = prop_ivar_values
+        else:
+            uncertainty = None
+            warnings.warn("Uncertainty is {} but convolutional error propagation is not defined for that type. Uncertainty will be dropped in the convolved spectrum.".format(type(uncertainty)),
+                          AstropyUserWarning)
+
+
     # Return a new object with the smoothed flux.
     return Spectrum1D(flux=u.Quantity(smoothed_flux, spectrum.unit),
                       spectral_axis=u.Quantity(spectrum.spectral_axis,
                                                spectrum.spectral_axis_unit),
                       wcs=spectrum.wcs,
+                      uncertainty=uncertainty,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
 
