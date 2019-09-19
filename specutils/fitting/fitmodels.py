@@ -423,47 +423,49 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     #
 
     # In this case the window defines the area around the center of each model
+    window_indices = None
     if window is not None and isinstance(window, (float, int)):
         center = model.mean
-        indices = np.nonzero((spectrum.spectral_axis >= center-window) &
+        window_indices = np.nonzero((spectrum.spectral_axis >= center-window) &
                              (spectrum.spectral_axis < center+window))
-
-        dispersion = dispersion[indices]
-        flux = flux[indices]
-
-        if mask is not None:
-            mask = mask[indices]
-
-        if weights is not None:
-            weights = weights[indices]
 
     # In this case the window is the start and end points of where we
     # should fit
     elif window is not None and isinstance(window, tuple):
-        indices = np.nonzero((dispersion >= window[0]) &
+        window_indices = np.nonzero((dispersion >= window[0]) &
                              (dispersion < window[1]))
 
-        dispersion = dispersion[indices]
-        flux = flux[indices]
-
-        if mask is not None:
-            mask = mask[indices]
-
-        if weights is not None:
-            weights = weights[indices]
-
+    # in this case the window is spectral regions that determine where
+    # to fit.
     elif window is not None and isinstance(window, SpectralRegion):
-        # TODO: fix this for weights and masks
-        try:
-            idx1, idx2 = window.bounds
-            if idx1 == idx2:
-                raise Exception("Bad selected region.")
-            extracted_regions = extract_region(spectrum, window)
-            dispersion, flux = _combined_region_data(extracted_regions)
-            dispersion = dispersion * dispersion_unit
-            flux = flux * flux_unit
-        except ValueError as e:
-            return
+        idx1, idx2 = window.bounds
+        if idx1 == idx2:
+            raise Exception("Bad selected region.")
+
+        # HACK WARNING! This uses the extract machinery to create a set of
+        # indices by making an "index spectrum"
+        # TODO: really the spectral region machinery should have the power
+        # to create a mask, and we'd just use that...
+        index_spectrum = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+                                    flux=np.arange(spectrum.flux.size).reshape(spectrum.flux.shape)*u.Jy)
+
+        extracted_regions = extract_region(index_spectrum, window)
+        if isinstance(extracted_regions, list):
+            if len(extracted_regions) == 0:
+                raise ValueError('The whole spectrum is windowed out!')
+            window_indices = np.concatenate([s.flux.value.astype(int) for s in extracted_regions])
+        else:
+            if len(extracted_regions.flux) == 0:
+                raise ValueError('The whole spectrum is windowed out!')
+            window_indices = extracted_regions.flux.value.astype(int)
+
+    if window_indices is not None:
+        dispersion = dispersion[window_indices]
+        flux = flux[window_indices]
+        if mask is not None:
+            mask = mask[window_indices]
+        if weights is not None:
+            weights = weights[window_indices]
 
     if flux is None or len(flux) == 0:
         raise Exception("Spectrum flux is empty or None.")
@@ -512,26 +514,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
                                   spectrum.flux.unit)
 
     return fit_model
-
-
-def _combined_region_data(spec):
-    if isinstance(spec, list):
-
-        # Merge sub-spec spectral_axis and flux values.
-        x = np.array([sv for subspec in spec if subspec is not None
-                         for sv in subspec.spectral_axis.value])
-        y = np.array([sv for subspec in spec if subspec is not None
-                         for sv in subspec.flux.value])
-    else:
-        if spec is None:
-            return
-        x = spec.spectral_axis.value
-        y = spec.flux.value
-
-    if len(x) == 0:
-        return
-
-    return x, y
 
 
 def _convert(quantity, dispersion_unit, dispersion, flux_unit):
