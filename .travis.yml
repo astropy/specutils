@@ -6,7 +6,7 @@ language: c
 os:
     - linux
 
-stage: Initial tests
+stage: Comprehensive tests
 
 
 addons:
@@ -51,7 +51,7 @@ matrix:
         - stage: Initial tests
           env: PYTHON_VERSION=3.7 SETUP_CMD='egg_info'
 
-        - stage: Initial tests:
+        - stage: Initial tests
           os: linux
           env: PYTHON_VERSION=3.7
 
