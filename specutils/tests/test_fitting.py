@@ -595,3 +595,24 @@ def test_spectrum_from_model():
                               1.5319218, 1.06886794, 0.71101768, 0.45092638, 0.27264641])
 
     assert np.allclose(spectrum_gaussian.flux.value[::10], flux_expected, atol=1e-5)
+
+
+def test_masking():
+    """
+    Test fitting spectra with masks
+    """
+    x, y = double_peak()
+    s = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+
+    # first we fit a single gaussian to the double_peak model, using the
+    # known-good second peak (but a bit higher in amplitude). It should lock
+    # in on the *second* peak since it's already close:
+    g_init = models.Gaussian1D(2.5, 5.5, 0.2)
+    g_fit1 = fit_lines(s, g_init)
+    assert u.allclose(g_fit1.mean, 5.5, atol=.1)
+
+    # now create a spectrum where the region around the second peak is masked.
+    # The fit should now go to the *first* peak
+    s_msk = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um, mask=(5.1 < x)&(x < 6.1))
+    g_fit2 = fit_lines(s_msk, g_init)
+    assert u.allclose(g_fit2.mean, 4.6, atol=.1)
