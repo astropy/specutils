@@ -616,3 +616,7 @@ def test_masking():
     s_msk = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um, mask=(5.1 < x)&(x < 6.1))
     g_fit2 = fit_lines(s_msk, g_init)
     assert u.allclose(g_fit2.mean, 4.6, atol=.1)
+
+    # double check that it works with weights as well
+    g_fit3 = fit_lines(s_msk, g_init, weights=np.ones_like(s_msk.flux.value))
+    assert g_fit2.mean == g_fit3.mean
