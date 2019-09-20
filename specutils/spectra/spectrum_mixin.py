@@ -90,45 +90,6 @@ class OneDSpectrumMixin:
         """
         return u.Quantity(self.data, unit=self.unit, copy=False)
 
-    @property
-    def flux_masked(self):
-        """
-        Converts the stored data and unit information into a quantity masked
-        by the ``mask`` attribute.
-
-        Returns
-        -------
-        `~astropy.units.Quantity`
-            Spectral data as a quantity.
-        """
-
-        data = self.data
-        if self.mask is not None:
-            data[self.mask] = np.nan
-
-        return u.Quantity(data, unit=self.flux.unit, copy=False)
-
-    @property
-    def uncertainty_masked(self):
-        """
-        Converts the stored data and unit information into a quantity masked
-        by the ``mask`` attribute.
-
-        Returns
-        -------
-        `~astropy.units.Quantity`
-            Spectral data as a quantity.
-        """
-
-        if not hasattr(self, 'uncertainty') or self.uncertainty is None:
-            return None
-
-        uncertainty = self.uncertainty
-        if self.mask is not None:
-            uncertainty.array[self.mask] = np.nan
-
-        return uncertainty
-
     def new_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
         """
         Converts the flux data to the specified unit.  This is an in-place
