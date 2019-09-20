@@ -158,7 +158,7 @@ Then estimate the line  parameters it it for a Gaussian line profile::
               amplitude            mean             stddev
                   Jy                um                um
           ------------------ ---------------- ------------------
-          1.1845669151078486 4.57517271067525 0.3015075376884422
+          1.1845669151078486 4.57517271067525 0.3199324375933905
 
 
 If an `~astropy.modeling.Model` is used that does not have the predefined
@@ -206,7 +206,7 @@ Model (Line) Fitting
 
 The generic model fitting machinery is well-suited to fitting spectral lines.
 The first step is to create a set of models with initial guesses as the
-parameters. To acheive better fits it may be wise to include a set of bounds for
+parameters. To achieve better fits it may be wise to include a set of bounds for
 each parameter, but that is optional.
 
 .. note::

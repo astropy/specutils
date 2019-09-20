@@ -476,14 +476,27 @@ def test_fwhm():
     expected = stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
-
     # Highest point at the first point
     wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = (1.0 / wavelengths.value)*u.Jy # highest point first.
+    flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
-    assert result == 0.9090909090909092*u.um
+    # Note that this makes a little more sense than the previous version;
+    # since the maximum value occurs at wavelength=1, and the half-value of
+    # flux (0.5) occurs at exactly wavelength=2, the result should be
+    # exactly 1 (2 - 1).
+    assert result == 1.0 * u.um
+
+    # Test the interpolation used in FWHM for wavelength values that are not
+    # on the grid
+    wavelengths = np.linspace(1, 10, 31) * u.um
+    flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+
+    assert quantity_allclose(result, 1.01 * u.um)
 
     # Highest point at the last point
     wavelengths = np.linspace(1, 10, 100) * u.um
