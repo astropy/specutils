@@ -272,6 +272,9 @@ then call the ``snr_threshold`` method:
     >>> uncertainty = StdDevUncertainty(np.abs(np.random.randn(10))*u.Jy)
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
     >>> spectrum_masked = snr_threshold(spectrum, 50) #doctest:+SKIP
+    >>> # To create a masked flux array
+    >>> flux_masked = spectrum_masked.flux
+    >>> flux_masked[spectrum_masked.mask] = np.nan
 
 The output ``spectrum_masked`` is a shallow copy of the input ``spectrum``
 with the ``mask`` attribute set to True where the S/N is greater than 50
