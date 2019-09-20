@@ -806,6 +806,13 @@ def _add_units_to_model(model_in, model_orig, spectrum):
 
                     v = current_value.to(m_orig_param_quantity.unit,
                                          equivalencies=u.equivalencies.spectral_density(dispersion))
+                else:
+                    raise ValueError(
+                        "The parameter '{}' with unit '{}' is not convertible "
+                        "to either the current flux unit '{}' or spectral "
+                        "axis unit '{}'.".format(
+                            m_orig_param.name, m_orig_param.unit,
+                            spectrum.flux.unit, spectrum.spectral_axis.unit))
 
             else:
                 v = getattr(m_in, pn).value
