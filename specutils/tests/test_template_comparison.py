@@ -64,7 +64,7 @@ def test_template_match_with_resample():
                              flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
 
     assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    assert tm_result[1] == 40093.28353756253
+    np.testing.assert_almost_equal(tm_result[1], 40093.28353756253)
 
 
 def test_template_match_list():
@@ -93,7 +93,7 @@ def test_template_match_list():
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, template_list)
 
-    assert tm_result[1] == 40093.28353756253
+    np.testing.assert_almost_equal(tm_result[1], 40093.28353756253)
 
 
 def test_template_match_spectrum_collection():
@@ -121,7 +121,7 @@ def test_template_match_spectrum_collection():
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, spec_coll)
 
-    assert tm_result[1] == 40093.28353756253
+    np.testing.assert_almost_equal(tm_result[1], 40093.28353756253)
 
 
 def test_template_match_multidim_spectrum():
@@ -144,4 +144,4 @@ def test_template_match_multidim_spectrum():
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, multidim_spec)
 
-    assert tm_result[1] == 250.26870401777543
+    np.testing.assert_almost_equal(tm_result[1], 250.26870401777543)
