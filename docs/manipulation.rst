@@ -157,7 +157,7 @@ Here's a set of simple examples showing each of the three types of resampling:
     >>> input_spec = Spectrum1D(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
 
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
-    >>> ax.step(input_spec.spectral_axis, input_spec.flux) # doctest: +IGNORE_OUTPUT
+    >>> ax.step(input_spec.spectral_axis, input_spec.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
 .. plot::
     :include-source:
@@ -173,9 +173,9 @@ Here's a set of simple examples showing each of the three types of resampling:
     Flux Conserving Resampler:
 
     >>> fluxcon = FluxConservingResampler()
-    >>> new_spec_fluxcon = fluxcon(input_spec, new_disp_grid) # doctest: +IGNORE_OUTPUT
+    >>> new_spec_fluxcon = fluxcon(input_spec, new_disp_grid) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
-    >>> ax.step(new_spec_fluxcon.spectral_axis, new_spec_fluxcon.flux) # doctest: +IGNORE_OUTPUT
+    >>> ax.step(new_spec_fluxcon.spectral_axis, new_spec_fluxcon.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
 .. plot::
     :include-source:
@@ -185,9 +185,9 @@ Here's a set of simple examples showing each of the three types of resampling:
     Linear Interpolation Resampler:
 
     >>> linear = LinearInterpolatedResampler()
-    >>> new_spec_lin = linear(input_spec, new_disp_grid)
+    >>> new_spec_lin = linear(input_spec, new_disp_grid)  # doctest: +REMOTE_DATA
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
-    >>> ax.step(new_spec_lin.spectral_axis, new_spec_lin.flux) # doctest: +IGNORE_OUTPUT
+    >>> ax.step(new_spec_lin.spectral_axis, new_spec_lin.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
 .. plot::
     :include-source:
@@ -197,9 +197,9 @@ Here's a set of simple examples showing each of the three types of resampling:
     Spline Resampler:
 
     >>> spline = SplineInterpolatedResampler()
-    >>> new_spec_sp = spline(input_spec, new_disp_grid)
+    >>> new_spec_sp = spline(input_spec, new_disp_grid)  # doctest: +REMOTE_DATA
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
-    >>> ax.step(new_spec_sp.spectral_axis, new_spec_sp.flux) # doctest: +IGNORE_OUTPUT
+    >>> ax.step(new_spec_sp.spectral_axis, new_spec_sp.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
 Uncertainty Estimation
 ----------------------
