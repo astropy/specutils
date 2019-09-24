@@ -5,11 +5,12 @@ spectra.
 
 import copy
 import numpy as np
+import operator
 
 __all__ = ['snr_threshold']
 
 
-def snr_threshold(spectrum, value):
+def snr_threshold(spectrum, value, op=operator.gt):
     """
     Calculate the mean S/N of the spectrum based on the flux and uncertainty
     in the spectrum. This will be calculated over the regions, if they
@@ -22,6 +23,9 @@ def snr_threshold(spectrum, value):
 
     value: ``float``
         Threshold value to be applied to flux / uncertainty.
+
+    op: One of operator.gt, operator.ge, operator.lt, operator.le
+        The mathenatical operator to apply for thresholding.
 
     Returns
     -------
@@ -38,6 +42,10 @@ def snr_threshold(spectrum, value):
     if not hasattr(spectrum, 'uncertainty') or spectrum.uncertainty is None:
         raise Exception("S/N thresholding requires the uncertainty be defined.")
 
+    if op not in [operator.gt, operator.ge, operator.lt, operator.le]:
+        raise ValueError('Threshold operator must be greater-than (operator.gt), greater-than-or-equal (operator.ge),'+
+                         'less-than (operator.lt) or less-than-or-equal (operator.le)')
+
     # Spectrum1D
     if hasattr(spectrum, 'flux'):
         data = spectrum.flux
@@ -48,7 +56,7 @@ def snr_threshold(spectrum, value):
     else:
         raise ValueError('Could not find data attribute.')
 
-    mask = (data / (spectrum.uncertainty.array*spectrum.uncertainty.unit)) > value
+    mask = op((data / (spectrum.uncertainty.array*spectrum.uncertainty.unit)), value)
 
     spectrum_out = copy.copy(spectrum)
     spectrum_out._mask = mask
