@@ -53,9 +53,9 @@ def snr_threshold(spectrum, value, op=operator.gt):
 
     if (op not in [operator.gt, operator.ge, operator.lt, operator.le] and
         op not in operator_mapping.keys()):
-         raise ValueError('Threshold operator must be a string or operator that represents ' +
-                          'greater-than, less-than, greater-than-or-equal or ' +
-                          'less-than-or-equal')
+        raise ValueError('Threshold operator must be a string or operator that represents ' +
+                         'greater-than, less-than, greater-than-or-equal or ' +
+                         'less-than-or-equal')
 
     # If the operator passed in is a string, then map to the
     # operator method.
