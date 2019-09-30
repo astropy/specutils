@@ -72,7 +72,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
     else:
         raise ValueError('Could not find data attribute.')
 
-    mask = op((data / (spectrum.uncertainty.array*spectrum.uncertainty.unit)), value)
+    mask = op(data / (spectrum.uncertainty.quantity), value)
 
     spectrum_out = copy.copy(spectrum)
     spectrum_out._mask = mask
