@@ -1,3 +1,4 @@
+import operator
 import pytest
 import numpy as np
 
@@ -22,9 +23,31 @@ def test_snr_threshold():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
 
     spectrum_masked = snr_threshold(spectrum, 50)
-
     assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
 
+    spectrum_masked = snr_threshold(spectrum, 50, operator.gt)
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, '>')
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, operator.ge)
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, '>=')
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, operator.lt)
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, '<')
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, operator.le)
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+
+    spectrum_masked = snr_threshold(spectrum, 50, '<=')
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
 
     # Setup 3D spectrum
     np.random.seed(42)

@@ -24,13 +24,14 @@ def snr_threshold(spectrum, value, op=operator.gt):
     value: ``float``
         Threshold value to be applied to flux / uncertainty.
 
-    op: One of operator.gt, operator.ge, operator.lt, operator.le
-        The mathenatical operator to apply for thresholding.
+    op: One of operator.gt, operator.ge, operator.lt, operator.le or
+        the str equivalent '>', '>=', '<', '<='
+        The mathematical operator to apply for thresholding.
 
     Returns
     -------
     spectrum: `~specutils.Spectrum1D`
-        Ouput object with ``spectrum.mask`` set based on threshold.
+        Output object with ``spectrum.mask`` set based on threshold.
 
     Notes
     -----
@@ -39,12 +40,27 @@ def snr_threshold(spectrum, value, op=operator.gt):
 
     """
 
+    # Setup the mapping
+    operator_mapping = {
+        '>': operator.gt,
+        '<': operator.lt,
+        '>=': operator.ge,
+        '<=': operator.le
+    }
+
     if not hasattr(spectrum, 'uncertainty') or spectrum.uncertainty is None:
         raise Exception("S/N thresholding requires the uncertainty be defined.")
 
-    if op not in [operator.gt, operator.ge, operator.lt, operator.le]:
-        raise ValueError('Threshold operator must be greater-than (operator.gt), greater-than-or-equal (operator.ge),'+
-                         'less-than (operator.lt) or less-than-or-equal (operator.le)')
+    if (op not in [operator.gt, operator.ge, operator.lt, operator.le] and 
+        op not in operator_mapping.keys()):
+         raise ValueError('Threshold operator must be a string or operator that represents '+
+                          'greater-than, less-than, greater-than-or-equal or '+
+                          'less-than-or-equal')
+
+    # If the operator passed in is a string, then map to the
+    # operator method.
+    if isinstance(op, str):
+        op = operator_mapping[op]
 
     # Spectrum1D
     if hasattr(spectrum, 'flux'):
