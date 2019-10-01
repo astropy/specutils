@@ -72,7 +72,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
     else:
         raise ValueError('Could not find data attribute.')
 
-    # NDData convention: Masks should follow the numpy convention that valid 
+    # NDData convention: Masks should follow the numpy convention that valid
     # data points are marked by False and invalid ones with True.
     mask = ~op(data / (spectrum.uncertainty.quantity), value)
 
