@@ -277,8 +277,8 @@ then call the ``snr_threshold`` method:
     >>> flux_masked[spectrum_masked.mask] = np.nan #doctest:+SKIP
 
 The output ``spectrum_masked`` is a shallow copy of the input ``spectrum``
-with the ``mask`` attribute set to True where the S/N is greater than 50
-and False elsewhere.
+with the ``mask`` attribute set to False where the S/N is greater than 50
+and True elsewhere. It is this way to be consistent with ``astropy.nddata``.
 
 .. note:: The mask attribute is the only attribute modified by ``snr_threshold()``. To
              retrieve the masked flux data use ``spectrum.masked.flux_masked``.
