@@ -23,31 +23,31 @@ def test_snr_threshold():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
 
     spectrum_masked = snr_threshold(spectrum, 50)
-    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, operator.gt)
-    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, '>')
-    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, operator.ge)
-    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, '>=')
-    assert all([x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, operator.lt)
-    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, '<')
-    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, operator.le)
-    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     spectrum_masked = snr_threshold(spectrum, 50, '<=')
-    assert all([not x==y for x,y in zip(spectrum_masked.mask, [True, False, True, True, False, False, True, True, True, False])])
+    assert all([not x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
 
     # Setup 3D spectrum
     np.random.seed(42)
@@ -58,18 +58,18 @@ def test_snr_threshold():
 
     spectrum_masked = snr_threshold(spectrum, 50)
 
-    masked_true = np.array([[[ True, False, False,  True, False, False,  True,  True,  True, True],
-        [False,  True, False,  True,  True, False,  True,  True,  True, True],
-        [ True, False, False,  True,  True, False,  True, False,  True, True],
-        [ True,  True, False,  True,  True,  True, False,  True,  True, False]],
-        [[ True, False, False, False,  True,  True,  True,  True,  True, True],
-        [False, False,  True,  True,  True,  True,  True, False,  True, False],
-        [ True, False,  True,  True,  True,  True, False,  True, False, False],
-        [ True,  True, False,  True,  True,  True, False,  True,  True, True]],
-        [[ True,  True,  True, False,  True,  True,  True,  True,  True, False],
-        [False,  True,  True,  True,  True,  True, False,  True, False, True],
-        [ True, False, False, False, False, False,  True, False, False, False],
-        [ True, False,  True,  True, False, False, False,  True,  True, True]]])
+    masked_true = np.array([[[ False, True, True,  False, True, True,  False,  False,  False, False],
+        [True,  False, True,  False,  False, True,  False,  False,  False, False],
+        [ False, True, True,  False,  False, True,  False, True,  False, False],
+        [ False,  False, True,  False,  False,  False, True,  False,  False, True]],
+        [[ False, True, True, True,  False,  False,  False,  False,  False, False],
+        [True, True,  False,  False,  False,  False,  False, True,  False, True],
+        [ False, True,  False,  False,  False,  False, True,  False, True, True],
+        [ False,  False, True,  False,  False,  False, True,  False,  False, False]],
+        [[ False,  False,  False, True,  False,  False,  False,  False,  False, True],
+        [True,  False,  False,  False,  False,  False, True,  False, True, False],
+        [ False, True, True, True, True, True,  False, True, True, True],
+        [ False, True,  False,  False, True, True, True,  False,  False, False]]])
 
     assert all([x==y for x,y in zip(spectrum_masked.mask.ravel(), masked_true.ravel())])
 
@@ -82,18 +82,18 @@ def test_snr_threshold():
 
     spectrum_masked = snr_threshold(spectrum, 50)
 
-    masked_true = np.array([[[ True, False, False,  True, False, False,  True,  True,  True, True],
-        [False,  True, False,  True,  True, False,  True,  True,  True, True],
-        [ True, False, False,  True,  True, False,  True, False,  True, True],
-        [ True,  True, False,  True,  True,  True, False,  True,  True, False]],
-        [[ True, False, False, False,  True,  True,  True,  True,  True, True],
-        [False, False,  True,  True,  True,  True,  True, False,  True, False],
-        [ True, False,  True,  True,  True,  True, False,  True, False, False],
-        [ True,  True, False,  True,  True,  True, False,  True,  True, True]],
-        [[ True,  True,  True, False,  True,  True,  True,  True,  True, False],
-        [False,  True,  True,  True,  True,  True, False,  True, False, True],
-        [ True, False, False, False, False, False,  True, False, False, False],
-        [ True, False,  True,  True, False, False, False,  True,  True, True]]])
+    masked_true = np.array([[[ False, True, True,  False, True, True,  False,  False,  False, False],
+        [True,  False, True,  False,  False, True,  False,  False,  False, False],
+        [ False, True, True,  False,  False, True,  False, True,  False, False],
+        [ False,  False, True,  False,  False,  False, True,  False,  False, True]],
+        [[ False, True, True, True,  False,  False,  False,  False,  False, False],
+        [True, True,  False,  False,  False,  False,  False, True,  False, True],
+        [ False, True,  False,  False,  False,  False, True,  False, True, True],
+        [ False,  False, True,  False,  False,  False, True,  False,  False, False]],
+        [[ False,  False,  False, True,  False,  False,  False,  False,  False, True],
+        [True,  False,  False,  False,  False,  False, True,  False, True, False],
+        [ False, True, True, True, True, True,  False, True, True, True],
+        [ False, True,  False,  False, True, True, True,  False,  False, False]]])
 
     assert all([x==y for x,y in zip(spectrum_masked.mask.ravel(), masked_true.ravel())])
 
@@ -114,10 +114,10 @@ def test_snr_threshold():
     spec_coll_masked = snr_threshold(spec_coll, 3)
     print(spec_coll_masked.mask)
 
-    ma = np.array([[False, False, False, False, False, False, False,  True,  True, False],
-                  [False,  True, False, False, False, False, False, False,  True, False],
-                  [False, False,  True, False, False, False, False,  True, False, False],
-                  [False, False, False,  True,  True, False, False, False, False, False],
-                  [False, False, False, False, False, False, False, False,  True, False]])
+    ma = np.array([[True, True, True, True, True, True, True,  False,  False, True],
+                  [True,  False, True, True, True, True, True, True,  False, True],
+                  [True, True,  False, True, True, True, True,  False, True, True],
+                  [True, True, True,  False,  False, True, True, True, True, True],
+                  [True, True, True, True, True, True, True, True,  False, True]])
 
     assert all([x==y for x,y in zip(spec_coll_masked.mask.ravel(), ma.ravel())])
