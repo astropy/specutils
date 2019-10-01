@@ -461,12 +461,14 @@ def test_fixed_parameters():
     # Test passing fixed and bounds parameters
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
                                fixed={'mean': True},
-                               bounds={'amplitude': (2, 5)*u.Jy})
+                               bounds={'amplitude': (2, 5)*u.Jy},
+                               name="Gaussian Test Model")
 
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.mean == 6.1*u.um
     assert g_fit.bounds == g_init.bounds
+    assert g_fit.name == "Gaussian Test Model"
 
     # Test passing of tied parameter
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
@@ -474,6 +476,7 @@ def test_fixed_parameters():
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.tied == g_init.tied
+    assert g_fit.name == g_init.name
 
 
 def test_ignore_units():

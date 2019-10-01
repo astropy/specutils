@@ -358,6 +358,8 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
                                ignore_units, **kwargs)
+        if model_guess.name is not None:
+            fit_model.name = model_guess.name
 
         fitted_models.append(fit_model)
 
