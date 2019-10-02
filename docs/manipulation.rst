@@ -246,6 +246,43 @@ Or similarly, expressed in pixels:
     >>> spec_w_unc.uncertainty # doctest: +ELLIPSIS
     StdDevUncertainty([0.18714535, ..., 0.18714535])
 
+S/N Threshold Mask
+------------------
+
+It is useful to be able to find all the spaxels in an ND spectrum
+in which the signal to noise ratio is greater than some threshold.
+This method implements this functionality so that a `~specutils.Spectrum1D`
+object, `~specutils.SpectrumCollection` or an :class:`~astropy.nddata.NDData` derived
+object may be passed in as the first parameter. The second parameter
+is a floating point threshold. 
+
+For example, first a spectrum with flux and uncertainty is created, and 
+then call the ``snr_threshold`` method:
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> from astropy.nddata import StdDevUncertainty
+    >>> import astropy.units as u
+    >>> from specutils import Spectrum1D
+    >>> from specutils.manipulation import snr_threshold
+    >>> np.random.seed(42)
+    >>> wavelengths = np.arange(0, 10)*u.um
+    >>> flux = 100*np.abs(np.random.randn(10))*u.Jy
+    >>> uncertainty = StdDevUncertainty(np.abs(np.random.randn(10))*u.Jy)
+    >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
+    >>> spectrum_masked = snr_threshold(spectrum, 50) #doctest:+SKIP
+    >>> # To create a masked flux array
+    >>> flux_masked = spectrum_masked.flux #doctest:+SKIP
+    >>> flux_masked[spectrum_masked.mask] = np.nan #doctest:+SKIP
+
+The output ``spectrum_masked`` is a shallow copy of the input ``spectrum``
+with the ``mask`` attribute set to False where the S/N is greater than 50
+and True elsewhere. It is this way to be consistent with ``astropy.nddata``.
+
+.. note:: The mask attribute is the only attribute modified by ``snr_threshold()``. To
+             retrieve the masked flux data use ``spectrum.masked.flux_masked``.
+
 Reference/API
 -------------
 

@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 from astropy import units as u
 from astropy import constants as cnst
-from astropy.nddata import NDDataRef
+from astropy.nddata import NDDataRef, NDUncertainty
 from astropy.utils.decorators import lazyproperty
 
 from ..wcs import WCSAdapter, WCSWrapper
