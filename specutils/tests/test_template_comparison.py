@@ -145,3 +145,30 @@ def test_template_match_multidim_spectrum():
     tm_result = template_comparison.template_match(spec, multidim_spec)
 
     np.testing.assert_almost_equal(tm_result[1], 250.26870401777543)
+
+def test_template_redshift():
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    perm_flux = np.random.randn(50) * u.Jy
+
+    spec = Spectrum1D(spectral_axis=spec_axis,
+                      flux=perm_flux,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    redshift = 3
+
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=(perm_flux / (1+redshift)),
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+
+    min_redshift = .5
+    max_redhsift = 5.5
+    delta_redshift = .25
+
+    tm_result = template_comparison.template_redshift(spec, spec1, min_redshift, max_redhsift, delta_redshift)
+
+    assert tm_result == 3

@@ -59,7 +59,7 @@ def _resample(resample_method):
     return None
 
 
-def _template_match(observed_spectrum, template_spectrum, resample_method):
+def _chi_sqaure_for_templates(observed_spectrum, template_spectrum, resample_method):
     """
     Resample the template spectrum to match the wavelength of the observed
     spectrum. Then, calculate chi2 on the flux of the two spectra.
@@ -126,6 +126,9 @@ def template_match(observed_spectrum, spectral_templates,
         over. The template spectra, which will be resampled, normalized, and
         compared to the observed spectrum, where the smallest chi2 and
         normalized template spectrum will be returned.
+    resample_method : `string`
+        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
+        Anything else does not resample the spectrum.
 
     Returns
     -------
@@ -138,7 +141,7 @@ def template_match(observed_spectrum, spectral_templates,
         The index of the spectrum with the smallest chi2 in spectral templates.
     """
     if hasattr(spectral_templates, 'flux') and len(spectral_templates.flux.shape) == 1:
-        normalized_spectral_template, chi2 = _template_match(
+        normalized_spectral_template, chi2 = _chi_sqaure_for_templates(
             observed_spectrum, spectral_templates, resample_method)
 
         return normalized_spectral_template, chi2
@@ -151,7 +154,7 @@ def template_match(observed_spectrum, spectral_templates,
     smallest_chi_spec = None
 
     for index, spectrum in enumerate(spectral_templates):
-        normalized_spectral_template, chi2 = _template_match(
+        normalized_spectral_template, chi2 = _chi_sqaure_for_templates(
             observed_spectrum, spectrum, resample_method)
 
         if chi2_min is None or chi2 < chi2_min:
@@ -160,3 +163,32 @@ def template_match(observed_spectrum, spectral_templates,
             smallest_chi_index = index
 
     return smallest_chi_spec, chi2_min, smallest_chi_index
+
+
+def template_redshift(spec, spec1, min_redshift, max_redshift, delta_redshift):
+    # run through redshifts and apply each to the template spectra
+    # then run the redshifted spectra through chi square
+    # Start in the center and go in one direction. if the chi2 gets larger, go in the other direction.
+
+    print("Spec flux: {}, spec1 flux: {}".format(spec.flux, spec1.flux))
+
+
+    redshift = min_redshift
+    chi2_min = None
+    final_redshift = None
+    while redshift <= max_redshift:
+        print("Testing {}".format(redshift))
+        temp_spec = Spectrum1D(spectral_axis=spec1.spectral_axis,
+                        flux=(spec1.flux*(1+redshift)))
+        normalized_spectral_template, chi2 = _chi_sqaure_for_templates(
+            spec, temp_spec, "flux_conserving")
+
+        print("\tchi2 {}".format(chi2))
+        # print("\t\tSpec flux: {}, spec1 flux: {}".format(spec.flux, temp_spec.flux))
+
+        if chi2_min is None or chi2 < chi2_min:
+            chi2_min = chi2
+            final_redshift = redshift
+        redshift += delta_redshift
+
+    return final_redshift
