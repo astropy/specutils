@@ -158,10 +158,10 @@ This again will be done in a separate python file and placed in the user's
     @custom_writer("fits-writer")
     def generic_fits(spectrum, file_name, **kwargs):
         flux = spectrum.flux.value
-        disp = spectrum.dispersion.value
+        disp = spectrum.spectral_axis.value
         meta = spectrum.meta
 
-        tab = Table([disp, flux], names=("dispersion", "flux"), meta=meta)
+        tab = Table([disp, flux], names=("spectral_axis", "flux"), meta=meta)
 
         tab.write(file_name, format="fits")
 
