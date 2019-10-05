@@ -358,6 +358,8 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
                                ignore_units, **kwargs)
+        if model_guess.name is not None:
+            fit_model.name = model_guess.name
 
         fitted_models.append(fit_model)
 
@@ -633,9 +635,9 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
         #
 
         if isinstance(sub_model, models.PolynomialModel):
-            new_sub_model = sub_model.__class__(sub_model.degree)
+            new_sub_model = sub_model.__class__(sub_model.degree, name=sub_model.name)
         else:
-            new_sub_model = sub_model.__class__()
+            new_sub_model = sub_model.__class__(name=sub_model.name)
 
         # Now for each parameter in the model determine if a dispersion or
         # flux type of unit, then convert to spectrum units and then
@@ -751,9 +753,9 @@ def _add_units_to_model(model_in, model_orig, spectrum):
         #
 
         if isinstance(m_in, models.PolynomialModel):
-            new_sub_model = m_in.__class__(m_in.degree)
+            new_sub_model = m_in.__class__(m_in.degree, name=m_in.name)
         else:
-            new_sub_model = m_in.__class__()
+            new_sub_model = m_in.__class__(name=m_in.name)
 
         #
         # Convert the model values from the spectrum units back to the

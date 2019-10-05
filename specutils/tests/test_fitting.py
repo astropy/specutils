@@ -461,12 +461,14 @@ def test_fixed_parameters():
     # Test passing fixed and bounds parameters
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
                                fixed={'mean': True},
-                               bounds={'amplitude': (2, 5)*u.Jy})
+                               bounds={'amplitude': (2, 5)*u.Jy},
+                               name="Gaussian Test Model")
 
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.mean == 6.1*u.um
     assert g_fit.bounds == g_init.bounds
+    assert g_fit.name == "Gaussian Test Model"
 
     # Test passing of tied parameter
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
@@ -474,6 +476,26 @@ def test_fixed_parameters():
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.tied == g_init.tied
+    assert g_fit.name == g_init.name
+
+
+def test_name_preservation_after_fitting():
+    """
+    Test to confirm model and submodels names are preserved after fitting.
+    """
+
+    x = np.linspace(0., 10., 200)
+    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
+    y += np.random.normal(0., 0.2, x.shape)
+    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+
+    subcomponents = models.Gaussian1D(name="Model I") * models.Gaussian1D(name="Second Model")
+    c_model = subcomponents + models.Gaussian1D(name="Model 3")
+    c_model.name = "Compound Model with 3 components"
+    model_fit = fit_lines(spectrum, c_model)
+
+    assert model_fit.name == "Compound Model with 3 components"
+    assert model_fit.submodel_names == ("Model I", "Second Model", "Model 3")
 
 
 def test_ignore_units():
