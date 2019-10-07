@@ -154,21 +154,91 @@ def test_template_redshift():
     spec_axis = np.linspace(0, 50, 50) * u.AA
     perm_flux = np.random.randn(50) * u.Jy
 
-    spec = Spectrum1D(spectral_axis=spec_axis,
+    redshift = 3
+
+    # Observed spectrum
+    spec = Spectrum1D(spectral_axis=spec_axis * (1+redshift),
                       flux=perm_flux,
                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
-    redshift = 3
-
+    # Template spectrum
     spec1 = Spectrum1D(spectral_axis=spec_axis,
-                       flux=(perm_flux / (1+redshift)),
+                       flux=perm_flux,
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
-
+    # Test redshift parameters
     min_redshift = .5
-    max_redhsift = 5.5
+    max_redshift = 5.5
     delta_redshift = .25
 
-    tm_result = template_comparison.template_redshift(spec, spec1, min_redshift, max_redhsift, delta_redshift)
+    tr_result = template_comparison.template_redshift(spec, spec1, min_redshift, max_redshift, delta_redshift)
 
-    assert tm_result == 3
+    assert tr_result[0] == 3
+
+def test_template_redshift_with_one_template_spectrum_in_match():
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    perm_flux = np.random.randn(50) * u.Jy
+
+    # Test redshift
+    redshift = 3
+
+    # Observed spectrum
+    spec = Spectrum1D(spectral_axis=spec_axis * (1+redshift),
+                      flux=perm_flux,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    # Template spectrum
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=perm_flux,
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    # Test redshift parameters
+    min_redshift = .5
+    max_redshift = 5.5
+    delta_redshift = .25
+
+    tm_result = template_comparison.template_match(spec, spec1, "flux_conserving",
+                                                   min_redshift, max_redshift, delta_redshift)
+
+    np.testing.assert_almost_equal(tm_result[1], 73484.0053895151)
+
+def test_template_redshift_with_multiple_template_spectra_in_match():
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    perm_flux = np.random.randn(50) * u.Jy
+
+    # Test redshift
+    redshift = 3
+
+    # Observed spectrum
+    spec = Spectrum1D(spectral_axis=spec_axis * (1+redshift),
+                      flux=perm_flux,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    # Template spectrum
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=StdDevUncertainty(np.random.sample(50)))
+    spec2 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=StdDevUncertainty(np.random.sample(50)))
+
+    # Combine spectra into SpectrumCollection object
+    spec_coll = SpectrumCollection.from_spectra([spec1, spec2])
+
+    # Test redshift parameters
+    min_redshift = .5
+    max_redshift = 5.5
+    delta_redshift = .25
+
+    tm_result = template_comparison.template_match(spec, spec_coll, "flux_conserving",
+                                                   min_redshift, max_redshift, delta_redshift)
+
+    np.testing.assert_almost_equal(tm_result[1], 6803.922741644725)
