@@ -4,13 +4,12 @@ import os
 from astropy import units as u
 from astropy.io import fits
 from astropy.wcs import WCS
-from astropy.table import Table
 from astropy.modeling import models, fitting
 
 import shlex
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader, custom_writer
+from ..registers import data_loader
 
 __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
 
@@ -80,17 +79,6 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, flux_unit=None,
         meta = {'header': header}
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
-
-
-@custom_writer("wcs-fits")
-def wcs1d_fits_writer(spectrum, file_name, **kwargs):
-    flux = spectrum.flux.value
-    disp = spectrum.dispersion.value
-    meta = spectrum.meta
-
-    tab = Table([disp, flux], names=("dispersion", "flux"), meta=meta)
-
-    tab.write(file_name, format="fits")
 
 
 def identify_iraf_wcs(origin, *args):
