@@ -11,6 +11,66 @@ from astropy.tests.helper import quantity_allclose
 # TODO: Add some tests that are outliers: where the observed and template do not overlap (what happens?),
 # TODO: where there is minimal overlap (1 point)?
 
+def test_template_match_no_overlap():
+    """
+    Test template_match when both observed and template spectra have the same wavelength axis
+    """
+    print("no overlap test")
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    spec_axis_no_overlap = np.linspace(51, 102, 50) * u.AA
+
+    spec = Spectrum1D(spectral_axis=spec_axis,
+                      flux=np.random.randn(50) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    spec1 = Spectrum1D(spectral_axis=spec_axis_no_overlap,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    # Get result from template_match
+    tm_result = template_comparison.template_match(spec, spec1)
+
+    # Create new spectrum for comparison
+    spec_result = Spectrum1D(spectral_axis=spec_axis,
+                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
+
+    # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
+    assert tm_result[1] == 40093.28353756253
+
+def test_template_match_minimal_overlap():
+    """
+    Test template_match when both observed and template spectra have the same wavelength axis
+    """
+    print("minimal overlap test")
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    spec_axis_no_overlap = np.linspace(50, 102, 50) * u.AA
+
+    spec = Spectrum1D(spectral_axis=spec_axis,
+                      flux=np.random.randn(50) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    spec1 = Spectrum1D(spectral_axis=spec_axis_no_overlap,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    # Get result from template_match
+    tm_result = template_comparison.template_match(spec, spec1)
+
+    # Create new spectrum for comparison
+    spec_result = Spectrum1D(spectral_axis=spec_axis,
+                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
+
+    # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
+    assert tm_result[1] == 40093.28353756253
+
 def test_template_match_spectrum():
     """
     Test template_match when both observed and template spectra have the same wavelength axis
