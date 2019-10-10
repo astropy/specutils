@@ -204,7 +204,7 @@ Here's a set of simple examples showing each of the three types of resampling:
 Splicing
 ---------
 :ref:`specutils <specutils>` can be used for splicing multiple spectra together. This can be achieved by using
-the :ref:`Resampling <Resampling>` and additive functionalities as follows:
+the Resampling and additive functionalities as follows:
 
 
 .. code-block:: python
