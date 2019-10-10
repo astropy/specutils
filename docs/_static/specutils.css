@@ -5,3 +5,11 @@ div.topbar a.brand {
   background-image: url("logo_icon.png"), none;
   background-size: 32px 32px;
 }
+
+#logotext1 {
+  color: #667C8A;
+}
+
+#logotext2 {
+  color: #F09156;
+}
