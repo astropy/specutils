@@ -208,6 +208,7 @@ the :ref:`Resampling <Resampling>` and additive functionalities as follows:
 
 
 .. code-block:: python
+
     >>> import numpy as np
     >>> import astropy.units as u
     >>> from specutils import Spectrum1D
