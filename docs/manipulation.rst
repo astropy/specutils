@@ -201,30 +201,6 @@ Here's a set of simple examples showing each of the three types of resampling:
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.step(new_spec_sp.spectral_axis, new_spec_sp.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
-Splicing
----------
-:ref:`specutils <specutils>` can be used for splicing multiple spectra together. This can be achieved by using
-the :ref:`Resampling <Resampling>` and additive functionalities as follows:
-
-
-.. code-block:: python
-    >>> import numpy as np
-    >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
-    >>> from specutils.manipulation.resample import FluxConservingResampler
-
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(1, 99, 2) * u.nm, flux=np.random.sample(49)*u.Jy)
-
-    >>> new_disp_grid = np.arange(1, 99, 2)
-
-    >>> fluxcon = FluxConservingResampler()
-    >>> new_spec1 = fluxcon(spec1, new_disp_grid)
-    >>> new_spec2 = fluxcon(spec2, new_disp_grid)
-
-    >>> final_spec = new_spec1 + new_spec2
-
-
 Uncertainty Estimation
 ----------------------
 
