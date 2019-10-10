@@ -13,7 +13,7 @@ from astropy.tests.helper import quantity_allclose
 
 def test_template_match_no_overlap():
     """
-    Test template_match when both observed and template spectra have the same wavelength axis
+    Test template_match when both observed and template spectra have no overlap on the wavelength axis
     """
     print("no overlap test")
     # Seed np.random so that results are consistent
@@ -39,11 +39,11 @@ def test_template_match_no_overlap():
                              flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
 
     # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    assert tm_result[1] == 40093.28353756253
+    assert np.isnan(tm_result[1])
 
 def test_template_match_minimal_overlap():
     """
-    Test template_match when both observed and template spectra have the same wavelength axis
+    Test template_match when both observed and template spectra have minimal overlap on the wavelength axis
     """
     print("minimal overlap test")
     # Seed np.random so that results are consistent
@@ -51,7 +51,7 @@ def test_template_match_minimal_overlap():
 
     # Create test spectra
     spec_axis = np.linspace(0, 50, 50) * u.AA
-    spec_axis_no_overlap = np.linspace(50, 102, 50) * u.AA
+    spec_axis_no_overlap = np.linspace(45, 95, 50) * u.AA
 
     spec = Spectrum1D(spectral_axis=spec_axis,
                       flux=np.random.randn(50) * u.Jy,
@@ -69,7 +69,7 @@ def test_template_match_minimal_overlap():
                              flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
 
     # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    assert tm_result[1] == 40093.28353756253
+    assert np.isnan(tm_result[1])
 
 def test_template_match_spectrum():
     """
