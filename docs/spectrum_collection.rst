@@ -36,9 +36,9 @@ solution.
     (5,)
     >>> spec_coll.flux.unit
     Unit("Jy")
-    >>> spec_coll.wavelength.shape
+    >>> spec_coll.spectral_axis.shape
     (5, 10)
-    >>> spec_coll.wavelength.unit
+    >>> spec_coll.spectral_axis.unit
     Unit("Angstrom")
 
 Collections from 1D spectra
@@ -67,7 +67,7 @@ a list of :class:`~specutils.Spectrum1D`:
     Unit("Jy")
     >>> spec_coll.wavelength.shape
     (2, 50)
-    >>> spec_coll.wavelength.unit
+    >>> spec_coll.spectral_axis.unit
     Unit("Angstrom")
 
 :class:`~specutils.SpectrumCollection` objects can be treated just like
