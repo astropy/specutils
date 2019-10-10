@@ -127,7 +127,7 @@ common spectral axis.
     >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
     >>> spec_slice = spec[0] #doctest:+SKIP
     >>> spec_slice.wavelength #doctest:+SKIP
-    <Quantity [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] Angstrom>
+    <Quantity [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
     >>> spec_slice.flux #doctest:+SKIP
     <Quantity [0.72722821, 0.32147784, 0.70256482, 0.04445197, 0.03390352,
            0.50835299, 0.87581725, 0.50270413, 0.08556376, 0.53713355] Jy>
