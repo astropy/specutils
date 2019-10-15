@@ -172,8 +172,8 @@ def test_expanded_grid_interp_spline():
 @pytest.mark.parametrize("edgetype,lastvalue",
                          [("nan_fill", np.nan), ("zero_fill", 0)])
 def test_resample_edges(edgetype, lastvalue, all_resamplers):
-    input_spectrum = Spectrum1D(spectral_axis=[1, 3, 7, 6, 20] * u.micron,
-                                flux=[2, 4, 12, 16, 20] * u.mJy)
+    input_spectrum = Spectrum1D(spectral_axis=[2, 4, 12, 16, 20] * u.micron,
+                                flux=[1, 3, 7, 6, 20] * u.mJy)
     resamp_grid = [1, 3, 7, 6, 20, 100] * u.micron
 
     resampler = all_resamplers(edgetype)

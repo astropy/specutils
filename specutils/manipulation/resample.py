@@ -20,6 +20,8 @@ class ResamplerBase(ABC):
     show how we will want to use it in the future.
     """
     def __init__(self, bin_edges='nan_fill'):
+        if bin_edges not in ('nan_fill', 'zero_fill'):
+            raise ValueError('invalid bin_edges value: ' + str(bin_edges))
         self.bin_edges = bin_edges
 
     @abstractmethod
@@ -220,6 +222,14 @@ class FluxConservingResampler(ResamplerBase):
         else:
             out_uncertainty = None
 
+        # nan-filling happens by default - replace with zeros if requested:
+        if self.bin_edges == 'zero_fill':
+            origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_lamb.unit
+            off_edges = (fin_lamb < origedges[0]) | (origedges[-1] < fin_lamb)
+            out_flux[off_edges] = 0
+            if out_uncertainty is not None:
+                out_uncertainty.array[off_edges] = 0
+
         # todo: for now, use the units from the pre-resampled
         # spectra, although if a unit is defined for fin_lamb and it doesn't
         # match the input spectrum it won't work right, will have to think
@@ -283,7 +293,11 @@ class LinearInterpolatedResampler(ResamplerBase):
             The resampled flux array generated from the interpolation.
 
         """
-        return np.interp(fin_lamb, orig_dispersion, flux, left=np.nan, right=np.nan)
+        fill_val = np.nan #bin_edges=nan_fill case
+        if self.bin_edges == 'zero_fill':
+            fill_val = 0
+
+        return np.interp(fin_lamb, orig_dispersion, flux, left=fill_val, right=fill_val)
 
     def resample1d(self, orig_spectrum, fin_lamb):
         """
@@ -372,7 +386,8 @@ class SplineInterpolatedResampler(ResamplerBase):
             The resampled flux array generated from the interpolation.
 
         """
-        cubic_spline = CubicSpline(orig_dispersion, flux, extrapolate=False)
+        cubic_spline = CubicSpline(orig_dispersion, flux,
+                                   extrapolate=self.bin_edges!='nan_fill')
         return cubic_spline(fin_lamb)
 
     def resample1d(self, orig_spectrum, fin_lamb):
@@ -393,7 +408,12 @@ class SplineInterpolatedResampler(ResamplerBase):
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
         out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
-                                  fin_lamb)
+                                       fin_lamb)
+
+        if self.bin_edges == 'zero_fill':
+            origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_lamb.unit
+            off_edges = (fin_lamb < origedges[0]) | (origedges[-1] < fin_lamb)
+            out_flux[off_edges] = 0
 
         # todo: for now, use the units from the pre-resampled
         # spectra, although if a unit is defined for fin_lamb and it doesn't
