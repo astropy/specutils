@@ -85,7 +85,7 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 In this case, the ``spec1_bsmooth2`` result should be equivalent to the ``spec1_bsmooth`` in
 the section above (assuming the flux data of the input ``spec`` is the same).
 
-The uncertainties are propagated using a standard "propagation of errors" method, if the uncertainty 
+The uncertainties are propagated using a standard "propagation of errors" method, if the uncertainty
 is defined for the spectrum *and* it is one of StdDevUncertainty, VarianceUncertainty or InverseVariance.
 But note that this does *not* consider covariance between points.
 
@@ -99,7 +99,7 @@ method applys the median filter across the flux.
 
 .. note::
     This method is not flux conserving and errors are not propagated.
-    
+
 
 .. code-block:: python
 
@@ -201,29 +201,41 @@ Here's a set of simple examples showing each of the three types of resampling:
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.step(new_spec_sp.spectral_axis, new_spec_sp.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
-Splicing
----------
-:ref:`specutils <specutils>` can be used for splicing multiple spectra together. This can be achieved by using
-the Resampling and additive functionalities as follows:
+Splicing/Combining Multiple Spectra
+-----------------------------------
+The resampling functionality detailed above is also the default way
+:ref:`specutils <specutils>` supports splicing multiple spectra together into a
+single spectrum. This can be achieved as follows:
 
 
-.. code-block:: python
 
-    >>> import numpy as np
-    >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
-    >>> from specutils.manipulation.resample import FluxConservingResampler
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(1, 99, 2) * u.nm, flux=np.random.sample(49)*u.Jy)
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
 
-    >>> new_disp_grid = np.arange(1, 99, 2)
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.micron, flux=np.random.randn(49)*u.Jy)
+    >>> spec2 = Spectrum1D(spectral_axis=np.arange(51, 100) * u.micron, flux=(np.random.randn(49)+1)*u.Jy)
 
-    >>> fluxcon = FluxConservingResampler()
-    >>> new_spec1 = fluxcon(spec1, new_disp_grid)
-    >>> new_spec2 = fluxcon(spec2, new_disp_grid)
+    >>> new_spectral_axis = np.concatenate([spec1.spectral_axis.value, spec2.spectral_axis.to_value(spec1.spectral_axis.unit)]) * spec1.spectral_axis.unit
+
+    >>> resampler = LinearInterpolatedResampler()
+    >>> new_spec1 = resampler(spec1, new_spectral_axis)
+    >>> new_spec1.flux[np.isnan(new_spec1.flux)] = 0
+    >>> new_spec2 = resampler(spec2, new_spectral_axis)
+    >>> new_spec2.flux[np.isnan(new_spec2.flux)] = 0
 
     >>> final_spec = new_spec1 + new_spec2
+
+    Yielding a spliced spectrum (the solid line below) composed of the splice of
+    two other spectra (dashed lines)::
+
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.step(final_spec.spectral_axis, final_spec.flux, where='mid', c='k', lw=2) # doctest: +IGNORE_OUTPUT
+    >>> ax.step(spec1.spectral_axis, spec1.flux, ls='--', where='mid', lw=1) # doctest: +IGNORE_OUTPUT
+    >>> ax.step(spec2.spectral_axis, spec2.flux, ls='--', where='mid', lw=1) # doctest: +IGNORE_OUTPUT
+
 
 
 Uncertainty Estimation
@@ -279,9 +291,9 @@ in which the signal to noise ratio is greater than some threshold.
 This method implements this functionality so that a `~specutils.Spectrum1D`
 object, `~specutils.SpectrumCollection` or an :class:`~astropy.nddata.NDData` derived
 object may be passed in as the first parameter. The second parameter
-is a floating point threshold. 
+is a floating point threshold.
 
-For example, first a spectrum with flux and uncertainty is created, and 
+For example, first a spectrum with flux and uncertainty is created, and
 then call the ``snr_threshold`` method:
 
 .. code-block:: python
