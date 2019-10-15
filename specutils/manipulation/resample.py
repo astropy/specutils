@@ -16,13 +16,17 @@ class ResamplerBase(ABC):
     Base class for resample classes.  The algorithms and needs for difference
     resamples will vary quite a bit, so this class is relatively sparse.
 
-    Init paramtere here is not yet hooked up to the rest of the code, but to
-    show how we will want to use it in the future.
+    Parameters
+    ----------
+    edge_action : str
+        What to do when resampling off the edge of the spectrum.  Can be
+        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
+        ``'zero_fill'`` to be set to zero.
     """
-    def __init__(self, bin_edges='nan_fill'):
-        if bin_edges not in ('nan_fill', 'zero_fill'):
-            raise ValueError('invalid bin_edges value: ' + str(bin_edges))
-        self.bin_edges = bin_edges
+    def __init__(self, edge_action='nan_fill'):
+        if edge_action not in ('nan_fill', 'zero_fill'):
+            raise ValueError('invalid edge_action value: ' + str(edge_action))
+        self.edge_action = edge_action
 
     @abstractmethod
     def __call__(self, orig_spectrum, fin_lamb):
@@ -72,6 +76,13 @@ class FluxConservingResampler(ResamplerBase):
     flux density).
     Algorithm based on the equations documented in the following paper:
     https://ui.adsabs.harvard.edu/abs/2017arXiv170505165C/abstract
+
+    Parameters
+    ----------
+    edge_action : str
+        What to do when resampling off the edge of the spectrum.  Can be
+        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
+        ``'zero_fill'`` to be set to zero.
 
     Examples
     --------
@@ -223,7 +234,7 @@ class FluxConservingResampler(ResamplerBase):
             out_uncertainty = None
 
         # nan-filling happens by default - replace with zeros if requested:
-        if self.bin_edges == 'zero_fill':
+        if self.edge_action == 'zero_fill':
             origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_lamb.unit
             off_edges = (fin_lamb < origedges[0]) | (origedges[-1] < fin_lamb)
             out_flux[off_edges] = 0
@@ -247,6 +258,13 @@ class LinearInterpolatedResampler(ResamplerBase):
     """
     Resample a spectrum onto a new ``spectral_axis`` using linear interpolation.
 
+    Parameters
+    ----------
+    edge_action : str
+        What to do when resampling off the edge of the spectrum.  Can be
+        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
+        ``'zero_fill'`` to be set to zero.
+
     Examples
     --------
 
@@ -264,8 +282,8 @@ class LinearInterpolatedResampler(ResamplerBase):
     >>> fluxc_resample = LinearInterpolatedResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
     """
-    def __init__(self, bin_edges='nan_fill'):
-        super().__init__(bin_edges)
+    def __init__(self, edge_action='nan_fill'):
+        super().__init__(edge_action)
 
     def __call__(self, orig_spectrum, fin_lamb):
         """
@@ -294,7 +312,7 @@ class LinearInterpolatedResampler(ResamplerBase):
 
         """
         fill_val = np.nan #bin_edges=nan_fill case
-        if self.bin_edges == 'zero_fill':
+        if self.edge_action == 'zero_fill':
             fill_val = 0
 
         return np.interp(fin_lamb, orig_dispersion, flux, left=fill_val, right=fill_val)
@@ -338,6 +356,14 @@ class SplineInterpolatedResampler(ResamplerBase):
     """
     This resample algorithim uses a cubic spline interpolator.  In the future
     this can be expanded to use splines of different degrees.
+
+
+    Parameters
+    ----------
+    edge_action : str
+        What to do when resampling off the edge of the spectrum.  Can be
+        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
+        ``'zero_fill'`` to be set to zero.
 
     Examples
     --------
@@ -387,7 +413,7 @@ class SplineInterpolatedResampler(ResamplerBase):
 
         """
         cubic_spline = CubicSpline(orig_dispersion, flux,
-                                   extrapolate=self.bin_edges!='nan_fill')
+                                   extrapolate=self.edge_action!='nan_fill')
         return cubic_spline(fin_lamb)
 
     def resample1d(self, orig_spectrum, fin_lamb):
@@ -410,7 +436,7 @@ class SplineInterpolatedResampler(ResamplerBase):
         out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
                                        fin_lamb)
 
-        if self.bin_edges == 'zero_fill':
+        if self.edge_action == 'zero_fill':
             origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_lamb.unit
             off_edges = (fin_lamb < origedges[0]) | (origedges[-1] < fin_lamb)
             out_flux[off_edges] = 0
