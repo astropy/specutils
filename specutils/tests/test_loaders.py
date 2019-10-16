@@ -16,6 +16,7 @@ from astropy.wcs import FITSFixedWarning
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
+from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from numpy.testing import assert_allclose
 
@@ -224,3 +225,20 @@ def test_iraf_non_linear_cubic_spline(remote_data_path):
 
     with pytest.raises(NotImplementedError):
         assert Spectrum1D.read(remote_data_path, format='iraf')
+
+
+def test_tabular_fits_writer(tmpdir):
+    # Create a small data set
+    wave = np.arange(1,1.1,0.01)*u.AA
+    flux = np.ones(len(wave))*1.e-14*u.Jy
+    unc = StdDevUncertainty(0.01*flux)
+    spectrum = Spectrum1D(flux=flux, spectral_axis=wave, uncertainty=unc)
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile,format='tabular-fits')
+
+    # Read it in and check against the original
+    table = Table.read(tmpfile,format='fits')
+    assert np.alltrue(table['spectral_axis'] == spectrum.spectral_axis.value)
+    assert np.alltrue(table['flux'] == spectrum.flux.value)
+
+    # ToDo: get tabular_fits_loader to also read this in correctly!
