@@ -291,31 +291,6 @@ class LinearInterpolatedResampler(ResamplerBase):
         """
         return self.resample1d(orig_spectrum, fin_spec_axis)
 
-    def _interpolation(self, orig_spec_axis, flux, fin_spec_axis):
-        """
-        Use specified interpolation to calculated resampled
-        flux.
-
-        Parameters
-        ----------
-        orig_spec_axis : ndarray
-            The original spectral axis array.
-        flux: ndarray
-            The flux array from the input Spectrum1D
-        fin_spec_axis : ndarray
-            The desired spectral axis array.
-
-        Returns
-        -------
-        resample_flux : ndarray
-            The resampled flux array generated from the interpolation.
-
-        """
-        fill_val = np.nan #bin_edges=nan_fill case
-        if self.edge_action == 'zero_fill':
-            fill_val = 0
-
-        return np.interp(fin_spec_axis, orig_spec_axis, flux, left=fill_val, right=fill_val)
 
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
@@ -336,8 +311,13 @@ class LinearInterpolatedResampler(ResamplerBase):
         """
         if orig_spectrum.uncertainty is not None:
             warn("Linear interpolation currently does not propogate uncertainties")
-        out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
-                                  fin_spec_axis)
+
+        fill_val = np.nan #bin_edges=nan_fill case
+        if self.edge_action == 'zero_fill':
+            fill_val = 0
+
+        out_flux = np.interp(fin_spec_axis, orig_spectrum.spectral_axis,
+                             orig_spectrum.flux, left=fill_val, right=fill_val)
 
         # todo: for now, use the units from the pre-resampled
         # spectra, although if a unit is defined for fin_spec_axis and it doesn't
@@ -392,30 +372,6 @@ class SplineInterpolatedResampler(ResamplerBase):
         """
         return self.resample1d(orig_spectrum, fin_spec_axis)
 
-    def _interpolation(self, orig_spec_axis, flux, fin_spec_axis):
-        """
-        Use specified interpolation to calculated resampled
-        flux.
-
-        Parameters
-        ----------
-        orig_spec_axis : ndarray
-            The original spectral axis array.
-        flux: ndarray
-            The flux array from the input Spectrum1D
-        fin_spec_axis : ndarray
-            The desired spectral axis array.
-
-        Returns
-        -------
-        resample_flux : ndarray
-            The resampled flux array generated from the interpolation.
-
-        """
-        cubic_spline = CubicSpline(orig_spec_axis, flux,
-                                   extrapolate=self.edge_action!='nan_fill')
-        return cubic_spline(fin_spec_axis)
-
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Call interpolation, repackage new spectra
@@ -433,8 +389,9 @@ class SplineInterpolatedResampler(ResamplerBase):
         resample_spectrum : `~specutils.Spectrum1D`
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
-        out_flux = self._interpolation(orig_spectrum.spectral_axis, orig_spectrum.flux,
-                                       fin_spec_axis)
+        cubic_spline = CubicSpline(orig_spectrum.spectral_axis, orig_spectrum.flux,
+                                   extrapolate=self.edge_action != 'nan_fill')
+        out_flux = cubic_spline(fin_spec_axis)
 
         if self.edge_action == 'zero_fill':
             origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_spec_axis.unit
