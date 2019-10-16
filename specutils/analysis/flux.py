@@ -5,9 +5,11 @@ A module for analysis tools focused on determining fluxes of spectral features.
 import numpy as np
 from ..manipulation import extract_region
 from .utils import computation_wrapper
+from astropy.stats import sigma_clip
+from astropy.stats import median_absolute_deviation
 
 
-__all__ = ['line_flux', 'equivalent_width']
+__all__ = ['line_flux', 'equivalent_width', 'is_continuum_near_zero']
 
 
 def line_flux(spectrum, regions=None):
@@ -116,3 +118,46 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
     ew =  dx - (line_flux / continuum)
 
     return ew.to(calc_spectrum.spectral_axis.unit)
+
+def is_continuum_near_zero(spectrum, eps=0.01):
+    """
+    Determine if the baseline continuum of the spectrum is near zero.
+
+    The value is scaled to match the sigma/standard deviation parameter of a
+    standard Gaussian profile. This will be calculated over the regions, if
+    they are specified.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object over which the width will be calculated.
+
+    eps: float
+        The tolerance on the quantification to confirm the continuum is
+        near zero.
+
+    Returns
+    -------
+    is_near_zero: bool
+        A True if the continuum of the spectrum is with eps, False otherwise.
+
+    Notes
+    -----
+    The spectrum should be continuum subtracted before being passed to this
+    function.
+    """
+
+    # If the eps has units then the assumption is that we want
+    # to compare the median of the flux regardless of the
+    # existence of the uncertainty.
+    if hasattr(eps, 'unit'):
+        return np.median(spectrum.flux) < eps
+
+    # If eps does not have a unit, ie it is not a quantity, then
+    # we are going to calculate based on the S/N if the uncertainty
+    # exists.
+    if hasattr(spectrum, 'uncertainty') and spectrum.uncertainty:
+        return np.median(spectrum.flux / spectrum.uncertainty.quantity) < eps
+    else:
+        raise Exception('Spectrum flux has units, eps does not, either include uncertainty or use units on eps')
+        #return np.median(spectrum.flux) / median_absolute_deviation(spectrum.flux) < eps

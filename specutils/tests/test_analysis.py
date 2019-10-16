@@ -10,7 +10,7 @@ from astropy.tests.helper import quantity_allclose
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
-                        snr_derived, fwzi)
+                        snr_derived, fwzi, is_continuum_near_zero)
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -578,3 +578,27 @@ def test_fwzi_multi_spectrum():
     expected = [113.51706001 * u.AA, 567.21252727 * u.AA, 499.5024546 * u.AA]
 
     assert quantity_allclose(fwzi(spec), expected)
+
+
+def test_is_continuum_near_zero():
+
+    # No mask, no uncertainty
+    wavelengths = [300, 500, 1000] * u.nm
+    data = [0.001, -0.003, 0.003] * u.Jy
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
+    assert True == is_continuum_near_zero(spectrum, eps=0.1*u.Jy)
+
+#    # No mask, no uncertainty, eps is float
+#    wavelengths = [300, 500, 1000] * u.nm
+#    data = [0.0081, 0.0043, 0.0072] * u.Jy
+#    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
+#    assert True == is_continuum_near_zero(spectrum, eps=0.1)
+
+    # No mask, with uncertainty
+    wavelengths = [300, 500, 1000] * u.nm
+    data = [0.03, 0.029, 0.033] * u.Jy
+    uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
+                          uncertainty=uncertainty)
+
+    assert True == is_continuum_near_zero(spectrum, eps=0.1)
