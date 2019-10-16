@@ -73,10 +73,22 @@ def tabular_fits_loader(file_name, column_mapping=None, **kwargs):
 
 @custom_writer("tabular-fits")
 def tabular_fits_writer(spectrum, file_name, **kwargs):
-    flux = spectrum.flux.value
-    disp = spectrum.spectral_axis.value
+    flux = spectrum.flux
+    disp = spectrum.spectral_axis
     meta = spectrum.meta
 
-    tab = Table([disp, flux], names=("spectral_axis", "flux"), meta=meta)
+    # Mapping of spectral_axis types to header TTYPE1
+    dispname = disp.unit.physical_type
+    if dispname == "length":
+        dispname = "wavelength"
 
-    tab.write(file_name, format="fits")
+    columns = [disp, flux]
+    colnames = [dispname, "flux"]
+    # Include uncertainty - ToDo: uncertainty units?
+    if spectrum.uncertainty is not None:
+        columns.append(spectrum.uncertainty.array * spectrum.uncertainty.unit)
+        colnames.append("uncertainty")
+
+    tab = Table(columns, names=colnames, meta=meta)
+
+    tab.write(file_name, format="fits", **kwargs)

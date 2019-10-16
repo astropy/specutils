@@ -227,18 +227,39 @@ def test_iraf_non_linear_cubic_spline(remote_data_path):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
 
-def test_tabular_fits_writer(tmpdir):
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_tabular_fits_writer(tmpdir, spectral_axis):
+    wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
+           'wavenumber': u.cm**-1}
     # Create a small data set
-    wave = np.arange(1,1.1,0.01)*u.AA
-    flux = np.ones(len(wave))*1.e-14*u.Jy
+    disp = np.arange(1,1.1,0.01)*wlu[spectral_axis]
+    flux = np.ones(len(disp))*1.e-14*u.Jy
     unc = StdDevUncertainty(0.01*flux)
-    spectrum = Spectrum1D(flux=flux, spectral_axis=wave, uncertainty=unc)
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
     tmpfile = str(tmpdir.join('_tst.fits'))
     spectrum.write(tmpfile,format='tabular-fits')
 
     # Read it in and check against the original
-    table = Table.read(tmpfile,format='fits')
-    assert np.alltrue(table['spectral_axis'] == spectrum.spectral_axis.value)
-    assert np.alltrue(table['flux'] == spectrum.flux.value)
+    table = Table.read(tmpfile, format='fits')
+    assert table[spectral_axis].unit == spectrum.spectral_axis.unit
+    assert table['flux'].unit == spectrum.flux.unit
+    assert table['uncertainty'].unit == spectrum.uncertainty.unit
+    assert np.alltrue(table[spectral_axis] == spectrum.spectral_axis)
+    assert np.alltrue(table['flux'] == spectrum.flux)
+    assert np.alltrue(table['uncertainty'] == spectrum.uncertainty.array)
+
+    # Test spectrum with different flux unit
+    flux = np.ones(len(disp))*1.e-11*u.W*u.m**-2*u.AA**-1
+    unc = StdDevUncertainty(0.02*flux)
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
+
+    # Try to overwrite the file
+    with pytest.raises(OSError, match=r'File exists:'):
+        spectrum.write(tmpfile,format='tabular-fits')
+    spectrum.write(tmpfile,format='tabular-fits', overwrite=True)
+
+    table = Table.read(tmpfile)
+    assert table['flux'].unit == spectrum.flux.unit
 
     # ToDo: get tabular_fits_loader to also read this in correctly!
