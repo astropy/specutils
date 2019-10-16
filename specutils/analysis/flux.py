@@ -161,3 +161,14 @@ def is_continuum_near_zero(spectrum, eps=0.01):
     else:
         raise Exception('Spectrum flux has units, eps does not, either include uncertainty or use units on eps')
         #return np.median(spectrum.flux) / median_absolute_deviation(spectrum.flux) < eps
+
+def warn_spectrum_continuum_subtracted(eps):
+    def real_decorator(function):
+        def wrapper(*args, **kwargs):
+            spectrum = args[0]
+            if not is_continuum_near_zero(spectrum, eps):
+                raise Exception('Spectrum does not appear to be continuum subtracted.')
+            result = function(*args, **kwargs)
+            return result
+        return wrapper
+    return real_decorator
