@@ -48,15 +48,24 @@ def template_correlate(observed_spectrum, template_spectrum):
     correlation function : :class:`~specutils.Spectrum1D`
         The normalized correlation function.
     """
-    # Normalize spectra
+    # Normalize template
     normalization = _normalize(observed_spectrum, template_spectrum)
 
     # Correlation
-    corr = np.correlate(observed_spectrum.flux, (template_spectrum.flux * normalization), mode='full')
+    corr = np.correlate(observed_spectrum.flux.value,
+                        (template_spectrum.flux.value * normalization),
+                        mode='full')
 
     # Retun correlation function as a Spectrum1D instance
-    lags = np.array([(a-len(corr)/2+0.5) for a in range(len(corr))]) * u.dimensionless_unscaled
-    correlation_function = Spectrum1D(spectral_axis=lags, flux=corr * u.dimensionless_unscaled)
+    lags = np.array([(a-len(corr)/2+0.5) for a in range(len(corr))]) * \
+           observed_spectrum.spectral_axis.unit
+
+    spectrum_midpoint = int(len(observed_spectrum.spectral_axis) / 2)
+    lags *= (observed_spectrum.spectral_axis[spectrum_midpoint].value -
+             observed_spectrum.spectral_axis[spectrum_midpoint-1].value)
+
+    correlation_function = Spectrum1D(spectral_axis=lags,
+                                      flux=corr * u.dimensionless_unscaled)
 
     return correlation_function
 
