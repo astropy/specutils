@@ -6,7 +6,7 @@ from ..spectra.spectrum1d import Spectrum1D
 from ..analysis import correlation
 from astropy.tests.helper import quantity_allclose
 
-SIZE = 50
+SIZE = 41
 
 
 def test_correlation():
@@ -29,12 +29,7 @@ def test_correlation():
     # Get result from correlation
     corr_result = correlation.template_correlate(spec, spec1)
 
-    #TODO this is copied over from the template matching test. Fix it.
-
-    # Create new spectrum for comparison
-    spec_result = Spectrum1D(spectral_axis=spec_axis,
-                             flux=spec1.flux * correlation._normalize(spec, spec1))
-
-    assert quantity_allclose(corr_result.flux, spec_result.flux, atol=0.01*u.Jy)
+    # Checks that lag at mid-point is zero.
+    assert int((corr_result.spectral_axis[int(len(corr_result.spectral_axis)/2)]).value) == 0
 
 

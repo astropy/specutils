@@ -1,8 +1,7 @@
 import numpy as np
 
-from ..manipulation import (FluxConservingResampler,
-                            LinearInterpolatedResampler,
-                            SplineInterpolatedResampler)
+import astropy.units as u
+
 from ..spectra.spectrum1d import Spectrum1D
 
 def _normalize(observed_spectrum, template_spectrum):
@@ -52,75 +51,12 @@ def template_correlate(observed_spectrum, template_spectrum):
     # Normalize spectra
     normalization = _normalize(observed_spectrum, template_spectrum)
 
-    # Numerator
-    num_right = normalization * template_spectrum.flux
-    num = observed_spectrum.flux - num_right
+    # Correlation
+    corr = np.correlate(observed_spectrum.flux, (template_spectrum.flux * normalization), mode='full')
 
-    # Denominator
-    denom = observed_spectrum.uncertainty.array * observed_spectrum.flux.unit
+    # Retun correlation function as a Spectrum1D instance
+    lags = np.array([(a-len(corr)/2+0.5) for a in range(len(corr))]) * u.dimensionless_unscaled
+    correlation_function = Spectrum1D(spectral_axis=lags, flux=corr * u.dimensionless_unscaled)
 
-    # Get chi square
-    result = (num/denom)**2
-    chi2 = np.sum(result.value)
+    return correlation_function
 
-    # Create normalized template spectrum, which will be returned with
-    # corresponding chi2
-    normalized_template_spectrum = Spectrum1D(
-        spectral_axis=template_spectrum.spectral_axis,
-        flux=template_spectrum.flux*normalization)
-
-    return normalized_template_spectrum, chi2
-
-
-# TODO not sure if this is part of the core functionality, or is
-# something the user will do outside.
-
-def correlation(observed_spectrum, spectral_templates):
-    """
-    Find which spectral templates is the best fit to an observed spectrum by
-    computing the chi-squared. If two template_spectra have the same chi2, the
-    first template is returned.
-
-    Parameters
-    ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
-        The observed spectrum.
-    spectral_templates : :class:`~specutils.Spectrum1D` or :class:`~specutils.SpectrumCollection` or `list`
-        That will give a single :class:`~specutils.Spectrum1D` when iterated
-        over. The template spectra, which will be resampled, normalized, and
-        compared to the observed spectrum, where the smallest chi2 and
-        normalized template spectrum will be returned.
-
-    Returns
-    -------
-    normalized_template_spectrum : :class:`~specutils.Spectrum1D`
-        The template spectrum that has been normalized.
-    chi2 : `float`
-        The chi2 of the flux of the observed_spectrum and the flux of the
-        normalized template spectrum.
-    smallest_chi_index : `int`
-        The index of the spectrum with the smallest chi2 in spectral templates.
-    """
-    if hasattr(spectral_templates, 'flux') and len(spectral_templates.flux.shape) == 1:
-        normalized_spectral_template, chi2 = template_correlate(
-            observed_spectrum, spectral_templates)
-
-        return normalized_spectral_template, chi2
-
-    # At this point, the template spectrum is either a ``SpectrumCollection``
-    # or a multi-dimensional``Spectrum1D``. Loop through the object and return
-    # the template spectrum with the lowest chi square and its corresponding
-    # chi square.
-    chi2_min = None
-    smallest_chi_spec = None
-
-    for index, spectrum in enumerate(spectral_templates):
-        normalized_spectral_template, chi2 = template_correlate(
-            observed_spectrum, spectrum)
-
-        if chi2_min is None or chi2 < chi2_min:
-            chi2_min = chi2
-            smallest_chi_spec = normalized_spectral_template
-            smallest_chi_index = index
-
-    return smallest_chi_spec, chi2_min, smallest_chi_index
