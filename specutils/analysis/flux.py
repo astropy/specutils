@@ -121,7 +121,8 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
 def is_continuum_near_zero(spectrum, eps=0.01):
     """
-    Determine if the baseline continuum of the spectrum is near zero.
+    Determine if the typical baseline of this spectrum is near zero. I.e., an
+    estimate of whether or not the continuum has been subtracted.
 
     The value is scaled to match the sigma/standard deviation parameter of a
     standard Gaussian profile. This will be calculated over the regions, if
