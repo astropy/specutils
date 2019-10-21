@@ -55,6 +55,8 @@ def test_correlation():
     np.testing.assert_almost_equal(lag.value, wstep.value, 0.0001)
 
     # Check position of correlation peak.
-    assert np.argmax(corr_result.flux) == 35
+    maximum = np.argmax(corr_result.flux)
+    assert maximum == 35
+    np.testing.assert_almost_equal(corr_result.spectral_axis[maximum].value, -4., 0.1)
 
 
