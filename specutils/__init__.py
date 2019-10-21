@@ -7,6 +7,7 @@ Specutils: an astropy package for spectroscopy.
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
 from ._astropy_init import *
+from astropy import config as _config
 # ----------------------------------------------------------------------------
 
 # Enforce Python version check during package import.
@@ -34,3 +35,17 @@ if not _ASTROPY_SETUP_:
     _load_user_io()
 
 __citation__ = 'https://doi.org/10.5281/zenodo.1421356'
+
+class Conf(_config.ConfigNamespace):
+    """
+    Configuration parameters for specutils.
+    """
+
+    always_check_continuum = _config.ConfigItem(
+        True,
+        'Whether to check the spectrum baseline value is close'
+        'to zero. If it is not within ``eps`` then a warning is raised.'
+    )
+
+conf = Conf()
+

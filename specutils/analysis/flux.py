@@ -2,14 +2,20 @@
 A module for analysis tools focused on determining fluxes of spectral features.
 """
 
+from functools import wraps
+import warnings
+
 import numpy as np
+from .. import conf
 from ..manipulation import extract_region
 from .utils import computation_wrapper
 from astropy.stats import sigma_clip
 from astropy.stats import median_absolute_deviation
+from astropy.utils.exceptions import AstropyUserWarning
 
 
-__all__ = ['line_flux', 'equivalent_width', 'is_continuum_near_zero']
+__all__ = ['line_flux', 'equivalent_width', 'is_continuum_near_zero',
+           'warn_spectrum_continuum_subtracted']
 
 
 def line_flux(spectrum, regions=None):
@@ -124,10 +130,6 @@ def is_continuum_near_zero(spectrum, eps=0.01):
     Determine if the typical baseline of this spectrum is near zero. I.e., an
     estimate of whether or not the continuum has been subtracted.
 
-    The value is scaled to match the sigma/standard deviation parameter of a
-    standard Gaussian profile. This will be calculated over the regions, if
-    they are specified.
-
     Parameters
     ----------
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
@@ -142,34 +144,46 @@ def is_continuum_near_zero(spectrum, eps=0.01):
     is_near_zero: bool
         A True if the continuum of the spectrum is with eps, False otherwise.
 
-    Notes
-    -----
-    The spectrum should be continuum subtracted before being passed to this
-    function.
     """
+
+    flux = spectrum.flux
+    uncertainty = spectrum.uncertainty if hasattr(spectrum, 'uncertainty') else None
+
+    # Apply the mask if it exists.
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
+        flux = flux[~spectrum.mask]
+        uncertainty = uncertainty[~spectrum.mask] if uncertainty else uncertainty
 
     # If the eps has units then the assumption is that we want
     # to compare the median of the flux regardless of the
     # existence of the uncertainty.
     if hasattr(eps, 'unit'):
-        return np.median(spectrum.flux) < eps
+        print('here with med {}'.format(spectrum.flux))
+        return np.median(flux) < eps
 
     # If eps does not have a unit, ie it is not a quantity, then
     # we are going to calculate based on the S/N if the uncertainty
     # exists.
-    if hasattr(spectrum, 'uncertainty') and spectrum.uncertainty:
-        return np.median(spectrum.flux / spectrum.uncertainty.quantity) < eps
+    if uncertainty:
+        return np.median(flux / uncertainty.quantity) < eps
     else:
-        raise Exception('Spectrum flux has units, eps does not, either include uncertainty or use units on eps')
-        #return np.median(spectrum.flux) / median_absolute_deviation(spectrum.flux) < eps
+        warnings.warn('Spectrum does not appear to be continuum subtracted.', AstropyUserWarning)
+        #return np.median(flux) / median_absolute_deviation(flux) < eps
 
-def warn_spectrum_continuum_subtracted(eps):
-    def real_decorator(function):
+def warn_spectrum_continuum_subtracted(eps=0.01, check=conf.always_check_continuum):
+    """
+    Dectorator for methods that should warn if the baseline
+    of the spectrum does not appear to be near zero.
+    """
+    def actual_decorator(function):
+        @wraps(function)
         def wrapper(*args, **kwargs):
-            spectrum = args[0]
-            if not is_continuum_near_zero(spectrum, eps):
-                raise Exception('Spectrum does not appear to be continuum subtracted.')
+            if check:
+                spectrum = args[0]
+                if not is_continuum_near_zero(spectrum, eps):
+                    warnings.warn('Spectrum does not appear to be continuum subtracted.',
+                                  AstropyUserWarning)
             result = function(*args, **kwargs)
             return result
         return wrapper
-    return real_decorator
+    return actual_decorator

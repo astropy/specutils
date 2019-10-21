@@ -6,11 +6,13 @@ from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
+from astropy.utils.exceptions import AstropyUserWarning
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
                         snr_derived, fwzi, is_continuum_near_zero)
+from ..fitting import find_lines_threshold
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -602,3 +604,25 @@ def test_is_continuum_near_zero():
                           uncertainty=uncertainty)
 
     assert True == is_continuum_near_zero(spectrum, eps=0.1)
+
+    # With mask, with uncertainty
+    wavelengths = [300, 500, 1000] * u.nm
+    data = [0.03, 1.029, 0.033] * u.Jy
+    mask = np.array([False, True, False])
+    uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
+                          uncertainty=uncertainty, mask=mask)
+
+    assert True == is_continuum_near_zero(spectrum, eps=0.1)
+
+    # With mask, with uncertainty -- should throw an exception
+    wavelengths = [300, 500, 1000] * u.nm
+    data = [10.03, 10.029, 10.033] * u.Jy
+    mask = np.array([False, False, False])
+    uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
+                          uncertainty=uncertainty, mask=mask)
+
+    print('spectrum has flux {}'.format(spectrum.flux))
+    with pytest.warns(AstropyUserWarning) as e_info:
+        find_lines_threshold(spectrum, noise_factor=1)
