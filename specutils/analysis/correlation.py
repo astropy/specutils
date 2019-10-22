@@ -2,7 +2,6 @@ import numpy as np
 
 import astropy.units as u
 
-from ..spectra.spectrum1d import Spectrum1D
 
 def _normalize(observed_spectrum, template_spectrum):
     """
@@ -45,8 +44,8 @@ def template_correlate(observed_spectrum, template_spectrum):
 
     Returns
     -------
-    correlation function : :class:`~specutils.Spectrum1D`
-        The normalized correlation function.
+    tuple : (`~astropy.units.Quantity`, `~astropy.units.Quantity`)
+        Arrays with correlation values and lags in km/s
     """
     # Normalize template
     normalization = _normalize(observed_spectrum, template_spectrum)
@@ -56,16 +55,11 @@ def template_correlate(observed_spectrum, template_spectrum):
                         (template_spectrum.flux.value * normalization),
                         mode='full')
 
-    # Retun correlation function as a Spectrum1D instance
-    lags = np.array([(a-len(corr)/2+0.5) for a in range(len(corr))]) * \
-           observed_spectrum.spectral_axis.unit
+    # Lag in km/s
+    equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
+        observed_spectrum.velocity_convention))(observed_spectrum.rest_value)
 
-    spectrum_midpoint = int(len(observed_spectrum.spectral_axis) / 2)
-    lags *= (observed_spectrum.spectral_axis[spectrum_midpoint].value -
-             observed_spectrum.spectral_axis[spectrum_midpoint-1].value)
+    lag = observed_spectrum.spectral_axis.to(u.km / u.s, equivalencies=equiv)
 
-    correlation_function = Spectrum1D(spectral_axis=lags,
-                                      flux=corr * u.dimensionless_unscaled)
-
-    return correlation_function
+    return (corr * u.dimensionless_unscaled, lag)
 
