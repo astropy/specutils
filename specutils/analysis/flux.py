@@ -158,7 +158,6 @@ def is_continuum_near_zero(spectrum, eps=0.01):
     # to compare the median of the flux regardless of the
     # existence of the uncertainty.
     if hasattr(eps, 'unit'):
-        print('here with med {}'.format(spectrum.flux))
         return np.median(flux) < eps
 
     # If eps does not have a unit, ie it is not a quantity, then
@@ -178,7 +177,6 @@ def warn_spectrum_continuum_subtracted(eps=0.01, check=conf.always_check_continu
     def actual_decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            print('args is {} and kwargs is {}'.format(args, kwargs))
             if check:
                 spectrum = args[0]
                 if not is_continuum_near_zero(spectrum, eps):
