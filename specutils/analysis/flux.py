@@ -178,6 +178,7 @@ def warn_spectrum_continuum_subtracted(eps=0.01, check=conf.always_check_continu
     def actual_decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
+            print('args is {} and kwargs is {}'.format(args, kwargs))
             if check:
                 spectrum = args[0]
                 if not is_continuum_near_zero(spectrum, eps):

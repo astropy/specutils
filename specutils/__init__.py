@@ -48,4 +48,3 @@ class Conf(_config.ConfigNamespace):
     )
 
 conf = Conf()
-

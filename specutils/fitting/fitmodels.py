@@ -171,7 +171,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
     return qtable
 
 
-@warn_spectrum_continuum_subtracted
+@warn_spectrum_continuum_subtracted(eps=0.01, check=True)
 def find_lines_derivative(spectrum, flux_threshold=None):
     """
     Find the emission and absorption lines in a spectrum. The method
