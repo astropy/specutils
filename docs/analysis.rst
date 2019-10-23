@@ -167,24 +167,33 @@ Each of the width analysis functions are applied to this spectrum below:
 Template Comparison
 -------------------
 
-The `specutils.analysis.template_comparison` script contains the
-`specutils.analysis.template_comparison.template_redshift` method and the
-`specutils.analysis.template_comparison.template_match` method.
-`specutils.analysis.template_comparison.template_redshift` finds the most accurate redshift to shift the template
-spectrum by to match the observed spectrum. `specutils.analysis.template_comparison.template_match` takes one
-observed spectrum and n template spectra (and optionally redshift parameters in order to shift the template
-spectrum to match the observed spectrum) and does the following process:
+The ~`specutils.analysis.template_comparison.template_match` function takes one
+observed spectrum and n template spectra and returns the best template that
+matches the observed spectrum via chi-square minimization.
 
-With one observed spectrum and n template spectra, the process to do template matching is:
+If the redshift is known, the user will redshift the template spectra
+appropriately and then run the
+~`specutils.analysis.template_comparison.template_match` function.
+This method will:
 
-    1. Move the templates as close as possible to the observed spectrum by doing redshifting, matching the resolution,
-       and matching the wavelength spacing
-    2. Then loop through all of the n template spectra (accounting for redshift if parameters are provided) and
-       run chi square on them using the observed spectrum as the expected frequency and the template spectrum as
-       the observed
-    3. Once you have a corresponding chi square for each template spectrum, return the lowest chi square and its
-       corresponding template spectrum (normalized) and the index of the template spectrum if the original template
-       parameter is iterable
+    1. Match the resolution and wavelength spacing of the observed spectrum
+    2. Compute the chi-square between the observed spectrum and each template
+    3. Return the lowest chi-square and its corresponding template spectrum,
+       normalized to the observed spectrum (and the index of the template
+       spectrum if the list of templates is iterable)
+
+If the redshift is unknown, the user specifies the expected window in redshift
+(min_redshift and max_redshift) and the redshift spacing (delta_redshift).
+The ~`specutils.analysis.template_comparison.template_match` function will then:
+
+    1. Move each template to the first term in the redshift grid (min_redshift)
+    2. Run steps 1 and 2 of the case with known redshift
+    3. Move to the next term in the redshift grid (min_redshift + delta_redshift)
+    4. Run steps 1 and 2 of the case with known redshift
+    5. Repeat the steps until max_redshift is reached
+    6. Return the best redshift, the lowest chi-square and its corresponding
+       template spectrum, redshifted and normalized to the observed spectrum
+       (and the index of the template spectrum if the list of templates is iterable)
 
 An example of how to do template matching with an unknown redshift is:
 
@@ -196,10 +205,11 @@ An example of how to do template matching with an unknown redshift is:
    >>> min_redshift = 1.0
    >>> max_redshift = 3.0
    >>> delta_redshift = .25
+   >>> resample_method = "flux_conserving"
 
    >>> observed_spectrum = Spectrum1D(spectral_axis=spec_axis*(1+observed_redshift), flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
    >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-   >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method="flux_conserving", min_redshift=min_redshift, max_redshift=max_redshift, delta_redshift=delta_redshift) # doctest:+FLOAT_CMP
+   >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method=resample_method, min_redshift=min_redshift, max_redshift=max_redshift, delta_redshift=delta_redshift) # doctest:+FLOAT_CMP
 
 
 Reference/API
