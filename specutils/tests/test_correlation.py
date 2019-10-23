@@ -57,5 +57,3 @@ def test_correlation():
     maximum = np.argmax(corr)
     assert maximum == 36
     np.testing.assert_almost_equal(lag[maximum].value, 980., 0.1)
-
-
