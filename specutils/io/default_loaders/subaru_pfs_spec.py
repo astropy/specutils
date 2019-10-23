@@ -32,7 +32,8 @@ def spec_identify(origin, *args, **kwargs):
     Registry.
     """
     return (isinstance(args[0], str) and
-            _spec_pattern.match(args[0]) is not None)
+            _spec_pattern.match(args[0]) is not None and
+            fits.connect.is_fits(origin, *args))
 
 
 @data_loader(label="Subaru-pfsObject", identifier=spec_identify,

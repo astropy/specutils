@@ -35,10 +35,9 @@ def cos_spectrum_loader(file_name, **kwargs):
         The spectrum that is represented by the data in this table.
     """
 
-    name = os.path.basename(file_name)
-
     with fits.open(file_name, **kwargs) as hdu:
         header = hdu[0].header
+        name = header.get('FILENAME')
         meta = {'header': header}
 
         unit = Unit("erg/cm**2 Angstrom s")

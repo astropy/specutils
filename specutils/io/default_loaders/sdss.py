@@ -30,7 +30,8 @@ def spec_identify(origin, *args, **kwargs):
     Registry.
     """
     return (isinstance(args[0], str) and
-            _spec_pattern.match(args[0]) is not None)
+            _spec_pattern.match(os.path.basename(args[0])) is not None and
+            fits.connect.is_fits(origin, *args))
 
 
 def spSpec_identify(origin, *args, **kwargs):
@@ -39,7 +40,8 @@ def spSpec_identify(origin, *args, **kwargs):
     Registry.
     """
     return (isinstance(args[0], str) and
-            _spSpec_pattern.match(args[0]) is not None)
+            _spSpec_pattern.match(os.path.basename(args[0])) is not None and
+            fits.connect.is_fits(origin, *args))
 
 
 @data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
@@ -57,10 +59,10 @@ def spec_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
+    name = header.get('NAME')
     meta = {'header': header}
 
     # spectrum is in HDU 1
@@ -99,10 +101,10 @@ def spSpec_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
+    name = header.get('NAME')
     meta = {'header': header}
     wcs = WCS(hdulist[0].header)
 

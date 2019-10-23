@@ -28,8 +28,8 @@ def apVisit_identify(origin, *args, **kwargs):
     Registry.
     """
     return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] == 'fits' and
-            args[0].startswith('apVisit'))
+            args[0].startswith('apVisit') and
+            fits.connect.is_fits(origin, *args))
 
 
 def apStar_identify(origin, *args, **kwargs):
