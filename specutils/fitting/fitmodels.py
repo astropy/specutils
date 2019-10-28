@@ -8,7 +8,7 @@ import astropy.units as u
 from astropy.stats import sigma_clipped_stats
 
 from ..manipulation.utils import excise_regions
-from ..analysis import fwhm, centroid, warn_spectrum_continuum_subtracted
+from ..analysis import fwhm, centroid, warn_continuum_below_threshold
 from ..utils import QuantityModel
 from ..manipulation import extract_region, noise_region_uncertainty
 from ..spectra.spectral_region import SpectralRegion
@@ -97,7 +97,7 @@ def _consecutive(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 
-@warn_spectrum_continuum_subtracted(eps=0.01, check=True)
+@warn_continuum_below_threshold(threshold=0.01, check=True)
 def find_lines_threshold(spectrum, noise_factor=1):
     """
     Find the emission and absorption lines in a spectrum. The method
@@ -171,7 +171,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
     return qtable
 
 
-@warn_spectrum_continuum_subtracted(eps=0.01, check=True)
+@warn_continuum_below_threshold(threshold=0.01, check=True)
 def find_lines_derivative(spectrum, flux_threshold=None):
     """
     Find the emission and absorption lines in a spectrum. The method

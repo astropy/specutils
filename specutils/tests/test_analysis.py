@@ -11,7 +11,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
-                        snr_derived, fwzi, is_continuum_near_zero)
+                        snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
 from ..tests.spectral_examples import simulated_spectra
 
@@ -582,19 +582,19 @@ def test_fwzi_multi_spectrum():
     assert quantity_allclose(fwzi(spec), expected)
 
 
-def test_is_continuum_near_zero():
+def test_is_continuum_below_threshold():
 
     # No mask, no uncertainty
     wavelengths = [300, 500, 1000] * u.nm
     data = [0.001, -0.003, 0.003] * u.Jy
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
-    assert True == is_continuum_near_zero(spectrum, eps=0.1*u.Jy)
+    assert True == is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy)
 
-#    # No mask, no uncertainty, eps is float
+#    # No mask, no uncertainty, threshold is float
 #    wavelengths = [300, 500, 1000] * u.nm
 #    data = [0.0081, 0.0043, 0.0072] * u.Jy
 #    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
-#    assert True == is_continuum_near_zero(spectrum, eps=0.1)
+#    assert True == is_continuum_below_threshold(spectrum, threshold=0.1)
 
     # No mask, with uncertainty
     wavelengths = [300, 500, 1000] * u.nm
@@ -603,7 +603,7 @@ def test_is_continuum_near_zero():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty)
 
-    assert True == is_continuum_near_zero(spectrum, eps=0.1)
+    assert True == is_continuum_below_threshold(spectrum, threshold=0.1)
 
     # With mask, with uncertainty
     wavelengths = [300, 500, 1000] * u.nm
@@ -613,7 +613,7 @@ def test_is_continuum_near_zero():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty, mask=mask)
 
-    assert True == is_continuum_near_zero(spectrum, eps=0.1)
+    assert True == is_continuum_below_threshold(spectrum, threshold=0.1)
 
     # With mask, with uncertainty -- should throw an exception
     wavelengths = [300, 500, 1000] * u.nm

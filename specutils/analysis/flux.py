@@ -14,8 +14,8 @@ from astropy.stats import median_absolute_deviation
 from astropy.utils.exceptions import AstropyUserWarning
 
 
-__all__ = ['line_flux', 'equivalent_width', 'is_continuum_near_zero',
-           'warn_spectrum_continuum_subtracted']
+__all__ = ['line_flux', 'equivalent_width', 'is_continuum_below_threshold',
+           'warn_continuum_below_threshold']
 
 
 def line_flux(spectrum, regions=None):
@@ -125,24 +125,34 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
     return ew.to(calc_spectrum.spectral_axis.unit)
 
-def is_continuum_near_zero(spectrum, eps=0.01):
+def is_continuum_below_threshold(spectrum, threshold=0.01):
     """
-    Determine if the typical baseline of this spectrum is near zero. I.e., an
-    estimate of whether or not the continuum has been subtracted.
+    Determine if the baseline of this spectrum is less than the threshold. 
+    I.e., an estimate of whether or not the continuum has been subtracted.
+
+    If the threshold is an `~astropy.units.Quantity` then compare the median
+    of the flux to the threshold.  
+
+    If the threshold is a float then the spectrum's uncertainty will be 
+    used or an estimate of the uncertainty. If the uncertainty is present then the
+    threshold is compared to the median of the flux divided by the
+    uncertainty.  If the uncertainty is not present then the threshold
+    is compared to the median of the flux divided by the 
+    `~astropy.stats.median_absolute_deviation`.
 
     Parameters
     ----------
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object over which the width will be calculated.
 
-    eps: float
+    threshold: float or `~astropy.units.Quantity`
         The tolerance on the quantification to confirm the continuum is
-        near zero.
+        near zero. 
 
     Returns
     -------
-    is_near_zero: bool
-        A True if the continuum of the spectrum is with eps, False otherwise.
+    is_continuum_below_threshold: bool
+        Return True if the continuum of the spectrum is below the threshold, False otherwise.
 
     """
 
@@ -154,33 +164,32 @@ def is_continuum_near_zero(spectrum, eps=0.01):
         flux = flux[~spectrum.mask]
         uncertainty = uncertainty[~spectrum.mask] if uncertainty else uncertainty
 
-    # If the eps has units then the assumption is that we want
+    # If the threshold has units then the assumption is that we want
     # to compare the median of the flux regardless of the
     # existence of the uncertainty.
-    if hasattr(eps, 'unit'):
-        return np.median(flux) < eps
+    if hasattr(threshold, 'unit'):
+        return np.median(flux) < threshold
 
-    # If eps does not have a unit, ie it is not a quantity, then
+    # If threshold does not have a unit, ie it is not a quantity, then
     # we are going to calculate based on the S/N if the uncertainty
     # exists.
     if uncertainty:
-        return np.median(flux / uncertainty.quantity) < eps
+        return np.median(flux / uncertainty.quantity) < threshold
     else:
-        warnings.warn('Spectrum does not appear to be continuum subtracted.', AstropyUserWarning)
-        #return np.median(flux) / median_absolute_deviation(flux) < eps
+        return np.median(flux) / median_absolute_deviation(flux) < threshold
 
-def warn_spectrum_continuum_subtracted(eps=0.01, check=conf.always_check_continuum):
+def warn_continuum_below_threshold(threshold=0.01, check=conf.always_check_continuum):
     """
-    Dectorator for methods that should warn if the baseline
-    of the spectrum does not appear to be near zero.
+    Decorator for methods that should warn if the baseline
+    of the spectrum does not appear to be below a threshold.
     """
     def actual_decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
             if check:
                 spectrum = args[0]
-                if not is_continuum_near_zero(spectrum, eps):
-                    warnings.warn('Spectrum does not appear to be continuum subtracted.',
+                if not is_continuum_below_threshold(spectrum, threshold):
+                    warnings.warn('Spectrum is not below the threshold {}.'.format(threshold),
                                   AstropyUserWarning)
             result = function(*args, **kwargs)
             return result
