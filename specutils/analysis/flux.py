@@ -127,17 +127,17 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
 def is_continuum_below_threshold(spectrum, threshold=0.01):
     """
-    Determine if the baseline of this spectrum is less than the threshold. 
+    Determine if the baseline of this spectrum is less than the threshold.
     I.e., an estimate of whether or not the continuum has been subtracted.
 
     If the threshold is an `~astropy.units.Quantity` then compare the median
-    of the flux to the threshold.  
+    of the flux to the threshold.
 
-    If the threshold is a float then the spectrum's uncertainty will be 
+    If the threshold is a float then the spectrum's uncertainty will be
     used or an estimate of the uncertainty. If the uncertainty is present then the
     threshold is compared to the median of the flux divided by the
     uncertainty.  If the uncertainty is not present then the threshold
-    is compared to the median of the flux divided by the 
+    is compared to the median of the flux divided by the
     `~astropy.stats.median_absolute_deviation`.
 
     Parameters
@@ -147,7 +147,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
 
     threshold: float or `~astropy.units.Quantity`
         The tolerance on the quantification to confirm the continuum is
-        near zero. 
+        near zero.
 
     Returns
     -------
