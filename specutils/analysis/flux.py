@@ -178,10 +178,14 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     else:
         return np.median(flux) / median_absolute_deviation(flux) < threshold
 
-def warn_continuum_below_threshold(threshold=0.01, check=conf.always_check_continuum):
+def warn_continuum_below_threshold(threshold=0.01, check=conf.do_continuum_function_check):
     """
     Decorator for methods that should warn if the baseline
     of the spectrum does not appear to be below a threshold.
+
+    The ``check`` parameter is based on the `astropy configuration system
+    http://docs.astropy.org/en/stable/config/#adding-new-configuration-items`_.
+    Examples are on that page to show how to turn off this type of warning checking.
     """
     def actual_decorator(function):
         @wraps(function)

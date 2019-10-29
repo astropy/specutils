@@ -41,10 +41,10 @@ class Conf(_config.ConfigNamespace):
     Configuration parameters for specutils.
     """
 
-    always_check_continuum = _config.ConfigItem(
+    do_continuum_function_check = _config.ConfigItem(
         True,
         'Whether to check the spectrum baseline value is close'
-        'to zero. If it is not within ``eps`` then a warning is raised.'
+        'to zero. If it is not within ``threshold`` then a warning is raised.'
     )
 
 conf = Conf()
