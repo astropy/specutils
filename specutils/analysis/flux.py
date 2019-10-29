@@ -178,7 +178,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     else:
         return np.median(flux) / median_absolute_deviation(flux) < threshold
 
-def warn_continuum_below_threshold(threshold=0.01, check=conf.do_continuum_function_check):
+def warn_continuum_below_threshold(threshold=0.01):
     """
     Decorator for methods that should warn if the baseline
     of the spectrum does not appear to be below a threshold.
@@ -190,7 +190,7 @@ def warn_continuum_below_threshold(threshold=0.01, check=conf.do_continuum_funct
     def actual_decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            if check:
+            if conf.do_continuum_function_check:
                 spectrum = args[0]
                 if not is_continuum_below_threshold(spectrum, threshold):
                     warnings.warn('Spectrum is not below the threshold {}.'.format(threshold),

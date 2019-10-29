@@ -97,7 +97,7 @@ def _consecutive(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 
 
-@warn_continuum_below_threshold(threshold=0.01, check=True)
+@warn_continuum_below_threshold(threshold=0.01)
 def find_lines_threshold(spectrum, noise_factor=1):
     """
     Find the emission and absorption lines in a spectrum. The method
@@ -171,7 +171,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
     return qtable
 
 
-@warn_continuum_below_threshold(threshold=0.01, check=True)
+@warn_continuum_below_threshold(threshold=0.01)
 def find_lines_derivative(spectrum, flux_threshold=None):
     """
     Find the emission and absorption lines in a spectrum. The method
