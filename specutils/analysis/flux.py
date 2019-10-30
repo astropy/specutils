@@ -193,8 +193,13 @@ def warn_continuum_below_threshold(threshold=0.01):
             if conf.do_continuum_function_check:
                 spectrum = args[0]
                 if not is_continuum_below_threshold(spectrum, threshold):
-                    warnings.warn('Spectrum is not below the threshold {}.'.format(threshold),
-                                  AstropyUserWarning)
+                    message = "Spectrum is not below the threshold {}.\n\n".format(threshold)
+                    message += ("""If you want to suppress this warning either type """
+                                """'specutils.conf.do_continuum_functin_check = False' or """
+                                """see http://docs.astropy.org/en/stable/config/#adding-new-configuration-items """
+                                """for other ways to configure the warning.""")
+
+                    warnings.warn(message, AstropyUserWarning)
             result = function(*args, **kwargs)
             return result
         return wrapper
