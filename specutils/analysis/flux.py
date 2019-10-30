@@ -139,7 +139,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     threshold is compared to the median of the flux divided by the
     uncertainty.  If the uncertainty is not present then the threshold
     is compared to the median of the flux divided by the
-    `~astropy.stats.median_absolute_deviation`.
+    `~astropy.stats.mad_std`.
 
     Parameters
     ----------
