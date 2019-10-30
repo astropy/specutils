@@ -134,7 +134,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     directly compares the median of the spectrum to the threshold.
     of the flux to the threshold.
 
-    If the threshold is a float then the spectrum's uncertainty will be
+    If the threshold is a float or dimensionless quantity then the spectrum's uncertainty will be
     used or an estimate of the uncertainty. If the uncertainty is present then the
     threshold is compared to the median of the flux divided by the
     uncertainty.  If the uncertainty is not present then the threshold
