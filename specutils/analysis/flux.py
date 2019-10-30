@@ -127,7 +127,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
 def is_continuum_below_threshold(spectrum, threshold=0.01):
     """
-    Determine if the baseline of this spectrum is less than the threshold.
+    Determine if the baseline of this spectrum is less than a threshold.
     I.e., an estimate of whether or not the continuum has been subtracted.
 
     If the threshold is an `~astropy.units.Quantity` then compare the median
