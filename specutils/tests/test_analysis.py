@@ -598,22 +598,22 @@ def test_is_continuum_below_threshold():
 
     # No mask, with uncertainty
     wavelengths = [300, 500, 1000] * u.nm
-    data = [0.03, 0.029, 0.033] * u.Jy
-    uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
+    data = [0.03, 0.029, 0.031] * u.Jy
+    uncertainty = StdDevUncertainty([1.01, 1.03, 1.01] * u.Jy)
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty)
 
-    assert True == is_continuum_below_threshold(spectrum, threshold=0.1)
+    assert True == is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy)
 
     # With mask, with uncertainty
     wavelengths = [300, 500, 1000] * u.nm
-    data = [0.03, 1.029, 0.033] * u.Jy
+    data = [0.01, 1.029, 0.013] * u.Jy
     mask = np.array([False, True, False])
     uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty, mask=mask)
 
-    assert True == is_continuum_below_threshold(spectrum, threshold=0.1)
+    assert True == is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy)
 
     # With mask, with uncertainty -- should throw an exception
     wavelengths = [300, 500, 1000] * u.nm
