@@ -9,8 +9,9 @@ import numpy as np
 from .. import conf
 from ..manipulation import extract_region
 from .utils import computation_wrapper
+import astropy.units as u
 from astropy.stats import sigma_clip
-from astropy.stats import median_absolute_deviation
+from astropy.stats import mad_std
 from astropy.utils.exceptions import AstropyUserWarning
 
 
@@ -168,16 +169,16 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     # If the threshold has units then the assumption is that we want
     # to compare the median of the flux regardless of the
     # existence of the uncertainty.
-    if hasattr(threshold, 'unit'):
+    if hasattr(threshold, 'unit') and not threshold.unit == u.dimensionless_unscaled:
         return np.median(flux) < threshold
 
     # If threshold does not have a unit, ie it is not a quantity, then
     # we are going to calculate based on the S/N if the uncertainty
     # exists.
-    if uncertainty:
+    if uncertainty and uncertainty.uncertainty_type != 'std':
         return np.median(flux / uncertainty.quantity) < threshold
     else:
-        return np.median(flux) / median_absolute_deviation(flux) < threshold
+        return np.median(flux) / mad_std(flux) < threshold
 
 def warn_continuum_below_threshold(threshold=0.01):
     """
