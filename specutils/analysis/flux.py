@@ -130,7 +130,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     Determine if the baseline of this spectrum is less than a threshold.
     I.e., an estimate of whether or not the continuum has been subtracted.
 
-    If ``threshold`` is an `~astropy.units.Quantity` with flux units, this 
+    If ``threshold`` is an `~astropy.units.Quantity` with flux units, this
     directly compares the median of the spectrum to the threshold.
     of the flux to the threshold.
 
