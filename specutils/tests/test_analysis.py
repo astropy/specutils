@@ -626,3 +626,4 @@ def test_is_continuum_below_threshold():
     print('spectrum has flux {}'.format(spectrum.flux))
     with pytest.warns(AstropyUserWarning) as e_info:
         find_lines_threshold(spectrum, noise_factor=1)
+        assert len(e_info)==1 and 'if you want to suppress this warning' in e_info[0].message.args[0].lower()
