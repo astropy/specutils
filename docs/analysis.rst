@@ -167,14 +167,14 @@ Each of the width analysis functions are applied to this spectrum below:
 Template Comparison
 -------------------
 
-The ~`specutils.analysis.template_comparison.template_match` function takes one
+The ~`specutils.analysis.template_comparison.template_match` function takes an
 observed spectrum and n template spectra and returns the best template that
 matches the observed spectrum via chi-square minimization.
 
 If the redshift is known, the user will redshift the template spectra
 appropriately and then run the
 ~`specutils.analysis.template_comparison.template_match` function.
-This method will:
+This function will:
 
     1. Match the resolution and wavelength spacing of the observed spectrum
     2. Compute the chi-square between the observed spectrum and each template

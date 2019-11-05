@@ -5,6 +5,8 @@ from ..manipulation import (FluxConservingResampler,
                             SplineInterpolatedResampler)
 from ..spectra.spectrum1d import Spectrum1D
 
+__all__ = ['template_match', 'template_redshift']
+
 def _normalize_for_template_matching(observed_spectrum, template_spectrum):
     """
     Calculate a scale factor to be applied to the template spectrum so the
@@ -187,7 +189,7 @@ def template_match(observed_spectrum, spectral_templates,
 
 def template_redshift(observed_spectrum, template_spectrum, min_redshift, max_redshift, delta_redshift):
     """
-    Find the most accurate redshift for template_spectrum to match observed_spectrum using chi2
+    Find the best-fit redshift for template_spectrum to match observed_spectrum using chi2
 
     Parameters
     ----------
@@ -205,7 +207,7 @@ def template_redshift(observed_spectrum, template_spectrum, min_redshift, max_re
     Returns
     -------
     final_redshift : `float`
-        The most accurate redshift for template_spectrum to match the observed_spectrum
+        The best-fit redshift for template_spectrum to match the observed_spectrum
     redshifted_spectrum: :class:`~specutils.Spectrum1D`
         A new Spectrum1D object which incorporates the template_spectrum with a spectral_axis
         that has been redshifted using the final_redshift
@@ -223,7 +225,8 @@ def template_redshift(observed_spectrum, template_spectrum, min_redshift, max_re
 
         # Create new redshifted spectrum and run it through the chi2 method
         redshifted_spectrum = Spectrum1D(spectral_axis=template_spectrum.spectral_axis*(1+redshift),
-                        flux=template_spectrum.flux)
+                        flux=template_spectrum.flux, uncertainty=template_spectrum.uncertainty,
+                                         meta=template_spectrum.meta)
         normalized_spectral_template, chi2 = _chi_square_for_templates(
                         observed_spectrum, redshifted_spectrum, "flux_conserving")
 
