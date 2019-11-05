@@ -65,7 +65,7 @@ a list of :class:`~specutils.Spectrum1D`:
     (2,)
     >>> spec_coll.flux.unit
     Unit("Jy")
-    >>> spec_coll.wavelength.shape
+    >>> spec_coll.spectral_axis.shape
     (2, 50)
     >>> spec_coll.spectral_axis.unit
     Unit("Angstrom")
