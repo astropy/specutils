@@ -205,7 +205,10 @@ def test_template_match_multidim_spectrum():
 
     np.testing.assert_almost_equal(tm_result[1], 250.26870401777543)
 
-def test_template_redshift():
+def test_template_unknown_redshift():
+    """
+    Test template redshift when redshift is unknown
+    """
     # Seed np.random so that results are consistent
     np.random.seed(42)
 
@@ -230,7 +233,9 @@ def test_template_redshift():
     max_redshift = 5.5
     delta_redshift = .25
 
-    tr_result = template_comparison.template_redshift(spec, spec1, min_redshift, max_redshift, delta_redshift)
+    tr_result = template_comparison.template_redshift(observed_spectrum=spec, template_spectrum=spec1,
+                                                      min_redshift=min_redshift, max_redshift=max_redshift,
+                                                      delta_redshift=delta_redshift)
 
     assert tr_result[0] == 3
 
@@ -260,8 +265,10 @@ def test_template_redshift_with_one_template_spectrum_in_match():
     max_redshift = 5.5
     delta_redshift = .25
 
-    tm_result = template_comparison.template_match(spec, spec1, "flux_conserving",
-                                                   min_redshift, max_redshift, delta_redshift)
+    tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
+                                                      resample_method="flux_conserving", known_redshift=None,
+                                                      min_redshift=min_redshift, max_redshift=max_redshift,
+                                                      delta_redshift=delta_redshift)
 
     np.testing.assert_almost_equal(tm_result[1], 73484.0053895151)
 
@@ -297,7 +304,38 @@ def test_template_redshift_with_multiple_template_spectra_in_match():
     max_redshift = 5.5
     delta_redshift = .25
 
-    tm_result = template_comparison.template_match(spec, spec_coll, "flux_conserving",
-                                                   min_redshift, max_redshift, delta_redshift)
+    tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec_coll,
+                                                      resample_method="flux_conserving", known_redshift=None,
+                                                      min_redshift=min_redshift, max_redshift=max_redshift,
+                                                      delta_redshift=delta_redshift)
 
     np.testing.assert_almost_equal(tm_result[1], 6803.922741644725)
+
+def test_template_known_redshift():
+    """
+    Test template match when the redshift is known
+    """
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    perm_flux = np.random.randn(50) * u.Jy
+
+    redshift = 3
+
+    # Observed spectrum
+    spec = Spectrum1D(spectral_axis=spec_axis * (1+redshift),
+                      flux=perm_flux,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    # Template spectrum
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=perm_flux,
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
+                                                      resample_method="flux_conserving", known_redshift=redshift,
+                                                      min_redshift=None, max_redshift=None,
+                                                      delta_redshift=None)
+    np.testing.assert_almost_equal(tm_result[1], 1.9062409482056814e-31)

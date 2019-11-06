@@ -113,7 +113,8 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
 
 def template_match(observed_spectrum, spectral_templates,
-                   resample_method="flux_conserving", min_redshift=None, max_redshift=None, delta_redshift=None):
+                   resample_method="flux_conserving", known_redshift=None,
+                   min_redshift=None, max_redshift=None, delta_redshift=None):
     """
     Find which spectral templates is the best fit to an observed spectrum by
     computing the chi-squared. If two template_spectra have the same chi2, the
@@ -131,6 +132,9 @@ def template_match(observed_spectrum, spectral_templates,
     resample_method : `string`
         Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
         Anything else does not resample the spectrum.
+    known_redshift: `float`
+        If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
+        then this redshift can be applied to each template before attempting the match
     min_redshift : `float`
         The minimum redshift allowed
     max_redshift : `float`
@@ -155,6 +159,10 @@ def template_match(observed_spectrum, spectral_templates,
             redshift, redshifted_spectrum = template_redshift(observed_spectrum, spectral_templates,
                                                                min_redshift, max_redshift, delta_redshift)
             spectral_templates = redshifted_spectrum
+        elif known_redshift:
+            redshift, redshifted_spectrum = template_redshift(observed_spectrum, spectral_templates,
+                                                              known_redshift, known_redshift, 1.0)
+            spectral_templates = redshifted_spectrum
 
         normalized_spectral_template, chi2 = _chi_square_for_templates(
             observed_spectrum, spectral_templates, resample_method)
@@ -174,6 +182,11 @@ def template_match(observed_spectrum, spectral_templates,
         if all(x is not None for x in (min_redshift, max_redshift, delta_redshift)):
             redshift, redshifted_spectrum = template_redshift(observed_spectrum, spectrum,
                                                                min_redshift, max_redshift, delta_redshift)
+            spectrum = redshifted_spectrum
+
+        elif known_redshift:
+            redshift, redshifted_spectrum = template_redshift(observed_spectrum, spectrum,
+                                                              known_redshift, known_redshift, 1.0)
             spectrum = redshifted_spectrum
 
         normalized_spectral_template, chi2 = _chi_square_for_templates(
