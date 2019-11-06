@@ -10,7 +10,7 @@ from astropy.tests.helper import quantity_allclose
 
 def test_template_match_no_overlap():
     """
-    Test template_match when both observed and template spectra have no overlap on the wavelength axis
+    Test template_match when both observed and template spectra have no overlap on the wavelength axis.
     """
     # Seed np.random so that results are consistent
     np.random.seed(42)
@@ -39,7 +39,7 @@ def test_template_match_no_overlap():
 
 def test_template_match_minimal_overlap():
     """
-    Test template_match when both observed and template spectra have minimal overlap on the wavelength axis
+    Test template_match when both observed and template spectra have minimal overlap on the wavelength axis.
     """
     # Seed np.random so that results are consistent
     np.random.seed(42)
@@ -72,7 +72,7 @@ def test_template_match_minimal_overlap():
 
 def test_template_match_spectrum():
     """
-    Test template_match when both observed and template spectra have the same wavelength axis
+    Test template_match when both observed and template spectra have the same wavelength axis.
     """
     # Seed np.random so that results are consistent
     np.random.seed(42)
@@ -100,7 +100,7 @@ def test_template_match_spectrum():
 
 def test_template_match_with_resample():
     """
-    Test template_match when both observed and template spectra have different wavelength axis using resampling
+    Test template_match when both observed and template spectra have different wavelength axis using resampling.
     """
     np.random.seed(42)
 
@@ -128,7 +128,7 @@ def test_template_match_with_resample():
 
 def test_template_match_list():
     """
-    Test template_match when template spectra are in a list
+    Test template_match when template spectra are in a list.
     """
     np.random.seed(42)
 
@@ -157,7 +157,7 @@ def test_template_match_list():
 
 def test_template_match_spectrum_collection():
     """
-    Test template_match when template spectra are in a SpectrumCollection object
+    Test template_match when template spectra are in a SpectrumCollection object.
     """
     np.random.seed(42)
 
@@ -207,7 +207,7 @@ def test_template_match_multidim_spectrum():
 
 def test_template_unknown_redshift():
     """
-    Test template redshift when redshift is unknown
+    Test template redshift when redshift is unknown.
     """
     # Seed np.random so that results are consistent
     np.random.seed(42)
@@ -313,7 +313,7 @@ def test_template_redshift_with_multiple_template_spectra_in_match():
 
 def test_template_known_redshift():
     """
-    Test template match when the redshift is known
+    Test template match when the redshift is known.
     """
     # Seed np.random so that results are consistent
     np.random.seed(42)

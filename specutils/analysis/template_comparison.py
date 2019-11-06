@@ -42,12 +42,12 @@ def _resample(resample_method):
     Parameters
     ----------
     resample_method: `string`
-        The type of resampling to be done on the template spectrum
+        The type of resampling to be done on the template spectrum.
 
     Returns
     -------
     :class:`~specutils.ResamplerBase`
-        This is the actual class that will handle the resampling
+        This is the actual class that will handle the resampling.
     """
     if resample_method == "flux_conserving":
         return FluxConservingResampler()
@@ -134,13 +134,13 @@ def template_match(observed_spectrum, spectral_templates,
         Anything else does not resample the spectrum.
     known_redshift: `float`
         If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
-        then this redshift can be applied to each template before attempting the match
+        then this redshift can be applied to each template before attempting the match.
     min_redshift : `float`
-        The minimum redshift allowed
+        The minimum redshift allowed.
     max_redshift : `float`
-        The maximum redshift allowed
+        The maximum redshift allowed.
     delta_redshift : `float`
-        The amount the redshift will change between loops
+        The amount the redshift will change between loops.
 
     Returns
     -------
@@ -202,28 +202,28 @@ def template_match(observed_spectrum, spectral_templates,
 
 def template_redshift(observed_spectrum, template_spectrum, min_redshift, max_redshift, delta_redshift):
     """
-    Find the best-fit redshift for template_spectrum to match observed_spectrum using chi2
+    Find the best-fit redshift for template_spectrum to match observed_spectrum using chi2.
 
     Parameters
     ----------
     observed_spectrum : :class:`~specutils.Spectrum1D`
         The observed spectrum.
     template_spectrum : :class:`~specutils.Spectrum1D`
-        The template spectrum, which will have it's redshift calculated
+        The template spectrum, which will have it's redshift calculated.
     min_redshift : `float`
-        The minimum redshift allowed
+        The minimum redshift allowed.
     max_redshift : `float`
-        The maximum redshift allowed
+        The maximum redshift allowed.
     delta_redshift : `float`
-        The amount the redshift will change between loops
+        The amount the redshift will change between loops.
 
     Returns
     -------
     final_redshift : `float`
-        The best-fit redshift for template_spectrum to match the observed_spectrum
+        The best-fit redshift for template_spectrum to match the observed_spectrum.
     redshifted_spectrum: :class:`~specutils.Spectrum1D`
         A new Spectrum1D object which incorporates the template_spectrum with a spectral_axis
-        that has been redshifted using the final_redshift
+        that has been redshifted using the final_redshift.
     """
     if min_redshift > max_redshift:
         raise ValueError("The `max_redshift` value must be greater than `min_redshift`.")
