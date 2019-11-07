@@ -80,16 +80,12 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     if update_header:
         hdr_types = (str, int, float, complex, bool,
                      np.floating, np.integer, np.complexfloating, np.bool_)
-        header.update([k for k in spectrum.meta.items() if
-                       isinstance(k[1], hdr_types)])
+        header.update([keyword for keyword in spectrum.meta.items() if
+                       isinstance(keyword[1], hdr_types)])
 
-    # Strip header of FITS reserved keywords (strangely, loop does not work!)
-    if 'NAXIS' in header:
-        header.remove('NAXIS')
-    if 'NAXIS1' in header:
-        header.remove('NAXIS1')
-    if 'NAXIS2' in header:
-        header.remove('NAXIS2')
+    # Strip header of FITS reserved keywords
+    for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
+        header.remove(keyword, ignore_missing=True)
 
     # Mapping of spectral_axis types to header TTYPE1
     dispname = disp.unit.physical_type
@@ -98,9 +94,9 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
 
     columns = [disp, flux]
     colnames = [dispname, "flux"]
-    # Include uncertainty - ToDo: uncertainty units?
+    # Include uncertainty - units to be inferred from spectrum.flux
     if spectrum.uncertainty is not None:
-        columns.append(spectrum.uncertainty.array * spectrum.uncertainty.unit)
+        columns.append(spectrum.uncertainty.quantity)
         colnames.append("uncertainty")
 
     tab = Table(columns, names=colnames, meta=header)
