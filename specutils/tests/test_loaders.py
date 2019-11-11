@@ -9,6 +9,7 @@ import pytest
 
 import astropy.units as u
 import numpy as np
+from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy.units import UnitsWarning
@@ -16,6 +17,7 @@ from astropy.wcs import FITSFixedWarning
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
+from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from numpy.testing import assert_allclose
 
@@ -224,3 +226,84 @@ def test_iraf_non_linear_cubic_spline(remote_data_path):
 
     with pytest.raises(NotImplementedError):
         assert Spectrum1D.read(remote_data_path, format='iraf')
+
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_tabular_fits_writer(tmpdir, spectral_axis):
+    wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
+           'wavenumber': u.cm**-1}
+    # Create a small data set
+    disp = np.arange(1,1.1,0.01)*wlu[spectral_axis]
+    flux = np.ones(len(disp))*1.e-14*u.Jy
+    unc = StdDevUncertainty(0.01*flux)
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, format='tabular-fits')
+
+    # Read it in and check against the original
+    table = Table.read(tmpfile, format='fits')
+    assert table[spectral_axis].unit == spectrum.spectral_axis.unit
+    assert table['flux'].unit == spectrum.flux.unit
+    assert table['uncertainty'].unit == spectrum.uncertainty.unit
+    assert quantity_allclose(table[spectral_axis], spectrum.spectral_axis)
+    assert quantity_allclose(table['flux'], spectrum.flux)
+    assert quantity_allclose(table['uncertainty'], spectrum.uncertainty.quantity)
+
+    # Test spectrum with different flux unit
+    flux = np.random.normal(0., 1.e-9, disp.shape[0]) * u.W * u.m**-2 * u.AA**-1
+    unc = StdDevUncertainty(0.1 * np.sqrt(np.abs(flux.value)) * flux.unit)
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
+
+    # Try to overwrite the file
+    with pytest.raises(OSError, match=r'File exists:'):
+        spectrum.write(tmpfile, format='tabular-fits')
+    spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
+
+    table = Table.read(tmpfile)
+    assert table['flux'].unit == spectrum.flux.unit
+
+    # ToDo: get tabular_fits_loader to also read this in correctly!
+
+
+def test_tabular_fits_header(tmpdir):
+    # Create a small data set + header with reserved FITS keywords
+    disp = np.linspace(1, 1.2, 21) * u.AA
+    flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.Jy
+    hdr = fits.header.Header({'TELESCOP': 'Leviathan', 'APERTURE': 1.8,
+                              'OBSERVER': 'Parsons', 'NAXIS': 1, 'NAXIS1': 8})
+
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, format='tabular-fits')
+
+    # Read it in and check against the original
+    hdulist = fits.open(tmpfile)
+    assert hdulist[0].header['NAXIS'] == 0
+    assert hdulist[1].header['NAXIS'] == 2
+    assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+    assert hdulist[1].header['OBSERVER'] == 'Parsons'
+    hdulist.close()
+
+    # Now write with updated header information from spectrum.meta
+    spectrum.meta.update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1, 'NAXIS2': 12})
+    spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
+                   update_header=True)
+
+    hdulist = fits.open(tmpfile)
+    assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+    assert hdulist[1].header['OBSERVER'] == 'Rosse'
+    assert_allclose(hdulist[1].header['EXPTIME'], 3.21e1)
+    hdulist.close()
+
+    # Test that unsupported types (dict) are not added to written header
+    spectrum.meta['MYHEADER'] = {'OBSDATE': '1848-02-26', 'TARGET': 'M51'}
+    spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
+                   update_header=True)
+
+    hdulist = fits.open(tmpfile)
+    assert 'MYHEADER' not in hdulist[0].header
+    assert 'MYHEADER' not in hdulist[1].header
+    assert 'OBSDATE' not in hdulist[0].header
+    assert 'OBSDATE' not in hdulist[1].header
+    hdulist.close()
