@@ -268,7 +268,7 @@ value set in.
    >>> tspec = Spectrum1D(spectral_axis=..., flux=..., ...)
    >>> corr, lag = correlation.template_correlate(ospec, tspec)
 
-The lag values will be reported in km/s units. The correlation values are computed after the template spectrum is
+The lag values are reported in km/s units. The correlation values are computed after the template spectrum is
 normalized such as to have the same total flux as the observed spectrum.
 
 
