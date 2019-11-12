@@ -250,6 +250,28 @@ Below is an example of how to apply extinction.
     spec_ext = Spectrum1D(spectral_axis=wave, flux=flux_ext)
 
 
+Cross-correlation
+-----------------
+
+The cross-correlation function between an observed spectrum and a template spectrum that both share a common spectral
+axis, can be calculated by function `~template_correlate` in the `specutils.analysis.correlation` module.
+
+An example of how to get the cross correlation follows. Note that the observed spectrum must have a rest wavelength
+value set in.
+
+.. code-block:: python
+
+   >>> from specutils.analysis import correlation
+   >>> from specutils.spectra.spectrum1d import Spectrum1D
+   >>> ospec = Spectrum1D(spectral_axis=..., flux=..., ..., \
+                          velocity_convention='optical', rest_value=...)
+   >>> tspec = Spectrum1D(spectral_axis=..., flux=..., ...)
+   >>> corr, lag = correlation.template_correlate(ospec, tspec)
+
+The lag values will be reported in km/s units. The correlation values are computed after the template spectrum is
+normalized such as to have the same total flux as the observed spectrum.
+
+
 Reference/API
 -------------
 .. automodapi:: specutils.analysis
