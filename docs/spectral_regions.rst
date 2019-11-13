@@ -99,11 +99,9 @@ One can also delete a sub-region:
 
     >>> del sr[1]
     >>> sr #doctest:+SKIP
-    [(<Quantity 0.15 um>, <Quantity 0.2 um>),
-     (<Quantity 0.45 um>, <Quantity 0.6 um>),
-     (<Quantity 0.8 um>, <Quantity 0.9 um>),
-     (<Quantity 1. um>, <Quantity 1.2 um>),
-     (<Quantity 1.3 um>, <Quantity 1.5 um>)]
+    Spectral Region, 5 sub-regions:
+    (0.15 um, 0.2 um)   (0.45 um, 0.6 um)   (0.8 um, 0.9 um)
+    (1.0 um, 1.2 um)    (1.3 um, 1.5 um)
 
 There is also the ability to iterate:
 
@@ -118,12 +116,12 @@ There is also the ability to iterate:
 
     >>> for s in sr:
     ...     print(s.lower) #doctest:+SKIP
-    SpectralRegion: 0.15 um - 0.2 um
-    SpectralRegion: 0.3 um - 0.4 um
-    SpectralRegion: 0.45 um - 0.6 um
-    SpectralRegion: 0.8 um - 0.9 um
-    SpectralRegion: 1.0 um - 1.2 um
-    SpectralRegion: 1.3 um - 1.5 um
+    0.15 um
+    0.3 um
+    0.45 um
+    0.8 um
+    1.0 um
+    1.3 um
 
 
 And, lastly, there is the ability to invert a `~specutils.SpectralRegion` given a
@@ -142,8 +140,10 @@ defines the baseline/noise regions:
 
     >>> sr_inverted = sr.invert(0.05*u.um, 3*u.um)
     >>> sr_inverted #doctest:+SKIP
-    SpectralRegion: 0.05 um - 0.15 um, 0.2 um - 0.3 um, 0.4 um - 0.45 um, 0.6 um - 0.8 um, 0.9 um - 1.0 um, 1.2 um - 1 .3 um, 1.5 um - 3.0 um
-
+    Spectral Region, 7 sub-regions:
+    (0.05 um, 0.15 um)   (0.2 um, 0.3 um)     (0.4 um, 0.45 um)
+    (0.6 um, 0.8 um)     (0.9 um, 1.0 um)     (1.2 um, 1.3 um)
+    (1.5 um, 3.0 um)
 
 Region Extraction
 -----------------

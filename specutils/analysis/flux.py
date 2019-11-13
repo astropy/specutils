@@ -2,12 +2,21 @@
 A module for analysis tools focused on determining fluxes of spectral features.
 """
 
+from functools import wraps
+import warnings
+
 import numpy as np
+from .. import conf
 from ..manipulation import extract_region
 from .utils import computation_wrapper
+import astropy.units as u
+from astropy.stats import sigma_clip
+from astropy.stats import mad_std
+from astropy.utils.exceptions import AstropyUserWarning
 
 
-__all__ = ['line_flux', 'equivalent_width']
+__all__ = ['line_flux', 'equivalent_width', 'is_continuum_below_threshold',
+           'warn_continuum_below_threshold']
 
 
 def line_flux(spectrum, regions=None):
@@ -116,3 +125,84 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
     ew =  dx - (line_flux / continuum)
 
     return ew.to(calc_spectrum.spectral_axis.unit)
+
+def is_continuum_below_threshold(spectrum, threshold=0.01):
+    """
+    Determine if the baseline of this spectrum is less than a threshold.
+    I.e., an estimate of whether or not the continuum has been subtracted.
+
+    If ``threshold`` is an `~astropy.units.Quantity` with flux units, this
+    directly compares the median of the spectrum to the threshold.
+    of the flux to the threshold.
+
+    If the threshold is a float or dimensionless quantity then the spectrum's uncertainty will be
+    used or an estimate of the uncertainty. If the uncertainty is present then the
+    threshold is compared to the median of the flux divided by the
+    uncertainty.  If the uncertainty is not present then the threshold
+    is compared to the median of the flux divided by the
+    `~astropy.stats.mad_std`.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        The spectrum object over which the width will be calculated.
+
+    threshold: float or `~astropy.units.Quantity`
+        The tolerance on the quantification to confirm the continuum is
+        near zero.
+
+    Returns
+    -------
+    is_continuum_below_threshold: bool
+        Return True if the continuum of the spectrum is below the threshold, False otherwise.
+
+    """
+
+    flux = spectrum.flux
+    uncertainty = spectrum.uncertainty if hasattr(spectrum, 'uncertainty') else None
+
+    # Apply the mask if it exists.
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
+        flux = flux[~spectrum.mask]
+        uncertainty = uncertainty[~spectrum.mask] if uncertainty else uncertainty
+
+    # If the threshold has units then the assumption is that we want
+    # to compare the median of the flux regardless of the
+    # existence of the uncertainty.
+    if hasattr(threshold, 'unit') and not threshold.unit == u.dimensionless_unscaled:
+        return np.median(flux) < threshold
+
+    # If threshold does not have a unit, ie it is not a quantity, then
+    # we are going to calculate based on the S/N if the uncertainty
+    # exists.
+    if uncertainty and uncertainty.uncertainty_type != 'std':
+        return np.median(flux / uncertainty.quantity) < threshold
+    else:
+        return np.median(flux) / mad_std(flux) < threshold
+
+def warn_continuum_below_threshold(threshold=0.01):
+    """
+    Decorator for methods that should warn if the baseline
+    of the spectrum does not appear to be below a threshold.
+
+    The ``check`` parameter is based on the
+    `astropy configuration system <http://docs.astropy.org/en/stable/config/#adding-new-configuration-items>`_.
+    Examples are on that page to show how to turn off this type of warning checking.
+    """
+    def actual_decorator(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            if conf.do_continuum_function_check:
+                spectrum = args[0]
+                if not is_continuum_below_threshold(spectrum, threshold):
+                    message = "Spectrum is not below the threshold {}.\n\n".format(threshold)
+                    message += ("""If you want to suppress this warning either type """
+                                """'specutils.conf.do_continuum_function_check = False' or """
+                                """see http://docs.astropy.org/en/stable/config/#adding-new-configuration-items """
+                                """for other ways to configure the warning.""")
+
+                    warnings.warn(message, AstropyUserWarning)
+            result = function(*args, **kwargs)
+            return result
+        return wrapper
+    return actual_decorator

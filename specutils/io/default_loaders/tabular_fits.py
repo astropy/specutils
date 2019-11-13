@@ -72,11 +72,33 @@ def tabular_fits_loader(file_name, column_mapping=None, **kwargs):
 
 
 @custom_writer("tabular-fits")
-def tabular_fits_writer(spectrum, file_name, **kwargs):
-    flux = spectrum.flux.value
-    disp = spectrum.spectral_axis.value
-    meta = spectrum.meta
+def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
+    flux = spectrum.flux
+    disp = spectrum.spectral_axis
+    header = spectrum.meta.get('header', fits.header.Header()).copy()
 
-    tab = Table([disp, flux], names=("spectral_axis", "flux"), meta=meta)
+    if update_header:
+        hdr_types = (str, int, float, complex, bool,
+                     np.floating, np.integer, np.complexfloating, np.bool_)
+        header.update([keyword for keyword in spectrum.meta.items() if
+                       isinstance(keyword[1], hdr_types)])
 
-    tab.write(file_name, format="fits")
+    # Strip header of FITS reserved keywords
+    for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
+        header.remove(keyword, ignore_missing=True)
+
+    # Mapping of spectral_axis types to header TTYPE1
+    dispname = disp.unit.physical_type
+    if dispname == "length":
+        dispname = "wavelength"
+
+    columns = [disp, flux]
+    colnames = [dispname, "flux"]
+    # Include uncertainty - units to be inferred from spectrum.flux
+    if spectrum.uncertainty is not None:
+        columns.append(spectrum.uncertainty.quantity)
+        colnames.append("uncertainty")
+
+    tab = Table(columns, names=colnames, meta=header)
+
+    tab.write(file_name, format="fits", **kwargs)
