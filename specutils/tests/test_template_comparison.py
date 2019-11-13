@@ -232,10 +232,10 @@ def test_template_unknown_redshift():
     min_redshift = .5
     max_redshift = 5.5
     delta_redshift = .25
+    redshift = np.arange(min_redshift, max_redshift, delta_redshift)
 
     tr_result = template_comparison.template_redshift(observed_spectrum=spec, template_spectrum=spec1,
-                                                      min_redshift=min_redshift, max_redshift=max_redshift,
-                                                      delta_redshift=delta_redshift)
+                                                      redshift=redshift)
 
     assert tr_result[0] == 3
 
@@ -264,11 +264,11 @@ def test_template_redshift_with_one_template_spectrum_in_match():
     min_redshift = .5
     max_redshift = 5.5
     delta_redshift = .25
+    redshift = np.arange(min_redshift, max_redshift, delta_redshift)
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
                                                       resample_method="flux_conserving", known_redshift=None,
-                                                      min_redshift=min_redshift, max_redshift=max_redshift,
-                                                      delta_redshift=delta_redshift)
+                                                      redshift=redshift)
 
     np.testing.assert_almost_equal(tm_result[1], 73484.0053895151)
 
@@ -303,11 +303,11 @@ def test_template_redshift_with_multiple_template_spectra_in_match():
     min_redshift = .5
     max_redshift = 5.5
     delta_redshift = .25
+    redshift_trial_values = np.arange(min_redshift, max_redshift, delta_redshift)
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec_coll,
                                                       resample_method="flux_conserving", known_redshift=None,
-                                                      min_redshift=min_redshift, max_redshift=max_redshift,
-                                                      delta_redshift=delta_redshift)
+                                                      redshift=redshift_trial_values)
 
     np.testing.assert_almost_equal(tm_result[1], 6803.922741644725)
 
@@ -336,6 +336,5 @@ def test_template_known_redshift():
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
                                                       resample_method="flux_conserving", known_redshift=redshift,
-                                                      min_redshift=None, max_redshift=None,
-                                                      delta_redshift=None)
+                                                      redshift=None)
     np.testing.assert_almost_equal(tm_result[1], 1.9062409482056814e-31)
