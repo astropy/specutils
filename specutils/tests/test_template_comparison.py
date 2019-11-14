@@ -232,10 +232,10 @@ def test_template_unknown_redshift():
     min_redshift = .5
     max_redshift = 5.5
     delta_redshift = .25
-    redshift = np.arange(min_redshift, max_redshift, delta_redshift)
+    redshift_trial_values = np.arange(min_redshift, max_redshift, delta_redshift)
 
     tr_result = template_comparison.template_redshift(observed_spectrum=spec, template_spectrum=spec1,
-                                                      redshift=redshift)
+                                                      redshift=redshift_trial_values)
 
     assert tr_result[0] == 3
 
