@@ -149,6 +149,8 @@ def template_match(observed_spectrum, spectral_templates,
         normalized template spectrum.
     smallest_chi_index : `int`
         The index of the spectrum with the smallest chi2 in spectral templates.
+    chi2_list : `list`
+        A list with the best-fit chi2 values found for each template spectrum.
     """
     if hasattr(spectral_templates, 'flux') and len(spectral_templates.flux.shape) == 1:
 
@@ -173,6 +175,7 @@ def template_match(observed_spectrum, spectral_templates,
     # chi square.
     chi2_min = None
     smallest_chi_spec = None
+    chi2_list = []
 
     for index, spectrum in enumerate(spectral_templates):
 
@@ -190,12 +193,14 @@ def template_match(observed_spectrum, spectral_templates,
         normalized_spectral_template, chi2 = _chi_square_for_templates(
             observed_spectrum, spectrum, resample_method)
 
+        chi2_list.append(chi2)
+
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
             smallest_chi_spec = normalized_spectral_template
             smallest_chi_index = index
 
-    return smallest_chi_spec, chi2_min, smallest_chi_index
+    return smallest_chi_spec, chi2_min, smallest_chi_index, chi2_list
 
 
 def template_redshift(observed_spectrum, template_spectrum, redshift):

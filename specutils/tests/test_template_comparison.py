@@ -154,6 +154,10 @@ def test_template_match_list():
 
     np.testing.assert_almost_equal(tm_result[1], 40093.28353756253)
 
+    # make sure that multiple template spectra will create a list of
+    # chi2 values, one per template.
+    assert len(tm_result) == 4
+
 
 def test_template_match_spectrum_collection():
     """

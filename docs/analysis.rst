@@ -198,8 +198,10 @@ The ~`specutils.analysis.template_comparison.template_match` function will then:
     4. Run steps 1 and 2 of the case with known redshift.
     5. Repeat the steps until ``max_redshift`` is reached.
     6. Return the best redshift, the lowest chi-square and its corresponding
-       template spectrum, redshifted and normalized to the observed spectrum
-       (and the index of the template spectrum if the list of templates is iterable).
+       template spectrum, and a list with all chi2 values, one per template.
+       The returned template spectrum corresponding to the lowest chi2 is redshifted
+       and normalized to the observed spectrum (and the index of the template spectrum if
+       the list of templates is iterable).
 
 An example of how to do template matching with an unknown redshift is:
 
