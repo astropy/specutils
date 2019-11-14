@@ -264,11 +264,11 @@ def test_template_redshift_with_one_template_spectrum_in_match():
     min_redshift = .5
     max_redshift = 5.5
     delta_redshift = .25
-    redshift = np.arange(min_redshift, max_redshift, delta_redshift)
+    redshift_trial_values = np.arange(min_redshift, max_redshift, delta_redshift)
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
                                                       resample_method="flux_conserving", known_redshift=None,
-                                                      redshift=redshift)
+                                                      redshift=redshift_trial_values)
 
     np.testing.assert_almost_equal(tm_result[1], 73484.0053895151)
 
