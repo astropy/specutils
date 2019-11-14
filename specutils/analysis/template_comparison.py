@@ -156,11 +156,11 @@ def template_match(observed_spectrum, spectral_templates,
 
         # Account for redshift if provided
         if redshift is not None and all(x is not None for x in redshift):
-            _, redshifted_spectrum = template_redshift(observed_spectrum, spectral_templates,
+            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectral_templates,
                                                                redshift=redshift)
             spectral_templates = redshifted_spectrum
         elif known_redshift:
-            _, redshifted_spectrum = template_redshift(observed_spectrum, spectral_templates,
+            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectral_templates,
                                                               redshift=(known_redshift,))
             spectral_templates = redshifted_spectrum
 
@@ -181,12 +181,12 @@ def template_match(observed_spectrum, spectral_templates,
 
         # Account for redshift if provided
         if redshift is not None and all(x is not None for x in redshift):
-            _, redshifted_spectrum = template_redshift(observed_spectrum, spectrum,
+            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectrum,
                                                                redshift=redshift)
             spectrum = redshifted_spectrum
 
         elif known_redshift:
-            _, redshifted_spectrum = template_redshift(observed_spectrum, spectrum,
+            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectrum,
                                                               redshift=(known_redshift,))
             spectrum = redshifted_spectrum
 
@@ -223,9 +223,12 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
     redshifted_spectrum: :class:`~specutils.Spectrum1D`
         A new Spectrum1D object which incorporates the template_spectrum with a spectral_axis
         that has been redshifted using the final_redshift.
+    chi2_list : `list`
+        A list with the chi2 values corresponding to each input redshift value.
     """
     chi2_min = None
     final_redshift = None
+    chi2_list = []
 
     # Loop which goes through available redshift values and finds the smallest chi2
     for rs in redshift:
@@ -237,9 +240,11 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         normalized_spectral_template, chi2 = _chi_square_for_templates(
                         observed_spectrum, redshifted_spectrum, "flux_conserving")
 
+        chi2_list.append(chi2)
+
         # Set new chi2_min if suitable replacement is found
         if not np.isnan(chi2) and (chi2_min is None or chi2 < chi2_min):
             chi2_min = chi2
             final_redshift = rs
 
-    return final_redshift, redshifted_spectrum
+    return final_redshift, redshifted_spectrum, chi2_list

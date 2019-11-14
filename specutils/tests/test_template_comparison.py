@@ -241,6 +241,7 @@ def test_template_unknown_redshift():
     tr_result = template_comparison.template_redshift(observed_spectrum=spec, template_spectrum=spec1,
                                                       redshift=redshift_trial_values)
 
+    assert len(tr_result) == 3
     assert tr_result[0] == 3
 
 def test_template_redshift_with_one_template_spectrum_in_match():
