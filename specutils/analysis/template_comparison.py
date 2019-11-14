@@ -229,10 +229,10 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
     final_redshift = None
 
     # Loop which goes through available redshift values and finds the smallest chi2
-    for red in redshift:
+    for rs in redshift:
 
         # Create new redshifted spectrum and run it through the chi2 method
-        redshifted_spectrum = Spectrum1D(spectral_axis=template_spectrum.spectral_axis*(1+red),
+        redshifted_spectrum = Spectrum1D(spectral_axis=template_spectrum.spectral_axis*(1+rs),
                         flux=template_spectrum.flux, uncertainty=template_spectrum.uncertainty,
                                          meta=template_spectrum.meta)
         normalized_spectral_template, chi2 = _chi_square_for_templates(
@@ -241,6 +241,6 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         # Set new chi2_min if suitable replacement is found
         if not np.isnan(chi2) and (chi2_min is None or chi2 < chi2_min):
             chi2_min = chi2
-            final_redshift = red
+            final_redshift = rs
 
     return final_redshift, redshifted_spectrum
