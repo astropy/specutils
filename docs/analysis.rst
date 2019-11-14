@@ -188,7 +188,7 @@ values to use. As an example, a simple linear grid can be built with:
 
 .. code-block:: python
 
-    >>> rs_values = np.arange(min_redshift, max_redshift+delta_redshift, delta_redshift)
+    >>> rs_values = np.arange(1., 3.25, 0.25)
 
 The ~`specutils.analysis.template_comparison.template_match` function will then:
 
