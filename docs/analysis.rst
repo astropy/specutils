@@ -182,8 +182,14 @@ This function will:
        normalized to the observed spectrum (and the index of the template
        spectrum if the list of templates is iterable).
 
-If the redshift is unknown, the user specifies the expected window in redshift
-(``min_redshift`` and ``max_redshift``) and the redshift spacing (``delta_redshift``).
+If the redshift is unknown, the user specifies a grid of redshift values in the
+form of an iterable object such as a list, tuple, or numpy array with the redshift
+values to use. As an example, a simple linear grid can be built with:
+
+.. code-block:: python
+
+    >>> rs_values = numpy.arange(min_redshift, max_redshift+delta_redshift, delta_redshift)
+
 The ~`specutils.analysis.template_comparison.template_match` function will then:
 
     1. Move each template to the first term in the redshift grid (``min_redshift``).
@@ -206,10 +212,11 @@ An example of how to do template matching with an unknown redshift is:
    >>> max_redshift = 3.0
    >>> delta_redshift = .25
    >>> resample_method = "flux_conserving"
+   >>> rs_values = np.arange(min_redshift, max_redshift+delta_redshift, delta_redshift)
 
    >>> observed_spectrum = Spectrum1D(spectral_axis=spec_axis*(1+observed_redshift), flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
    >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-   >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method=resample_method, min_redshift=min_redshift, max_redshift=max_redshift, delta_redshift=delta_redshift) # doctest:+FLOAT_CMP
+   >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method=resample_method, redshift=rs_values) # doctest:+FLOAT_CMP
 
 
 Reference/API

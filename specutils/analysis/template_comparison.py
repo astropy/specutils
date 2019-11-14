@@ -135,12 +135,10 @@ def template_match(observed_spectrum, spectral_templates,
     known_redshift: `float`
         If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
         then this redshift can be applied to each template before attempting the match.
-    min_redshift : `float`
-        The minimum redshift allowed.
-    max_redshift : `float`
-        The maximum redshift allowed.
-    delta_redshift : `float`
-        The amount the redshift will change between loops.
+    redshift : `list`, `tuple`, 'numpy.array`
+        An iterable with redshift values to be applied to each template, before computation of the
+        corresponding chi2 value. For each template, the redshift value that results in the smallest chi2
+        is used.
 
     Returns
     -------
@@ -210,12 +208,8 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         The observed spectrum.
     template_spectrum : :class:`~specutils.Spectrum1D`
         The template spectrum, which will have it's redshift calculated.
-    min_redshift : `float`
-        The minimum redshift allowed.
-    max_redshift : `float`
-        The maximum redshift allowed.
-    delta_redshift : `float`
-        The amount the redshift will change between loops.
+    redshift : `list`, `tuple`, 'numpy.array`
+        An iterable with the redshift values to test.
 
     Returns
     -------
