@@ -15,8 +15,8 @@ Specutils Documentation
 .. image:: img/logo.png
 
 
-``specutils`` is a Python package for the representation of, loading,
-manipulation, and analysis of astronomical spectroscopic data. The
+``specutils`` is a Python package for representing, loading,
+manipulating, and analyzing astronomical spectroscopic data. The
 generic data containers and accompanying modules provide a toolbox that the
 astronomical community can use to build more domain-specific packages. For more
 details about the underlying principles, see
