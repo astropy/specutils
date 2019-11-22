@@ -37,6 +37,7 @@ def test_template_match_no_overlap():
     # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     assert np.isnan(tm_result[1])
 
+
 def test_template_match_minimal_overlap():
     """
     Test template_match when both observed and template spectra have minimal overlap on the wavelength axis.
@@ -69,6 +70,7 @@ def test_template_match_minimal_overlap():
     # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     # TODO: investigate why the all elements in tm_result[1] are NaN even with overlap
     assert np.isnan(tm_result[1])
+
 
 def test_template_match_spectrum():
     """
@@ -209,6 +211,7 @@ def test_template_match_multidim_spectrum():
 
     np.testing.assert_almost_equal(tm_result[1], 250.26870401777543)
 
+
 def test_template_unknown_redshift():
     """
     Test template redshift when redshift is unknown.
@@ -220,7 +223,7 @@ def test_template_unknown_redshift():
     spec_axis = np.linspace(0, 50, 50) * u.AA
     perm_flux = np.random.randn(50) * u.Jy
 
-    redshift = 3
+    redshift = 2.5
 
     # Observed spectrum
     spec = Spectrum1D(spectral_axis=spec_axis * (1+redshift),
@@ -242,7 +245,8 @@ def test_template_unknown_redshift():
                                                       redshift=redshift_trial_values)
 
     assert len(tr_result) == 3
-    assert tr_result[0] == 3
+    assert tr_result[0] == 2.5
+
 
 def test_template_redshift_with_one_template_spectrum_in_match():
     # Seed np.random so that results are consistent
@@ -272,10 +276,12 @@ def test_template_redshift_with_one_template_spectrum_in_match():
     redshift_trial_values = np.arange(min_redshift, max_redshift+delta_redshift, delta_redshift)
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
-                                                      resample_method="flux_conserving", known_redshift=None,
+                                                      resample_method="flux_conserving",
                                                       redshift=redshift_trial_values)
 
+    assert len(tm_result) == 4
     np.testing.assert_almost_equal(tm_result[1], 73484.0053895151)
+
 
 def test_template_redshift_with_multiple_template_spectra_in_match():
     # Seed np.random so that results are consistent
@@ -311,10 +317,19 @@ def test_template_redshift_with_multiple_template_spectra_in_match():
     redshift_trial_values = np.arange(min_redshift, max_redshift+delta_redshift, delta_redshift)
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec_coll,
-                                                      resample_method="flux_conserving", known_redshift=None,
+                                                      resample_method="flux_conserving",
                                                       redshift=redshift_trial_values)
-
+    assert len(tm_result) == 4
     np.testing.assert_almost_equal(tm_result[1], 6803.922741644725)
+
+    # When a spectrum collection is matched with a redshift
+    # grid, a list-of-lists is returned with the trial chi2
+    # values computed for every combination redshift-template.
+    # The external list spans the templates in the collection,
+    # while each internal list contains all chi2 values
+    # for a given template.
+    assert len(tm_result[3]) == 2
+
 
 def test_template_known_redshift():
     """
@@ -340,6 +355,7 @@ def test_template_known_redshift():
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     tm_result = template_comparison.template_match(observed_spectrum=spec, spectral_templates=spec1,
-                                                      resample_method="flux_conserving", known_redshift=redshift,
-                                                      redshift=None)
+                                                      resample_method="flux_conserving",
+                                                      redshift=redshift)
+    assert len(tm_result) == 4
     np.testing.assert_almost_equal(tm_result[1], 1.9062409482056814e-31)

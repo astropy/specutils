@@ -113,7 +113,7 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
 
 def template_match(observed_spectrum, spectral_templates,
-                   resample_method="flux_conserving", known_redshift=None,
+                   resample_method="flux_conserving",
                    redshift=None):
     """
     Find which spectral templates is the best fit to an observed spectrum by
@@ -135,10 +135,12 @@ def template_match(observed_spectrum, spectral_templates,
     known_redshift: `float`
         If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
         then this redshift can be applied to each template before attempting the match.
-    redshift : `list`, `tuple`, 'numpy.array`
-        An iterable with redshift values to be applied to each template, before computation of the
-        corresponding chi2 value. For each template, the redshift value that results in the smallest chi2
-        is used.
+    redshift : 'float', `int`, `list`, `tuple`, 'numpy.array`
+        If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
+        then this float or int value redshift can be applied to each template before attempting the match.
+        Or, alternatively, an iterable with redshift values to be applied to each template, before computation
+        of the corresponding chi2 value, can be passed via this same parameter. For each template, the redshift
+        value that results in the smallest chi2 is used.
 
     Returns
     -------
@@ -150,24 +152,21 @@ def template_match(observed_spectrum, spectral_templates,
     smallest_chi_index : `int`
         The index of the spectrum with the smallest chi2 in spectral templates.
     chi2_list : `list`
-        A list with the best-fit chi2 values found for each template spectrum.
+        A list with all chi2 values found for each template spectrum.
     """
     if hasattr(spectral_templates, 'flux') and len(spectral_templates.flux.shape) == 1:
 
         # Account for redshift if provided
-        if redshift is not None and all(x is not None for x in redshift):
-            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectral_templates,
+        chi2_list = []
+        if redshift is not None:
+            _, redshifted_spectrum, chi2_list = template_redshift(observed_spectrum, spectral_templates,
                                                                redshift=redshift)
-            spectral_templates = redshifted_spectrum
-        elif known_redshift:
-            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectral_templates,
-                                                              redshift=(known_redshift,))
             spectral_templates = redshifted_spectrum
 
         normalized_spectral_template, chi2 = _chi_square_for_templates(
             observed_spectrum, spectral_templates, resample_method)
 
-        return normalized_spectral_template, chi2
+        return normalized_spectral_template, chi2, 0, chi2_list
 
     # At this point, the template spectrum is either a ``SpectrumCollection``
     # or a multi-dimensional``Spectrum1D``. Loop through the object and return
@@ -180,20 +179,15 @@ def template_match(observed_spectrum, spectral_templates,
     for index, spectrum in enumerate(spectral_templates):
 
         # Account for redshift if provided
-        if redshift is not None and all(x is not None for x in redshift):
-            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectrum,
-                                                               redshift=redshift)
+        if redshift is not None:
+            _, redshifted_spectrum, chi2_inner_list = template_redshift(
+                observed_spectrum, spectrum, redshift=redshift)
             spectrum = redshifted_spectrum
 
-        elif known_redshift:
-            _, redshifted_spectrum, _ = template_redshift(observed_spectrum, spectrum,
-                                                              redshift=(known_redshift,))
-            spectrum = redshifted_spectrum
+            chi2_list.append(chi2_inner_list)
 
         normalized_spectral_template, chi2 = _chi_square_for_templates(
             observed_spectrum, spectrum, resample_method)
-
-        chi2_list.append(chi2)
 
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
@@ -213,8 +207,8 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         The observed spectrum.
     template_spectrum : :class:`~specutils.Spectrum1D`
         The template spectrum, which will have it's redshift calculated.
-    redshift : `list`, `tuple`, 'numpy.array`
-        An iterable with the redshift values to test.
+    redshift : `float`, `int`, `list`, `tuple`, 'numpy.array`
+        A scalar or iterable with the redshift values to test.
 
     Returns
     -------
@@ -229,6 +223,8 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
     chi2_min = None
     final_redshift = None
     chi2_list = []
+
+    redshift = np.array(redshift).reshape((np.array(redshift).size,))
 
     # Loop which goes through available redshift values and finds the smallest chi2
     for rs in redshift:
