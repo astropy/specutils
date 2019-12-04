@@ -187,8 +187,8 @@ def test_flux_unit_conversion():
 
     # Simple Unit Conversion
     s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500])*u.nm)
-    converted_spec = s.new_flux_unit(unit=u.uJy)[0]
-    assert ((26.0 * u.Jy).to(u.uJy) == converted_spec.flux)
+    converted_spec = s.new_flux_unit(unit=u.uJy)
+    assert ((26.0 * u.Jy).to(u.uJy) == converted_spec.flux[0])
 
     # Make sure incompatible units raise UnitConversionError
     with pytest.raises(u.UnitConversionError):
@@ -200,8 +200,8 @@ def test_flux_unit_conversion():
     eq = [[u.Jy, u.m,
           lambda x: np.full_like(np.array(x), 1000.0, dtype=np.double),
           lambda x: np.full_like(np.array(x), 0.001, dtype=np.double)]]
-    converted_spec = s.new_flux_unit(unit=u.m, equivalencies=eq)[0]
-    assert 1000.0 * u.m == converted_spec.flux
+    converted_spec = s.new_flux_unit(unit=u.m, equivalencies=eq)
+    assert 1000.0 * u.m == converted_spec.flux[0]
 
     # Check if suppressing the unit conversion works
     s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500]) * u.nm)
@@ -214,8 +214,8 @@ def test_wcs_transformations():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
-    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
+    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30) * u.nm)
+    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30))
 
     assert isinstance(pix_axis, np.ndarray)
     assert isinstance(disp_axis, u.Quantity)
@@ -225,17 +225,17 @@ def test_wcs_transformations():
 
     # Test with a FITS WCS
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
-                                 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
+                                 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25}, naxis=1)
 
     spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
 
-    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30))
-    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30) * u.nm)
+    pix_axis = spec.wcs.world_to_pixel(20 * u.um)
+    disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30))
 
     assert isinstance(pix_axis, np.ndarray)
     assert isinstance(disp_axis, u.Quantity)
 
-    assert np.allclose(spec.wcs.world_to_pixel([7000*u.AA, 700*u.nm]), [461.2, 461.2])
+    assert np.allclose(spec.wcs.world_to_pixel(7000 * u.AA), [461.2])
 
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
@@ -365,6 +365,9 @@ def test_str():
         assert line.startswith('flux{:2}:'.format(i))
 
     # Test string representation with single-dimensional flux
-    spec_single_flux = Spectrum1D(1 * u.Jy)
+    spec_single_flux = Spectrum1D([1] * u.Jy, [0] * u.nm)
     result = str(spec_single_flux)
-    assert result == 'Spectrum1D (length=1)\nflux:   {}'.format(spec_single_flux.flux)
+    assert result == \
+           """Spectrum1D (length=1)
+           flux:             [ 1.0 Jy ],  mean=1.0 Jy
+           spectral axis:    [ nan nm ],  mean=nan nm"""

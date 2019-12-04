@@ -49,7 +49,7 @@ def test_equivalent_width():
 
     result = equivalent_width(spectrum)
 
-    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+    assert result.unit.is_equivalent(spectrum.spectral_axis.unit)
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative
@@ -90,7 +90,7 @@ def test_equivalent_width_continuum(continuum):
 
     result = equivalent_width(spectrum, continuum=continuum)
 
-    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+    assert result.unit.is_equivalent(spectrum.spectral_axis.unit)
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative
@@ -114,7 +114,7 @@ def test_equivalent_width_absorption():
 
     result = equivalent_width(spectrum)
 
-    assert result.unit.is_equivalent(spectrum.spectral_axis_unit)
+    assert result.unit.is_equivalent(spectrum.spectral_axis.unit)
 
     # Since this is an absorption line, we expect the equivalent width value to
     # be positive

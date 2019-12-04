@@ -298,7 +298,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # First check if units are equivalent, if so, create a new spectrum
         # object with spectral axis in compatible units
         other_wcs = other_operand.wcs.with_spectral_unit(
-            this_operand.wcs.spectral_axis_unit,
+            this_operand.wcs.spectral_axis.unit,
             rest_value=this_operand._rest_value,
             velocity_convention=this_operand._velocity_convention)
 

@@ -168,7 +168,7 @@ class FluxConservingResampler(ResamplerBase):
         # Check if units on original spectrum and new wavelength (if defined)
         # match
         if isinstance(fin_lamb, Quantity):
-            if orig_spectrum.spectral_axis_unit != fin_lamb.unit:
+            if orig_spectrum.spectral_axis.unit != fin_lamb.unit:
                 return ValueError("Original spectrum dispersion grid and new"
                                   "dispersion grid must have the same units.")
 
@@ -227,7 +227,7 @@ class FluxConservingResampler(ResamplerBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         resampled_spectrum = Spectrum1D(flux=out_flux,
-                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis_unit,
+                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis.unit,
                                         uncertainty=out_uncertainty)
 
         return resampled_spectrum
@@ -315,7 +315,7 @@ class LinearInterpolatedResampler(ResamplerBase):
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
         resampled_spectrum = Spectrum1D(flux=out_flux * orig_spectrum.flux.unit,
-                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
+                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis.unit)
 
         return resampled_spectrum
 
@@ -403,6 +403,6 @@ class SplineInterpolatedResampler(ResamplerBase):
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
         resampled_spectrum = Spectrum1D(flux=out_flux * orig_spectrum.flux.unit,
-                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis_unit)
+                                        spectral_axis=np.array(fin_lamb) * orig_spectrum.spectral_axis.unit)
 
         return resampled_spectrum
