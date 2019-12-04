@@ -154,9 +154,9 @@ def test_single_peak_estimate():
 
 
     #
-    # Estimate parameter MexicanHat1D
+    # Estimate parameter RickerWavelet1D
     #
-    mh = models.MexicanHat1D()
+    mh = models.RickerWavelet1D
     estimators = {
         'amplitude': lambda s: max(s.flux),
         'x_0': lambda s: centroid(s, region=None),
@@ -171,7 +171,7 @@ def test_single_peak_estimate():
 
     assert np.isclose(g_init.amplitude.value, 3.354169257846847)
     assert np.isclose(g_init.x_0.value, 6.218588636687762)
-    assert np.isclose(g_init.stddev.value, 1.6339001193853715)
+    assert np.isclose(g_init.sigma.value, 1.6339001193853715)
 
     assert g_init.amplitude.unit == u.Jy
     assert g_init.x_0.unit == u.um
