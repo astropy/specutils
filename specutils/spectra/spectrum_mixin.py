@@ -6,6 +6,8 @@ from astropy import units as u
 import astropy.units.equivalencies as eq
 from astropy.utils.decorators import lazyproperty
 
+from specutils.utils.wcs_utils import gwcs_from_array
+
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
 DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
@@ -65,7 +67,7 @@ class OneDSpectrumMixin:
             # for a future where pixel_to_world might yield something more than
             # just a raw Quantity, which is planned for the mid-term in astropy and
             # possible gwcs.  Such changes might necessitate a revisit of this code.
-            dummy_spectrum = self.__class__(spectral_axis=[1,2]*self.wcs.spectral_axis_unit,
+            dummy_spectrum = self.__class__(spectral_axis=[1,2]*self.wcs.unit[0],
                                             flux=[1,2]*self.flux.unit)
             spectral_axis = dummy_spectrum.wcs.pixel_to_world([0])[1:]
 
@@ -98,7 +100,7 @@ class OneDSpectrumMixin:
         Parameters
         ----------
         unit : str or `~astropy.units.Unit`
-            The unit to conver the flux array to.
+            The unit to convert the flux array to.
 
         equivalencies : list of equivalencies
             Custom equivalencies to apply to conversions.
@@ -285,15 +287,15 @@ class OneDSpectrumMixin:
         meta = self._meta.copy()
 
         if 'original_unit' not in self._meta:
-            meta['original_unit'] = self.wcs.spectral_axis_unit
+            meta['original_unit'] = self.wcs.unit[0]
 
         # Create the new wcs object
-        new_wcs = self.wcs.with_spectral_unit(unit=unit,
-                                         rest_value=rest_value,
-                                         velocity_convention=velocity_convention)
+        if isinstance(unit, u.UnitBase) and unit.is_equivalent(
+                self.wcs.unit[0], equivalencies=u.spectral()):
+            return gwcs_from_array(self.spectral_axis), meta
 
-        return new_wcs, meta
-
+        logging.error("WCS units incompatible: {} and {}.".format(
+            unit, self._wcs_unit))
 
 class InplaceModificationMixin:
     # Example methods follow to demonstrate how methods can be written to be

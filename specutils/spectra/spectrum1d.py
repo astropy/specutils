@@ -7,8 +7,9 @@ from astropy import constants as cnst
 from astropy.nddata import NDDataRef, NDUncertainty
 from astropy.utils.decorators import lazyproperty
 
-from ..wcs import WCSAdapter, WCSWrapper
 from .spectrum_mixin import OneDSpectrumMixin
+
+from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
 
@@ -80,6 +81,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
                                             else kwargs.get('unit'))
 
+        # In the case where the arithmetic operation is being performed with
+        # a single float, int, or array object, just go ahead and ignore wcs
+        # requirements
+        if isinstance(flux, float) or isinstance(flux, int) \
+                or not isinstance(flux, u.Quantity):
+            super(Spectrum1D, self).__init__(data=flux)
+            return
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
@@ -88,20 +97,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             if not isinstance(spectral_axis, u.Quantity):
                 raise ValueError("Spectral axis must be a `Quantity` object.")
 
-            wcs = WCSWrapper.from_array(spectral_axis)
-        elif wcs is not None:
-            if not issubclass(wcs.__class__, WCSAdapter):
-                wcs = WCSWrapper(wcs)
-        elif isinstance(flux, float) or isinstance(flux, int) or isinstance(flux, np.ndarray):
-            # In the case where the arithmetic operation is being performed with
-            # a single float, int, or array object, just go ahead and ignore wcs
-            # requirements
-            super(Spectrum1D, self).__init__(data=flux)
-            return
-        else:
-            # If no wcs and no spectral axis has been given, raise an error
-            raise LookupError("No WCS object or spectral axis information has "
-                              "been given. Please provide one.")
+            wcs = gwcs_from_array(spectral_axis)
+        elif wcs is None:
+            # If no spectral axis or wcs information is provided, initialize a
+            # with an empty gwcs based on the flux.
+            wcs = gwcs_from_array(np.arange(len(flux)) * u.Unit(""))
 
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
@@ -112,9 +112,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         self._velocity_convention = velocity_convention
 
         if rest_value is None:
-            if wcs.rest_frequency != 0:
+            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
                 self._rest_value = wcs.rest_frequency * u.Hz
-            elif wcs.rest_wavelength != 0:
+            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
                 self._rest_value = wcs.rest_wavelength * u.AA
             else:
                 self._rest_value = 0 * u.AA
@@ -126,8 +126,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                              "Assuming units of spectral axis ('%s').",
                              spectral_axis.unit)
                 self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
-                raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
+            elif not self._rest_value.unit.is_equivalent(u.AA) \
+                 and not self._rest_value.unit.is_equivalent(u.Hz):
+                raise u.UnitsError("Rest value must be "
+                                   "energy/wavelength/frequency equivalent.")
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
@@ -219,8 +221,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         The flux density of photons as a `~astropy.units.Quantity`, in units of
         photons per cm^2 per second per spectral_axis unit
         """
-        flux_in_spectral_axis_units = self.flux.to(u.W * u.cm**-2 * self.spectral_axis.unit**-1, u.spectral_density(self.spectral_axis))
+        flux_in_spectral_axis_units = self.flux.to(
+            u.W * u.cm ** -2 * self.spectral_axis.unit ** -1,
+            u.spectral_density(self.spectral_axis))
+
         photon_flux_density = flux_in_spectral_axis_units / (self.energy / u.photon)
+
         return photon_flux_density.to(u.photon * u.cm**-2 * u.s**-1 *
                                       self.spectral_axis.unit**-1)
 
@@ -357,7 +363,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
 
     def _format_array_summary(self, label, array):
-        if len(array) > 0:
+        if len(array) == 1:
+            mean = np.mean(array)
+            s = "{:17} [ {:.5} ],  mean={:.5}"
+            return s.format(label + ':', array[0], array[-1], mean)
+        elif len(array) > 1:
             mean = np.mean(array)
             s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
             return s.format(label+':', array[0], array[-1], mean)
