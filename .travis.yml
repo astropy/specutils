@@ -22,7 +22,7 @@ env:
         # to repeat them for all configurations.
         - PYTHON_VERSION=3.6
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
+        - ASTROPY_VERSION=dev
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test --remote-data=any'
         - PIP_DEPENDENCIES='gwcs scipy matplotlib'
