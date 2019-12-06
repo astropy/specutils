@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import astropy.units as u
 
@@ -7,7 +8,7 @@ from astropy.modeling import models
 from ..spectra.spectrum1d import Spectrum1D
 from ..analysis import correlation
 
-SIZE = 40
+SIZE = 41 # force symmetry around peak.
 
 
 def test_correlation():
@@ -24,8 +25,9 @@ def test_correlation():
     # as to generate a correlation peak at a expected lag.
     f1 = np.random.randn(SIZE) * u.Jy
     f2 = np.random.randn(SIZE) * u.Jy
-    g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=5020 * u.AA, stddev=2 * u.AA)
-    g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=5023 * u.AA, stddev=2 * u.AA)
+
+    g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=5025 * u.AA, stddev=2 * u.AA)
+    g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=5020 * u.AA, stddev=2 * u.AA)
 
     flux1 = f1 + g1(spec_axis)
     flux2 = f2 + g2(spec_axis)
@@ -48,12 +50,11 @@ def test_correlation():
     assert corr.unit == u.dimensionless_unscaled
     assert lag.unit == u.km / u.s
 
-    # Check that lag at mid-point is zero and lags are symmetrical
-    midpoint = int(len(lag) / 2)
-    assert int((lag[midpoint]).value) == 0
-    np.testing.assert_almost_equal(lag[midpoint+10].value, (-(lag[midpoint-10])).value, 0.01)
-
     # Check position of correlation peak.
     maximum = np.argmax(corr)
-    assert maximum == 36
-    np.testing.assert_almost_equal(lag[maximum].value, 980., 0.1)
+    assert maximum == 45
+    np.testing.assert_almost_equal(lag[maximum].value, 298.6, 1)
+
+    # Check that lags are symmetrical
+    midpoint = int(len(lag) / 2)
+    np.testing.assert_almost_equal(lag[midpoint+2].value, (-(lag[midpoint-2])).value, 2)

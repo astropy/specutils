@@ -22,9 +22,9 @@ def _normalize(observed_spectrum, template_spectrum):
         A float which will normalize the template spectrum's flux so that it
         can be compared to the observed spectrum.
     """
-    num = np.sum((observed_spectrum.flux*template_spectrum.flux)/
+    num = np.nansum((observed_spectrum.flux*template_spectrum.flux)/
                  (observed_spectrum.uncertainty.array**2))
-    denom = np.sum((template_spectrum.flux/
+    denom = np.nansum((template_spectrum.flux/
                     observed_spectrum.uncertainty.array)**2)
 
     return num/denom
@@ -59,6 +59,8 @@ def template_correlate(observed_spectrum, template_spectrum):
     equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
         observed_spectrum.velocity_convention))(observed_spectrum.rest_value)
 
-    lag = observed_spectrum.spectral_axis.to(u.km / u.s, equivalencies=equiv)
+    lags = observed_spectrum.spectral_axis.to(u.km / u.s, equivalencies=equiv)
+    diff = lags[1:] - lags[:-1]
+    lags = (np.array(range(len(corr))) - len(corr)/2 + 0.5) * diff[0]
 
-    return (corr * u.dimensionless_unscaled, lag)
+    return (corr * u.dimensionless_unscaled, lags)
