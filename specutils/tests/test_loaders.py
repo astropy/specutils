@@ -53,10 +53,7 @@ def test_spectrumlist_GMOSfits(remote_data_path, caplog):
     spec = spectrum_list[0]
     assert len(spec.data) == 3020
 
-    logmsg = caplog.record_tuples[0]
-    assert logmsg[1] == logging.WARN
-    assert "Assuming the axis 0 labeled 'linear' is spectral" in logmsg[2]
-
+    assert len(caplog.record_tuples) == 0
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
@@ -69,14 +66,14 @@ def test_specific_spec_axis_unit(remote_data_path):
 
     assert optical_spec.spectral_axis.unit == "Angstrom"
 
+
 @remote_access([{'id': '2656720', 'filename': '_v1410ori_20181204_261_Forrest%20Sims.fit'}])
 def test_ctypye_not_compliant(remote_data_path, caplog):
     optical_spec = Spectrum1D.read(remote_data_path,
                                    spectral_axis_unit="Angstrom",
                                    format='wcs1d-fits')
-    logmsg = caplog.record_tuples[0]
-    assert logmsg[1] == logging.WARN
-    assert "Assuming the axis 0 labeled 'wavelength' is spectral" in logmsg[2]
+
+    assert len(caplog.record_tuples) == 0
 
 
 def test_generic_ecsv_reader(tmpdir):
