@@ -221,7 +221,8 @@ def test_wcs_transformations():
     assert isinstance(disp_axis, u.Quantity)
 
     # Test transform with different unit
-    spec.wcs.world_to_pixel(np.arange(20, 30) * u.GHz)
+    with u.set_enabled_equivalencies(u.spectral()):
+        spec.wcs.world_to_pixel(np.arange(20, 30) * u.GHz)
 
     # Test with a FITS WCS
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
