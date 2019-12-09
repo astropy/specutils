@@ -1,14 +1,18 @@
 import os
 import numpy as np
 import astropy.units as u
+from astropy import constants as const
 
 from astropy.nddata import StdDevUncertainty
 from astropy.modeling import models
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..analysis import correlation
+from ..manipulation.resample import FluxConservingResampler
 
-SIZE = 41 # force symmetry around peak.
+SIZE = 1001
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), '../../')
 
 
 def test_correlation():
@@ -19,15 +23,23 @@ def test_correlation():
     np.random.seed(41)
 
     # Create test spectra
-    spec_axis = np.linspace(5000., 5040., num=SIZE) * u.AA
+    spec_axis = np.linspace(4500., 6500., num=SIZE) * u.AA
 
     # Two narrow Gaussians are offset from each other so
     # as to generate a correlation peak at a expected lag.
-    f1 = np.random.randn(SIZE) * u.Jy
-    f2 = np.random.randn(SIZE) * u.Jy
+    # f1 = np.random.randn(SIZE)*0.0001 * u.Jy
+    # f2 = np.random.randn(SIZE)*0.0001 * u.Jy
+    f1 = (np.ones(SIZE)-0.5) * u.Jy
+    f2 = (np.ones(SIZE)-0.5) * u.Jy
 
-    g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=5025 * u.AA, stddev=2 * u.AA)
-    g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=5020 * u.AA, stddev=2 * u.AA)
+    rest_value = 6000. * u.AA
+
+    mean1 = 5035. * u.AA
+    mean2 = 5015. * u.AA
+    expected_lag = (mean1 - mean2) / rest_value * const.c.to('km/s')
+
+    g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean1, stddev=10. * u.AA)
+    g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean2, stddev=10. * u.AA)
 
     flux1 = f1 + g1(spec_axis)
     flux2 = f2 + g2(spec_axis)
@@ -37,7 +49,7 @@ def test_correlation():
                       flux=flux1,
                       uncertainty=StdDevUncertainty(np.random.sample(SIZE), unit='Jy'),
                       velocity_convention='optical',
-                      rest_value=spec_axis[int(SIZE/2)])
+                      rest_value=rest_value)
 
     spec2 = Spectrum1D(spectral_axis=spec_axis,
                        flux=flux2,
@@ -51,10 +63,5 @@ def test_correlation():
     assert lag.unit == u.km / u.s
 
     # Check position of correlation peak.
-    maximum = np.argmax(corr)
-    assert maximum == 45
-    np.testing.assert_almost_equal(lag[maximum].value, 298.6, 1)
-
-    # Check that lags are symmetrical
-    midpoint = int(len(lag) / 2)
-    np.testing.assert_almost_equal(lag[midpoint+2].value, (-(lag[midpoint-2])).value, 2)
+    corr_peak = np.where(corr == np.amax(corr))[0][0]
+    np.testing.assert_almost_equal(lag[corr_peak].value, expected_lag.value, 1)
