@@ -1,11 +1,13 @@
+import logging
 from abc import ABC, abstractmethod
 
 from warnings import warn
 
 import numpy as np
-from scipy.interpolate import CubicSpline
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, \
+    InverseVariance
 from astropy.units import Quantity
-from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+from scipy.interpolate import CubicSpline
 
 from ..spectra import Spectrum1D
 
