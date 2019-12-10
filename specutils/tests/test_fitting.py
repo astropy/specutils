@@ -1,17 +1,14 @@
-import numpy as np
-
 import astropy.units as u
+import numpy as np
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
-
 from astropy.tests.helper import assert_quantity_allclose
 
-
-from ..spectra import Spectrum1D, SpectralRegion
+from ..analysis import fwhm, centroid
 from ..fitting import (fit_lines, find_lines_derivative,
                        find_lines_threshold, estimate_line_parameters)
-from ..analysis import fwhm, centroid
 from ..manipulation import noise_region_uncertainty, spectrum_from_model
+from ..spectra import Spectrum1D, SpectralRegion
 
 
 def single_peak():
