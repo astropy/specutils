@@ -1,22 +1,23 @@
-import operator
 import itertools
 import logging
+import operator
 
+import astropy.units as u
 import numpy as np
+from astropy.modeling import fitting, Model, models
+from astropy.table import QTable
 from scipy.signal import convolve
+
 
 import astropy.units as u
 from astropy.stats import sigma_clipped_stats
 
-from ..manipulation.utils import excise_regions
-from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
-from ..utils import QuantityModel
-from ..manipulation import extract_region, noise_region_uncertainty
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
-from astropy.modeling import fitting, Model, models
-from astropy.table import QTable
-
+from ..utils import QuantityModel
+from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
+from ..manipulation import extract_region, noise_region_uncertainty
+from ..manipulation.utils import excise_regions
 
 __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
            'estimate_line_parameters']
@@ -655,15 +656,14 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
             # Add this information for the parameter name into the
             # new sub model.
             #
-
             setattr(new_sub_model, pn, v)
 
             #
             # Copy over all the constraints (e.g., tied, fixed...)
             #
-            for k, v in sub_model._constraints.items():
-                new_sub_model._constraints[k] = v
-
+            for constraint in ('tied', 'fixed'):
+                for k, v in getattr(sub_model, constraint).items():
+                    getattr(new_sub_model, constraint)[k] = v
             #
             # Convert teh bounds parameter
             #
@@ -831,8 +831,9 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             #
             # Copy over all the constraints (e.g., tied, fixed, bounds...)
             #
-            for k, v in m_orig._constraints.items():
-                new_sub_model._constraints[k] = v
+            for constraint in ('tied', 'bounds', 'fixed'):
+                for k, v in getattr(m_orig, constraint).items():
+                    getattr(new_sub_model, constraint)[k] = v
 
         #
         # Add the new unit-filled model onto the stack.
