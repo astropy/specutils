@@ -10,7 +10,7 @@ from astropy.modeling import Fittable1DModel
 from astropy.modeling.models import Shift
 from astropy.modeling.tabular import Tabular1D
 from gwcs import coordinate_frames as cf
-import gwcs
+from gwcs import WCS as GWCS
 import numpy as np
 import copy
 
@@ -568,14 +568,9 @@ def gwcs_from_array(array):
     forward_transform.inverse = SpectralTabular1D(
         array, lookup_table=np.arange(len(array)))
 
-    # TODO: Manually insert slicing as a workaround until gwcs properly
-    # supports it
-    TabularGWCS = type("TabularGWCS", (gwcs.wcs.WCS,),
-                       {'__getitem__': gwcs_slice})
-
-    tabular_gwcs = TabularGWCS(forward_transform=forward_transform,
-                               input_frame=coord_frame,
-                               output_frame=spec_frame)
+    tabular_gwcs = GWCS(forward_transform=forward_transform,
+                        input_frame=coord_frame,
+                        output_frame=spec_frame)
 
     return tabular_gwcs
 

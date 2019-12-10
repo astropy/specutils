@@ -5,6 +5,7 @@ import astropy.units.equivalencies as eq
 import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
+from astropy.wcs.wcsapi import HighLevelWCSWrapper
 
 from specutils.utils.wcs_utils import gwcs_from_array
 
@@ -61,17 +62,19 @@ class OneDSpectrumMixin:
         """
         Returns a Quantity array with the values of the spectral axis.
         """
-
         if len(self.flux) > 0:
             spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
         else:
-            # After some discussion it was suggested to create the empty spectral
-            # axis this way to better use the WCS infrastructure. This is to prepare
-            # for a future where pixel_to_world might yield something more than
-            # just a raw Quantity, which is planned for the mid-term in astropy and
-            # possible gwcs.  Such changes might necessitate a revisit of this code.
-            dummy_spectrum = self.__class__(spectral_axis=[1,2]*self.wcs.unit[0],
-                                            flux=[1,2]*self.flux.unit)
+            # After some discussion it was suggested to create the empty
+            # spectral axis this way to better use the WCS infrastructure.
+            # This is to prepare for a future where pixel_to_world might yield
+            # something more than just a raw Quantity, which is planned for
+            # the mid-term in astropy and possible gwcs.  Such changes might
+            # necessitate a revisit of this code.
+            dummy_spectrum = self.__class__(
+                spectral_axis=[1, 2] * self.spectral_axis_unit,
+                flux=[1, 2] * self.flux.unit)
+
             spectral_axis = dummy_spectrum.wcs.pixel_to_world([0])[1:]
 
         return spectral_axis
@@ -81,7 +84,10 @@ class OneDSpectrumMixin:
         """
         Returns the units of the spectral axis.
         """
-        return self.wcs.spectral_axis_unit
+        if isinstance(self.wcs, HighLevelWCSWrapper):
+            return u.Unit(self.wcs.world_axis_units[0])
+
+        return self.wcs.unit[0]
 
     @property
     def flux(self):
