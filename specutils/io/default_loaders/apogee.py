@@ -94,7 +94,7 @@ def apVisit_loader(file_name, **kwargs):
 
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,
-                      dispersion=dispersion * dispersion_unit,
+                      spectral_axis=dispersion * dispersion_unit,
                       meta=meta)
 
 
@@ -135,7 +135,7 @@ def apStar_loader(file_name, **kwargs):
 
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,
-                      dispersion=dispersion * dispersion_unit,
+                      spectral_axis=dispersion * dispersion_unit,
                       meta=meta,
                       wcs=wcs)
 
@@ -162,7 +162,7 @@ def aspcapStar_loader(file_name, **kwargs):
     meta = {'header': header}
     wcs = WCS(hdulist[1].header)
 
-    data = hdulist[1].data # spectrum in the first extension
+    data = hdulist[1].data  # spectrum in the first extension
     unit = def_unit('arbitrary units')
 
     uncertainty = StdDevUncertainty(hdulist[2].data)
@@ -174,6 +174,6 @@ def aspcapStar_loader(file_name, **kwargs):
 
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,
-                      dispersion=dispersion * dispersion_unit,
+                      spectral_axis=dispersion * dispersion_unit,
                       meta=meta,
                       wcs=wcs)
