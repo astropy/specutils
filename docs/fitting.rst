@@ -181,8 +181,11 @@ dictionary:
    >>> sub_spectrum = extract_region(spectrum, sub_region)
 
    >>> mh = models.MexicanHat1D()
-   >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'stddev': lambda s: fwhm(s) }
-   >>> mh._constraints['parameter_estimator'] = estimators
+   >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'sigma': lambda s: fwhm(s) }
+   >>>
+   >>> for name in mh.param_names:
+   ...     par = getattr(mh, name)
+   ...     setattr(par, "estimator", estimators[name])
 
    >>> print(estimate_line_parameters(spectrum, mh))  # doctest:+FLOAT_CMP
    Model: MexicanHat1D
@@ -190,10 +193,10 @@ dictionary:
    Outputs: ('y',)
    Model set size: 1
    Parameters:
-           amplitude             x_0         sigma
-               Jy                 um
-       ------------------ ------------------ -----
-       2.4220683957581444 3.6045476935889367   1.0
+           amplitude             x_0                sigma
+              Jy                 um                  um
+      ------------------ ------------------ -------------------
+      2.4220683957581444 3.6045476935889367 0.24416769183724707
 
 .. warning::
    Be aware the use of ``_constraints`` to store the estimators may change in
