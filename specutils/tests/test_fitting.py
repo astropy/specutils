@@ -601,8 +601,8 @@ def test_masking():
     """
     Test fitting spectra with masks
     """
-    x, y = double_peak()
-    s = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    wl, flux = double_peak()
+    s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
 
     # first we fit a single gaussian to the double_peak model, using the
     # known-good second peak (but a bit higher in amplitude). It should lock
@@ -613,7 +613,7 @@ def test_masking():
 
     # now create a spectrum where the region around the second peak is masked.
     # The fit should now go to the *first* peak
-    s_msk = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um, mask=(5.1 < x)&(x < 6.1))
+    s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=(5.1 < wl)&(wl < 6.1))
     g_fit2 = fit_lines(s_msk, g_init)
     assert u.allclose(g_fit2.mean, 4.6, atol=.1)
 
@@ -627,18 +627,18 @@ def test_window_extras():
     Test that fitting works with masks and weights when a window is present
     """
     # similar to the masking test, but add a broad window around the whole thing
-    x, y = double_peak()
+    wl, flux = double_peak()
     g_init = models.Gaussian1D(2.5, 5.5, 0.2)
     window_region = SpectralRegion(4*u.um, 8*u.um)
-    mask = (5.1 < x) & (x < 6.1)
+    mask = (5.1 < wl) & (wl < 6.1)
 
-    s_msk = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um, mask=mask)
+    s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=mask)
 
     g_fit1 = fit_lines(s_msk, g_init, window=window_region)
     assert u.allclose(g_fit1.mean, 4.6, atol=.1)
 
     # check that if we weight instead of masking, we get the same result
-    s = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
     weights = (~mask).astype(float)
     g_fit2 = fit_lines(s, g_init, weights=weights, window=window_region)
     assert u.allclose(g_fit2.mean, 4.6, atol=.1)
