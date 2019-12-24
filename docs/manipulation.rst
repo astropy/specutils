@@ -217,7 +217,7 @@ single spectrum. This can be achieved as follows:
 
     >>> new_spectral_axis = np.concatenate([spec1.spectral_axis.value, spec2.spectral_axis.to_value(spec1.spectral_axis.unit)]) * spec1.spectral_axis.unit
 
-    >>> resampler = LinearInterpolatedResampler(edge_action='zero_fill')
+    >>> resampler = LinearInterpolatedResampler(extrapolation_treatment='zero_fill')
     >>> new_spec1 = resampler(spec1, new_spectral_axis)
     >>> new_spec2 = resampler(spec2, new_spectral_axis)
 

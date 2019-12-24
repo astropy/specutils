@@ -20,15 +20,15 @@ class ResamplerBase(ABC):
 
     Parameters
     ----------
-    edge_action : str
+    extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN, or
         ``'zero_fill'`` to be set to zero.
     """
-    def __init__(self, edge_action='nan_fill'):
-        if edge_action not in ('nan_fill', 'zero_fill'):
-            raise ValueError('invalid edge_action value: ' + str(edge_action))
-        self.edge_action = edge_action
+    def __init__(self, extrapolation_treatment='nan_fill'):
+        if extrapolation_treatment not in ('nan_fill', 'zero_fill'):
+            raise ValueError('invalid extrapolation_treatment value: ' + str(extrapolation_treatment))
+        self.extrapolation_treatment = extrapolation_treatment
 
     @abstractmethod
     def __call__(self, orig_spectrum, fin_spec_axis):
@@ -81,7 +81,7 @@ class FluxConservingResampler(ResamplerBase):
 
     Parameters
     ----------
-    edge_action : str
+    extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN, or
         ``'zero_fill'`` to be set to zero.
@@ -236,7 +236,7 @@ class FluxConservingResampler(ResamplerBase):
             out_uncertainty = None
 
         # nan-filling happens by default - replace with zeros if requested:
-        if self.edge_action == 'zero_fill':
+        if self.extrapolation_treatment == 'zero_fill':
             origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_spec_axis.unit
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux[off_edges] = 0
@@ -262,7 +262,7 @@ class LinearInterpolatedResampler(ResamplerBase):
 
     Parameters
     ----------
-    edge_action : str
+    extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN, or
         ``'zero_fill'`` to be set to zero.
@@ -284,8 +284,8 @@ class LinearInterpolatedResampler(ResamplerBase):
     >>> fluxc_resample = LinearInterpolatedResampler()
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
     """
-    def __init__(self, edge_action='nan_fill'):
-        super().__init__(edge_action)
+    def __init__(self, extrapolation_treatment='nan_fill'):
+        super().__init__(extrapolation_treatment)
 
     def __call__(self, orig_spectrum, fin_spec_axis):
         """
@@ -315,7 +315,7 @@ class LinearInterpolatedResampler(ResamplerBase):
             warn("Linear interpolation currently does not propogate uncertainties")
 
         fill_val = np.nan #bin_edges=nan_fill case
-        if self.edge_action == 'zero_fill':
+        if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
 
         out_flux = np.interp(fin_spec_axis, orig_spectrum.spectral_axis,
@@ -342,7 +342,7 @@ class SplineInterpolatedResampler(ResamplerBase):
 
     Parameters
     ----------
-    edge_action : str
+    extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN, or
         ``'zero_fill'`` to be set to zero.
@@ -392,10 +392,10 @@ class SplineInterpolatedResampler(ResamplerBase):
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
         cubic_spline = CubicSpline(orig_spectrum.spectral_axis, orig_spectrum.flux,
-                                   extrapolate=self.edge_action != 'nan_fill')
+                                   extrapolate=self.extrapolation_treatment != 'nan_fill')
         out_flux = cubic_spline(fin_spec_axis)
 
-        if self.edge_action == 'zero_fill':
+        if self.extrapolation_treatment == 'zero_fill':
             origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_spec_axis.unit
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux[off_edges] = 0
