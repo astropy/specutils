@@ -427,7 +427,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     if window is not None and isinstance(window, (float, int)):
         center = model.mean
         window_indices = np.nonzero((spectrum.spectral_axis >= center-window) &
-                             (spectrum.spectral_axis < center+window))
+                                    (spectrum.spectral_axis < center+window))
 
     # In this case the window is the start and end points of where we
     # should fit
@@ -440,14 +440,16 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     elif window is not None and isinstance(window, SpectralRegion):
         idx1, idx2 = window.bounds
         if idx1 == idx2:
-            raise Exception("Bad selected region.")
+            raise IndexError("Tried to fit a region containing no pixels.")
 
         # HACK WARNING! This uses the extract machinery to create a set of
         # indices by making an "index spectrum"
+        # note that any unit will do but Jy is at least flux-y
         # TODO: really the spectral region machinery should have the power
         # to create a mask, and we'd just use that...
+        idxarr = np.arange(spectrum.flux.size).reshape(spectrum.flux.shape)
         index_spectrum = Spectrum1D(spectral_axis=spectrum.spectral_axis,
-                                    flux=np.arange(spectrum.flux.size).reshape(spectrum.flux.shape)*u.Jy)
+                                    flux=u.Quantity(idxarr, u.Jy, dtype=int))
 
         extracted_regions = extract_region(index_spectrum, window)
         if isinstance(extracted_regions, list):

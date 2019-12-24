@@ -95,7 +95,7 @@ class SpectraExamples:
         #
         # Create one spectrum like 1 but with a mask
         #
-        self._s1_um_mJy_e1_masked = copy(self._s1_um_mJy_e1)  # SHALLOW copy
+        self._s1_um_mJy_e1_masked = copy(self._s1_um_mJy_e1)  # SHALLOW copy - the data are shared with the above non-masked case
         self._s1_um_mJy_e1_masked.mask = (np.random.randn(*self.base_flux.shape) + 1) > 0
 
 
