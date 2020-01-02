@@ -239,8 +239,11 @@ class FluxConservingResampler(ResamplerBase):
 
         # nan-filling happens by default - replace with zeros if requested:
         if self.extrapolation_treatment == 'zero_fill':
-            origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_spec_axis.unit
-            off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
+            origedges = self._calc_bin_edges(
+                orig_spectrum.spectral_axis.value) * \
+                        orig_spectrum.spectral_axis.unit
+            off_edges = (fin_spec_axis < origedges[0].value) | (
+                    origedges[-1].value < fin_spec_axis)
             out_flux[off_edges] = 0
             if out_uncertainty is not None:
                 out_uncertainty.array[off_edges] = 0
@@ -295,7 +298,6 @@ class LinearInterpolatedResampler(ResamplerBase):
         """
         return self.resample1d(orig_spectrum, fin_spec_axis)
 
-
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Call interpolation, repackage new spectra
@@ -320,8 +322,10 @@ class LinearInterpolatedResampler(ResamplerBase):
         if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
 
-        out_flux = np.interp(fin_spec_axis, orig_spectrum.spectral_axis,
-                             orig_spectrum.flux, left=fill_val, right=fill_val)
+        out_flux = np.interp(fin_spec_axis,
+                             orig_spectrum.spectral_axis.value,
+                             orig_spectrum.flux.value, left=fill_val,
+                             right=fill_val)
 
         # todo: for now, use the units from the pre-resampled
         # spectra, although if a unit is defined for fin_spec_axis and it doesn't
@@ -330,8 +334,10 @@ class LinearInterpolatedResampler(ResamplerBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
-        resampled_spectrum = Spectrum1D(flux=out_flux * orig_spectrum.flux.unit,
-                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis_unit)
+        resampled_spectrum = Spectrum1D(
+            flux=out_flux * orig_spectrum.flux.unit,
+            spectral_axis=np.array(fin_spec_axis) *
+                          orig_spectrum.spectral_axis_unit)
 
         return resampled_spectrum
 
@@ -398,8 +404,11 @@ class SplineInterpolatedResampler(ResamplerBase):
         out_flux = cubic_spline(fin_spec_axis)
 
         if self.extrapolation_treatment == 'zero_fill':
-            origedges = self._calc_bin_edges(orig_spectrum.spectral_axis.value) * fin_spec_axis.unit
-            off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
+            origedges = self._calc_bin_edges(
+                orig_spectrum.spectral_axis.value) * \
+                        orig_spectrum.spectral_axis.unit
+            off_edges = (fin_spec_axis < origedges[0].value) | (
+                    origedges[-1].value < fin_spec_axis)
             out_flux[off_edges] = 0
 
         # todo: for now, use the units from the pre-resampled
@@ -409,7 +418,9 @@ class SplineInterpolatedResampler(ResamplerBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         # todo: handle uncertainties for interpolated cases.
-        resampled_spectrum = Spectrum1D(flux=out_flux * orig_spectrum.flux.unit,
-                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis_unit)
+        resampled_spectrum = Spectrum1D(
+            flux=out_flux * orig_spectrum.flux.unit,
+            spectral_axis=np.array(fin_spec_axis) *
+                          orig_spectrum.spectral_axis.unit)
 
         return resampled_spectrum
