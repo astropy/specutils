@@ -207,9 +207,6 @@ The resampling functionality detailed above is also the default way
 :ref:`specutils <specutils>` supports splicing multiple spectra together into a
 single spectrum. This can be achieved as follows:
 
-
-
-
 .. plot::
     :include-source:
     :align: center
@@ -220,11 +217,9 @@ single spectrum. This can be achieved as follows:
 
     >>> new_spectral_axis = np.concatenate([spec1.spectral_axis.value, spec2.spectral_axis.to_value(spec1.spectral_axis.unit)]) * spec1.spectral_axis.unit
 
-    >>> resampler = LinearInterpolatedResampler()
+    >>> resampler = LinearInterpolatedResampler(extrapolation_treatment='zero_fill')
     >>> new_spec1 = resampler(spec1, new_spectral_axis)
-    >>> new_spec1.flux[np.isnan(new_spec1.flux)] = 0
     >>> new_spec2 = resampler(spec2, new_spectral_axis)
-    >>> new_spec2.flux[np.isnan(new_spec2.flux)] = 0
 
     >>> final_spec = new_spec1 + new_spec2
 

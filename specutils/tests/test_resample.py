@@ -8,6 +8,11 @@ from ..spectra.spectrum1d import Spectrum1D
 from ..tests.spectral_examples import simulated_spectra
 from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
+
+@pytest.fixture(params=[FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler])
+def all_resamplers(request):
+    return request.param
+
 # todo: Should add tests for different weighting options once those
 # are more solidified.
 
@@ -162,3 +167,18 @@ def test_expanded_grid_interp_spline():
     assert_quantity_allclose(results.flux,
                             np.array([np.nan, 3.98808594, 6.94042969, 6.45869141,
                                       5.89921875, 7.29736328, np.nan, np.nan, np.nan])*u.mJy)
+
+
+@pytest.mark.parametrize("edgetype,lastvalue",
+                         [("nan_fill", np.nan), ("zero_fill", 0)])
+def test_resample_edges(edgetype, lastvalue, all_resamplers):
+    input_spectrum = Spectrum1D(spectral_axis=[2, 4, 12, 16, 20] * u.micron,
+                                flux=[1, 3, 7, 6, 20] * u.mJy)
+    resamp_grid = [1, 3, 7, 6, 20, 100] * u.micron
+
+    resampler = all_resamplers(edgetype)
+    resampled = resampler(input_spectrum, resamp_grid)
+    if lastvalue is np.nan:
+        assert np.isnan(resampled.flux[-1])
+    else:
+        assert resampled.flux[-1] == lastvalue
