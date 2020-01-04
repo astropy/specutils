@@ -157,8 +157,8 @@ Then estimate the line  parameters it it for a Gaussian line profile::
       Parameters:
               amplitude            mean             stddev
                   Jy                um                um
-          ------------------ ---------------- ------------------
-          1.1845669151078486 4.57517271067525 0.3199324375933905
+          ------------------ ---------------- -------------------
+          1.1845669151078486 4.57517271067525 0.19373372929165977
 
 
 If an `~astropy.modeling.Model` is used that does not have the predefined
@@ -681,7 +681,7 @@ fitted continuum, which returns a new object:
     plt.title('Continuum normalized spectrum')
     plt.grid('on')
 
-    
+
 Reference/API
 -------------
 
