@@ -174,3 +174,17 @@ def test_linear_excise_invert_from_spectrum():
                              np.diff(excised_spec[51:61].flux))
     assert quantity_allclose(np.diff(excised_spec[80:90].flux),
                              np.diff(excised_spec[81:91].flux))
+
+
+def test_extract_masked():
+    wl = [1, 2, 3, 4]*u.nm
+    flux = np.arange(4)*u.Jy
+    mask = [False, False, True, True]
+
+    masked_spec = Spectrum1D(spectral_axis=wl, flux=flux, mask=mask)
+    region = SpectralRegion(1.5 * u.nm, 3.5 * u.nm)
+
+    extracted = extract_region(masked_spec, region)
+
+    assert np.all(extracted.mask == [False, True])
+    assert np.all(extracted.flux.value == [1, 2])

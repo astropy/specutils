@@ -286,10 +286,12 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         Fitter instance to be used when fitting model to spectrum.
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
-    weights : list or 'unc', optional
+    weights : array-like or 'unc', optional
         If 'unc', the unceratinties from the spectrum object are used to
-        to calculate the weights. If list/ndarray, represents the weights to
-        use in the fitting.
+        to calculate the weights. If array-like, represents the weights to
+        use in the fitting.  Note that if a mask is present on the spectrum, it
+        will be applied to the ``weights`` as it would be to the spectrum
+        itself.
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
         whole spectrum will be used in the fitting.
@@ -403,11 +405,14 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         # Assume that the weights argument is list-like
         weights = np.array(weights)
 
+    mask = spectrum.mask
+
     dispersion = spectrum.spectral_axis
     dispersion_unit = spectrum.spectral_axis.unit
 
     flux = spectrum.flux
     flux_unit = spectrum.flux.unit
+
 
     #
     # Determine the window if it is not None.  There
@@ -422,40 +427,51 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     #
 
     # In this case the window defines the area around the center of each model
+    window_indices = None
     if window is not None and isinstance(window, (float, int)):
         center = model.mean
-        indices = np.nonzero((spectrum.spectral_axis >= center-window) &
-                             (spectrum.spectral_axis < center+window))
-
-        dispersion = dispersion[indices]
-        flux = flux[indices]
-
-        if weights is not None:
-            weights = weights[indices]
+        window_indices = np.nonzero((spectrum.spectral_axis >= center-window) &
+                                    (spectrum.spectral_axis < center+window))
 
     # In this case the window is the start and end points of where we
     # should fit
     elif window is not None and isinstance(window, tuple):
-        indices = np.nonzero((dispersion >= window[0]) &
+        window_indices = np.nonzero((dispersion >= window[0]) &
                              (dispersion < window[1]))
 
-        dispersion = dispersion[indices]
-        flux = flux[indices]
-
-        if weights is not None:
-            weights = weights[indices]
-
+    # in this case the window is spectral regions that determine where
+    # to fit.
     elif window is not None and isinstance(window, SpectralRegion):
-        try:
-            idx1, idx2 = window.bounds
-            if idx1 == idx2:
-                raise Exception("Bad selected region.")
-            extracted_regions = extract_region(spectrum, window)
-            dispersion, flux = _combined_region_data(extracted_regions)
-            dispersion = dispersion * dispersion_unit
-            flux = flux * flux_unit
-        except ValueError as e:
-            return
+        idx1, idx2 = window.bounds
+        if idx1 == idx2:
+            raise IndexError("Tried to fit a region containing no pixels.")
+
+        # HACK WARNING! This uses the extract machinery to create a set of
+        # indices by making an "index spectrum"
+        # note that any unit will do but Jy is at least flux-y
+        # TODO: really the spectral region machinery should have the power
+        # to create a mask, and we'd just use that...
+        idxarr = np.arange(spectrum.flux.size).reshape(spectrum.flux.shape)
+        index_spectrum = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+                                    flux=u.Quantity(idxarr, u.Jy, dtype=int))
+
+        extracted_regions = extract_region(index_spectrum, window)
+        if isinstance(extracted_regions, list):
+            if len(extracted_regions) == 0:
+                raise ValueError('The whole spectrum is windowed out!')
+            window_indices = np.concatenate([s.flux.value.astype(int) for s in extracted_regions])
+        else:
+            if len(extracted_regions.flux) == 0:
+                raise ValueError('The whole spectrum is windowed out!')
+            window_indices = extracted_regions.flux.value.astype(int)
+
+    if window_indices is not None:
+        dispersion = dispersion[window_indices]
+        flux = flux[window_indices]
+        if mask is not None:
+            mask = mask[window_indices]
+        if weights is not None:
+            weights = weights[window_indices]
 
     if flux is None or len(flux) == 0:
         raise Exception("Spectrum flux is empty or None.")
@@ -482,6 +498,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     #
     # Do the fitting of spectrum to the model.
     #
+    if mask is not None:
+        nmask = ~mask
+        dispersion_unitless = dispersion_unitless[nmask]
+        flux_unitless = flux_unitless[nmask]
+        if weights is not None:
+            weights = weights[nmask]
 
     fit_model_unitless = fitter(model_unitless, dispersion_unitless,
                                 flux_unitless, weights=weights, **kwargs)
@@ -498,26 +520,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
                                   spectrum.flux.unit)
 
     return fit_model
-
-
-def _combined_region_data(spec):
-    if isinstance(spec, list):
-
-        # Merge sub-spec spectral_axis and flux values.
-        x = np.array([sv for subspec in spec if subspec is not None
-                         for sv in subspec.spectral_axis.value])
-        y = np.array([sv for subspec in spec if subspec is not None
-                         for sv in subspec.flux.value])
-    else:
-        if spec is None:
-            return
-        x = spec.spectral_axis.value
-        y = spec.flux.value
-
-    if len(x) == 0:
-        return
-
-    return x, y
 
 
 def _convert(quantity, dispersion_unit, dispersion, flux_unit):

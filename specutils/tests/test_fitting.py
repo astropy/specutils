@@ -617,3 +617,55 @@ def test_spectrum_from_model():
                               1.5319218, 1.06886794, 0.71101768, 0.45092638, 0.27264641])
 
     assert np.allclose(spectrum_gaussian.flux.value[::10], flux_expected, atol=1e-5)
+
+
+def test_masking():
+    """
+    Test fitting spectra with masks
+    """
+    wl, flux = double_peak()
+    s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
+
+    # first we fit a single gaussian to the double_peak model, using the
+    # known-good second peak (but a bit higher in amplitude). It should lock
+    # in on the *second* peak since it's already close:
+    g_init = models.Gaussian1D(2.5, 5.5, 0.2)
+    g_fit1 = fit_lines(s, g_init)
+    assert u.allclose(g_fit1.mean, 5.5, atol=.1)
+
+    # now create a spectrum where the region around the second peak is masked.
+    # The fit should now go to the *first* peak
+    s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=(5.1 < wl)&(wl < 6.1))
+    g_fit2 = fit_lines(s_msk, g_init)
+    assert u.allclose(g_fit2.mean, 4.6, atol=.1)
+
+    # double check that it works with weights as well
+    g_fit3 = fit_lines(s_msk, g_init, weights=np.ones_like(s_msk.flux.value))
+    assert g_fit2.mean == g_fit3.mean
+
+
+def test_window_extras():
+    """
+    Test that fitting works with masks and weights when a window is present
+    """
+    # similar to the masking test, but add a broad window around the whole thing
+    wl, flux = double_peak()
+    g_init = models.Gaussian1D(2.5, 5.5, 0.2)
+    window_region = SpectralRegion(4*u.um, 8*u.um)
+    mask = (5.1 < wl) & (wl < 6.1)
+
+    s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=mask)
+
+    g_fit1 = fit_lines(s_msk, g_init, window=window_region)
+    assert u.allclose(g_fit1.mean, 4.6, atol=.1)
+
+    # check that if we weight instead of masking, we get the same result
+    s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
+    weights = (~mask).astype(float)
+    g_fit2 = fit_lines(s, g_init, weights=weights, window=window_region)
+    assert u.allclose(g_fit2.mean, 4.6, atol=.1)
+
+    # and the same with both together
+    weights = (~mask).astype(float)
+    g_fit3 = fit_lines(s_msk, g_init, weights=weights, window=window_region)
+    assert u.allclose(g_fit3.mean, 4.6, atol=.1)

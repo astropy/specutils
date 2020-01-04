@@ -1,3 +1,5 @@
+from copy import copy
+
 import numpy as np
 import astropy.units as u
 from astropy.modeling import models
@@ -32,6 +34,9 @@ class SpectraExamples:
 
         4. s1_AA_nJy_e3 - same as 1, but with a fourth instance of noise
                           dispersion: Angstroms, flux: nJy
+
+        5. s1_um_mJy_e1_masked - same as 1, but with a random set of pixels
+                                 masked.
     """
 
     def __init__(self):
@@ -71,7 +76,7 @@ class SpectraExamples:
                                         flux=self._flux_e2 * u.mJy)
 
         #
-        # Create on spectrum with the same flux but in angstrom units
+        # Create one spectrum with the same flux but in angstrom units
         #
 
         self.wavelengths_AA = self.wavelengths_um * 10000
@@ -79,12 +84,19 @@ class SpectraExamples:
                                         flux=self._flux_e1 * u.mJy)
 
         #
-        # Create on spectrum with the same flux but in angstrom units and nJy
+        # Create one spectrum with the same flux but in angstrom units and nJy
         #
 
         self._flux_e4 = (self.base_flux + 400 * np.random.random(self.base_flux.shape)) * 1000000
         self._s1_AA_nJy_e4 = Spectrum1D(spectral_axis=self.wavelengths_AA * u.AA,
                                         flux=self._flux_e4 * u.nJy)
+
+
+        #
+        # Create one spectrum like 1 but with a mask
+        #
+        self._s1_um_mJy_e1_masked = copy(self._s1_um_mJy_e1)  # SHALLOW copy - the data are shared with the above non-masked case
+        self._s1_um_mJy_e1_masked.mask = (np.random.randn(*self.base_flux.shape) + 1) > 0
 
 
     @property
@@ -118,6 +130,11 @@ class SpectraExamples:
     @property
     def s1_AA_nJy_e4_flux(self):
         return self._flux_e4
+
+    @property
+    def s1_um_mJy_e1_masked(self):
+        return self._s1_um_mJy_e1_masked
+
 
 
 @pytest.fixture
