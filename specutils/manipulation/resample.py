@@ -32,12 +32,11 @@ class ResamplerBase(ABC):
             raise ValueError('invalid extrapolation_treatment value: ' + str(extrapolation_treatment))
         self.extrapolation_treatment = extrapolation_treatment
 
-    @abstractmethod
     def __call__(self, orig_spectrum, fin_spec_axis):
         """
         Return the resulting `~specutils.Spectrum1D` of the resampling.
         """
-        return NotImplemented
+        return self.resample1d(orig_spectrum, fin_spec_axis)
 
     @abstractmethod
     def resample1d(self, orig_spectrum, fin_spec_axis):
@@ -106,12 +105,6 @@ class FluxConservingResampler(ResamplerBase):
     >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
 
     """
-
-    def __call__(self, orig_spectrum, fin_spec_axis):
-        """
-        Return the resulting `~specutils.Spectrum1D` of the resampling.
-        """
-        return self.resample1d(orig_spectrum, fin_spec_axis)
 
     def _resample_matrix(self, orig_spec_axis, fin_spec_axis):
         """
@@ -290,12 +283,6 @@ class LinearInterpolatedResampler(ResamplerBase):
     def __init__(self, extrapolation_treatment='nan_fill'):
         super().__init__(extrapolation_treatment)
 
-    def __call__(self, orig_spectrum, fin_spec_axis):
-        """
-        Return the resulting `~specutils.Spectrum1D` of the resampling.
-        """
-        return self.resample1d(orig_spectrum, fin_spec_axis)
-
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Call interpolation, repackage new spectra
@@ -359,12 +346,6 @@ class SplineInterpolatedResampler(ResamplerBase):
     """
     def __init__(self, bin_edges='nan_fill'):
         super().__init__(bin_edges)
-
-    def __call__(self, orig_spectrum, fin_spec_axis):
-        """
-        Return the resulting `~specutils.Spectrum1D` of the resampling.
-        """
-        return self.resample1d(orig_spectrum, fin_spec_axis)
 
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
