@@ -201,3 +201,16 @@ def test_resample_different_units(all_resamplers):
     assert not np.any(np.isnan(resampled.flux))
 
 
+def test_resample_uncs(all_resamplers):
+    sdunc = StdDevUncertainty([0.1,0.2, 0.3]*u.mJy)
+    input_spectrum = Spectrum1D(spectral_axis=[5000, 6000 ,7000] * u.AA,
+                                flux=[1, 2, 3] * u.mJy,
+                                uncertainty=sdunc)
+
+    resampled = all_resamplers()(input_spectrum, [5500, 6500]*u.AA)
+    if all_resamplers == FluxConservingResampler:
+        # special-cased because it switches the unc to inverse variance by construction
+        assert resampled.uncertainty.unit == sdunc.unit**-2
+    else:
+        assert resampled.uncertainty.unit == sdunc.unit
+        assert resampled.uncertainty.uncertainty_type == sdunc.uncertainty_type

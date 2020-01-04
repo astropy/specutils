@@ -300,17 +300,29 @@ class LinearInterpolatedResampler(ResamplerBase):
         resample_spectrum : `~specutils.Spectrum1D`
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
-        if orig_spectrum.uncertainty is not None:
-            warn("Linear interpolation currently does not propogate uncertainties")
+
 
         fill_val = np.nan #bin_edges=nan_fill case
         if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
 
-        out_flux = np.interp(fin_spec_axis,
-                             orig_spectrum.spectral_axis.to(fin_spec_axis.unit),
+        orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
+
+        out_flux = np.interp(fin_spec_axis, orig_axis_in_fin,
                              orig_spectrum.flux, left=fill_val, right=fill_val)
-        return Spectrum1D(spectral_axis=fin_spec_axis, flux=out_flux)
+
+
+        new_unc = None
+        if orig_spectrum.uncertainty is not None:
+            out_unc_arr = np.interp(fin_spec_axis, orig_axis_in_fin,
+                                    orig_spectrum.uncertainty.array,
+                                    left=fill_val, right=fill_val)
+            new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_arr,
+                                                          unit=orig_spectrum.unit)
+
+        return Spectrum1D(spectral_axis=fin_spec_axis,
+                          flux=out_flux,
+                          uncertainty=new_unc)
 
 
 class SplineInterpolatedResampler(ResamplerBase):
@@ -369,12 +381,22 @@ class SplineInterpolatedResampler(ResamplerBase):
                                    extrapolate=self.extrapolation_treatment != 'nan_fill')
         out_flux_val = flux_spline(fin_spec_axis.value)
 
+        new_unc = None
+        if orig_spectrum.uncertainty is not None:
+            unc_spline = CubicSpline(orig_axis_in_new.value, orig_spectrum.uncertainty.array,
+                                       extrapolate=self.extrapolation_treatment != 'nan_fill')
+            out_unc_val = unc_spline(fin_spec_axis.value)
+            new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_val, unit=orig_spectrum.unit)
+
         if self.extrapolation_treatment == 'zero_fill':
             origedges = self._calc_bin_edges(
                 orig_spectrum.spectral_axis.value) * \
                         orig_spectrum.spectral_axis.unit
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux_val[off_edges] = 0
+            if new_unc is not None:
+                new_unc.array[off_edges] = 0
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
-                          flux=out_flux_val*orig_spectrum.flux.unit)
+                          flux=out_flux_val*orig_spectrum.flux.unit,
+                          uncertainty=new_unc)
