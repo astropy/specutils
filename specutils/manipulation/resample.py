@@ -173,7 +173,7 @@ class FluxConservingResampler(ResamplerBase):
         ----------
         orig_spectrum : `~specutils.Spectrum1D`
             The original 1D spectrum.
-        fin_spec_axis : ndarray
+        fin_spec_axis :  Quantity
             The desired spectral axis array.
 
         Returns
@@ -242,11 +242,13 @@ class FluxConservingResampler(ResamplerBase):
             origedges = self._calc_bin_edges(
                 orig_spectrum.spectral_axis.value) * \
                         orig_spectrum.spectral_axis.unit
-            off_edges = (fin_spec_axis < origedges[0].value) | (
-                    origedges[-1].value < fin_spec_axis)
+            off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux[off_edges] = 0
             if out_uncertainty is not None:
                 out_uncertainty.array[off_edges] = 0
+
+
+        return Spectrum1D(spectral_axis=fin_spec_axis, flux=out_flux)
 
         # todo: for now, use the units from the pre-resampled
         # spectra, although if a unit is defined for fin_spec_axis and it doesn't
@@ -323,23 +325,9 @@ class LinearInterpolatedResampler(ResamplerBase):
             fill_val = 0
 
         out_flux = np.interp(fin_spec_axis,
-                             orig_spectrum.spectral_axis.value,
-                             orig_spectrum.flux.value, left=fill_val,
-                             right=fill_val)
-
-        # todo: for now, use the units from the pre-resampled
-        # spectra, although if a unit is defined for fin_spec_axis and it doesn't
-        # match the input spectrum it won't work right, will have to think
-        # more about how to handle that... could convert before and after
-        # calculation, which is probably easiest. Matrix math algorithm is
-        # geometry based, so won't work to just let quantity math handle it.
-        # todo: handle uncertainties for interpolated cases.
-        resampled_spectrum = Spectrum1D(
-            flux=out_flux * orig_spectrum.flux.unit,
-            spectral_axis=np.array(fin_spec_axis) *
-                          orig_spectrum.spectral_axis_unit)
-
-        return resampled_spectrum
+                             orig_spectrum.spectral_axis.to(fin_spec_axis.unit),
+                             orig_spectrum.flux, left=fill_val, right=fill_val)
+        return Spectrum1D(spectral_axis=fin_spec_axis, flux=out_flux)
 
 
 class SplineInterpolatedResampler(ResamplerBase):
@@ -391,7 +379,7 @@ class SplineInterpolatedResampler(ResamplerBase):
         ----------
         orig_spectrum : `~specutils.Spectrum1D`
             The original 1D spectrum.
-        fin_spec_axis : ndarray
+        fin_spec_axis : Quantity
             The desired spectral axis array.
 
         Returns
@@ -407,8 +395,7 @@ class SplineInterpolatedResampler(ResamplerBase):
             origedges = self._calc_bin_edges(
                 orig_spectrum.spectral_axis.value) * \
                         orig_spectrum.spectral_axis.unit
-            off_edges = (fin_spec_axis < origedges[0].value) | (
-                    origedges[-1].value < fin_spec_axis)
+            off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux[off_edges] = 0
 
         # todo: for now, use the units from the pre-resampled

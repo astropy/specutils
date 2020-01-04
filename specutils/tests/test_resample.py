@@ -142,7 +142,7 @@ def test_expanded_grid_interp_linear():
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
     input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
-    resamp_grid = np.array([1, 5, 9, 13, 14, 17, 21, 22, 23])
+    resamp_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.AA
 
     inst = LinearInterpolatedResampler()
     results = inst(input_spectra, resamp_grid)
@@ -174,7 +174,7 @@ def test_expanded_grid_interp_spline():
 def test_resample_edges(edgetype, lastvalue, all_resamplers):
     input_spectrum = Spectrum1D(spectral_axis=[2, 4, 12, 16, 20] * u.micron,
                                 flux=[1, 3, 7, 6, 20] * u.mJy)
-    resamp_grid = [1, 3, 7, 6, 20, 100]
+    resamp_grid = [1, 3, 7, 6, 20, 100] * u.micron
 
     resampler = all_resamplers(edgetype)
     resampled = resampler(input_spectrum, resamp_grid)
