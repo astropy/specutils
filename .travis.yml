@@ -100,35 +100,27 @@ matrix:
       env: SETUP_CMD='build_docs -w'
         CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
 
-    # Now try Astropy dev with the latest Python and LTS with and 3.x.
+    # check on somewhat older versions LTS version
     - os: linux
-      env: ASTROPY_VERSION=development
-        EVENT_TYPE='pull_request push cron'
-    - os: linux
-      env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.13
+      env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.16
 
     # Add a job that runs from cron only and tests against astropy dev and
     # numpy dev to give a change for early discovery of issues and feedback
-    # for both developer teams.
+    # for both developer teams. 
     - os: linux
       stage: Cron tests
       env: ASTROPY_VERSION=development NUMPY_VERSION=development
         EVENT_TYPE='cron'
+    - os: linux
+      env: ASTROPY_VERSION=development
+        EVENT_TYPE='pull_request push cron'
 
     # Try on Windows.
     - os: windows
       stage: Slow tests
       env: SETUP_CMD='test'
 
-    # Try all python versions and Numpy versions. Since we can assume that
-    # the Numpy developers have taken care of testing Numpy with different
-    # versions of Python, we can vary Python and Numpy versions at the same
-    # time.
-
-    - os: linux
-      env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.14
-    - os: linux
-      env: NUMPY_VERSION=1.15
+    # Note we are not doing any numpy versions older than 1.16 since those are not compatible with Astropy 4.0
 
     # Do a PEP8 test with flake8
     - os: linux
