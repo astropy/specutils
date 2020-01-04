@@ -167,8 +167,8 @@ one can create a dictionary where the key is the parameter name and the value is
 a function that operates on a spectrum (lambda functions are very useful for
 this purpose). For example if one wants to estimate the line parameters of a
 line fit for a `~astropy.modeling.functional_models.RickerWavelet1D` one can
-define the ``estimators`` dictionary and attach in the model's ``_constraints``
-dictionary:
+define the ``estimators`` dictionary and use it to populate the ``estimator``
+attribute of the model's parameters:
 
 .. code-block:: python
 
@@ -198,11 +198,6 @@ dictionary:
       ------------------ ------------------ -------------------
       2.4220683957581444 3.6045476935889367 0.24416769183724707
 
-.. warning::
-   Be aware the use of ``_constraints`` to store the estimators may change in
-   future versions of astropy or specutils to something more natural (i.e., not
-   a "private" attribute), as this is a workaround for a known limitation in
-   `astropy.modeling`.
 
 Model (Line) Fitting
 --------------------
