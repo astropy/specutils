@@ -181,11 +181,9 @@ attribute of the model's parameters:
    >>> sub_spectrum = extract_region(spectrum, sub_region)
 
    >>> ricker = models.RickerWavelet1D()
-   >>> estimators = { 'amplitude': lambda s: max(s.flux), 'x_0': lambda s: centroid(s, region=None), 'sigma': lambda s: fwhm(s) }
-   >>>
-   >>> for name in ricker.param_names:
-   ...     par = getattr(ricker, name)
-   ...     setattr(par, "estimator", estimators[name])
+   >>> ricker.amplitude.estimator = lambda s: max(s.flux)
+   >>> ricker.x_0.estimator = lambda s: centroid(s, region=None)
+   >>> ricker.sigma.estimator = lambda s: fwhm(s)
 
    >>> print(estimate_line_parameters(spectrum, ricker))  # doctest:+FLOAT_CMP
    Model: RickerWavelet1D
