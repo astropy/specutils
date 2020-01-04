@@ -101,13 +101,16 @@ def test_single_peak_estimate():
 
     #
     # Estimate parameter Gaussian1D
+    # we give the true values for the Gaussian because it actually *should*
+    # be pretty close to the true values, because it's a Gaussian...
     #
 
     g_init = estimate_line_parameters(s_single, models.Gaussian1D())
 
-    assert np.isclose(g_init.amplitude.value, 3.354169257846847)
-    assert np.isclose(g_init.mean.value, 6.218588636687762)
-    assert np.isclose(g_init.stddev.value, 1.6339001193853715)
+
+    assert np.isclose(g_init.amplitude.value, 3., rtol=.2)
+    assert np.isclose(g_init.mean.value, 6.3, rtol=.1)
+    assert np.isclose(g_init.stddev.value, 0.8, rtol=.3)
 
     assert g_init.amplitude.unit == u.Jy
     assert g_init.mean.unit == u.um
@@ -115,6 +118,9 @@ def test_single_peak_estimate():
 
     #
     # Estimate parameter Lorentz1D
+    # unlike the Gaussian1D here we do hand-picked comparison values, because
+    # the "single peak" is a Gaussian and therefore the Lorentzian fit shouldn't
+    # be quite right anyway
     #
 
     g_init = estimate_line_parameters(s_single, models.Lorentz1D())
