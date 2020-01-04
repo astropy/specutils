@@ -45,8 +45,8 @@ def _to_edge_pixel(subregion, spectrum):
             try:
                 left_index = int(np.ceil(spectrum.wcs.world_to_pixel(left_reg_in_spec_unit)))
             except Exception as e:
-                raise ValueError("Lower value, {}, could not convert using spectrum's WCS {}".format(
-                    left_reg_in_spec_unit, spectrum.wcs))
+                raise ValueError("Lower value, {}, could not convert using spectrum's WCS {}. Exception: {}".format(
+                    left_reg_in_spec_unit, spectrum.wcs, e))
 
     #
     # Right/upper side of sub region
@@ -66,8 +66,8 @@ def _to_edge_pixel(subregion, spectrum):
             try:
                 right_index = int(np.floor(spectrum.wcs.world_to_pixel(right_reg_in_spec_unit))) + 1
             except Exception as e:
-                raise ValueError("Upper value, {}, could not convert using spectrum's WCS {}".format(
-                    right_reg_in_spec_unit, spectrum.wcs))
+                raise ValueError("Upper value, {}, could not convert using spectrum's WCS {}. Exception: {}".format(
+                    right_reg_in_spec_unit, spectrum.wcs, e))
 
     return left_index, right_index
 
