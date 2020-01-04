@@ -168,7 +168,7 @@ Here's a set of simple examples showing each of the three types of resampling:
     available.
 
     >>> from specutils.manipulation import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
-    >>> new_disp_grid = np.arange(4800, 5200,3)
+    >>> new_disp_grid = np.arange(4800, 5200, 3) * u.AA
 
     Flux Conserving Resampler:
 

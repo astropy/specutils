@@ -130,7 +130,6 @@ def non_linear_wcs1d_fits(file_name, spectral_axis_unit=None, flux_unit=None,
                 logging.info("linear Solution: Try using "
                              "`format='wcs1d-fits'` instead")
                 wcs = WCS(header)
-
                 spectral_axis = _read_linear_iraf_wcs(wcs=wcs,
                                                       dc_flag=header['DC-FLAG'])
             elif ctypen == 'MULTISPE':
@@ -161,7 +160,6 @@ def non_linear_wcs1d_fits(file_name, spectral_axis_unit=None, flux_unit=None,
                 spectral_axis *= u.angstrom
 
         meta = {'header': header}
-
     return Spectrum1D(flux=data, spectral_axis=spectral_axis, meta=meta)
 
 
@@ -433,9 +431,8 @@ def _chebyshev(wcs_dict):
                                domain=[wcs_dict['pmin'],
                                        wcs_dict['pmax']], )
 
-    for param_index in range(wcs_dict['order']):
-        model.parameters[param_index] = wcs_dict['fpar'][
-            param_index]
+    new_params = [wcs_dict['fpar'][i] for i in range(wcs_dict['order'])]
+    model.parameters = new_params
 
     return model
 
@@ -462,9 +459,8 @@ def _non_linear_legendre(wcs_dict):
                               domain=[wcs_dict['pmin'],
                                       wcs_dict['pmax']], )
 
-    for param_index in range(wcs_dict['order']):
-        model.parameters[param_index] = wcs_dict['fpar'][
-            param_index]
+    new_params = [wcs_dict['fpar'][i] for i in range(wcs_dict['order'])]
+    model.parameters = new_params
 
     return model
 

@@ -1,21 +1,23 @@
-import operator
 import itertools
 import logging
+import operator
 
+import astropy.units as u
 import numpy as np
+from astropy.modeling import fitting, Model, models
+from astropy.table import QTable
 from scipy.signal import convolve
+
+
 import astropy.units as u
 from astropy.stats import sigma_clipped_stats
 
-from ..manipulation.utils import excise_regions
-from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
-from ..utils import QuantityModel
-from ..manipulation import extract_region, noise_region_uncertainty
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
-from astropy.modeling import fitting, Model, models
-from astropy.table import QTable
-
+from ..utils import QuantityModel
+from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
+from ..manipulation import extract_region, noise_region_uncertainty
+from ..manipulation.utils import excise_regions
 
 __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
            'estimate_line_parameters']
@@ -51,8 +53,10 @@ def _set_parameter_estimators(model):
     Helper method used in method below.
     """
     if model.__class__.__name__ in _parameter_estimators:
-        model._constraints['parameter_estimator'] = _parameter_estimators[
-            model.__class__.__name__]
+        model_pars = _parameter_estimators[model.__class__.__name__]
+        for name in model.param_names:
+            par = getattr(model, name)
+            setattr(par, "estimator", model_pars[name])
 
     return model
 
@@ -77,18 +81,16 @@ def estimate_line_parameters(spectrum, model):
         Model with parameters estimated.
     """
 
-    if not 'parameter_estimator' in model._constraints:
-        model = _set_parameter_estimators(model)
-
+    model = _set_parameter_estimators(model)
     # Estimate the parameters based on the estimators already
     # attached to the model
-    if 'parameter_estimator' in model._constraints:
-        for param, estimator in model._constraints['parameter_estimator'].items():
-            setattr(model, param, estimator(spectrum))
-
-    # No estimators.
-    else:
-        raise Exception('No method to estimate parameters')
+    for name in model.param_names:
+        par = getattr(model, name)
+        try:
+            estimator = getattr(par, "estimator")
+            setattr(model, name, estimator(spectrum))
+        except AttributeError:
+            raise Exception('No method to estimate parameter {}'.format(name))
 
     return model
 
@@ -606,8 +608,7 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
     #
     # Determine if a compound model
     #
-
-    compound_model = model_in.n_submodels() > 1
+    compound_model = model_in.n_submodels > 1
 
     if not compound_model:
         # For this we are going to just make it a list so that we
@@ -617,8 +618,7 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
         # If it is a compound model then we are going to create the RPN
         # representation of it which is a list that contains either astropy
         # models or string representations of operators (e.g., '+' or '*').
-        model_in = [c.value for c in model_in._tree.traverse_postorder()]
-
+        model_in = model_in.traverse_postorder(include_operator=True)
     #
     # Run through each model in the list or compound model
     #
@@ -656,15 +656,14 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
             # Add this information for the parameter name into the
             # new sub model.
             #
-
             setattr(new_sub_model, pn, v)
 
             #
             # Copy over all the constraints (e.g., tied, fixed...)
             #
-            for k, v in sub_model._constraints.items():
-                new_sub_model._constraints[k] = v
-
+            for constraint in ('tied', 'fixed'):
+                for k, v in getattr(sub_model, constraint).items():
+                    getattr(new_sub_model, constraint)[k] = v
             #
             # Convert teh bounds parameter
             #
@@ -715,15 +714,15 @@ def _add_units_to_model(model_in, model_orig, spectrum):
     # list so we can use the for loop below.
     #
 
-    compound_model = model_in.n_submodels() > 1
+    compound_model = model_in.n_submodels > 1
     if not compound_model:
         model_in_list = [model_in]
         model_orig_list = [model_orig]
     else:
         compound_model_in = model_in
 
-        model_in_list = [c.value for c in model_in._tree.traverse_postorder()]
-        model_orig_list = [c.value for c in model_orig._tree.traverse_postorder()]
+        model_in_list = model_in.traverse_postorder(include_operator=True)
+        model_orig_list = model_orig.traverse_postorder(include_operator=True)
 
     model_out_stack = []
     model_index = 0
@@ -832,8 +831,9 @@ def _add_units_to_model(model_in, model_orig, spectrum):
             #
             # Copy over all the constraints (e.g., tied, fixed, bounds...)
             #
-            for k, v in m_orig._constraints.items():
-                new_sub_model._constraints[k] = v
+            for constraint in ('tied', 'bounds', 'fixed'):
+                for k, v in getattr(m_orig, constraint).items():
+                    getattr(new_sub_model, constraint)[k] = v
 
         #
         # Add the new unit-filled model onto the stack.

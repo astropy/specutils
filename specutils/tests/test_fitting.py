@@ -1,14 +1,14 @@
-import numpy as np
-
 import astropy.units as u
+import numpy as np
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
+from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra import Spectrum1D, SpectralRegion
+from ..analysis import fwhm, centroid
 from ..fitting import (fit_lines, find_lines_derivative,
                        find_lines_threshold, estimate_line_parameters)
-from ..analysis import fwhm, centroid
 from ..manipulation import noise_region_uncertainty, spectrum_from_model
+from ..spectra import Spectrum1D, SpectralRegion
 
 
 def single_peak():
@@ -151,25 +151,28 @@ def test_single_peak_estimate():
 
 
     #
-    # Estimate parameter MexicanHat1D
+    # Estimate parameter RickerWavelet1D
     #
-    mh = models.MexicanHat1D()
+    mh = models.RickerWavelet1D
     estimators = {
         'amplitude': lambda s: max(s.flux),
         'x_0': lambda s: centroid(s, region=None),
-        'stddev': lambda s: fwhm(s)
+        'sigma': lambda s: fwhm(s)
     }
-    mh._constraints['parameter_estimator'] = estimators
+    #mh._constraints['parameter_estimator'] = estimators
+    mh.amplitude.estimator = lambda s: max(s.flux)
+    mh.x_0.estimator = lambda s: centroid(s, region=None)
+    mh.sigma.estimator = lambda s: fwhm(s)
 
     g_init = estimate_line_parameters(s_single, mh)
 
     assert np.isclose(g_init.amplitude.value, 3.354169257846847)
     assert np.isclose(g_init.x_0.value, 6.218588636687762)
-    assert np.isclose(g_init.stddev.value, 1.6339001193853715)
+    assert np.isclose(g_init.sigma.value, 1.6339001193853715)
 
     assert g_init.amplitude.unit == u.Jy
     assert g_init.x_0.unit == u.um
-    assert g_init.stddev.unit == u.um
+    assert g_init.sigma.unit == u.um
 
 
 def test_single_peak_fit():
@@ -472,13 +475,13 @@ def test_fixed_parameters():
 
     g_fit = fit_lines(spectrum, g_init)
 
-    assert g_fit.mean == 6.1*u.um
+    assert_quantity_allclose(g_fit.mean, 6.1*u.um)
     assert g_fit.bounds == g_init.bounds
     assert g_fit.name == "Gaussian Test Model"
 
     # Test passing of tied parameter
-    g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
-                               tied={'mean': tie_center})
+    g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um)
+    g_init.mean.tied = tie_center
     g_fit = fit_lines(spectrum, g_init)
 
     assert g_fit.tied == g_init.tied

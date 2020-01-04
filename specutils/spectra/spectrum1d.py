@@ -6,9 +6,9 @@ from astropy import units as u
 from astropy import constants as cnst
 from astropy.nddata import NDDataRef, NDUncertainty
 from astropy.utils.decorators import lazyproperty
-
-from ..wcs import WCSAdapter, WCSWrapper
+from astropy.nddata import NDUncertainty
 from .spectrum_mixin import OneDSpectrumMixin
+from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
 
@@ -67,8 +67,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             return
 
         # Ensure that the flux argument is an astropy quantity
-        if flux is not None and not isinstance(flux, u.Quantity):
-            raise ValueError("Flux must be a `Quantity` object.")
+        if flux is not None:
+            if not isinstance(flux, u.Quantity):
+                raise ValueError("Flux must be a `Quantity` object.")
+            elif flux.isscalar:
+                flux = u.Quantity([flux])
 
         # In cases of slicing, new objects will be initialized with `data`
         # instead of ``flux``. Ensure we grab the `data` argument.
@@ -80,6 +83,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         kwargs.setdefault('unit', flux.unit if isinstance(flux, u.Quantity)
                                             else kwargs.get('unit'))
 
+        # In the case where the arithmetic operation is being performed with
+        # a single float, int, or array object, just go ahead and ignore wcs
+        # requirements
+        if isinstance(flux, float) or isinstance(flux, int) \
+                or not isinstance(flux, u.Quantity):
+            super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
+            return
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
@@ -88,20 +99,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             if not isinstance(spectral_axis, u.Quantity):
                 raise ValueError("Spectral axis must be a `Quantity` object.")
 
-            wcs = WCSWrapper.from_array(spectral_axis)
-        elif wcs is not None:
-            if not issubclass(wcs.__class__, WCSAdapter):
-                wcs = WCSWrapper(wcs)
-        elif isinstance(flux, float) or isinstance(flux, int) or isinstance(flux, np.ndarray):
-            # In the case where the arithmetic operation is being performed with
-            # a single float, int, or array object, just go ahead and ignore wcs
-            # requirements
-            super(Spectrum1D, self).__init__(data=flux)
-            return
-        else:
-            # If no wcs and no spectral axis has been given, raise an error
-            raise LookupError("No WCS object or spectral axis information has "
-                              "been given. Please provide one.")
+            wcs = gwcs_from_array(spectral_axis)
+        elif wcs is None:
+            # If no spectral axis or wcs information is provided, initialize a
+            # with an empty gwcs based on the flux.
+            size = len(flux) if not flux.isscalar else 1
+            wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
 
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
@@ -112,9 +115,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         self._velocity_convention = velocity_convention
 
         if rest_value is None:
-            if wcs.rest_frequency != 0:
+            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
                 self._rest_value = wcs.rest_frequency * u.Hz
-            elif wcs.rest_wavelength != 0:
+            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
                 self._rest_value = wcs.rest_wavelength * u.AA
             else:
                 self._rest_value = 0 * u.AA
@@ -126,8 +129,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                              "Assuming units of spectral axis ('%s').",
                              spectral_axis.unit)
                 self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not self._rest_value.unit.is_equivalent(u.AA) and not self._rest_value.unit.is_equivalent(u.Hz):
-                raise u.UnitsError("Rest value must be energy/wavelength/frequency equivalent.")
+            elif not self._rest_value.unit.is_equivalent(u.AA) \
+                    and not self._rest_value.unit.is_equivalent(u.Hz):
+                raise u.UnitsError("Rest value must be "
+                                   "energy/wavelength/frequency equivalent.")
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
@@ -168,6 +173,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             return self._copy(
                 flux=self.flux[item], uncertainty=self.uncertainty[item]
                     if self.uncertainty is not None else None)
+
+        if not isinstance(item, slice):
+            item = slice(item, item+1, None)
 
         return super().__getitem__(item)
 
@@ -219,8 +227,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         The flux density of photons as a `~astropy.units.Quantity`, in units of
         photons per cm^2 per second per spectral_axis unit
         """
-        flux_in_spectral_axis_units = self.flux.to(u.W * u.cm**-2 * self.spectral_axis.unit**-1, u.spectral_density(self.spectral_axis))
+        flux_in_spectral_axis_units = self.flux.to(
+            u.W * u.cm**-2 * self.spectral_axis.unit**-1,
+            u.spectral_density(self.spectral_axis))
         photon_flux_density = flux_in_spectral_axis_units / (self.energy / u.photon)
+
         return photon_flux_density.to(u.photon * u.cm**-2 * u.s**-1 *
                                       self.spectral_axis.unit**-1)
 
@@ -243,6 +254,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         a spectrum.
         """
         return self._radial_velocity/cnst.c
+
     @redshift.setter
     def redshift(self, val):
         if val is None:
@@ -261,6 +273,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         a spectrum.
         """
         return self._radial_velocity
+
     @radial_velocity.setter
     def radial_velocity(self, val):
         if val is None:
@@ -279,85 +292,42 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                                  "is compatible with this spectrum's flux array")
             self._radial_velocity = val
 
-    @staticmethod
-    def _compare_wcs(this_operand, other_operand):
-        """
-        NNData arithmetic callable to determine if two wcs's are compatible.
-        """
-        # If the other operand is a simple number or array, allow the operations
-        if (isinstance(other_operand, float) or isinstance(other_operand, int)
-            or isinstance(other_operand, np.ndarray)):
-            return True
-
-        # First check if units are equivalent, if so, create a new spectrum
-        # object with spectral axis in compatible units
-        other_wcs = other_operand.wcs.with_spectral_unit(
-            this_operand.wcs.spectral_axis_unit,
-            rest_value=this_operand._rest_value,
-            velocity_convention=this_operand._velocity_convention)
-
-        if other_wcs is None:
-            return False
-
-        # Check if the shape of the axes are compatible
-        if this_operand.spectral_axis.shape != other_operand.spectral_axis.shape:
-            logging.error("Shape of spectral axes between operands must be "
-                          "equivalent.")
-            return False
-
-        # And that they cover the same range
-        if (this_operand.spectral_axis[0] != other_operand.spectral_axis[0] or
-                this_operand.spectral_axis[-1] != other_operand.spectral_axis[-1]):
-            logging.error("Spectral axes between operands must cover the "
-                          "same range. Interpolation may be required.")
-            return False
-
-        # Check if the delta dispersion is equivalent between the two axes
-        if not np.array_equal(np.diff(this_operand.spectral_axis),
-                              np.diff(other_operand.spectral_axis)):
-            logging.error("Delta dispersion of spectral axes of operands "
-                          "must be equivalent. Interpolation may be required.")
-            return False
-
-        return True
-
     def __add__(self, other):
         if not isinstance(other, NDDataRef):
             other = u.Quantity(other, unit=self.unit)
 
-        return self.add(
-            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+        return self.add(other)
 
     def __sub__(self, other):
         if not isinstance(other, NDDataRef):
             other = u.Quantity(other, unit=self.unit)
 
-        return self.subtract(
-            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+        return self.subtract(other)
 
     def __mul__(self, other):
         if not isinstance(other, NDDataRef):
             other = u.Quantity(other)
 
-        return self.multiply(
-            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+        return self.multiply(other)
 
     def __div__(self, other):
         if not isinstance(other, NDDataRef):
             other = u.Quantity(other)
 
-        return self.divide(
-            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+        return self.divide(other)
 
     def __truediv__(self, other):
         if not isinstance(other, NDDataRef):
             other = u.Quantity(other)
 
-        return self.divide(
-            other, compare_wcs=lambda o1, o2: self._compare_wcs(self, other))
+        return self.divide(other)
 
     def _format_array_summary(self, label, array):
-        if len(array) > 0:
+        if len(array) == 1:
+            mean = np.mean(array)
+            s = "{:17} [ {:.5} ],  mean={:.5}"
+            return s.format(label+':', array[0], array[-1], mean)
+        elif len(array) > 1:
             mean = np.mean(array)
             s = "{:17} [ {:.5}, ..., {:.5} ],  mean={:.5}"
             return s.format(label+':', array[0], array[-1], mean)

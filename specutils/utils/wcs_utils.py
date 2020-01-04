@@ -6,6 +6,14 @@ Utilities for parsing, converting, and manipulating astropy FITS-WCS objects
 from astropy import units as u
 from astropy import constants
 import warnings
+from astropy.modeling import Fittable1DModel
+from astropy.modeling.models import Shift
+from astropy.modeling.tabular import Tabular1D
+from gwcs import coordinate_frames as cf
+from gwcs import WCS as GWCS
+import numpy as np
+import copy
+
 
 def _parse_velocity_convention(vc):
     if vc in (u.doppler_radio, 'radio', 'RADIO', 'VRAD', 'F', 'FREQ'):
@@ -535,3 +543,73 @@ def air_to_vac_deriv(wavelength, method='Griesen2006'):
     assert method.lower() == 'griesen2006', "Only supported method is 'Griesen2006'"
     wlum = wavelength.to(u.um).value
     return (1 + 1e-6 * (287.6155 - 1.62887 / wlum**2 - 0.04080 / wlum**4))
+
+
+def gwcs_from_array(array):
+    """
+    Create a new WCS from provided tabular data. This defaults to being
+    a GWCS object.
+    """
+    array = u.Quantity(array)
+
+    coord_frame = cf.CoordinateFrame(naxes=1,
+                                     axes_type=('SPECTRAL',),
+                                     axes_order=(0,))
+    spec_frame = cf.SpectralFrame(unit=array.unit, axes_order=(0,))
+
+    # In order for the world_to_pixel transformation to automatically convert
+    # input units, the equivalencies in the look up table have to be extended
+    # with spectral unit information.
+    SpectralTabular1D = type("SpectralTabular1D", (Tabular1D,),
+                             {'input_units_equivalencies': {'x0': u.spectral()}})
+
+    forward_transform = SpectralTabular1D(np.arange(len(array)),
+                                          lookup_table=array)
+    forward_transform.inverse = SpectralTabular1D(
+        array, lookup_table=np.arange(len(array)))
+
+    tabular_gwcs = GWCS(forward_transform=forward_transform,
+                        input_frame=coord_frame,
+                        output_frame=spec_frame)
+
+    return tabular_gwcs
+
+
+def gwcs_slice(self, item):
+    """
+    This is a bit of a hack in order to fix the slicing of the WCS
+    in the spectral dispersion direction.  The NDData slices properly
+    but the spectral dispersion result was not.
+
+    There is code slightly downstream that sets the *number* of entries
+    in the dispersion axis, this is just needed to shift to the correct
+    starting element.
+
+    When WCS gets the ability to do slicing then we might be able to
+    remove this code.
+    """
+    # Create shift of x-axis
+    if isinstance(item, int):
+        shift = item
+    elif isinstance(item, slice):
+        shift = item.start
+    else:
+        raise TypeError('Unknown index type {}, must be int or slice.'.format(item))
+
+    # Create copy as we need to modify this and return it.
+    new_wcs = copy.deepcopy(self)
+
+    if shift == 0:
+        return new_wcs
+
+    shifter = Shift(shift)
+
+    # Get the current forward transform
+    forward = new_wcs.forward_transform
+
+    # Set the new transform
+    new_wcs.set_transform(new_wcs.input_frame,
+                          new_wcs.output_frame,
+                          shifter | forward)
+
+    return new_wcs

@@ -4,105 +4,170 @@
 language: c
 
 os:
-    - linux
+  - linux
+
+# The apt packages below are needed for sphinx builds. A full list of packages
+# that can be included can be found here:
+#
+# https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
+
+addons:
+  apt:
+    packages:
+      - graphviz
+
 
 stage: Comprehensive tests
 
+stages:
+  # Do the style check and a single test job, don't proceed if it fails
+  - name: Initial tests
+  # Test docs, astropy dev, and without optional dependencies
+  - name: Comprehensive tests
+  # Slow tests that should only run if comprehensive ones passed
+  - name: Slow tests
+  # These will only run when cron is opted in
+  - name: Cron tests
+    if: type = cron
 
-addons:
-    apt:
-        packages:
-            - graphviz
 
 env:
-    global:
-
-        # The following versions are the 'default' for tests, unless
-        # overridden underneath. They are defined here in order to save having
-        # to repeat them for all configurations.
-        - PYTHON_VERSION=3.6
-        - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
-        - MAIN_CMD='python setup.py'
-        - SETUP_CMD='test --remote-data=any'
-        - PIP_DEPENDENCIES='gwcs scipy matplotlib'
-        - EVENT_TYPE='pull_request push'
-        - CONDA_DEPENDENCIES='pytest-remotedata'
-        - GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
-        - ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+  global:
+    # The following versions are the 'default' for tests, unless
+    # overridden underneath. They are defined here in order to save having
+    # to repeat them for all configurations.
+    - PYTHON_VERSION=3.7
+    - NUMPY_VERSION=stable
+    - ASTROPY_VERSION=stable
+    - MAIN_CMD='python setup.py'
+    - SETUP_CMD='test --remote-data=any'
+    - EVENT_TYPE='pull_request push'
 
 
-stages:
-   # Do the style check and a single test job, don't proceed if it fails
-   - name: Initial tests
-   # Test docs, astropy dev, and without optional dependencies
-   - name: Comprehensive tests
-   # These will only run when cron is opted in
-   - name: Cron tests
-     if: type = cron
+    # List runtime dependencies for the package that are available as conda
+    # packages here.
+    - CONDA_DEPENDENCIES='pytest-remotedata'
+    - CONDA_DEPENDENCIES_DOC='sphinx-astropy'
+
+    # List other runtime dependencies for the package that are available as
+    # pip packages here.
+    - PIP_DEPENDENCIES='gwcs scipy matplotlib'
+
+    # Conda packages for affiliated packages are hosted in channel
+    # "astropy" while builds for astropy LTS with recent numpy versions
+    # are in astropy-ci-extras. If your package uses either of these,
+    # add the channels to CONDA_CHANNELS along with any other channels
+    # you want to use.
+    - CONDA_CHANNELS='astropy'
+
+    # If there are matplotlib or other GUI tests, uncomment the following
+    # line to use the X virtual framebuffer.
+    # - SETUP_XVFB=True
+
+    # If you want to ignore certain flake8 errors, you can list them
+    # in FLAKE8_OPT, for example:
+    # - FLAKE8_OPT='--ignore=E501'
+    - FLAKE8_OPT=''
+
+    # Extra dependencies
+    - GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
+    - ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
 
 matrix:
 
-    # Don't wait for allowed failures
-    fast_finish: true
+  # Don't wait for allowed failures
+  fast_finish: true
 
-    include:
-        # Make sure that egg_info works without dependencies
-        - stage: Initial tests
-          env: PYTHON_VERSION=3.7 SETUP_CMD='egg_info'
+  include:
+    # Make sure that egg_info works without dependencies
+    - stage: Initial tests
+      env: PYTHON_VERSION=3.7 SETUP_CMD='egg_info'
 
-        - stage: Initial tests
-          os: linux
-          env: PYTHON_VERSION=3.7
+    # Try MacOS X, usually enough only to run from cron as hardly there are
+    # issues that are not picked up by a linux worker
+    - os: osx
+      stage: Cron tests
+      env: SETUP_CMD='test' EVENT_TYPE='cron'
 
-        # Try MacOS X
-        - os: osx
-          env: SETUP_CMD='test --remote-data=any'
+    # Do a coverage test.
+    - os: linux
+      stage: Initial tests
+      env: SETUP_CMD='test --coverage'
 
-        # Do a coverage test.
-        - os: linux
-          env: SETUP_CMD='test --coverage --remote-data=any'
+    # Check for sphinx doc build warnings - we do this first because it
+    # may run for a long time
+    - os: linux
+      env: SETUP_CMD='build_docs -w'
+        CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
 
-        # Check for sphinx doc build warnings - we do this first because it
-        # may run for a long time
-        - os: linux
-          env: SETUP_CMD='build_docs -w'
-               PIP_DEPENDENCIES='gwcs scipy matplotlib sphinx-astropy'
+    # check on somewhat older versions LTS version
+    - os: linux
+      env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.16
 
-        # Try all python versions and Numpy versions. Since we can assume that
-        # the Numpy developers have taken care of testing Numpy with different
-        # versions of Python, we can vary Python and Numpy versions at the same
-        # time.
+    # Add a job that runs from cron only and tests against astropy dev and
+    # numpy dev to give a change for early discovery of issues and feedback
+    # for both developer teams. 
+    - os: linux
+      stage: Cron tests
+      env: ASTROPY_VERSION=development NUMPY_VERSION=development
+        EVENT_TYPE='cron'
+    - os: linux
+      env: ASTROPY_VERSION=development
+        EVENT_TYPE='pull_request push cron'
 
-        - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.15
-        - os: linux
-          env: NUMPY_VERSION=1.14
+    # Try on Windows.
+    - os: windows
+      stage: Slow tests
+      env: SETUP_CMD='test'
 
-        # Do a PEP8 test with pycodestyle
-        - stage: Initial tests
-          os: linux
-          env: MAIN_CMD='pycodestyle specutils --count'
-               SETUP_CMD=''
+    # Note we are not doing any numpy versions older than 1.16 since those are not compatible with Astropy 4.0
 
-        # Try development version of Astropy
-        - os: linux
-          env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
-               PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
+    # Do a PEP8 test with flake8
+    - os: linux
+      stage: Initial tests
+      env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
-    allow_failures:
-        # Try development version of Astropy
-        - os: linux
-          env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
-               PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
+    # Try development version of Astropy and GWCS
+    - os: linux
+      env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
+        PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
 
+  allow_failures:
+  # Do a PEP8 test with flake8
+  # (do allow to fail unless your code completely compliant)
+   - os: linux
+     stage: Initial tests
+     env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
 install:
-    - git clone git://github.com/astropy/ci-helpers.git
-    - source ci-helpers/travis/setup_conda.sh
+
+  # We now use the ci-helpers package to set up our testing environment.
+  # This is done by using Miniconda and then using conda and pip to install
+  # dependencies. Which dependencies are installed using conda and pip is
+  # determined by the CONDA_DEPENDENCIES and PIP_DEPENDENCIES variables,
+  # which should be space-delimited lists of package names. See the README
+  # in https://github.com/astropy/ci-helpers for information about the full
+  # list of environment variables that can be used to customize your
+  # environment. In some cases, ci-helpers may not offer enough flexibility
+  # in how to install a package, in which case you can have additional
+  # commands in the install: section below.
+
+  - git clone --depth 1 git://github.com/astropy/ci-helpers.git
+  - source ci-helpers/travis/setup_conda.sh
+
+  # As described above, using ci-helpers, you should be able to set up an
+  # environment with dependencies installed using conda and pip, but in some
+  # cases this may not provide enough flexibility in how to install a
+  # specific dependency (and it will not be able to install non-Python
+  # dependencies). Therefore, you can also include commands below (as
+  # well as at the start of the install section or in the before_install
+  # section if they are needed before setting up conda) to install any
+  # other dependencies.
 
 script:
-   - $MAIN_CMD $SETUP_CMD
+  - $MAIN_CMD $SETUP_CMD
 
 after_success:
-    - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='specutils/tests/coveragerc'; fi
+# If coveralls.io is set up for this package, uncomment the line below.
+# The coveragerc file may be customized as needed for your package.
+# - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='specutils/tests/coveragerc'; fi

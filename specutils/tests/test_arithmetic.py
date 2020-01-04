@@ -88,7 +88,6 @@ def test_multiplication_basic_spectra(simulated_spectra):
     assert np.allclose(spec3.flux.value, flux3)
 
 
-@pytest.mark.xfail(raises=ValueError)
 def test_add_diff_spectral_axis(simulated_spectra):
 
     # Calculate using the spectrum1d/nddata code
