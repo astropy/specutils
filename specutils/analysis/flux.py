@@ -195,7 +195,13 @@ def warn_continuum_below_threshold(threshold=0.01):
             if conf.do_continuum_function_check:
                 spectrum = args[0]
                 if not is_continuum_below_threshold(spectrum, threshold):
-                    message = "Spectrum is not below the threshold {}.\n\n".format(threshold)
+                    if hasattr(threshold, 'unit'):
+                        levelorsnr = 'value'
+                    else:
+                        levelorsnr = 'signal-to-noise'
+
+                    message = "Spectrum is not below the threshold {} {}. ".format(levelorsnr, threshold)
+                    message += "This may indicate you have not continuum subtracted this spectrum (or that you have but it has high SNR features).\n\n"
                     message += ("""If you want to suppress this warning either type """
                                 """'specutils.conf.do_continuum_function_check = False' or """
                                 """see http://docs.astropy.org/en/stable/config/#adding-new-configuration-items """
