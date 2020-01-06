@@ -51,7 +51,7 @@ env:
 
     # List other runtime dependencies for the package that are available as
     # pip packages here.
-    - PIP_DEPENDENCIES='gwcs scipy matplotlib'
+    - PIP_DEPENDENCIES='gwcs scipy matplotlib pytest-astropy'
 
     # Conda packages for affiliated packages are hosted in channel
     # "astropy" while builds for astropy LTS with recent numpy versions
@@ -67,7 +67,7 @@ env:
     # If you want to ignore certain flake8 errors, you can list them
     # in FLAKE8_OPT, for example:
     # - FLAKE8_OPT='--ignore=E501'
-    - FLAKE8_OPT=''
+    - FLAKE8_OPT='--select=E101,W191,W291,W292,W293,W391,E111,E112,E113,E502,E722,E901,E902'
 
     # Extra dependencies
     - GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
@@ -106,7 +106,7 @@ matrix:
 
     # Add a job that runs from cron only and tests against astropy dev and
     # numpy dev to give a change for early discovery of issues and feedback
-    # for both developer teams. 
+    # for both developer teams.
     - os: linux
       stage: Cron tests
       env: ASTROPY_VERSION=development NUMPY_VERSION=development
