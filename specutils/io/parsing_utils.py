@@ -164,7 +164,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
                 table[c].to("AA", equivalencies=u.spectral())
                 found_column = c
                 break
-            except:
+            except Exception:
                 continue
 
         # If no success there, check for other possible length units
@@ -201,7 +201,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
                 table[c].to("Jy", equivalencies=u.spectral_density(spec_ax))
                 found_column = c
                 break
-            except:
+            except Exception:
                 continue
 
         # If no success there, check for other possible flux units
