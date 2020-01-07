@@ -49,6 +49,8 @@ distribute-*.tar.gz
 .tox
 .*.sw[op]
 *~
+version.py
+.tmp
 
 # Mac OSX
 .DS_Store
