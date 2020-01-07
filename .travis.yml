@@ -19,7 +19,7 @@ matrix:
       python: 3.8
       env: TOXENV='test'
 
-    - os: osx
+    - os: linux
       python: 3.6
       env: TOXENV='test'
 
@@ -35,12 +35,11 @@ matrix:
     - os: linux
       python: 3.7
       env: TOXENV="build_docs"
-        TOXPOSARGS="--remote-data=astropy"
 
     # Run pycodestyle checks
     - os: linux
       python: 3.7
-      env: TOXENV="pycodestyle"
+      env: TOXENV="flake8"
 
     # Run with jwst pipeline
     - os: linux
