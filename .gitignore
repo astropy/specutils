@@ -49,8 +49,8 @@ distribute-*.tar.gz
 .tox
 .*.sw[op]
 *~
-version.py
 .tmp
+pip-wheel-metadata
 
 # Mac OSX
 .DS_Store

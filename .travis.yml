@@ -23,10 +23,6 @@ matrix:
       python: 3.6
       env: TOXENV='test'
 
-    - os: windows
-      python: 3.7
-      env: TOXENV='test'
-
     # Run the test-dev-all environment and pass the
     # --remote-data to demonstrate passing positional
     # arguments for pytest
@@ -50,6 +46,12 @@ matrix:
     - os: linux
       python: 3.7
       env: PIP_DEPENDENCIES="$PIP_DEPENDENCIES git+https://github.com/spacetelescope/jwst@stable"
+
+  allow_failures:
+    # Currently, travis does not support python language jobs in builds.
+    - os: windows
+      python: 3.7
+      env: TOXENV='test'
 
 before_install:
 
