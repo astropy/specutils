@@ -97,7 +97,7 @@ def test_template_match_spectrum():
                              flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
 
     assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    assert tm_result[1] == 40093.28353756253
+    np.testing.assert_almost_equal(tm_result[1], 40093.28353756253)
 
 
 def test_template_match_with_resample():
