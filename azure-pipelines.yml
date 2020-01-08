@@ -1,1 +1,70 @@
-#
+resources:
+  repositories:
+  - repository: OpenAstronomy
+    type: github
+    endpoint: nmearl
+    name: OpenAstronomy/azure-pipelines-templates
+    ref: master
+
+jobs:
+- template: run-tox-env.yml@OpenAstronomy
+  parameters:
+    libraries:
+      apt:
+        - graphviz
+      brew:
+        - graphviz
+      choco:
+        - graphviz
+      yum:
+        - graphviz
+    envs:
+      # Perform a coverage test
+      - linux: py37-test
+        coverage: codecov
+
+      # Build docs and check for warnings
+      - linux: py37-docs
+
+      # Test all supported python environments
+      - linux: py36-test
+      - macos: py36-test
+      - windows: py36-test
+
+      - linux: py37-test
+      - macos: py37-test
+      - windows: py37-test
+
+      - linux: py38-test
+      - macos: py38-test
+      - windows: py38-test
+
+      # Test with dev environments
+      - linux: py37-test-dev
+      - macos: py37-test-dev
+      - windows: py37-test-dev
+
+      - linux: py38-test-dev
+      - macos: py38-test-dev
+      - windows: py38-test-dev
+
+      # Test lts environments
+      - linux: py36-test-lts
+      - macos: py36-test-lts
+      - windows: py36-test-lts
+
+      # Try all numpy versions.
+      - linux: py36-test-numpy116
+      - linux: py36-test-numpy117
+      - linux: py36-test-numpy118
+
+      - linux: py37-test-numpy116
+      - linux: py37-test-numpy117
+      - linux: py37-test-numpy118
+
+      - linux: py38-test-numpy116
+      - linux: py38-test-numpy117
+      - linux: py38-test-numpy118
+
+      # Perform pip8 test with flake8
+      - linux: style
