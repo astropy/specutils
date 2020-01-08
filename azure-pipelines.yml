@@ -13,29 +13,29 @@ stages:
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        coverage: codecov
         envs:
           # Perform a coverage test
           - linux: py37-test
-            coverage: codecov
 
   - stage: Documentation
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        libraries:
+          apt:
+            - graphviz
+          brew:
+            - graphviz
+          choco:
+            - graphviz
+          yum:
+            - graphviz
         envs:
           # Build docs and check for warnings
           - linux: build_docs
-            libraries:
-              apt:
-                - graphviz
-              brew:
-                - graphviz
-              choco:
-                - graphviz
-              yum:
-                - graphviz
 
-  - stage: Default Environment
+  - stage: DefaultEnvironment
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
@@ -53,7 +53,7 @@ stages:
           - macos: py38-test
           - windows: py38-test
 
-  - stage: Development Environment
+  - stage: DevelopmentEnvironment
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
@@ -67,7 +67,7 @@ stages:
           - macos: py38-test-dev
           - windows: py38-test-dev
 
-  - stage: LTS Environment
+  - stage: LTSEnvironment
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
@@ -89,7 +89,7 @@ stages:
       # - linux: py38-test-numpy116
       # - linux: py38-test-numpy117
       # - linux: py38-test-numpy118
-  - stage: PEP8 Compliance
+  - stage: PEP8Compliance
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
