@@ -54,17 +54,17 @@ jobs:
       - windows: py36-test-lts
 
       # Try all numpy versions.
-      - linux: py36-test-numpy116
-      - linux: py36-test-numpy117
-      - linux: py36-test-numpy118
+      # - linux: py36-test-numpy116
+      # - linux: py36-test-numpy117
+      # - linux: py36-test-numpy118
 
-      - linux: py37-test-numpy116
-      - linux: py37-test-numpy117
-      - linux: py37-test-numpy118
+      # - linux: py37-test-numpy116
+      # - linux: py37-test-numpy117
+      # - linux: py37-test-numpy118
 
-      - linux: py38-test-numpy116
-      - linux: py38-test-numpy117
-      - linux: py38-test-numpy118
+      # - linux: py38-test-numpy116
+      # - linux: py38-test-numpy117
+      # - linux: py38-test-numpy118
 
       # Perform pip8 test with flake8
       - linux: style
