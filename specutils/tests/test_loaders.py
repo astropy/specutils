@@ -145,13 +145,42 @@ def test_sdss_spspec():
             assert spec.flux.size > 0
 
 
+@pytest.mark.remote_data
+def test_sdss_spec_stream():
+    '''Test direct read and recognition of SDSS-III/IV spec from remote URL,
+    i.e. do not rely on filename pattern.
+    '''
+    sdss_url = 'https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055'
+    spec = Spectrum1D.read(sdss_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_sdss_spspec_stream():
+    '''Test direct read and recognition of SDSS-I/II spSpec from remote URL,
+    i.e. do not rely on filename pattern.
+    '''
+    sdss_url = 'http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit'
+    spec = Spectrum1D.read(sdss_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
 @pytest.mark.skipif('sys.platform.startswith("win")',
                     reason='Uncertain availability of compression utilities')
 @pytest.mark.remote_data
 @pytest.mark.parametrize('compress', ['gzip', 'bzip2'])
 def test_sdss_compressed(compress):
+    '''Test automatic recognition of supported compression formats.
+    '''
     ext = {'gzip': '.gz', 'bzip2': '.bz2'}
-    sp_pattern = 'spSpec-51957-0273-016.fit.'
+    # Deliberately not using standard filename pattern to test header info.
+    sp_pattern = 'SDSS-I.fits'
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
         with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
             shutil.copyfileobj(response, tmp_file)
@@ -160,10 +189,20 @@ def test_sdss_compressed(compress):
                 warnings.simplefilter('ignore', FITSFixedWarning)
                 os.system(f'{compress} {tmp_file.name}')
                 spec = Spectrum1D.read(tmp_file.name + ext[compress])
-                os.system(f'{compress} -d {tmp_file.name}{ext[compress]}')
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
+            assert spec.uncertainty.array.min() >= 0.0
+
+            # Try again without compression suffix:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                os.system(f'mv {tmp_file.name}{ext[compress]} {tmp_file.name}')
+                spec = Spectrum1D.read(tmp_file.name)
+
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+            assert spec.uncertainty.array.min() >= 0.0
 
 
 @pytest.mark.parametrize("name", ['file.fit', 'file.fits', 'file.dat'])
