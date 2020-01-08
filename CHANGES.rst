@@ -1,16 +1,105 @@
-0.6 (unreleased)
-----------------
-
-API Changes
-^^^^^^^^^^^
-
+0.7
+---
 
 New Features
 ^^^^^^^^^^^^
 
+- Make specutils compatible with Astropy 4.0 (breaking change). [#462]
+
+- Remove all wcs adapter code and rely on APE14 implementation. [#462]
+
 Bug Fixes
 ^^^^^^^^^
 
+- Address ``MexicanHat1D`` name change in documentation. [#564]
+
+
+0.6.1
+-----
+
+API Changes
+^^^^^^^^^^^
+
+- Resamplers now include ``extrapolation_treatment`` argument. [#537]
+
+- Template fitting now returns an array of chi squared values for each template. [#551]
+
+New Features
+^^^^^^^^^^^^
+
+- Masks now supported in fitting operations. [#519]
+
+- Resamplers now support resamping beyond the edge of a spectrum using. [#537]
+
+- New template fitting for redshift finding. [#527]
+
+- New continuum checker to discern whether continuum is normalized or subtracted. [#538]
+
+- Include documentation on how to achieve splicing using specutils. [#536]
+
+- Include function to calculate masks based on S/N thresholding. [#509]
+
+Bug Fixes
+^^^^^^^^^
+
+- Include new regions regression tests. [#345]
+
+- Fix fitting documentation code block test. [#478]
+
+- Fix Apogee loader to incorporate spectral axis keyword argument. [#560]
+
+- Fix tabular fits writer and include new regression test. [#539]
+
+- Fix dispersion attribute bug in ``Spectrum1D`` objects. [#530]
+
+- Correctly label regression tests that require remote data. [#525]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Switch to using ``gaussian_sigma_width`` for ``Gaussian1D`` fitting estimator. [#434]
+
+- Update documentation side bar to include page listing. [#556]
+
+- New documentation on ``spectrum_mixin``. [#532]
+
+- Model names are now preserved in the ``fit_lines`` operation. [#526]
+
+- Clearer error messages for incompatible units in line fitting. [#520]
+
+- Include travis stages in test matrix. [#515]
+
+
+0.6
+---
+
+New Features
+^^^^^^^^^^^^
+
+- New redshift and radial velocity storage on `Spectrum1D` object.
+
+- Spectral template matching including resampling.
+
+- Error propagation in convolution smoothing.
+
+- Sub-pixel precision for fwhm calculations.
+
+- New spectral resampling functions.
+
+- New IRAF data loaders.
+
+- New FWZI calculation.
+
+Bug Fixes
+^^^^^^^^^
+
+- Stricter intiailizer for ``Spectrum1D``.
+
+- Correct handling of weights in line fitting.
+
+- Array size checking in `Spectrum1D` objects.
+
+- Fix for continuum fitting on pixel-axis dispersions.
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
