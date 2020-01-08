@@ -6,31 +6,40 @@ resources:
     name: OpenAstronomy/azure-pipelines-templates
     ref: master
 
-jobs:
-- template: run-tox-env.yml@OpenAstronomy
-  parameters:
-    stages:
-      - stage: Coverage
-        - jobs:
+
+stages:
+
+  - stage: Coverage
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        envs:
           # Perform a coverage test
           - linux: py37-test
             coverage: codecov
-      - stage: Documentation
-          - jobs:
-            # Build docs and check for warnings
-            - linux: build_docs
-              libraries:
-                apt:
-                  - graphviz
-                brew:
-                  - graphviz
-                choco:
-                  - graphviz
-                yum:
-                  - graphviz
 
-      - stage: Default Environment
-        - jobs:
+  - stage: Documentation
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        envs:
+          # Build docs and check for warnings
+          - linux: build_docs
+            libraries:
+              apt:
+                - graphviz
+              brew:
+                - graphviz
+              choco:
+                - graphviz
+              yum:
+                - graphviz
+
+  - stage: Default Environment
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        envs:
           # Test all supported python environments
           - linux: py36-test
           - macos: py36-test
@@ -44,8 +53,11 @@ jobs:
           - macos: py38-test
           - windows: py38-test
 
-      - stage: Development Environment
-        - jobs:
+  - stage: Development Environment
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        envs:
           # Test with dev environments
           - linux: py37-test-dev
           - macos: py37-test-dev
@@ -55,8 +67,11 @@ jobs:
           - macos: py38-test-dev
           - windows: py38-test-dev
 
-      - stage: LTS Environment
-        - jobs:
+  - stage: LTS Environment
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        envs:
           # Test lts environments
           - linux: py36-test-lts
           - macos: py36-test-lts
@@ -74,7 +89,10 @@ jobs:
       # - linux: py38-test-numpy116
       # - linux: py38-test-numpy117
       # - linux: py38-test-numpy118
-      - stage: PEP8 Compliance
-        - jobs:
+  - stage: PEP8 Compliance
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        envs:
           # Perform pip8 test with flake8
           - linux: style
