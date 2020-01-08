@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import urllib
 import warnings
-
+import uuid
 import pytest
 
 import astropy.units as u
@@ -162,26 +162,31 @@ def test_sdss_spec():
         assert spec.flux.size > 0
 
     with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
-        with tempfile.NamedTemporaryFile() as tmp_file:
-            shutil.copyfileobj(response, tmp_file)
+        # On Windows, NamedTemporaryFile cannot be opened a second time while
+        #  already being open, so we avoid using that method.
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            file_path = os.path.join(tmp_dir, sp_pattern)
 
-            # Read from local disk via file signature
-            spec = Spectrum1D.read(tmp_file.name)
+            with open(file_path, 'wb') as tmp_file:
+                shutil.copyfileobj(response, tmp_file)
 
-            assert isinstance(spec, Spectrum1D)
-            assert spec.flux.size > 0
+                # Read from local disk via filename
+                spec = Spectrum1D.read(tmp_file.name)
 
-            # Read from HDUList object
-            hdulist = fits.open(tmp_file.name)
-            spec = Spectrum1D.read(hdulist)
-            assert isinstance(spec, Spectrum1D)
-            assert spec.flux.size > 0
+                assert isinstance(spec, Spectrum1D)
+                assert spec.flux.size > 0
 
-            # Read from file handle
-            fileio = open(tmp_file.name, mode='rb')
-            spec = Spectrum1D.read(fileio)
-            assert isinstance(spec, Spectrum1D)
-            assert spec.flux.size > 0
+                # Read from HDUList object
+                hdulist = fits.open(tmp_file.name)
+                spec = Spectrum1D.read(hdulist)
+                assert isinstance(spec, Spectrum1D)
+                assert spec.flux.size > 0
+
+                # Read from file handle
+                fileio = open(tmp_file.name, mode='rb')
+                spec = Spectrum1D.read(fileio)
+                assert isinstance(spec, Spectrum1D)
+                assert spec.flux.size > 0
 
 
 @pytest.mark.remote_data
@@ -194,28 +199,32 @@ def test_sdss_spspec():
         assert spec.flux.size > 0
 
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
-        with tempfile.NamedTemporaryFile() as tmp_file:
-            shutil.copyfileobj(response, tmp_file)
+        # On Windows, NamedTemporaryFile cannot be opened a second time while
+        #  already being open, so we avoid using that method.
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            file_path = os.path.join(tmp_dir, sp_pattern)
 
-            # Read from local disk via file signature
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', FITSFixedWarning)
-                spec = Spectrum1D.read(tmp_file.name)
+            with open(file_path, 'wb') as tmp_file:
+                shutil.copyfileobj(response, tmp_file)
 
-            assert isinstance(spec, Spectrum1D)
-            assert spec.flux.size > 0
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', FITSFixedWarning)
+                    spec = Spectrum1D.read(tmp_file.name)
 
-            # Read from HDUList object
-            hdulist = fits.open(tmp_file.name)
-            spec = Spectrum1D.read(hdulist)
-            assert isinstance(spec, Spectrum1D)
-            assert spec.flux.size > 0
+                assert isinstance(spec, Spectrum1D)
+                assert spec.flux.size > 0
 
-            # Read from file handle
-            fileio = open(tmp_file.name, mode='rb')
-            spec = Spectrum1D.read(fileio)
-            assert isinstance(spec, Spectrum1D)
-            assert spec.flux.size > 0
+                # Read from HDUList object
+                hdulist = fits.open(tmp_file.name)
+                spec = Spectrum1D.read(hdulist)
+                assert isinstance(spec, Spectrum1D)
+                assert spec.flux.size > 0
+
+                # Read from file handle
+                fileio = open(tmp_file.name, mode='rb')
+                spec = Spectrum1D.read(fileio)
+                assert isinstance(spec, Spectrum1D)
+                assert spec.flux.size > 0
 
 
 @pytest.mark.remote_data
