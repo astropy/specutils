@@ -9,21 +9,12 @@ resources:
 
 stages:
 
-  - stage: Coverage
-    dependsOn: []  # Have stage run concurrently with others
-    jobs:
-    - template: run-tox-env.yml@OpenAstronomy
-      parameters:
-        coverage: codecov
-        envs:
-          # Perform a coverage test
-          - linux: py37-test
-
   - stage: Documentation
     dependsOn: []  # Have stage run concurrently with others
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        coverage: codecov
         libraries:
           apt:
             - graphviz
@@ -42,6 +33,7 @@ stages:
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        coverage: codecov
         envs:
           # Test all supported python environments
           - linux: py36-test
@@ -61,6 +53,7 @@ stages:
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        coverage: codecov
         envs:
           # Test with dev environments
           - linux: py37-test-dev
@@ -76,6 +69,7 @@ stages:
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        coverage: codecov
         envs:
           # Test lts environments
           - linux: py36-test-lts
@@ -99,6 +93,7 @@ stages:
     jobs:
     - template: run-tox-env.yml@OpenAstronomy
       parameters:
+        coverage: codecov
         envs:
           # Perform pip8 test with flake8
-          - linux: style
+          - linux: codestyle
