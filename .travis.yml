@@ -102,7 +102,7 @@ matrix:
 
     # check on somewhat older versions LTS version
     - os: linux
-      env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.16
+      env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.17
 
     # Add a job that runs from cron only and tests against astropy dev and
     # numpy dev to give a change for early discovery of issues and feedback
