@@ -16,8 +16,9 @@ def identify_muscles_sed(origin, *args, **kwargs):
     # args[0] = filename
     # fits.open(args[0]) = hdulist
     return (isinstance(args[0], str) and
+            args[0].split('.')[0].endswith('sed') and
             # check if file is .fits
-            args[0].endswith('sed.fits') and
+            fits.connect.is_fits(origin, *args) and
             # check hdulist has more than one extension
             len(fits.open(args[0])) > 1 and
             # check if fits has BinTable extension

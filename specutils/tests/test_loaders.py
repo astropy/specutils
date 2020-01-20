@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import shutil
 import tempfile
 import urllib
@@ -46,7 +47,8 @@ def test_spectrum1d_GMOSfits(remote_data_path):
 def test_spectrumlist_GMOSfits(remote_data_path, caplog):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
-        spectrum_list = SpectrumList.read(remote_data_path, format='wcs1d-fits')
+        spectrum_list = SpectrumList.read(remote_data_path,
+                                          format='wcs1d-fits')
 
     assert len(spectrum_list) == 1
 
@@ -99,7 +101,7 @@ def test_generic_ecsv_reader(tmpdir):
 @remote_access([{'id': '1481119', 'filename': 'COS_FUV.fits'},
                 {'id': '1481181', 'filename': 'COS_NUV.fits'}])
 def test_hst_cos(remote_data_path):
-    spec = Spectrum1D.read(remote_data_path, format='HST/COS')
+    spec = Spectrum1D.read(remote_data_path)
 
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
@@ -109,7 +111,7 @@ def test_hst_cos(remote_data_path):
                 {'id': '1481185', 'filename': 'STIS_NUV.fits'},
                 {'id': '1481183', 'filename': 'STIS_CCD.fits'}])
 def test_hst_stis(remote_data_path):
-    spec = Spectrum1D.read(remote_data_path, format='HST/STIS')
+    spec = Spectrum1D.read(remote_data_path)
 
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
@@ -117,11 +119,12 @@ def test_hst_stis(remote_data_path):
 
 @pytest.mark.remote_data
 def test_sdss_spec():
+    sp_pattern = 'spec-4055-55359-0596.fits.'
     with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            spec = Spectrum1D.read(tmp_file.name, format="SDSS-III/IV spec")
+            spec = Spectrum1D.read(tmp_file.name)
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
@@ -129,8 +132,9 @@ def test_sdss_spec():
 
 @pytest.mark.remote_data
 def test_sdss_spspec():
+    sp_pattern = 'spSpec-51957-0273-016.fit.'
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
             with warnings.catch_warnings():
@@ -139,6 +143,66 @@ def test_sdss_spspec():
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
+
+
+@pytest.mark.remote_data
+def test_sdss_spec_stream():
+    '''Test direct read and recognition of SDSS-III/IV spec from remote URL,
+    i.e. do not rely on filename pattern.
+    '''
+    sdss_url = 'https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055'
+    spec = Spectrum1D.read(sdss_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_sdss_spspec_stream():
+    '''Test direct read and recognition of SDSS-I/II spSpec from remote URL,
+    i.e. do not rely on filename pattern.
+    '''
+    sdss_url = 'http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit'
+    spec = Spectrum1D.read(sdss_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.skipif('sys.platform.startswith("win")',
+                    reason='Uncertain availability of compression utilities')
+@pytest.mark.remote_data
+@pytest.mark.parametrize('compress', ['gzip', 'bzip2'])
+def test_sdss_compressed(compress):
+    '''Test automatic recognition of supported compression formats.
+    '''
+    ext = {'gzip': '.gz', 'bzip2': '.bz2'}
+    # Deliberately not using standard filename pattern to test header info.
+    sp_pattern = 'SDSS-I.fits'
+    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+        with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                os.system(f'{compress} {tmp_file.name}')
+                spec = Spectrum1D.read(tmp_file.name + ext[compress])
+
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+            assert spec.uncertainty.array.min() >= 0.0
+
+            # Try again without compression suffix:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                os.system(f'mv {tmp_file.name}{ext[compress]} {tmp_file.name}')
+                spec = Spectrum1D.read(tmp_file.name)
+
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+            assert spec.uncertainty.array.min() >= 0.0
 
 
 @pytest.mark.parametrize("name", ['file.fit', 'file.fits', 'file.dat'])

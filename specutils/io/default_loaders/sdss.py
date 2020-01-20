@@ -26,20 +26,29 @@ _spec_pattern = re.compile(r'spec-\d{4,5}-\d{5}-\d{4}\.fits')
 
 def spec_identify(origin, *args, **kwargs):
     """
-    Check whether given filename is FITS. This is used for Astropy I/O
-    Registry.
+    Check whether given file is FITS and has SDSS-III/IV spec type
+    BINTABLE in first extension. This is used for Astropy I/O Registry.
     """
-    return (isinstance(args[0], str) and
-            _spec_pattern.match(args[0]) is not None)
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check for
+        # spec-specific keys
+        return (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
+                len(hdulist) > 1 and
+                isinstance(hdulist[1], fits.BinTableHDU) and
+                hdulist[1].header['TTYPE3'] == 'ivar')
 
 
 def spSpec_identify(origin, *args, **kwargs):
     """
-    Check whether given filename is FITS. This is used for Astropy I/O
-    Registry.
+    Check whether given file is FITS with SDSS-I/II spSpec type data.
+    This is used for Astropy I/O Registry.
     """
-    return (isinstance(args[0], str) and
-            _spSpec_pattern.match(args[0]) is not None)
+    with fits.open(args[0]) as hdulist:
+        # Test telescope keyword and check if primary HDU contains data
+        # consistent with spSpec format
+        return (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
+                isinstance(hdulist[0].data, np.ndarray) and
+                hdulist[0].data.shape[0] == 5)
 
 
 @data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
@@ -57,10 +66,10 @@ def spec_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
+    name = header.get('NAME')
     meta = {'header': header}
 
     # spectrum is in HDU 1
@@ -99,10 +108,10 @@ def spSpec_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
+    name = header.get('NAME')
     meta = {'header': header}
     wcs = WCS(hdulist[0].header)
 
