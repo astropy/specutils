@@ -303,13 +303,13 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
     spectrum.write(tmpfile, format='tabular-fits')
 
     # Read it in and check against the original
-    table = Table.read(tmpfile, format='fits')
-    assert table[spectral_axis].unit == spectrum.spectral_axis.unit
-    assert table['flux'].unit == spectrum.flux.unit
-    assert table['uncertainty'].unit == spectrum.uncertainty.unit
-    assert quantity_allclose(table[spectral_axis], spectrum.spectral_axis)
-    assert quantity_allclose(table['flux'], spectrum.flux)
-    assert quantity_allclose(table['uncertainty'], spectrum.uncertainty.quantity)
+    spec = Spectrum1D.read(tmpfile)
+    assert spec.flux.unit == spectrum.flux.unit
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
 
     # Test spectrum with different flux unit
     flux = np.random.normal(0., 1.e-9, disp.shape[0]) * u.W * u.m**-2 * u.AA**-1
@@ -321,10 +321,18 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
         spectrum.write(tmpfile, format='tabular-fits')
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
 
-    table = Table.read(tmpfile)
-    assert table['flux'].unit == spectrum.flux.unit
+    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+            'flux': ('flux', 'erg / (s cm**2 AA)'),
+            'uncertainty': ('uncertainty', None)}
 
-    # ToDo: get tabular_fits_loader to also read this in correctly!
+    # Read it back again and check against the original
+    spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
+    assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
 
 
 def test_tabular_fits_header(tmpdir):
@@ -368,3 +376,56 @@ def test_tabular_fits_header(tmpdir):
     assert 'OBSDATE' not in hdulist[0].header
     assert 'OBSDATE' not in hdulist[1].header
     hdulist.close()
+
+
+@pytest.mark.remote_data
+def test_apstar_loader():
+    '''Test remote read and automatic recognition of apStar spec from URL.
+    '''
+    apstar_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
+                  "stars/apo25m/N7789/apStar-r12-2M00005414+5522241.fits")
+    spec = Spectrum1D.read(apstar_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_apvisit_loader():
+    '''Test remote read and automatic recognition of apvisit spec from URL.
+    '''
+    apvisit_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
+                   "visit/apo25m/N7789/5094/55874/"
+                   "apVisit-r12-5094-55874-123.fits")
+    spec = Spectrum1D.read(apvisit_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_aspcapstar_loader():
+    '''Test remote read and automatic recognition of aspcapStar spec from URL.
+    '''
+    aspcap_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/aspcap/r12/"
+                  "l33/apo25m/N7789/aspcapStar-r12-2M00005414+5522241.fits")
+    spec = Spectrum1D.read(aspcap_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_muscles_loader():
+    '''Test remote read and automatic recognition of muscles spec from URL.
+    '''
+    url = ("https://archive.stsci.edu/missions/hlsp/muscles/gj1214/"
+           "hlsp_muscles_multi_multi_gj1214_broadband_v22_const-res-sed.fits")
+    spec = Spectrum1D.read(url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert len(spec.flux) == len(spec.spectral_axis) > 50000
+    assert spec.uncertainty.array.min() >= 0.0
