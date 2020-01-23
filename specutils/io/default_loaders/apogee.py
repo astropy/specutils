@@ -24,32 +24,44 @@ __all__ = ['apVisit_identify', 'apStar_identify', 'aspcapStar_identify',
 
 def apVisit_identify(origin, *args, **kwargs):
     """
-    Check whether given filename is FITS. This is used for Astropy I/O
+    Check whether given file is FITS. This is used for Astropy I/O
     Registry.
     """
-    return (isinstance(args[0], str) and
-            args[0].startswith('apVisit') and
-            fits.connect.is_fits(origin, *args))
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check for
+        # apVisit-specific keys
+        return (hdulist[0].header.get('SURVEY') == 'apogee' and
+                len(hdulist) > 4 and
+                hdulist[1].header.get('BUNIT', 'none').startswith('Flux') and
+                hdulist[2].header.get('BUNIT', 'none').startswith('Flux') and
+                hdulist[4].header.get('BUNIT', 'none').startswith('Wavelen'))
 
 
 def apStar_identify(origin, *args, **kwargs):
     """
-    Check whether given filename is FITS. This is used for Astropy I/O
+    Check whether given file is FITS. This is used for Astropy I/O
     Registry.
     """
-    return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] == 'fits' and
-            args[0].startswith('apStar'))
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check for
+        # apogee-specific keys + keys for individual apVisits
+        return (hdulist[0].header.get('SURVEY') == 'apogee' and
+                hdulist[0].header.get('SFILE1', 'none').startswith('apVisit'))
 
 
 def aspcapStar_identify(origin, *args, **kwargs):
     """
-    Check whether given filename is FITS. This is used for Astropy I/O
+    Check whether given file is FITS. This is used for Astropy I/O
     Registry.
     """
-    return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] == 'fits' and
-            args[0].startswith('aspcapStar'))
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check for
+        # aspcapStar-specific keys
+        return (hdulist[0].header.get('TARG1') is not None and
+                len(hdulist) > 4 and
+                hdulist[1].header.get('NAXIS1', 0) > 8000 and
+                hdulist[2].header.get('NAXIS1', 0) > 8000 and
+                hdulist[-1].header.get('TTYPE45') == 'ASPCAPFLAG')
 
 
 @data_loader(label="APOGEE apVisit", identifier=apVisit_identify, extensions=['fits'])
@@ -67,7 +79,6 @@ def apVisit_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
@@ -113,7 +124,6 @@ def apStar_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
@@ -155,7 +165,6 @@ def aspcapStar_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
