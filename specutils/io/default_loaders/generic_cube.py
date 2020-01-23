@@ -22,7 +22,7 @@ from ...spectra import Spectrum1D
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
     return (isinstance(args[0], str) and
-            fits.connect.is_fits(origin, *args) and
+            fits.connect.is_fits(origin, origin, *args) and
             fits.getheader(args[0])['NAXIS'] == 3)
 
 

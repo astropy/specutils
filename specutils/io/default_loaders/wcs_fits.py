@@ -90,7 +90,7 @@ def identify_iraf_wcs(origin, *args):
     The difference of this with respect to wcs1d is that this can work with
     WCSDIM == 2
     """
-    return (fits.connect.is_fits(origin, *args) and
+    return (fits.connect.is_fits(origin, origin, *args) and
             'WAT1_001' in fits.getheader(args[0]) and
             not (fits.getheader(args[0])['TELESCOP'] == 'SDSS 2.5-M' and
                  fits.getheader(args[0])['FIBERID'] > 0)
