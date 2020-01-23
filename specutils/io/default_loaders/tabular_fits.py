@@ -20,20 +20,20 @@ __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 def identify_tabular_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
-    # fits.open(args[0]) = hdulist
-    return (isinstance(args[0], str) and
-            # check if file is .fits
-            fits.connect.is_fits(origin, *args) and
-            # check hdulist has more than one extension
-            len(fits.open(args[0])) > 1 and
-            # check if fits has BinTable extension
-            isinstance(fits.open(args[0])[1], fits.BinTableHDU) and not
-            (fits.getheader(args[0])['TELESCOP'] == 'SDSS 2.5-M' and
-             fits.getheader(args[0])['FIBERID'] > 0) and not
-            (fits.getheader(args[0])['TELESCOP'] == 'HST' and
-             fits.getheader(args[0])['INSTRUME'] in ('COS', 'STIS')) and not
-            (fits.getheader(args[0])['TELESCOP'] == 'JWST')
             )
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check against
+        # known keys of already defined specific formats
+        return (len(hdulist) > 1 and
+                isinstance(hdulist[1], fits.BinTableHDU) and not
+                (fits.getheader(args[0]).get('TELESCOP') == 'MULTI' and
+                 fits.getheader(args[0]).get('HLSPACRN') == 'MUSCLES' and
+                 fits.getheader(args[0]).get('PROPOSID') == 13650) and not
+                (fits.getheader(args[0]).get('TELESCOP') == 'SDSS 2.5-M' and
+                 fits.getheader(args[0]).get('FIBERID') > 0) and not
+                (fits.getheader(args[0]).get('TELESCOP') == 'HST' and
+                 fits.getheader(args[0]).get('INSTRUME') in ('COS', 'STIS')) and not
+                 fits.getheader(args[0])['TELESCOP'] == 'JWST')
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
@@ -69,6 +69,10 @@ def tabular_fits_loader(file_name, column_mapping=None, hdu=1, **kwargs):
         wcs = WCS(hdulist[hdu].header)
 
     tab = Table.read(file_name, format='fits', hdu=hdu)
+
+    # Minimal consistency check for wcs consistency with table data
+    if wcs.naxis != 1:
+        wcs = None
 
     # If no column mapping is given, attempt to parse the file using
     # unit information
