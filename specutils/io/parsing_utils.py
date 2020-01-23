@@ -17,16 +17,17 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
     Parameters
     ----------
     table : :class:`~astropy.table.Table`
-        The table object returned from parsing the data file.
+        The table object (e.g. returned from `Table.read('data_file')`).
     column_mapping : dict
-        A dictionary describing the relation between the file columns
+        A dictionary describing the relation between the table columns
         and the arguments of the `Spectrum1D` class, along with unit
-        information. The dictionary keys should be the file column names
+        information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
         associated `Spectrum1D` keyword argument, and the second element is the
-        unit for the file column::
+        unit for the file column (or `None` to take unit from the table)::
 
-            column_mapping = {'FLUX': ('flux', 'Jy')}
+            column_mapping = {'FLUX': ('flux', 'Jy'),
+                              'WAVE': ('spectral_axis', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
@@ -48,13 +49,19 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             logging.debug("Attempting auto-convert of table unit '%s' to "
                           "user-provided unit '%s'.", tab_unit, cm_unit)
 
+            if not isinstance(cm_unit, u.Unit):
+                cm_unit = u.Unit(cm_unit)
             if cm_unit.physical_type in ('length', 'frequency'):
                 # Spectral axis column information
-                kwarg_val = kwarg_val.to(cm_unit, equivalence=u.spectral())
+                kwarg_val = kwarg_val.to(cm_unit, equivalencies=u.spectral())
             elif 'spectral flux' in cm_unit.physical_type:
                 # Flux/error column information
                 kwarg_val = kwarg_val.to(
                     cm_unit, equivalencies=u.spectral_density(1 * u.AA))
+        elif tab_unit:
+            # The user has provided no unit in the column mapping, so we
+            # use the unit as defined in the table object.
+            kwarg_val = u.Quantity(table[col_name], tab_unit)
         elif cm_unit is not None:
             # In this case, the user has defined a unit in the column mapping
             # but no unit has been defined in the table object.
