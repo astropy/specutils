@@ -4,7 +4,7 @@ import os
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
-from astropy.units import Unit
+from astropy.units import Unit, Quantity
 from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
@@ -15,17 +15,14 @@ def identify_muscles_sed(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
     # fits.open(args[0]) = hdulist
-    return (isinstance(args[0], str) and
-            args[0].split('.')[0].endswith('sed') and
-            # check if file is .fits
-            fits.connect.is_fits(origin, *args) and
-            # check hdulist has more than one extension
-            len(fits.open(args[0])) > 1 and
-            # check if fits has BinTable extension
-            isinstance(fits.open(args[0])[1], fits.BinTableHDU) and
-            # check if MUSCLES proposal ID is in fits header
-            fits.open(args[0])[0].header['PROPOSID'] == 13650
-            )
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check against
+        # known keys of already defined specific formats
+        return (len(hdulist) > 1 and
+                isinstance(hdulist[1], fits.BinTableHDU) and
+                fits.getheader(args[0]).get('TELESCOP') == 'MULTI' and
+                fits.getheader(args[0]).get('HLSPACRN') == 'MUSCLES' and
+                fits.getheader(args[0]).get('PROPOSID') == 13650)
 
 
 @data_loader("muscles-sed", identifier=identify_muscles_sed,
@@ -50,14 +47,12 @@ def muscles_sed(file_name, **kwargs):
     with fits.open(file_name, **kwargs) as hdulist:
         header = hdulist[0].header
 
-        tab = Table.read(hdulist)
+        tab = Table.read(hdulist[1])
 
         meta = {'header': header}
         uncertainty = StdDevUncertainty(tab["ERROR"])
-        data = tab["FLUX"]
-        wavelength = tab["WAVELENGTH"]
+        data = Quantity(tab["FLUX"])
+        wavelength = Quantity(tab["WAVELENGTH"])
 
     return Spectrum1D(flux=data, spectral_axis=wavelength,
-                      uncertainty=uncertainty, meta=meta,
-                      unit=data.unit,
-                      spectral_axis_unit=wavelength.unit)
+                      uncertainty=uncertainty, meta=meta)
