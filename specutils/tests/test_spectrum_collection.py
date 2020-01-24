@@ -98,4 +98,14 @@ def test_create_collection_from_spectra_without_uncertainties():
     spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
                        flux=np.random.randn(50) * u.Jy)
 
-    spec_coll = SpectrumCollection.from_spectra([spec, spec1])
+    SpectrumCollection.from_spectra([spec, spec1])
+
+
+@pytest.mark.parametrize('scshape,expected_len', [((5, 10), 5), ((4, 5, 10), 4)])
+def test_len(scshape, expected_len):
+    flux = u.Quantity(np.random.sample(scshape), unit='Jy')
+    spectral_axis = u.Quantity(np.arange(np.prod(scshape)).reshape(scshape), unit='AA')
+    sc2d = SpectrumCollection(flux=flux, spectral_axis=spectral_axis)
+
+    assert sc2d.shape == scshape[:-1]
+    assert len(sc2d) == expected_len
