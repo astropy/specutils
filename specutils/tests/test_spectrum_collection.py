@@ -12,7 +12,7 @@ from ..utils.wcs_utils import gwcs_from_array
 @pytest.fixture
 def spectrum_collection():
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
-    spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
+    spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)) + 1, unit='AA')
     wcs = np.array([gwcs_from_array(x) for x in spectral_axis])
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     mask = np.ones((5, 10)).astype(bool)
@@ -55,7 +55,7 @@ def test_spectrum_collection_slicing(spectrum_collection):
 def test_collection_without_optional_arguments():
     # Without uncertainties
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
-    spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
+    spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)) + 1, unit='AA')
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     wcs = np.array([gwcs_from_array(x) for x in spectral_axis])
     mask = np.ones((5, 10)).astype(bool)
@@ -104,7 +104,7 @@ def test_create_collection_from_spectra_without_uncertainties():
 @pytest.mark.parametrize('scshape,expected_len', [((5, 10), 5), ((4, 5, 10), 4)])
 def test_len(scshape, expected_len):
     flux = u.Quantity(np.random.sample(scshape), unit='Jy')
-    spectral_axis = u.Quantity(np.arange(np.prod(scshape)).reshape(scshape), unit='AA')
+    spectral_axis = u.Quantity(np.arange(np.prod(scshape)).reshape(scshape) + 1, unit='AA')
     sc2d = SpectrumCollection(flux=flux, spectral_axis=spectral_axis)
 
     assert sc2d.shape == scshape[:-1]
