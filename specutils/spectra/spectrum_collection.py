@@ -221,6 +221,9 @@ class SpectrumCollection:
         """
         return self.flux.shape[:-1]
 
+    def __len__(self):
+        return self.shape[0]
+
     @property
     def ndim(self):
         """
