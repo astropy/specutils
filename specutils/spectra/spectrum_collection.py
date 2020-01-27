@@ -130,15 +130,18 @@ class SpectrumCollection:
         # none of them do. If only some do, log an error and ignore the
         # uncertainties.
         if not all((x.uncertainty is None for x in spectra)) and \
-            any((x.uncertainty is not None for x in spectra)):
-            uncertainty = spectra[0].uncertainty.__class__(
-                np.array([spec.uncertainty.array for spec in spectra]),
-                unit=spectra[0].uncertainty.unit)
+            any((x.uncertainty is not None for x in spectra)) and \
+            all((x.uncertainty.uncertainty_type ==
+                 spectra[0].uncertainty.uncertainty_type
+                 for x in spectra)):
+
+            quncs = u.Quantity([spec.uncertainty.quantity for spec in spectra])
+            uncertainty = spectra[0].uncertainty.__class__(quncs)
         else:
             uncertainty = None
 
-            logging.warning("Not all spectra have associated uncertainties, "
-                            "skipping uncertainties.")
+            logging.warning("Not all spectra have associated uncertainties of "
+                            "the same type, skipping uncertainties.")
 
         # Check that either all spectra have associated masks, or that
         # none of them do. If only some do, log an error and ignore the masks.
