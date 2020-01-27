@@ -90,6 +90,8 @@ def test_create_collection_from_spectrum1D():
     assert spec_coll.nspectral == 50
     assert isinstance(spec_coll.flux, u.Quantity)
     assert isinstance(spec_coll.spectral_axis, u.Quantity)
+    assert spec.spectral_axis.unit == spec_coll.spectral_axis.unit
+    assert spec.flux.unit == spec_coll.flux.unit
 
 
 def test_create_collection_from_collections():
@@ -115,6 +117,8 @@ def test_create_collection_from_collections():
     assert spec_coll.nspectral == 50
     assert isinstance(spec_coll.flux, u.Quantity)
     assert isinstance(spec_coll.spectral_axis, u.Quantity)
+    assert spec.spectral_axis.unit == spec_coll.spectral_axis.unit
+    assert spec.flux.unit == spec_coll.flux.unit
 
 
 def test_create_collection_from_spectra_without_uncertainties():

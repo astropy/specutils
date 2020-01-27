@@ -124,7 +124,7 @@ class SpectrumCollection:
 
         # Compose multi-dimensional ndarrays for each property
         flux = u.Quantity([spec.flux for spec in spectra])
-        spectral_axis = u.Quantity([spec.spectral_axis.value for spec in spectra])
+        spectral_axis = u.Quantity([spec.spectral_axis for spec in spectra])
 
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
