@@ -92,6 +92,31 @@ def test_create_collection_from_spectrum1D():
     assert isinstance(spec_coll.spectral_axis, u.Quantity)
 
 
+def test_create_collection_from_collections():
+    spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+                      flux=np.random.randn(50) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    spec_coll1 = SpectrumCollection.from_spectra([spec, spec1])
+
+    spec2 = Spectrum1D(spectral_axis=np.linspace(40, 80, 50) * u.AA,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+
+    spec_coll2 = SpectrumCollection.from_spectra([spec, spec2])
+
+    spec_coll = SpectrumCollection.from_spectra([spec_coll1, spec_coll2, spec_coll1])
+
+    assert spec_coll.ndim == 2
+    assert spec_coll.shape == (3, 2)
+    assert spec_coll.nspectral == 50
+    assert isinstance(spec_coll.flux, u.Quantity)
+    assert isinstance(spec_coll.spectral_axis, u.Quantity)
+
+
 def test_create_collection_from_spectra_without_uncertainties():
     spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
                       flux=np.random.randn(50) * u.Jy)
