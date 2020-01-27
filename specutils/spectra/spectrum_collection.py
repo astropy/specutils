@@ -123,10 +123,8 @@ class SpectrumCollection:
             raise ValueError("Shape of all elements must be the same.")
 
         # Compose multi-dimensional ndarrays for each property
-        flux = np.vstack(
-            [spec.flux.value for spec in spectra]) * spectra[0].flux.unit
-        spectral_axis = np.vstack(
-            [spec.spectral_axis.value for spec in spectra]) * spectra[0].spectral_axis.unit
+        flux = u.Quantity([spec.flux for spec in spectra])
+        spectral_axis = u.Quantity([spec.spectral_axis.value for spec in spectra])
 
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
@@ -134,7 +132,7 @@ class SpectrumCollection:
         if not all((x.uncertainty is None for x in spectra)) and \
             any((x.uncertainty is not None for x in spectra)):
             uncertainty = spectra[0].uncertainty.__class__(
-                np.vstack([spec.uncertainty.array for spec in spectra]),
+                np.array([spec.uncertainty.array for spec in spectra]),
                 unit=spectra[0].uncertainty.unit)
         else:
             uncertainty = None
@@ -146,7 +144,7 @@ class SpectrumCollection:
         # none of them do. If only some do, log an error and ignore the masks.
         if not all((x.mask is None for x in spectra)) and \
             any((x.mask is not None for x in spectra)):
-            mask = np.vstack([spec.mask for spec in spectra])
+            mask = np.array([spec.mask for spec in spectra])
         else:
             mask = None
 
