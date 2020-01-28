@@ -90,11 +90,10 @@ def identify_iraf_wcs(origin, *args):
     The difference of this with respect to wcs1d is that this can work with
     WCSDIM == 2
     """
-    return (fits.connect.is_fits(origin, origin, *args) and
-            'WAT1_001' in fits.getheader(args[0]) and
-            not (fits.getheader(args[0])['TELESCOP'] == 'SDSS 2.5-M' and
-                 fits.getheader(args[0])['FIBERID'] > 0)
-            )
+    with fits.open(args[0]) as hdulist:
+        return ('WAT1_001' in hdulist[0].header and
+                not hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
+                hdulist[0].header['FIBERID'] > 0)
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
