@@ -38,14 +38,14 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def tabular_fits_loader(file_name, column_mapping=None, hdu=1, **kwargs):
+def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     Load spectrum from a FITS file.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
     hdu: int
         The HDU of the fits file (default: 1st extension) to read from
     column_mapping : dict
@@ -65,13 +65,15 @@ def tabular_fits_loader(file_name, column_mapping=None, hdu=1, **kwargs):
     """
     # Parse the wcs information. The wcs will be passed to the column finding
     # routines to search for spectral axis information in the file.
-    with fits.open(file_name) as hdulist:
+    with fits.open(file_obj) as hdulist:
         wcs = WCS(hdulist[hdu].header)
 
-    tab = Table.read(file_name, format='fits', hdu=hdu)
+    tab = Table.read(file_obj, format='fits', hdu=hdu)
 
-    # Minimal consistency check for wcs consistency with table data
-    if wcs.naxis != 1:
+    # Minimal checks for wcs consistency with table data - assume 1D
+    # spectral axis, or alternatively compare against shape of 1st column.
+    if not (wcs.naxis == 1 and wcs.array_shape[0] == len(tab) or
+            wcs.array_shape == tab[tab.colnames[0]].shape):
         wcs = None
 
     # If no column mapping is given, attempt to parse the file using
