@@ -52,21 +52,21 @@ def spSpec_identify(origin, *args, **kwargs):
 
 
 @data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
-def spec_loader(file_name, **kwargs):
+def spec_loader(file_obj, **kwargs):
     """
     Loader for SDSS-III/IV optical spectrum "spec" files.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_name, **kwargs)
+    hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     name = header.get('NAME')
@@ -94,21 +94,21 @@ def spec_loader(file_name, **kwargs):
 
 
 @data_loader(label="SDSS-I/II spSpec", identifier=spSpec_identify, extensions=['fits'])
-def spSpec_loader(file_name, **kwargs):
+def spSpec_loader(file_obj, **kwargs):
     """
     Loader for SDSS-I/II spSpec files.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_name, **kwargs)
+    hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     name = header.get('NAME')
