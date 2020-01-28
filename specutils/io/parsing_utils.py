@@ -17,14 +17,14 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
     Parameters
     ----------
     table : :class:`~astropy.table.Table`
-        The table object (e.g. returned from `Table.read('data_file')`).
+        The table object (e.g. returned from ``Table.read('data_file')``).
     column_mapping : dict
         A dictionary describing the relation between the table columns
         and the arguments of the `Spectrum1D` class, along with unit
         information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
         associated `Spectrum1D` keyword argument, and the second element is the
-        unit for the file column (or `None` to take unit from the table)::
+        unit for the file column (or ``None`` to take unit from the table)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
                               'WAVE': ('spectral_axis', 'um')}
