@@ -1,20 +1,25 @@
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+import pytest
 
 from specutils import Spectrum1D, SpectrumList
 
 
-def create_spectrum_hdu(data_len):
+def create_spectrum_hdu(data_len, srctype='point'):
     # Create a minimal header for the purposes of testing
 
-    data = np.random.random((data_len, 3))
-    table = Table(data=data, names=['WAVELENGTH', 'FLUX', 'ERROR'])
+    data = np.random.random((data_len, 5))
+    table = Table(data=data, names=['WAVELENGTH', 'FLUX', 'ERROR', 'SURF_BRIGHT',
+        'SB_ERROR'])
 
     hdu = fits.BinTableHDU(table, name='EXTRACT1D')
     hdu.header['TUNIT1'] = 'um'
-    hdu.header['TUNIT2'] = 'mJy'
-    hdu.header['TUNIT3'] = 'mJy'
+    hdu.header['TUNIT2'] = 'Jy'
+    hdu.header['TUNIT3'] = 'Jy'
+    hdu.header['TUNIT4'] = 'MJy/sr'
+    hdu.header['TUNIT5'] = 'MJy/sr'
+    hdu.header['SRCTYPE'] = srctype
 
     return hdu
 
@@ -24,13 +29,13 @@ def test_jwst_loader(tmpdir):
     tmpfile = str(tmpdir.join('jwst.fits'))
 
     hdulist = fits.HDUList()
-    # Make sure the file has a primary HDU
     hdulist.append(fits.PrimaryHDU())
+    hdulist["PRIMARY"].header["TELESCOP"] = "JWST"
     # Add several BinTableHDUs that contain spectral data
-    hdulist.append(create_spectrum_hdu(100))
-    hdulist.append(create_spectrum_hdu(120))
+    hdulist.append(create_spectrum_hdu(100, 'point'))
+    hdulist.append(create_spectrum_hdu(120, 'extended'))
     hdulist.append(create_spectrum_hdu(110))
-    # JWST data product will always contain an ASDF header which is a BinTable
+    # Mock the ASDF extension
     hdulist.append(fits.BinTableHDU(name='ASDF'))
     hdulist.writeto(tmpfile)
 
