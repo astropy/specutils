@@ -95,7 +95,7 @@ of a spectrum.  Both are demonstrated below:
     >>> line_flux(noisy_gaussian, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
     <Quantity 4.92933252 GHz Jy>
 
-For the equivalen width, note the need to add a continuum level:
+For the equivalent width, note the need to add a continuum level:
 
 .. code-block:: python
 
