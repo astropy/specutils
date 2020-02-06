@@ -24,8 +24,8 @@ def create_spectrum_hdu(data_len, srctype=None):
     return hdu
 
 
-def test_jwst_loader(tmpdir):
-
+def test_jwst_x1d_loader(tmpdir):
+    """Test SpectrumList.read for JWST x1d data"""
     tmpfile = str(tmpdir.join('jwst.fits'))
 
     hdulist = fits.HDUList()
@@ -49,8 +49,9 @@ def test_jwst_loader(tmpdir):
     assert data[1].shape == (120,)
     assert data[2].shape == (110,)
 
-def test_jwst_loader_fail(tmpdir):
 
+def test_jwst_loader_fail(tmpdir):
+    """Check that the loader fails when SRCTYPE is not set or is UNKNOWN"""
     tmpfile = str(tmpdir.join('jwst.fits'))
 
     hdulist = fits.HDUList()
