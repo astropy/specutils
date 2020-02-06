@@ -71,14 +71,14 @@ def jwst_loader(filename, **kwargs):
                 # SRCTYPE is in primary header because there is only one spectrum
                 srctype = hdulist.header.get("srctype")
 
-            if srctype == "point":
+            if srctype == "POINT":
                 flux_units = u.Unit(hdu.columns["flux"].unit)
                 flux = hdu.data["flux"] * flux_units
 
                 error_units = u.Unit(hdu.columns["error"].unit)
                 uncertainty = StdDevUncertainty(hdu.data["error"] * error_units)
 
-            elif srctype == "extended":
+            elif srctype == "EXTENDED":
                 flux_units = u.Unit(hdu.columns["surf_bright"].unit)
                 flux = hdu.data["surf_bright"] * flux_units
 
@@ -87,8 +87,8 @@ def jwst_loader(filename, **kwargs):
 
             else:
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
-                    "be 'point' or 'extended'. Can't decide between flux and "
-                    "surface brightness columns")
+                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
+                    "`surf_bright` columns.")
 
             if np.min(uncertainty.array) <= 0.:
                 warnings.warn("Standard Deviation has values of 0 or less",
