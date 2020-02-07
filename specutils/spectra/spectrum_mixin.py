@@ -84,10 +84,7 @@ class OneDSpectrumMixin:
         """
         Returns the units of the spectral axis.
         """
-        if isinstance(self.wcs, HighLevelWCSWrapper):
-            return u.Unit(self.wcs.world_axis_units[0])
-
-        return self.wcs.unit[0]
+        return u.Unit(self.wcs.world_axis_units[0])
 
     @property
     def flux(self):
