@@ -443,14 +443,14 @@ def test_subaru_pfs_loader(tmpdir):
     pfs = "pfsObject-00000-0,0-000-00000001-01-0x395428ab.fits"
     url = f"https://github.com/Subaru-PFS/datamodel/raw/master/examples/{pfs}"
 
-    assert subaru_pfs_spec.spec_identify(pfs, pfs)
-    assert subaru_pfs_spec.spec_identify(url, url)
+    assert subaru_pfs_spec.identify_pfs_spec(url, url)
 
     # PFS loader parses metadata from filename, cannot read directly from url
     tmpfile = str(tmpdir.join(pfs))
     with urllib.request.urlopen(url) as response:
         shutil.copyfileobj(response, open(tmpfile, mode='wb'))
 
+    assert subaru_pfs_spec.identify_pfs_spec(pfs, open(tmpfile, mode='rb'))
     spec = Spectrum1D.read(tmpfile, format='Subaru-pfsObject')
     assert isinstance(spec, Spectrum1D)
 

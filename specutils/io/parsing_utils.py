@@ -1,8 +1,13 @@
 import numpy as np
+import os
+import re
+import urllib
+
+from astropy.io import fits
 from astropy.table import Table
-import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
+import astropy.units as u
 import warnings
 import logging
 
@@ -215,3 +220,48 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
                                   meta=table.meta, wcs=wcs)
 
     return spectrum
+
+
+def _fits_identify_by_name(origin, fileinp, *args,
+                           pattern=r'(?i).*\.fit[s]?$', **kwargs):
+    """
+    Check whether input file is FITS and matches a given name pattern.
+    Utility function to construct an `identifier` for Astropy I/O Registry.
+
+    Parameters
+    ----------
+    fileinp : str or file-like object
+        FITS file name or object (provided from name by Astropy I/O Registry).
+    pattern : regex str or re.Pattern
+        File name pattern to be matched.
+        Note: loaders should define a pattern sufficiently specific for their
+        spectrum file types to avoid ambiguous/multiple matches.
+    """
+    fileobj = None
+    filepath = None
+    if pattern is None:
+        pattern = r''
+    _spec_pattern = re.compile(pattern)
+
+    if isinstance(fileinp, str):
+        filepath = fileinp
+        try:
+            fileobj = open(filepath, mode='rb')
+        except FileNotFoundError:
+            # Check if path points to valid url
+            try:
+                fileinp = urllib.request.urlopen(filepath)
+            except ValueError:
+                return False
+    elif fits.util.isfile(fileinp):
+        fileobj = fileinp
+        filepath = fileobj.name
+
+    # Check for `urlopen` object - can only probe content if seekable
+    if hasattr(fileinp, 'url') and hasattr(fileinp, 'seekable'):
+        filepath = urllib.parse.unquote(fileinp.url)
+        if fileinp.seekable():
+            fileobj = fileinp
+
+    return (_spec_pattern.match(os.path.basename(filepath)) is not None and
+            fits.connect.is_fits(origin, filepath, fileobj, *args))

@@ -12,8 +12,9 @@ from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 
-from specutils.io.registers import data_loader
-from specutils import Spectrum1D
+from ...spectra import Spectrum1D
+from ..registers import data_loader
+from ..parsing_utils import _fits_identify_by_name
 
 __all__ = ['spec_identify', 'spec_loader']
 
@@ -26,44 +27,28 @@ _spec_pattern = re.compile(r'pfsObject-(?P<tract>\d{5})-(?P<patch>.{3})-'
                            r'\.fits')
 
 
-def spec_identify(origin, *args, **kwargs):
+def identify_pfs_spec(origin, *args, **kwargs):
     """
-    Check whether given file is FITS. This is used for Astropy I/O Registry.
+    Check whether given file is FITS and name matches `_spec_pattern`.
     """
-    filepath = args[0]
-    fileobj = None
-    if isinstance(args[0], str):
-        try:
-            fileobj = open(filepath, mode='rb')
-        except FileNotFoundError:
-            fileobj = None
-    elif fits.util.isfile(args[0]):
-        fileobj = args[0]
-        filepath = fileobj.name
-    # Check for `urlopen` object - can only probe content if seekable
-    elif hasattr(args[0], 'url') and hasattr(args[0], 'seekable'):
-        filepath = args[0].url
-        if args[0].seekable():
-            fileobj = args[0]
 
-    return (_spec_pattern.match(os.path.basename(filepath)) is not None and
-            fits.connect.is_fits(origin, filepath, fileobj, *args))
+    return _fits_identify_by_name(origin, *args, pattern=_spec_pattern)
 
 
-@data_loader(label="Subaru-pfsObject", identifier=spec_identify,
+@data_loader(label="Subaru-pfsObject", identifier=identify_pfs_spec,
              extensions=['fits'])
-def spec_loader(file_obj, **kwargs):
+def pfs_spec_loader(file_obj, **kwargs):
     """
     Loader for PFS combined spectrum files.
 
     Parameters
     ----------
-    file_obj: str or file-like
+    file_obj : str or file-like
         FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
-    data: Spectrum1D
+    data : Spectrum1D
         The spectrum that is represented by the data in this table.
     """
     if isinstance(file_obj, str):
