@@ -31,7 +31,8 @@ def identify_tabular_fits(origin, *args, **kwargs):
             (fits.getheader(args[0])['TELESCOP'] == 'SDSS 2.5-M' and
              fits.getheader(args[0])['FIBERID'] > 0) and not
             (fits.getheader(args[0])['TELESCOP'] == 'HST' and
-             fits.getheader(args[0])['INSTRUME'] in ('COS', 'STIS'))
+             fits.getheader(args[0])['INSTRUME'] in ('COS', 'STIS')) and not
+            (fits.getheader(args[0])['TELESCOP'] == 'JWST')
             )
 
 

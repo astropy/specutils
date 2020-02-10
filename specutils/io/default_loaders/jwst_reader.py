@@ -34,11 +34,51 @@ def identify_jwst_x1d_fits(origin, *args, **kwargs):
         return False
 
 
-@data_loader("JWST", identifier=identify_jwst_x1d_fits, dtype=SpectrumList,
+@data_loader("JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
              extensions=['fits'])
-def jwst_loader(filename, **kwargs):
+def jwst_x1d_single_loader(filename, **kwargs):
     """
     Loader for JWST x1d 1-D spectral data in FITS format
+
+    Parameters
+    ----------
+    filename: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file.
+    """
+    spectrum_list = _jwst_x1d_loader(filename, **kwargs)
+    if len(spectrum_list) == 1:
+        return spectrum_list[0]
+    else:
+        raise RuntimeError(f"{filename} has {len(spectrum_list)} spectra. "
+            "Use the SpectrumList.read.")
+
+
+@data_loader("JWST x1d multi", identifier=identify_jwst_x1d_fits, dtype=SpectrumList,
+             extensions=['fits'])
+def jwst_x1d_multi_loader(filename, **kwargs):
+    """
+    Loader for JWST x1d 1-D spectral data in FITS format
+
+    Parameters
+    ----------
+    filename: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        A list of the spectra that are contained in the file.
+    """
+    return _jwst_x1d_loader(filename, **kwargs)
+
+
+def _jwst_x1d_loader(filename, **kwargs):
+    """Implementation of loader for JWST x1d 1-D spectral data in FITS format
 
     Parameters
     ----------
