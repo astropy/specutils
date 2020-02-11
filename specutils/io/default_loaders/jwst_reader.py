@@ -10,21 +10,41 @@ from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
 
 
-__all__ = ["jwst_loader"]
+__all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader"]
 
 
 def identify_jwst_x1d_fits(origin, *args, **kwargs):
     """
     Check whether the given file is a JWST x1d spectral data product.
     """
+    is_jwst = _identify_jwst_fits(args[0])
+    with fits.open(args[0], memmap=False) as hdulist:
+        if is_jwst and 'EXTRACT1D' in hdulist and not ('EXTRACT1D', 2) in hdulist:
+            return True
+        else:
+            return False
 
+
+def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST x1d spectral data product.
+    """
+    is_jwst = _identify_jwst_fits(args[0])
+    with fits.open(args[0], memmap=False) as hdulist:
+        if is_jwst and ('EXTRACT1D', 2) in hdulist:
+            return True
+        else:
+            return False
+
+
+def _identify_jwst_fits(filename):
+    """
+    Check whether the given file is a JWST spectral data product.
+    """
     try:
-        with fits.open(args[0]) as hdulist:
+        with fits.open(filename, memmap=False) as hdulist:
             # This is a near-guarantee that we have a JWST data product
             if not 'ASDF' in hdulist:
-                return False
-            # This indicates the data product contains  spectral data
-            if not 'EXTRACT1D' in hdulist:
                 return False
             if not hdulist[0].header["TELESCOP"] == "JWST":
                 return False
@@ -35,7 +55,7 @@ def identify_jwst_x1d_fits(origin, *args, **kwargs):
 
 
 @data_loader("JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
-             extensions=['fits'])
+            extensions=['fits'])
 def jwst_x1d_single_loader(filename, **kwargs):
     """
     Loader for JWST x1d 1-D spectral data in FITS format
@@ -54,12 +74,12 @@ def jwst_x1d_single_loader(filename, **kwargs):
     if len(spectrum_list) == 1:
         return spectrum_list[0]
     else:
-        raise RuntimeError(f"{filename} has {len(spectrum_list)} spectra. "
-            "Use the SpectrumList.read.")
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. "
+            "Use SpectrumList.read() instead.")
 
 
-@data_loader("JWST x1d multi", identifier=identify_jwst_x1d_fits, dtype=SpectrumList,
-             extensions=['fits'])
+@data_loader("JWST x1d multi", identifier=identify_jwst_x1d_multi_fits,
+            dtype=SpectrumList, extensions=['fits'])
 def jwst_x1d_multi_loader(filename, **kwargs):
     """
     Loader for JWST x1d 1-D spectral data in FITS format
@@ -93,7 +113,7 @@ def _jwst_x1d_loader(filename, **kwargs):
 
     spectra = []
 
-    with fits.open(filename) as hdulist:
+    with fits.open(filename, memmap=False) as hdulist:
 
         for hdu in hdulist:
             # Read only the BinaryTableHDUs named EXTRACT1D
