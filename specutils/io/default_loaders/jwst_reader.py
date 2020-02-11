@@ -1,6 +1,8 @@
 import warnings
 
 import astropy.units as u
+from astropy.units import Quantity
+from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
@@ -120,8 +122,9 @@ def _jwst_x1d_loader(filename, **kwargs):
             if hdu.name != 'EXTRACT1D':
                 continue
 
-            wavelength_units = u.Unit(hdu.columns["wavelength"].unit)
-            wavelength = hdu.data["wavelength"] * wavelength_units
+            data = Table.read(hdu)
+
+            wavelength = Quantity(data["WAVELENGTH"])
 
             # Determine if FLUX or SURF_BRIGHT column should be returned
             # based on whether it is point or extended source
@@ -132,18 +135,12 @@ def _jwst_x1d_loader(filename, **kwargs):
                 srctype = hdulist.header.get("srctype")
 
             if srctype == "POINT":
-                flux_units = u.Unit(hdu.columns["flux"].unit)
-                flux = hdu.data["flux"] * flux_units
-
-                error_units = u.Unit(hdu.columns["error"].unit)
-                uncertainty = StdDevUncertainty(hdu.data["error"] * error_units)
+                flux = Quantity(data["FLUX"])
+                uncertainty = StdDevUncertainty(data["ERROR"])
 
             elif srctype == "EXTENDED":
-                flux_units = u.Unit(hdu.columns["surf_bright"].unit)
-                flux = hdu.data["surf_bright"] * flux_units
-
-                error_units = u.Unit(hdu.columns["sb_error"].unit)
-                uncertainty = StdDevUncertainty(hdu.data["sb_error"] * error_units)
+                flux = Quantity(data["SURF_BRIGHT"])
+                uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
 
             else:
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "

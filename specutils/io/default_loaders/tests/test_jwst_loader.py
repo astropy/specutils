@@ -1,6 +1,7 @@
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+import astropy.units as u
 from astropy.io.registry import IORegistryError
 from astropy.utils.exceptions import AstropyUserWarning
 import pytest
@@ -91,6 +92,8 @@ def test_jwst_x1d_single_loader_no_format(tmpdir, x1d_single):
     data = Spectrum1D.read(tmpfile)
     assert type(data) is Spectrum1D
     assert data.shape == (100,)
+    assert data.unit == u.Jy
+    assert data.spectral_axis.unit == u.um
 
 
 def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
@@ -105,9 +108,16 @@ def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
     for item in data:
         assert isinstance(item, Spectrum1D)
 
-    assert data[0].shape == (100,)
-    assert data[1].shape == (120,)
-    assert data[2].shape == (110,)
+
+def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
+    """Test units for Spectrum1D.read for JWST x1d data"""
+    tmpfile = str(tmpdir.join('jwst.fits'))
+    x1d_multi.writeto(tmpfile)
+
+    data = SpectrumList.read(tmpfile)
+    assert data[0].unit == u.Jy
+    assert data[1].unit == u.MJy / u.sr
+    assert data[2].unit == u.Jy
 
 
 def test_jwst_x1d_single_loader_fail_on_multi(tmpdir, x1d_multi):
