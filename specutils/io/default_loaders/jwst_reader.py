@@ -48,7 +48,7 @@ def _identify_jwst_fits(filename):
             # This is a near-guarantee that we have a JWST data product
             if not 'ASDF' in hdulist:
                 return False
-            if not hdulist[0].header["TELESCOP"] == "JWST":
+            if not hdulist[0].header["TELESCOP"] == ("JWST"):
                 return False
         return True
     # This probably means we didn't have a FITS file
@@ -117,6 +117,8 @@ def _jwst_x1d_loader(filename, **kwargs):
 
     with fits.open(filename, memmap=False) as hdulist:
 
+        primary_header = hdulist[0].header
+
         for hdu in hdulist:
             # Read only the BinaryTableHDUs named EXTRACT1D
             if hdu.name != 'EXTRACT1D':
@@ -151,7 +153,11 @@ def _jwst_x1d_loader(filename, **kwargs):
                 warnings.warn("Standard Deviation has values of 0 or less",
                     AstropyUserWarning)
 
-            meta = dict(slitname=hdu.header.get('SLTNAME', ''))
+            # Merge primary and slit headers and dump into meta
+            slit_header = hdu.header
+            header = primary_header.copy()
+            header.extend(slit_header, strip=True, update=True)
+            meta = {k: v for k,v in header.items()}
 
             spec = Spectrum1D(flux=flux, spectral_axis=wavelength,
                 uncertainty=uncertainty, meta=meta)

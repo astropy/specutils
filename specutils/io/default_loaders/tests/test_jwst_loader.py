@@ -32,7 +32,7 @@ def x1d_single():
     """Mock a JWST x1d HDUList with a single spectrum"""
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
-    hdulist["PRIMARY"].header["TELESCOP"] = "JWST"
+    hdulist["PRIMARY"].header["TELESCOP"] = ("JWST", "comment")
     # Add a BinTableHDU that contains spectral data
     hdulist.append(create_spectrum_hdu(100, 'POINT', ver=1))
     # Mock the ASDF extension
@@ -118,6 +118,16 @@ def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
     assert data[0].unit == u.Jy
     assert data[1].unit == u.MJy / u.sr
     assert data[2].unit == u.Jy
+
+
+def test_jwst_x1d_loader_meta(tmpdir, x1d_single):
+    """Test that the Primary and EXTRACT1D extension headers are merged in meta"""
+    tmpfile = str(tmpdir.join('jwst.fits'))
+    x1d_single.writeto(tmpfile)
+
+    data = Spectrum1D.read(tmpfile)
+    assert ('TELESCOP', 'JWST') in data.meta.items()
+    assert ('SRCTYPE', 'POINT') in data.meta.items()
 
 
 def test_jwst_x1d_single_loader_fail_on_multi(tmpdir, x1d_multi):
