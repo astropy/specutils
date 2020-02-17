@@ -56,13 +56,13 @@ stages:
         coverage: codecov
         envs:
           # Test with dev environments
-          - linux: py37-test-dev
-          - macos: py37-test-dev
-          - windows: py37-test-dev
+          - linux: py37-test-devdeps
+          - macos: py37-test-devdeps
+          - windows: py37-test-devdeps
 
-          - linux: py38-test-dev
-          - macos: py38-test-dev
-          - windows: py38-test-dev
+          - linux: py38-test-devdeps
+          - macos: py38-test-devdeps
+          - windows: py38-test-devdeps
 
   - stage: LTSEnvironment
     dependsOn: []  # Have stage run concurrently with others
@@ -72,14 +72,14 @@ stages:
         coverage: codecov
         envs:
           # Test lts environments
-          - linux: py36-test-lts
-          - macos: py36-test-lts
-          - windows: py36-test-lts
+          - linux: py36-test-astropylts
+          - macos: py36-test-astropylts
+          - windows: py36-test-astropylts
 
       # Try all numpy versions.
-      # - linux: py36-test-numpy116
-      # - linux: py36-test-numpy117
-      # - linux: py36-test-numpy118
+          - linux: py36-test-astropylts-numpy116
+          # - linux: py36-test-numpy117
+          # - linux: py36-test-numpy118
 
       # - linux: py37-test-numpy116
       # - linux: py37-test-numpy117
