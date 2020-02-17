@@ -36,7 +36,7 @@ def generic_ecsv(file_name, column_mapping=None, **kwargs):
         associated `Spectrum1D` keyword argument, and the second element is the
         unit for the ECSV file column::
 
-            column_mapping = {'FLUX': ('flux': 'Jy')}
+            column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------

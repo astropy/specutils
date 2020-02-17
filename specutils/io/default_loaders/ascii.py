@@ -39,7 +39,7 @@ def ascii_loader(file_name, column_mapping=None, **kwargs):
         associated `Spectrum1D` keyword argument, and the second element is the
         unit for the ASCII file column::
 
-            column_mapping = {'FLUX': ('flux': 'Jy')}
+            column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------

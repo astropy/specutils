@@ -22,7 +22,7 @@ from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from numpy.testing import assert_allclose
 
-from .conftest import remote_data_path, remote_access
+from .conftest import remote_access
 from .. import Spectrum1D, SpectrumList
 from ..io import get_loaders_by_extension
 
