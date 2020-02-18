@@ -131,7 +131,7 @@ def test_correlation_zero_padding():
     f2 = np.random.randn(size2) * u.Jy
 
     mean1 = 6075. * u.AA
-    mean2 = 6050. * u.AA
+    mean2 = 6030. * u.AA
     rest_value = mean2
 
     expected_lag = (mean1 - mean2) / rest_value * const.c.to('km/s')
@@ -187,6 +187,6 @@ def test_correlation_zero_padding():
 
     # Check position of correlation peak.
     maximum = np.argmax(corr)
-    assert maximum == 125
+    assert maximum == 145
     np.testing.assert_almost_equal(lag[maximum].value, expected_lag.value, 1)
 
