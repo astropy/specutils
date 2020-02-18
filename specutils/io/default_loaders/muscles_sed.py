@@ -25,16 +25,16 @@ def identify_muscles_sed(origin, *args, **kwargs):
                 fits.getheader(args[0]).get('PROPOSID') == 13650)
 
 
-@data_loader("muscles-sed", identifier=identify_muscles_sed,
+@data_loader(label="MUSCLES SED", identifier=identify_muscles_sed,
              dtype=Spectrum1D, extensions=['fits'])
-def muscles_sed(file_obj, **kwargs):
+def muscles_sed(file_name, **kwargs):
     """
-    Load spectrum from a MUSCLES SED FITS file.
+    Load spectrum from a MUSCLES Treasury Survey panchromatic SED FITS file.
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_name: str
+        The path to the FITS file.
 
     Returns
     -------
@@ -44,7 +44,7 @@ def muscles_sed(file_obj, **kwargs):
     # name is not used; what was it for?
     # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
-    with fits.open(file_obj, **kwargs) as hdulist:
+    with fits.open(file_name, **kwargs) as hdulist:
         header = hdulist[0].header
 
         tab = Table.read(hdulist[1])

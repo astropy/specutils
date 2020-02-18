@@ -20,7 +20,6 @@ __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 def identify_tabular_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
-            )
     with fits.open(args[0]) as hdulist:
         # Test if fits has extension of type BinTable and check against
         # known keys of already defined specific formats
@@ -33,7 +32,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
                  fits.getheader(args[0]).get('FIBERID') > 0) and not
                 (fits.getheader(args[0]).get('TELESCOP') == 'HST' and
                  fits.getheader(args[0]).get('INSTRUME') in ('COS', 'STIS')) and not
-                 fits.getheader(args[0])['TELESCOP'] == 'JWST')
+                 fits.getheader(args[0]).get('TELESCOP') == 'JWST')
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
