@@ -261,11 +261,22 @@ value set.
 
 .. code-block:: python
 
-   >>> from specutils.analysis import correlation
-   >>> from specutils.spectra.spectrum1d import Spectrum1D
-   >>> ospec = Spectrum1D(spectral_axis=..., flux=..., velocity_convention='optical', rest_value=...)
-   >>> tspec = Spectrum1D(spectral_axis=..., flux=..., ...)
-   >>> corr, lag = correlation.template_correlate(ospec, tspec)
+    >> from specutils.analysis import correlation
+    >>> size = 200
+    >>> spec_axis = np.linspace(4500., 6500., num=size) * u.AA
+    >>> f1 = np.random.randn(size)*0.5 * u.Jy
+    >>> f2 = np.random.randn(size)*0.5 * u.Jy
+    >>> rest_value = 6000. * u.AA
+    >>> mean1 = 5035. * u.AA
+    >>> mean2 = 5015. * u.AA
+    >>> g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean1, stddev=10. * u.AA)
+    >>> g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean2, stddev=10. * u.AA)
+    >>> flux1 = f1 + g1(spec_axis)
+    >>> flux2 = f2 + g2(spec_axis)
+    >>> uncertainty = StdDevUncertainty(0.2*np.ones(size)*u.Jy)
+    >>> ospec = Spectrum1D(spectral_axis=spec_axis, flux=flux1, uncertainty=uncertainty, velocity_convention='optical', rest_value=rest_value)
+    >>> tspec = Spectrum1D(spectral_axis=spec_axis, flux=flux2, uncertainty=uncertainty)
+    >>> corr, lag = correlation.template_correlate(ospec, tspec)
 
 The lag values are reported in km/s units. The correlation values are computed after the template spectrum is
 normalized in order to have the same total flux as the observed spectrum.
