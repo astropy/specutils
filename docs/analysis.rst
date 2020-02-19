@@ -263,8 +263,7 @@ value set.
 
    >>> from specutils.analysis import correlation
    >>> from specutils.spectra.spectrum1d import Spectrum1D
-   >>> ospec = Spectrum1D(spectral_axis=..., flux=..., ..., \
-                          velocity_convention='optical', rest_value=...)
+   >>> ospec = Spectrum1D(spectral_axis=..., flux=..., velocity_convention='optical', rest_value=...)
    >>> tspec = Spectrum1D(spectral_axis=..., flux=..., ...)
    >>> corr, lag = correlation.template_correlate(ospec, tspec)
 

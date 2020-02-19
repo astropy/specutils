@@ -264,4 +264,3 @@ def test_correlation_random_lines():
     maximum = np.argmax(corr)
     assert maximum == 145
     np.testing.assert_almost_equal(lag[maximum].value, expected_lag.value, 1)
-
