@@ -85,8 +85,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # In the case where the arithmetic operation is being performed with
         # a single float, int, or array object, just go ahead and ignore wcs
         # requirements
-        if isinstance(flux, float) or isinstance(flux, int) \
-                or not isinstance(flux, u.Quantity):
+        if np.ndim(flux) == 0 and (isinstance(flux, float)
+            or isinstance(flux, int)
+            or not isinstance(flux, u.Quantity)):
             super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
 
