@@ -7,6 +7,8 @@ from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
+import asdf
+from gwcs.wcstools import grid_from_bounding_box
 
 from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
@@ -34,6 +36,18 @@ def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
         if is_jwst and ('EXTRACT1D', 2) in hdulist:
+            return True
+        else:
+            return False
+
+
+def identify_jwst_s2d_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST s2d spectral data product.
+    """
+    is_jwst = _identify_jwst_fits(args[0])
+    with fits.open(args[0], memmap=False) as hdulist:
+        if is_jwst and "SCI" in hdulist:
             return True
         else:
             return False
@@ -164,3 +178,74 @@ def _jwst_x1d_loader(filename, **kwargs):
             spectra.append(spec)
 
     return SpectrumList(spectra)
+
+
+@data_loader("JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum1D,
+            extensions=['fits'])
+def jwst_s2d_single_loader(filename, **kwargs):
+    """
+    Loader for JWST s2d 2D rectified spectral data in FITS format
+
+    Parameters
+    ----------
+    filename: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file.
+    """
+    spectra = []
+
+    with fits.open(filename, memmap=False) as hdulist:
+
+        primary_header = hdulist["PRIMARY"].header
+
+        # Get a list of GWCS objects from the slits
+        with asdf.open(filename) as af:
+            try:
+                # For MultiProductModel, soon to be deprecated
+                wcslist = [slit["meta"]["wcs"] for slit in af.tree["products"]]
+            except (AttributeError, TypeError):
+                # For MultiSlitModel
+                wcslist = [slit["meta"]["wcs"] for slit in af.tree["slits"]]
+
+        hdulist_sci = [hdu for hdu in hdulist if hdu.name == "SCI"]
+
+        for hdu, wcs in zip(hdulist_sci, wcslist):
+            # Get flux
+            try:
+                flux_unit = u.Unit(hdu.header["BUNIT"])
+            except (ValueError, KeyError):
+                flux_unit = None
+            print(flux_unit)
+            flux = Quantity(hdu.data, unit="MJy")
+            print(flux)
+
+            # Get the wavelength array from the GWCS object which returns a
+            # tuple of (RA, Dec, lambda)
+            grid = grid_from_bounding_box(wcs.bounding_box)
+            _, _, lam = wcs(*grid)
+            _, _, lam_unit = wcs.output_frame.unit
+
+            # The dispersion axis is 1-indexed in the FITS file, but we
+            # need it zero-indexed
+            dispaxis = hdu.header["DISPAXIS"] - 1
+
+            # Make sure the dispersion axis is the same for every spatial axis
+            if not (lam == lam[dispaxis]).all():
+                raise RuntimeError("This 2D or 3D spectrum is not rectified "
+                    "and cannot be loaded into a Spectrum1D object")
+            wavelength = Quantity(lam[dispaxis], unit=lam_unit)
+
+            # Merge primary and slit headers and dump into meta
+            slit_header = hdu.header
+            header = primary_header.copy()
+            header.extend(slit_header, strip=True, update=True)
+            meta = {k: v for k,v in header.items()}
+
+            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spectra.append(spec)
+
+    return spectra[0]

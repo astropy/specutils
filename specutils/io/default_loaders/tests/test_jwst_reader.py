@@ -9,6 +9,8 @@ import pytest
 from specutils import Spectrum1D, SpectrumList
 
 
+# The x1d reader tests --------------------------
+
 def create_spectrum_hdu(data_len, srctype=None, ver=1):
     """Mock a JWST x1d BinTableHDU"""
     data = np.random.random((data_len, 5))
@@ -57,7 +59,7 @@ def x1d_multi():
     return hdulist
 
 
-def test_jwst_x1d_multi_loader(tmpdir, x1d_multi):
+def test_jwst_x1d_multi_reader(tmpdir, x1d_multi):
     """Test SpectrumList.read for JWST x1d multi data"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_multi.writeto(tmpfile)
@@ -74,7 +76,7 @@ def test_jwst_x1d_multi_loader(tmpdir, x1d_multi):
     assert data[2].shape == (110,)
 
 
-def test_jwst_x1d_single_loader(tmpdir, x1d_single):
+def test_jwst_x1d_single_reader(tmpdir, x1d_single):
     """Test Spectrum1D.read for JWST x1d data"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_single.writeto(tmpfile)
@@ -84,7 +86,7 @@ def test_jwst_x1d_single_loader(tmpdir, x1d_single):
     assert data.shape == (100,)
 
 
-def test_jwst_x1d_single_loader_no_format(tmpdir, x1d_single):
+def test_jwst_x1d_single_reader_no_format(tmpdir, x1d_single):
     """Test Spectrum1D.read for JWST x1d data without format arg"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_single.writeto(tmpfile)
@@ -96,7 +98,7 @@ def test_jwst_x1d_single_loader_no_format(tmpdir, x1d_single):
     assert data.spectral_axis.unit == u.um
 
 
-def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
+def test_jwst_x1d_multi_reader_no_format(tmpdir, x1d_multi):
     """Test Spectrum1D.read for JWST x1d data without format arg"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_multi.writeto(tmpfile)
@@ -109,7 +111,7 @@ def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
         assert isinstance(item, Spectrum1D)
 
 
-def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
+def test_jwst_x1d_multi_reader_check_units(tmpdir, x1d_multi):
     """Test units for Spectrum1D.read for JWST x1d data"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_multi.writeto(tmpfile)
@@ -120,7 +122,7 @@ def test_jwst_x1d_multi_loader_no_format(tmpdir, x1d_multi):
     assert data[2].unit == u.Jy
 
 
-def test_jwst_x1d_loader_meta(tmpdir, x1d_single):
+def test_jwst_x1d_reader_meta(tmpdir, x1d_single):
     """Test that the Primary and EXTRACT1D extension headers are merged in meta"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_single.writeto(tmpfile)
@@ -130,7 +132,7 @@ def test_jwst_x1d_loader_meta(tmpdir, x1d_single):
     assert ('SRCTYPE', 'POINT') in data.meta.items()
 
 
-def test_jwst_x1d_single_loader_fail_on_multi(tmpdir, x1d_multi):
+def test_jwst_x1d_single_reader_fail_on_multi(tmpdir, x1d_multi):
     """Make sure Spectrum1D.read on JWST x1d with many spectra errors out"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     x1d_multi.writeto(tmpfile)
@@ -140,8 +142,8 @@ def test_jwst_x1d_single_loader_fail_on_multi(tmpdir, x1d_multi):
 
 
 @pytest.mark.parametrize("srctype", [None, "UNKNOWN"])
-def test_jwst_loader_fail(tmpdir, x1d_single, srctype):
-    """Check that the loader fails when SRCTYPE is not set or is UNKNOWN"""
+def test_jwst_reader_fail(tmpdir, x1d_single, srctype):
+    """Check that the reader fails when SRCTYPE is not set or is UNKNOWN"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     hdulist = x1d_single
     # Add a spectrum with bad SRCTYPE (mutate the fixture)
@@ -152,8 +154,8 @@ def test_jwst_loader_fail(tmpdir, x1d_single, srctype):
         SpectrumList.read(tmpfile, format='JWST x1d multi')
 
 
-def test_jwst_loader_warning_stddev(tmpdir, x1d_single):
-    """Check that the loader raises warning when stddev is zeros"""
+def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
+    """Check that the reader raises warning when stddev is zeros"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     hdulist = x1d_single
     # Put zeros in ERROR column
@@ -165,3 +167,34 @@ def test_jwst_loader_warning_stddev(tmpdir, x1d_single):
         for r in record:
             if r.message is AstropyUserWarning:
                 assert "Standard Deviation has values of 0" in r.message
+
+
+# The s2d reader tests -------------------------------
+
+@pytest.fixture
+def s2d_single():
+    jwst = pytest.importorskip("jwst")
+    from jwst.datamodels import MultiSlitModel, SlitModel
+
+    model = MultiSlitModel()
+    model.slits.append(SlitModel((10, 1000)))
+
+    return model
+
+
+@pytest.fixture
+def s2d_multi(s2d_single):
+    jwst = pytest.importorskip("jwst")
+    from jwst.datamodels import MultiSlitModel, SlitModel
+
+    model = s2d_single
+    model.slits.append(SlitModel((10, 1000)))
+    model.slits.append(SlitModel((10, 1000)))
+
+    return model
+
+
+
+def test_jwst_s2d_reader(tmpdir, s2d_single):
+    model = s2d_single
+    assert model
