@@ -14,7 +14,7 @@ def test_autocorrelation():
     """
     Test auto correlation
     """
-    size = 41
+    size = 42
 
     # Seed np.random so that results are consistent
     np.random.seed(41)
@@ -45,39 +45,39 @@ def test_autocorrelation():
 
     # Check that lags are symmetrical
     midpoint = int(len(lag) / 2)
-    np.testing.assert_almost_equal(lag[midpoint+11].value, (-(lag[midpoint-11])).value, 2)
+    np.testing.assert_almost_equal(lag[midpoint+1].value, (-(lag[midpoint-1])).value, 2)
 
     # Check position of correlation peak.
     maximum = np.argmax(corr)
-    assert maximum == size-1
-    np.testing.assert_almost_equal(lag[maximum].value, 0.0, 1)
+    assert maximum == midpoint
 
 
 def test_correlation():
     """
     Test correlation when both observed and template spectra have the same wavelength axis
     """
-    size = 1001
+    size = 4000
 
     # Seed np.random so that results are consistent
     np.random.seed(51)
 
     # Create test spectra
-    spec_axis = np.linspace(4500., 6500., num=size) * u.AA
+    spec_axis = np.linspace(4001., 8000., num=size) * u.AA
 
     # Two narrow Gaussians are offset from each other so
     # as to generate a correlation peak at a expected lag.
     f1 = np.random.randn(size)*0.5 * u.Jy
     f2 = np.random.randn(size)*0.5 * u.Jy
 
-    rest_value = 6000. * u.AA
+    expected_lag = 10000. * u.km/u.s
+    mean2 = 5000. * u.AA
+    stdev2 = 30. * u.AA
+    mean1 = (1 + expected_lag / const.c.to('km/s')) * mean2
+    stdev1 = (1 + expected_lag / const.c.to('km/s')) * stdev2
+    rest_value = mean2
 
-    mean1 = 5035. * u.AA
-    mean2 = 5015. * u.AA
-    expected_lag = (mean1 - mean2) / rest_value * const.c.to('km/s')
-
-    g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean1, stddev=10. * u.AA)
-    g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean2, stddev=10. * u.AA)
+    g1 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean1, stddev=stdev1)
+    g2 = models.Gaussian1D(amplitude=30 * u.Jy, mean=mean2, stddev=stdev2)
 
     flux1 = f1 + g1(spec_axis)
     flux2 = f2 + g2(spec_axis)
@@ -101,8 +101,10 @@ def test_correlation():
     assert lag.unit == u.km / u.s
 
     # Check position of correlation peak.
-    corr_peak = np.where(corr == np.amax(corr))[0][0]
-    np.testing.assert_almost_equal(lag[corr_peak].value, expected_lag.value, 1)
+    maximum = np.argmax(corr)
+    v_fit = _fit_peak(corr, lag, maximum)
+    # checks against 1.5 * 10**(-decimal)
+    np.testing.assert_almost_equal(v_fit.value, expected_lag.value, -1)
 
 
 def _create_arrays(size1, size2):
@@ -115,14 +117,15 @@ def _create_arrays(size1, size2):
 
     # Two narrow Gaussians are offset from each other so
     # as to generate a correlation peak at a expected lag.
-    mean1 = 6075. * u.AA
-    mean2 = 6030. * u.AA
+    expected_lag = 1000. * u.km/u.s
+    mean2 = 6050. * u.AA
+    stdev2 = 5. * u.AA
+    mean1 = (1 + expected_lag / const.c.to('km/s')) * mean2
+    stdev1 = (1 + expected_lag / const.c.to('km/s')) * stdev2
     rest_value = mean2
 
-    expected_lag = (mean1 - mean2) / rest_value * const.c.to('km/s')
-
-    g1 = models.Gaussian1D(amplitude=50 * u.Jy, mean=mean1, stddev=5 * u.AA)
-    g2 = models.Gaussian1D(amplitude=50 * u.Jy, mean=mean2, stddev=5 * u.AA)
+    g1 = models.Gaussian1D(amplitude=50 * u.Jy, mean=mean1, stddev=stdev1)
+    g2 = models.Gaussian1D(amplitude=50 * u.Jy, mean=mean2, stddev=stdev2)
 
     flux1 = f1 + g1(spec_axis_1)
     flux2 = f2 + g2(spec_axis_2)
@@ -150,6 +153,20 @@ def _zero_padding(spec1, spec2, rest_value):
                         velocity_convention='optical',
                         rest_value=rest_value)
     return result
+
+
+def _fit_peak(corr, lag, index_peak):
+
+    # Parabolic fit to maximum
+
+    n = 3  # points to the left and right of correlation maximum
+
+    peak_lags = lag[index_peak - n:index_peak + n + 1].value
+    peak_vals = corr[index_peak - n:index_peak + n + 1].value
+    p = np.polyfit(peak_lags, peak_vals, deg=2)
+    roots = np.roots(p)
+
+    return np.mean(roots) * u.km / u.s  # maximum lies at mid point between roots
 
 
 def test_correlation_zero_padding():
@@ -191,12 +208,13 @@ def test_correlation_zero_padding():
 
     # Check that lags are symmetrical
     midpoint = int(len(lag) / 2)
-    np.testing.assert_almost_equal(lag[midpoint+11].value, (-(lag[midpoint-11])).value, 2)
+    np.testing.assert_almost_equal(lag[midpoint+1].value, (-(lag[midpoint-1])).value, 2)
 
     # Check position of correlation peak.
     maximum = np.argmax(corr)
-    assert maximum == 145
-    np.testing.assert_almost_equal(lag[maximum].value, expected_lag.value, 1)
+    v_fit = _fit_peak(corr, lag, maximum)
+    # checks against 1.5 * 10**(-decimal)
+    np.testing.assert_almost_equal(v_fit.value, expected_lag.value, -1)
 
 
 def test_correlation_random_lines():
@@ -213,23 +231,24 @@ def test_correlation_random_lines():
     # Create test spectra
     spec_axis_1, spec_axis_2, flux1, flux2, expected_lag, rest_value = _create_arrays(size1, size2)
 
-    # Add random lines to both spectra to simulate non-correlated spectral features. The more
-    # lines we add, and the larger amplitude they have, the larger the error in correlation
-    # peak position will be. In this specific case, increasing nlines by 1, or increasing the
-    # Gaussian amplitudes by 1 Jy, is enough to make the correlation peak move to the next lag
-    # bin.
+    # Add random lines to both spectra to simulate non-correlated spectral features.
     #
-    # So we can say generically that the presence of non-correlated features in observed and
-    # template spectra generates an error in the correlation peak position, and that error
-    # will be larger as these non-correlated features become more predominant in the data.
-    nlines = 14
+    # The more lines we add, and the larger amplitude they have, the larger the error in correlation
+    # peak position will be. In this specific case, increasing nlines by 1, or increasing the
+    # Gaussian amplitudes by a bit, is enough to make the correlation peak move off position.
+    #
+    # So we can say generically (as expected anyway) that the presence of non-correlated features
+    # in observed and template spectra generates an error in the correlation peak position, and
+    # that error will be larger as these non-correlated features become more predominant in the
+    # data.
+    nlines = 39
     for i in range(nlines):
         mean = (spec_axis_1[-1] - spec_axis_1[0]) * np.random.randn(size1) + spec_axis_1[0]
-        g1 = models.Gaussian1D(amplitude=5 * u.Jy, mean=mean, stddev=4 * u.AA)
+        g1 = models.Gaussian1D(amplitude=10 * u.Jy, mean=mean, stddev=4 * u.AA)
         flux1 += g1(spec_axis_1)
     for i in range(nlines):
         mean = (spec_axis_2[-1] - spec_axis_2[0]) * np.random.randn(size2) + spec_axis_2[0]
-        g2 = models.Gaussian1D(amplitude=2 * u.Jy, mean=mean, stddev=4 * u.AA)
+        g2 = models.Gaussian1D(amplitude=5 * u.Jy, mean=mean, stddev=4 * u.AA)
         flux2 += g2(spec_axis_2)
 
     # Observed spectrum must have a rest wavelength value set in.
@@ -258,9 +277,10 @@ def test_correlation_random_lines():
 
     # Check that lags are symmetrical
     midpoint = int(len(lag) / 2)
-    np.testing.assert_almost_equal(lag[midpoint+11].value, (-(lag[midpoint-11])).value, 2)
+    np.testing.assert_almost_equal(lag[midpoint+1].value, (-(lag[midpoint-1])).value, 2)
 
     # Check position of correlation peak.
     maximum = np.argmax(corr)
-    assert maximum == 145
-    np.testing.assert_almost_equal(lag[maximum].value, expected_lag.value, 1)
+    v_fit = _fit_peak(corr, lag, maximum)
+    # checks against 1.5 * 10**(-decimal)
+    np.testing.assert_almost_equal(v_fit.value, expected_lag.value, -1)
