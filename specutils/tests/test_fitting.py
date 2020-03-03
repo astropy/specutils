@@ -225,7 +225,7 @@ def test_single_peak_fit_with_uncertainties():
             spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
                               uncertainty=StdDevUncertainty(unc * u.Jy))
 
-            weights = 'unc' if implicit_weights else unc ** -2
+            weights = 'unc' if implicit_weights else unc ** -1
 
             spec_fit = fit_lines(spec, init_mod, weights=weights)
 
@@ -234,9 +234,9 @@ def test_single_peak_fit_with_uncertainties():
         return np.median(rms)
 
     assert np.allclose(calculate_rms(x, init_mod, implicit_weights=True),
-                       5.113708262419985)
+                       5.101611033799086)
     assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False),
-                       5.147348340711497)
+                       5.113697654869089)
 
 
 def test_single_peak_fit_window():

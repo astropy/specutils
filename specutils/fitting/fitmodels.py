@@ -395,8 +395,9 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         if weights == 'unc':
             uncerts = spectrum.uncertainty
 
+            # Astropy fitters expect weights in 1/sigma
             if uncerts is not None:
-                weights = uncerts.array ** -2
+                weights = uncerts.array ** -1
             else:
                 logging.warning("Uncertainty values are not defined, but are "
                                 "trying to be used in model fitting.")
