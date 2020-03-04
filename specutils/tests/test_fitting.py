@@ -4,11 +4,12 @@ from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..analysis import fwhm, centroid
-from ..fitting import (fit_lines, find_lines_derivative,
-                       find_lines_threshold, estimate_line_parameters)
-from ..manipulation import noise_region_uncertainty, spectrum_from_model
-from ..spectra import Spectrum1D, SpectralRegion
+from ..analysis import centroid, fwhm
+from ..fitting import (estimate_line_parameters, find_lines_derivative,
+                       find_lines_threshold, fit_lines)
+from ..manipulation import (extract_region, noise_region_uncertainty,
+                            spectrum_from_model)
+from ..spectra import SpectralRegion, Spectrum1D
 
 
 def single_peak():
@@ -678,3 +679,22 @@ def test_window_extras():
     weights = (~mask).astype(float)
     g_fit3 = fit_lines(s_msk, g_init, weights=weights, window=window_region)
     assert u.allclose(g_fit3.mean, 4.6, atol=.1)
+
+
+def test_fit_subspectrum():
+    # Create test spectrum
+    spectrum = Spectrum1D(
+        flux=np.random.sample(10) * u.Jy,
+        spectral_axis=(np.arange(10) + 6558) * u.AA,
+        rest_value=6561.16*u.angstrom,
+        velocity_convention='relativistic')
+
+    # Exract a sub region
+    sub_region = SpectralRegion(6490 * u.AA, 6635 * u.AA)
+    sub_spectrum = extract_region(spectrum, sub_region)
+
+    # Create model and git to spectrum
+    g_init = models.Gaussian1D(amplitude=1*u.Jy, mean=6561.157*u.angstrom,
+                                stddev=4.0721*u.angstrom)
+    g_fit = fit_lines(sub_spectrum, g_init)
+    y_fit = g_fit(sub_spectrum.spectral_axis)
