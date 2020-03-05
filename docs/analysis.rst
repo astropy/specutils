@@ -235,6 +235,7 @@ An example of how to apply extinction is:
 
 .. code-block:: python
 
+    >>> from astropy.modeling.blackbody import blackbody_lambda
     >>> from dust_extinction.parameter_averages import F99
     >>> wave = np.logspace(np.log10(1000), np.log10(3e4), num=10) * u.AA
     >>> flux = blackbody_lambda(wave, 10000 * u.K)
