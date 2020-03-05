@@ -7,6 +7,7 @@ from astropy import constants as cnst
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
+from .spectral_coordinate import SpectralCoord
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
@@ -41,7 +42,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
         the unit defined in the flux.
-    meta : dict
+    meta : dicspectral_axis, SpectralCoordt
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
     """
@@ -95,13 +96,25 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if spectral_axis is not None:
-            # Ensure that the spectral axis is an astropy quantity
+            # Ensure that the spectral axis is an astropy Quantity
             if not isinstance(spectral_axis, u.Quantity):
-                raise ValueError("Spectral axis must be a `Quantity` object.")
+                # TODO Should word this better to make clear SpectralCoord is a subclass of Quantity
+                raise ValueError("Spectral axis must be a `Quantity` or `SpectralCoord` object.")
+
+            # If spectral axis is provided as an astropy Quantity, convert it
+            # to a specutils SpectralCoord object
+            if isinstance(spectral_axis, u.Quantity) and not \
+                    isinstance(spectral_axis, SpectralCoord):
+                self.spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
+                        radial_velocity=radial_velocity, doppler_rest=rest_value,
+                        doppler_convention=velocity_convention)
+
+            # Pull information from SpectralCoord object if needed
+            if isinstance()
 
             wcs = gwcs_from_array(spectral_axis)
         elif wcs is None:
-            # If no spectral axis or wcs information is provided, initialize a
+            # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
             size = len(flux) if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
