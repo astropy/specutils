@@ -225,6 +225,29 @@ An example of how to do template matching with an unknown redshift is:
    >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method=resample_method, redshift=rs_values) # doctest:+FLOAT_CMP
 
 
+Dust extinction
+---------------
+
+Dust extinction can be applied to Spectrum1D instances via their internal arrays, using
+the `dust_extinction package` (http://dust-extinction.readthedocs.io/en/latest)
+
+An example of how to apply extinction is:
+
+.. code-block:: python
+
+    >>> from dust_extinction.parameter_averages import F99
+    >>> wave = np.logspace(np.log10(1000), np.log10(3e4), num=10) * u.AA
+    >>> flux = blackbody_lambda(wave, 10000 * u.K)
+    >>> spec = Spectrum1D(spectral_axis=wave, flux=flux)
+    >>> #
+    >>> # define the model
+    >>> ext = F99(Rv=3.1)
+    >>> #
+    >>> # extinguish (redden) the spectrum
+    >>> flux_ext = spec.flux * ext.extinguish(spec.spectral_axis, Ebv=0.5)
+    >>> spec_ext = Spectrum1D(spectral_axis=wave, flux=flux_ext)
+
+
 Reference/API
 -------------
 .. automodapi:: specutils.analysis
