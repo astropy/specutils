@@ -11,4 +11,5 @@ dependencies:
     - scipy
     - gwcs
     - matplotlib
+    - dust_extinction
     - sphinx-astropy

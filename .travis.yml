@@ -51,7 +51,7 @@ env:
 
     # List other runtime dependencies for the package that are available as
     # pip packages here.
-    - PIP_DEPENDENCIES='gwcs scipy matplotlib pytest-astropy'
+    - PIP_DEPENDENCIES='gwcs scipy matplotlib pytest-astropy dust_extinction'
 
     # Conda packages for affiliated packages are hosted in channel
     # "astropy" while builds for astropy LTS with recent numpy versions
@@ -135,7 +135,7 @@ matrix:
     # Try development version of Astropy and GWCS
     - os: linux
       env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
-        PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
+        PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib, dust_extinction"
 
   allow_failures:
   # Do a PEP8 test with flake8
