@@ -42,7 +42,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
         the unit defined in the flux.
-    meta : dicspectral_axis, SpectralCoordt
+    meta : dict
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
     """
