@@ -229,7 +229,7 @@ Dust extinction
 ---------------
 
 Dust extinction can be applied to Spectrum1D instances via their internal arrays, using
-the `dust_extinction package` (http://dust-extinction.readthedocs.io/en/latest)
+the `dust_extinction` package (http://dust-extinction.readthedocs.io/en/latest)
 
 An example of how to apply extinction is:
 
