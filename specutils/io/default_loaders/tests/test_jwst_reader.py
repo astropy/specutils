@@ -162,7 +162,7 @@ def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
     hdulist["EXTRACT1D"].data["ERROR"] = 0
     hdulist.writeto(tmpfile)
 
-    with pytest.warns(AstropyUserWarning) as record:
+    with pytest.warns(Warning) as record:
         Spectrum1D.read(tmpfile)
         for r in record:
             if r.message is AstropyUserWarning:

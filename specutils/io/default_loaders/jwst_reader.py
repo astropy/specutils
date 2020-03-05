@@ -23,7 +23,8 @@ def identify_jwst_x1d_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if is_jwst and 'EXTRACT1D' in hdulist and not ('EXTRACT1D', 2) in hdulist:
+        if (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist
+            and "SCI" not in hdulist):
             return True
         else:
             return False
@@ -35,7 +36,7 @@ def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if is_jwst and ('EXTRACT1D', 2) in hdulist:
+        if is_jwst and ('EXTRACT1D', 2) in hdulist and "SCI" not in hdulist:
             return True
         else:
             return False
@@ -47,7 +48,20 @@ def identify_jwst_s2d_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if is_jwst and "SCI" in hdulist:
+        if (is_jwst and "SCI" in hdulist and ("SCI", 2) not in hdulist
+            and "EXTRACT1D" not in hdulist):
+            return True
+        else:
+            return False
+
+
+def identify_jwst_s2d_multi_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST s2d spectral data product.
+    """
+    is_jwst = _identify_jwst_fits(args[0])
+    with fits.open(args[0], memmap=False) as hdulist:
+        if is_jwst and ("SCI", 2) in hdulist and "EXTRACT1D" not in hdulist:
             return True
         else:
             return False
@@ -60,7 +74,7 @@ def _identify_jwst_fits(filename):
     try:
         with fits.open(filename, memmap=False) as hdulist:
             # This is a near-guarantee that we have a JWST data product
-            if not 'ASDF' in hdulist:
+            if 'ASDF' not in hdulist:
                 return False
             if not hdulist[0].header["TELESCOP"] == ("JWST"):
                 return False
@@ -163,10 +177,6 @@ def _jwst_x1d_loader(filename, **kwargs):
                     "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
                     "`surf_bright` columns.")
 
-            if np.min(uncertainty.array) <= 0.:
-                warnings.warn("Standard Deviation has values of 0 or less",
-                    AstropyUserWarning)
-
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
             header = primary_header.copy()
@@ -196,20 +206,69 @@ def jwst_s2d_single_loader(filename, **kwargs):
     Spectrum1D
         The spectrum contained in the file.
     """
+    spectrum_list = _jwst_s2d_loader(filename, **kwargs)
+    if len(spectrum_list) == 1:
+        return spectrum_list[0]
+    elif len(spectrum_list) > 1:
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. "
+            "Use SpectrumList.read() instead.")
+    else:
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra.")
+
+
+@data_loader("JWST s2d multi", identifier=identify_jwst_s2d_multi_fits, dtype=SpectrumList,
+            extensions=['fits'])
+def jwst_s2d_multi_loader(filename, **kwargs):
+    """
+    Loader for JWST s2d 2D rectified spectral data in FITS format
+
+    Parameters
+    ----------
+    filename: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file.
+    """
+    return _jwst_s2d_loader(filename, **kwargs)
+
+
+def _jwst_s2d_loader(filename, **kwargs):
+    """
+    Loader for JWST s2d 2D rectified spectral data in FITS format
+
+    Parameters
+    ----------
+    filename: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file.
+    """
     spectra = []
+
+    # Get a list of GWCS objects from the slits
+    with asdf.open(filename) as af:
+        # Slits can be listed under "slits", "products" or "exposures"
+        if "products" in af.tree:
+            slits = "products"
+        elif "exposures" in af.tree:
+            slits = "exposures"
+        elif "slits" in af.tree:
+            slits = "slits"
+        else:
+            raise RuntimeError(f"Cannot load gwcs object in {filename}")
+
+        # Create list of the GWCS objects, one for each slit
+        wcslist = [slit["meta"]["wcs"] for slit in af.tree[slits]]
 
     with fits.open(filename, memmap=False) as hdulist:
 
         primary_header = hdulist["PRIMARY"].header
-
-        # Get a list of GWCS objects from the slits
-        with asdf.open(filename) as af:
-            try:
-                # For MultiProductModel, soon to be deprecated
-                wcslist = [slit["meta"]["wcs"] for slit in af.tree["products"]]
-            except (AttributeError, TypeError):
-                # For MultiSlitModel
-                wcslist = [slit["meta"]["wcs"] for slit in af.tree["slits"]]
 
         hdulist_sci = [hdu for hdu in hdulist if hdu.name == "SCI"]
 
@@ -218,10 +277,8 @@ def jwst_s2d_single_loader(filename, **kwargs):
             try:
                 flux_unit = u.Unit(hdu.header["BUNIT"])
             except (ValueError, KeyError):
-                flux_unit = None
-            print(flux_unit)
-            flux = Quantity(hdu.data, unit="MJy")
-            print(flux)
+                flux_unit = u.Unit("MJy")
+            flux = Quantity(hdu.data, unit=flux_unit)
 
             # Get the wavelength array from the GWCS object which returns a
             # tuple of (RA, Dec, lambda)
@@ -248,4 +305,4 @@ def jwst_s2d_single_loader(filename, **kwargs):
             spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
             spectra.append(spec)
 
-    return spectra[0]
+    return SpectrumList(spectra)
