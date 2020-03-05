@@ -6,6 +6,7 @@ import numpy as np
 
 import astropy.units as u
 from astropy.coordinates import FK5
+from astropy.nddata import StdDevUncertainty
 
 from asdf.tests.helpers import assert_roundtrip_tree
 import asdf
@@ -14,9 +15,9 @@ from specutils import Spectrum1D, SpectrumList
 
 
 def create_spectrum1d(xmin, xmax, uncertainty=None):
-    flux = np.ones(xmax-xmin) * u.Jy
-    wavelength = np.arange(xmin, xmax) * u.AA
-    uncertainty = np.ones(xmax-xmin) if uncertainty is not None else None
+    flux = np.ones(xmax - xmin) * u.Jy
+    wavelength = np.arange(xmin, xmax) * 0.1 * u.nm
+    uncertainty = StdDevUncertainty(np.ones(xmax - xmin) * u.Jy) if uncertainty is not None else None
     return Spectrum1D(spectral_axis=wavelength, flux=flux,
                       uncertainty=uncertainty)
 
