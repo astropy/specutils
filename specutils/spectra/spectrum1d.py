@@ -73,6 +73,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif flux.isscalar:
                 flux = u.Quantity([flux])
 
+        # Ensure that only one or neither of these parameters is set
+        if redshift is not None and radial_velocity is not None:
+            raise ValueError('cannot set both radial_velocity and redshift at '
+                             'the same time.')
+
         # In cases of slicing, new objects will be initialized with `data`
         # instead of ``flux``. Ensure we grab the `data` argument.
         if flux is None and 'data' in kwargs:
@@ -98,19 +103,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if spectral_axis is not None:
             # Ensure that the spectral axis is an astropy Quantity
             if not isinstance(spectral_axis, u.Quantity):
-                # TODO Should word this better to make clear SpectralCoord is a subclass of Quantity
                 raise ValueError("Spectral axis must be a `Quantity` or `SpectralCoord` object.")
 
             # If spectral axis is provided as an astropy Quantity, convert it
             # to a specutils SpectralCoord object
-            if isinstance(spectral_axis, u.Quantity) and not \
-                    isinstance(spectral_axis, SpectralCoord):
+            if not isinstance(spectral_axis, SpectralCoord):
                 self.spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
                         radial_velocity=radial_velocity, doppler_rest=rest_value,
                         doppler_convention=velocity_convention)
-
-            # Pull information from SpectralCoord object if needed
-            if isinstance()
 
             wcs = gwcs_from_array(spectral_axis)
         elif wcs is None:
@@ -153,14 +153,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         # set redshift after super() - necessary because the shape-checking
         # requires that the flux be initialized
-
-        if redshift is None:
-            self.radial_velocity = radial_velocity
-        elif radial_velocity is None:
-            self.redshift = redshift
-        else:
-            raise ValueError('cannot set both radial_velocity and redshift at '
-                             'the same time.')
+        self.radial_velocity = self.spectral_axis.radial_velocity
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
