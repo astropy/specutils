@@ -315,6 +315,33 @@ and True elsewhere. It is this way to be consistent with ``astropy.nddata``.
 .. note:: The mask attribute is the only attribute modified by ``snr_threshold()``. To
              retrieve the masked flux data use ``spectrum.masked.flux_masked``.
 
+Shifting
+--------
+
+To shift a spectrum in wavelength, one can use a construct like this:
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+    >>> wavelengths = np.arange(0, 10)*u.um
+    >>> flux = 100*np.abs(np.random.randn(10))*u.Jy
+    >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    >>> >>> spectrum  #doctest:+SKIP
+    <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
+                163.31955247,  90.92780989,  22.69088175,  51.81322025,
+                 11.70522032,  63.81487901] Jy>, spectral_axis=<Quantity [0., 1., 2., 3.,
+                 4., 5., 6., 7., 8., 9.] um>)>
+    >>> wunit = spectrum.spectral_axis.unit
+    >>> shift = 1.23
+    >>> new_spec = Spectrum1D(spectral_axis=(spectrum.spectral_axis.value + shift) * wunit,
+                         flux=spec.flux, wcs=None)
+    >>> new_spec #doctest:+SKIP
+    <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
+               163.31955247,  90.92780989,  22.69088175,  51.81322025,
+               11.70522032,  63.81487901] Jy>, spectral_axis=<Quantity [ 1.23,  2.23,  3.23,
+               4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
+
+
 Reference/API
 -------------
 
