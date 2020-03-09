@@ -333,8 +333,7 @@ To shift a spectrum in wavelength, one can use a construct like this:
                  4., 5., 6., 7., 8., 9.] um>)>
     >>> wunit = spectrum.spectral_axis.unit
     >>> shift = 1.23
-    >>> new_spec = Spectrum1D(spectral_axis=(spectrum.spectral_axis.value + shift) * wunit,
-                         flux=spec.flux, wcs=None)
+    >>> new_spec = Spectrum1D(spectral_axis=(spectrum.spectral_axis.value + shift) * wunit, flux=spectrum.flux, wcs=None)
     >>> new_spec #doctest:+SKIP
     <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
                163.31955247,  90.92780989,  22.69088175,  51.81322025,
