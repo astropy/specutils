@@ -60,8 +60,12 @@ class OneDSpectrumMixin:
     @lazyproperty
     def spectral_axis(self):
         """
-        Returns a Quantity array with the values of the spectral axis.
+        Returns the SpectralCoord object.
         """
+        return self._spectral_coord
+        """
+        # Deprecated code, keeping it here while I make sure there's no case where
+        # it's needed
         if len(self.flux) > 0:
             spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
         else:
@@ -78,6 +82,7 @@ class OneDSpectrumMixin:
             spectral_axis = dummy_spectrum.wcs.pixel_to_world([0])[1:]
 
         return spectral_axis
+        """
 
     @property
     def spectral_axis_unit(self):

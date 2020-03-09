@@ -111,7 +111,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 self._spectral_coord = SpectralCoord(spectral_axis, redshift=redshift,
                         radial_velocity=radial_velocity, doppler_rest=rest_value,
                         doppler_convention=velocity_convention)
+            # If a SpectralCoord object is provided, we assume it doesn't need
+            # information from other keywords added
             else:
+                for a in [radial_velocity, redshift]:
+                    if a is not None:
+                        raise ValueError("Cannot separately set redshift or radial_velocity if "
+                                        "a SpectralCoord object is input to spectral_axis")
+                        break
                 self._spectral_coord = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
@@ -250,10 +257,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def shape(self):
         return self.flux.shape
-
-    @property
-    def spectral_axis(self):
-        return self._spectral_coord
 
     @property
     def redshift(self):
