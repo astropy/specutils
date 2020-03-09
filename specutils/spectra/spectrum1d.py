@@ -106,11 +106,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise ValueError("Spectral axis must be a `Quantity` or `SpectralCoord` object.")
 
             # If spectral axis is provided as an astropy Quantity, convert it
-            # to a specutils SpectralCoord object
+            # to a specutils SpectralCoord object.
             if not isinstance(spectral_axis, SpectralCoord):
-                self.spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
+                self._spectral_coord = SpectralCoord(spectral_axis, redshift=redshift,
                         radial_velocity=radial_velocity, doppler_rest=rest_value,
                         doppler_convention=velocity_convention)
+            else:
+                self._spectral_coord = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
         elif wcs is None:
@@ -153,7 +155,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         # set redshift after super() - necessary because the shape-checking
         # requires that the flux be initialized
-        self.radial_velocity = self.spectral_axis.radial_velocity
+        self.radial_velocity = self._spectral_coord.radial_velocity
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
@@ -248,6 +250,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def shape(self):
         return self.flux.shape
+
+    @property
+    def spectral_axis(self):
+        return self._spectral_coord
 
     @property
     def redshift(self):
