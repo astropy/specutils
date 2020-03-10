@@ -122,16 +122,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 self._spectral_coord = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
-        else:
-            if wcs is None:
-                # If no spectral axis or wcs information is provided, initialize
-                # with an empty gwcs based on the flux.
-                size = len(flux) if not flux.isscalar else 1
-                wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
-            # If spectral_axis wasn't provided, set _spectral_coord based on the WCS
-            self.spectral_coord = SpectralCoord(self.wcs.pixel_to_world(np.arange(self.flux.shape[-1])),
-                        redshift=redshift, radial_velocity=radial_velocity, doppler_rest=rest_value,
-                        doppler_convention=velocity_convention)
+        elif wcs is None:
+            # If no spectral axis or wcs information is provided, initialize
+            # with an empty gwcs based on the flux.
+            size = len(flux) if not flux.isscalar else 1
+            wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
 
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
@@ -164,6 +159,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
+
+        # If no spectral_axis was provided, create a SpectralCoord based on the WCS
+        if spectral_axis is None:
+            #If spectral_axis wasn't provided, set _spectral_coord based on the WCS
+            self._spectral_coord = SpectralCoord(self.wcs.pixel_to_world(np.arange(self.flux.shape[-1])),
+                        redshift=redshift, radial_velocity=radial_velocity, doppler_rest=rest_value,
+                        doppler_convention=velocity_convention)
 
         # set redshift after super() - necessary because the shape-checking
         # requires that the flux be initialized
