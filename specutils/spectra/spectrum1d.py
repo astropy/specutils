@@ -122,11 +122,16 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 self._spectral_coord = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
-        elif wcs is None:
-            # If no spectral axis or wcs information is provided, initialize
-            # with an empty gwcs based on the flux.
-            size = len(flux) if not flux.isscalar else 1
-            wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
+        else:
+            if wcs is None:
+                # If no spectral axis or wcs information is provided, initialize
+                # with an empty gwcs based on the flux.
+                size = len(flux) if not flux.isscalar else 1
+                wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
+            # If spectral_axis wasn't provided, set _spectral_coord based on the WCS
+            self.spectral_coord = SpectralCoord(self.wcs.pixel_to_world(np.arange(self.flux.shape[-1])),
+                        redshift=redshift, radial_velocity=radial_velocity, doppler_rest=rest_value,
+                        doppler_convention=velocity_convention)
 
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
