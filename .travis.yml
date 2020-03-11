@@ -52,6 +52,7 @@ env:
     # List other runtime dependencies for the package that are available as
     # pip packages here.
     - PIP_DEPENDENCIES='gwcs scipy matplotlib pytest-astropy'
+    - PIP_DEPENDENCIES_DOC='dust_extinction'
 
     # Conda packages for affiliated packages are hosted in channel
     # "astropy" while builds for astropy LTS with recent numpy versions
@@ -99,6 +100,7 @@ matrix:
     - os: linux
       env: SETUP_CMD='build_docs -w'
         CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
+        PIP_DEPENDENCIES=$PIP_DEPENDENCIES_DOC
 
     # check on somewhat older versions LTS version
     - os: linux
