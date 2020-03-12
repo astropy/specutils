@@ -133,28 +133,6 @@ def _create_arrays(size1, size2):
     return spec_axis_1, spec_axis_2, flux1, flux2, expected_lag, rest_value
 
 
-def _zero_padding(spec1, spec2, rest_value):
-    # Zero-pad first spectrum to the blue, so it covers the waverange of the
-    # second spectrum on the blue side (this is supposed to be used to find
-    # redshifts).
-    dw = spec1.wavelength[1] - spec1.wavelength[0]
-    n = int((spec1.wavelength[0].value - spec2.spectral_axis[0].value) / dw.value)
-    padding_wave = np.arange(n) * dw.value + spec2.spectral_axis[0].value
-    wave = np.concatenate([padding_wave, spec1.wavelength.value]) * u.AA
-
-    padding_flux = np.zeros(n)
-    flux = np.concatenate([padding_flux, spec1.flux.value]) * spec1.flux.unit
-
-    # Re-build first spectrum. Uncertainty is, again, arbitrary.
-    err = np.ones(flux.shape) * np.amax(flux) * 0.001
-    result = Spectrum1D(spectral_axis=wave,
-                        flux=flux,
-                        uncertainty=StdDevUncertainty(err),
-                        velocity_convention='optical',
-                        rest_value=rest_value)
-    return result
-
-
 def _fit_peak(corr, lag, index_peak):
 
     # Parabolic fit to maximum
@@ -193,11 +171,6 @@ def test_correlation_zero_padding():
     spec2 = Spectrum1D(spectral_axis=spec_axis_2,
                        flux=flux2,
                        uncertainty=StdDevUncertainty(np.random.sample(size2), unit='Jy'))
-
-    # Zero-pad first spectrum to the blue, so it covers the waverange of the
-    # second spectrum on the blue side (this is supposed to be used to find
-    # redshifts).
-    spec1 = _zero_padding(spec1, spec2, rest_value)
 
     # Get result from correlation
     corr, lag = correlation.template_correlate(spec1, spec2)
@@ -241,7 +214,7 @@ def test_correlation_random_lines():
     # in observed and template spectra generates an error in the correlation peak position, and
     # that error will be larger as these non-correlated features become more predominant in the
     # data.
-    nlines = 39
+    nlines = 20
     for i in range(nlines):
         mean = (spec_axis_1[-1] - spec_axis_1[0]) * np.random.randn(size1) + spec_axis_1[0]
         g1 = models.Gaussian1D(amplitude=10 * u.Jy, mean=mean, stddev=4 * u.AA)
@@ -262,11 +235,6 @@ def test_correlation_random_lines():
     spec2 = Spectrum1D(spectral_axis=spec_axis_2,
                        flux=flux2,
                        uncertainty=StdDevUncertainty(np.random.sample(size2), unit='Jy'))
-
-    # Zero-pad first spectrum to the blue, so it covers the waverange of the
-    # second spectrum on the blue side (this is supposed to be used to find
-    # redshifts).
-    spec1 = _zero_padding(spec1, spec2, rest_value)
 
     # Get result from correlation
     corr, lag = correlation.template_correlate(spec1, spec2)
