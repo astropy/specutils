@@ -155,9 +155,10 @@ def excise_region(spectrum, region, exciser=linear_exciser):
 
     # Raise a warning if the SpectralRegion has more than one subregion, since
     # the handling for this is perhaps unexpected
-    warnings.warn("A SpectralRegion with subregions was provided as input. The
-            lowest subregion lower bound and highest subregion upper bound will
-            be used as the excision region.", AstropyUserWarning)
+    warnings.warn("A SpectralRegion with multiple subregions was provided as "
+            "input. The lowest subregion lower bound and highest subregion "
+            "upper bound will be used as the excision region.",
+            AstropyUserWarning)
 
     #
     #  Call the exciser method
