@@ -8,7 +8,7 @@ __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 def linear_exciser(spectrum, region):
     """
     Basic spectral excise method where the spectral region defined by the
-    2-tuple parameter ``region`` (start and end wavelengths) will result
+    parameter ``region`` (a `~specutils.SpectralRegion`) will result
     in the flux between those regions set to a linear ramp of the
     two points immediately before and after the start and end regions.
 
@@ -65,15 +65,14 @@ def linear_exciser(spectrum, region):
 
 def excise_regions(spectrum, regions, exciser=linear_exciser):
     """
-    Apply a convolution based smoothing to the spectrum. The kernel must be one
-    of the 1D kernels defined in `astropy.convolution`.
-
-    This method can be used along but also is used by other specific methods below.
+    Method to replace the flux in the defined regions of the spectrum with
+    interpolated values produced by the function given in the ``exciser``
+    argument.
 
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the excision will be applied.
 
     regions : list of `~specutils.SpectralRegion`
         Each element of the list is a `~specutils.SpectralRegion`. The flux
@@ -109,10 +108,9 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
 
 def excise_region(spectrum, region, exciser=linear_exciser):
     """
-    Apply a convolution based smoothing to the spectrum. The kernel must be one
-    of the 1D kernels defined in `astropy.convolution`.
-
-    This method can be used along but also is used by other specific methods below.
+    Method to replace the flux in the defined region of the spectrum with
+    interpolated values produced by the function given in the ``exciser``
+    argument.
 
     Parameters
     ----------
@@ -120,7 +118,7 @@ def excise_region(spectrum, region, exciser=linear_exciser):
         The `~specutils.Spectrum1D` object to which the smoothing will be applied.
 
     region : `~specutils.SpectralRegion`
-        Region to excise.
+        A `~specutils.SpectralRegion` object defining the region to excise.
 
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
@@ -141,10 +139,10 @@ def excise_region(spectrum, region, exciser=linear_exciser):
 
     # Parameter checks
     if not isinstance(spectrum, Spectrum1D):
-        raise ValueError('The spectrum parameter must be Spectrum1D object.')
+        raise ValueError('The spectrum parameter must be a Spectrum1D object.')
 
     if not isinstance(region, SpectralRegion):
-        raise ValueError('The region parameter must be a 2-tuples of start and end wavelengths.')
+        raise ValueError('The region parameter must be a SpectralRegion object.')
 
     #
     #  Call the exciser method
