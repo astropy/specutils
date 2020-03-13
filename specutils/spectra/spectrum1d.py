@@ -23,7 +23,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     ----------
     flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `astropy.units.Quantity`
+    spectral_axis : `astropy.units.Quantity` or `specutils.SpectralCoord`
         Dispersion information with the same shape as the last (or only)
         dimension of flux.
     wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
