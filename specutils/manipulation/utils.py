@@ -1,5 +1,7 @@
 import numpy as np
+import warnings
 
+from astropy.utils.exceptions import AstropyUserWarning
 from ..spectra import Spectrum1D, SpectralRegion
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
@@ -76,8 +78,11 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
 
     regions : list of `~specutils.SpectralRegion`
         Each element of the list is a `~specutils.SpectralRegion`. The flux
-        between these wavelengths will be "cut out" using the ``exciser``
-        method.
+        between the lower and upper wavelength of each region will be "cut out"
+        and replaced with interpolated values using the ``exciser`` method.
+        Note that non-overlapping regions should be provided as separate
+        `~specutils.SpectralRegion` objects in this list, not as sub-regions
+        in a single object in the list.
 
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
@@ -119,6 +124,10 @@ def excise_region(spectrum, region, exciser=linear_exciser):
 
     region : `~specutils.SpectralRegion`
         A `~specutils.SpectralRegion` object defining the region to excise.
+        If excising multiple regions is desired, they should be input as a
+        list of separate `~specutils.SpectralRegion` objects to
+        ``excise_regions``, not as subregions defined in a single
+        `~specutils.SpectralRegion`.
 
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
@@ -143,6 +152,12 @@ def excise_region(spectrum, region, exciser=linear_exciser):
 
     if not isinstance(region, SpectralRegion):
         raise ValueError('The region parameter must be a SpectralRegion object.')
+
+    # Raise a warning if the SpectralRegion has more than one subregion, since
+    # the handling for this is perhaps unexpected
+    warnings.warn("A SpectralRegion with subregions was provided as input. The
+            lowest subregion lower bound and highest subregion upper bound will
+            be used as the excision region.", AstropyUserWarning)
 
     #
     #  Call the exciser method
