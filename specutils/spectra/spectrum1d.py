@@ -275,7 +275,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         (like template fitting) that set this attribute when they are run on
         a spectrum.
         """
-        return self._radial_velocity/cnst.c
+        return self.spectral_axis.redshift
 
     @redshift.setter
     def redshift(self, val):
@@ -294,7 +294,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         (like template fitting) that set this attribute when they are run on
         a spectrum.
         """
-        return self._radial_velocity
+        return self.spectral_axis.radial_velocity
 
     @radial_velocity.setter
     def radial_velocity(self, val):
