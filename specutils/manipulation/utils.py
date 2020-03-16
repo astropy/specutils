@@ -53,12 +53,12 @@ def true_exciser(spectrum, region):
     new_flux = np.delete(spectrum.flux, excise_indices)
     new_spectral_axis = np.delete(spectrum.spectral_axis, excise_indices)
 
-    if spec.mask is not None:
+    if spectrum.mask is not None:
         new_mask = np.delete(spectrum.mask, excise_indices)
     else:
         new_mask = None
 
-    if spec.uncertainty is not None:
+    if spectrum.uncertainty is not None:
         new_uncertainty = np.delete(spectrum.uncertainty, excise_indices)
     else:
         new_uncertainty = None

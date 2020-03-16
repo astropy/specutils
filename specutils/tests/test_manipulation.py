@@ -11,7 +11,7 @@ from ..utils.wcs_utils import gwcs_from_array
 from ..spectra import Spectrum1D, SpectralRegion, SpectrumCollection
 from ..manipulation import snr_threshold, excise_regions, linear_exciser
 
- def test_true_exciser():
+def test_true_exciser():
     np.random.seed(84)
     spectral_axis = np.linspace(5000,5100,num=100)*u.AA
     flux = (np.random.randn(100) + 3) * u.Jy
