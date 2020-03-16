@@ -11,8 +11,8 @@ def true_exciser(spectrum, region):
     Basic spectral excise method where the spectral region defined by the
     parameter ``region`` (a `~specutils.SpectralRegion`) will be removed from
     all applicable elements of the Spectrum1D object: flux, spectral_axis,
-    mask, uncertainty. Note that if multiple subregions are defined in the
-    input SpectralRegion, all will be excised.
+    mask, and uncertainty. Note that if multiple subregions are defined in
+    ``region``, all will be excised.
 
     Other methods could be defined by the user to do other types of excision.
 
@@ -22,7 +22,7 @@ def true_exciser(spectrum, region):
         The `~specutils.Spectrum1D` object to which the excision will be applied.
 
     region : `~specutils.SpectralRegion`
-        Region to excise.
+        The region of the spectrum to remove.
 
     Returns
     -------
@@ -68,9 +68,10 @@ def true_exciser(spectrum, region):
                     spectral_axis = new_spectral_axis,
                     uncertainty = new_uncertainty,
                     mask = new_mask,
-                    wcs = spectrum.wcs, unit = spectrum.unit,
+                    wcs = spectrum.wcs,
                     velocity_convention = spectrum.velocity_convention,
-                    rest_value = spectrum.rest_value)
+                    rest_value = spectrum.rest_value,
+                    radial_velocity = spectrum.radial_velocity)
 
 def linear_exciser(spectrum, region):
     """
@@ -87,7 +88,7 @@ def linear_exciser(spectrum, region):
         The `~specutils.Spectrum1D` object to which the excision will be applied.
 
     region : `~specutils.SpectralRegion`
-        Region to excise.
+        The region of the spectrum to replace.
 
     Returns
     -------
@@ -117,17 +118,27 @@ def linear_exciser(spectrum, region):
     s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
                                                wavelengths.size-1)
 
-    flux = spectrum.flux.value
+    flux = spectrum.flux.copy()
     modified_flux = flux
     modified_flux[s:e] = np.linspace(flux[s], flux[e], modified_flux[s:e].size)
 
+    # Add the uncertainty of the two linear interpolation endpoints in
+    # quadrature and apply to the excised region.
+    if spectrum.uncertainty is not None:
+        new_uncertainty = spectrum.uncertainty.copy()
+        new_uncertainty[s:e] = np.sqrt(spectrum.uncertainty[s]**2 + spectrum.uncertainty[e]**2)
+    else:
+        new_uncertainty = None
+
     # Return a new object with the regions excised.
-    return Spectrum1D(flux=modified_flux*spectrum.flux.unit,
+    return Spectrum1D(flux=modified_flux,
                       spectral_axis=wavelengths,
-                      uncertainty=spectrum.uncertainty,
-                      wcs=spectrum.wcs, unit=spectrum.unit,
+                      uncertainty=new_uncertainty,
+                      wcs=spectrum.wcs,
+                      mask = spectrum.mask,
                       velocity_convention=spectrum.velocity_convention,
-                      rest_value=spectrum.rest_value)
+                      rest_value=spectrum.rest_value,
+                      radial_velocity = spectrum.radial_velocity)
 
 
 def excise_regions(spectrum, regions, exciser=true_exciser):
@@ -152,7 +163,7 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
-        default: linear_exciser
+        default: true_exciser
 
     Returns
     -------
@@ -197,7 +208,7 @@ def excise_region(spectrum, region, exciser=true_exciser):
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
-        default: linear_exciser
+        default: true_exciser
 
     Returns
     -------
