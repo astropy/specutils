@@ -2,7 +2,8 @@ import pytest
 import numpy as np
 from astropy import units as u
 from astropy import modeling
-from specutils.utils import QuantityModel
+from specutils.utils import QuantityModel, excise_regions, linear_exciser
+from specutils import Spectrum1D, SpectralRegion
 from ..utils.wcs_utils import refraction_index, vac_to_air, air_to_vac
 
 wavelengths = [300, 500, 1000] * u.nm
@@ -21,6 +22,26 @@ def test_quantity_model():
 
     assert uc(10*u.nm).to(u.m) == 0*u.m
 
+def test_true_exciser():
+    np.random.seed(84)
+    spectral_axis = np.linspace(5000,5100,num=100)*u.AA
+    flux = (np.random.randn(100) + 3) * u.Jy
+    spec = Spectrum1D(flux=flux, spectral_axis = spectral_axis)
+    region = SpectralRegion([(5005,5010), (5060,5065)]*u.AA)
+    excised_spec = excise_regions(spec, region)
+
+    assert len(excised_spec.spectral_axis) == len(spec.spectral_axis)-10
+    assert len(excised_spec.flux) == len(spec.flux)-10
+    assert np.isclose(excised_spec.flux.sum(), 274.54139*u.Jy, atol=0.001)
+
+def test_linear_exciser():
+    np.random.seed(84)
+    spectral_axis = np.linspace(5000,5100,num=100)*u.AA
+    flux = np.random.randn(100) * u.Jy
+    uncertainty = np.random.
+    spec = Spectrum1D(flux=flux)
+    region = SpectralRegion([(5005,5010), (5060,5065)]*u.AA)
+    excised_spec = excise_regions(spec, region, exciser = linear_exciser)
 
 @pytest.mark.parametrize("method", data_index_refraction.keys())
 def test_refraction_index(method):
