@@ -41,7 +41,7 @@ def true_exciser(spectrum, region):
 
     for subregion in region:
         #
-        # Find the indices of the wavelengths in the range ``range``
+        # Find the indices of the spectral_axis array corresponding to the subregion
         #
         wavelengths_in = (spectral_axis >= region.lower) & (spectral_axis < region.upper)
         temp_indices = np.nonzero(wavelengths_in)[0]
@@ -50,11 +50,27 @@ def true_exciser(spectrum, region):
         else:
             excise_indices = np.hstack(excise_indices, temp_indices)
 
-    spectrum.flux = np.delete(spectrum.flux, excise_indices)
-    spectrum.spectral_axis = np.delete(spectrum.spectral_axis, excise_indices)
+    new_flux = np.delete(spectrum.flux, excise_indices)
+    new_spectral_axis = np.delete(spectrum.spectral_axis, excise_indices)
 
+    if spec.mask is not None:
+        new_mask = np.delete(spectrum.mask, excise_indices)
+    else:
+        new_mask = None
 
-    return spectrum
+    if spec.uncertainty is not None:
+        new_uncertainty = np.delete(spectrum.uncertainty, excise_indices)
+    else:
+        new_uncertainty = None
+
+    # Return a new object with the regions excised.
+    return Spectrum1D(flux = new_flux,
+                    spectral_axis = new_spectral_axis,
+                    uncertainty = new_uncertainty,
+                    mask = new_mask,
+                    wcs = spectrum.wcs, unit = spectrum.unit,
+                    velocity_convention = spectrum.velocity_convention,
+                    rest_value = spectrum.rest_value)
 
 def linear_exciser(spectrum, region):
     """
