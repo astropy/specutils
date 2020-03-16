@@ -40,9 +40,7 @@ def true_exciser(spectrum, region):
     excise_indices = None
 
     for subregion in region:
-        #
         # Find the indices of the spectral_axis array corresponding to the subregion
-        #
         wavelengths_in = (spectral_axis >= region.lower) & (spectral_axis < region.upper)
         temp_indices = np.nonzero(wavelengths_in)[0]
         if excise_indices is None:
@@ -102,33 +100,31 @@ def linear_exciser(spectrum, region):
 
     """
 
-    #
-    # Find the indices of the wavelengths in the range ``range``
-    #
-
     wavelengths = spectrum.spectral_axis
-    wavelengths_in = (wavelengths >= region.lower) & (wavelengths < region.upper)
-    inclusive_indices = np.nonzero(wavelengths_in)[0]
-
-    #
-    # Now set the flux values for these indices to be a
-    # linear range
-    #
-
-    s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
-                                               wavelengths.size-1)
-
     flux = spectrum.flux.copy()
     modified_flux = flux
-    modified_flux[s:e] = np.linspace(flux[s], flux[e], modified_flux[s:e].size)
-
-    # Add the uncertainty of the two linear interpolation endpoints in
-    # quadrature and apply to the excised region.
     if spectrum.uncertainty is not None:
         new_uncertainty = spectrum.uncertainty.copy()
-        new_uncertainty[s:e] = np.sqrt(spectrum.uncertainty[s]**2 + spectrum.uncertainty[e]**2)
     else:
         new_uncertainty = None
+
+    # Need to add a check that the subregions don't overlap, since that could
+    # cause undesired results
+    for subregion in region:
+        # Find the indices of the spectral_axis array corresponding to the subregion
+        wavelengths_in = (wavelengths >= subregion.lower) & (wavelengths < subregion.upper)
+        inclusive_indices = np.nonzero(wavelengths_in)[0]
+        # Now set the flux values for these indices to be a
+        # linear range
+        s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
+                                               wavelengths.size-1)
+
+        modified_flux[s:e] = np.linspace(flux[s], flux[e], modified_flux[s:e].size)
+
+        # Add the uncertainty of the two linear interpolation endpoints in
+        # quadrature and apply to the excised region.
+        if new_uncertainty is not None:
+            new_uncertainty[s:e] = np.sqrt(spectrum.uncertainty[s]**2 + spectrum.uncertainty[e]**2)
 
     # Return a new object with the regions excised.
     return Spectrum1D(flux=modified_flux,
