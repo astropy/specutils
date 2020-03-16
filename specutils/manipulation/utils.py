@@ -6,6 +6,55 @@ from ..spectra import Spectrum1D, SpectralRegion
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
+def true_exciser(spectrum, region):
+    """
+    Basic spectral excise method where the spectral region defined by the
+    parameter ``region`` (a `~specutils.SpectralRegion`) will be removed from
+    all applicable elements of the Spectrum1D object: flux, spectral_axis,
+    mask, uncertainty. Note that if multiple subregions are defined in the
+    input SpectralRegion, all will be excised.
+
+    Other methods could be defined by the user to do other types of excision.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to which the excision will be applied.
+
+    region : `~specutils.SpectralRegion`
+        Region to excise.
+
+    Returns
+    -------
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` with the region excised.
+
+    Raises
+    ------
+    ValueError
+       In the case that ``spectrum`` and ``region`` are not the correct types.
+
+    """
+
+    wavelengths = spectrum.spectral_axis
+    excise_indices = None
+
+    for subregion in region:
+        #
+        # Find the indices of the wavelengths in the range ``range``
+        #
+        wavelengths_in = (wavelengths >= region.lower) & (wavelengths < region.upper)
+        temp_indices = np.nonzero(wavelengths_in)[0]
+        if excise_indices is None:
+            excise_indices = temp_indices
+        else:
+            excise_indices = np.hstack(excise_indices, temp_indices)
+
+    spectrum.flux = np.delete(spectrum.flux, excise_indices)
+    spectrum.spectral_axis = np.delete(spectrum.spectral_axis, excise_indices)
+
+
+    return spectrum
 
 def linear_exciser(spectrum, region):
     """
@@ -19,7 +68,7 @@ def linear_exciser(spectrum, region):
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the excision will be applied.
 
     region : `~specutils.SpectralRegion`
         Region to excise.
