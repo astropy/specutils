@@ -109,7 +109,15 @@ def linear_exciser(spectrum, region):
         new_uncertainty = None
 
     # Need to add a check that the subregions don't overlap, since that could
-    # cause undesired results
+    # cause undesired results. For now warn if there is more than one subregion
+    if len(region) > 1:
+        # Raise a warning if the SpectralRegion has more than one subregion, since
+        # the handling for this is perhaps unexpected
+        warnings.warn("A SpectralRegion with multiple subregions was provided as "
+             "input. This may lead to undesired behavior with linear_exciser if "
+             "the subregions overlap.",
+             AstropyUserWarning)
+
     for subregion in region:
         # Find the indices of the spectral_axis array corresponding to the subregion
         wavelengths_in = (wavelengths >= subregion.lower) & (wavelengths < subregion.upper)
@@ -224,13 +232,6 @@ def excise_region(spectrum, region, exciser=true_exciser):
 
     if not isinstance(region, SpectralRegion):
         raise ValueError('The region parameter must be a SpectralRegion object.')
-
-    # Raise a warning if the SpectralRegion has more than one subregion, since
-    # the handling for this is perhaps unexpected
-    warnings.warn("A SpectralRegion with multiple subregions was provided as "
-            "input. The lowest subregion lower bound and highest subregion "
-            "upper bound will be used as the excision region.",
-            AstropyUserWarning)
 
     #
     #  Call the exciser method
