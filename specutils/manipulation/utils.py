@@ -36,14 +36,14 @@ def true_exciser(spectrum, region):
 
     """
 
-    wavelengths = spectrum.spectral_axis
+    spectral_axis = spectrum.spectral_axis
     excise_indices = None
 
     for subregion in region:
         #
         # Find the indices of the wavelengths in the range ``range``
         #
-        wavelengths_in = (wavelengths >= region.lower) & (wavelengths < region.upper)
+        wavelengths_in = (spectral_axis >= region.lower) & (spectral_axis < region.upper)
         temp_indices = np.nonzero(wavelengths_in)[0]
         if excise_indices is None:
             excise_indices = temp_indices
@@ -114,7 +114,7 @@ def linear_exciser(spectrum, region):
                       rest_value=spectrum.rest_value)
 
 
-def excise_regions(spectrum, regions, exciser=linear_exciser):
+def excise_regions(spectrum, regions, exciser=true_exciser):
     """
     Method to replace the flux in the defined regions of the spectrum with
     interpolated values produced by the function given in the ``exciser``
@@ -160,7 +160,7 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
     return spectrum
 
 
-def excise_region(spectrum, region, exciser=linear_exciser):
+def excise_region(spectrum, region, exciser=true_exciser):
     """
     Method to replace the flux in the defined region of the spectrum with
     interpolated values produced by the function given in the ``exciser``
