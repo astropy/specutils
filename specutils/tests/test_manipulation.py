@@ -33,7 +33,7 @@ def test_linear_exciser():
 
     assert len(excised_spec.spectral_axis) == len(spec.spectral_axis)
     assert len(excised_spec.flux) == len(spec.flux)
-    assert np.isclose(excised_spec.flux[25], 37.4267*u.Jy, atol=0.001*u.Jy)
+    assert np.isclose(excised_spec.flux[25], 34.9864*u.Jy, atol=0.001*u.Jy)
 
 def test_snr_threshold():
 
