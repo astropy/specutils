@@ -490,3 +490,11 @@ def test_subaru_pfs_loader(tmpdir):
     assert len(spec.flux) == len(spec.spectral_axis) > 10000
     assert spec.spectral_axis.unit == u.nm
     assert spec.flux.unit == u.nJy
+
+
+@remote_access([{'id': '3733958', 'filename': '1D-c0022498-344732.fits'}])
+def test_spectrum1d_6dfgs_tabular(remote_data_path):
+    spec = Spectrum1D.read(remote_data_path)
+
+    assert spec.spectral_axis.unit == u.Unit("Angstrom")
+    assert spec.flux.unit == u.Unit("count/s")
