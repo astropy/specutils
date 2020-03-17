@@ -260,7 +260,7 @@ def _jwst_s2d_loader(filename, **kwargs):
             try:
                 flux_unit = u.Unit(hdu.header["BUNIT"])
             except (ValueError, KeyError):
-                flux_unit = u.Unit("MJy")
+                flux_unit = None
             flux = Quantity(hdu.data, unit=flux_unit)
 
             # Get the wavelength array from the GWCS object which returns a
