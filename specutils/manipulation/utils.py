@@ -100,7 +100,7 @@ def linear_exciser(spectrum, region):
 
     """
 
-    wavelengths = spectrum.spectral_axis
+    wavelengths = spectrum.spectral_axis.copy()
     flux = spectrum.flux.copy()
     modified_flux = flux
     if spectrum.uncertainty is not None:

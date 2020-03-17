@@ -21,15 +21,19 @@ def test_true_exciser():
 
     assert len(excised_spec.spectral_axis) == len(spec.spectral_axis)-10
     assert len(excised_spec.flux) == len(spec.flux)-10
-    assert np.isclose(excised_spec.flux.sum(), 274.54139*u.Jy, atol=0.001)
+    assert np.isclose(excised_spec.flux.sum(), 243.2617*u.Jy, atol=0.001*u.Jy)
 
 def test_linear_exciser():
     np.random.seed(84)
     spectral_axis = np.linspace(5000,5100,num=100)*u.AA
     flux = (np.random.rand(100)*100) * u.Jy
     spec = Spectrum1D(flux=flux, spectral_axis = spectral_axis)
-    region = SpectralRegion([(5005,5010), (5060,5065)]*u.AA)
+    region = SpectralRegion([(5020,5030)]*u.AA)
     excised_spec = excise_regions(spec, region, exciser = linear_exciser)
+
+    assert len(excised_spec.spectral_axis) == len(spec.spectral_axis)
+    assert len(excised_spec.flux) == len(spec.flux)
+    assert np.isclose(excised_spec.flux[25], 37.4267*u.Jy, atol=0.001*u.Jy)
 
 def test_snr_threshold():
 
