@@ -127,7 +127,7 @@ def linear_exciser(spectrum, region):
         s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
                                                wavelengths.size-1)
 
-        modified_flux[s:e] = np.linspace(flux[s], flux[e], modified_flux[s:e].size)
+        modified_flux[s:e+1] = np.linspace(flux[s], flux[e], modified_flux[s:e+1].size)
 
         # Add the uncertainty of the two linear interpolation endpoints in
         # quadrature and apply to the excised region.
