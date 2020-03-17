@@ -176,6 +176,7 @@ def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
 # The s2d reader tests -------------------------------
 
 def generate_wcs_transform():
+    """Create mock gwcs.WCS object for resampled s2d data"""
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
         axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
@@ -214,7 +215,7 @@ def s2d_single():
     return model
 
 
-@pytest.fixture(params=[(10, 100), (8, 100)])
+@pytest.fixture(params=[(10, 100), (8, 100), (5, 6, 100)])
 def s2d_multi(s2d_single, request):
     pytest.importorskip("jwst")
     from jwst.datamodels import SlitModel
@@ -223,12 +224,16 @@ def s2d_multi(s2d_single, request):
     shape = request.param
 
     model = s2d_single
-    model.slits.append(SlitModel(shape))
-    model.slits.append(SlitModel(shape))
+    sm = SlitModel(shape)
+    sm.data
+    model.slits.append(sm)
+    model.slits.append(sm)
     for slit in model.slits:
         slit.meta.wcs = generate_wcs_transform()
         slit.meta.wcs.bounding_box = wcs_bbox_from_shape(shape)
         slit.meta.wcsinfo.dispersion_direction = 1
+        slit.meta.bunit_data = "Jy"
+        slit.meta.bunit_err = "Jy"
 
     return model
 
@@ -238,8 +243,17 @@ def test_jwst_s2d_reader(tmpdir, s2d_single):
     model = s2d_single
     model.save(path)
 
-    spec = Spectrum1D.read(path, format="JWST s2d")
+    spec = Spectrum1D.read(path)
     assert hasattr(spec, "spectral_axis")
+    assert spec.unit == u.dimensionless_unscaled
 
-    spec = SpectrumList.read(path, format="JWST s2d multi")
-    assert hasattr(spec[0], "spectral_axis")
+
+def test_jwst_s2d_multi_reader(tmpdir, s2d_multi):
+    path = str(tmpdir.join("test.fits"))
+    model = s2d_multi
+    model.save(path)
+
+    speclist = SpectrumList.read(path)
+    assert len(speclist) == 3
+    assert hasattr(speclist[0], "spectral_axis")
+    assert speclist[1].unit == u.Jy
