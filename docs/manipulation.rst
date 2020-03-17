@@ -321,7 +321,7 @@ Shifting
 In addition to resampling, you may sometimes wish to simply shift the
 ``spectral_axis`` of a spectrum (a la the ``specshift`` iraf task).
 There is no explicit function for this because it is a basic transform of
-just the ``spectral_axis``. Therefore one can use a construct like this:
+the ``spectral_axis``. Therefore one can use a construct like this:
 
 .. code-block:: python
 
@@ -329,7 +329,7 @@ just the ``spectral_axis``. Therefore one can use a construct like this:
     >>> wavelengths = np.arange(0, 10)*u.um
     >>> flux = 100*np.abs(np.random.randn(10))*u.Jy
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
-    >>> >>> spectrum  #doctest:+ELLIPSIS
+    >>> spectrum  #doctest:+ELLIPSIS
     <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
                 163.31955247,  90.92780989,  22.69088175,  51.81322025,
                  11.70522032,  63.81487901] Jy>, spectral_axis=<Quantity [0., 1., 2., 3.,
