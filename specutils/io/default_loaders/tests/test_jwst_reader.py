@@ -4,6 +4,10 @@ from astropy.table import Table
 import astropy.units as u
 from astropy.io.registry import IORegistryError
 from astropy.utils.exceptions import AstropyUserWarning
+from astropy.modeling import models
+from astropy import coordinates as coord
+import gwcs.coordinate_frames as cf
+from gwcs.wcs import WCS
 import pytest
 
 from specutils import Spectrum1D, SpectrumList
@@ -14,7 +18,7 @@ from specutils import Spectrum1D, SpectrumList
 def create_spectrum_hdu(data_len, srctype=None, ver=1):
     """Mock a JWST x1d BinTableHDU"""
     data = np.random.random((data_len, 5))
-    table = Table(data=data,names=['WAVELENGTH', 'FLUX', 'ERROR', 'SURF_BRIGHT',
+    table = Table(data=data, names=['WAVELENGTH', 'FLUX', 'ERROR', 'SURF_BRIGHT',
         'SB_ERROR'])
 
     hdu = fits.BinTableHDU(table, name='EXTRACT1D')
@@ -171,30 +175,71 @@ def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
 
 # The s2d reader tests -------------------------------
 
+def generate_wcs_transform():
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
+        axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
+    spec = cf.SpectralFrame(name='spec', axes_order=(2,), unit=(u.micron,),
+        axes_names=('lambda',))
+    world = cf.CompositeFrame(name="world", frames=[icrs, spec])
+
+    transform = models.Mapping((0, 1, 0)) | (models.Const1D(42) & models.Const1D(42)
+        & (models.Shift(30) | models.Scale(0.1)))
+    pipeline = [(detector, transform),
+                (world, None)]
+    wcs = WCS(pipeline)
+
+    return wcs
+
+
 @pytest.fixture
 def s2d_single():
-    jwst = pytest.importorskip("jwst")
+    pytest.importorskip("jwst")
     from jwst.datamodels import MultiSlitModel, SlitModel
+    from jwst.assign_wcs.util import wcs_bbox_from_shape
+
+    shape = (10, 100)
 
     model = MultiSlitModel()
-    model.slits.append(SlitModel((10, 1000)))
+    sm = SlitModel(shape)
+    sm.data
+    model.slits.append(sm)
+    for slit in model.slits:
+        slit.meta.wcs = generate_wcs_transform()
+        slit.meta.wcs.bounding_box = wcs_bbox_from_shape(shape)
+        slit.meta.wcsinfo.dispersion_direction = 1
+
+    model.meta.telescope = "JWST"
 
     return model
 
 
-@pytest.fixture
-def s2d_multi(s2d_single):
-    jwst = pytest.importorskip("jwst")
-    from jwst.datamodels import MultiSlitModel, SlitModel
+@pytest.fixture(params=[(10, 100), (8, 100)])
+def s2d_multi(s2d_single, request):
+    pytest.importorskip("jwst")
+    from jwst.datamodels import SlitModel
+    from jwst.assign_wcs.util import wcs_bbox_from_shape
+
+    shape = request.param
 
     model = s2d_single
-    model.slits.append(SlitModel((10, 1000)))
-    model.slits.append(SlitModel((10, 1000)))
+    model.slits.append(SlitModel(shape))
+    model.slits.append(SlitModel(shape))
+    for slit in model.slits:
+        slit.meta.wcs = generate_wcs_transform()
+        slit.meta.wcs.bounding_box = wcs_bbox_from_shape(shape)
+        slit.meta.wcsinfo.dispersion_direction = 1
 
     return model
-
 
 
 def test_jwst_s2d_reader(tmpdir, s2d_single):
+    path = str(tmpdir.join("test.fits"))
     model = s2d_single
-    assert model
+    model.save(path)
+
+    spec = Spectrum1D.read(path, format="JWST s2d")
+    assert hasattr(spec, "spectral_axis")
+
+    spec = SpectrumList.read(path, format="JWST s2d multi")
+    assert hasattr(spec[0], "spectral_axis")

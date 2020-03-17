@@ -23,11 +23,8 @@ def identify_jwst_x1d_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist
-            and "SCI" not in hdulist):
-            return True
-        else:
-            return False
+        return (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist
+            and "SCI" not in hdulist)
 
 
 def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
@@ -36,10 +33,7 @@ def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if is_jwst and ('EXTRACT1D', 2) in hdulist and "SCI" not in hdulist:
-            return True
-        else:
-            return False
+        return is_jwst and ('EXTRACT1D', 2) in hdulist and "SCI" not in hdulist
 
 
 def identify_jwst_s2d_fits(origin, *args, **kwargs):
@@ -48,11 +42,8 @@ def identify_jwst_s2d_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if (is_jwst and "SCI" in hdulist and ("SCI", 2) not in hdulist
-            and "EXTRACT1D" not in hdulist):
-            return True
-        else:
-            return False
+        return (is_jwst and "SCI" in hdulist and ("SCI", 2) not in hdulist
+            and "EXTRACT1D" not in hdulist)
 
 
 def identify_jwst_s2d_multi_fits(origin, *args, **kwargs):
@@ -61,10 +52,7 @@ def identify_jwst_s2d_multi_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        if is_jwst and ("SCI", 2) in hdulist and "EXTRACT1D" not in hdulist:
-            return True
-        else:
-            return False
+        return is_jwst and ("SCI", 2) in hdulist and "EXTRACT1D" not in hdulist
 
 
 def _identify_jwst_fits(filename):
@@ -73,12 +61,7 @@ def _identify_jwst_fits(filename):
     """
     try:
         with fits.open(filename, memmap=False) as hdulist:
-            # This is a near-guarantee that we have a JWST data product
-            if 'ASDF' not in hdulist:
-                return False
-            if not hdulist[0].header["TELESCOP"] == ("JWST"):
-                return False
-        return True
+            return "ASDF" in hdulist and hdulist[0].header["TELESCOP"] == "JWST"
     # This probably means we didn't have a FITS file
     except Exception:
         return False
@@ -92,7 +75,7 @@ def jwst_x1d_single_loader(filename, **kwargs):
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to the FITS file
 
     Returns
@@ -116,7 +99,7 @@ def jwst_x1d_multi_loader(filename, **kwargs):
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to the FITS file
 
     Returns
@@ -132,7 +115,7 @@ def _jwst_x1d_loader(filename, **kwargs):
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to the FITS file
 
     Returns
@@ -194,11 +177,11 @@ def _jwst_x1d_loader(filename, **kwargs):
             extensions=['fits'])
 def jwst_s2d_single_loader(filename, **kwargs):
     """
-    Loader for JWST s2d 2D rectified spectral data in FITS format
+    Loader for JWST s2d 2D rectified spectral data in FITS format.
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to the FITS file
 
     Returns
@@ -220,11 +203,11 @@ def jwst_s2d_single_loader(filename, **kwargs):
             extensions=['fits'])
 def jwst_s2d_multi_loader(filename, **kwargs):
     """
-    Loader for JWST s2d 2D rectified spectral data in FITS format
+    Loader for JWST s2d 2D rectified spectral data in FITS format.
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to the FITS file
 
     Returns
@@ -237,11 +220,11 @@ def jwst_s2d_multi_loader(filename, **kwargs):
 
 def _jwst_s2d_loader(filename, **kwargs):
     """
-    Loader for JWST s2d 2D rectified spectral data in FITS format
+    Loader for JWST s2d 2D rectified spectral data in FITS format.
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to the FITS file
 
     Returns
@@ -293,7 +276,7 @@ def _jwst_s2d_loader(filename, **kwargs):
             # Make sure the dispersion axis is the same for every spatial axis
             if not (lam == lam[dispaxis]).all():
                 raise RuntimeError("This 2D or 3D spectrum is not rectified "
-                    "and cannot be loaded into a Spectrum1D object")
+                    "and cannot be loaded into a Spectrum1D object.")
             wavelength = Quantity(lam[dispaxis], unit=lam_unit)
 
             # Merge primary and slit headers and dump into meta
