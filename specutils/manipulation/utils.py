@@ -8,11 +8,11 @@ __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
 def true_exciser(spectrum, region):
     """
-    Basic spectral excise method where the spectral region defined by the
-    parameter ``region`` (a `~specutils.SpectralRegion`) will be removed from
-    all applicable elements of the Spectrum1D object: flux, spectral_axis,
-    mask, and uncertainty. Note that if multiple subregions are defined in
-    ``region``, all will be excised.
+    Basic spectral excise method where the array elements in the spectral
+    region defined by the parameter ``region`` (a `~specutils.SpectralRegion`)
+    will be deleted from all applicable elements of the Spectrum1D object:
+    flux, spectral_axis, mask, and uncertainty. If multiple subregions are
+    defined in ``region``, all the subregions will be excised.
 
     Other methods could be defined by the user to do other types of excision.
 
@@ -76,7 +76,7 @@ def linear_exciser(spectrum, region):
     Basic spectral excise method where the spectral region defined by the
     parameter ``region`` (a `~specutils.SpectralRegion`) will result
     in the flux between those regions set to a linear ramp of the
-    two points immediately before and after the start and end regions.
+    two points immediately before and after the start and end of the region.
 
     Other methods could be defined by the user to do other types of excision.
 
