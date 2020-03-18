@@ -41,7 +41,7 @@ def _normalize(observed_spectrum, template_spectrum):
 
 def template_correlate(observed_spectrum, template_spectrum,
                        wblue=None, wred=None, delta_log_wavelength=None,
-                       alpha=0.5, resample=True, lag_units=_KMS):
+                       apodization_window=0.5, resample=True, lag_units=_KMS):
     """
     Compute cross-correlation of the observed and template spectra.
 
@@ -77,9 +77,12 @@ def template_correlate(observed_spectrum, template_spectrum,
     delta_log_wavelength: float
         Log-wavelength step to use to build the log-wavelength
         scale. If None, use limits defined as explained above.
-    alpha: float
-        Apodization parameter for Tukey window (`~scipy.signal.windows.tukey`) -
-        in units of pixels.
+    apodization_window: float, callable, or None
+        If a callable, will be treated as a window function for apodization of
+        the cross-correlation (should behave like a `~scipy.signal.windows`
+        window function, with ``sym=True``). If a float, will be treated as the
+        ``alpha`` parameter for a Tukey window (`~scipy.signal.windows.tukey`),
+        in units of pixels. If None, no apodization will be performed
     resample: bool
         Re-sample spectrum and template into log-wavelength?
     lag_units: `~astropy.units.Unit`
@@ -99,7 +102,7 @@ def template_correlate(observed_spectrum, template_spectrum,
                                                                template_spectrum,
                                                                wblue, wred,
                                                                delta_log_wavelength,
-                                                               resample, alpha)
+                                                               resample, apodization_window)
     # Normalize template
     normalization = _normalize(observed_log_spectrum, template_log_spectrum)
 
@@ -133,7 +136,7 @@ def template_correlate(observed_spectrum, template_spectrum,
 
 
 def _preprocess(spectrum, template, wblue, wred, delta_log_wavelength,
-                resample, alpha):
+                resample, apodization_window):
     if resample:
         # Build an equally-spaced log-wavelength array based on
         # the input and template spectrum's limit wavelengths and
@@ -197,7 +200,12 @@ def _preprocess(spectrum, template, wblue, wred, delta_log_wavelength,
         clean_template = template
 
     # Apodization. Must be performed after resampling.
-    clean_spectrum = clean_spectrum * tukey(len(clean_spectrum.wavelength), alpha=alpha)
-    clean_template = clean_template * tukey(len(clean_template.wavelength), alpha=alpha)
+    if apodization_window is not None:
+        if not callable(apodization_window, float):
+            window = lambda x: tukey(x, alpha=apodization_window)
+        else:
+            window = apodization_window
+    clean_spectrum = clean_spectrum * window(len(clean_spectrum.wavelength))
+    clean_template = clean_template * window(len(clean_template.wavelength))
 
     return clean_spectrum, clean_template
