@@ -261,7 +261,7 @@ value set.
 
 .. code-block:: python
 
-    >> from specutils.analysis import correlation
+    >>> from specutils.analysis import correlation
     >>> size = 200
     >>> spec_axis = np.linspace(4500., 6500., num=size) * u.AA
     >>> f1 = np.random.randn(size)*0.5 * u.Jy

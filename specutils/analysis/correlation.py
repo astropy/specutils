@@ -1,13 +1,13 @@
+import astropy.units as u
 import numpy as np
-
+from astropy import constants as const
+from astropy.units import Quantity
 from scipy.signal.windows import tukey
 
-import astropy.units as u
-from astropy.units import Quantity
-from astropy import constants as const
-
-from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation import LinearInterpolatedResampler
+from ..spectra.spectrum1d import Spectrum1D
+
+__all__ = ['template_correlate']
 
 
 def _normalize(observed_spectrum, template_spectrum):
