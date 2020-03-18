@@ -121,11 +121,11 @@ def linear_exciser(spectrum, region):
     for subregion in region:
         # Find the indices of the spectral_axis array corresponding to the subregion
         region_mask = (spectral_axis >= subregion.lower) & (spectral_axis < subregion.upper)
-        inclusive_indices = np.nonzero(wavelengths_in)[0]
+        inclusive_indices = np.nonzero(region_mask)[0]
         # Now set the flux values for these indices to be a
         # linear range
         s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
-                                               wavelengths.size-1)
+                                               spectral_axis.size-1)
 
         modified_flux[s:e+1] = np.linspace(flux[s], flux[e], modified_flux[s:e+1].size)
 
@@ -147,7 +147,7 @@ def linear_exciser(spectrum, region):
 
 def excise_regions(spectrum, regions, exciser=true_exciser):
     """
-    Method to remove or replace the flux in the defined regions of the spectrum 
+    Method to remove or replace the flux in the defined regions of the spectrum
     depending on the function provided in the ``exciser`` argument.
 
     Parameters
@@ -192,7 +192,7 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
 
 def excise_region(spectrum, region, exciser=true_exciser):
     """
-    Method to remove or replace the flux in the defined regions of the spectrum 
+    Method to remove or replace the flux in the defined regions of the spectrum
     depending on the function provided in the ``exciser`` argument.
 
     Parameters
