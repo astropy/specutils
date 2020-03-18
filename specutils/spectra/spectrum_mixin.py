@@ -184,8 +184,8 @@ class OneDSpectrumMixin:
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
         # if redshift/rv is present, apply it:
-        if self._radial_velocity is not None:
-            new_data += self.radial_velocity
+        if self.spectral_axis.radial_velocity is not None:
+            new_data += self.spectral_axis.radial_velocity
 
         return new_data
 

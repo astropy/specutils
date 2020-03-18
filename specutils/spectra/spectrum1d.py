@@ -118,7 +118,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     if a is not None:
                         raise ValueError("Cannot separately set redshift or radial_velocity if "
                                          "a SpectralCoord object is input to spectral_axis")
-                        
+
                 self._spectral_coord = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
@@ -169,7 +169,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         # set redshift after super() - necessary because the shape-checking
         # requires that the flux be initialized
-        
+
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
@@ -279,10 +279,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @redshift.setter
     def redshift(self, val):
-        if val is None:
-            self._radial_velocity = None
-        else:
-            self.radial_velocity = val * cnst.c
+        new_spec_coord = self.spectral_axis.with_redshift(val)
+        self._spectral_coord = new_spec_coord
 
     @property
     def radial_velocity(self):
@@ -298,21 +296,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @radial_velocity.setter
     def radial_velocity(self, val):
-        if val is None:
-            self._radial_velocity = None
-        else:
+        if val is not None:
             if not val.unit.is_equivalent(u.km/u.s):
                 raise u.UnitsError('radial_velocity must be a velocity')
 
-            # the trick below checks if the two shapes given are broadcastable onto
-            # each other. See https://stackoverflow.com/questions/47243451/checking-if-two-arrays-are-broadcastable-in-python
-            input_shape = val.shape
-            flux_shape = self.flux.shape[:-1]
-            if not all((m == n) or (m == 1) or (n == 1)
-                   for m, n in zip(input_shape[::-1], flux_shape)):
-                raise ValueError("radial_velocity or redshift must have shape that "
-                                 "is compatible with this spectrum's flux array")
-            self._radial_velocity = val
+        new_spectral_coord = self.spectral_axis.with_radial_velocity(val)
+        self._spectral_coord = new_spectral_coord
 
     def __add__(self, other):
         if not isinstance(other, NDDataRef):
