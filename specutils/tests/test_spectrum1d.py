@@ -95,9 +95,9 @@ def test_create_implicit_wcs_with_spectral_unit():
 
 def test_create_with_spectral_coord():
 
-    spectral_coord = SpectralCoord(np.arange(5100, 5150)*u.AA, radial_velocity = u.Quantity(1000.0, "km/s"))
+    spectral_coord = SpectralCoord(np.arange(5100, 5150)*u.AA, radial_velocity=u.Quantity(1000.0, "km/s"))
     flux = np.random.randn(50)*u.Jy
-    spec = Spectrum1D(spectral_axis = spectral_coord, flux = flux)
+    spec = Spectrum1D(spectral_axis = spectral_coord, flux=flux)
 
     assert spec.radial_velocity == u.Quantity(1000.0, "km/s")
     assert isinstance(spec.spectral_axis, SpectralCoord)

@@ -75,8 +75,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         # Ensure that only one or neither of these parameters is set
         if redshift is not None and radial_velocity is not None:
-            raise ValueError('cannot set both radial_velocity and redshift at '
-                             'the same time.')
+            raise ValueError("Cannot set both radial_velocity and redshift at "
+                             "the same time.")
 
         # In cases of slicing, new objects will be initialized with `data`
         # instead of ``flux``. Ensure we grab the `data` argument.
@@ -117,8 +117,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 for a in [radial_velocity, redshift]:
                     if a is not None:
                         raise ValueError("Cannot separately set redshift or radial_velocity if "
-                                        "a SpectralCoord object is input to spectral_axis")
-                        break
+                                         "a SpectralCoord object is input to spectral_axis")
+                        
                 self._spectral_coord = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
@@ -169,7 +169,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         # set redshift after super() - necessary because the shape-checking
         # requires that the flux be initialized
-        self.radial_velocity = self._spectral_coord.radial_velocity
+        
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
