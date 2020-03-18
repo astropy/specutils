@@ -378,8 +378,7 @@ def test_str():
     # Test string representation with single-dimensional flux
     spec_single_flux = Spectrum1D([1] * u.Jy, [0] * u.nm)
     result = str(spec_single_flux)
-    print(spec_single_flux.spectral_axis)
     assert result == \
 """Spectrum1D (length=1)
 flux:             [ 1.0 Jy ],  mean=1.0 Jy
-spectral axis:    [ nan nm ],  mean=nan nm"""
+spectral axis:    [ 0.0 nm ],  mean=0.0 nm"""
