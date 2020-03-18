@@ -215,7 +215,7 @@ def s2d_single():
     return model
 
 
-@pytest.fixture(params=[(10, 100), (8, 100), (5, 6, 100)])
+@pytest.fixture(params=[(10, 100), (8, 100)])
 def s2d_multi(s2d_single, request):
     pytest.importorskip("jwst")
     from jwst.datamodels import SlitModel
