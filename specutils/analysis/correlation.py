@@ -9,6 +9,8 @@ from ..spectra.spectrum1d import Spectrum1D
 
 __all__ = ['template_correlate']
 
+_KMS = u.Unit('km/s')  # for use below without having to create a composite unit
+
 
 def _normalize(observed_spectrum, template_spectrum):
     """
@@ -39,7 +41,7 @@ def _normalize(observed_spectrum, template_spectrum):
 
 def template_correlate(observed_spectrum, template_spectrum,
                        wblue=None, wred=None, delta_log_wavelength=None,
-                       alpha=0.5, resample=True, lag_units=u.Unit('km/s')):
+                       alpha=0.5, resample=True, lag_units=_KMS):
     """
     Compute cross-correlation of the observed and template spectra.
 
@@ -75,13 +77,14 @@ def template_correlate(observed_spectrum, template_spectrum,
     delta_log_wavelength: float
         Log-wavelength step to use to build the log-wavelength
         scale. If None, use limits defined as explained above.
-    alpha: float, default=20
-        Apodization parameter (`~scipy.signal.windows.tukey`).
-    resample: Boolean
+    alpha: float
+        Apodization parameter for Tukey window (`~scipy.signal.windows.tukey`) -
+        in units of pixels.
+    resample: bool
         Re-sample spectrum and template into log-wavelength?
     lag_units: `~astropy.units.Unit`
-        Default is 'km/s'. To output the lags in redshift,
-        use ``u.dimensionless_unscaled`` instead.
+        Must be a unit with velocity physical type for lags in velocity. To
+        output the lags in redshift, use ``u.dimensionless_unscaled``.
 
     Returns
     -------
@@ -119,10 +122,12 @@ def template_correlate(observed_spectrum, template_spectrum,
     deltas = (np.array(range(len(corr))) - len(corr)/2 + 0.5) * delta_log_wave
     lags = np.power(10., deltas) - 1.
 
-    if lag_units == u.dimensionless_unscaled:
+    if u.dimensionless_unscaled.is_equivalent(lag_units):
         lags = Quantity(lags, u.dimensionless_unscaled)
-    else:
+    elif _KMS.is_equivalent(lag_units):
         lags = lags * const.c.to(lag_units)
+    else:
+        raise u.UnitsError('lag_units must be either velocity or dimensionless')
 
     return corr * u.dimensionless_unscaled, lags
 
