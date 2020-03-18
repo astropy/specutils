@@ -331,17 +331,17 @@ the ``spectral_axis``. Therefore one can use a construct like this:
     >>> flux = 100 * np.abs(np.random.randn(10)) * u.Jy
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     >>> spectrum  #doctest:+ELLIPSIS
-    <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
-                163.31955247,  90.92780989,  22.69088175,  51.81322025,
-                 11.70522032,  63.81487901] Jy>, spectral_axis=<Quantity [0., 1., 2., 3.,
-                 4., 5., 6., 7., 8., 9.] um>)>
+    <Spectrum1D(flux=<Quantity [ 49.6714153 ,  13.82643012,  64.76885381, 152.30298564,
+                23.41533747,  23.41369569, 157.92128155,  76.74347292,
+                46.94743859,  54.25600436] Jy>, spectral_axis=<Quantity [0., 1., 2., 3.,
+                4., 5., 6., 7., 8., 9.] um>)>
     >>> shift = 12300 * u.AA
     >>> new_spec = Spectrum1D(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
     >>> new_spec #doctest:+ELLIPSIS
-    <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
-               163.31955247,  90.92780989,  22.69088175,  51.81322025,
-               11.70522032,  63.81487901] Jy>, spectral_axis=<Quantity [ 1.23,  2.23,  3.23,
-               4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
+    <Spectrum1D(flux=<Quantity [ 49.6714153 ,  13.82643012,  64.76885381, 152.30298564,
+                23.41533747,  23.41369569, 157.92128155,  76.74347292,
+                46.94743859,  54.25600436] Jy>, spectral_axis=<Quantity [ 1.23,  2.23,  3.23,
+                4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
 
 
 Reference/API
