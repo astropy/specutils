@@ -326,17 +326,17 @@ the ``spectral_axis``. Therefore one can use a construct like this:
 .. code-block:: python
 
     >>> from specutils import Spectrum1D
-    >>> wavelengths = np.arange(0, 10)*u.um
-    >>> flux = 100*np.abs(np.random.randn(10))*u.Jy
+    >>> np.random.seed(42)
+    >>> wavelengths = np.arange(0, 10) * u.um
+    >>> flux = 100 * np.abs(np.random.randn(10)) * u.Jy
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     >>> spectrum  #doctest:+ELLIPSIS
     <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
                 163.31955247,  90.92780989,  22.69088175,  51.81322025,
                  11.70522032,  63.81487901] Jy>, spectral_axis=<Quantity [0., 1., 2., 3.,
                  4., 5., 6., 7., 8., 9.] um>)>
-    >>> wunit = spectrum.spectral_axis.unit
-    >>> shift = 1.23
-    >>> new_spec = Spectrum1D(spectral_axis=(spectrum.spectral_axis.value + shift) * wunit, flux=spectrum.flux)
+    >>> shift = 12300 * u.AA
+    >>> new_spec = Spectrum1D(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
     >>> new_spec #doctest:+ELLIPSIS
     <Spectrum1D(flux=<Quantity [ 31.65751688, 115.6368968 , 118.58240303, 186.46500763,
                163.31955247,  90.92780989,  22.69088175,  51.81322025,
