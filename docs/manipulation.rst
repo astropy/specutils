@@ -315,6 +315,35 @@ and True elsewhere. It is this way to be consistent with ``astropy.nddata``.
 .. note:: The mask attribute is the only attribute modified by ``snr_threshold()``. To
              retrieve the masked flux data use ``spectrum.masked.flux_masked``.
 
+Shifting
+--------
+
+In addition to resampling, you may sometimes wish to simply shift the
+``spectral_axis`` of a spectrum (a la the ``specshift`` iraf task).
+There is no explicit function for this because it is a basic transform of
+the ``spectral_axis``. Therefore one can use a construct like this:
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+    >>> np.random.seed(42)
+    >>> wavelengths = np.arange(0, 10) * u.um
+    >>> flux = 100 * np.abs(np.random.randn(10)) * u.Jy
+    >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    >>> spectrum  #doctest:+ELLIPSIS
+    <Spectrum1D(flux=<Quantity [ 49.6714153 ,  13.82643012,  64.76885381, 152.30298564,
+                23.41533747,  23.41369569, 157.92128155,  76.74347292,
+                46.94743859,  54.25600436] Jy>, spectral_axis=<Quantity [0., 1., 2., 3.,
+                4., 5., 6., 7., 8., 9.] um>)>
+    >>> shift = 12300 * u.AA
+    >>> new_spec = Spectrum1D(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
+    >>> new_spec #doctest:+ELLIPSIS
+    <Spectrum1D(flux=<Quantity [ 49.6714153 ,  13.82643012,  64.76885381, 152.30298564,
+                23.41533747,  23.41369569, 157.92128155,  76.74347292,
+                46.94743859,  54.25600436] Jy>, spectral_axis=<Quantity [ 1.23,  2.23,  3.23,
+                4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
+
+
 Reference/API
 -------------
 
