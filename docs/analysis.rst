@@ -48,8 +48,8 @@ spectrum:
 
 
 A second method to calculate SNR does not require the uncertainty defined
-on the `~specutils.Spectrum1D` object. This computes the signal to noise 
-ratio DER_SNR following the definition set forth by the Spectral 
+on the `~specutils.Spectrum1D` object. This computes the signal to noise
+ratio DER_SNR following the definition set forth by the Spectral
 Container Working Group of ST-ECF, MAST and CADC. This is based on the
 code at http://www.stecf.org/software/ASTROsoft/DER_SNR/.
 
@@ -61,11 +61,11 @@ code at http://www.stecf.org/software/ASTROsoft/DER_SNR/.
     >>> snr_derived(noisy_gaussian, SpectralRegion(4*u.GHz, 6*u.GHz))  # doctest:+FLOAT_CMP
     <Quantity 40.53528208761309>
 
-The conditions on the data for this implementation for it to be an unbiased estimator of the SNR 
+The conditions on the data for this implementation for it to be an unbiased estimator of the SNR
 are strict.  In particular:
 
   * the noise is uncorrelated in wavelength bins spaced two pixels apart
-  * for large wavelength regions, the signal over the scale of 5 or more pixels can be approximated by a straight line 
+  * for large wavelength regions, the signal over the scale of 5 or more pixels can be approximated by a straight line
 
 
 Line Flux Estimates
@@ -164,7 +164,7 @@ Each of the width analysis functions are applied to this spectrum below:
    <Quantity 89.99999455 GHz>
 
 
-Template Comparison
+Template comparison
 -------------------
 
 The ~`specutils.analysis.template_comparison.template_match` function takes an
@@ -223,6 +223,31 @@ An example of how to do template matching with an unknown redshift is:
    >>> observed_spectrum = Spectrum1D(spectral_axis=spec_axis*(1+observed_redshift), flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
    >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
    >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method=resample_method, redshift=rs_values) # doctest:+FLOAT_CMP
+
+
+Dust extinction
+---------------
+
+Dust extinction can be applied to Spectrum1D instances via their internal arrays, using
+the ``dust_extinction`` package (http://dust-extinction.readthedocs.io/en/latest)
+
+Below is an example of how to apply extinction.
+
+.. code-block:: python
+
+    from astropy.modeling.blackbody import blackbody_lambda
+    from dust_extinction.parameter_averages import F99
+
+    wave = np.logspace(np.log10(1000), np.log10(3e4), num=10) * u.AA
+    flux = blackbody_lambda(wave, 10000 * u.K)
+    spec = Spectrum1D(spectral_axis=wave, flux=flux)
+
+    # define the model
+    ext = F99(Rv=3.1)
+
+    # extinguish (redden) the spectrum
+    flux_ext = spec.flux * ext.extinguish(spec.spectral_axis, Ebv=0.5)
+    spec_ext = Spectrum1D(spectral_axis=wave, flux=flux_ext)
 
 
 Reference/API
