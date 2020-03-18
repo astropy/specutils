@@ -55,14 +55,13 @@ def template_correlate(observed_spectrum, template_spectrum,
 
     As for the wavelength step, the function uses either the smallest
     wavelength interval found in the observed spectrum, or takes
-    it from the `delta_log_wavelength` parameter.
+    it from the ``delta_log_wavelength`` parameter.
 
     After re-sampling into log-wavelength, both observed and template
     spectra are apodized by a Tukey window in order to minimize edge
     and consequent non-periodicity effects and thus decrease
     high-frequency power in the correlation function. To turn off the
     apodization, use alpha=0.
-
 
     Parameters
     ----------
@@ -72,17 +71,17 @@ def template_correlate(observed_spectrum, template_spectrum,
         The template spectrum, which will be correlated with
         the observed spectrum.
     wblue, wred: float
-        Wavelength limits to include in the correlation
+        Wavelength limits to include in the correlation.
     delta_log_wavelength: float
         Log-wavelength step to use to build the log-wavelength
         scale. If None, use limits defined as explained above.
-    alhpa: float, default=20.
-        Apodization parameter (`~scipy.signal.windows.tukey`)
+    alpha: float, default=20
+        Apodization parameter (`~scipy.signal.windows.tukey`).
     resample: Boolean
         Re-sample spectrum and template into log-wavelength?
     lag_units: `~astropy.units.Unit`
         Default is 'km/s'. To output the lags in redshift,
-        use `u.dimensionless_unscaled` instead
+        use ``u.dimensionless_unscaled`` instead.
 
     Returns
     -------
@@ -125,10 +124,11 @@ def template_correlate(observed_spectrum, template_spectrum,
     else:
         lags = lags * const.c.to(lag_units)
 
-    return (corr * u.dimensionless_unscaled, lags)
+    return corr * u.dimensionless_unscaled, lags
 
 
-def _preprocess(spectrum, template, wblue, wred, delta_log_wavelength, resample, alpha):
+def _preprocess(spectrum, template, wblue, wred, delta_log_wavelength,
+                resample, alpha):
     if resample:
         # Build an equally-spaced log-wavelength array based on
         # the input and template spectrum's limit wavelengths and

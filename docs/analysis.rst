@@ -254,7 +254,7 @@ Template Cross-correlation
 --------------------------
 
 The cross-correlation function between an observed spectrum and a template spectrum that both share a common spectral
-axis can be calculated with the function `~template_correlate` in the `specutils.analysis.correlation` module.
+axis can be calculated with the function `~template_correlate` in the `~specutils.analysis` module.
 
 An example of how to get the cross correlation follows. Note that the observed spectrum must have a rest wavelength
 value set.
