@@ -15,7 +15,7 @@ def test_true_exciser():
     np.random.seed(84)
     spectral_axis = np.linspace(5000,5100,num=100)*u.AA
     flux = (np.random.randn(100) + 3) * u.Jy
-    spec = Spectrum1D(flux=flux, spectral_axis = spectral_axis)
+    spec = Spectrum1D(flux=flux, spectral_axis=spectral_axis)
     region = SpectralRegion([(5005,5010), (5060,5065)]*u.AA)
     excised_spec = excise_regions(spec, region)
 
