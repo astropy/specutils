@@ -9,6 +9,7 @@ from .conftest import remote_access
 from ..spectra import Spectrum1D
 from ..spectra.spectral_coordinate import SpectralCoord
 
+
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
                       flux=[]*u.Jy)
@@ -93,6 +94,7 @@ def test_create_implicit_wcs_with_spectral_unit():
     assert pix2world.size == 5
     assert isinstance(pix2world, np.ndarray)
 
+
 def test_create_with_spectral_coord():
 
     spectral_coord = SpectralCoord(np.arange(5100, 5150)*u.AA, radial_velocity=u.Quantity(1000.0, "km/s"))
@@ -102,6 +104,7 @@ def test_create_with_spectral_coord():
     assert spec.radial_velocity == u.Quantity(1000.0, "km/s")
     assert isinstance(spec.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.size == 50
+
 
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
