@@ -175,8 +175,9 @@ def test_extract_region_mismatched_units():
 def test_linear_excise_invert_from_spectrum():
     spec = Spectrum1D(flux=np.random.sample(100) * u.Jy,
                       spectral_axis=np.arange(100) * u.AA)
-    inc_regs = SpectralRegion(80 * u.AA, 90 * u.AA) + \
-               SpectralRegion(50 * u.AA, 60 * u.AA)
+    inc_regs = SpectralRegion(0 * u.AA, 50 * u.AA) + \
+               SpectralRegion(60 * u.AA, 80 * u.AA) + \
+               SpectralRegion(90 * u.AA, 110 * u.AA)
     exc_regs = inc_regs.invert_from_spectrum(spec)
 
     excised_spec = linear_exciser(spec, exc_regs)

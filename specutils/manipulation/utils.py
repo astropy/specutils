@@ -1,26 +1,28 @@
 import numpy as np
+import warnings
 
+from astropy.utils.exceptions import AstropyUserWarning
 from ..spectra import Spectrum1D, SpectralRegion
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
-
-def linear_exciser(spectrum, region):
+def true_exciser(spectrum, region):
     """
-    Basic spectral excise method where the spectral region defined by the
-    2-tuple parameter ``region`` (start and end wavelengths) will result
-    in the flux between those regions set to a linear ramp of the
-    two points immediately before and after the start and end regions.
+    Basic spectral excise method where the array elements in the spectral
+    region defined by the parameter ``region`` (a `~specutils.SpectralRegion`)
+    will be deleted from all applicable elements of the Spectrum1D object:
+    flux, spectral_axis, mask, and uncertainty. If multiple subregions are
+    defined in ``region``, all the subregions will be excised.
 
     Other methods could be defined by the user to do other types of excision.
 
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the excision will be applied.
 
     region : `~specutils.SpectralRegion`
-        Region to excise.
+        The region of the spectrum to remove.
 
     Returns
     -------
@@ -34,56 +36,137 @@ def linear_exciser(spectrum, region):
 
     """
 
-    #
-    # Find the indices of the wavelengths in the range ``range``
-    #
+    spectral_axis = spectrum.spectral_axis
+    excise_indices = None
 
-    wavelengths = spectrum.spectral_axis
-    wavelengths_in = (wavelengths >= region.lower) & (wavelengths < region.upper)
-    inclusive_indices = np.nonzero(wavelengths_in)[0]
+    for subregion in region:
+        # Find the indices of the spectral_axis array corresponding to the subregion
+        region_mask = (spectral_axis >= region.lower) & (spectral_axis < region.upper)
+        temp_indices = np.nonzero(region_mask)[0]
+        if excise_indices is None:
+            excise_indices = temp_indices
+        else:
+            excise_indices = np.hstack(excise_indices, temp_indices)
 
-    #
-    # Now set the flux values for these indices to be a
-    # linear range
-    #
+    new_flux = np.delete(spectrum.flux, excise_indices)
+    new_spectral_axis = np.delete(spectrum.spectral_axis, excise_indices)
 
-    s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
-                                               wavelengths.size-1)
+    if spectrum.mask is not None:
+        new_mask = np.delete(spectrum.mask, excise_indices)
+    else:
+        new_mask = None
 
-    flux = spectrum.flux.value
-    modified_flux = flux
-    modified_flux[s:e] = np.linspace(flux[s], flux[e], modified_flux[s:e].size)
+    if spectrum.uncertainty is not None:
+        new_uncertainty = np.delete(spectrum.uncertainty, excise_indices)
+    else:
+        new_uncertainty = None
 
     # Return a new object with the regions excised.
-    return Spectrum1D(flux=modified_flux*spectrum.flux.unit,
-                      spectral_axis=wavelengths,
-                      uncertainty=spectrum.uncertainty,
-                      wcs=spectrum.wcs, unit=spectrum.unit,
+    return Spectrum1D(flux=new_flux,
+                      spectral_axis=new_spectral_axis,
+                      uncertainty=new_uncertainty,
+                      mask=new_mask,
+                      wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
-                      rest_value=spectrum.rest_value)
+                      rest_value=spectrum.rest_value,
+                      radial_velocity=spectrum.radial_velocity)
 
-
-def excise_regions(spectrum, regions, exciser=linear_exciser):
+def linear_exciser(spectrum, region):
     """
-    Apply a convolution based smoothing to the spectrum. The kernel must be one
-    of the 1D kernels defined in `astropy.convolution`.
+    Basic spectral excise method where the spectral region defined by the
+    parameter ``region`` (a `~specutils.SpectralRegion`) will result
+    in the flux between those regions set to a linear ramp of the
+    two points immediately before and after the start and end of the region.
 
-    This method can be used along but also is used by other specific methods below.
+    Other methods could be defined by the user to do other types of excision.
 
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the excision will be applied.
+
+    region : `~specutils.SpectralRegion`
+        The region of the spectrum to replace.
+
+    Returns
+    -------
+    spectrum : `~specutils.Spectrum1D`
+        Output `~specutils.Spectrum1D` with the region excised.
+
+    Raises
+    ------
+    ValueError
+       In the case that ``spectrum`` and ``region`` are not the correct types.
+
+    """
+
+    spectral_axis = spectrum.spectral_axis.copy()
+    flux = spectrum.flux.copy()
+    modified_flux = flux
+    if spectrum.uncertainty is not None:
+        new_uncertainty = spectrum.uncertainty.copy()
+    else:
+        new_uncertainty = None
+
+    # Need to add a check that the subregions don't overlap, since that could
+    # cause undesired results. For now warn if there is more than one subregion
+    if len(region) > 1:
+        # Raise a warning if the SpectralRegion has more than one subregion, since
+        # the handling for this is perhaps unexpected
+        warnings.warn("A SpectralRegion with multiple subregions was provided as "
+             "input. This may lead to undesired behavior with linear_exciser if "
+             "the subregions overlap.",
+             AstropyUserWarning)
+
+    for subregion in region:
+        # Find the indices of the spectral_axis array corresponding to the subregion
+        region_mask = (spectral_axis >= subregion.lower) & (spectral_axis < subregion.upper)
+        inclusive_indices = np.nonzero(region_mask)[0]
+        # Now set the flux values for these indices to be a
+        # linear range
+        s, e = max(inclusive_indices[0]-1, 0), min(inclusive_indices[-1]+1,
+                                               spectral_axis.size-1)
+
+        modified_flux[s:e+1] = np.linspace(flux[s], flux[e], modified_flux[s:e+1].size)
+
+        # Add the uncertainty of the two linear interpolation endpoints in
+        # quadrature and apply to the excised region.
+        if new_uncertainty is not None:
+            new_uncertainty[s:e] = np.sqrt(spectrum.uncertainty[s]**2 + spectrum.uncertainty[e]**2)
+
+    # Return a new object with the regions excised.
+    return Spectrum1D(flux=modified_flux,
+                      spectral_axis=spectral_axis,
+                      uncertainty=new_uncertainty,
+                      wcs=spectrum.wcs,
+                      mask = spectrum.mask,
+                      velocity_convention=spectrum.velocity_convention,
+                      rest_value=spectrum.rest_value,
+                      radial_velocity = spectrum.radial_velocity)
+
+
+def excise_regions(spectrum, regions, exciser=true_exciser):
+    """
+    Method to remove or replace the flux in the defined regions of the spectrum
+    depending on the function provided in the ``exciser`` argument.
+
+    Parameters
+    ----------
+    spectrum : `~specutils.Spectrum1D`
+        The `~specutils.Spectrum1D` object to which the excision will be applied.
 
     regions : list of `~specutils.SpectralRegion`
         Each element of the list is a `~specutils.SpectralRegion`. The flux
-        between these wavelengths will be "cut out" using the ``exciser``
-        method.
+        between the lower and upper spectral axis value of each region will be "cut out"
+        and optionally replaced with interpolated values using the ``exciser`` method.
+        Note that non-overlapping regions should be provided as separate
+        `~specutils.SpectralRegion` objects in this list, not as sub-regions
+        in a single object in the list.
 
-    exciser: method
+    exciser : function
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
-        default: linear_exciser
+        default: true_exciser
 
     Returns
     -------
@@ -107,12 +190,10 @@ def excise_regions(spectrum, regions, exciser=linear_exciser):
     return spectrum
 
 
-def excise_region(spectrum, region, exciser=linear_exciser):
+def excise_region(spectrum, region, exciser=true_exciser):
     """
-    Apply a convolution based smoothing to the spectrum. The kernel must be one
-    of the 1D kernels defined in `astropy.convolution`.
-
-    This method can be used along but also is used by other specific methods below.
+    Method to remove or replace the flux in the defined regions of the spectrum
+    depending on the function provided in the ``exciser`` argument.
 
     Parameters
     ----------
@@ -120,12 +201,16 @@ def excise_region(spectrum, region, exciser=linear_exciser):
         The `~specutils.Spectrum1D` object to which the smoothing will be applied.
 
     region : `~specutils.SpectralRegion`
-        Region to excise.
+        A `~specutils.SpectralRegion` object defining the region to excise.
+        If excising multiple regions is desired, they should be input as a
+        list of separate `~specutils.SpectralRegion` objects to
+        ``excise_regions``, not as subregions defined in a single
+        `~specutils.SpectralRegion`.
 
     exciser: method
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
-        default: linear_exciser
+        default: true_exciser
 
     Returns
     -------
@@ -141,10 +226,10 @@ def excise_region(spectrum, region, exciser=linear_exciser):
 
     # Parameter checks
     if not isinstance(spectrum, Spectrum1D):
-        raise ValueError('The spectrum parameter must be Spectrum1D object.')
+        raise ValueError('The spectrum parameter must be a Spectrum1D object.')
 
     if not isinstance(region, SpectralRegion):
-        raise ValueError('The region parameter must be a 2-tuples of start and end wavelengths.')
+        raise ValueError('The region parameter must be a SpectralRegion object.')
 
     #
     #  Call the exciser method

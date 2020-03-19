@@ -21,7 +21,6 @@ def test_quantity_model():
 
     assert uc(10*u.nm).to(u.m) == 0*u.m
 
-
 @pytest.mark.parametrize("method", data_index_refraction.keys())
 def test_refraction_index(method):
     tmp = (refraction_index(wavelengths, method) - 1) * 1e4
