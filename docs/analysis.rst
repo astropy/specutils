@@ -93,7 +93,7 @@ of a spectrum.  Both are demonstrated below:
     >>> line_flux(noisy_gaussian).to(u.erg * u.cm**-2 * u.s**-1)  # doctest:+FLOAT_CMP
     <Quantity 4.97826284e-14 erg / (cm2 s)>
     >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity -4.93254052 GHz Jy>
+    <Quantity 4.93254052 GHz Jy>
 
 For the equivalent width, note the need to add a continuum level:
 
@@ -102,9 +102,9 @@ For the equivalent width, note the need to add a continuum level:
     >>> from specutils.analysis import equivalent_width
     >>> noisy_gaussian_with_continuum = noisy_gaussian + 1*u.Jy
     >>> equivalent_width(noisy_gaussian_with_continuum)  # doctest:+FLOAT_CMP
-    <Quantity 4.97826284 GHz>
+    <Quantity -4.97826284 GHz>
     >>> equivalent_width(noisy_gaussian_with_continuum, regions=SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 4.93254052 GHz>
+    <Quantity -4.93254052 GHz>
 
 
 Centroid
@@ -159,7 +159,7 @@ Each of the width analysis functions are applied to this spectrum below:
    >>> gaussian_fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 1.74434311 GHz>
    >>> fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity -1.86047666 GHz>
+   <Quantity 1.86047666 GHz>
    >>> fwzi(noisy_gaussian) # doctest: +FLOAT_CMP
    <Quantity 94.99997484 GHz>
 

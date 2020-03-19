@@ -258,7 +258,7 @@ def _compute_single_fwhm(flux, spectral_axis):
                        / (flux_value[i1] - left_flux)
                        + left_spectral)
 
-    return spectral_axis.unit * (right_value - left_value)
+    return spectral_axis.unit * np.abs(right_value - left_value)
 
 
 def _compute_fwhm(spectrum, regions=None):

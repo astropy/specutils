@@ -33,7 +33,7 @@ def test_line_flux():
 
     # Account for the fact that Astropy uses a different normalization of the
     # Gaussian where the integral is not 1
-    expected = -np.sqrt(2*np.pi) * u.GHz * u.Jy
+    expected = np.sqrt(2*np.pi) * u.GHz * u.Jy
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
 
@@ -55,7 +55,7 @@ def test_equivalent_width():
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative
-    expected = (np.sqrt(2*np.pi) * u.GHz)
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
@@ -73,7 +73,7 @@ def test_equivalent_width_regions():
     cont_norm_spec = spec / np.median(spec.flux)
     result = equivalent_width(cont_norm_spec, regions=SpectralRegion(97*u.GHz, 3*u.GHz))
 
-    expected = (np.sqrt(2*np.pi) * u.GHz)
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
 
     assert quantity_allclose(result, expected, atol=0.02*u.GHz)
 
@@ -94,7 +94,9 @@ def test_equivalent_width_continuum(continuum):
 
     assert result.unit.is_equivalent(spectrum.wcs.unit)
 
-    expected = (np.sqrt(2*np.pi) * u.GHz) / continuum.value
+    # Since this is an emission line, we expect the equivalent width value to
+    # be negative
+    expected = -(np.sqrt(2*np.pi) * u.GHz) / continuum.value
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
@@ -116,7 +118,7 @@ def test_equivalent_width_absorption():
 
     assert result.unit.is_equivalent(spectrum.wcs.unit)
 
-    expected = -amplitude*np.sqrt(2*np.pi) * u.GHz
+    expected = amplitude*np.sqrt(2*np.pi) * u.GHz
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
