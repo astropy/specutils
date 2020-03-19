@@ -1,3 +1,35 @@
+1.0 (2020-03-27)
+----------------
+
+New Features
+^^^^^^^^^^^^
+
+- SpectrumCollection objects now support len(). [#575]
+
+- Improved JWST data loaders. [#579]
+
+- Include documentation on how to use dust_extinction in specutils. [#594]
+
+- Include example of spectrum shifting in docs. [#600]
+
+- Add new default excise_regions exciser function and improve subregion handling. [#609]
+
+Bug Fixes
+^^^^^^^^^
+
+- Fix stacking and unit treatment in SpectrumCollection.from_spectra. [#578]
+
+- Fix spectral axis unit retrieval. [#581]
+
+- Fix bug in subspectrum fitting. [#586] 
+
+- Fix uncertainty to weight conversion to match astropy assumptions. [#594]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Remove spectral_resolution stub from Spectrum1D. [#606]
+
 0.7
 ---
 
