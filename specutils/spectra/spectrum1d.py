@@ -60,9 +60,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, NDDataRef):
-            self._velocity_convention = flux._velocity_convention
-            self._rest_value = flux._rest_value
-
             super(Spectrum1D, self).__init__(flux)
             return
 
@@ -157,28 +154,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     "must be the same.".format(
                         spectral_axis.shape[0], flux.shape[-1]))
 
-        self._velocity_convention = velocity_convention
-
-        if rest_value is None:
-            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
-                self._rest_value = wcs.rest_frequency * u.Hz
-            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
-                self._rest_value = wcs.rest_wavelength * u.AA
-            else:
-                self._rest_value = 0 * u.AA
-        else:
-            self._rest_value = rest_value
-
-            if not isinstance(self._rest_value, u.Quantity):
-                logging.info("No unit information provided with rest value. "
-                             "Assuming units of spectral axis ('%s').",
-                             spectral_axis.unit)
-                self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not self._rest_value.unit.is_equivalent(u.AA) \
-                    and not self._rest_value.unit.is_equivalent(u.Hz):
-                raise u.UnitsError("Rest value must be "
-                                   "energy/wavelength/frequency equivalent.")
-
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
@@ -190,10 +165,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             self._spectral_coord = SpectralCoord(self.wcs.pixel_to_world(np.arange(self.flux.shape[-1])),
                         redshift=redshift, radial_velocity=radial_velocity, doppler_rest=rest_value,
                         doppler_convention=velocity_convention)
-
-        # set redshift after super() - necessary because the shape-checking
-        # requires that the flux be initialized
-
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
