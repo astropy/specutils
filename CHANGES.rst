@@ -12,7 +12,9 @@ New Features
 
 - Support ``len()`` for ``SpectrumCollection`` objects. [#575]
 
-- Improve JWST data loaders. [#579]
+- Improved 1D JWST loader and allow parsing into an ``SpectrumCollection`` object. [#579]
+
+- Implemented 2D and 3D data loaders for JWST products. [#595] 
 
 - Include documentation on how to use dust_extinction in specutils. [#594]
 
