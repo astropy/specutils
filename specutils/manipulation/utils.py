@@ -2,9 +2,10 @@ import numpy as np
 import warnings
 
 from astropy.utils.exceptions import AstropyUserWarning
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum1D, SpectralRegion, SpectralCoord
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
+
 
 def true_exciser(spectrum, region):
     """
@@ -68,8 +69,9 @@ def true_exciser(spectrum, region):
                       mask=new_mask,
                       wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
-                      rest_value=spectrum.rest_value,
-                      radial_velocity=spectrum.radial_velocity)
+                      rest_value=spectrum.rest_value if not isinstance(new_spectral_axis, SpectralCoord) else None,
+                      radial_velocity=spectrum.radial_velocity if not isinstance(new_spectral_axis, SpectralCoord) else None)
+
 
 def linear_exciser(spectrum, region):
     """
@@ -139,10 +141,10 @@ def linear_exciser(spectrum, region):
                       spectral_axis=spectral_axis,
                       uncertainty=new_uncertainty,
                       wcs=spectrum.wcs,
-                      mask = spectrum.mask,
+                      mask=spectrum.mask,
                       velocity_convention=spectrum.velocity_convention,
-                      rest_value=spectrum.rest_value,
-                      radial_velocity = spectrum.radial_velocity)
+                      rest_value=spectrum.rest_value if not isinstance(spectral_axis, SpectralCoord) else None,
+                      radial_velocity=spectrum.radial_velocity if not isinstance(spectral_axis, SpectralCoord) else None)
 
 
 def excise_regions(spectrum, regions, exciser=true_exciser):
