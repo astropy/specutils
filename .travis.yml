@@ -90,29 +90,24 @@ matrix:
       env: SETUP_CMD='test' EVENT_TYPE='cron'
 
     # Do a coverage test.
-    - os: linux
-      stage: Initial tests
+    - stage: Initial tests
       env: SETUP_CMD='test --coverage'
 
     # Check for sphinx doc build warnings - we do this first because it
     # may run for a long time
-    - os: linux
-      env: SETUP_CMD='build_docs -w'
+    - env: SETUP_CMD='build_docs -w'
         CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
 
     # check on somewhat older versions LTS version
-    - os: linux
-      env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.17
+    - env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.17
 
     # Add a job that runs from cron only and tests against astropy dev and
     # numpy dev to give a change for early discovery of issues and feedback
     # for both developer teams.
-    - os: linux
-      stage: Cron tests
+    - stage: Cron tests
       env: ASTROPY_VERSION=development NUMPY_VERSION=development
         EVENT_TYPE='cron'
-    - os: linux
-      env: ASTROPY_VERSION=development
+    - env: ASTROPY_VERSION=development
         EVENT_TYPE='pull_request push cron'
 
     # Try on Windows.
@@ -123,26 +118,24 @@ matrix:
     # Note we are not doing any numpy versions older than 1.16 since those are not compatible with Astropy 4.0
 
     # Do a PEP8 test with flake8
-    # - os: linux
-    #   stage: Initial tests
+    # - stage: Initial tests
     #   env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
     # Do a PEP8 test with pycodestyle
     - stage: Initial tests
-      os: linux
       env: MAIN_CMD='pycodestyle specutils --count'
            SETUP_CMD=''
 
     # Try development version of Astropy and GWCS
-    - os: linux
-      env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
+    - env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
         PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
+
+    - env: PIP_DEPENDENCIES="$PIP_DEPENDENCIES git+https://github.com/spacetelescope/jwst@stable"
 
   allow_failures:
   # Do a PEP8 test with flake8
   # (do allow to fail unless your code completely compliant)
-   - os: linux
-     stage: Initial tests
-     env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+   # - stage: Initial tests
+   #   env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
 install:
 
