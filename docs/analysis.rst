@@ -20,7 +20,7 @@ sub-sections below - a gaussian-profile line with flux of 5 GHz Jy.  See
     >>> from astropy.modeling import models
     >>> from specutils import Spectrum1D, SpectralRegion
     >>> np.random.seed(42)
-    >>> spectral_axis = np.linspace(0., 10., 200) * u.GHz
+    >>> spectral_axis = np.linspace(11., 1., 200) * u.GHz
     >>> spectral_model = models.Gaussian1D(amplitude=5*(2*np.pi*0.8**2)**-0.5*u.Jy, mean=5*u.GHz, stddev=0.8*u.GHz)
     >>> flux = spectral_model(spectral_axis)
     >>> flux += np.random.normal(0., 0.05, spectral_axis.shape) * u.Jy
@@ -43,8 +43,8 @@ spectrum:
     >>> from specutils.analysis import snr
     >>> snr(noisy_gaussian)  # doctest:+FLOAT_CMP
     <Quantity 2.47730726>
-    >>> snr(noisy_gaussian, SpectralRegion(4*u.GHz, 6*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 9.84136331>
+    >>> snr(noisy_gaussian, SpectralRegion(6*u.GHz, 4*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 9.8300873>
 
 
 A second method to calculate SNR does not require the uncertainty defined
@@ -57,9 +57,9 @@ code at http://www.stecf.org/software/ASTROsoft/DER_SNR/.
 
     >>> from specutils.analysis import snr_derived
     >>> snr_derived(noisy_gaussian)  # doctest:+FLOAT_CMP
-    <Quantity 1.0448650809155666>
-    >>> snr_derived(noisy_gaussian, SpectralRegion(4*u.GHz, 6*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 40.53528208761309>
+    <Quantity 1.13359867>
+    >>> snr_derived(noisy_gaussian, SpectralRegion(6*u.GHz, 4*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 42.10020601>
 
 The conditions on the data for this implementation for it to be an unbiased estimator of the SNR
 are strict.  In particular:
@@ -91,9 +91,9 @@ of a spectrum.  Both are demonstrated below:
 
     >>> from specutils.analysis import line_flux
     >>> line_flux(noisy_gaussian).to(u.erg * u.cm**-2 * u.s**-1)  # doctest:+FLOAT_CMP
-    <Quantity 4.97826405e-14 erg / (cm2 s)>
-    >>> line_flux(noisy_gaussian, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 4.92933252 GHz Jy>
+    <Quantity 4.97826284e-14 erg / (cm2 s)>
+    >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity -4.93254052 GHz Jy>
 
 For the equivalent width, note the need to add a continuum level:
 
@@ -102,9 +102,9 @@ For the equivalent width, note the need to add a continuum level:
     >>> from specutils.analysis import equivalent_width
     >>> noisy_gaussian_with_continuum = noisy_gaussian + 1*u.Jy
     >>> equivalent_width(noisy_gaussian_with_continuum)  # doctest:+FLOAT_CMP
-    <Quantity -4.97826405 GHz>
-    >>> equivalent_width(noisy_gaussian_with_continuum, regions=SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity -4.92933252 GHz>
+    <Quantity 4.97826284 GHz>
+    >>> equivalent_width(noisy_gaussian_with_continuum, regions=SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 4.93254052 GHz>
 
 
 Centroid
@@ -116,8 +116,8 @@ estimate the center of a spectral feature:
 .. code-block:: python
 
     >>> from specutils.analysis import centroid
-    >>> centroid(noisy_gaussian, SpectralRegion(3*u.GHz, 7*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 4.99881315 GHz>
+    >>> centroid(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 4.99909151 GHz>
 
 While this example is "pre-subtracted", this function only performs well if the
 contiuum has already been subtracted, as for the other functions above and
@@ -155,13 +155,13 @@ Each of the width analysis functions are applied to this spectrum below:
 
    >>> from specutils.analysis import gaussian_sigma_width, gaussian_fwhm, fwhm, fwzi
    >>> gaussian_sigma_width(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 0.76925064 GHz>
+   <Quantity 0.74075431 GHz>
    >>> gaussian_fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 1.81144683 GHz>
+   <Quantity 1.74434311 GHz>
    >>> fwhm(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 1.91686888 GHz>
+   <Quantity -1.86047666 GHz>
    >>> fwzi(noisy_gaussian) # doctest: +FLOAT_CMP
-   <Quantity 89.99999455 GHz>
+   <Quantity 94.99997484 GHz>
 
 
 Template comparison
