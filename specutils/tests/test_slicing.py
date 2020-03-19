@@ -11,10 +11,10 @@ def test_spectral_axes():
     spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                        flux=np.random.sample(49) * 100 * u.Jy)
 
-    sliced_spec1 = spec1[0]
+    sliced_spec1 = spec1[0:2]
 
     assert isinstance(sliced_spec1, Spectrum1D)
-    assert_allclose(sliced_spec1.wcs.pixel_to_world(np.arange(10)), spec1.wcs.pixel_to_world(np.arange(10)))
+    assert_allclose(sliced_spec1.wcs.pixel_to_world(0), spec1.wcs.pixel_to_world(0))
 
     flux2 = np.random.sample((10, 49)) * 100
 
@@ -83,7 +83,7 @@ def test_slicing_with_fits():
 
     assert isinstance(spec_slice, Spectrum1D)
     assert spec_slice.flux.size == 4
-    assert np.allclose(spec_slice.wcs.pixel_to_world([6, 7, 8, 9]).value, spec.wcs.pixel_to_world([6, 7, 8, 9]).value)
+    assert np.allclose(spec_slice.wcs.pixel_to_world([0, 1, 2, 3]), spec.wcs.pixel_to_world([0, 1, 2, 3]))
 
 
 def test_slicing_multidim():

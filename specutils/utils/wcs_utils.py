@@ -550,7 +550,14 @@ def gwcs_from_array(array):
     Create a new WCS from provided tabular data. This defaults to being
     a GWCS object.
     """
-    array = u.Quantity(array)
+    orig_array = u.Quantity(array)
+
+    # TODO: Input arrays must be strictly ascending. This is not always the
+    #  case for a spectral axis (e.g. when in frequency space). Thus, we
+    #  convert to wavelength to create the wcs.
+    if orig_array.unit.physical_type != 'length' and \
+            orig_array.unit.is_equivalent(u.AA, equivalencies=u.spectral()):
+        array = orig_array.to(u.AA, equivalencies=u.spectral())
 
     coord_frame = cf.CoordinateFrame(naxes=1,
                                      axes_type=('SPECTRAL',),
@@ -568,9 +575,17 @@ def gwcs_from_array(array):
     forward_transform.inverse = SpectralTabular1D(
         array, lookup_table=np.arange(len(array)))
 
-    tabular_gwcs = GWCS(forward_transform=forward_transform,
-                        input_frame=coord_frame,
-                        output_frame=spec_frame)
+    class SpectralGWCS(GWCS):
+        def pixel_to_world(self, *args, **kwargs):
+            return super().pixel_to_world(*args, **kwargs).to(
+                orig_array.unit, equivalencies=u.spectral())
+
+    tabular_gwcs = SpectralGWCS(forward_transform=forward_transform,
+                                input_frame=coord_frame,
+                                output_frame=spec_frame)
+
+    # Store the intended unit from the origin input array
+    #     tabular_gwcs._input_unit = orig_array.unit
 
     return tabular_gwcs
 
