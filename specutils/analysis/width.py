@@ -146,7 +146,8 @@ def _compute_fwzi(spectrum, regions=None):
 
     # Create a copy of the flux array to ensure the value on the spectrum
     # object is not altered.
-    disp, flux = calc_spectrum.spectral_axis, calc_spectrum.flux.copy()
+    disp = calc_spectrum.spectral_axis.quantity
+    flux = calc_spectrum.flux.copy()
 
     # For noisy data, ensure that the search from the centroid stops on
     # either side once the flux value reaches zero.
@@ -198,7 +199,7 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
         calc_spectrum = spectrum
 
     flux = calc_spectrum.flux
-    spectral_axis = calc_spectrum.spectral_axis
+    spectral_axis = calc_spectrum.spectral_axis.quantity
 
     centroid_result = centroid(spectrum, regions)
 
@@ -257,7 +258,7 @@ def _compute_single_fwhm(flux, spectral_axis):
                        / (flux_value[i1] - left_flux)
                        + left_spectral)
 
-    return spectral_axis.unit * (right_value - left_value)
+    return spectral_axis.unit * np.abs(right_value - left_value)
 
 
 def _compute_fwhm(spectrum, regions=None):

@@ -57,27 +57,12 @@ class OneDSpectrumMixin:
         """
         return self.wcs.axes.spectral
 
-    @lazyproperty
+    @property
     def spectral_axis(self):
         """
-        Returns a Quantity array with the values of the spectral axis.
+        Returns the SpectralCoord object.
         """
-        if len(self.flux) > 0:
-            spectral_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
-        else:
-            # After some discussion it was suggested to create the empty
-            # spectral axis this way to better use the WCS infrastructure.
-            # This is to prepare for a future where pixel_to_world might yield
-            # something more than just a raw Quantity, which is planned for
-            # the mid-term in astropy and possible gwcs.  Such changes might
-            # necessitate a revisit of this code.
-            dummy_spectrum = self.__class__(
-                spectral_axis=[1, 2] * self.spectral_axis_unit,
-                flux=[1, 2] * self.flux.unit)
-
-            spectral_axis = dummy_spectrum.wcs.pixel_to_world([0])[1:]
-
-        return spectral_axis
+        return self._spectral_axis
 
     @property
     def spectral_axis_unit(self):
@@ -142,7 +127,7 @@ class OneDSpectrumMixin:
         """
         Returns the velocity convention
         """
-        return self._velocity_convention
+        return self.spectral_axis.doppler_convention
 
     def with_velocity_convention(self, velocity_convention):
         return self.__class__(flux=self.flux, wcs=self.wcs, meta=self.meta,
@@ -150,15 +135,11 @@ class OneDSpectrumMixin:
 
     @property
     def rest_value(self):
-        return self._rest_value
+        return self.spectral_axis.doppler_rest
 
     @rest_value.setter
     def rest_value(self, value):
-        if not hasattr(value, 'unit') or not value.unit.is_equivalent(u.Hz, u.spectral()):
-            raise u.UnitsError(
-                "Rest value must be energy/wavelength/frequency equivalent.")
-
-        self._rest_value = value
+        self.spectral_axis.doppler_rest = value
 
     @property
     def velocity(self):
@@ -186,10 +167,10 @@ class OneDSpectrumMixin:
         ~`astropy.units.Quantity`
             The converted dispersion array in the new dispersion space.
         """
-        if not hasattr(self, '_rest_value') or self._rest_value is None:
+        if self.rest_value is None:
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a reference value.")
-        if not hasattr(self, '_velocity_convention') or self._velocity_convention is None:
+        if self.velocity_convention is None:
             raise ValueError("Cannot get velocity representation of spectral "
                              "axis without specifying a velocity convention.")
 
@@ -199,8 +180,8 @@ class OneDSpectrumMixin:
         new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
 
         # if redshift/rv is present, apply it:
-        if self._radial_velocity is not None:
-            new_data += self.radial_velocity
+        if self.spectral_axis.radial_velocity is not None:
+            new_data += self.spectral_axis.radial_velocity
 
         return new_data
 
@@ -230,7 +211,7 @@ class OneDSpectrumMixin:
         """
         new_wcs, new_meta = self._new_spectral_wcs(
             unit=unit,
-            velocity_convention=velocity_convention or self._velocity_convention,
+            velocity_convention=velocity_convention or self.velocity_convention,
             rest_value=rest_value or self.rest_value)
 
         spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta)

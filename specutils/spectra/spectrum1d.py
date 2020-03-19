@@ -7,11 +7,14 @@ from astropy import constants as cnst
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
+from .spectral_coordinate import SpectralCoord
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
 
 __doctest_skip__ = ['Spectrum1D.spectral_resolution']
+
+u.set_enabled_equivalencies(u.spectral())
 
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
@@ -22,7 +25,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     ----------
     flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `astropy.units.Quantity`
+    spectral_axis : `astropy.units.Quantity` or `specutils.SpectralCoord`
         Dispersion information with the same shape as the last (or only)
         dimension of flux.
     wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
@@ -59,9 +62,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, NDDataRef):
-            self._velocity_convention = flux._velocity_convention
-            self._rest_value = flux._rest_value
-
             super(Spectrum1D, self).__init__(flux)
             return
 
@@ -71,6 +71,11 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise ValueError("Flux must be a `Quantity` object.")
             elif flux.isscalar:
                 flux = u.Quantity([flux])
+
+        # Ensure that only one or neither of these parameters is set
+        if redshift is not None and radial_velocity is not None:
+            raise ValueError("Cannot set both radial_velocity and redshift at "
+                             "the same time.")
 
         # In cases of slicing, new objects will be initialized with `data`
         # instead of ``flux``. Ensure we grab the `data` argument.
@@ -91,17 +96,54 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
 
+        if rest_value is None:
+            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
+                rest_value = wcs.rest_frequency * u.Hz
+            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
+                rest_value = wcs.rest_wavelength * u.AA
+            else:
+                rest_value = 0 * u.AA
+        else:
+            if not isinstance(rest_value, u.Quantity):
+                logging.info("No unit information provided with rest value. "
+                             "Assuming units of spectral axis ('%s').",
+                             spectral_axis.unit)
+                rest_value = u.Quantity(rest_value, spectral_axis.unit)
+            elif not rest_value.unit.is_equivalent(u.AA) \
+                    and not rest_value.unit.is_equivalent(u.Hz):
+                raise u.UnitsError("Rest value must be "
+                                   "energy/wavelength/frequency equivalent.")
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if spectral_axis is not None:
-            # Ensure that the spectral axis is an astropy quantity
+            # Ensure that the spectral axis is an astropy Quantity
             if not isinstance(spectral_axis, u.Quantity):
-                raise ValueError("Spectral axis must be a `Quantity` object.")
+                raise ValueError("Spectral axis must be a `Quantity` or "
+                                 "`SpectralCoord` object.")
+
+            # If spectral axis is provided as an astropy Quantity, convert it
+            # to a specutils SpectralCoord object.
+            if not isinstance(spectral_axis, SpectralCoord):
+                self._spectral_axis = SpectralCoord(
+                    spectral_axis, redshift=redshift,
+                    radial_velocity=radial_velocity, doppler_rest=rest_value,
+                    doppler_convention=velocity_convention)
+            # If a SpectralCoord object is provided, we assume it doesn't need
+            # information from other keywords added
+            else:
+                for a in [radial_velocity, redshift]:
+                    if a is not None:
+                        raise ValueError("Cannot separately set redshift or "
+                                         "radial_velocity if a SpectralCoord "
+                                         "object is input to spectral_axis")
+
+                self._spectral_axis = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
         elif wcs is None:
-            # If no spectral axis or wcs information is provided, initialize a
+            # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
             size = len(flux) if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
@@ -109,50 +151,33 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
             if not spectral_axis.shape[0] == flux.shape[-1]:
-                raise ValueError('Spectral axis ({}) and the last flux axis ({}) lengths must be the same'.format(
-                    spectral_axis.shape[0], flux.shape[-1]))
-
-        self._velocity_convention = velocity_convention
-
-        if rest_value is None:
-            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
-                self._rest_value = wcs.rest_frequency * u.Hz
-            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
-                self._rest_value = wcs.rest_wavelength * u.AA
-            else:
-                self._rest_value = 0 * u.AA
-        else:
-            self._rest_value = rest_value
-
-            if not isinstance(self._rest_value, u.Quantity):
-                logging.info("No unit information provided with rest value. "
-                             "Assuming units of spectral axis ('%s').",
-                             spectral_axis.unit)
-                self._rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not self._rest_value.unit.is_equivalent(u.AA) \
-                    and not self._rest_value.unit.is_equivalent(u.Hz):
-                raise u.UnitsError("Rest value must be "
-                                   "energy/wavelength/frequency equivalent.")
+                raise ValueError(
+                    "Spectral axis ({}) and the last flux axis ({}) lengths "
+                    "must be the same.".format(
+                        spectral_axis.shape[0], flux.shape[-1]))
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
 
-        # set redshift after super() - necessary because the shape-checking
-        # requires that the flux be initialized
+        # If no spectral_axis was provided, create a SpectralCoord based on
+        # the WCS
+        if spectral_axis is None:
+            # If spectral_axis wasn't provided, set _spectral_axis based on
+            # the WCS
+            spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
 
-        if redshift is None:
-            self.radial_velocity = radial_velocity
-        elif radial_velocity is None:
-            self.redshift = redshift
-        else:
-            raise ValueError('cannot set both radial_velocity and redshift at '
-                             'the same time.')
+            self._spectral_axis = SpectralCoord(
+                spec_axis,
+                redshift=redshift, radial_velocity=radial_velocity,
+                doppler_rest=rest_value,
+                doppler_convention=velocity_convention)
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
-                raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same.'.format(
-                    flux.shape, self.uncertainty.array.shape))
+                raise ValueError(
+                    "Flux axis ({}) and uncertainty ({}) shapes must be the "
+                    "same.".format(flux.shape, self.uncertainty.array.shape))
 
     def __getitem__(self, item):
         """
@@ -171,13 +196,26 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         """
         if len(self.flux.shape) > 1:
             return self._copy(
-                flux=self.flux[item], uncertainty=self.uncertainty[item]
-                    if self.uncertainty is not None else None)
+                flux=self.flux[item],
+                uncertainty=self.uncertainty[item]
+                if self.uncertainty is not None else None)
 
         if not isinstance(item, slice):
             item = slice(item, item+1, None)
 
-        return super().__getitem__(item)
+        tmp_spec = super().__getitem__(item)
+
+        # TODO: this is a workaround until we figure out how to deal with non-
+        #  strictly ascending spectral axes. Currently, the wcs is created from
+        #  a spectral axis array by converting to a length physical type. On
+        #  a regular slicing operation, the wcs is handed back to the
+        #  initializer and a new spectral axis is created. This would then also
+        #  be in length units, which may not be the units used initially. So,
+        #  we create a new ``Spectrum1D`` that includes the sliced spectral
+        #  axis. This means that a new wcs object will be created with the
+        #  appropriate unit translation handling.
+        return tmp_spec._copy(
+            spectral_axis=self.spectral_axis[item])
 
     def _copy(self, **kwargs):
         """
@@ -253,14 +291,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         (like template fitting) that set this attribute when they are run on
         a spectrum.
         """
-        return self._radial_velocity/cnst.c
+        return self.spectral_axis.redshift
 
     @redshift.setter
     def redshift(self, val):
-        if val is None:
-            self._radial_velocity = None
-        else:
-            self.radial_velocity = val * cnst.c
+        new_spec_coord = self.spectral_axis.with_redshift(val)
+        self._spectral_axis = new_spec_coord
 
     @property
     def radial_velocity(self):
@@ -272,25 +308,16 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         (like template fitting) that set this attribute when they are run on
         a spectrum.
         """
-        return self._radial_velocity
+        return self.spectral_axis.radial_velocity
 
     @radial_velocity.setter
     def radial_velocity(self, val):
-        if val is None:
-            self._radial_velocity = None
-        else:
+        if val is not None:
             if not val.unit.is_equivalent(u.km/u.s):
-                raise u.UnitsError('radial_velocity must be a velocity')
+                raise u.UnitsError("Radial velocity must be a velocity.")
 
-            # the trick below checks if the two shapes given are broadcastable onto
-            # each other. See https://stackoverflow.com/questions/47243451/checking-if-two-arrays-are-broadcastable-in-python
-            input_shape = val.shape
-            flux_shape = self.flux.shape[:-1]
-            if not all((m == n) or (m == 1) or (n == 1)
-                   for m, n in zip(input_shape[::-1], flux_shape)):
-                raise ValueError("radial_velocity or redshift must have shape that "
-                                 "is compatible with this spectrum's flux array")
-            self._radial_velocity = val
+        new_spectral_axis = self.spectral_axis.with_radial_velocity(val)
+        self._spectral_axis = new_spectral_axis
 
     def __add__(self, other):
         if not isinstance(other, NDDataRef):

@@ -20,7 +20,7 @@ def test_line_flux():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
@@ -42,7 +42,7 @@ def test_equivalent_width():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + 1*u.Jy
@@ -64,18 +64,18 @@ def test_equivalent_width_regions():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     noise = np.random.normal(0., 0.001, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + 1*u.Jy
 
     spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
     cont_norm_spec = spec / np.median(spec.flux)
-    result = equivalent_width(cont_norm_spec, regions=SpectralRegion(3*u.GHz, 97*u.GHz))
+    result = equivalent_width(cont_norm_spec, regions=SpectralRegion(97*u.GHz, 3*u.GHz))
 
     expected = -(np.sqrt(2*np.pi) * u.GHz)
 
-    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+    assert quantity_allclose(result, expected, atol=0.02*u.GHz)
 
 
 @pytest.mark.parametrize('continuum', [1*u.Jy, 2*u.Jy, 5*u.Jy])
@@ -83,7 +83,7 @@ def test_equivalent_width_continuum(continuum):
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + continuum
@@ -105,7 +105,7 @@ def test_equivalent_width_absorption():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(1, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
     amplitude = 0.5
     g = models.Gaussian1D(amplitude=amplitude*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     continuum = 1*u.Jy
@@ -118,8 +118,6 @@ def test_equivalent_width_absorption():
 
     assert result.unit.is_equivalent(spectrum.wcs.unit)
 
-    # Since this is an absorption line, we expect the equivalent width value to
-    # be positive
     expected = amplitude*np.sqrt(2*np.pi) * u.GHz
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
@@ -168,6 +166,7 @@ def test_snr_no_uncertainty(simulated_spectra):
 
     with pytest.raises(Exception) as e_info:
         _ = snr(spectrum)
+
 
 def test_snr_multiple_flux(simulated_spectra):
     """
@@ -371,7 +370,7 @@ def test_gaussian_sigma_width_regions():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(0, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 0, 10000) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
@@ -379,19 +378,19 @@ def test_gaussian_sigma_width_regions():
     compound = g1 + g2 + g3
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
-    region1 = SpectralRegion(5*u.GHz, 15*u.GHz)
+    region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
     result1 = gaussian_sigma_width(spectrum, regions=region1)
 
     exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
-    region2 = SpectralRegion(1*u.GHz, 3*u.GHz)
+    region2 = SpectralRegion(3*u.GHz, 1*u.GHz)
     result2 = gaussian_sigma_width(spectrum, regions=region2)
 
     exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
-    region3 = SpectralRegion(40*u.GHz, 100*u.GHz)
+    region3 = SpectralRegion(100*u.GHz, 40*u.GHz)
     result3 = gaussian_sigma_width(spectrum, regions=region3)
 
     exp3 = g3.stddev
@@ -408,7 +407,7 @@ def test_gaussian_sigma_width_multi_spectrum():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(0, 100, 10000) * u.GHz
+    frequencies = np.linspace(100, 0, 10000) * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=5*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=50*u.GHz, stddev=10*u.GHz)

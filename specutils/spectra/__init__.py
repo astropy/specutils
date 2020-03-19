@@ -6,3 +6,4 @@ from .spectrum1d import *  # noqa
 from .spectral_region import *  # noqa
 from .spectrum_collection import *  #noqa
 from .spectrum_list import * #noqa
+from .spectral_coordinate import *

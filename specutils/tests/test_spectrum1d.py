@@ -7,13 +7,14 @@ from astropy.nddata import StdDevUncertainty
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
+from ..spectra.spectral_coordinate import SpectralCoord
 
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
                       flux=[]*u.Jy)
 
-    assert isinstance(spec.spectral_axis, u.Quantity)
+    assert isinstance(spec.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.size == 0
 
     assert isinstance(spec.flux, u.Quantity)
@@ -24,7 +25,7 @@ def test_create_from_arrays():
     spec = Spectrum1D(spectral_axis=np.arange(50) * u.AA,
                       flux=np.random.randn(50) * u.Jy)
 
-    assert isinstance(spec.spectral_axis, u.Quantity)
+    assert isinstance(spec.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.size == 50
 
     assert isinstance(spec.flux, u.Quantity)
@@ -60,7 +61,7 @@ def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    assert isinstance(spec.spectral_axis, u.Quantity)
+    assert isinstance(spec.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.unit == u.nm
     assert spec.spectral_axis.size == 49
 
@@ -92,6 +93,17 @@ def test_create_implicit_wcs_with_spectral_unit():
 
     assert pix2world.size == 5
     assert isinstance(pix2world, np.ndarray)
+
+
+def test_create_with_spectral_coord():
+
+    spectral_coord = SpectralCoord(np.arange(5100, 5150)*u.AA, radial_velocity=u.Quantity(1000.0, "km/s"))
+    flux = np.random.randn(50)*u.Jy
+    spec = Spectrum1D(spectral_axis = spectral_coord, flux=flux)
+
+    assert spec.radial_velocity == u.Quantity(1000.0, "km/s")
+    assert isinstance(spec.spectral_axis, SpectralCoord)
+    assert spec.spectral_axis.size == 50
 
 
 def test_spectral_axis_conversions():
@@ -246,7 +258,7 @@ def test_create_explicit_fitswcs():
     spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
     spec = spec.with_velocity_convention("relativistic")
 
-    assert isinstance(spec.spectral_axis, u.Quantity)
+    assert isinstance(spec.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.unit.is_equivalent(u.AA)
 
     pix2world = spec.wcs.pixel_to_world(np.arange(3))
@@ -297,7 +309,7 @@ def test_read_linear_solution(remote_data_path):
     assert isinstance(spec, Spectrum1D)
 
     assert isinstance(spec.flux, u.Quantity)
-    assert isinstance(spec.spectral_axis, u.Quantity)
+    assert isinstance(spec.spectral_axis, SpectralCoord)
 
     assert spec.flux.size == spec.data.size
     assert spec.spectral_axis.size == spec.data.size
@@ -316,7 +328,7 @@ def test_repr():
                                flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<Quantity [' in result
+    assert 'spectral_axis=<SpectralCoord [' in result
 
     spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy,
@@ -324,7 +336,7 @@ def test_repr():
                                    np.random.sample(10), unit='Jy'))
     result = repr(spec_with_unc)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<Quantity [' in result
+    assert 'spectral_axis=<SpectralCoord [' in result
     assert 'uncertainty=StdDevUncertainty(' in result
 
 
@@ -369,8 +381,7 @@ def test_str():
     # Test string representation with single-dimensional flux
     spec_single_flux = Spectrum1D([1] * u.Jy, [0] * u.nm)
     result = str(spec_single_flux)
-    print(spec_single_flux.spectral_axis)
     assert result == \
 """Spectrum1D (length=1)
 flux:             [ 1.0 Jy ],  mean=1.0 Jy
-spectral axis:    [ nan nm ],  mean=nan nm"""
+spectral axis:    [ 0.0 nm ],  mean=0.0 nm"""

@@ -80,7 +80,7 @@ def _centroid_single_region(spectrum, region=None):
         calc_spectrum = spectrum
 
     flux = calc_spectrum.flux
-    dispersion = calc_spectrum.spectral_axis
+    dispersion = calc_spectrum.spectral_axis.quantity
 
     if len(flux.shape) > 1:
         dispersion = np.tile(dispersion, [flux.shape[0], 1])

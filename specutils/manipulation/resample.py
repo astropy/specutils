@@ -178,7 +178,7 @@ class FluxConservingResampler(ResamplerBase):
         # Check if units on original spectrum and new wavelength (if defined)
         # match
         if isinstance(fin_spec_axis, Quantity):
-            if orig_spectrum.spectral_axis_unit != fin_spec_axis.unit:
+            if orig_spectrum.spectral_axis.unit != fin_spec_axis.unit:
                 raise ValueError("Original spectrum spectral axis grid and new"
                                  "spectral axis grid must have the same units.")
 

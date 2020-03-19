@@ -29,6 +29,10 @@ create it explicitly from arrays or `~astropy.units.Quantity` objects:
     >>> ax.set_xlabel("Dispersion")  # doctest: +SKIP
     >>> ax.set_ylabel("Flux")  # doctest: +SKIP
 
+.. note::
+    Note that the ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralCoord` object, 
+    and in fact will internally convert the spectral_axis to :class:`~specutils.SpectralCoord` if it
+    is provided as an array or `~astropy.units.Quantity`.
 
 Reading from a File
 -------------------
@@ -74,7 +78,7 @@ Defining WCS
 
 Specutils always maintains a WCS object whether it is passed explicitly by the
 user, or is created dynamically by specutils itself. In the latter case, the
-user need not be awrae that the WCS object is being used, and is can interact
+user need not be aware that the WCS object is being used, and can interact
 with the :class:`~specutils.Spectrum1D` object as if it were only a simple
 data container.
 
