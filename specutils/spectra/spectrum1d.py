@@ -14,6 +14,8 @@ __all__ = ['Spectrum1D']
 
 __doctest_skip__ = ['Spectrum1D.spectral_resolution']
 
+u.set_enabled_equivalencies(u.spectral())
+
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
@@ -161,10 +163,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # If no spectral_axis was provided, create a SpectralCoord based on
         # the WCS
         if spectral_axis is None:
-            #If spectral_axis wasn't provided, set _spectral_coord based on the WCS
-            self._spectral_coord = SpectralCoord(self.wcs.pixel_to_world(np.arange(self.flux.shape[-1])),
-                        redshift=redshift, radial_velocity=radial_velocity, doppler_rest=rest_value,
-                        doppler_convention=velocity_convention)
+            # If spectral_axis wasn't provided, set _spectral_axis based on
+            # the WCS
+            spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+
+            self._spectral_axis = SpectralCoord(
+                spec_axis,
+                redshift=redshift, radial_velocity=radial_velocity,
+                doppler_rest=rest_value,
+                doppler_convention=velocity_convention)
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
@@ -189,13 +196,26 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         """
         if len(self.flux.shape) > 1:
             return self._copy(
-                flux=self.flux[item], uncertainty=self.uncertainty[item]
-                    if self.uncertainty is not None else None)
+                flux=self.flux[item],
+                uncertainty=self.uncertainty[item]
+                if self.uncertainty is not None else None)
 
         if not isinstance(item, slice):
             item = slice(item, item+1, None)
 
-        return super().__getitem__(item)
+        tmp_spec = super().__getitem__(item)
+
+        # TODO: this is a workaround until we figure out how to deal with non-
+        #  strictly ascending spectral axes. Currently, the wcs is created from
+        #  a spectral axis array by converting to a length physical type. On
+        #  a regular slicing operation, the wcs is handed back to the
+        #  initializer and a new spectral axis is created. This would then also
+        #  be in length units, which may not be the units used initially. So,
+        #  we create a new ``Spectrum1D`` that includes the sliced spectral
+        #  axis. This means that a new wcs object will be created with the
+        #  appropriate unit translation handling.
+        return tmp_spec._copy(
+            spectral_axis=self.spectral_axis[item])
 
     def _copy(self, **kwargs):
         """
