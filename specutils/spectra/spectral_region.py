@@ -154,8 +154,12 @@ class SpectralRegion:
 
     def _valid(self):
 
-        # Lower bound < Upper bound for all sub regions
-        if any(x[0] >= x[1] for x in self._subregions):
+        # Lower bound < Upper bound for all sub regions in length physical type
+        sub_regions = [(x[0].to('m'), x[1].to('m'))
+                       if x[0].unit.is_equivalent(u.m) else x
+                       for x in self._subregions]
+
+        if any(x[0] >= x[1] for x in sub_regions):
             raise ValueError('Lower bound must be strictly less than the upper bound')
 
         return True
@@ -184,7 +188,7 @@ class SpectralRegion:
         """
         Compute the lower and upper extent of the SpectralRegion.
         """
-        return (self.lower, self.upper)
+        return self.lower, self.upper
 
     @property
     def lower(self):
@@ -215,7 +219,8 @@ class SpectralRegion:
 
         See notes in SpectralRegion.invert() method.
         """
-        return self.invert(spectrum.spectral_axis[0], spectrum.spectral_axis[-1])
+        return self.invert(spectrum.spectral_axis[0],
+                           spectrum.spectral_axis[-1])
 
     def _in_range(self, value, lower, upper):
         return (value >= lower) and (value <= upper)
@@ -230,10 +235,10 @@ class SpectralRegion:
         Parameters
         ----------
 
-        lower : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+        lower_bound : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The lower bound of the region.
 
-        upper : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
+        upper_bound : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The upper bound of the region.
 
         Returns
@@ -261,7 +266,8 @@ class SpectralRegion:
         #
         min_num = -sys.maxsize-1
         max_num = sys.maxsize
-        rs = self._subregions + [(min_num*u.um, lower_bound), (upper_bound, max_num*u.um)]
+        rs = self._subregions + [(min_num*u.um, lower_bound),
+                                 (upper_bound, max_num*u.um)]
 
         #
         # Sort the region list based on lower bound.
