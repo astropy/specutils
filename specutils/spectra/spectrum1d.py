@@ -97,29 +97,50 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
 
+        if rest_value is None:
+            if hasattr(wcs, 'rest_frequency') and wcs.rest_frequency != 0:
+                rest_value = wcs.rest_frequency * u.Hz
+            elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
+                rest_value = wcs.rest_wavelength * u.AA
+            else:
+                rest_value = 0 * u.AA
+        else:
+            if not isinstance(rest_value, u.Quantity):
+                logging.info("No unit information provided with rest value. "
+                             "Assuming units of spectral axis ('%s').",
+                             spectral_axis.unit)
+                rest_value = u.Quantity(rest_value, spectral_axis.unit)
+            elif not rest_value.unit.is_equivalent(u.AA) \
+                    and not rest_value.unit.is_equivalent(u.Hz):
+                raise u.UnitsError("Rest value must be "
+                                   "energy/wavelength/frequency equivalent.")
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
         if spectral_axis is not None:
             # Ensure that the spectral axis is an astropy Quantity
             if not isinstance(spectral_axis, u.Quantity):
-                raise ValueError("Spectral axis must be a `Quantity` or `SpectralCoord` object.")
+                raise ValueError("Spectral axis must be a `Quantity` or "
+                                 "`SpectralCoord` object.")
 
             # If spectral axis is provided as an astropy Quantity, convert it
             # to a specutils SpectralCoord object.
             if not isinstance(spectral_axis, SpectralCoord):
-                self._spectral_coord = SpectralCoord(spectral_axis, redshift=redshift,
-                        radial_velocity=radial_velocity, doppler_rest=rest_value,
-                        doppler_convention=velocity_convention)
+                self._spectral_axis = SpectralCoord(
+                    spectral_axis, redshift=redshift,
+                    radial_velocity=radial_velocity, doppler_rest=rest_value,
+                    doppler_convention=velocity_convention)
             # If a SpectralCoord object is provided, we assume it doesn't need
             # information from other keywords added
             else:
                 for a in [radial_velocity, redshift]:
                     if a is not None:
-                        raise ValueError("Cannot separately set redshift or radial_velocity if "
-                                         "a SpectralCoord object is input to spectral_axis")
+                        raise ValueError("Cannot separately set redshift or "
+                                         "radial_velocity if a SpectralCoord "
+                                         "object is input to spectral_axis")
 
-                self._spectral_coord = spectral_axis
+                self._spectral_axis = spectral_axis
 
             wcs = gwcs_from_array(spectral_axis)
         elif wcs is None:
@@ -131,8 +152,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # Check to make sure the wavelength length is the same in both
         if flux is not None and spectral_axis is not None:
             if not spectral_axis.shape[0] == flux.shape[-1]:
-                raise ValueError('Spectral axis ({}) and the last flux axis ({}) lengths must be the same'.format(
-                    spectral_axis.shape[0], flux.shape[-1]))
+                raise ValueError(
+                    "Spectral axis ({}) and the last flux axis ({}) lengths "
+                    "must be the same.".format(
+                        spectral_axis.shape[0], flux.shape[-1]))
 
         self._velocity_convention = velocity_convention
 
@@ -160,7 +183,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             data=flux.value if isinstance(flux, u.Quantity) else flux,
             wcs=wcs, **kwargs)
 
-        # If no spectral_axis was provided, create a SpectralCoord based on the WCS
+        # If no spectral_axis was provided, create a SpectralCoord based on
+        # the WCS
         if spectral_axis is None:
             #If spectral_axis wasn't provided, set _spectral_coord based on the WCS
             self._spectral_coord = SpectralCoord(self.wcs.pixel_to_world(np.arange(self.flux.shape[-1])),
@@ -173,8 +197,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
-                raise ValueError('Flux axis ({}) and uncertainty ({}) shapes must be the same.'.format(
-                    flux.shape, self.uncertainty.array.shape))
+                raise ValueError(
+                    "Flux axis ({}) and uncertainty ({}) shapes must be the "
+                    "same.".format(flux.shape, self.uncertainty.array.shape))
 
     def __getitem__(self, item):
         """
@@ -280,7 +305,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @redshift.setter
     def redshift(self, val):
         new_spec_coord = self.spectral_axis.with_redshift(val)
-        self._spectral_coord = new_spec_coord
+        self._spectral_axis = new_spec_coord
 
     @property
     def radial_velocity(self):
@@ -298,10 +323,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     def radial_velocity(self, val):
         if val is not None:
             if not val.unit.is_equivalent(u.km/u.s):
-                raise u.UnitsError('radial_velocity must be a velocity')
+                raise u.UnitsError("Radial velocity must be a velocity.")
 
-        new_spectral_coord = self.spectral_axis.with_radial_velocity(val)
-        self._spectral_coord = new_spectral_coord
+        new_spectral_axis = self.spectral_axis.with_radial_velocity(val)
+        self._spectral_axis = new_spectral_axis
 
     def __add__(self, other):
         if not isinstance(other, NDDataRef):
