@@ -166,8 +166,16 @@ An example of a single sub-region `~specutils.SpectralRegion`:
     >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> sub_spectrum = extract_region(spectrum, region)
     >>> sub_spectrum.spectral_axis
-    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
-               21., 22.] nm>
+    <SpectralCoord [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.,
+                     20., 21., 22.] nm,
+        radial_velocity=0.0 km / s,
+        redshift=0.0,
+        doppler_rest=0.0 Angstrom,
+        doppler_convention=None,
+        observer=None,
+        target=None>
+
+
 
 
 Extraction also correctly interprets different kinds of spectral region units
@@ -184,13 +192,25 @@ as would be expected:
     >>> region_angstroms = SpectralRegion(80*u.AA, 220*u.AA)
     >>> sub_spectrum = extract_region(spectrum, region_angstroms)
     >>> sub_spectrum.spectral_axis
-    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
-               21., 22.] nm>
+    <SpectralCoord [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.,
+                    20., 21., 22.] nm,
+        radial_velocity=0.0 km / s,
+        redshift=0.0,
+        doppler_rest=0.0 Angstrom,
+        doppler_convention=None,
+        observer=None,
+        target=None>
     >>> region_pixels = SpectralRegion(7.5*u.pixel, 21.5*u.pixel)
     >>> sub_spectrum = extract_region(spectrum, region_pixels)
     >>> sub_spectrum.spectral_axis
-    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
-               21., 22.] nm>
+    <SpectralCoord [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.,
+                    20., 21., 22.] nm,
+        radial_velocity=0.0 km / s,
+        redshift=0.0,
+        doppler_rest=0.0 Angstrom,
+        doppler_convention=None,
+        observer=None,
+        target=None>
 
 
 
@@ -207,10 +227,22 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
     >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> sub_spectra = extract_region(spectrum, region)
     >>> sub_spectra[0].spectral_axis
-    <Quantity [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.,
-               21., 22.] nm>
+    <SpectralCoord [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.,
+                    20., 21., 22.] nm,
+        radial_velocity=0.0 km / s,
+        redshift=0.0,
+        doppler_rest=0.0 Angstrom,
+        doppler_convention=None,
+        observer=None,
+        target=None>
     >>> sub_spectra[1].spectral_axis
-    <Quantity [34., 35., 36., 37., 38., 39., 40.] nm>
+    <SpectralCoord [34., 35., 36., 37., 38., 39., 40.] nm,
+        radial_velocity=0.0 km / s,
+        redshift=0.0,
+        doppler_rest=0.0 Angstrom,
+        doppler_convention=None,
+        observer=None,
+        target=None>
 
 
 Reference/API
