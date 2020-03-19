@@ -10,7 +10,7 @@ New Features
 
 - Improve FITS file identification in default_loaders. [#545]
 
-- Support len() for ``SpectrumCollection`` objects. [#575]
+- Support ``len()`` for ``SpectrumCollection`` objects. [#575]
 
 - Improve JWST data loaders. [#579]
 
