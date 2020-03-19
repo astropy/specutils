@@ -173,65 +173,79 @@ def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
                 assert "Standard Deviation has values of 0" in r.message
 
 
-# The s2d reader tests -------------------------------
+# The s2d/s3d reader tests -------------------------------
 
+@pytest.fixture
 def generate_wcs_transform():
-    """Create mock gwcs.WCS object for resampled s2d data"""
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
-        axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
-    spec = cf.SpectralFrame(name='spec', axes_order=(2,), unit=(u.micron,),
-        axes_names=('lambda',))
-    world = cf.CompositeFrame(name="world", frames=[icrs, spec])
+    def _generate_wcs_transform(dispaxis):
+        """Create mock gwcs.WCS object for resampled s2d data"""
+        detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+        icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
+            axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
+        spec = cf.SpectralFrame(name='spec', axes_order=(2,), unit=(u.micron,),
+            axes_names=('lambda',))
+        world = cf.CompositeFrame(name="world", frames=[icrs, spec])
 
-    transform = models.Mapping((0, 1, 0)) | (models.Const1D(42) & models.Const1D(42)
-        & (models.Shift(30) | models.Scale(0.1)))
-    pipeline = [(detector, transform),
-                (world, None)]
-    wcs = WCS(pipeline)
+        if dispaxis == 1:
+            mapping = models.Mapping((0, 1, 0))
+        if dispaxis == 2:
+            mapping = models.Mapping((0, 1, 1))
 
-    return wcs
+        transform = mapping | (models.Const1D(42) & models.Const1D(42)
+            & (models.Shift(30) | models.Scale(0.1)))
+        pipeline = [(detector, transform),
+                    (world, None)]
+        wcs = WCS(pipeline)
+
+        return wcs
+
+    return _generate_wcs_transform
 
 
 @pytest.fixture
-def s2d_single():
+def s2d_single(generate_wcs_transform):
     pytest.importorskip("jwst")
     from jwst.datamodels import MultiSlitModel, SlitModel
     from jwst.assign_wcs.util import wcs_bbox_from_shape
 
     shape = (10, 100)
+    dispaxis = 1
 
     model = MultiSlitModel()
     sm = SlitModel(shape)
     sm.data
     model.slits.append(sm)
     for slit in model.slits:
-        slit.meta.wcs = generate_wcs_transform()
+        slit.meta.wcs = generate_wcs_transform(dispaxis)
         slit.meta.wcs.bounding_box = wcs_bbox_from_shape(shape)
-        slit.meta.wcsinfo.dispersion_direction = 1
+        slit.meta.wcsinfo.dispersion_direction = dispaxis
 
     model.meta.telescope = "JWST"
 
     return model
 
 
-@pytest.fixture(params=[(10, 100), (8, 100)])
-def s2d_multi(s2d_single, request):
+@pytest.fixture(params=[(5, 100), (100, 8)])
+def s2d_multi(generate_wcs_transform, request):
     pytest.importorskip("jwst")
-    from jwst.datamodels import SlitModel
+    from jwst.datamodels import SlitModel, MultiSlitModel
     from jwst.assign_wcs.util import wcs_bbox_from_shape
 
     shape = request.param
+    if shape[0] < shape[1]:
+        dispaxis = 1
+    else:
+        dispaxis = 2
 
-    model = s2d_single
+    model = MultiSlitModel()
     sm = SlitModel(shape)
     sm.data
     model.slits.append(sm)
     model.slits.append(sm)
     for slit in model.slits:
-        slit.meta.wcs = generate_wcs_transform()
+        slit.meta.wcs = generate_wcs_transform(dispaxis)
         slit.meta.wcs.bounding_box = wcs_bbox_from_shape(shape)
-        slit.meta.wcsinfo.dispersion_direction = 1
+        slit.meta.wcsinfo.dispersion_direction = dispaxis
         slit.meta.bunit_data = "Jy"
         slit.meta.bunit_err = "Jy"
 
@@ -253,7 +267,7 @@ def test_jwst_s2d_multi_reader(tmpdir, s2d_multi):
     model = s2d_multi
     model.save(path)
 
-    speclist = SpectrumList.read(path)
-    assert len(speclist) == 3
+    speclist = SpectrumList.read(path, format="JWST s2d multi")
+    assert len(speclist) == 2
     assert hasattr(speclist[0], "spectral_axis")
     assert speclist[1].unit == u.Jy

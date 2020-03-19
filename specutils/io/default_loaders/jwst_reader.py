@@ -1,11 +1,8 @@
-import warnings
-
 import astropy.units as u
 from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
-from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 import asdf
 from gwcs.wcstools import grid_from_bounding_box
@@ -29,7 +26,7 @@ def identify_jwst_x1d_fits(origin, *args, **kwargs):
 
 def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     """
-    Check whether the given file is a JWST x1d spectral data product.
+    Check whether the given file is a JWST x1d spectral data product with many slits.
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
@@ -43,21 +40,32 @@ def identify_jwst_s2d_fits(origin, *args, **kwargs):
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
         return (is_jwst and "SCI" in hdulist and ("SCI", 2) not in hdulist
-            and "EXTRACT1D" not in hdulist)
+            and "EXTRACT1D" not in hdulist and len(hdulist["SCI"].data.shape) == 2)
 
 
 def identify_jwst_s2d_multi_fits(origin, *args, **kwargs):
     """
-    Check whether the given file is a JWST s2d spectral data product.
+    Check whether the given file is a JWST s2d spectral data product with many slits.
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        return is_jwst and ("SCI", 2) in hdulist and "EXTRACT1D" not in hdulist
+        return (is_jwst and ("SCI", 2) in hdulist and "EXTRACT1D" not in hdulist
+            and len(hdulist["SCI"].data.shape) == 2)
+
+
+def identify_jwst_s3d_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST s3d spectral data product.
+    """
+    is_jwst = _identify_jwst_fits(args[0])
+    with fits.open(args[0], memmap=False) as hdulist:
+        return (is_jwst and "SCI" in hdulist and "EXTRACT1D" not in hdulist
+            and len(hdulist["SCI"].data.shape) == 3)
 
 
 def _identify_jwst_fits(filename):
     """
-    Check whether the given file is a JWST spectral data product.
+    Check whether the given file is a JWST data product.
     """
     try:
         with fits.open(filename, memmap=False) as hdulist:
@@ -263,13 +271,114 @@ def _jwst_s2d_loader(filename, **kwargs):
                 flux_unit = u.Unit(hdu.header["BUNIT"])
             except (ValueError, KeyError):
                 flux_unit = None
-            if len(hdu.data.shape) == 2:
+
+            # The dispersion axis is 1 or 2.  1=x, 2=y.
+            dispaxis = hdu.header.get("DISPAXIS")
+            if dispaxis is None:
+                dispaxis = hdulist["PRIMARY"].header.get("DISPAXIS")
+
+            # Get the wavelength array from the GWCS object which returns a
+            # tuple of (RA, Dec, lambda)
+            grid = grid_from_bounding_box(wcs.bounding_box)
+            _, _, lam = wcs(*grid)
+            _, _, lam_unit = wcs.output_frame.unit
+
+            # Make sure the dispersion axis is the same for every spatial axis
+            # for s2d data
+            if dispaxis == 1:
                 flux_array = hdu.data
-            elif len(hdu.data.shape) == 3:
+                wavelength_array = lam[0]
+                # Make sure all rows are the same
+                if not (lam == wavelength_array).all():
+                    raise RuntimeError("This 2D or 3D spectrum is not rectified "
+                        "and cannot be loaded into a Spectrum1D object.")
+            elif dispaxis == 2:
                 flux_array = hdu.data.T
+                wavelength_array = lam[:, 0]
+                # Make sure all columns are the same
+                if not (lam.T == lam[None, :, 0]).all():
+                    raise RuntimeError("This 2D or 3D spectrum is not rectified "
+                        "and cannot be loaded into a Spectrum1D object.")
             else:
-                raise RuntimeError("This is not 2D or 3D spectral data "
+                raise RuntimeError("This 2D spectrum has an unknown dispaxis "
                     "and cannot be loaded into a Spectrum1D object.")
+
+            flux = Quantity(flux_array, unit=flux_unit)
+            wavelength = Quantity(wavelength_array, unit=lam_unit)
+
+            # Merge primary and slit headers and dump into meta
+            slit_header = hdu.header
+            header = primary_header.copy()
+            header.extend(slit_header, strip=True, update=True)
+            meta = {k: v for k,v in header.items()}
+
+            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spectra.append(spec)
+
+    return SpectrumList(spectra)
+
+
+@data_loader("JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum1D,
+            extensions=['fits'])
+def jwst_s3d_single_loader(filename, **kwargs):
+    """
+    Loader for JWST s3d 3D rectified spectral data in FITS format.
+
+    Parameters
+    ----------
+    filename : str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file.
+    """
+    spectrum_list = _jwst_s3d_loader(filename, **kwargs)
+    if len(spectrum_list) == 1:
+        return spectrum_list[0]
+    elif len(spectrum_list) > 1:
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. "
+            "Use SpectrumList.read() instead.")
+    else:
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra.")
+
+
+def _jwst_s3d_loader(filename, **kwargs):
+    """
+    Loader for JWST s3d 3D rectified spectral data in FITS format.
+
+    Parameters
+    ----------
+    filename : str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file.
+    """
+    spectra = []
+
+    # Get a list of GWCS objects from the slits
+    with asdf.open(filename) as af:
+        wcslist = [af.tree["meta"]["wcs"]]
+
+    with fits.open(filename, memmap=False) as hdulist:
+
+        primary_header = hdulist["PRIMARY"].header
+
+        hdulist_sci = [hdu for hdu in hdulist if hdu.name == "SCI"]
+
+        for hdu, wcs in zip(hdulist_sci, wcslist):
+            # Get flux
+            try:
+                flux_unit = u.Unit(hdu.header["BUNIT"])
+            except (ValueError, KeyError):
+                flux_unit = None
+
+            # The spectral axis is first.  We need it last
+            flux_array = hdu.data.T
             flux = Quantity(flux_array, unit=flux_unit)
 
             # Get the wavelength array from the GWCS object which returns a
@@ -278,26 +387,7 @@ def _jwst_s2d_loader(filename, **kwargs):
             _, _, lam = wcs(*grid)
             _, _, lam_unit = wcs.output_frame.unit
 
-            # The dispersion axis is 1-indexed in the FITS file.  1=x, 2=y.
-            # We need it zero-indexed.
-            if len(lam.shape) == 2:
-                dispaxis = hdu.header["DISPAXIS"] - 1
-            else:
-                # Cubes need just a slice
-                dispaxis = 0
-
-            # Make sure the dispersion axis is the same for every spatial axis
-            # for s2d data
-            if not (lam == lam[dispaxis]).all() and len(lam.shape) == 2:
-                raise RuntimeError("This 2D or 3D spectrum is not rectified "
-                    "and cannot be loaded into a Spectrum1D object.")
-            if len(lam.shape) == 2:
-                wavelength_array = lam[dispaxis]
-            elif len(lam.shape) == 3:
-                wavelength_array = lam[:, 0, 0]
-            else:
-                raise RuntimeError("This is not 2D or 3D spectral data "
-                    "and cannot be loaded into a Spectrum1D object.")
+            wavelength_array = lam[:, 0, 0]
             wavelength = Quantity(wavelength_array, unit=lam_unit)
 
             # Merge primary and slit headers and dump into meta
