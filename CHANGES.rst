@@ -1,3 +1,47 @@
+1.0
+---
+
+New Features
+^^^^^^^^^^^^
+
+- Implement ``SpectralCoord`` object. [#524] 
+
+- Implement cross-correlation for finding redshift/radial velocity. [#544]
+
+- Improve FITS file identification in default_loaders. [#545]
+
+- Support ``len()`` for ``SpectrumCollection`` objects. [#575]
+
+- Improved 1D JWST loader and allow parsing into an ``SpectrumCollection`` object. [#579]
+
+- Implemented 2D and 3D data loaders for JWST products. [#595] 
+
+- Include documentation on how to use dust_extinction in specutils. [#594]
+
+- Include example of spectrum shifting in docs. [#600]
+
+- Add new default excise_regions exciser function and improve subregion handling. [#609]
+
+- Implement use of ``SpectralCoord`` in ``Spectrum1D`` objects. [#610]
+
+Bug Fixes
+^^^^^^^^^
+
+- Fix stacking and unit treatment in ``SpectrumCollection.from_spectra``. [#578]
+
+- Fix spectral axis unit retrieval. [#581]
+
+- Fix bug in subspectrum fitting. [#586] 
+
+- Fix uncertainty to weight conversion to match astropy assumptions. [#594]
+
+- Fix warnings and log messages from ASDF serialization tests. [#597]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Remove spectral_resolution stub from Spectrum1D. [#606]
+
 0.7
 ---
 
