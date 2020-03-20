@@ -2,15 +2,13 @@ import pytest
 import os
 import urllib
 
-import tempfile
-
 
 remote_access = lambda argvals: pytest.mark.parametrize(
     'remote_data_path', argvals, indirect=True, scope='function')
 
 
 @pytest.fixture(scope='module')
-def remote_data_path(request):
+def remote_data_path(request, tmp_path):
     """
     Remotely access the Zenodo deposition archive to retrieve the versioned
     test data.
@@ -27,10 +25,9 @@ def remote_data_path(request):
 
     # Create a temporary directory that is automatically cleaned up when the
     # context is exited, removing any temporarily stored data.
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        file_path = os.path.join(tmp_dir, file_name)
+    file_path = os.path.join(tmp_path, file_name)
 
-        with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
-            tmp_file.write(r.read())
+    with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
+        tmp_file.write(r.read())
 
-            yield file_path
+        yield file_path
