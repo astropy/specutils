@@ -133,18 +133,20 @@ class SpectrumCollection:
         # Check that the spectral parameters are the same for each input
         # spectral_axis and create the multi-dimensional SpectralCoord
         sa = [x.spectral_axis for x in spectra]
-        sa_0 = spectra[0].spectral_axis
-        if not all(x.radial_velocity == sa_0.radial_velocity for x in sa) or \
-            not all(x.target == sa_0.target for x in sa) or \
-            not all(x.doppler_convention == sa_0.doppler_convention for
+        if not all(x.radial_velocity == sa[0].radial_velocity for x in sa) or \
+            not all(x.target == sa[0].target for x in sa) or \
+            not all(x.observer == sa[0].observer for x in sa) or \
+            not all(x.doppler_convention == sa[0].doppler_convention for
                     x in sa) or \
-            not all(x.doppler_rest == sa_0.doppler_rest for x in sa):
-                raise ValueError("All input spectral axes must have the same "
-                                "parameters")
-        spectral_axis = SpectralCoord([spec.spectral_axis for spec in spectra],
-                        radial_velocity = spectra[0].spectral_axis.radial_velocity,
-                        doppler_rest = spectra[0].spectral_axis.doppler_rest,
-                        doppler_convention = spectra[0].spectral_axis.doppler_convention)
+            not all(x.doppler_rest == sa[0].doppler_rest for x in sa):
+                raise ValueError("All input spectral_axis SpectralCoord "
+                                 "objects must have the same parameters.")
+        spectral_axis = SpectralCoord(sa,
+                            radial_velocity=sa[0].radial_velocity,
+                            doppler_rest=sa[0].doppler_rest,
+                            doppler_convention=sa[0].doppler_convention,
+                            observer=sa[0].observer,
+                            target=sa[0].target)
 
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
