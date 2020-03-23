@@ -4,7 +4,7 @@ from copy import deepcopy
 import astropy.units.equivalencies as eq
 import numpy as np
 from astropy import units as u
-from astropy.utils.decorators import lazyproperty
+from astropy.utils.decorators import lazyproperty, deprecated
 from astropy.wcs.wcsapi import HighLevelWCSWrapper
 
 from specutils.utils.wcs_utils import gwcs_from_array
@@ -65,6 +65,7 @@ class OneDSpectrumMixin:
         return self._spectral_axis
 
     @property
+    @deprecated('v1.0', alternative="spectral_axis.unit")
     def spectral_axis_unit(self):
         """
         Returns the units of the spectral axis.
