@@ -245,11 +245,11 @@ initial guess.
     y_fit = g_fit(x*u.um)
 
     # Plot the original spectrum and the fitted.
-    plt.plot(x, y)
-    plt.plot(x, y_fit)
+    plt.plot(x, y, label="Original spectrum")
+    plt.plot(x, y_fit, label="Fit result")
     plt.title('Single fit peak')
     plt.grid(True)
-    plt.legend('Original Spectrum', 'Specutils Fit Result')
+    plt.legend()
 
 
 Simple Example with Different Units
