@@ -5,6 +5,7 @@ from astropy.nddata import StdDevUncertainty
 from gwcs.wcs import WCS as GWCS
 
 from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectral_coordinate import SpectralCoord
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -76,11 +77,11 @@ def test_collection_without_optional_arguments():
 
 
 def test_create_collection_from_spectrum1D():
-    spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
-                      flux=np.random.randn(50) * u.Jy,
+    spec = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
+                      redshift=0.1), flux=np.random.randn(50) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-    spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
-                       flux=np.random.randn(50) * u.Jy,
+    spec1 = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(20, 60, 50) * u.AA,
+                       redshift=0.1), flux=np.random.randn(50) * u.Jy,
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     spec_coll = SpectrumCollection.from_spectra([spec, spec1])
@@ -89,9 +90,10 @@ def test_create_collection_from_spectrum1D():
     assert spec_coll.shape == (2, )
     assert spec_coll.nspectral == 50
     assert isinstance(spec_coll.flux, u.Quantity)
-    assert isinstance(spec_coll.spectral_axis, u.Quantity)
+    assert isinstance(spec_coll.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.unit == spec_coll.spectral_axis.unit
     assert spec.flux.unit == spec_coll.flux.unit
+    assert spec_coll.spectral_axis.redshift == 0.1
 
 
 def test_create_collection_from_collections():
@@ -129,6 +131,16 @@ def test_create_collection_from_spectra_without_uncertainties():
 
     SpectrumCollection.from_spectra([spec, spec1])
 
+def test_mismatched_spectral_axes_parameters():
+    spec = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
+                      radial_velocity=u.Quantity(100.0, "km/s")),
+                      flux=np.random.randn(50) * u.Jy)
+    spec1 = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(20, 60, 50) * u.AA,
+                       radial_velocity=u.Quantity(200.0, "km/s")),
+                       flux=np.random.randn(50) * u.Jy)
+
+    with pytest.raises(ValueError) as e_info:
+        SpectrumCollection.from_spectra([spec, spec1])
 
 @pytest.mark.parametrize('scshape,expected_len', [((5, 10), 5), ((4, 5, 10), 4)])
 def test_len(scshape, expected_len):
