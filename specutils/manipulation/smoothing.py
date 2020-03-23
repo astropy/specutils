@@ -96,7 +96,7 @@ def convolution_smooth(spectrum, kernel):
     # Return a new object with the smoothed flux.
     return Spectrum1D(flux=u.Quantity(smoothed_flux, spectrum.unit),
                       spectral_axis=u.Quantity(spectrum.spectral_axis,
-                                               spectrum.spectral_axis_unit),
+                                               spectrum.spectral_axis.unit),
                       wcs=spectrum.wcs,
                       uncertainty=uncertainty,
                       velocity_convention=spectrum.velocity_convention,
@@ -245,7 +245,7 @@ def median_smooth(spectrum, width):
     # Return a new object with the smoothed flux.
     return Spectrum1D(flux=u.Quantity(smoothed_flux, spectrum.unit),
                       spectral_axis=u.Quantity(spectrum.spectral_axis,
-                                               spectrum.spectral_axis_unit),
+                                               spectrum.spectral_axis.unit),
                       wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,
                       rest_value=spectrum.rest_value)
