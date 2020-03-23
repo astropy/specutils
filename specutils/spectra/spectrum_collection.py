@@ -5,6 +5,7 @@ import numpy as np
 from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from .spectrum1d import Spectrum1D
+from .spectral_coordinate import SpectralCoord
 
 __all__ = ['SpectrumCollection']
 
@@ -57,6 +58,10 @@ class SpectrumCollection:
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
                 raise ValueError("Shape of all data elements must be the same.")
+
+            # Convert to SpectralCoord if simple Quantity was input
+            if not isinstance(spectral_axis, SpectralCoord):
+                spectral_axis = SpectralCoord(spectral_axis)
 
         if uncertainty is not None and uncertainty.array.shape != flux.shape:
             raise ValueError("Uncertainty must be the same shape as flux and "
@@ -124,7 +129,22 @@ class SpectrumCollection:
 
         # Compose multi-dimensional ndarrays for each property
         flux = u.Quantity([spec.flux for spec in spectra])
-        spectral_axis = u.Quantity([spec.spectral_axis for spec in spectra])
+
+        # Check that the spectral parameters are the same for each input
+        # spectral_axis and create the multi-dimensional SpectralCoord
+        sa = [x.spectral_axis for x in spectra]
+        sa_0 = spectra[0].spectral_axis
+        if not all(x.radial_velocity == sa_0.radial_velocity for x in sa) or \
+            not all(x.target == sa_0.target for x in sa) or \
+            not all(x.doppler_convention == sa_0.doppler_convention for
+                    x in sa) or \
+            not all(x.doppler_rest == sa_0.doppler_rest for x in sa):
+                raise ValueError("All input spectral axes must have the same "
+                                "parameters")
+        spectral_axis = SpectralCoord([spec.spectral_axis for spec in spectra],
+                        radial_velocity = spectra[0].spectral_axis.radial_velocity,
+                        doppler_rest = spectra[0].spectral_axis.doppler_rest,
+                        doppler_convention = spectra[0].spectral_axis.doppler_convention)
 
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
