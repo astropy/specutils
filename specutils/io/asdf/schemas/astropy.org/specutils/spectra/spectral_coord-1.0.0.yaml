@@ -1,0 +1,15 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://astropy.org/schemas/specutils/spectra/spectral_coord-1.0.0"
+tag: "tag:astropy.org:specutils/spectra/spectral_coord-1.0.0"
+
+title: >
+  Represents a spectral coordinate
+description:
+  This schema represents a SpectralCoord object from specutils
+
+type: object
+properties:
+  $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
+...

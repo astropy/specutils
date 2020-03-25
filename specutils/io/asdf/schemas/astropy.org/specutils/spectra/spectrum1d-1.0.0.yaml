@@ -31,8 +31,8 @@ properties:
     $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
   spectral_axis:
     description: |
-      Quantity that represents the spectral axis of the spectrum
-    $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
+      SpectralCoord that represents the spectral axis of the spectrum
+    $ref: "spectral_coord-1.0.0"
   uncertainty:
     description: |
       Uncertainty information about the spectrum
