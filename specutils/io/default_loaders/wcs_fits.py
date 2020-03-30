@@ -18,15 +18,11 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
     with fits.open(args[0]) as hdu:
-        if (
-            # check if number of axes is one
-            hdu[0].header['NAXIS'] == 1 and
-            hdu[0].header.get('WCSDIM', 1) == 1 and
-            'WAT1_001' not in hdu[0].header and
-            # check if CTYPE1 kep is in the header
-            'CTYPE1' in hdu[0].header
-            ):
-            return True
+        # check if number of axes is one
+        return (hdu[0].header['NAXIS'] == 1 and
+                hdu[0].header.get('WCSDIM', 1) == 1 and
+                # check in CTYPE1 key for linear solution
+                hdu[0].header.get('CTYPE1', '').upper() != 'MULTISPEC')
 
     return False
 
@@ -91,9 +87,11 @@ def identify_iraf_wcs(origin, *args):
     WCSDIM == 2
     """
     with fits.open(args[0]) as hdulist:
-        return ('WAT1_001' in hdulist[0].header and
-                not hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
-                hdulist[0].header['FIBERID'] > 0)
+        return ('WAT1_001' in hdulist[0].header and not
+                (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
+                 hdulist[0].header['FIBERID'] > 0) and
+                (hdu[0].header.get('WCSDIM', 1) > 1 or
+                 hdu[0].header.get('CTYPE1', '').upper() == 'MULTISPEC'))
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,

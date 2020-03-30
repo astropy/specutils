@@ -69,9 +69,10 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
 
     tab = Table.read(file_obj, format='fits', hdu=hdu)
 
-    # Minimal checks for wcs consistency with table data - assume 1D
-    # spectral axis, or alternatively compare against shape of 1st column.
-    if not (wcs.naxis == 1 and wcs.array_shape[0] == len(tab) or
+    # Minimal checks for wcs consistency with table data -
+    # assume 1D spectral axis (having shape (0, NAXIS1),
+    # or alternatively compare against shape of 1st column.
+    if not (wcs.naxis == 1 and wcs.array_shape[-1] == len(tab) or
             wcs.array_shape == tab[tab.colnames[0]].shape):
         wcs = None
 
@@ -121,6 +122,19 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     if spectrum.uncertainty is not None:
         columns.append(spectrum.uncertainty.quantity)
         colnames.append("uncertainty")
+
+    # For 2D data transpose from row-major format
+    ndim = 1
+    for c in range(1, len(columns)):
+        if columns[c].ndim > 1:
+            ndim = columns[c].ndim
+            columns[c] = columns[c].T
+    if ndim > 1:
+        spec_shape = np.ones(ndim, dtype=np.int)
+        spec_shape[0] = -1
+        for c in range(len(columns)):
+            if columns[c].ndim == 1:
+                columns[c] = columns[c].reshape(spec_shape)
 
     tab = Table(columns, names=colnames, meta=header)
 

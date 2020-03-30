@@ -120,7 +120,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
 
     """
     # Local function to find the wavelength or frequency column
-    def _find_spectral_axis_column(table,columns_to_search):
+    def _find_spectral_axis_column(table, columns_to_search):
         """
         Figure out which column in a table holds the spectral axis (dispersion).
         Take the first column that has units compatible with u.spectral()
@@ -133,7 +133,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         # First, search for a column with units compatible with Angstroms
         for c in columns_to_search:
             try:
-                table[c].to("AA",equivalencies=u.spectral())
+                table[c].to("AA", equivalencies=u.spectral())
                 found_column = c
                 break
             except:
@@ -149,20 +149,28 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         return found_column
 
     # Local function to find the flux column
-    def _find_spectral_column(table,columns_to_search,spectral_axis):
+    def _find_spectral_column(table, columns_to_search, spectral_axis):
         """
         Figure out which column in a table holds the fluxes or uncertainties.
         Take the first column that has units compatible with
         u.spectral_density() equivalencies. If none meet that criterion,
         look for other likely length units such as 'adu' or 'cts/s'.
         """
-        additional_valid_units = [u.Unit('adu'),u.Unit('ct/s')]
+        additional_valid_units = [u.Unit('adu'), u.Unit('ct/s')]
         found_column = None
 
         # First, search for a column with units compatible with Janskies
         for c in columns_to_search:
             try:
-                table[c].to("Jy",equivalencies=u.spectral_density(spectral_axis))
+                # Check for multi-D flux columns
+                if table[c].ndim == 1:
+                    spec_ax = spectral_axis
+                else:
+                    # Assume leading dimension corresponds to spectral_axis
+                    spec_shape = np.ones(table[c].ndim, dtype=np.int)
+                    spec_shape[0] = -1
+                    spec_ax = spectral_axis.reshape(spec_shape)
+                table[c].to("Jy", equivalencies=u.spectral_density(spec_ax))
                 found_column = c
                 break
             except:
@@ -192,11 +200,14 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         colnames.remove(spectral_axis_column)
 
     # Use the first column that has a spectral_density equivalence as the flux
-    flux_column = _find_spectral_column(table,colnames,spectral_axis)
+    flux_column = _find_spectral_column(table, colnames, spectral_axis)
     if flux_column is None:
         raise IOError("Could not identify column containing the flux")
     flux = table[flux_column].to(table[flux_column].unit)
     colnames.remove(flux_column)
+    # For > 1D data transpose to row-major format
+    if flux.ndim > 1:
+        flux = flux.T
 
     # Use the next column with the same units as flux as the uncertainty
     # Interpret it as a standard deviation and check if it has zeros or negative values
@@ -206,7 +217,13 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
             err_column = c
             break
     if err_column is not None:
-        err = StdDevUncertainty(table[err_column].to(table[err_column].unit))
+        if table[err_column].ndim > 1:
+            err = table[err_column].T
+        elif flux.ndim > 1:  # Repeat uncertainties over all flux columns
+            err = np.tile(table[err_column], flux.shape[0], 1)
+        else:
+            err = table[err_column]
+        err = StdDevUncertainty(err.to(err.unit))
         if np.min(table[err_column]) <= 0.:
             warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
 
