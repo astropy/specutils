@@ -1,6 +1,8 @@
 """
 Contains classes that serialize spectral data types into ASDF representations.
 """
+from numpy.testing import assert_allclose
+from astropy.units import allclose
 import astropy.nddata
 from asdf.yamlutil import custom_tree_to_tagged_tree, tagged_tree_to_custom_tree
 
@@ -62,13 +64,10 @@ class Spectrum1DType(SpecutilsType):
     @classmethod
     def assert_equal(cls, old, new):
         """
-        Equality test used in ASDF unit tests
+        Equality method for use in ASDF unit tests
         """
-        from numpy.testing import assert_allclose
-        from astropy.tests.helper import quantity_allclose
-
-        assert quantity_allclose(old.flux, new.flux)
-        assert quantity_allclose(old.spectral_axis, new.spectral_axis)
+        assert allclose(old.flux, new.flux)
+        assert allclose(old.spectral_axis, new.spectral_axis)
         if old.uncertainty is None:
             assert new.uncertainty is None
         else:
