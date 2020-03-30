@@ -54,14 +54,11 @@ class SpectrumCollection:
         if spectral_axis is not None:
             if not isinstance(spectral_axis, u.Quantity):
                 raise u.UnitsError("Spectral axis must be a `Quantity`.")
+            spectral_axis = SpectralCoord(spectral_axis)
 
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
                 raise ValueError("Shape of all data elements must be the same.")
-
-            # Convert to SpectralCoord if simple Quantity was input
-            if not isinstance(spectral_axis, SpectralCoord):
-                spectral_axis = SpectralCoord(spectral_axis)
 
         if uncertainty is not None and uncertainty.array.shape != flux.shape:
             raise ValueError("Uncertainty must be the same shape as flux and "
@@ -121,7 +118,8 @@ class SpectrumCollection:
         ----------
         spectra : list, ndarray
             A list of :class:`~specutils.Spectrum1D` objects to be held in the
-            collection.
+            collection. Currently the spectral_axis parameters (e.g. observer,
+            radial_velocity) must be the same for each spectrum.
         """
         # Enforce that the shape of each item must be the same
         if not all((x.shape == spectra[0].shape for x in spectra)):
