@@ -299,6 +299,9 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
     disp = np.arange(1, 1.1, 0.01)*wlu[spectral_axis]
     flux = np.ones(len(disp))*1.e-14*u.Jy
     unc = StdDevUncertainty(0.01*flux)
+    if spectral_axis not in ('wavelength', ):
+        disp = np.flip(disp)
+
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
     tmpfile = str(tmpdir.join('_tst.fits'))
     spectrum.write(tmpfile, format='tabular-fits')
@@ -345,6 +348,9 @@ def test_tabular_fits_2d(tmpdir, spectral_axis):
     disp = np.arange(1, 1.1, 0.01)*wlu[spectral_axis]
     flux = np.ones((3, len(disp)))*np.arange(1, len(disp)+1)**2*1.e-14*u.Jy
     unc = StdDevUncertainty(0.01*np.random.rand(3, len(disp)))
+    if spectral_axis not in ('wavelength', ):
+        disp = np.flip(disp)
+
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
     tmpfile = str(tmpdir.join('_tst.fits'))
     spectrum.write(tmpfile, format='tabular-fits')

@@ -29,7 +29,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def wcs1d_fits_loader(file_name, spectral_axis_unit=None, flux_unit=None,
+def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
                       hdu_idx=0, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
@@ -39,8 +39,8 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, flux_unit=None,
 
     Parameters
     ----------
-    file_name : str
-        The path to the FITS file.
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
     spectral_axis_unit: str or `~astropy.Unit`, optional
         Units of the spectral axis. If not given (or None), the unit will be
         inferred from the CUNIT in the WCS.  Not that if this is providded it
@@ -58,7 +58,7 @@ def wcs1d_fits_loader(file_name, spectral_axis_unit=None, flux_unit=None,
     """
     logging.info("Spectrum file looks like wcs1d-fits")
 
-    with fits.open(file_name, **kwargs) as hdulist:
+    with fits.open(file_obj, **kwargs) as hdulist:
         header = hdulist[hdu_idx].header
         wcs = WCS(header)
 
@@ -96,7 +96,7 @@ def identify_iraf_wcs(origin, *args):
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
              extensions=['fits'])
-def non_linear_wcs1d_fits(file_name, spectral_axis_unit=None, flux_unit=None,
+def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
                           **kwargs):
     """Read wcs from files written by IRAF
 
@@ -106,8 +106,8 @@ def non_linear_wcs1d_fits(file_name, spectral_axis_unit=None, flux_unit=None,
     Parameters
     ----------
 
-    file_name : str
-        Name of file to load
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     spectral_axis_unit : `~astropy.Unit`, optional
         Spectral axis unit, default is None in which case will search for it
@@ -125,7 +125,7 @@ def non_linear_wcs1d_fits(file_name, spectral_axis_unit=None, flux_unit=None,
 
     logging.info('Loading 1D non-linear fits solution')
 
-    with fits.open(file_name, **kwargs) as hdulist:
+    with fits.open(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
         for wcsdim in range(1, header['WCSDIM'] + 1):
             ctypen = header['CTYPE{:d}'.format(wcsdim)]

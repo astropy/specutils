@@ -65,21 +65,21 @@ def aspcapStar_identify(origin, *args, **kwargs):
 
 
 @data_loader(label="APOGEE apVisit", identifier=apVisit_identify, extensions=['fits'])
-def apVisit_loader(file_name, **kwargs):
+def apVisit_loader(file_obj, **kwargs):
     """
     Loader for APOGEE apVisit files.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_name, **kwargs)
+    hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
@@ -110,21 +110,21 @@ def apVisit_loader(file_name, **kwargs):
 
 
 @data_loader(label="APOGEE apStar", identifier=apStar_identify, extensions=['fits'])
-def apStar_loader(file_name, **kwargs):
+def apStar_loader(file_obj, **kwargs):
     """
     Loader for APOGEE apStar files.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_name, **kwargs)
+    hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
@@ -151,21 +151,21 @@ def apStar_loader(file_name, **kwargs):
 
 
 @data_loader(label="APOGEE aspcapStar", identifier=aspcapStar_identify, extensions=['fits'])
-def aspcapStar_loader(file_name, **kwargs):
+def aspcapStar_loader(file_obj, **kwargs):
     """
     Loader for APOGEE aspcapStar files.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_name, **kwargs)
+    hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
