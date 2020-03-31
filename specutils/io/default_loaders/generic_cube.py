@@ -21,9 +21,8 @@ from ...spectra import Spectrum1D
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
-    return (isinstance(args[0], str) and
-            fits.connect.is_fits(origin, *args) and
-            fits.getheader(args[0])['NAXIS'] == 3)
+    with fits.open(args[0]) as hdulist:
+        return (hdulist[0].header['NAXIS'] == 3)
 
 
 # not yet ready because it's not generic enough and does not use column_mapping

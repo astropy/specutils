@@ -25,6 +25,7 @@ from numpy.testing import assert_allclose
 from .conftest import remote_access
 from .. import Spectrum1D, SpectrumList
 from ..io import get_loaders_by_extension
+from ..io.default_loaders import subaru_pfs_spec
 
 
 def test_get_loaders_by_extension():
@@ -147,9 +148,9 @@ def test_sdss_spspec():
 
 @pytest.mark.remote_data
 def test_sdss_spec_stream():
-    '''Test direct read and recognition of SDSS-III/IV spec from remote URL,
+    """Test direct read and recognition of SDSS-III/IV spec from remote URL,
     i.e. do not rely on filename pattern.
-    '''
+    """
     sdss_url = 'https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055'
     spec = Spectrum1D.read(sdss_url)
 
@@ -160,9 +161,9 @@ def test_sdss_spec_stream():
 
 @pytest.mark.remote_data
 def test_sdss_spspec_stream():
-    '''Test direct read and recognition of SDSS-I/II spSpec from remote URL,
+    """Test direct read and recognition of SDSS-I/II spSpec from remote URL,
     i.e. do not rely on filename pattern.
-    '''
+    """
     sdss_url = 'http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit'
     spec = Spectrum1D.read(sdss_url)
 
@@ -176,8 +177,8 @@ def test_sdss_spspec_stream():
 @pytest.mark.remote_data
 @pytest.mark.parametrize('compress', ['gzip', 'bzip2'])
 def test_sdss_compressed(compress):
-    '''Test automatic recognition of supported compression formats.
-    '''
+    """Test automatic recognition of supported compression formats.
+    """
     ext = {'gzip': '.gz', 'bzip2': '.bz2'}
     # Deliberately not using standard filename pattern to test header info.
     sp_pattern = 'SDSS-I.fits'
@@ -207,13 +208,13 @@ def test_sdss_compressed(compress):
 
 @pytest.mark.parametrize("name", ['file.fit', 'file.fits', 'file.dat'])
 def test_no_reader_matches(name):
-    '''If no reader matches a file, check that the correct error is raised.
+    """If no reader matches a file, check that the correct error is raised.
     This test serves a second purpose: A badly written identifier
     function might raise an error as supposed to returning False when
     it cannot identify a file.  The fact that this test passes means
     that at the very least all identifier functions that have been
     tried for that file ending did not fail with an error.
-    '''
+    """
     with tempfile.TemporaryDirectory() as tmpdirname:
         filename = os.path.join(tmpdirname, name)
         with open(filename, 'w') as fp:
@@ -295,21 +296,24 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
     wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
            'wavenumber': u.cm**-1}
     # Create a small data set
-    disp = np.arange(1,1.1,0.01)*wlu[spectral_axis]
+    disp = np.arange(1, 1.1, 0.01)*wlu[spectral_axis]
     flux = np.ones(len(disp))*1.e-14*u.Jy
     unc = StdDevUncertainty(0.01*flux)
+    if spectral_axis not in ('wavelength', ):
+        disp = np.flip(disp)
+
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
     tmpfile = str(tmpdir.join('_tst.fits'))
     spectrum.write(tmpfile, format='tabular-fits')
 
     # Read it in and check against the original
-    table = Table.read(tmpfile, format='fits')
-    assert table[spectral_axis].unit == spectrum.spectral_axis.unit
-    assert table['flux'].unit == spectrum.flux.unit
-    assert table['uncertainty'].unit == spectrum.uncertainty.unit
-    assert quantity_allclose(table[spectral_axis], spectrum.spectral_axis)
-    assert quantity_allclose(table['flux'], spectrum.flux)
-    assert quantity_allclose(table['uncertainty'], spectrum.uncertainty.quantity)
+    spec = Spectrum1D.read(tmpfile)
+    assert spec.flux.unit == spectrum.flux.unit
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
 
     # Test spectrum with different flux unit
     flux = np.random.normal(0., 1.e-9, disp.shape[0]) * u.W * u.m**-2 * u.AA**-1
@@ -321,10 +325,46 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
         spectrum.write(tmpfile, format='tabular-fits')
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
 
-    table = Table.read(tmpfile)
-    assert table['flux'].unit == spectrum.flux.unit
+    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+            'flux': ('flux', 'erg / (s cm**2 AA)'),
+            'uncertainty': ('uncertainty', None)}
 
-    # ToDo: get tabular_fits_loader to also read this in correctly!
+    # Read it back again and check against the original
+    spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
+    assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
+
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_tabular_fits_2d(tmpdir, spectral_axis):
+    wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
+           'wavenumber': u.cm**-1}
+    # Create a small data set with 2D flux + uncertainty
+    disp = np.arange(1, 1.1, 0.01)*wlu[spectral_axis]
+    flux = np.ones((3, len(disp)))*np.arange(1, len(disp)+1)**2*1.e-14*u.Jy
+    unc = StdDevUncertainty(0.01*np.random.rand(3, len(disp)))
+    if spectral_axis not in ('wavelength', ):
+        disp = np.flip(disp)
+
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, format='tabular-fits')
+
+    # Read it in and check against the original
+    spec = Spectrum1D.read(tmpfile)
+    assert spec.flux.unit == spectrum.flux.unit
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert spec.flux.shape == flux.shape
+    assert spec.uncertainty.array.shape == flux.shape
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
 
 
 def test_tabular_fits_header(tmpdir):
@@ -368,3 +408,85 @@ def test_tabular_fits_header(tmpdir):
     assert 'OBSDATE' not in hdulist[0].header
     assert 'OBSDATE' not in hdulist[1].header
     hdulist.close()
+
+
+@pytest.mark.remote_data
+def test_apstar_loader():
+    """Test remote read and automatic recognition of apStar spec from URL.
+    """
+    apstar_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
+                  "stars/apo25m/N7789/apStar-r12-2M00005414+5522241.fits")
+    spec = Spectrum1D.read(apstar_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.flux.unit == 1e-17 * u.erg / (u.s * u.cm**2 * u.AA)
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_apvisit_loader():
+    """Test remote read and automatic recognition of apvisit spec from URL.
+    """
+    apvisit_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
+                   "visit/apo25m/N7789/5094/55874/"
+                   "apVisit-r12-5094-55874-123.fits")
+    spec = Spectrum1D.read(apvisit_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.flux.unit == 1e-17 * u.erg / (u.s * u.cm**2 * u.AA)
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_aspcapstar_loader():
+    """Test remote read and automatic recognition of aspcapStar spec from URL.
+    """
+    aspcap_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/aspcap/r12/"
+                  "l33/apo25m/N7789/aspcapStar-r12-2M00005414+5522241.fits")
+    spec = Spectrum1D.read(aspcap_url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_muscles_loader():
+    """Test remote read and automatic recognition of muscles spec from URL.
+    """
+    url = ("https://archive.stsci.edu/missions/hlsp/muscles/gj1214/"
+           "hlsp_muscles_multi_multi_gj1214_broadband_v22_const-res-sed.fits")
+    spec = Spectrum1D.read(url)
+
+    assert isinstance(spec, Spectrum1D)
+    assert len(spec.flux) == len(spec.spectral_axis) > 50000
+    assert spec.uncertainty.array.min() >= 0.0
+    assert spec.spectral_axis.unit == u.AA
+    assert spec.flux.unit == u.erg / (u.s * u.cm**2 * u.AA)
+
+
+@pytest.mark.remote_data
+def test_subaru_pfs_loader(tmpdir):
+    """Test remote read and automatic recognition of Subaru PFS spec from URL.
+    """
+    pfs = "pfsObject-00000-0,0-000-00000001-01-0x395428ab.fits"
+    url = f"https://github.com/Subaru-PFS/datamodel/raw/master/examples/{pfs}"
+
+    assert subaru_pfs_spec.identify_pfs_spec(url, url)
+
+    # PFS loader parses metadata from filename, cannot read directly from url
+    tmpfile = str(tmpdir.join(pfs))
+    with urllib.request.urlopen(url) as response:
+        shutil.copyfileobj(response, open(tmpfile, mode='wb'))
+
+    assert subaru_pfs_spec.identify_pfs_spec(pfs, open(tmpfile, mode='rb'))
+    spec = Spectrum1D.read(tmpfile, format='Subaru-pfsObject')
+    assert isinstance(spec, Spectrum1D)
+
+    spec = Spectrum1D.read(tmpfile)
+    assert isinstance(spec, Spectrum1D)
+    assert len(spec.flux) == len(spec.spectral_axis) > 10000
+    assert spec.spectral_axis.unit == u.nm
+    assert spec.flux.unit == u.nJy

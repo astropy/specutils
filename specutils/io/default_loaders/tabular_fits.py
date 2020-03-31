@@ -20,32 +20,31 @@ __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 def identify_tabular_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
-    # fits.open(args[0]) = hdulist
-    return (isinstance(args[0], str) and
-            # check if file is .fits
-            fits.connect.is_fits(origin, *args) and
-            # check hdulist has more than one extension
-            len(fits.open(args[0])) > 1 and
-            # check if fits has BinTable extension
-            isinstance(fits.open(args[0])[1], fits.BinTableHDU) and not
-            (fits.getheader(args[0])['TELESCOP'] == 'SDSS 2.5-M' and
-             fits.getheader(args[0])['FIBERID'] > 0) and not
-            (fits.getheader(args[0])['TELESCOP'] == 'HST' and
-             fits.getheader(args[0])['INSTRUME'] in ('COS', 'STIS')) and not
-            (fits.getheader(args[0])['TELESCOP'] == 'JWST')
-            )
+    with fits.open(args[0]) as hdulist:
+        # Test if fits has extension of type BinTable and check against
+        # known keys of already defined specific formats
+        return (len(hdulist) > 1 and
+                isinstance(hdulist[1], fits.BinTableHDU) and not
+                (fits.getheader(args[0]).get('TELESCOP') == 'MULTI' and
+                 fits.getheader(args[0]).get('HLSPACRN') == 'MUSCLES' and
+                 fits.getheader(args[0]).get('PROPOSID') == 13650) and not
+                (fits.getheader(args[0]).get('TELESCOP') == 'SDSS 2.5-M' and
+                 fits.getheader(args[0]).get('FIBERID') > 0) and not
+                (fits.getheader(args[0]).get('TELESCOP') == 'HST' and
+                 fits.getheader(args[0]).get('INSTRUME') in ('COS', 'STIS')) and not
+                 fits.getheader(args[0]).get('TELESCOP') == 'JWST')
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D, extensions=['fits'])
-def tabular_fits_loader(file_name, column_mapping=None, hdu=1, **kwargs):
+def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     Load spectrum from a FITS file.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
     hdu: int
         The HDU of the fits file (default: 1st extension) to read from
     column_mapping : dict
@@ -65,10 +64,17 @@ def tabular_fits_loader(file_name, column_mapping=None, hdu=1, **kwargs):
     """
     # Parse the wcs information. The wcs will be passed to the column finding
     # routines to search for spectral axis information in the file.
-    with fits.open(file_name) as hdulist:
+    with fits.open(file_obj) as hdulist:
         wcs = WCS(hdulist[hdu].header)
 
-    tab = Table.read(file_name, format='fits', hdu=hdu)
+    tab = Table.read(file_obj, format='fits', hdu=hdu)
+
+    # Minimal checks for wcs consistency with table data -
+    # assume 1D spectral axis (having shape (0, NAXIS1),
+    # or alternatively compare against shape of 1st column.
+    if not (wcs.naxis == 1 and wcs.array_shape[-1] == len(tab) or
+            wcs.array_shape == tab[tab.colnames[0]].shape):
+        wcs = None
 
     # If no column mapping is given, attempt to parse the file using
     # unit information
@@ -116,6 +122,19 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     if spectrum.uncertainty is not None:
         columns.append(spectrum.uncertainty.quantity)
         colnames.append("uncertainty")
+
+    # For 2D data transpose from row-major format
+    ndim = 1
+    for c in range(1, len(columns)):
+        if columns[c].ndim > 1:
+            ndim = columns[c].ndim
+            columns[c] = columns[c].T
+    if ndim > 1:
+        spec_shape = np.ones(ndim, dtype=np.int)
+        spec_shape[0] = -1
+        for c in range(len(columns)):
+            if columns[c].ndim == 1:
+                columns[c] = columns[c].reshape(spec_shape)
 
     tab = Table(columns, names=colnames, meta=header)
 

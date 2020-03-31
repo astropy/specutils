@@ -12,8 +12,9 @@ from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 
-from specutils.io.registers import data_loader
-from specutils import Spectrum1D
+from ...spectra import Spectrum1D
+from ..registers import data_loader
+from ..parsing_utils import _fits_identify_by_name
 
 __all__ = ['spec_identify', 'spec_loader']
 
@@ -26,35 +27,38 @@ _spec_pattern = re.compile(r'pfsObject-(?P<tract>\d{5})-(?P<patch>.{3})-'
                            r'\.fits')
 
 
-def spec_identify(origin, *args, **kwargs):
+def identify_pfs_spec(origin, *args, **kwargs):
     """
-    Check whether given filename is FITS. This is used for Astropy I/O
-    Registry.
+    Check whether given file is FITS and name matches `_spec_pattern`.
     """
-    return (isinstance(args[0], str) and
-            _spec_pattern.match(args[0]) is not None and
-            fits.connect.is_fits(origin, *args))
+
+    return _fits_identify_by_name(origin, *args, pattern=_spec_pattern)
 
 
-@data_loader(label="Subaru-pfsObject", identifier=spec_identify,
+@data_loader(label="Subaru-pfsObject", identifier=identify_pfs_spec,
              extensions=['fits'])
-def spec_loader(file_name, **kwargs):
+def pfs_spec_loader(file_obj, **kwargs):
     """
     Loader for PFS combined spectrum files.
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj : str or file-like
+        FITS file name or object (provided from name by Astropy I/O Registry).
 
     Returns
     -------
-    data: Spectrum1D
+    data : Spectrum1D
         The spectrum that is represented by the data in this table.
     """
+    if isinstance(file_obj, str):
+        file_name = file_obj
+    else:
+        file_name = file_obj.name
+
     m = _spec_pattern.match(os.path.basename(file_name))
 
-    with fits.open(file_name, **kwargs) as hdulist:
+    with fits.open(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
         meta = {'header': header,
                 'tract': m['tract'],

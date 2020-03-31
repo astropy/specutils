@@ -1,8 +1,13 @@
 import numpy as np
+import os
+import re
+import urllib
+
+from astropy.io import fits
 from astropy.table import Table
-import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
+import astropy.units as u
 import warnings
 import logging
 
@@ -17,16 +22,17 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
     Parameters
     ----------
     table : :class:`~astropy.table.Table`
-        The table object returned from parsing the data file.
+        The table object (e.g. returned from ``Table.read('data_file')``).
     column_mapping : dict
-        A dictionary describing the relation between the file columns
+        A dictionary describing the relation between the table columns
         and the arguments of the `Spectrum1D` class, along with unit
-        information. The dictionary keys should be the file column names
+        information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
         associated `Spectrum1D` keyword argument, and the second element is the
-        unit for the file column::
+        unit for the file column (or ``None`` to take unit from the table)::
 
-            column_mapping = {'FLUX': ('flux', 'Jy')}
+            column_mapping = {'FLUX': ('flux', 'Jy'),
+                              'WAVE': ('spectral_axis', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
@@ -48,13 +54,19 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             logging.debug("Attempting auto-convert of table unit '%s' to "
                           "user-provided unit '%s'.", tab_unit, cm_unit)
 
+            if not isinstance(cm_unit, u.Unit):
+                cm_unit = u.Unit(cm_unit)
             if cm_unit.physical_type in ('length', 'frequency'):
                 # Spectral axis column information
-                kwarg_val = kwarg_val.to(cm_unit, equivalence=u.spectral())
+                kwarg_val = kwarg_val.to(cm_unit, equivalencies=u.spectral())
             elif 'spectral flux' in cm_unit.physical_type:
                 # Flux/error column information
                 kwarg_val = kwarg_val.to(
                     cm_unit, equivalencies=u.spectral_density(1 * u.AA))
+        elif tab_unit:
+            # The user has provided no unit in the column mapping, so we
+            # use the unit as defined in the table object.
+            kwarg_val = u.Quantity(table[col_name], tab_unit)
         elif cm_unit is not None:
             # In this case, the user has defined a unit in the column mapping
             # but no unit has been defined in the table object.
@@ -108,7 +120,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
 
     """
     # Local function to find the wavelength or frequency column
-    def _find_spectral_axis_column(table,columns_to_search):
+    def _find_spectral_axis_column(table, columns_to_search):
         """
         Figure out which column in a table holds the spectral axis (dispersion).
         Take the first column that has units compatible with u.spectral()
@@ -121,7 +133,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         # First, search for a column with units compatible with Angstroms
         for c in columns_to_search:
             try:
-                table[c].to("AA",equivalencies=u.spectral())
+                table[c].to("AA", equivalencies=u.spectral())
                 found_column = c
                 break
             except:
@@ -137,20 +149,28 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         return found_column
 
     # Local function to find the flux column
-    def _find_spectral_column(table,columns_to_search,spectral_axis):
+    def _find_spectral_column(table, columns_to_search, spectral_axis):
         """
         Figure out which column in a table holds the fluxes or uncertainties.
         Take the first column that has units compatible with
         u.spectral_density() equivalencies. If none meet that criterion,
         look for other likely length units such as 'adu' or 'cts/s'.
         """
-        additional_valid_units = [u.Unit('adu'),u.Unit('ct/s')]
+        additional_valid_units = [u.Unit('adu'), u.Unit('ct/s')]
         found_column = None
 
         # First, search for a column with units compatible with Janskies
         for c in columns_to_search:
             try:
-                table[c].to("Jy",equivalencies=u.spectral_density(spectral_axis))
+                # Check for multi-D flux columns
+                if table[c].ndim == 1:
+                    spec_ax = spectral_axis
+                else:
+                    # Assume leading dimension corresponds to spectral_axis
+                    spec_shape = np.ones(table[c].ndim, dtype=np.int)
+                    spec_shape[0] = -1
+                    spec_ax = spectral_axis.reshape(spec_shape)
+                table[c].to("Jy", equivalencies=u.spectral_density(spec_ax))
                 found_column = c
                 break
             except:
@@ -180,11 +200,14 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         colnames.remove(spectral_axis_column)
 
     # Use the first column that has a spectral_density equivalence as the flux
-    flux_column = _find_spectral_column(table,colnames,spectral_axis)
+    flux_column = _find_spectral_column(table, colnames, spectral_axis)
     if flux_column is None:
         raise IOError("Could not identify column containing the flux")
     flux = table[flux_column].to(table[flux_column].unit)
     colnames.remove(flux_column)
+    # For > 1D data transpose to row-major format
+    if flux.ndim > 1:
+        flux = flux.T
 
     # Use the next column with the same units as flux as the uncertainty
     # Interpret it as a standard deviation and check if it has zeros or negative values
@@ -194,7 +217,13 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
             err_column = c
             break
     if err_column is not None:
-        err = StdDevUncertainty(table[err_column].to(table[err_column].unit))
+        if table[err_column].ndim > 1:
+            err = table[err_column].T
+        elif flux.ndim > 1:  # Repeat uncertainties over all flux columns
+            err = np.tile(table[err_column], flux.shape[0], 1)
+        else:
+            err = table[err_column]
+        err = StdDevUncertainty(err.to(err.unit))
         if np.min(table[err_column]) <= 0.:
             warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
 
@@ -208,3 +237,48 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
                                   meta=table.meta, wcs=wcs)
 
     return spectrum
+
+
+def _fits_identify_by_name(origin, fileinp, *args,
+                           pattern=r'(?i).*\.fit[s]?$', **kwargs):
+    """
+    Check whether input file is FITS and matches a given name pattern.
+    Utility function to construct an `identifier` for Astropy I/O Registry.
+
+    Parameters
+    ----------
+    fileinp : str or file-like object
+        FITS file name or object (provided from name by Astropy I/O Registry).
+    pattern : regex str or re.Pattern
+        File name pattern to be matched.
+        Note: loaders should define a pattern sufficiently specific for their
+        spectrum file types to avoid ambiguous/multiple matches.
+    """
+    fileobj = None
+    filepath = None
+    if pattern is None:
+        pattern = r''
+    _spec_pattern = re.compile(pattern)
+
+    if isinstance(fileinp, str):
+        filepath = fileinp
+        try:
+            fileobj = open(filepath, mode='rb')
+        except FileNotFoundError:
+            # Check if path points to valid url
+            try:
+                fileinp = urllib.request.urlopen(filepath)
+            except ValueError:
+                return False
+    elif fits.util.isfile(fileinp):
+        fileobj = fileinp
+        filepath = fileobj.name
+
+    # Check for `urlopen` object - can only probe content if seekable
+    if hasattr(fileinp, 'url') and hasattr(fileinp, 'seekable'):
+        filepath = urllib.parse.unquote(fileinp.url)
+        if fileinp.seekable():
+            fileobj = fileinp
+
+    return (_spec_pattern.match(os.path.basename(filepath)) is not None and
+            fits.connect.is_fits(origin, filepath, fileobj, *args))

@@ -1,3 +1,20 @@
+1.1
+---
+
+New Features
+^^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+- Fixed ``tabular-fits`` handling of 1D+2D spectra without WCS;
+  identification and parsing of metadata and units for ``apogee``
+  and ``muscles`` improved; enabled loading from file-like objects. [#573]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 1.0
 ---
 
@@ -41,6 +58,7 @@ Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Remove spectral_resolution stub from Spectrum1D. [#606]
+
 
 0.7
 ---
