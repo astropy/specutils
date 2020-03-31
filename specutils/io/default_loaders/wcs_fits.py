@@ -17,8 +17,13 @@ __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
-    # check if file can be opened with this reader
     # args[0] = filename
+    # check if filename conforms to naming convention for writer
+    if origin == 'write':
+        return (args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) and not
+                hasattr(args[2], 'uncertainty'))
+
+    # check if file can be opened with this reader
     with fits.open(args[0]) as hdulist:
         # check if number of axes is one
         return (hdulist[0].header['NAXIS'] == 1 and

@@ -18,8 +18,12 @@ __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 
 
 def identify_tabular_fits(origin, *args, **kwargs):
-    # check if file can be opened with this reader
     # args[0] = filename
+    # check if filename conforms to naming convention for writer
+    if origin == 'write':
+        return args[0].endswith(('.fits', '.fit'))
+
+    # check if file can be opened with this reader
     with fits.open(args[0]) as hdulist:
         # Test if fits has extension of type BinTable and check against
         # known keys of already defined specific formats
@@ -36,7 +40,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
-             dtype=Spectrum1D, extensions=['fits'])
+             dtype=Spectrum1D, extensions=['fits'], priority=6)
 def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     Load spectrum from a FITS file.
@@ -100,9 +104,15 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
         The path to the FITS file
     update_header: bool
         Update FITS header with all compatible entries in `spectrum.meta`
+    wunit : str or `~astropy.units.Unit`
+        Unit for the spectral axis (wavelength or frequency-like)
+    funit : str or `~astropy.units.Unit`
+        Unit for the flux (and associated uncertainty)
+    wtype : str or `~numpy.dtype`
+        Floating point type for storing spectral axis array
+    ftype : str or `~numpy.dtype`
+        Floating point type for storing flux array
     """
-    flux = spectrum.flux
-    disp = spectrum.spectral_axis
     header = spectrum.meta.get('header', fits.header.Header()).copy()
 
     if update_header:
@@ -115,16 +125,28 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
         header.remove(keyword, ignore_missing=True)
 
+    # Add dispersion array and unit
+    wtype = kwargs.pop('wtype', spectrum.spectral_axis.dtype)
+    wunit = u.Unit(kwargs.pop('wunit', spectrum.spectral_axis.unit))
+    disp = spectrum.spectral_axis.to(wunit, equivalencies=u.spectral())
+
     # Mapping of spectral_axis types to header TTYPE1
-    dispname = disp.unit.physical_type
+    dispname = wunit.physical_type
     if dispname == "length":
         dispname = "wavelength"
 
-    columns = [disp, flux]
+    # Add flux array and unit
+    ftype = kwargs.pop('ftype', spectrum.flux.dtype)
+    funit = u.Unit(kwargs.pop('funit', spectrum.flux.unit))
+    flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(disp))
+
+    columns = [disp.astype(wtype), flux.astype(ftype)]
     colnames = [dispname, "flux"]
+
     # Include uncertainty - units to be inferred from spectrum.flux
     if spectrum.uncertainty is not None:
-        columns.append(spectrum.uncertainty.quantity)
+        unc = spectrum.uncertainty.quantity.to(funit, equivalencies=u.spectral_density(disp))
+        columns.append(unc.astype(ftype))
         colnames.append("uncertainty")
 
     # For 2D data transpose from row-major format
