@@ -14,7 +14,7 @@ from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy.units import UnitsWarning
-from astropy.wcs import FITSFixedWarning
+from astropy.wcs import FITSFixedWarning, WCS
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
@@ -452,6 +452,40 @@ def test_tabular_fits_header(tmpdir):
     assert 'OBSDATE' not in hdulist[0].header
     assert 'OBSDATE' not in hdulist[1].header
     hdulist.close()
+
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_wcs1d_fits_writer(tmpdir, spectral_axis):
+    wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
+               'wavenumber': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + len(flux[1:]) * dwl, dwl) * wlu
+
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, format='wcs1d-fits')
+
+    # Read it in and check against the original
+    spec = Spectrum1D.read(tmpfile)
+    assert spec.flux.unit == spectrum.flux.unit
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.spectral_axis, disp)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+
+    # Construct a 2D flux array, just for demonstration - cannot read it back
+    flux = flux * np.arange(1, 6).reshape(-1, 1)
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_2d.fits'))
+    spectrum.write(tmpfile, format='wcs1d-fits')
 
 
 @pytest.mark.remote_data
