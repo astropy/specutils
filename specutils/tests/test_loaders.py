@@ -481,11 +481,15 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     assert quantity_allclose(spec.spectral_axis, disp)
     assert quantity_allclose(spec.flux, spectrum.flux)
 
-    # Construct a 2D flux array, just for demonstration - cannot read it back
+    # Construct a 2D flux array and repeat (no auto-identify)
     flux = flux * np.arange(1, 6).reshape(-1, 1)
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
     tmpfile = str(tmpdir.join('_2d.fits'))
     spectrum.write(tmpfile, format='wcs1d-fits')
+
+    spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
 
 
 @pytest.mark.remote_data

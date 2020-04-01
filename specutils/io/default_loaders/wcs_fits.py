@@ -6,6 +6,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 from astropy.modeling import models
 from astropy.utils.exceptions import AstropyUserWarning
+from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 import shlex
@@ -25,11 +26,12 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
     # check if file can be opened with this reader
     with fits.open(args[0]) as hdulist:
+        hdu = kwargs.get('hdu', 0)
         # check if number of axes is one
-        return (hdulist[0].header['NAXIS'] == 1 and
-                hdulist[0].header.get('WCSDIM', 1) == 1 and
+        return (hdulist[hdu].header['NAXIS'] == 1 and
+                hdulist[hdu].header.get('WCSDIM', 1) == 1 and
                 # check in CTYPE1 key for linear solution
-                hdulist[0].header.get('CTYPE1', '').upper() != 'MULTISPEC')
+                hdulist[hdu].header.get('CTYPE1', '').upper() != 'MULTISPEC')
 
     return False
 
@@ -37,7 +39,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits'], priority=5)
 def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
-                      hdu_idx=0, **kwargs):
+                      hdu=0, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
     axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
@@ -51,13 +53,13 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         or HDUList (as resulting from astropy.io.fits.open()).
     spectral_axis_unit: str or `~astropy.Unit`, optional
         Units of the spectral axis. If not given (or None), the unit will be
-        inferred from the CUNIT in the WCS.  Not that if this is providded it
+        inferred from the CUNIT in the WCS.  Note that if this is provided it
         will *override* any units the CUNIT provides.
     flux_unit: str or `~astropy.Unit`, optional
         Units of the flux for this spectrum. If not given (or None), the unit
         will be inferred from the BUNIT keyword in the header. Note that this
         unit will attempt to convert from BUNIT if BUNIT is present
-    hdu_idx : int
+    hdu : int
         The index of the HDU to load into this spectrum.
 
     Notes
@@ -71,18 +73,18 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     else:
         hdulist = fits.open(file_obj, **kwargs)
 
-    header = hdulist[hdu_idx].header
+    header = hdulist[hdu].header
     wcs = WCS(header)
 
     if wcs.naxis != 1:
         raise ValueError('FITS file input to wcs1d_fits_loader is not 1D')
 
     if 'BUNIT' in header:
-        data = u.Quantity(hdulist[hdu_idx].data, unit=header['BUNIT'])
+        data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
         if flux_unit is not None:
             data = data.to(flux_unit)
     else:
-        data = u.Quantity(hdulist[hdu_idx].data, unit=flux_unit)
+        data = u.Quantity(hdulist[hdu].data, unit=flux_unit)
 
     if spectral_axis_unit is not None:
         wcs.wcs.cunit[0] = str(spectral_axis_unit)
@@ -91,6 +93,11 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist.close()
+
+        if wcs.naxis == 2:
+            wcs = wcs.dropaxis(1)
+        elif wcs.naxis > 2:
+            raise ValueError('FITS file input to wcs1d_fits_loader is > 2D')
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
 
