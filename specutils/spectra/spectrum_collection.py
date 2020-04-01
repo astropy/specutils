@@ -5,6 +5,7 @@ import numpy as np
 from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from .spectrum1d import Spectrum1D
+from .spectral_coordinate import SpectralCoord
 
 __all__ = ['SpectrumCollection']
 
@@ -53,6 +54,7 @@ class SpectrumCollection:
         if spectral_axis is not None:
             if not isinstance(spectral_axis, u.Quantity):
                 raise u.UnitsError("Spectral axis must be a `Quantity`.")
+            spectral_axis = SpectralCoord(spectral_axis)
 
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
@@ -116,7 +118,8 @@ class SpectrumCollection:
         ----------
         spectra : list, ndarray
             A list of :class:`~specutils.Spectrum1D` objects to be held in the
-            collection.
+            collection. Currently the spectral_axis parameters (e.g. observer,
+            radial_velocity) must be the same for each spectrum.
         """
         # Enforce that the shape of each item must be the same
         if not all((x.shape == spectra[0].shape for x in spectra)):
@@ -124,7 +127,24 @@ class SpectrumCollection:
 
         # Compose multi-dimensional ndarrays for each property
         flux = u.Quantity([spec.flux for spec in spectra])
-        spectral_axis = u.Quantity([spec.spectral_axis for spec in spectra])
+
+        # Check that the spectral parameters are the same for each input
+        # spectral_axis and create the multi-dimensional SpectralCoord
+        sa = [x.spectral_axis for x in spectra]
+        if not all(x.radial_velocity == sa[0].radial_velocity for x in sa) or \
+            not all(x.target == sa[0].target for x in sa) or \
+            not all(x.observer == sa[0].observer for x in sa) or \
+            not all(x.doppler_convention == sa[0].doppler_convention for
+                    x in sa) or \
+            not all(x.doppler_rest == sa[0].doppler_rest for x in sa):
+                raise ValueError("All input spectral_axis SpectralCoord "
+                                 "objects must have the same parameters.")
+        spectral_axis = SpectralCoord(sa,
+                            radial_velocity=sa[0].radial_velocity,
+                            doppler_rest=sa[0].doppler_rest,
+                            doppler_convention=sa[0].doppler_convention,
+                            observer=sa[0].observer,
+                            target=sa[0].target)
 
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
