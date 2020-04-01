@@ -94,10 +94,11 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist.close()
 
-        if wcs.naxis == 2:
-            wcs = wcs.dropaxis(1)
-        elif wcs.naxis > 2:
-            raise ValueError('FITS file input to wcs1d_fits_loader is > 2D')
+        if wcs.naxis > 4:
+            raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
+        elif wcs.naxis > 1:
+            for i in range(wcs.naxis - 1, 0, -1):
+                wcs = wcs.dropaxis(i)
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
 

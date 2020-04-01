@@ -457,6 +457,7 @@ def test_tabular_fits_header(tmpdir):
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
 def test_wcs1d_fits_writer(tmpdir, spectral_axis):
+    """Test write/read for Spectrum1D with WCS-constructed spectral_axis."""
     wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
                'wavenumber': 'cm**-1'}
     # Header dictionary for constructing WCS
@@ -481,15 +482,46 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     assert quantity_allclose(spec.spectral_axis, disp)
     assert quantity_allclose(spec.flux, spectrum.flux)
 
-    # Construct a 2D flux array and repeat (no auto-identify)
-    flux = flux * np.arange(1, 6).reshape(-1, 1)
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_wcs1d_fits_multid(tmpdir, spectral_axis):
+    """Test spectrum with WCS-1D spectral_axis and higher dimension in flux."""
+    wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
+               'wavenumber': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + len(flux[1:]) * dwl, dwl) * wlu
+
+    # Construct up to 4D flux array, write and read (no auto-identify)
+    shape = [-1, 1]
+    for i in range(2, 5):
+        flux = flux * np.arange(i, i+5).reshape(*shape)
+        spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+        tmpfile = str(tmpdir.join(f'_{i}d.fits'))
+        spectrum.write(tmpfile, format='wcs1d-fits')
+
+        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
+        assert spec.flux.ndim == i
+        assert quantity_allclose(spec.spectral_axis, disp)
+        assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+        assert quantity_allclose(spec.flux, spectrum.flux)
+        shape.append(1)
+
+    # Test exception for NAXIS > 4
+    flux = flux * np.arange(i+1, i+6).reshape(*shape)
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-    tmpfile = str(tmpdir.join('_2d.fits'))
+    tmpfile = str(tmpdir.join(f'_{i+1}d.fits'))
     spectrum.write(tmpfile, format='wcs1d-fits')
 
-    spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
-    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
-    assert quantity_allclose(spec.flux, spectrum.flux)
+    with pytest.raises(ValueError, match='input to wcs1d_fits_loader is > 4D'):
+        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
 
 
 @pytest.mark.remote_data
