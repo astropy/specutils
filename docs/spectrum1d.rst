@@ -53,6 +53,7 @@ internet. Note that in these cases, a format string corresponding to an
 existing loader must be supplied.
 
 .. code-block:: python
+    
     >>> from astroquery.sdss import SDSS
     >>> from specutils import Spectrum1D
     >>> import urllib
