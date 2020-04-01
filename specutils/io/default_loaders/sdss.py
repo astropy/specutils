@@ -66,7 +66,12 @@ def spec_loader(file_obj, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdulist = file_obj
+    else:
+        close_hdulist = True
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     name = header.get('NAME')
@@ -108,7 +113,12 @@ def spSpec_loader(file_obj, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdulist = file_obj
+    else:
+        close_hdulist = True
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     name = header.get('NAME')
