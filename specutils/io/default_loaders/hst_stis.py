@@ -20,7 +20,7 @@ def stis_identify(origin, *args, **kwargs):
 
 
 @data_loader(label="HST/STIS",identifier=stis_identify, extensions=['FITS', 'FIT', 'fits', 'fit'])
-def stis_spectrum_loader(file_name, **kwargs):
+def stis_spectrum_loader(file_obj, **kwargs):
     """
     Load STIS spectral data from the MAST archive into a spectrum object.
 
@@ -34,22 +34,30 @@ def stis_spectrum_loader(file_name, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdu = file_obj
+    else:
+        close_hdulist = True
+        hdu = fits.open(file_obj, **kwargs)
 
-    with fits.open(file_name, **kwargs) as hdu:
-        header = hdu[0].header
-        name = header.get('FILENAME')
-        meta = {'header': header}
+    header = hdu[0].header
+    name = header.get('FILENAME')
+    meta = {'header': header}
 
-        unit = Unit("erg/cm**2 Angstrom s")
-        disp_unit = Unit('Angstrom')
-        data = hdu[1].data['FLUX'].flatten() * unit
-        dispersion = hdu[1].data['wavelength'].flatten() * disp_unit
-        uncertainty = StdDevUncertainty(hdu[1].data["ERROR"].flatten() * unit)
+    unit = Unit("erg/cm**2 Angstrom s")
+    disp_unit = Unit('Angstrom')
+    data = hdu[1].data['FLUX'].flatten() * unit
+    dispersion = hdu[1].data['wavelength'].flatten() * disp_unit
+    uncertainty = StdDevUncertainty(hdu[1].data["ERROR"].flatten() * unit)
 
-        sort_idx = dispersion.argsort()
-        dispersion = dispersion[sort_idx]
-        data = data[sort_idx]
-        uncertainty = uncertainty[sort_idx]
+    sort_idx = dispersion.argsort()
+    dispersion = dispersion[sort_idx]
+    data = data[sort_idx]
+    uncertainty = uncertainty[sort_idx]
+
+    if close_hdulist:
+        hdu.close()
 
     return Spectrum1D(flux=data,
                       spectral_axis=dispersion,

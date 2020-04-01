@@ -79,7 +79,12 @@ def apVisit_loader(file_obj, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdulist = file_obj
+    else:
+        close_hdulist = True
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
@@ -101,7 +106,8 @@ def apVisit_loader(file_obj, **kwargs):
                                  hdulist[4].data[1, :],
                                  hdulist[4].data[2, :]])
     dispersion_unit = Unit('Angstrom')
-    hdulist.close()
+    if close_hdulist:
+        hdulist.close()
 
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,
@@ -124,7 +130,12 @@ def apStar_loader(file_obj, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdulist = file_obj
+    else:
+        close_hdulist = True
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
@@ -141,7 +152,8 @@ def apStar_loader(file_obj, **kwargs):
                                                   np.zeros((data.shape[0],)))).T,
                                        0)[:, 0]
     dispersion_unit = Unit('Angstrom')
-    hdulist.close()
+    if close_hdulist:
+        hdulist.close()
 
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,
@@ -165,7 +177,12 @@ def aspcapStar_loader(file_obj, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdulist = file_obj
+    else:
+        close_hdulist = True
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     meta = {'header': header}
@@ -179,7 +196,8 @@ def aspcapStar_loader(file_obj, **kwargs):
     # dispersion from the WCS but convert out of logspace
     dispersion = 10**wcs.all_pix2world(np.arange(data.shape[0]), 0)[0]
     dispersion_unit = Unit('Angstrom')
-    hdulist.close()
+    if close_hdulist:
+        hdulist.close()
 
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,

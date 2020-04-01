@@ -43,16 +43,24 @@ def muscles_sed(file_obj, **kwargs):
     """
     # name is not used; what was it for?
     # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        close_hdulist = False
+        hdulist = file_obj
+    else:
+        close_hdulist = True
+        hdulist = fits.open(file_obj, **kwargs)
 
-    with fits.open(file_obj, **kwargs) as hdulist:
-        header = hdulist[0].header
+    header = hdulist[0].header
 
-        tab = Table.read(hdulist[1])
+    tab = Table.read(hdulist[1])
 
-        meta = {'header': header}
-        uncertainty = StdDevUncertainty(tab["ERROR"])
-        data = Quantity(tab["FLUX"])
-        wavelength = Quantity(tab["WAVELENGTH"])
+    meta = {'header': header}
+    uncertainty = StdDevUncertainty(tab["ERROR"])
+    data = Quantity(tab["FLUX"])
+    wavelength = Quantity(tab["WAVELENGTH"])
+
+    if close_hdulist:
+        hdulist.close()
 
     return Spectrum1D(flux=data, spectral_axis=wavelength,
                       uncertainty=uncertainty, meta=meta)
