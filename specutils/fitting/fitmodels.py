@@ -2,7 +2,6 @@ import itertools
 import logging
 import operator
 
-import astropy.units as u
 import numpy as np
 from astropy.modeling import fitting, Model, models
 from astropy.table import QTable
@@ -10,7 +9,6 @@ from scipy.signal import convolve
 
 
 import astropy.units as u
-from astropy.stats import sigma_clipped_stats
 
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
