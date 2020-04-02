@@ -54,11 +54,11 @@ format string corresponding to an existing loader must be supplied.
 
 .. code-block:: python
     
-    >>> from astroquery.sdss import SDSS
+    >>> from astroquery.sdss import SDSS # doctest: +SKIP
     >>> from specutils import Spectrum1D
     >>> import urllib
-    >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160)
-    >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec")
+    >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160) # doctest: +SKIP
+    >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec") # doctest: +SKIP
     <Spectrum1D(flux=<Quantity [30.596626,...]...>
     >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits')
     >>> Spectrum1D.read(specs, format="SDSS-III/IV spec")
