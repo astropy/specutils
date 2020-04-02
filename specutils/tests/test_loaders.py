@@ -524,6 +524,31 @@ def test_wcs1d_fits_multid(tmpdir, spectral_axis):
         spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
 
 
+@pytest.mark.parametrize("spectral_axis", ['wavelength', 'frequency'])
+def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
+    """Test exception on trying to load FITS with irreducible WCS-1D spectral_axis and higher dimension in flux."""
+    wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
+               'wavenumber': 'cm**-1'}
+    # Header dictionaries for constructing WCS
+    hdr1 = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+            'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    hdr2 = {'CTYPE2': 'LINEAR', 'CUNIT2': 'pix', 'CRPIX2': 1, 'CRVAL2': 1,
+            'CDELT2': 0.1, 'PC1_2': 0.2}
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * np.arange(4).reshape(-1, 1) * 1.e-14 * u.Jy
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr1))
+    tmpfile = str(tmpdir.join(f'_{2}d.fits'))
+    spectrum.write(tmpfile, format='wcs1d-fits')
+
+    # Reopen file and update header with off-diagonal element
+    hdulist = fits.open(tmpfile, mode='update')
+    hdulist[0].header.update(hdr2)
+    hdulist.close()
+
+    with pytest.raises(ValueError, match='WCS cannot be reduced to 1D'):
+        Spectrum1D.read(tmpfile, format='wcs1d-fits')
+
+
 @pytest.mark.remote_data
 def test_apstar_loader():
     """Test remote read and automatic recognition of apStar spec from URL.

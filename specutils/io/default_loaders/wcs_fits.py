@@ -3,7 +3,7 @@ import warnings
 
 from astropy import units as u
 from astropy.io import fits
-from astropy.wcs import WCS
+from astropy.wcs import WCS, _wcs
 from astropy.modeling import models
 from astropy.utils.exceptions import AstropyUserWarning
 from astropy.nddata import StdDevUncertainty
@@ -98,7 +98,10 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
             raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
         elif wcs.naxis > 1:
             for i in range(wcs.naxis - 1, 0, -1):
-                wcs = wcs.dropaxis(i)
+                try:
+                    wcs = wcs.dropaxis(i)
+                except(_wcs.NonseparableSubimageCoordinateSystemError) as e:
+                    raise ValueError(f'WCS cannot be reduced to 1D: {e} {wcs}')
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
 
