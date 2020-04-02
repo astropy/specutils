@@ -4,6 +4,7 @@ spectral features.
 """
 
 import numpy as np
+
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
 
