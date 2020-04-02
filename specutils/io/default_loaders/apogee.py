@@ -71,8 +71,9 @@ def apVisit_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_obj: str, file-like or HDUList
+        FITS file name, object (provided from name by Astropy I/O Registry),
+        or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
@@ -122,8 +123,9 @@ def apStar_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_obj: str, file-like, or HDUList
+        FITS file name or object (provided from name by Astropy I/O Registry),
+        or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------

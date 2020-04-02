@@ -26,8 +26,9 @@ def stis_spectrum_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_name: str
-        The path to the FITS file
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
