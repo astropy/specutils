@@ -47,9 +47,9 @@ encouraged to :doc:`create their own loader </custom_loading>`.
     >>> from specutils import Spectrum1D
     >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
 
-The built-in default loaders can also read an existing 
-`astropy.io.fits.hdu.HDUList` object, or from an open file object as resulting 
-from e.g. streaming a file from the internet. Note that in these cases, a 
+Most of the built-in specutils default loaders can also read an existing 
+`astropy.io.fits.hdu.HDUList` object or an open file object (as resulting 
+from e.g. streaming a file from the internet). Note that in these cases, a 
 format string corresponding to an existing loader must be supplied.
 
 .. code-block:: python
