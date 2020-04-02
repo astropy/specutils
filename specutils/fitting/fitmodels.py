@@ -409,7 +409,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     mask = spectrum.mask
 
     dispersion = spectrum.spectral_axis
-    dispersion_unit = spectrum.spectral_axis.unit
 
     flux = spectrum.flux
     flux_unit = spectrum.flux.unit
@@ -481,7 +480,8 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     spectrum = Spectrum1D(
         flux=flux.value * flux_unit,
-        spectral_axis=dispersion.value * dispersion_unit,
+        # spectral_axis=dispersion.value * dispersion_unit,
+        spectral_axis=dispersion,
         wcs=input_spectrum.wcs,
         velocity_convention=input_spectrum.velocity_convention,
         rest_value=input_spectrum.rest_value)
