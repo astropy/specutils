@@ -48,7 +48,7 @@ encouraged to :doc:`create their own loader </custom_loading>`.
     >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
 
 Most of the built-in specutils default loaders can also read an existing 
-`astropy.io.fits.hdu.HDUList` object or an open file object (as resulting 
+`astropy.io.fits.HDUList` object or an open file object (as resulting 
 from e.g. streaming a file from the internet). Note that in these cases, a 
 format string corresponding to an existing loader must be supplied.
 
@@ -60,8 +60,8 @@ format string corresponding to an existing loader must be supplied.
     >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160) # doctest: +SKIP
     >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec") # doctest: +SKIP
     <Spectrum1D(flux=<Quantity [30.596626,...]...>
-    >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits')
-    >>> Spectrum1D.read(specs, format="SDSS-III/IV spec")
+    >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +SKIP
+    >>> Spectrum1D.read(specs, format="SDSS-III/IV spec") # doctest: +SKIP
     <Spectrum1D(flux=<Quantity [30.596626,...]...>
 
 Including Uncertainties
