@@ -126,10 +126,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # If spectral axis is provided as an astropy Quantity, convert it
             # to a specutils SpectralCoord object.
             if not isinstance(spectral_axis, SpectralCoord):
+                if spectral_axis.shape[0] == flux.shape[-1] + 1:
+                    bin_specification = "edges"
+                else:
+                    bin_specification = "centers"
                 self._spectral_axis = SpectralCoord(
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
-                    doppler_convention=velocity_convention)
+                    doppler_convention=velocity_convention,
+                    bin_specification = bin_specification)
             # If a SpectralCoord object is provided, we assume it doesn't need
             # information from other keywords added
             else:
@@ -148,13 +153,16 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             size = len(flux) if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
 
-        # Check to make sure the wavelength length is the same in both
+        # Check to make sure the wavelength length is the same in both, or
+        # off by one if the spectral axis specifies bin edges
         if flux is not None and spectral_axis is not None:
-            if not spectral_axis.shape[0] == flux.shape[-1]:
+            if not spectral_axis.shape[0] == flux.shape[-1] and \
+                    not spectral_axis.shape[0] != flux.shape[-1]+1:
                 raise ValueError(
-                    "Spectral axis ({}) and the last flux axis ({}) lengths "
-                    "must be the same.".format(
-                        spectral_axis.shape[0], flux.shape[-1]))
+                    "Spectral axis length ({}) must be the same size or one "
+                    "greater (if specifying bin edges) than that of the last "
+                    "flux axis ({})".format(spectral_axis.shape[0], \
+                        flux.shape[-1]))
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
