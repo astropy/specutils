@@ -88,9 +88,10 @@ ensure that the data file being loaded is compatible with the loader function.
             meta = {'header': header}
             wcs = WCS(hdulist[0].header)
             uncertainty = StdDevUncertainty(tab["err"])
+            lamb = tab["spectral_axis"] * Unit("Angstrom")
             data = tab["flux"] * Unit("Jy")
 
-        return Spectrum1D(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)
+        return Spectrum1D(flux=data, spectral_axis=lamb, wcs=wcs, uncertainty=uncertainty, meta=meta)
 
 
 An ``extensions`` keyword can be provided. This allows for basic filename
