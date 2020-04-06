@@ -15,21 +15,36 @@ class SpectralAxis(SpectralCoord):
     """
     """
 
-    def __new__():
-        pass
+    def __new__(cls, value, unit=None, observer=None, target=None,
+                 radial_velocity=None, redshift=None, doppler_rest=None,
+                 doppler_convention=None, bin_specification="centers",
+                 **kwargs):
+
+        # Convert to bin centers if bin edges were given, since SpectralCoord
+        # only accepts centers
+        if bin_specification == "edges":
+            value = self._centers_from_edges(value)
+            bin_specification = "bin_centers"
+
+        obj = super().__new__(cls, value, unit=unit, observer=observer,
+                              target=target, radial_velocity=radial_velocity,
+                              redshift=redshift, doppler_rest=doppler_rest,
+                              doppler_convention=doppler_convention, subok=True,
+                              **kwargs)
+        return obj
 
     @static_method
     def _edges_from_centers():
         pass
 
     @static_method
-    def centers_from_edges():
-        pass
+    def _centers_from_edges(edges):
+        return (edges[1:] + edges[:-1]) / 2
 
     @property
     def bin_edges(self):
-        pass
+        return self._edges_from_centers(self.value)
 
     @property
     def bin_centers(self):
-        pass
+        return self.value
