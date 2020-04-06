@@ -111,14 +111,16 @@ html_style = 'specutils.css'
 
 
 html_theme_options = {
-    'logotext1': 'specutils',  # white,  semi-bold
-    'logotext2': '',  # orange, light
+    'logotext1': 'spec',  # white,  semi-bold
+    'logotext2': 'utils',  # orange, light
     'logotext3': ':docs'   # white,  light
     }
 
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
+html_sidebars['**'] = ['localtoc.html']
+html_sidebars['index'] = ['globaltoc.html', 'localtoc.html']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
