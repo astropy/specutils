@@ -66,6 +66,7 @@ Note that the same spectrum could be more conveniently downloaded via
 astroquery, if the user has that package installed:
 
 .. code-block:: python
+
      >>> from astroquery.sdss import SDSS # doctest: +SKIP
      >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160) # doctest: +SKIP
      >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec") # doctest: +SKIP
