@@ -141,13 +141,13 @@ def test_sdss_spec():
         with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            # Read from filename
+            # Read from local disk via filename
             spec = Spectrum1D.read(tmp_file.name)
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
 
-            # Read from HDUList
+            # Read from HDUList object
             hdulist = fits.open(tmp_file.name)
             spec = Spectrum1D.read(hdulist, format="SDSS-III/IV spec")
             assert isinstance(spec, Spectrum1D)
