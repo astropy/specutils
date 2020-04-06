@@ -8,6 +8,7 @@ from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_coordinate import SpectralCoord
+from .spectral_axis import SpectralAxis
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
@@ -156,8 +157,17 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # Check to make sure the wavelength length is the same in both, or
         # off by one if the spectral axis specifies bin edges
         if flux is not None and spectral_axis is not None:
-            if not spectral_axis.shape[0] == flux.shape[-1] and \
-                    not spectral_axis.shape[0] != flux.shape[-1]+1:
+            if spectral_axis.shape[0] == flux.shape[-1]:
+                if bin_specification == "edges":
+                    raise ValueError("A spectral axis input as bin edges"
+                        "must have length one greater than the flux axis")
+                bin_specification = "centers"
+            elif spectral_axis.shape[0] == flux.shape[-1]+1:
+                if bin_specification == "centers":
+                    raise ValueError("A spectral axis input as bin centers"
+                        "must be the same length as the flux axis")
+                bin_specification = "edges"
+            else:
                 raise ValueError(
                     "Spectral axis length ({}) must be the same size or one "
                     "greater (if specifying bin edges) than that of the last "
