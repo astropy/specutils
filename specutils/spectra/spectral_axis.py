@@ -34,8 +34,11 @@ class SpectralAxis(SpectralCoord):
         return obj
 
     @static_method
-    def _edges_from_centers():
-        pass
+    def _edges_from_centers(centers):
+        a = np.insert(centers, 0, 2*centers[0]-centers[1])
+        b = centers.append(2*centers[-1]-centers[-2])
+        edges = (a + b) / 2
+        return edges
 
     @static_method
     def _centers_from_edges(edges):
