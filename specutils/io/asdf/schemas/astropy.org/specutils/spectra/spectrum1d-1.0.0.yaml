@@ -4,20 +4,6 @@ $schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
 id: "http://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0"
 tag: "tag:astropy.org:specutils/spectra/spectrum1d-1.0.0"
 
-definitions:
-  uncertainty:
-    type: object
-    properties:
-      uncertainty_type:
-        description: |
-          String describing the type of uncertainty data
-        type: string
-        enum: ["std", "var", "ivar", "unknown"]
-      data:
-        description: |
-          Array representing the uncertainty data
-        $ref: "tag:stsci.edu:asdf/core/ndarray-1.0.0"
-
 title: >
   Represents a one-dimensional spectrum
 description: |
@@ -28,14 +14,26 @@ properties:
   flux:
     description: |
       Quantity that represents the flux component of the spectrum
-    $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
+    $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
   spectral_axis:
     description: |
-      Quantity that represents the spectral axis of the spectrum
-    $ref: "tag:stsci.edu:asdf/unit/quantity-1.1.0"
+      SpectralCoord that represents the spectral axis of the spectrum
+    anyOf:
+      - $ref: "spectral_coord-1.0.0"
+      - $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
   uncertainty:
     description: |
       Uncertainty information about the spectrum
-    $ref: "#/definitions/uncertainty"
+    type: object
+    properties:
+      uncertainty_type:
+        description: |
+          String describing the type of uncertainty data
+        type: string
+        enum: ["std", "var", "ivar", "unknown"]
+      data:
+        description: |
+          Array representing the uncertainty data
+        $ref: "http://stsci.edu/schemas/asdf/core/ndarray-1.0.0"
 required: [flux, spectral_axis]
 ...
