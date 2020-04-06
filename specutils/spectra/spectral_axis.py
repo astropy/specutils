@@ -23,31 +23,28 @@ class SpectralAxis(SpectralCoord):
         # Convert to bin centers if bin edges were given, since SpectralCoord
         # only accepts centers
         if bin_specification == "edges":
-            value = self._centers_from_edges(value)
-            bin_specification = "bin_centers"
+            value = SpectralAxis._centers_from_edges(value)
 
         obj = super().__new__(cls, value, unit=unit, observer=observer,
                               target=target, radial_velocity=radial_velocity,
                               redshift=redshift, doppler_rest=doppler_rest,
-                              doppler_convention=doppler_convention, subok=True,
-                              **kwargs)
+                              doppler_convention=doppler_convention, **kwargs)
+
+        #obj.bin_edges = cls._edges_from_centers(value)
+
         return obj
 
-    @static_method
+    @staticmethod
     def _edges_from_centers(centers):
         a = np.insert(centers, 0, 2*centers[0]-centers[1])
-        b = centers.append(2*centers[-1]-centers[-2])
+        b = np.append(centers, 2*centers[-1]-centers[-2])
         edges = (a + b) / 2
         return edges
 
-    @static_method
+    @staticmethod
     def _centers_from_edges(edges):
         return (edges[1:] + edges[:-1]) / 2
 
     @property
     def bin_edges(self):
         return self._edges_from_centers(self.value)
-
-    @property
-    def bin_centers(self):
-        return self.value
