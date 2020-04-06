@@ -177,7 +177,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
     # we are going to calculate based on the S/N if the uncertainty
     # exists.
     if uncertainty and uncertainty.uncertainty_type != 'std':
-        return np.median(flux / uncertainty) < threshold
+        return np.median(flux / uncertainty.quantity) < threshold
     else:
         return np.median(flux) / mad_std(flux) < threshold
 
