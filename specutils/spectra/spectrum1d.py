@@ -167,7 +167,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
                 self._spectral_axis = spectral_axis
 
-            wcs = gwcs_from_array(spectral_axis)
+            wcs = gwcs_from_array(self._spectral_axis)
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
