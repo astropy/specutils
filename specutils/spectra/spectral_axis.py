@@ -34,6 +34,14 @@ class SpectralAxis(SpectralCoord):
 
         return obj
 
+    def __quantity_subclass__(self, unit):
+        """:wq
+
+        Overridden by subclasses to change what kind of view is
+        created based on the output unit of an operation.
+        """
+        return SpectralAxis, True
+
     @staticmethod
     def _edges_from_centers(centers):
         a = np.insert(centers, 0, 2*centers[0]-centers[1])
