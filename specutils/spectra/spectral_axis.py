@@ -1,6 +1,7 @@
 import warnings
 
 import astropy.units as u
+from astropy.utils.decorators import lazyproperty
 import numpy as np
 
 from .spectral_coordinate import SpectralCoord
@@ -23,6 +24,7 @@ class SpectralAxis(SpectralCoord):
         # Convert to bin centers if bin edges were given, since SpectralCoord
         # only accepts centers
         if bin_specification == "edges":
+            bin_edges = value
             value = SpectralAxis._centers_from_edges(value)
 
         obj = super().__new__(cls, value, unit=unit, observer=observer,
@@ -30,7 +32,8 @@ class SpectralAxis(SpectralCoord):
                               redshift=redshift, doppler_rest=doppler_rest,
                               doppler_convention=doppler_convention, **kwargs)
 
-        #obj.bin_edges = cls._edges_from_centers(value)
+        if bin_specification == "edges":
+            obj.bin_edges = bin_edges
 
         return obj
 
@@ -53,6 +56,6 @@ class SpectralAxis(SpectralCoord):
     def _centers_from_edges(edges):
         return (edges[1:] + edges[:-1]) / 2
 
-    @property
+    @lazyproperty
     def bin_edges(self):
         return self._edges_from_centers(self.value)
