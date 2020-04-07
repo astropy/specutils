@@ -28,7 +28,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         The flux data for this spectrum.
     spectral_axis : `astropy.units.Quantity` or `specutils.SpectralCoord`
         Dispersion information with the same shape as the last (or only)
-        dimension of flux.
+        dimension of flux, or one greater than the last dimension of flux
+        if specifying bin edges.
     wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
         WCS information object.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}

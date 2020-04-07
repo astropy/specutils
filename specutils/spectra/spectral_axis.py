@@ -14,6 +14,32 @@ __doctest_skip__ = ['SpectralAxis.*']
 
 class SpectralAxis(SpectralCoord):
     """
+    Coordinate object representing spectral values corresponding to a specific
+    spectrum. Overloads SpectralCoord with additional information (currently
+    only bin edges).
+
+    Parameters
+    ----------
+    value : ndarray or `~astropy.units.Quantity` or `SpectralCoord`
+        Spectral axis data values.
+    unit : str or `~astropy.units.Unit`
+        Unit for the given data.
+    observer : `~astropy.coordinates.BaseCoordinateFrame` or `~astropy.coordinates.SkyCoord`, optional
+        The coordinate (position and velocity) of observer.
+    target : `~astropy.coordinates.BaseCoordinateFrame` or `~astropy.coordinates.SkyCoord`, optional
+        The coordinate (position and velocity) of observer.
+    radial_velocity : `~astropy.units.Quantity`, optional
+        The radial velocity of the target with respect to the observer.
+    redshift : float, optional
+        The redshift of the target with respect to the observer.
+    doppler_rest : `~astropy.units.Quantity`, optional
+        The rest value to use for velocity space transformations.
+    doppler_convention : str, optional
+        The convention to use when converting the spectral data to/from
+        velocity space.
+    bin_specificatoin: str, optional
+        Must be "edges" or "centers". Determines whether specified axis values
+        are interpreted as bin edges or bin centers. Defaults to "centers".
     """
 
     def __new__(cls, value, unit=None, observer=None, target=None,
@@ -38,8 +64,7 @@ class SpectralAxis(SpectralCoord):
         return obj
 
     def __quantity_subclass__(self, unit):
-        """:wq
-
+        """
         Overridden by subclasses to change what kind of view is
         created based on the output unit of an operation.
         """
@@ -47,15 +72,27 @@ class SpectralAxis(SpectralCoord):
 
     @staticmethod
     def _edges_from_centers(centers):
-        a = np.insert(centers, 0, 2*centers[0]-centers[1])
-        b = np.append(centers, 2*centers[-1]-centers[-2])
+        """
+        Calculates interior bin edges based on the average of each pair of
+        centers, with the two outer edges based on extrapolated centers added
+        to the beginning and end of the spectral axis.
+        """
+        a = np.insert(centers, 0, 2*centers[0] - centers[1])
+        b = np.append(centers, 2*centers[-1] - centers[-2])
         edges = (a + b) / 2
         return edges
 
     @staticmethod
     def _centers_from_edges(edges):
+        """
+        Calculates the bin centers as the average of each pair of edges
+        """
         return (edges[1:] + edges[:-1]) / 2
 
     @lazyproperty
     def bin_edges(self):
+        """
+        Calculates bin edges if the spectral axis was created with centers
+        specified.
+        """
         return self._edges_from_centers(self.value)
