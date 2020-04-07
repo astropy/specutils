@@ -246,7 +246,7 @@ class FluxConservingResampler(ResamplerBase):
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
         resampled_spectrum = Spectrum1D(flux=out_flux,
-                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis_unit,
+                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit,
                                         uncertainty=out_uncertainty)
 
         return resampled_spectrum
