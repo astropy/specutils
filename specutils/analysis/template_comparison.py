@@ -86,7 +86,7 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
     if _resample(resample_method) != 0:
         fluxc_resample = _resample(resample_method)
         template_obswavelength = fluxc_resample(template_spectrum,
-                                                observed_spectrum.wavelength)
+                                                observed_spectrum.spectral_axis)
 
     # Normalize spectra
     normalization = _normalize_for_template_matching(observed_spectrum,
