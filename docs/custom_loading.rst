@@ -88,8 +88,8 @@ ensure that the data file being loaded is compatible with the loader function.
             meta = {'header': header}
             wcs = WCS(hdulist[0].header)
             uncertainty = StdDevUncertainty(tab["err"])
-            lamb = tab["spectral_axis"] * Unit("Angstrom")
-            data = tab["flux"] * Unit("Jy")
+            lamb = Quantity(tab["spectral_axis"])
+            data = Quantity(tab["flux"])
 
         return Spectrum1D(flux=data, spectral_axis=lamb, wcs=wcs, uncertainty=uncertainty, meta=meta)
 
