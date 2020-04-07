@@ -42,10 +42,7 @@ class SpectralAxis(SpectralCoord):
         are interpreted as bin edges or bin centers. Defaults to "centers".
     """
 
-    def __new__(cls, value, unit=None, observer=None, target=None,
-                 radial_velocity=None, redshift=None, doppler_rest=None,
-                 doppler_convention=None, bin_specification="centers",
-                 **kwargs):
+    def __new__(cls, value, *args, bin_specification="centers", **kwargs):
 
         # Convert to bin centers if bin edges were given, since SpectralCoord
         # only accepts centers
@@ -53,10 +50,7 @@ class SpectralAxis(SpectralCoord):
             bin_edges = value
             value = SpectralAxis._centers_from_edges(value)
 
-        obj = super().__new__(cls, value, unit=unit, observer=observer,
-                              target=target, radial_velocity=radial_velocity,
-                              redshift=redshift, doppler_rest=doppler_rest,
-                              doppler_convention=doppler_convention, **kwargs)
+        obj = super().__new__(cls, value, *args, **kwargs)
 
         if bin_specification == "edges":
             obj.bin_edges = bin_edges
