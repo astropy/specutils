@@ -65,7 +65,7 @@ class OneDSpectrumMixin:
         return self._spectral_axis
 
     @property
-    @deprecated('v1.0', alternative="spectral_axis.unit")
+    @deprecated('v1.1', alternative="spectral_axis.unit")
     def spectral_axis_unit(self):
         """
         Returns the units of the spectral axis.
