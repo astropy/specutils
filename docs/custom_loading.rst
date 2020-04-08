@@ -94,6 +94,9 @@ ensure that the data file being loaded is compatible with the loader function.
         return Spectrum1D(flux=data, spectral_axis=lamb, wcs=wcs, uncertainty=uncertainty, meta=meta)
 
 
+The above is based on the ``Quantity`` formulation, as for any reasonably "generic" format ``Table.read()``
+would extract the units from the FITS header anyway.
+
 An ``extensions`` keyword can be provided. This allows for basic filename
 extension matching in the case that the ``identifier`` function is not
 provided.
@@ -165,6 +168,10 @@ This again will be done in a separate python file and placed in the user's
         tab = Table([disp, flux], names=("spectral_axis", "flux"), meta=meta)
 
         tab.write(file_name, format="fits")
+
+Please note that it is assumed that the axis (of the ``flux`` and ``spectral_axis``)
+units information is stored in the ``meta`` parameter as introduced in the definition
+of ``generic-fits`` as the ``custom_writer()`` above.
 
 The custom writer can be used by passing the name of the custom writer to the
 ``format`` argument of the ``write`` method on the
