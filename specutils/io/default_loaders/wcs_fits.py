@@ -17,12 +17,12 @@ __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
 def identify_wcs1d_fits(origin, *args, **kwargs):
     # check if file can be opened with this reader
     # args[0] = filename
-    with fits.open(args[0]) as hdu:
+    with fits.open(args[0]) as hdulist:
         # check if number of axes is one
-        return (hdu[0].header['NAXIS'] == 1 and
-                hdu[0].header.get('WCSDIM', 1) == 1 and
+        return (hdulist[0].header['NAXIS'] == 1 and
+                hdulist[0].header.get('WCSDIM', 1) == 1 and
                 # check in CTYPE1 key for linear solution
-                hdu[0].header.get('CTYPE1', '').upper() != 'MULTISPEC')
+                hdulist[0].header.get('CTYPE1', '').upper() != 'MULTISPEC')
 
     return False
 
@@ -60,10 +60,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     logging.info("Spectrum file looks like wcs1d-fits")
 
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        close_hdulist = False
         hdulist = file_obj
     else:
-        close_hdulist = True
         hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[hdu_idx].header
@@ -84,7 +82,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     meta = {'header': header}
 
-    if close_hdulist:
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist.close()
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
@@ -137,10 +135,8 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
     logging.info('Loading 1D non-linear fits solution')
 
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        close_hdulist = False
         hdulist = file_obj
     else:
-        close_hdulist = True
         hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
@@ -181,7 +177,7 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     meta = {'header': header}
 
-    if close_hdulist:
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist.close()
 
     return Spectrum1D(flux=data, spectral_axis=spectral_axis, meta=meta)

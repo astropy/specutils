@@ -68,10 +68,8 @@ def spec_loader(file_obj, **kwargs):
         The spectrum that is represented by the data in this table.
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        close_hdulist = False
         hdulist = file_obj
     else:
-        close_hdulist = True
         hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
@@ -90,7 +88,9 @@ def spec_loader(file_obj, **kwargs):
     dispersion_unit = Unit('Angstrom')
 
     mask = hdulist[1].data['and_mask'] != 0
-    hdulist.close()
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
 
     return Spectrum1D(flux=data * unit,
                       spectral_axis=dispersion * dispersion_unit,
@@ -116,10 +116,8 @@ def spSpec_loader(file_obj, **kwargs):
         The spectrum that is represented by the data in this table.
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        close_hdulist = False
         hdulist = file_obj
     else:
-        close_hdulist = True
         hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
@@ -141,7 +139,9 @@ def spSpec_loader(file_obj, **kwargs):
     dispersion_unit = Unit('Angstrom')
 
     mask = hdulist[0].data[3, :] != 0
-    hdulist.close()
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
 
     return Spectrum1D(flux=data * unit,
                       spectral_axis=dispersion * dispersion_unit,

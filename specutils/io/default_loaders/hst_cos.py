@@ -12,8 +12,8 @@ __all__ = ['cos_identify', 'cos_spectrum_loader']
 
 def cos_identify(origin, *args, **kwargs):
     """Check whether given file contains HST/COS spectral data."""
-    with fits.open(args[0]) as hdu:
-        if hdu[0].header['TELESCOP'] == 'HST' and hdu[0].header['INSTRUME'] == 'COS':
+    with fits.open(args[0]) as hdulist:
+        if hdulist[0].header['TELESCOP'] == 'HST' and hdulist[0].header['INSTRUME'] == 'COS':
             return True
 
     return False
@@ -36,29 +36,27 @@ def cos_spectrum_loader(file_obj, **kwargs):
         The spectrum that is represented by the data in this table.
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        close_hdulist = False
-        hdu = file_obj
+        hdulist = file_obj
     else:
-        close_hdulist = True
-        hdu = fits.open(file_obj, **kwargs)
+        hdulist = fits.open(file_obj, **kwargs)
 
-    header = hdu[0].header
+    header = hdulist[0].header
     name = header.get('FILENAME')
     meta = {'header': header}
 
     unit = Unit("erg/cm**2 Angstrom s")
     disp_unit = Unit('Angstrom')
-    data = hdu[1].data['FLUX'].flatten() * unit
-    dispersion = hdu[1].data['wavelength'].flatten() * disp_unit
-    uncertainty = StdDevUncertainty(hdu[1].data["ERROR"].flatten() * unit)
+    data = hdulist[1].data['FLUX'].flatten() * unit
+    dispersion = hdulist[1].data['wavelength'].flatten() * disp_unit
+    uncertainty = StdDevUncertainty(hdulist[1].data["ERROR"].flatten() * unit)
 
     sort_idx = dispersion.argsort()
     dispersion = dispersion[sort_idx]
     data = data[sort_idx]
     uncertainty = uncertainty[sort_idx]
 
-    if close_hdulist:
-        hdu.close()
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
 
     return Spectrum1D(flux=data,
                       spectral_axis=dispersion,

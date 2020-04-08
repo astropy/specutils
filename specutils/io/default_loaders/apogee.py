@@ -81,10 +81,8 @@ def apVisit_loader(file_obj, **kwargs):
         The spectrum that is represented by the data in this table.
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        close_hdulist = False
         hdulist = file_obj
     else:
-        close_hdulist = True
         hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
@@ -107,7 +105,7 @@ def apVisit_loader(file_obj, **kwargs):
                                  hdulist[4].data[1, :],
                                  hdulist[4].data[2, :]])
     dispersion_unit = Unit('Angstrom')
-    if close_hdulist:
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist.close()
 
     return Spectrum1D(data=data * unit,
