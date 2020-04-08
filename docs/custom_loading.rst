@@ -159,8 +159,8 @@ This again will be done in a separate python file and placed in the user's
     from specutils.io.registers import custom_writer
 
 
-    @custom_writer("fits-writer")
-    def generic_fits(spectrum, file_name, **kwargs):
+    @custom_writer("my-format")
+    def my_format_writer(spectrum, file_name, **kwargs):
         flux = spectrum.flux
         disp = spectrum.spectral_axis
         meta = spectrum.meta
@@ -169,7 +169,7 @@ This again will be done in a separate python file and placed in the user's
 
         tab.write(file_name, format="fits")
 
-Please note that it is assumed that the axis (of the ``flux`` and ``spectral_axis``)
+Note that this will store the units information of the ``flux`` and ``spectral_axis`` as attributes of the ``Quantity`` columns in the ``Table``, which is saving them automatically to the FITS file.
 units information is stored in ``Table`` object as introduced in the definition
 of ``generic-fits`` as the ``custom_writer()`` above.
 
