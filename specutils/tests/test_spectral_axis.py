@@ -119,4 +119,3 @@ def test_create_from_spectral_axis(observer, target):
     assert spec_axis1.radial_velocity == spec_axis2.radial_velocity
     assert spec_axis1.doppler_convention == spec_axis2.doppler_convention
     assert spec_axis1.doppler_rest == spec_axis2.doppler_rest
-
