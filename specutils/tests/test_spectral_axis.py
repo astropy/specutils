@@ -97,8 +97,8 @@ def test_create_from_spectral_coord(observer, target):
     to the SpectralAxis object
     """
     spec_coord = SpectralCoord([100, 200, 300] * u.nm, observer=observer,
-            target=target, radial_velocity=u.Quantity(1000, 'km/s'),
-            doppler_convention = 'optical', doppler_rest = 6000*u.AA)
+                               target=target, doppler_convention = 'optical',
+                               doppler_rest = 6000*u.AA)
     spec_axis = SpectralAxis(spec_coord)
     assert spec_coord.observer == spec_axis.observer
     assert spec_coord.target == spec_axis.target
@@ -111,8 +111,8 @@ def test_create_from_spectral_axis(observer, target):
     Checks that parameters are correctly copied to the new SpectralAxis object
     """
     spec_axis1 = SpectralAxis([100, 200, 300] * u.nm, observer=observer,
-            target=target, radial_velocity=u.Quantity(1000, 'km/s'),
-            doppler_convention = 'optical', doppler_rest = 6000*u.AA)
+                              target=target, doppler_convention = 'optical',
+                              doppler_rest = 6000*u.AA)
     spec_axis2 = SpectralAxis(spec_axis1)
     assert spec_axis1.observer == spec_axis2.observer
     assert spec_axis1.target == spec_axis2.target
