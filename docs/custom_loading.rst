@@ -161,8 +161,8 @@ This again will be done in a separate python file and placed in the user's
 
     @custom_writer("fits-writer")
     def generic_fits(spectrum, file_name, **kwargs):
-        flux = spectrum.flux.value
-        disp = spectrum.spectral_axis.value
+        flux = spectrum.flux
+        disp = spectrum.spectral_axis
         meta = spectrum.meta
 
         tab = Table([disp, flux], names=("spectral_axis", "flux"), meta=meta)
@@ -170,7 +170,7 @@ This again will be done in a separate python file and placed in the user's
         tab.write(file_name, format="fits")
 
 Please note that it is assumed that the axis (of the ``flux`` and ``spectral_axis``)
-units information is stored in the ``meta`` parameter as introduced in the definition
+units information is stored in ``Table`` object as introduced in the definition
 of ``generic-fits`` as the ``custom_writer()`` above.
 
 The custom writer can be used by passing the name of the custom writer to the
