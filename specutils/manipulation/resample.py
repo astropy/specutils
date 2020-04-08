@@ -9,7 +9,7 @@ from astropy.nddata import StdDevUncertainty, VarianceUncertainty, \
 from astropy.units import Quantity
 from scipy.interpolate import CubicSpline
 
-from ..spectra import Spectrum1D
+from ..spectra import Spectrum1D, SpectralAxis
 
 __all__ = ['ResamplerBase', 'FluxConservingResampler',
            'LinearInterpolatedResampler', 'SplineInterpolatedResampler']
@@ -45,32 +45,6 @@ class ResamplerBase(ABC):
         object.
         """
         return NotImplemented
-
-    @staticmethod
-    def _calc_bin_edges(x):
-        """
-        Calculate the bin edge values of an input spectral axis. Input values
-        are assumed to be the center of the bins.
-
-        todo: this should live in the main spectrum object, but we're still
-        figuring out the details to that implementation, so leaving here
-        for now.
-
-        Parameters
-        ----------
-        x : ndarray
-            The input spectral axis values.
-
-        Returns
-        -------
-        edges : ndarray
-            Calcualated bin edges, including left and right most bin edges.
-        """
-        inside_edges = (x[1:] + x[:-1]) / 2
-        edges = np.insert(inside_edges, 0, 2 * x[0] - inside_edges[0])
-        edges = np.append(edges, 2 * x[-1] - inside_edges[-1])
-
-        return edges
 
 
 class FluxConservingResampler(ResamplerBase):
@@ -114,9 +88,9 @@ class FluxConservingResampler(ResamplerBase):
 
         Parameters
         ----------
-        orig_spec_axis : ndarray
+        orig_spec_axis : SpectralAxis
             The original spectral axis array.
-        fin_spec_axis : ndarray
+        fin_spec_axis : SpectralAxis
             The desired spectral axis array.
 
         Returns
@@ -125,8 +99,8 @@ class FluxConservingResampler(ResamplerBase):
             An [[N_{fin_spec_axis}, M_{orig_spec_axis}]] matrix.
         """
         # Lower bin and upper bin edges
-        orig_edges = self._calc_bin_edges(orig_spec_axis)
-        fin_edges = self._calc_bin_edges(fin_spec_axis)
+        orig_edges = orig_spec_axis.bin_edges
+        fin_edges = fin_spec_axis.bin_edges
 
         # I could get rid of these alias variables,
         # but it does add readability
@@ -153,7 +127,7 @@ class FluxConservingResampler(ResamplerBase):
 
         resamp_mat *= keep_overlapping_matrix[:, np.newaxis]
 
-        return resamp_mat
+        return resamp_mat.value
 
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
@@ -182,6 +156,9 @@ class FluxConservingResampler(ResamplerBase):
                 raise ValueError("Original spectrum spectral axis grid and new"
                                  "spectral axis grid must have the same units.")
 
+        if not isinstance(fin_spec_axis, SpectralAxis):
+            fin_spec_axis = SpectralAxis(fin_spec_axis)
+
         # todo: Would be good to return uncertainty in type it was provided?
         # todo: add in weighting options
 
@@ -197,8 +174,7 @@ class FluxConservingResampler(ResamplerBase):
             pixel_uncer = None
 
         orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
-        resample_grid = self._resample_matrix(orig_axis_in_fin.value,
-                                              fin_spec_axis.value)
+        resample_grid = self._resample_matrix(orig_axis_in_fin, fin_spec_axis)
 
         # Now for some broadcasting magic to handle multi dimensional flux inputs
         # Essentially this part is inserting length one dimensions as fillers
@@ -231,9 +207,7 @@ class FluxConservingResampler(ResamplerBase):
 
         # nan-filling happens by default - replace with zeros if requested:
         if self.extrapolation_treatment == 'zero_fill':
-            origedges = self._calc_bin_edges(
-                orig_spectrum.spectral_axis.value) * \
-                        orig_spectrum.spectral_axis.unit
+            origedges = orig_spectrum.spectral_axis.bin_edges
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux[off_edges] = 0
             if out_uncertainty is not None:
@@ -388,9 +362,7 @@ class SplineInterpolatedResampler(ResamplerBase):
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_val, unit=orig_spectrum.unit)
 
         if self.extrapolation_treatment == 'zero_fill':
-            origedges = self._calc_bin_edges(
-                orig_spectrum.spectral_axis.value) * \
-                        orig_spectrum.spectral_axis.unit
+            origedges = orig_spectrum.spectral_axis.bin_edges
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
             out_flux_val[off_edges] = 0
             if new_unc is not None:
