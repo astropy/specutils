@@ -53,7 +53,7 @@ class SpectralAxis(SpectralCoord):
         obj = super().__new__(cls, value, *args, **kwargs)
 
         if bin_specification == "edges":
-            obj.bin_edges = bin_edges
+            obj._bin_edges = bin_edges
 
         return obj
 
@@ -65,7 +65,7 @@ class SpectralAxis(SpectralCoord):
         return SpectralAxis, True
 
     @staticmethod
-    def _edges_from_centers(centers):
+    def _edges_from_centers(centers, unit):
         """
         Calculates interior bin edges based on the average of each pair of
         centers, with the two outer edges based on extrapolated centers added
@@ -74,7 +74,7 @@ class SpectralAxis(SpectralCoord):
         a = np.insert(centers, 0, 2*centers[0] - centers[1])
         b = np.append(centers, 2*centers[-1] - centers[-2])
         edges = (a + b) / 2
-        return edges
+        return edges*unit
 
     @staticmethod
     def _centers_from_edges(edges):
@@ -89,4 +89,7 @@ class SpectralAxis(SpectralCoord):
         Calculates bin edges if the spectral axis was created with centers
         specified.
         """
-        return self._edges_from_centers(self.value)
+        if hasattr(self, '_bin_edges'):
+            return self._bin_edges
+        else:
+            return self._edges_from_centers(self.value, self.unit)
