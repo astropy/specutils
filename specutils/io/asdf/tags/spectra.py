@@ -4,14 +4,15 @@ Contains classes that serialize spectral data types into ASDF representations.
 from numpy.testing import assert_allclose
 from astropy.units import allclose
 import astropy.nddata
-from asdf.yamlutil import custom_tree_to_tagged_tree, tagged_tree_to_custom_tree
+from asdf.tags.core import NDArrayType
+from asdf.yamlutil import (custom_tree_to_tagged_tree,
+                           tagged_tree_to_custom_tree)
+from astropy.io.misc.asdf.tags.unit.unit import UnitType
 
+from ....spectra import SpectralCoord, Spectrum1D, SpectrumList
 from ..types import SpecutilsType
-from ....spectra import Spectrum1D, SpectrumList
 
-
-__all__ = ['Spectrum1DType', 'SpectrumListType']
-
+__all__ = ['Spectrum1DType', 'SpectrumListType', 'SpectralCoordType']
 
 UNCERTAINTY_TYPE_MAPPING = {
     'std': astropy.nddata.StdDevUncertainty,
@@ -36,10 +37,12 @@ class Spectrum1DType(SpecutilsType):
         """
         node = {}
         node['flux'] = custom_tree_to_tagged_tree(obj.flux, ctx)
-        node['spectral_axis'] = custom_tree_to_tagged_tree(obj.spectral_axis, ctx)
+        node['spectral_axis'] = custom_tree_to_tagged_tree(obj.spectral_axis,
+                                                           ctx)
         if obj.uncertainty is not None:
             node['uncertainty'] = {}
-            node['uncertainty']['uncertainty_type'] = obj.uncertainty.uncertainty_type
+            node['uncertainty'][
+                'uncertainty_type'] = obj.uncertainty.uncertainty_type
             data = custom_tree_to_tagged_tree(obj.uncertainty.array, ctx)
             node['uncertainty']['data'] = data
 
@@ -75,7 +78,6 @@ class Spectrum1DType(SpecutilsType):
             assert_allclose(old.uncertainty.array, new.uncertainty.array)
 
 
-
 class SpectrumListType(SpecutilsType):
     """
     ASDF tag implementation used to serialize/deserialize SpectrumList objects
@@ -107,3 +109,32 @@ class SpectrumListType(SpecutilsType):
         assert len(old) == len(new)
         for x, y in zip(old, new):
             Spectrum1DType.assert_equal(x, y)
+
+
+class SpectralCoordType(SpecutilsType):
+    """
+    ASDF tag implementation used to serialize/derialize SpectralCoord objects
+    """
+    name = 'spectra/spectral_coord'
+    types = [SpectralCoord]
+    version = '1.0.0'
+
+    @classmethod
+    def to_tree(cls, spec_coord, ctx):
+        node = {}
+        if isinstance(spec_coord, SpectralCoord):
+            node['value'] = custom_tree_to_tagged_tree(spec_coord.value, ctx)
+            node['unit'] = custom_tree_to_tagged_tree(spec_coord.unit, ctx)
+            return node
+        raise TypeError(f"'{spec_coord}' is not a valid SpectralCoord")
+
+    @classmethod
+    def from_tree(cls, node, ctx):
+        if isinstance(node, SpectralCoord):
+            return node
+
+        unit = UnitType.from_tree(node['unit'], ctx)
+        value = node['value']
+        if isinstance(value, NDArrayType):
+            value = value._make_array()
+        return SpectralCoord(value, unit=unit)

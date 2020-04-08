@@ -115,8 +115,8 @@ def _apodize(spectrum, template, apodization_window):
         else:
             def window(wlen):
                 return tukey(wlen, alpha=apodization_window)
-        clean_spectrum = spectrum * window(len(spectrum.wavelength))
-        clean_template = template * window(len(template.wavelength))
+        clean_spectrum = spectrum * window(len(spectrum.spectral_axis))
+        clean_template = template * window(len(template.spectral_axis))
 
     return clean_spectrum, clean_template
 
@@ -164,7 +164,10 @@ def template_logwl_resample(spectrum, template, wblue=None, wred=None,
     # sampling, since it's the one that counts for the final accuracy
     # of the correlation. Alternatively, use the wred and wblue limits,
     # and delta log wave provided by the user.
-
+    #
+    # We work with separate float and units entities instead of Quantity
+    # instances, due to the profusion of log10 and power function calls
+    # (they only work on floats)
     if wblue:
         w0 = np.log10(wblue)
     else:
