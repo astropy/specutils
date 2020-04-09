@@ -301,20 +301,19 @@ class LinearInterpolatedResampler(ResamplerBase):
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
 
-
-        fill_val = np.nan #bin_edges=nan_fill case
+        fill_val = np.nan  # bin_edges=nan_fill case
         if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
 
         orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
 
-        out_flux = np.interp(fin_spec_axis, orig_axis_in_fin,
-                             orig_spectrum.flux, left=fill_val, right=fill_val)
-
+        out_flux_arr = np.interp(fin_spec_axis.value, orig_axis_in_fin.value,
+                                 orig_spectrum.flux.value, left=fill_val, right=fill_val)
+        out_flux = Quantity(out_flux_arr, unit=orig_spectrum.flux.unit)
 
         new_unc = None
         if orig_spectrum.uncertainty is not None:
-            out_unc_arr = np.interp(fin_spec_axis, orig_axis_in_fin,
+            out_unc_arr = np.interp(fin_spec_axis.value, orig_axis_in_fin.value,
                                     orig_spectrum.uncertainty.array,
                                     left=fill_val, right=fill_val)
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_arr,
