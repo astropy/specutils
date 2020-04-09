@@ -19,7 +19,7 @@ def stis_identify(origin, *args, **kwargs):
     return False
 
 
-@data_loader(label="HST/STIS",identifier=stis_identify, extensions=['FITS', 'FIT', 'fits', 'fit'])
+@data_loader(label="HST/STIS", identifier=stis_identify, extensions=['FITS', 'FIT', 'fits', 'fit'])
 def stis_spectrum_loader(file_obj, **kwargs):
     """
     Load STIS spectral data from the MAST archive into a spectrum object.
