@@ -113,6 +113,7 @@ def test_hst_cos(remote_data_path):
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
 
+
 @remote_access([{'id': '1481192', 'filename':'STIS_FUV.fits'},
                 {'id': '1481185', 'filename': 'STIS_NUV.fits'},
                 {'id': '1481183', 'filename': 'STIS_CCD.fits'}])
@@ -127,6 +128,7 @@ def test_hst_stis(remote_data_path):
     spec = Spectrum1D.read(hdulist, format="HST/STIS")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
+
 
 @pytest.mark.remote_data
 def test_sdss_spec():
@@ -180,6 +182,7 @@ def test_sdss_spspec():
             spec = Spectrum1D.read(hdulist, format="SDSS-I/II spSpec")
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
+
 
 @pytest.mark.remote_data
 def test_sdss_spec_stream():
@@ -299,7 +302,8 @@ def test_iraf_non_linear_chebyshev(remote_data_path):
     assert isinstance(spectrum_1d, Spectrum1D)
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
-@remote_access([{'id':'3359194', 'filename':'non-linear_fits_solution_legendre.fits'}])
+
+@remote_access([{'id': '3359194', 'filename': 'non-linear_fits_solution_legendre.fits'}])
 def test_iraf_non_linear_legendre(remote_data_path):
 
     legendre_model = models.Legendre1D(degree=3, domain=[21, 4048])
@@ -510,6 +514,7 @@ def test_muscles_loader():
     hdulist = fits.open(url)
     spec = Spectrum1D.read(hdulist, format="MUSCLES SED")
     assert isinstance(spec, Spectrum1D)
+
 
 @pytest.mark.remote_data
 def test_subaru_pfs_loader(tmpdir):
