@@ -6,7 +6,6 @@ from astropy.io import fits
 from astropy.wcs import WCS, _wcs
 from astropy.modeling import models
 from astropy.utils.exceptions import AstropyUserWarning
-from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 import shlex
@@ -76,9 +75,6 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     header = hdulist[hdu].header
     wcs = WCS(header)
 
-    if wcs.naxis != 1:
-        raise ValueError('FITS file input to wcs1d_fits_loader is not 1D')
-
     if 'BUNIT' in header:
         data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
         if flux_unit is not None:
@@ -130,7 +126,7 @@ def wcs1d_fits_writer(spectrum, file_name, update_header=False, **kwargs):
         hdulist = wcs.to_fits()
         header = hdulist[0].header
     except AttributeError as err:
-        raise ValueError(f'Only Spectrum1D objects with complete WCS can be written as wcs1d: {err}')
+        raise ValueError(f'Only Spectrum1D objects with valid WCS can be written as wcs1d: {err}')
 
     # Verify spectral axis constructed from WCS
     wl = spectrum.spectral_axis
@@ -178,8 +174,8 @@ def identify_iraf_wcs(origin, *args):
         return ('WAT1_001' in hdulist[0].header and not
                 (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
                  hdulist[0].header['FIBERID'] > 0) and
-                (hdu[0].header.get('WCSDIM', 1) > 1 or
-                 hdu[0].header.get('CTYPE1', '').upper() == 'MULTISPEC'))
+                (hdulist[0].header.get('WCSDIM', 1) > 1 or
+                 hdulist[0].header.get('CTYPE1', '').upper() == 'MULTISPEC'))
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
@@ -224,7 +220,7 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
         ctypen = header['CTYPE{:d}'.format(wcsdim)]
         if ctypen == 'LINEAR':
             logging.info("linear Solution: Try using "
-                             "`format='wcs1d-fits'` instead")
+                         "`format='wcs1d-fits'` instead")
             wcs = WCS(header)
             spectral_axis = _read_linear_iraf_wcs(wcs=wcs,
                                                   dc_flag=header['DC-FLAG'])
@@ -479,8 +475,7 @@ def _none():
         A mathematical model instance of `~astropy.modeling.models.Linear1D`
         with slope 1 and intercept 0.
     """
-    model = models.Linear1D(slope=1,
-                            intercept=0)
+    model = models.Linear1D(slope=1, intercept=0)
     return model
 
 
@@ -488,11 +483,8 @@ def _linear_solution(wcs_dict):
     """Constructs a Linear1D model based on the WCS information obtained
     from the header.
     """
-    intercept = wcs_dict['crval'] - \
-                (wcs_dict['crpix'] - 1) * \
-                wcs_dict['cdelt']
-    model = models.Linear1D(slope=wcs_dict['cdelt'],
-                            intercept=intercept)
+    intercept = wcs_dict['crval'] - (wcs_dict['crpix'] - 1) * wcs_dict['cdelt']
+    model = models.Linear1D(slope=wcs_dict['cdelt'], intercept=intercept)
 
     return model
 
@@ -528,8 +520,7 @@ def _chebyshev(wcs_dict):
 
     """
     model = models.Chebyshev1D(degree=wcs_dict['order'] - 1,
-                               domain=[wcs_dict['pmin'],
-                                       wcs_dict['pmax']], )
+                               domain=[wcs_dict['pmin'], wcs_dict['pmax']], )
 
     new_params = [wcs_dict['fpar'][i] for i in range(wcs_dict['order'])]
     model.parameters = new_params
@@ -556,8 +547,7 @@ def _non_linear_legendre(wcs_dict):
 
     """
     model = models.Legendre1D(degree=wcs_dict['order'] - 1,
-                              domain=[wcs_dict['pmin'],
-                                      wcs_dict['pmax']], )
+                              domain=[wcs_dict['pmin'], wcs_dict['pmax']], )
 
     new_params = [wcs_dict['fpar'][i] for i in range(wcs_dict['order'])]
     model.parameters = new_params
