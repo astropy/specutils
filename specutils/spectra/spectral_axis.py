@@ -20,24 +20,7 @@ class SpectralAxis(SpectralCoord):
 
     Parameters
     ----------
-    value : ndarray or `~astropy.units.Quantity` or `SpectralCoord`
-        Spectral axis data values.
-    unit : str or `~astropy.units.Unit`
-        Unit for the given data.
-    observer : `~astropy.coordinates.BaseCoordinateFrame` or `~astropy.coordinates.SkyCoord`, optional
-        The coordinate (position and velocity) of the observer.
-    target : `~astropy.coordinates.BaseCoordinateFrame` or `~astropy.coordinates.SkyCoord`, optional
-        The coordinate (position and velocity) of the target.
-    radial_velocity : `~astropy.units.Quantity`, optional
-        The radial velocity of the target with respect to the observer.
-    redshift : float, optional
-        The redshift of the target with respect to the observer.
-    doppler_rest : `~astropy.units.Quantity`, optional
-        The rest value to use for velocity space transformations.
-    doppler_convention : str, optional
-        The convention to use when converting the spectral data to/from
-        velocity space.
-    bin_specificatoin: str, optional
+    bin_specification: str, optional
         Must be "edges" or "centers". Determines whether specified axis values
         are interpreted as bin edges or bin centers. Defaults to "centers".
     """
