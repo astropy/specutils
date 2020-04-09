@@ -43,8 +43,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_obj: str, file-like, or HDUList
+            FITS file name, object (provided from name by Astropy I/O Registry),
+            or HDUList (as resulting from astropy.io.fits.open()).
     hdu: int
         The HDU of the fits file (default: 1st extension) to read from
     column_mapping : dict
@@ -64,8 +65,11 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     # Parse the wcs information. The wcs will be passed to the column finding
     # routines to search for spectral axis information in the file.
-    with fits.open(file_obj) as hdulist:
-        wcs = WCS(hdulist[hdu].header)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        wcs = WCS(file_obj[hdu].header)
+    else:
+        with fits.open(file_obj) as hdulist:
+            wcs = WCS(hdulist[hdu].header)
 
     tab = Table.read(file_obj, format='fits', hdu=hdu)
 

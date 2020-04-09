@@ -58,15 +58,19 @@ def spec_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     name = header.get('NAME')
@@ -84,7 +88,9 @@ def spec_loader(file_obj, **kwargs):
     dispersion_unit = Unit('Angstrom')
 
     mask = hdulist[1].data['and_mask'] != 0
-    hdulist.close()
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
 
     return Spectrum1D(flux=data * unit,
                       spectral_axis=dispersion * dispersion_unit,
@@ -100,15 +106,19 @@ def spSpec_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_obj: str, file-like, or HDUList
+           FITS file name, object (provided from name by Astropy I/O Registry),
+           or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    hdulist = fits.open(file_obj, **kwargs)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
 
     header = hdulist[0].header
     name = header.get('NAME')
@@ -129,7 +139,9 @@ def spSpec_loader(file_obj, **kwargs):
     dispersion_unit = Unit('Angstrom')
 
     mask = hdulist[0].data[3, :] != 0
-    hdulist.close()
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
 
     return Spectrum1D(flux=data * unit,
                       spectral_axis=dispersion * dispersion_unit,

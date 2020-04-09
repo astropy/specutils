@@ -107,6 +107,12 @@ def test_hst_cos(remote_data_path):
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
 
+    # HDUList case
+    hdulist = fits.open(remote_data_path)
+    spec = Spectrum1D.read(hdulist, format="HST/COS")
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+
 
 @remote_access([{'id': '1481192', 'filename':'STIS_FUV.fits'},
                 {'id': '1481185', 'filename': 'STIS_NUV.fits'},
@@ -117,16 +123,35 @@ def test_hst_stis(remote_data_path):
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
 
+    # HDUList case
+    hdulist = fits.open(remote_data_path)
+    spec = Spectrum1D.read(hdulist, format="HST/STIS")
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+
 
 @pytest.mark.remote_data
 def test_sdss_spec():
     sp_pattern = 'spec-4055-55359-0596.fits.'
     with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
+        # Read from open file object
+        spec = Spectrum1D.read(response, format="SDSS-III/IV spec")
+        assert isinstance(spec, Spectrum1D)
+        assert spec.flux.size > 0
+
+    with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
         with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
+            # Read from local disk via filename
             spec = Spectrum1D.read(tmp_file.name)
 
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+
+            # Read from HDUList object
+            hdulist = fits.open(tmp_file.name)
+            spec = Spectrum1D.read(hdulist, format="SDSS-III/IV spec")
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
 
@@ -135,13 +160,26 @@ def test_sdss_spec():
 def test_sdss_spspec():
     sp_pattern = 'spSpec-51957-0273-016.fit.'
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+        # Read from open file object
+        spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
+        assert isinstance(spec, Spectrum1D)
+        assert spec.flux.size > 0
+
+    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
         with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
+            # Read from local disk via filename
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', FITSFixedWarning)
                 spec = Spectrum1D.read(tmp_file.name, format="SDSS-I/II spSpec")
 
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+
+            # Read from HDUList object
+            hdulist = fits.open(tmp_file.name)
+            spec = Spectrum1D.read(hdulist, format="SDSS-I/II spSpec")
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
 
@@ -258,8 +296,14 @@ def test_iraf_non_linear_chebyshev(remote_data_path):
     assert isinstance(spectrum_1d, Spectrum1D)
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
+    # Read from HDUList
+    hdulist = fits.open(remote_data_path)
+    spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
+    assert isinstance(spectrum_1d, Spectrum1D)
+    assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
-@remote_access([{'id':'3359194', 'filename':'non-linear_fits_solution_legendre.fits'}])
+
+@remote_access([{'id': '3359194', 'filename': 'non-linear_fits_solution_legendre.fits'}])
 def test_iraf_non_linear_legendre(remote_data_path):
 
     legendre_model = models.Legendre1D(degree=3, domain=[21, 4048])
@@ -465,6 +509,11 @@ def test_muscles_loader():
     assert spec.uncertainty.array.min() >= 0.0
     assert spec.spectral_axis.unit == u.AA
     assert spec.flux.unit == u.erg / (u.s * u.cm**2 * u.AA)
+
+    # Read HDUList
+    hdulist = fits.open(url)
+    spec = Spectrum1D.read(hdulist, format="MUSCLES SED")
+    assert isinstance(spec, Spectrum1D)
 
 
 @pytest.mark.remote_data
