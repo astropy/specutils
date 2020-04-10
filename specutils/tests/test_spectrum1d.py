@@ -9,6 +9,12 @@ from .conftest import remote_access
 from ..spectra import Spectrum1D
 from ..spectra.spectral_coordinate import SpectralCoord
 
+try:
+    import matplotlib
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
@@ -385,3 +391,10 @@ def test_str():
 """Spectrum1D (length=1)
 flux:             [ 1.0 Jy ],  mean=1.0 Jy
 spectral axis:    [ 0.0 nm ],  mean=0.0 nm"""
+
+
+@pytest.mark.skipif('not HAS_MATPLOTLIB')
+def test_plot():
+    spec_single_flux = Spectrum1D([1, 2] * u.Jy, [3,4] * u.nm)
+    ax = spec_single_flux.plot_quick()
+    assert isinstance(ax, matplotlib.axes.Axes)
