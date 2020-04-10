@@ -11,6 +11,12 @@ from numpy.testing import assert_allclose
 from .conftest import remote_access
 from ..spectra import Spectrum1D
 
+try:
+    import matplotlib
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
@@ -538,3 +544,10 @@ def test_spectral_axis_direction():
     wave = [3, 2, 1] * u.nm
     spec1d = Spectrum1D(spectral_axis=wave, flux=flux)
     assert spec1d.spectral_axis_direction == 'decreasing'
+    
+    
+@pytest.mark.skipif('not HAS_MATPLOTLIB')
+def test_plot():
+    spec_single_flux = Spectrum1D([1, 2] * u.Jy, [3,4] * u.nm)
+    ax = spec_single_flux.plot_quick()
+    assert isinstance(ax, matplotlib.axes.Axes)
