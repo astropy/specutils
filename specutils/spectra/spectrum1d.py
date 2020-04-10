@@ -394,3 +394,70 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         result = "<Spectrum1D({})>".format(inner_str)
 
         return result
+
+
+    def plot_quick(self, ax=None, x_name='spectral axis', y_name='flux',
+                         **kwargs):
+        """
+        Visualize this spectrum using matplotlib in "histogram style".
+
+        Parameters
+        ----------
+        ax : `matplotlib.axes.Axes` or None
+            The axis to plot this figure into.  If None, use the current
+            ``pyplot`` axes (which will create a new figure if none exists).
+        x_name : str or None
+            The name to use for the x axis (units will be automatically added)
+            or None to not set the x axis label.
+        y_name : str or None
+            The name to use for the y axis (units will be automatically added)
+            or None to not set the y axis label.
+
+        kwargs are passed into `~matplotlib.axes.Axes.plot`, except for
+        ``drawstyle`` or ``ds``.
+
+        Returns
+        -------
+        ax : `matplotlib.axes.Axes`
+            Either ``ax``, or the newly created axes object (if the ``ax``
+            parameter is None).
+        """
+        # import is intentionally inside the method to make matplotlib an
+        # "optional" dependency
+        from matplotlib import pyplot as plt
+
+        if 'drawstyle' in kwargs or 'ds' in kwargs:
+            raise TypeError("cannot set draw style in a spectrum's plot_quick")
+
+        kwargs['drawstyle'] = 'steps-post'
+
+        if len(self.shape) != 1:
+            nspecdim = len(self.shape) - 1
+            indexing_hint = 'spec[' + ', '.join(['0']*nspecdim) + ']'
+            raise ValueError(f'plot_quick can only be used on 1d spectra. To '
+                              'get the first spectrum, try {indexing_hint}')
+
+        if ax is None:
+            ax = plt.gca()
+
+        # TODO: replace below with self.bin_edges once it is correct
+        mid_bin_edges = (self.spectral_axis[1:] + self.spectral_axis[:-1])/2
+        bin_edges = np.concatenate([(self.spectral_axis[0]*2-mid_bin_edges[0]).ravel(),
+                                     mid_bin_edges,
+                                     (self.spectral_axis[-1]*2-mid_bin_edges[-1]).ravel()])
+
+        # for a plot with steps-post, the last horizontal line requires a repeat
+        # of the last flux value
+        extended_flux = np.concatenate([self.flux, [self.flux[-1]]])
+
+        ax.plot(bin_edges, extended_flux, **kwargs)
+
+        if x_name is not None:
+            sa_unit = self.spectral_axis.unit.to_string(format='latex_inline')
+            ax.set_xlabel(x_name + f' [{sa_unit}]')
+
+        if y_name is not None:
+            flux_unit = self.flux.unit.to_string(format='latex_inline')
+            ax.set_ylabel(y_name + f' [{flux_unit}]')
+
+        return ax
