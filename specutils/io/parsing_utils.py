@@ -34,7 +34,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             column_mapping = {'FLUX': ('flux', 'Jy'),
                               'WAVE': ('spectral_axis', 'um')}
 
-    wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
+    wcs : :class:`~astropy.wcs.WCS` or :class:`~gwcs.wcs.WCS`
         WCS object passed to the Spectrum1D initializer.
 
     """
