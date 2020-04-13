@@ -20,8 +20,9 @@ class SpectrumCollection:
 
     For multidimensional spectra that all have the *same* spectral axis, use a
     :class:`~specutils.Spectrum1D` with dimension greater than 1.  For a
-    collection of spectra that have different shapes, see
-    :class:`~specutils.SpectrumList`.
+    collection of spectra that have different shapes, use
+    :class:`~specutils.SpectrumList`. For more on this topic, see
+    :ref:`specutils-representation-overview`.
 
     The attributes on this class uses the same names and conventions as
     :class:`~specutils.Spectrum1D`, allowing some operations to work the same.
