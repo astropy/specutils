@@ -36,6 +36,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
+
     """
     spec_kwargs = {}
 
@@ -91,14 +92,14 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     Load spectrum from an Astropy table into a Spectrum1D object.
     Uses the following logic to figure out which column is which:
 
-     * Spectral axis (dispersion) is the first column with units
-     compatible with u.spectral() or with length units such as 'pix'.
+    * Spectral axis (dispersion) is the first column with units
+    compatible with u.spectral() or with length units such as 'pix'.
 
-     * Flux is taken from the first column with units compatible with
-     u.spectral_density(), or with other likely culprits such as
-     'adu' or 'cts/s'.
+    * Flux is taken from the first column with units compatible with
+    u.spectral_density(), or with other likely culprits such as
+    'adu' or 'cts/s'.
 
-     * Uncertainty comes from the next column with the same units as flux.
+    * Uncertainty comes from the next column with the same units as flux.
 
     Parameters
     ----------
@@ -126,6 +127,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         Take the first column that has units compatible with u.spectral()
         equivalencies. If none meet that criterion, look for other likely
         length units such as 'pix'.
+
         """
         additional_valid_units = [u.Unit('pix')]
         found_column = None
@@ -155,6 +157,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         Take the first column that has units compatible with
         u.spectral_density() equivalencies. If none meet that criterion,
         look for other likely length units such as 'adu' or 'cts/s'.
+
         """
         additional_valid_units = [u.Unit('adu'), u.Unit('ct/s')]
         found_column = None
@@ -253,6 +256,7 @@ def _fits_identify_by_name(origin, fileinp, *args,
         File name pattern to be matched.
         Note: loaders should define a pattern sufficiently specific for their
         spectrum file types to avoid ambiguous/multiple matches.
+
     """
     fileobj = None
     filepath = None
