@@ -94,8 +94,52 @@ ensure that the data file being loaded is compatible with the loader function.
         return Spectrum1D(flux=data, spectral_axis=lamb, wcs=wcs, uncertainty=uncertainty, meta=meta)
 
 
-The above is based on the ``Quantity`` formulation, as for any reasonably "generic" format ``Table.read()``
-would extract the units from the FITS header anyway.
+The above is based on the ``Quantity`` formulation, as for any reasonably "generic" format
+``Table.read()`` would extract the units from the FITS header anyway.
+
+Another approach is based on the ``Table`` formulation, as follows:
+
+.. code-block:: python
+
+    import os
+
+    from astropy.io import fits
+    from astropy.nddata import StdDevUncertainty
+    from astropy.table import Table
+    from astropy.units import Unit
+    from astropy.wcs import WCS
+
+    from specutils.io.registers import data_loader
+    from specutils import Spectrum1D
+
+
+    # Define an optional identifier. If made specific enough, this circumvents the
+    # need to add ``format="my-format"`` in the ``Spectrum1D.read`` call.
+    def identify_generic_fits(origin, *args, **kwargs):
+        return (isinstance(args[0], str) and
+                os.path.splitext(args[0].lower())[1] == '.fits')
+
+    @data_loader("my-format", identifier=identify_generic_fits,
+                 extensions=['fits'])
+    def generic_fits(file_name, **kwargs):
+        with fits.open(file_name, **kwargs) as hdulist:
+
+            tab = Table.read(file_name)
+
+            uncertainty = StdDevUncertainty(tab["err"])
+            lamb = tab["spectral_axis"] * Unit('')
+            data = tab["flux"] * Unit('')
+
+        return Spectrum1D(flux=data, spectral_axis=lamb, uncertainty=uncertainty)
+
+
+The above example makes the assumption that the units of the wavelength and the flux are
+stored in the table's ``spectral_axis`` and ``flux`` columns as ``Quantity`` objects.
+
+Also, ``specutils`` provides some generic functions for parsing data in cases
+where the loader needs to determine characteristics at load time. Please see
+the api for `~specutils.io.parsing_utils.generic_spectrum_from_table` and
+`~specutils.io.parsing_utils.spectrum_from_column_mapping`.
 
 An ``extensions`` keyword can be provided. This allows for basic filename
 extension matching in the case that the ``identifier`` function is not
@@ -169,9 +213,9 @@ This again will be done in a separate python file and placed in the user's
 
         tab.write(file_name, format="fits")
 
-Note that this will store the units information of the ``flux`` and ``spectral_axis`` as attributes of the ``Quantity`` columns in the ``Table``, which is saving them automatically to the FITS file.
-units information is stored in ``Table`` object as introduced in the definition
-of ``generic-fits`` as the ``custom_writer()`` above.
+Note that this will store the units information of the ``flux`` and ``spectral_axis``
+as attributes of the ``Quantity`` columns in the ``Table``, which is saving them
+automatically to the FITS file.
 
 The custom writer can be used by passing the name of the custom writer to the
 ``format`` argument of the ``write`` method on the
@@ -182,7 +226,7 @@ The custom writer can be used by passing the name of the custom writer to the
     spec = Spectrum1D(flux=np.random.sample(100) * u.Jy,
                       spectral_axis=np.arange(100) * u.AA)
 
-    spec.write("my_output.fits", format="fits-writer")
+    spec.write("my_output.fits", format="my-format")
 
 
 Reference/API
