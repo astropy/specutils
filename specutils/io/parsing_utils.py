@@ -25,10 +25,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
         The table object (e.g. returned from ``Table.read('data_file')``).
     column_mapping : dict
         A dictionary describing the relation between the table columns
-        and the arguments of the `Spectrum1D` class, along with unit
+        and the arguments of the ``Spectrum1D`` class, along with unit
         information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum1D` keyword argument, and the second element is the
+        associated ``Spectrum1D`` keyword argument, and the second element is the
         unit for the file column (or ``None`` to take unit from the table)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
@@ -244,7 +244,7 @@ def _fits_identify_by_name(origin, fileinp, *args,
                            pattern=r'(?i).*\.fit[s]?$', **kwargs):
     """
     Check whether input file is FITS and matches a given name pattern.
-    Utility function to construct an `identifier` for Astropy I/O Registry.
+    Utility function to construct an ``identifier`` for Astropy I/O Registry.
 
     Parameters
     ----------
@@ -276,7 +276,7 @@ def _fits_identify_by_name(origin, fileinp, *args,
         fileobj = fileinp
         filepath = fileobj.name
 
-    # Check for `urlopen` object - can only probe content if seekable
+    # Check for ``urlopen`` object - can only probe content if seekable
     if hasattr(fileinp, 'url') and hasattr(fileinp, 'seekable'):
         filepath = urllib.parse.unquote(fileinp.url)
         if fileinp.seekable():
