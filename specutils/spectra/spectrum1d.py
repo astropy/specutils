@@ -395,7 +395,6 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         return result
 
-
     def plot_quick(self, ax=None, x_name='spectral axis', y_name='flux',
                          **kwargs):
         """
