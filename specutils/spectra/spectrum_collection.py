@@ -18,6 +18,11 @@ class SpectrumCollection:
     on them faster than if they are treated as individual
     :class:`~specutils.Spectrum1D` objects.
 
+    For multidimensional spectra that all have the *same* spectral axis, use a
+    :class:`~specutils.Spectrum1D` with dimension greater than 1.  For a
+    collection of spectra that have different shapes, see
+    :class:`~specutils.SpectrumList`.
+
     The attributes on this class uses the same names and conventions as
     :class:`~specutils.Spectrum1D`, allowing some operations to work the same.
     Where this does not work, the user can use standard indexing notation to
