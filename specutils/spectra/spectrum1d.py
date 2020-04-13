@@ -28,7 +28,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     ``spectral_axis``.
 
     For multidimensional spectra that are all the same shape but have different
-    spectral axes, use a :class:`~specutils.SpectralCollection`.  For a
+    spectral axes, use a :class:`~specutils.SpectrumCollection`.  For a
     collection of spectra that have different shapes, use
     :class:`~specutils.SpectrumList`. For more on this topic, see
     :ref:`specutils-representation-overview`.
