@@ -33,8 +33,9 @@ def muscles_sed(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj: str or file-like
-        FITS file name or object (provided from name by Astropy I/O Registry).
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
@@ -43,16 +44,22 @@ def muscles_sed(file_obj, **kwargs):
     """
     # name is not used; what was it for?
     # name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
 
-    with fits.open(file_obj, **kwargs) as hdulist:
-        header = hdulist[0].header
+    header = hdulist[0].header
 
-        tab = Table.read(hdulist[1])
+    tab = Table.read(hdulist[1])
 
-        meta = {'header': header}
-        uncertainty = StdDevUncertainty(tab["ERROR"])
-        data = Quantity(tab["FLUX"])
-        wavelength = Quantity(tab["WAVELENGTH"])
+    meta = {'header': header}
+    uncertainty = StdDevUncertainty(tab["ERROR"])
+    data = Quantity(tab["FLUX"])
+    wavelength = Quantity(tab["WAVELENGTH"])
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
 
     return Spectrum1D(flux=data, spectral_axis=wavelength,
                       uncertainty=uncertainty, meta=meta)
