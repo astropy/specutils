@@ -233,3 +233,6 @@ Reference/API
 -------------
 .. automodapi:: specutils.io.registers
     :no-heading:
+
+.. automodapi:: specutils.io.parsing_utils
+    :no-heading:
