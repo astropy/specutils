@@ -93,10 +93,10 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     Uses the following logic to figure out which column is which:
 
     * Spectral axis (dispersion) is the first column with units
-    compatible with u.spectral() or with length units such as 'pix'.
+      compatible with u.spectral() or with length units such as 'pix'.
     * Flux is taken from the first column with units compatible with
-    u.spectral_density(), or with other likely culprits such as
-    'adu' or 'cts/s'.
+      u.spectral_density(), or with other likely culprits such as
+      'adu' or 'cts/s'.
     * Uncertainty comes from the next column with the same units as flux.
 
     Parameters
