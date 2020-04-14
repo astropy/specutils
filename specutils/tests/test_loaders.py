@@ -498,3 +498,11 @@ def test_spectrum1d_6dfgs_tabular(remote_data_path):
 
     assert spec.spectral_axis.unit == u.Unit("Angstrom")
     assert spec.flux.unit == u.Unit("count/s")
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    spec = Spectrum1D.read(hdulist, format="6dFGS-tabular")
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.unit == u.Unit("count/s")
+    assert spec.flux.size > 0
+    hdulist.close()
