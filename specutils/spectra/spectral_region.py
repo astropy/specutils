@@ -48,7 +48,7 @@ class SpectralRegion:
         if width.value <= 0:
             raise ValueError('SpectralRegion width must be positive.')
 
-        if center.unit.physical_type == 'frequency':
+        if center.unit.physical_type != 'length':
             return cls(center + width, center - width)
 
         return cls(center - width, center + width)
