@@ -554,3 +554,26 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
     assert spec.flux.unit == u.Unit("count/Angstrom")
     assert spec.flux.size > 0
     hdulist.close()
+
+
+@remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732.fits'}])
+def test_spectrum1d_6dfgs_split_combined(remote_data_path):
+    specs = SpectrumList.read(remote_data_path)
+
+    for spec in specs:
+        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+        assert spec.flux.unit == u.Unit("count/Angstrom")
+
+    assert len(specs) == 3
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    specs = SpectrumList.read(hdulist, format="6dFGS-combined")
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.flux.unit == u.Unit("count/Angstrom")
+        assert spec.flux.size > 0
+
+    assert len(specs) == 3
+
+    hdulist.close()
