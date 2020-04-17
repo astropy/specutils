@@ -1,11 +1,14 @@
 import astropy.io.fits as fits
+from astropy.nddata import VarianceUncertainty
 from astropy.table import Table
 from astropy.units import Quantity, Unit
+from astropy.wcs import WCS
 from specutils.io.registers import data_loader
 from specutils import Spectrum1D
 
 SIXDFGS_PRIMARY_HDU_KEYWORDS = ["OBSRA", "OBSDEC", "Z", "Z_HELIO", "QUALITY"]
 COUNTS_PER_SECOND = Unit("counts/s", parse_strict="silent")
+ANGSTROMS = Unit("Angstroms", parse_strict="silent")
 
 
 def identify_6dfgs_tabular_fits(origin, *args, **kwargs):
@@ -17,6 +20,22 @@ def identify_6dfgs_tabular_fits(origin, *args, **kwargs):
             return False
         primary_hdu = hdulist[0]
         if primary_hdu.header["NAXIS"] != 0:
+            return False
+        for keyword in SIXDFGS_PRIMARY_HDU_KEYWORDS:
+            if keyword not in primary_hdu.header:
+                return False
+        return True
+
+
+def identify_6dfgs_split_fits(origin, *args, **kwargs):
+    """
+    Identify if the current file is a 6dFGS file (stored in the split variant).
+    """
+    with fits.open(args[0]) as hdulist:
+        if len(hdulist) != 1:
+            return False
+        primary_hdu = hdulist[0]
+        if primary_hdu.header["NAXIS2"] not in (3, 4):
             return False
         for keyword in SIXDFGS_PRIMARY_HDU_KEYWORDS:
             if keyword not in primary_hdu.header:
@@ -69,3 +88,62 @@ def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
         hdulist.close()
 
     return Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+
+
+@data_loader("6dFGS-split",
+             identifier=identify_6dfgs_split_fits, dtype=Spectrum1D,
+             extensions=["fit", "fits"])
+def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
+    """
+    Load the split variant of a 6dF Galaxy Survey (6dFGS) file.
+
+    6dFGS used the Six-degree Field instrument on the UK Schmidt Telescope
+    (UKST) at the Siding Spring Observatory (SSO) near Coonabarabran,
+    Australia. Further details can be found at http://www.6dfgs.net/, or
+    https://docs.datacentral.org.au/6dfgs/. Catalogues and spectra were
+    produced, with the spectra being provided as both fits tables and as fits
+    images. This loads the split variants of the spectra, which have been
+    produced by either the GAMA team or Data Central.
+
+    Parameters
+    ----------
+    file_obj: str, file-like or HDUList
+         FITS file name, object (provided from name by Astropy I/O Registry),
+         or HDUList (as resulting from astropy.io.fits.open()).
+
+    Returns
+    -------
+    data: Spectrum1D
+        The 6dF spectrum that is represented by the data in this file.
+    """
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
+
+    spec = _load_single_6dfgs_hdu(hdulist[0])
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
+
+    return spec
+
+
+def _load_single_6dfgs_hdu(hdu):
+    """
+    Helper function to handle loading spectra from a single 6dFGS HDU
+    """
+
+    header = hdu.header
+    w = WCS(naxis=1)
+    w.wcs.crpix[0] = header["CRPIX1"]
+    w.wcs.crval[0] = header["CRVAL1"]
+    w.wcs.cdelt[0] = header["CDELT1"]
+    w.wcs.cunit[0] = header["CUNIT1"]
+    if w.wcs.cunit[0] == ANGSTROMS:
+        w.wcs.cunit[0] = Unit("Angstrom")
+    meta = {"header": header}
+    flux = hdu.data[0] * Unit("count") / w.wcs.cunit[0]
+    uncertainty = VarianceUncertainty(hdu.data[1])
+
+    return Spectrum1D(flux=flux, wcs=w, meta=meta, uncertainty=uncertainty)

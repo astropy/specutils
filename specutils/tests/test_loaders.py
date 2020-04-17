@@ -506,3 +506,51 @@ def test_spectrum1d_6dfgs_tabular(remote_data_path):
     assert spec.flux.unit == u.Unit("count/s")
     assert spec.flux.size > 0
     hdulist.close()
+
+
+@remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732v_spectrum0.fits'}])
+def test_spectrum1d_6dfgs_split_v(remote_data_path):
+    spec = Spectrum1D.read(remote_data_path)
+
+    assert spec.spectral_axis.unit == u.Unit("Angstrom")
+    assert spec.flux.unit == u.Unit("count/Angstrom")
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    spec = Spectrum1D.read(hdulist, format="6dFGS-split")
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.unit == u.Unit("count/Angstrom")
+    assert spec.flux.size > 0
+    hdulist.close()
+
+
+@remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732r_spectrum0.fits'}])
+def test_spectrum1d_6dfgs_split_r(remote_data_path):
+    spec = Spectrum1D.read(remote_data_path)
+
+    assert spec.spectral_axis.unit == u.Unit("Angstrom")
+    assert spec.flux.unit == u.Unit("count/Angstrom")
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    spec = Spectrum1D.read(hdulist, format="6dFGS-split")
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.unit == u.Unit("count/Angstrom")
+    assert spec.flux.size > 0
+    hdulist.close()
+
+
+@remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732combined_spectrum0.fits'}])
+def test_spectrum1d_6dfgs_split_combined(remote_data_path):
+    spec = Spectrum1D.read(remote_data_path)
+
+    assert spec.spectral_axis.unit == u.Unit("Angstrom")
+    assert spec.flux.unit == u.Unit("count/Angstrom")
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    spec = Spectrum1D.read(hdulist, format="6dFGS-split")
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.unit == u.Unit("count/Angstrom")
+    assert spec.flux.size > 0
+    hdulist.close()
