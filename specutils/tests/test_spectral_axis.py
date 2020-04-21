@@ -43,7 +43,7 @@ def test_create_with_bin_edges():
     assert spectral_axis[0] == 501*u.AA
 
     # Test irregular bin edges
-    wavelengths = np.array([500,510,550,560,590])*u.AA
+    wavelengths = np.array([500, 510, 550, 560, 590])*u.AA
     spectral_axis = SpectralAxis(wavelengths, bin_specification="edges")
 
     assert np.all(spectral_axis.bin_edges == wavelengths)
