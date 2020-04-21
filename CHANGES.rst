@@ -11,6 +11,9 @@ Bug Fixes
   identification and parsing of metadata and units for ``apogee``
   and ``muscles`` improved; enabled loading from file-like objects. [#573]
 
+- Fix ``SpectralCoord`` transformations when applying velocity frame
+  transformations. [#662]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -21,7 +24,7 @@ Other Changes and Additions
 New Features
 ^^^^^^^^^^^^
 
-- Implement ``SpectralCoord`` object. [#524] 
+- Implement ``SpectralCoord`` object. [#524]
 
 - Implement cross-correlation for finding redshift/radial velocity. [#544]
 
@@ -31,7 +34,7 @@ New Features
 
 - Improved 1D JWST loader and allow parsing into an ``SpectrumCollection`` object. [#579]
 
-- Implemented 2D and 3D data loaders for JWST products. [#595] 
+- Implemented 2D and 3D data loaders for JWST products. [#595]
 
 - Include documentation on how to use dust_extinction in specutils. [#594]
 
@@ -48,7 +51,7 @@ Bug Fixes
 
 - Fix spectral axis unit retrieval. [#581]
 
-- Fix bug in subspectrum fitting. [#586] 
+- Fix bug in subspectrum fitting. [#586]
 
 - Fix uncertainty to weight conversion to match astropy assumptions. [#594]
 
