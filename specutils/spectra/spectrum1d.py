@@ -8,6 +8,7 @@ from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_coordinate import SpectralCoord
+from .spectral_axis import SpectralAxis
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
@@ -27,7 +28,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         The flux data for this spectrum.
     spectral_axis : `astropy.units.Quantity` or `specutils.SpectralCoord`
         Dispersion information with the same shape as the last (or only)
-        dimension of flux.
+        dimension of flux, or one greater than the last dimension of flux
+        if specifying bin edges.
     wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
         WCS information object.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
@@ -50,7 +52,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
                  velocity_convention=None, rest_value=None, redshift=None,
-                 radial_velocity=None, **kwargs):
+                 radial_velocity=None, bin_specification=None, **kwargs):
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
             {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy'})
@@ -114,6 +116,26 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise u.UnitsError("Rest value must be "
                                    "energy/wavelength/frequency equivalent.")
 
+        # If flux and spectral axis are both specified, check that their lengths
+        # match or are off by one (implying the spectral axis stores bin edges)
+        if flux is not None and spectral_axis is not None:
+            if spectral_axis.shape[0] == flux.shape[-1]:
+                if bin_specification == "edges":
+                    raise ValueError("A spectral axis input as bin edges"
+                        "must have length one greater than the flux axis")
+                bin_specification = "centers"
+            elif spectral_axis.shape[0] == flux.shape[-1]+1:
+                if bin_specification == "centers":
+                    raise ValueError("A spectral axis input as bin centers"
+                        "must be the same length as the flux axis")
+                bin_specification = "edges"
+            else:
+                raise ValueError(
+                    "Spectral axis length ({}) must be the same size or one "
+                    "greater (if specifying bin edges) than that of the last "
+                    "flux axis ({})".format(spectral_axis.shape[0], \
+                        flux.shape[-1]))
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
@@ -121,40 +143,37 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # Ensure that the spectral axis is an astropy Quantity
             if not isinstance(spectral_axis, u.Quantity):
                 raise ValueError("Spectral axis must be a `Quantity` or "
-                                 "`SpectralCoord` object.")
+                                 "`SpectralAxis` object.")
 
             # If spectral axis is provided as an astropy Quantity, convert it
-            # to a specutils SpectralCoord object.
-            if not isinstance(spectral_axis, SpectralCoord):
-                self._spectral_axis = SpectralCoord(
+            # to a specutils SpectralAxis object.
+            if not isinstance(spectral_axis, SpectralAxis):
+                if spectral_axis.shape[0] == flux.shape[-1] + 1:
+                    bin_specification = "edges"
+                else:
+                    bin_specification = "centers"
+                self._spectral_axis = SpectralAxis(
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
-                    doppler_convention=velocity_convention)
-            # If a SpectralCoord object is provided, we assume it doesn't need
+                    doppler_convention=velocity_convention,
+                    bin_specification = bin_specification)
+            # If a SpectralAxis object is provided, we assume it doesn't need
             # information from other keywords added
             else:
                 for a in [radial_velocity, redshift]:
                     if a is not None:
                         raise ValueError("Cannot separately set redshift or "
-                                         "radial_velocity if a SpectralCoord "
+                                         "radial_velocity if a SpectralAxis "
                                          "object is input to spectral_axis")
 
                 self._spectral_axis = spectral_axis
 
-            wcs = gwcs_from_array(spectral_axis)
+            wcs = gwcs_from_array(self._spectral_axis)
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
             size = len(flux) if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
-
-        # Check to make sure the wavelength length is the same in both
-        if flux is not None and spectral_axis is not None:
-            if not spectral_axis.shape[0] == flux.shape[-1]:
-                raise ValueError(
-                    "Spectral axis ({}) and the last flux axis ({}) lengths "
-                    "must be the same.".format(
-                        spectral_axis.shape[0], flux.shape[-1]))
 
         super(Spectrum1D, self).__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
@@ -167,7 +186,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # the WCS
             spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
 
-            self._spectral_axis = SpectralCoord(
+            self._spectral_axis = SpectralAxis(
                 spec_axis,
                 redshift=redshift, radial_velocity=radial_velocity,
                 doppler_rest=rest_value,
@@ -275,7 +294,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     @lazyproperty
     def bin_edges(self):
-        return self.wcs.bin_edges()
+        return self.spectral_axis.bin_edges
 
     @property
     def shape(self):

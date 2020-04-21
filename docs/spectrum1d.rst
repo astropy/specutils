@@ -30,8 +30,8 @@ create it explicitly from arrays or `~astropy.units.Quantity` objects:
     >>> ax.set_ylabel("Flux")  # doctest: +SKIP
 
 .. note::
-    Note that the ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralCoord` object, 
-    and in fact will internally convert the spectral_axis to :class:`~specutils.SpectralCoord` if it
+    Note that the ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralAxis` object, 
+    and in fact will internally convert the spectral_axis to :class:`~specutils.SpectralAxis` if it
     is provided as an array or `~astropy.units.Quantity`.
 
 Reading from a File

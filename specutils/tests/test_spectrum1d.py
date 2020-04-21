@@ -51,9 +51,10 @@ def test_create_from_multidimensional_arrays():
     assert (spec.frequency == freqs).all()
     assert (spec.flux == flux).all()
 
-    # Mis-matched lengths should raise an exception
+    # Mis-matched lengths should raise an exception (unless freqs is one longer
+    # than flux, in which case it's interpreted as bin edges)
     freqs = np.arange(50) * u.GHz
-    flux = np.random.random((5, len(freqs)-1)) * u.Jy
+    flux = np.random.random((5, len(freqs)-10)) * u.Jy
     with pytest.raises(ValueError) as e_info:
         spec = Spectrum1D(spectral_axis=freqs, flux=flux)
 
@@ -65,10 +66,11 @@ def test_create_from_quantities():
     assert spec.spectral_axis.unit == u.nm
     assert spec.spectral_axis.size == 49
 
-    # Mis-matched lengths should raise an exception
+    # Mis-matched lengths should raise an exception (unless freqs is one longer
+    # than flux, in which case it's interpreted as bin edges)
     with pytest.raises(ValueError) as e_info:
         spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(48) * u.Jy)
+                      flux=np.random.randn(47) * u.Jy)
 
 
 def test_create_implicit_wcs():
@@ -328,7 +330,7 @@ def test_repr():
                                flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<SpectralCoord [' in result
+    assert 'spectral_axis=<SpectralAxis [' in result
 
     spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy,
@@ -336,7 +338,7 @@ def test_repr():
                                    np.random.sample(10), unit='Jy'))
     result = repr(spec_with_unc)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<SpectralCoord [' in result
+    assert 'spectral_axis=<SpectralAxis [' in result
     assert 'uncertainty=StdDevUncertainty(' in result
 
 

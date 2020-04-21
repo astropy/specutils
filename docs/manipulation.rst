@@ -334,7 +334,7 @@ the ``spectral_axis``. Therefore one can use a construct like this:
     <Spectrum1D(flux=<Quantity [ 49.6714153 ,  13.82643012,  64.76885381, 152.30298564,
                 23.41533747,  23.41369569, 157.92128155,  76.74347292,
                 46.94743859,  54.25600436] Jy>,
-     spectral_axis=<SpectralCoord [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] um,
+     spectral_axis=<SpectralAxis [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] um,
        radial_velocity=0.0 km / s,
        redshift=0.0,
        doppler_rest=0.0 Angstrom,
@@ -347,7 +347,7 @@ the ``spectral_axis``. Therefore one can use a construct like this:
     >>> new_spec #doctest:+ELLIPSIS
     <Spectrum1D(flux=<Quantity [ 49.6714153 ,  13.82643012,  64.76885381, 152.30298564,
                 23.41533747,  23.41369569, 157.92128155,  76.74347292,
-                46.94743859,  54.25600436] Jy>, spectral_axis=<SpectralCoord [ 1.23,  2.23,  3.23,  4.23,  5.23,  6.23,  7.23,  8.23,
+                46.94743859,  54.25600436] Jy>, spectral_axis=<SpectralAxis [ 1.23,  2.23,  3.23,  4.23,  5.23,  6.23,  7.23,  8.23,
                      9.23, 10.23] um,
        radial_velocity=0.0 km / s,
        redshift=0.0,
