@@ -57,11 +57,11 @@ stages:
         envs:
           # Test with dev environments
           - linux: py37-test-devdeps
-          - macos: py37-test-devdeps
+#          - macos: py37-test-devdeps
           - windows: py37-test-devdeps
 
           - linux: py38-test-devdeps
-          - macos: py38-test-devdeps
+#          - macos: py38-test-devdeps
           - windows: py38-test-devdeps
 
   - stage: LTSEnvironment
