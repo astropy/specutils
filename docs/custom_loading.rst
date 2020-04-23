@@ -177,6 +177,13 @@ The custom writer can be used by passing the name of the custom writer to the
     spec.write("my_output.fits", format="fits-writer")
 
 
+List of loaders
+^^^^^^^^^^^^^^^
+A list of loaders is as follows:
+
+.. listformats::
+
+
 Reference/API
 -------------
 .. automodapi:: specutils.io.registers

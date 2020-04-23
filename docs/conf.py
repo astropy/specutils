@@ -172,6 +172,11 @@ man_pages = [('index', project.lower(), project + u' Documentation',
               [author], 1)]
 
 
+sys.path.append(os.path.abspath("./_ext"))
+
+extensions = ['listformats']
+
+
 # -- Options for the edit_on_github extension ---------------------------------
 
 if eval(setup_cfg.get('edit_on_github')):

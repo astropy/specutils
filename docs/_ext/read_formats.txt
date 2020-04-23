@@ -1,0 +1,20 @@
+      Format      Read Write Auto-identify
+----------------- ---- ----- -------------
+    APOGEE apStar  Yes    No           Yes
+   APOGEE apVisit  Yes    No           Yes
+APOGEE aspcapStar  Yes    No           Yes
+            ASCII  Yes    No           Yes
+             ECSV  Yes    No           Yes
+          HST/COS  Yes    No           Yes
+         HST/STIS  Yes    No           Yes
+             IPAC  Yes    No           Yes
+         JWST s2d  Yes    No           Yes
+         JWST s3d  Yes    No           Yes
+         JWST x1d  Yes    No           Yes
+      MUSCLES SED  Yes    No           Yes
+ SDSS-I/II spSpec  Yes    No           Yes
+ SDSS-III/IV spec  Yes    No           Yes
+ Subaru-pfsObject  Yes    No           Yes
+             iraf  Yes    No           Yes
+     tabular-fits  Yes   Yes           Yes
+       wcs1d-fits  Yes    No           Yes
