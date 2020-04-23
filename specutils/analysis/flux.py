@@ -2,13 +2,14 @@
 A module for analysis tools focused on determining fluxes of spectral features.
 """
 
-from functools import wraps
+from functools import wraps, reduce
 import warnings
 
 import numpy as np
 from .. import conf
 from ..manipulation import extract_region
 from .utils import computation_wrapper
+from ..utils.ndcontainer import NDContainer
 import astropy.units as u
 from astropy.stats import sigma_clip
 from astropy.stats import mad_std
@@ -99,7 +100,11 @@ def _compute_line_flux(spectrum, regions=None):
     # Average dispersion in the line region
     avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis)))
 
-    line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
+    line_flux = reduce(lambda a, b: a + b,
+                       NDContainer(
+                           calc_spectrum.flux[1:] * avg_dx,
+                           uncertainty=calc_spectrum.uncertainty.__class__(
+                               calc_spectrum.uncertainty.quantity[1:] * avg_dx)))
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
