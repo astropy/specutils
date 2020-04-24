@@ -182,7 +182,7 @@ List of loaders
 A list of loaders is as follows:
 
 .. listformats::
-
+    :no-heading:
 
 
 Reference/API
