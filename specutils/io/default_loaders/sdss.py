@@ -73,6 +73,30 @@ def spSpec_identify(origin, *args, **kwargs):
     return is_sdss
 
 
+def spPlate_identify(origin, *args, **kwargs):
+    """
+    Check whether given input is FITS with SDSS spPlate fibre spectral data.
+    This is used for Astropy I/O Registry.
+    """
+    if isinstance(args[2], fits.hdu.hdulist.HDUList):
+        hdulist = args[2]
+    elif isinstance(args[2], _io.BufferedReader):
+        hdulist = fits.open(args[2])
+    else:
+        hdulist = fits.open(args[0], **kwargs)
+
+    # Test telescope keyword and check if primary HDU contains data
+    # consistent with spSpec format
+    is_sdss = (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
+               hdulist[0].header.get('FIBERID', 0) <= 0 and
+               isinstance(hdulist[0].data, np.ndarray) and
+               hdulist[0].data.shape[0] > 5)
+
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+    return is_sdss
+
+
 @data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
 def spec_loader(file_obj, **kwargs):
     """
@@ -171,4 +195,60 @@ def spSpec_loader(file_obj, **kwargs):
         hdulist.close()
 
     return Spectrum1D(flux=flux, spectral_axis=dispersion * dispersion_unit,
+                      uncertainty=uncertainty, meta=meta, mask=mask)
+
+
+@data_loader(label="SDSS spPlate", identifier=spPlate_identify, extensions=['fits'])
+def spPlate_loader(file_obj, limit=None, **kwargs):
+    """
+    Loader for SDSS spPlate files, reading flux spectra from all fibres into single array.
+
+    Parameters
+    ----------
+    file_obj: str, file-like, or HDUList
+           FITS file name, object (provided from name by Astropy I/O Registry),
+           or HDUList (as resulting from astropy.io.fits.open()).
+
+    limit : :class:`int`, optional
+        If set, only return the first `limit` spectra in `flux` array.
+
+    Returns
+    -------
+    Spectrum1D
+        The spectra represented by the wavelength solution from the header WCS
+        and the data array of the primary HDU (typically 640 along dimension 1).
+    """
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
+
+    header = hdulist[0].header
+    meta = {'header': header}
+    wcs = WCS(header).dropaxis(1)
+    if limit is None:
+        limit = header['NAXIS2']
+
+    bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
+    if 'Ang' in bunit and 'strom' not in bunit:
+        bunit = bunit.replace('Ang', 'Angstrom')
+    flux_unit = Unit(bunit)
+    flux = hdulist[0].data[0:limit, :] * flux_unit
+    uncertainty = InverseVariance(hdulist[1].data[0:limit, :] / flux_unit**2)
+
+    # dispersion along NAXIS1 from the WCS
+    wcs = WCS(header).dropaxis(1)
+    dispersion = wcs.pixel_to_world(np.arange(flux.shape[-1]))
+    # convert out of logspace (default for spSpec/spPlate spectra)?
+    if header.get('DC-Flag', 1) == 1:
+        dispersion = 10**dispersion
+    dispersion_unit = Unit('Angstrom')
+
+    mask = hdulist[2].data[0:limit, :] != 0
+    meta['plugmap'] = Table.read(hdulist[5])[0:limit]
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
+
+    return Spectrum1D(flux=flux, spectral_axis=dispersion*dispersion_unit,
                       uncertainty=uncertainty, meta=meta, mask=mask)
