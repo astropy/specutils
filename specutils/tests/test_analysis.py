@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 
 import astropy.units as u
+from astropy.units import Quantity
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
@@ -13,6 +14,7 @@ from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
+from ..manipulation import snr_threshold
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -36,6 +38,34 @@ def test_line_flux():
     expected = np.sqrt(2*np.pi) * u.GHz * u.Jy
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
+
+
+def test_line_flux_masked():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 100) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux,
+                          uncertainty=StdDevUncertainty(noise))
+
+    spectrum_masked = snr_threshold(spectrum, 50.)
+
+    result = line_flux(spectrum_masked)
+
+    assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
+
+    # Test that flux is correct by comparing with hand-derived value.
+    assert quantity_allclose(result, Quantity(2.23)*u.GHz*u.Jy,
+                             atol=0.01*u.GHz*u.Jy)
+
+    # Flux from masked spectrum should be smaller than from the
+    # same spectrum but with no mask.
+    result_unmasked = line_flux(spectrum)
+    assert result < result_unmasked
 
 
 def test_line_flux_uncertainty():
@@ -65,6 +95,31 @@ def test_equivalent_width():
     result = equivalent_width(spectrum)
 
     assert result.unit.is_equivalent(spectrum.wcs.unit, equivalencies=u.spectral())
+
+    # Since this is an emission line, we expect the equivalent width value to
+    # be negative
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+def test_equivalent_width_masked ():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 1000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=50*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise + 1*u.Jy
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux,
+                          uncertainty=StdDevUncertainty(noise))
+
+    spectrum_masked = snr_threshold(spectrum, -100.)
+
+    result = equivalent_width(spectrum_masked)
+
+    assert result.unit.is_equivalent(spectrum.wcs.unit)
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative

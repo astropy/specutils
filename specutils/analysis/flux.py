@@ -102,6 +102,16 @@ def _compute_line_flux(spectrum, regions=None):
 
     line_flux.uncertainty = None
 
+    # Account for the existence of a mask.
+    if calc_spectrum.mask is None:
+        flux_ = calc_spectrum.flux[1:]
+    else:
+        # Cannot use unmasked values because of average dispersion.
+        # Masked values must enter sum calculation valued as zeros.
+        flux_ = np.where(calc_spectrum.mask, 0, calc_spectrum.flux)[1:]
+
+    line_flux = np.sum(flux_ * avg_dx)
+
     if calc_spectrum.uncertainty is not None:
         if isinstance(calc_spectrum.uncertainty, StdDevUncertainty):
             variance_q = calc_spectrum.uncertainty.quantity ** 2
@@ -138,6 +148,15 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
     dx = (np.abs(spectral_axis[-1] - spectral_axis[0]))
 
     line_flux = _compute_line_flux(spectrum, regions)
+
+    # Account for the existence of a mask. A correction factor
+    # is applied to the continuum value to account for the
+    # data points that are not included in the line flux due to
+    # masking.
+    if calc_spectrum.mask is not None:
+        valid = np.sum(np.where(calc_spectrum.mask, 0., 1.))
+        factor = valid / len(spectral_axis)
+        continuum *= factor
 
     # Calculate equivalent width
     ew = dx - (line_flux / continuum)
