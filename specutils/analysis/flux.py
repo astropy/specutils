@@ -100,11 +100,15 @@ def _compute_line_flux(spectrum, regions=None):
     # Average dispersion in the line region
     avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis)))
 
-    line_flux = reduce(lambda a, b: a + b,
-                       NDContainer(
-                           calc_spectrum.flux[1:] * avg_dx,
-                           uncertainty=calc_spectrum.uncertainty.__class__(
-                               calc_spectrum.uncertainty.quantity[1:] * avg_dx)))
+    line_flux_container = reduce(
+        lambda a, b: a + b,
+        NDContainer(
+            calc_spectrum.flux[1:] * avg_dx,
+            uncertainty=calc_spectrum.uncertainty.__class__(
+                calc_spectrum.uncertainty.quantity[1:] * avg_dx)))
+
+    line_flux = u.Quantity(line_flux_container.data * line_flux_container.unit)
+    line_flux.uncertainty = line_flux_container.uncertainty.quantity
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
