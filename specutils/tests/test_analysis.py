@@ -58,14 +58,14 @@ def test_line_flux_masked():
 
     assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
 
-    # Test that flux is correct by comparing with hand-derived value.
-    assert quantity_allclose(result, Quantity(2.23)*u.GHz*u.Jy,
-                             atol=0.01*u.GHz*u.Jy)
-
     # Flux from masked spectrum should be smaller than from the
     # same spectrum but with no mask.
     result_unmasked = line_flux(spectrum)
     assert result < result_unmasked
+
+    # Test that flux is correct by comparing with hand-derived value.
+    assert quantity_allclose(result, Quantity(2.23)*u.GHz*u.Jy,
+                             atol=0.01*u.GHz*u.Jy)
 
 
 def test_line_flux_uncertainty():
@@ -115,17 +115,22 @@ def test_equivalent_width_masked ():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux,
                           uncertainty=StdDevUncertainty(noise))
 
-    spectrum_masked = snr_threshold(spectrum, -100.)
+    spectrum_masked = snr_threshold(spectrum, 10.)
 
     result = equivalent_width(spectrum_masked)
 
     assert result.unit.is_equivalent(spectrum.wcs.unit)
 
-    # Since this is an emission line, we expect the equivalent width value to
-    # be negative
-    expected = -(np.sqrt(2*np.pi) * u.GHz)
+    # EW from masked spectrum should be larger than from the
+    # same spectrum but with no mask. This happens because the
+    # contribution from the continuum that is removed by the
+    # mask is larger than the same contribution in the unmasked
+    # spectrum.
+    result_unmasked = equivalent_width(spectrum)
+    assert abs(result.value) > abs(result_unmasked.value)
 
-    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+    # Test that EW is correct by comparing with hand-derived value.
+    assert quantity_allclose(result.value, -2.63, atol=0.01)
 
 
 def test_equivalent_width_regions():
