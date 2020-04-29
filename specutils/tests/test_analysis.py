@@ -483,6 +483,26 @@ def test_gaussian_sigma_width():
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
 
 
+def test_gaussian_sigma_width_masked():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian masked spectrum for testing
+    mean = 5
+    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
+
+    mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          uncertainty=uncertainty, mask=mask)
+
+    result = gaussian_sigma_width(spectrum)
+
+    assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
+
+
 def test_gaussian_sigma_width_regions():
 
     np.random.seed(42)
@@ -554,6 +574,27 @@ def test_gaussian_fwhm():
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = gaussian_fwhm(spectrum)
+
+    expected = g1.stddev * gaussian_sigma_to_fwhm
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+def test_gaussian_fwhm_masked():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian masked spectrum for testing
+    mean = 5
+    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
+
+    mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          uncertainty=uncertainty, mask=mask)
 
     result = gaussian_fwhm(spectrum)
 
@@ -674,6 +715,28 @@ def test_fwzi():
 
     assert quantity_allclose(fwzi(spec), 226.89732509 * u.AA)
     assert quantity_allclose(fwzi(spec_with_noise), 106.99998944 * u.AA)
+
+
+def test_fwzi_masked():
+    np.random.seed(42)
+
+    disp = np.linspace(0, 100, 100) * u.AA
+
+    g = models.Gaussian1D(mean=np.mean(disp),
+                          amplitude=1 * u.Jy,
+                          stddev=10 * u.AA)
+    flux = g(disp) + ((np.random.sample(disp.size) - 0.5) * 0.1) * u.Jy
+
+    # Add mask. It is built such that about 50% of the data points
+    # on and around the Gaussian peak are masked out (this was checked
+    # with the debugger to examine in-memory data).
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(disp))*u.Jy)
+    mask = (np.random.randn(disp.shape[0]) - 0.5) > 0
+
+    spec = Spectrum1D(spectral_axis=disp, flux=flux, uncertainty=uncertainty,
+                      mask=mask)
+
+    assert quantity_allclose(fwzi(spec), 35.9996284 * u.AA)
 
 
 def test_fwzi_multi_spectrum():
