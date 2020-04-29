@@ -103,12 +103,12 @@ def _compute_line_flux(spectrum, regions=None):
     line_flux.uncertainty = None
 
     # Account for the existence of a mask.
-    if calc_spectrum.mask is None:
-        flux_ = calc_spectrum.flux[1:]
-    else:
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         # Cannot use unmasked values because of average dispersion.
         # Masked values must enter sum calculation valued as zeros.
         flux_ = np.where(calc_spectrum.mask, 0, calc_spectrum.flux)[1:]
+    else:
+        flux_ = calc_spectrum.flux[1:]
 
     line_flux = np.sum(flux_ * avg_dx)
 
@@ -153,7 +153,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
     # is applied to the continuum value to account for the
     # data points that are not included in the line flux due to
     # masking.
-    if calc_spectrum.mask is not None:
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         valid = np.sum(np.where(calc_spectrum.mask, 0., 1.))
         factor = valid / len(spectral_axis)
         continuum *= factor
