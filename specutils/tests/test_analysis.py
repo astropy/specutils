@@ -388,6 +388,32 @@ def test_centroid(simulated_spectra):
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
 
 
+def test_centroid_masked(simulated_spectra):
+    """
+    Test centroid with masked spectrum.
+    """
+
+    np.random.seed(42)
+
+    # Same as in test for unmasked spectrum, but using
+    # masked version of same spectrum.
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    # Use masked flux and dispersion arrays to compute
+    # the expected value for centroid.
+    wavelengths = spectrum.spectral_axis[~spectrum.mask]
+    flux = spectrum.flux[~spectrum.mask]
+
+    spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(flux)
+
+    spec_centroid = centroid(spectrum, None)
+
+    assert isinstance(spec_centroid, u.Quantity)
+    assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
+
+
 def test_inverted_centroid(simulated_spectra):
     """
     Ensures the centroid calculation also works for *inverted* spectra - i.e.
@@ -399,6 +425,24 @@ def test_inverted_centroid(simulated_spectra):
 
     spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
                                    flux=-spectrum.flux)
+    spec_centroid_inverted = centroid(spectrum_inverted, None)
+    assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
+
+
+def test_inverted_centroid_masked(simulated_spectra):
+    """
+    Ensures the centroid calculation also works for *inverted* spectra with
+    masked data - i.e. continuum-subtracted absorption lines.
+    """
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    spec_centroid_expected = (np.sum(spectrum.flux[~spectrum.mask] *
+                                     spectrum.spectral_axis[~spectrum.mask]) /
+                              np.sum(spectrum.flux[~spectrum.mask]))
+
+    spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+                                   flux=-spectrum.flux,
+                                   mask=spectrum.mask)
+
     spec_centroid_inverted = centroid(spectrum_inverted, None)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
