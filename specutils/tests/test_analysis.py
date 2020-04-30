@@ -368,9 +368,8 @@ def test_snr_derived():
 
     x = np.arange(1, 101) * u.um
     y = np.random.random(len(x))*u.Jy
-    mask = (np.random.randn(x.shape[0]) + 1.) > 0
 
-    spectrum = Spectrum1D(spectral_axis=x, flux=y, mask=mask)
+    spectrum = Spectrum1D(spectral_axis=x, flux=y)
 
     assert np.allclose(snr_derived(spectrum), 1.604666860424951)
 
@@ -386,15 +385,16 @@ def test_snr_derived_masked():
 
     x = np.arange(1, 101) * u.um
     y = np.random.random(len(x))*u.Jy
-    spectrum = Spectrum1D(spectral_axis=x, flux=y)
+    mask = (np.random.randn(x.shape[0])) > 0
+    spectrum = Spectrum1D(spectral_axis=x, flux=y, mask=mask)
 
-    assert np.allclose(snr_derived(spectrum), 1.604666860424951)
+    assert np.allclose(snr_derived(spectrum), 2.08175408)
 
     sr = SpectralRegion(38*u.um, 48*u.um)
-    assert np.allclose(snr_derived(spectrum, sr), 2.330463630828406)
+    assert np.allclose(snr_derived(spectrum, sr), 4.01610033)
 
     sr2 = SpectralRegion(48*u.um, 57*u.um)
-    assert np.allclose(snr_derived(spectrum, [sr, sr2]), [2.330463630828406, 2.9673559890209305])
+    assert np.allclose(snr_derived(spectrum, [sr, sr2]), [4.01610033, 1.94906157])
 
 
 def test_centroid(simulated_spectra):
@@ -658,7 +658,7 @@ def test_gaussian_fwhm_uncentered(mean):
     assert quantity_allclose(result, expected, atol=0.05*u.GHz)
 
 
-def test_fwhm():
+def test_fwhm_masked():
 
     np.random.seed(42)
 
@@ -715,7 +715,7 @@ def test_fwhm():
     assert result == 9*u.um
 
 
-def test_fwhm_masked():
+def test_fwhm():
 
     np.random.seed(42)
 

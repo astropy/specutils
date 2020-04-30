@@ -171,7 +171,10 @@ def _snr_derived(spectrum, region=None):
     else:
         calc_spectrum = spectrum
 
-    flux = calc_spectrum.flux
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
+        flux = calc_spectrum.flux[~calc_spectrum.mask]
+    else:
+        flux = calc_spectrum.flux
 
     # Values that are exactly zero (padded) are skipped
     n = len(flux)
