@@ -1,0 +1,161 @@
+language: python
+
+# We need a full clone to make sure setuptools_scm works properly
+git:
+    depth: false
+
+os:
+    - linux
+
+# The apt packages below are needed for sphinx builds. A full list of packages
+# that can be included can be found here:
+#
+# https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
+
+addons:
+    apt:
+        packages:
+            - graphviz
+
+
+stages:
+   # Do the style check and a single test job, don't proceed if it fails
+   - name: Initial tests
+   # Test docs, astropy dev, and without optional dependencies
+   - name: Comprehensive tests
+   # These will only run when cron is opted in
+   - name: Cron tests
+     if: type = cron
+
+
+env:
+    global:
+
+        # The following versions are the 'default' for tests, unless
+        # overridden underneath. They are defined here in order to save having
+        # to repeat them for all configurations.
+
+        # The following three variables are for tox. TOXENV is a standard
+        # variable that tox uses to determine the environment to run,
+        # TOXARGS are arguments passed to tox, and TOXPOSARGS are arguments
+        # that tox passes through to the {posargs} indicator in tox.ini.
+        # The latter can be used for example to pass arguments to pytest.
+        - TOXENV='test'
+        - TOXARGS='-v'
+        - TOXPOSARGS=''
+
+        # The following is needed to avoid issues if e.g. Matplotlib tries
+        # to open a GUI window.
+        - SETUP_XVFB=True
+
+matrix:
+
+    # Don't wait for allowed failures
+    fast_finish: true
+
+    include:
+
+        # Try MacOS X, usually enough only to run from cron as hardly there are
+        # issues that are not picked up by a linux worker. We set language to
+        # 'c' since 'python' doesn't work on non-Linux platforms.
+        - os: osx
+          language: c
+          name: Python 3.7 with required dependencies
+          stage: Cron tests
+          env: PYTHON_VERSION=3.7 TOXENV=py37-test
+
+        # Do a regular build on Linux with Python 3.8, with cov
+        # For Linux we use language: python to avoid using conda.
+        - os: linux
+          python: 3.8
+          name: Python 3.8 with required dependencies and measure coverage
+          stage: Initial tests
+          env: TOXENV=py38-test-cov
+
+        # Check for sphinx doc build warnings
+        - os: linux
+          python: 3.8
+          name: Documentation build
+          stage: Comprehensive tests
+          env: TOXENV=build_docs
+
+        # Now try Astropy dev with the latest Python
+        - os: linux
+          python: 3.8
+          name: Python 3.8 with developer version of astropy
+          stage: Comprehensive tests
+          env: TOXENV=py38-test-devdeps
+
+        # And with an older Python, Astropy LTS, and the oldest supported Numpy
+        - os: linux
+          python: 3.6
+          name: Python 3.6 astropy LTS and Numpy 1.16
+          stage: Comprehensive tests
+          env: TOXENV=py36-test-astropylts-numpy116
+
+        # Add a job that runs from cron only and tests against astropy dev and
+        # numpy dev to give a change for early discovery of issues and feedback
+        # for both developer teams.
+        - os: linux
+          python: 3.8
+          name: Python 3.8 latest developer version of key dependencies
+          stage: Cron tests
+          env: TOXENV=py38-test-devdeps
+
+        # Try on Windows.
+        - os: windows
+          language: c
+          name: Python 3.8 with required dependencies
+          stage: Comprehensive tests
+          env: PYTHON_VERSION=3.8 TOXENV=py38-test
+
+        # Try other python versions and Numpy versions. Since we can assume that
+        # the Numpy developers have taken care of testing Numpy with different
+        # versions of Python, we can vary Python and Numpy versions at the same
+        # time.
+
+        - os: linux
+          python: 3.7
+          name: Python 3.7 with astropy 3.0 and Numpy 1.17
+          stage: Comprehensive tests
+          env: TOXENV=py37-test-astropy30-numpy117
+
+        # Do a code style check
+        - os: linux
+          python: 3.8
+          name: Code style checks
+          stage: Initial tests
+          env: TOXENV=codestyle
+
+    allow_failures:
+        # Do a PEP8 test with flake8
+        # (do allow to fail unless your code completely compliant)
+        # - os: linux
+        #   python: 3.8
+        #   name: Code style checks
+        #   stage: Initial tests
+        #   env: TOXENV=codestyle
+
+install:
+
+    # We now use the ci-helpers package to set up our Python environment
+    # on Windows and MacOS X but we don't set up any other dependencies,
+    # instead using tox to do this. See https://github.com/astropy/ci-helpers
+    # for more information about ci-helpers.
+
+    - if [[ $TRAVIS_OS_NAME != linux ]]; then
+        git clone --depth 1 git://github.com/astropy/ci-helpers.git;
+        source ci-helpers/travis/setup_conda.sh;
+      fi
+
+script:
+    - pip install tox
+    - tox $TOXARGS -- $TOXPOSARGS
+
+after_success:
+    # If coveralls.io is set up for this package, uncomment the two lines below.
+    # pip install coveralls
+    # coveralls
+    # If codecov is set up for this package, uncomment the two lines below
+    # pip install codecov
+    # codecov

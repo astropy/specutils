@@ -29,13 +29,17 @@ docs/_build
 # Pycharm editor project files
 .idea
 
+# Floobits project files
+.floo
+.flooignore
+
 # Packages/installer info
 *.egg
-*.eggs
 *.egg-info
 dist
 build
 eggs
+.eggs
 parts
 bin
 var
@@ -49,8 +53,10 @@ distribute-*.tar.gz
 .tox
 .*.sw[op]
 *~
-.tmp
-pip-wheel-metadata
+.project
+.pydevproject
+.settings
+pip-wheel-metadata/
 
 # Mac OSX
 .DS_Store
