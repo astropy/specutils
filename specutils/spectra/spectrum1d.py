@@ -162,8 +162,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise ValueError(
                     "Spectral axis length ({}) must be the same size or one "
                     "greater (if specifying bin edges) than that of the last "
-                    "flux axis ({})".format(spectral_axis.shape[0], \
-                        flux.shape[-1]))
+                    "flux axis ({})".format(spectral_axis.shape[0],
+                                            flux.shape[-1]))
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
