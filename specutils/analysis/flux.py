@@ -2,19 +2,18 @@
 A module for analysis tools focused on determining fluxes of spectral features.
 """
 
-from functools import wraps, reduce
 import warnings
+from functools import wraps
 
-import numpy as np
-from .. import conf
-from ..manipulation import extract_region
-from .utils import computation_wrapper
-from ..utils.ndcontainer import NDContainer
 import astropy.units as u
-from astropy.stats import sigma_clip
+import numpy as np
+from astropy.nddata import VarianceUncertainty, InverseVariance
 from astropy.stats import mad_std
 from astropy.utils.exceptions import AstropyUserWarning
 
+from .utils import computation_wrapper
+from .. import conf
+from ..manipulation import extract_region
 
 __all__ = ['line_flux', 'equivalent_width', 'is_continuum_below_threshold',
            'warn_continuum_below_threshold']
@@ -100,15 +99,16 @@ def _compute_line_flux(spectrum, regions=None):
     # Average dispersion in the line region
     avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis)))
 
-    line_flux_container = reduce(
-        lambda a, b: a + b,
-        NDContainer(
-            calc_spectrum.flux[1:] * avg_dx,
-            uncertainty=calc_spectrum.uncertainty.__class__(
-                calc_spectrum.uncertainty.quantity[1:] * avg_dx)))
+    if isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
+        stddev_uncert = np.sqrt(calc_spectrum.uncertainty.array)
+    elif isinstance(calc_spectrum.uncertainty, InverseVariance):
+        stddev_uncert = np.sqrt(1/calc_spectrum.uncertainty.array)
+    else:
+        stddev_uncert = calc_spectrum.uncertainty.array
 
-    line_flux = u.Quantity(line_flux_container.data * line_flux_container.unit)
-    line_flux.uncertainty = line_flux_container.uncertainty.quantity
+    line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
+    line_flux.uncertainty = np.sqrt(
+        np.sum((stddev_uncert[1:] * avg_dx.value) ** 2)) * line_flux.unit
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
