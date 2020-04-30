@@ -211,7 +211,6 @@ def test_snr(simulated_spectra):
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
     spec_snr_expected = np.mean(flux / (uncertainty.array*uncertainty.unit))
@@ -219,6 +218,28 @@ def test_snr(simulated_spectra):
     #
     # SNR of the whole spectrum
     #
+
+    spec_snr = snr(spectrum)
+
+    assert isinstance(spec_snr, u.Quantity)
+    assert np.allclose(spec_snr.value, spec_snr_expected.value)
+
+
+def test_snr_masked(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR, with masked spectrum.
+    """
+
+    np.random.seed(42)
+
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    uncertainty_array = uncertainty.array[~spectrum.mask]
+    flux = spectrum.flux[~spectrum.mask]
+
+    spec_snr_expected = np.mean(flux / (uncertainty_array * uncertainty.unit))
 
     spec_snr = snr(spectrum)
 
@@ -343,6 +364,24 @@ def test_snr_two_regions(simulated_spectra):
 
 
 def test_snr_derived():
+    np.random.seed(42)
+
+    x = np.arange(1, 101) * u.um
+    y = np.random.random(len(x))*u.Jy
+    mask = (np.random.randn(x.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=x, flux=y, mask=mask)
+
+    assert np.allclose(snr_derived(spectrum), 1.604666860424951)
+
+    sr = SpectralRegion(38*u.um, 48*u.um)
+    assert np.allclose(snr_derived(spectrum, sr), 2.330463630828406)
+
+    sr2 = SpectralRegion(48*u.um, 57*u.um)
+    assert np.allclose(snr_derived(spectrum, [sr, sr2]), [2.330463630828406, 2.9673559890209305])
+
+
+def test_snr_derived_masked():
     np.random.seed(42)
 
     x = np.arange(1, 101) * u.um

@@ -83,8 +83,13 @@ def _snr_single_region(spectrum, region=None):
     else:
         calc_spectrum = spectrum
 
-    flux = calc_spectrum.flux
-    uncertainty = calc_spectrum.uncertainty.array * spectrum.uncertainty.unit
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
+        flux = calc_spectrum.flux[~spectrum.mask]
+        uncertainty = calc_spectrum.uncertainty.array[~spectrum.mask] * \
+                      spectrum.uncertainty.unit
+    else:
+        flux = calc_spectrum.flux
+        uncertainty = calc_spectrum.uncertainty.array * spectrum.uncertainty.unit
 
     # the axis=-1 will enable this to run on single-dispersion, single-flux
     # and single-dispersion, multiple-flux
