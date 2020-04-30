@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 
 import astropy.units as u
-from astropy.units import Quantity
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
@@ -64,8 +63,7 @@ def test_line_flux_masked():
     assert result < result_unmasked
 
     # Test that flux is correct by comparing with hand-derived value.
-    assert quantity_allclose(result, Quantity(2.23)*u.GHz*u.Jy,
-                             atol=0.01*u.GHz*u.Jy)
+    assert quantity_allclose(result.value, 2.23, atol=0.01)
 
 
 def test_line_flux_uncertainty():
