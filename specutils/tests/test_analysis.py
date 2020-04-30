@@ -662,6 +662,63 @@ def test_fwhm():
 
     np.random.seed(42)
 
+    # Create a masked (uncentered) spectrum for testing
+    frequencies = np.linspace(0, 10, 1000) * u.GHz
+    stddev = 0.8*u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
+    mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          mask=mask)
+
+    result = fwhm(spectrum)
+
+    expected = stddev * gaussian_sigma_to_fwhm
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+    # Highest point at the first point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    # Note that this makes a little more sense than the previous version;
+    # since the maximum value occurs at wavelength=1, and the half-value of
+    # flux (0.5) occurs at exactly wavelength=2, the result should be
+    # exactly 1 (2 - 1).
+    assert result == 1.0 * u.um
+
+    # Test the interpolation used in FWHM for wavelength values that are not
+    # on the grid
+    wavelengths = np.linspace(1, 10, 31) * u.um
+    flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+
+    assert quantity_allclose(result, 1.01 * u.um)
+
+    # Highest point at the last point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = wavelengths.value*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 5*u.um
+
+    # Flat spectrum
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 9*u.um
+
+
+def test_fwhm_masked():
+
+    np.random.seed(42)
+
     # Create an (uncentered) spectrum for testing
     frequencies = np.linspace(0, 10, 1000) * u.GHz
     stddev = 0.8*u.GHz
