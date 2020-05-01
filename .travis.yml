@@ -120,6 +120,13 @@ matrix:
           stage: Comprehensive tests
           env: TOXENV=py37-test-astropy30-numpy117
 
+        # Run tests using external dependencies to e.g. check specific loaders
+        - os: linux
+          python: 3.8
+          name: External dependencies
+          stage: Comprehensive tests
+          env: TOXENV=py38-test-external
+
         # Do a code style check
         - os: linux
           python: 3.8
