@@ -183,7 +183,7 @@ A list of loaders is as follows:
 
 .. listformats::
 
-The list was generated using `specutils.SpectrumList.read <astropy.nddata.NDIOMixin.read>`.
+The list was generated using `~specutils.SpectrumList.read <astropy.nddata.NDIOMixin.read>`.
 
 
 Reference/API
