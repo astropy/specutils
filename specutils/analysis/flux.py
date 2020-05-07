@@ -106,11 +106,11 @@ def _compute_line_flux(spectrum, regions=None):
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         # Cannot use unmasked values because of average dispersion.
         # Masked values must enter sum calculation valued as zeros.
-        flux_ = np.where(calc_spectrum.mask, 0, calc_spectrum.flux)[1:]
+        flux = np.where(calc_spectrum.mask, 0, calc_spectrum.flux)[1:]
     else:
-        flux_ = calc_spectrum.flux[1:]
+        flux = calc_spectrum.flux[1:]
 
-    line_flux = np.sum(flux_ * avg_dx)
+    line_flux = np.sum(flux * avg_dx)
 
     if calc_spectrum.uncertainty is not None:
         if isinstance(calc_spectrum.uncertainty, StdDevUncertainty):
