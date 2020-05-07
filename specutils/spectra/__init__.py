@@ -4,7 +4,7 @@ The core specutils data objects package. This contains the
 """
 from .spectrum1d import *  # noqa
 from .spectral_region import *  # noqa
-from .spectrum_collection import *  #noqa
-from .spectrum_list import * #noqa
-from .spectral_coordinate import *
-from .spectral_axis import *
+from .spectrum_collection import *  # noqa
+from .spectrum_list import * # noqa
+from specutils.compat.spectralcoord import *  # noqa
+from .spectral_axis import *  # noqa

@@ -5,7 +5,7 @@ from astropy.nddata import StdDevUncertainty
 from gwcs.wcs import WCS as GWCS
 
 from ..spectra.spectrum1d import Spectrum1D
-from ..spectra.spectral_coordinate import SpectralCoord
+from ..compat.spectralcoord import SpectralCoord
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..utils.wcs_utils import gwcs_from_array
 

@@ -7,7 +7,7 @@ from astropy.constants import c
 from astropy.coordinates import (ICRS,
                                  CartesianDifferential,
                                  CartesianRepresentation, SkyCoord)
-from astropy.coordinates.spectral_quantity import SpectralQuantity
+from .spectral_quantity import SpectralQuantity
 from astropy.coordinates.baseframe import (BaseCoordinateFrame,
                                            frame_transform_graph)
 from astropy.utils.exceptions import AstropyUserWarning

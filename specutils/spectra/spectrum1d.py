@@ -7,7 +7,7 @@ from astropy import constants as cnst
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
-from .spectral_coordinate import SpectralCoord
+from ..compat.spectralcoord import SpectralCoord
 from .spectral_axis import SpectralAxis
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -156,7 +156,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
                     doppler_convention=velocity_convention,
-                    bin_specification = bin_specification)
+                    bin_specification=bin_specification)
             # If a SpectralAxis object is provided, we assume it doesn't need
             # information from other keywords added
             else:

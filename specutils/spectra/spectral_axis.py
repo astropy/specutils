@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.utils.decorators import lazyproperty
 import numpy as np
 
-from .spectral_coordinate import SpectralCoord
+from ..compat.spectralcoord import SpectralCoord
 
 
 __all__ = ['SpectralAxis']

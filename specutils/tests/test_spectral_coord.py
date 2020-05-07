@@ -9,7 +9,7 @@ from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, GCRS, Galactic,
                                  FK5, CartesianRepresentation)
 from astropy.tests.helper import assert_quantity_allclose, quantity_allclose
 
-from ..spectra.spectral_coordinate import SpectralCoord
+from ..compat.spectralcoord import SpectralCoord
 
 
 def assert_frame_allclose(frame1, frame2,

@@ -2,7 +2,8 @@ import numpy as np
 import warnings
 
 from astropy.utils.exceptions import AstropyUserWarning
-from ..spectra import Spectrum1D, SpectralRegion, SpectralCoord
+from ..spectra import Spectrum1D, SpectralRegion
+from ..compat.spectralcoord import SpectralCoord
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 

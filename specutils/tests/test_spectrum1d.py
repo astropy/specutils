@@ -7,8 +7,7 @@ from astropy.nddata import StdDevUncertainty
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
-from ..spectra.spectral_coordinate import SpectralCoord
-
+from ..compat.spectralcoord import SpectralCoord
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
