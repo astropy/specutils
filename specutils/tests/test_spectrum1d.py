@@ -387,3 +387,12 @@ def test_str():
 """Spectrum1D (length=1)
 flux:             [ 1.0 Jy ],  mean=1.0 Jy
 spectral axis:    [ 0.0 nm ],  mean=0.0 nm"""
+
+
+def test_equivalencies():
+    """
+    Test that after import `u.spectral` equivalencies are not enabled in the global namespace.
+    """
+    assert u.micron.is_equivalent(u.cm**-1) is False
+    assert u.micron.is_equivalent(u.Hz) is False
+    assert u.Hz.is_equivalent(u.cm**-1) is False

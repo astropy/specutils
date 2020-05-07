@@ -36,14 +36,15 @@ def test_region_simple(simulated_spectra):
 
 
 def test_region_ghz(simulated_spectra):
-    spectrum = Spectrum1D(flux=simulated_spectra.s1_um_mJy_e1.flux,
-                          spectral_axis=simulated_spectra.s1_um_mJy_e1.frequency)
+    with u.set_enabled_equivalencies(u.spectral()):
+        spectrum = Spectrum1D(flux=simulated_spectra.s1_um_mJy_e1.flux,
+                              spectral_axis=simulated_spectra.s1_um_mJy_e1.frequency)
 
-    region = SpectralRegion(499654.09666667*u.GHz, 374740.5725*u.GHz)
+        region = SpectralRegion(499654.09666667*u.GHz, 374740.5725*u.GHz)
 
-    sub_spectrum = extract_region(spectrum, region)
+        sub_spectrum = extract_region(spectrum, region)
 
-    sub_spectrum_flux_expected =  [
+        sub_spectrum_flux_expected =  [
              1605.71612173, 1651.41650744, 2057.65798618, 2066.73502361, 1955.75832537,
              1670.52711471, 1491.10034446, 1637.08084112, 1471.28982259, 1299.19484483,
              1423.11195734, 1226.74494917, 1572.31888312, 1311.50503403, 1474.05051673,
@@ -52,7 +53,7 @@ def test_region_ghz(simulated_spectra):
              1157.33825995, 1136.12679394,  999.92394692, 1038.61546167, 1011.60297294
              ]*u.mJy
 
-    assert quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
+        assert quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
 
 
 def test_region_simple_check_ends(simulated_spectra):

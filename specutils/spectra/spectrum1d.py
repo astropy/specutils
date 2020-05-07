@@ -15,8 +15,6 @@ __all__ = ['Spectrum1D']
 
 __doctest_skip__ = ['Spectrum1D.spectral_resolution']
 
-u.set_enabled_equivalencies(u.spectral())
-
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
@@ -106,15 +104,16 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             else:
                 rest_value = 0 * u.AA
         else:
-            if not isinstance(rest_value, u.Quantity):
-                logging.info("No unit information provided with rest value. "
-                             "Assuming units of spectral axis ('%s').",
-                             spectral_axis.unit)
-                rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not rest_value.unit.is_equivalent(u.AA) \
-                    and not rest_value.unit.is_equivalent(u.Hz):
-                raise u.UnitsError("Rest value must be "
-                                   "energy/wavelength/frequency equivalent.")
+            with u.set_enabled_equivalencies(u.spectral()):
+                if not isinstance(rest_value, u.Quantity):
+                    logging.info("No unit information provided with rest value."
+                                 "Assuming units of spectral axis ('%s').",
+                                 spectral_axis.unit)
+                    rest_value = u.Quantity(rest_value, spectral_axis.unit)
+                elif not (rest_value.unit.is_equivalent(u.AA)
+                          or rest_value.unit.is_equivalent(u.Hz)):
+                    raise u.UnitsError("Rest value must be "
+                                       "energy/wavelength/frequency equivalent.")
 
         # If flux and spectral axis are both specified, check that their lengths
         # match or are off by one (implying the spectral axis stores bin edges)
