@@ -51,8 +51,7 @@ def test_equivalent_width():
 
     result = equivalent_width(spectrum)
 
-    with u.set_enabled_equivalencies(u.spectral()):
-        assert result.unit.is_equivalent(spectrum.wcs.unit)
+    assert result.unit.is_equivalent(spectrum.wcs.unit, equivalencies=u.spectral())
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative
@@ -93,8 +92,7 @@ def test_equivalent_width_continuum(continuum):
 
     result = equivalent_width(spectrum, continuum=continuum)
 
-    with u.set_enabled_equivalencies(u.spectral()):
-        assert result.unit.is_equivalent(spectrum.wcs.unit)
+    assert result.unit.is_equivalent(spectrum.wcs.unit, equivalencies=u.spectral())
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative
@@ -118,8 +116,7 @@ def test_equivalent_width_absorption():
 
     result = equivalent_width(spectrum)
 
-    with u.set_enabled_equivalencies(u.spectral()):
-        assert result.unit.is_equivalent(spectrum.wcs.unit)
+    assert result.unit.is_equivalent(spectrum.wcs.unit, equivalencies=u.spectral())
 
     expected = amplitude*np.sqrt(2*np.pi) * u.GHz
 
