@@ -70,14 +70,13 @@ def test_equivalent_width_regions():
     noise = np.random.normal(0., 0.001, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + 1*u.Jy
 
-    with u.set_enabled_equivalencies(u.spectral()):
-        spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
-        cont_norm_spec = spec / np.median(spec.flux)
-        result = equivalent_width(cont_norm_spec, regions=SpectralRegion(97*u.GHz, 3*u.GHz))
+    spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    cont_norm_spec = spec / np.median(spec.flux)
+    result = equivalent_width(cont_norm_spec, regions=SpectralRegion(97*u.GHz, 3*u.GHz))
 
-        expected = -(np.sqrt(2*np.pi) * u.GHz)
+    expected = -(np.sqrt(2*np.pi) * u.GHz)
 
-        assert quantity_allclose(result, expected, atol=0.02*u.GHz)
+    assert quantity_allclose(result, expected, atol=0.02*u.GHz)
 
 
 @pytest.mark.parametrize('continuum', [1*u.Jy, 2*u.Jy, 5*u.Jy])
@@ -122,9 +121,9 @@ def test_equivalent_width_absorption():
     with u.set_enabled_equivalencies(u.spectral()):
         assert result.unit.is_equivalent(spectrum.wcs.unit)
 
-        expected = amplitude*np.sqrt(2*np.pi) * u.GHz
+    expected = amplitude*np.sqrt(2*np.pi) * u.GHz
 
-        assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
 def test_snr(simulated_spectra):
@@ -382,30 +381,29 @@ def test_gaussian_sigma_width_regions():
     compound = g1 + g2 + g3
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
-    with u.set_enabled_equivalencies(u.spectral()):
-        region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
-        result1 = gaussian_sigma_width(spectrum, regions=region1)
+    region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
+    result1 = gaussian_sigma_width(spectrum, regions=region1)
 
-        exp1 = g1.stddev
-        assert quantity_allclose(result1, exp1, atol=0.25*exp1)
+    exp1 = g1.stddev
+    assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
-        region2 = SpectralRegion(3*u.GHz, 1*u.GHz)
-        result2 = gaussian_sigma_width(spectrum, regions=region2)
+    region2 = SpectralRegion(3*u.GHz, 1*u.GHz)
+    result2 = gaussian_sigma_width(spectrum, regions=region2)
 
-        exp2 = g2.stddev
-        assert quantity_allclose(result2, exp2, atol=0.25*exp2)
+    exp2 = g2.stddev
+    assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
-        region3 = SpectralRegion(100*u.GHz, 40*u.GHz)
-        result3 = gaussian_sigma_width(spectrum, regions=region3)
+    region3 = SpectralRegion(100*u.GHz, 40*u.GHz)
+    result3 = gaussian_sigma_width(spectrum, regions=region3)
 
-        exp3 = g3.stddev
-        assert quantity_allclose(result3, exp3, atol=0.25*exp3)
+    exp3 = g3.stddev
+    assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
-        # Test using a list of regions
-        result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3])
-        for model, result in zip((g1, g2, g3), result_list):
-            exp = model.stddev
-            assert quantity_allclose(result, exp, atol=0.25*exp)
+    # Test using a list of regions
+    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3])
+    for model, result in zip((g1, g2, g3), result_list):
+        exp = model.stddev
+        assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
 def test_gaussian_sigma_width_multi_spectrum():
