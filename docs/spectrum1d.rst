@@ -72,6 +72,18 @@ astroquery, if the user has that package installed:
      >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec") # doctest: +SKIP
      <Spectrum1D(flux=<Quantity [30.596626,...]...>
 
+
+List of Loaders
+~~~~~~~~~~~~~~~
+
+The `~specutils.Spectrum1D` class has built-in support for various input and output formats.
+A full list of the supported formats is shown in the table below.
+
+.. automodule:: specutils.io._list_of_loaders
+
+| More information on creating custom loaders can be found in the :doc:`custom loading </custom_loading>` page.
+
+
 Including Uncertainties
 -----------------------
 
