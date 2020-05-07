@@ -8,7 +8,7 @@ from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, GCRS, Galactic,
                                  get_body_barycentric_posvel,
                                  FK5, CartesianRepresentation)
 
-from ..compat.spectralcoord import SpectralCoord
+from ..extern.spectralcoord import SpectralCoord
 from ..spectra.spectral_axis import SpectralAxis
 
 

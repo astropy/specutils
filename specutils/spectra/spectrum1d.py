@@ -7,7 +7,7 @@ from astropy import constants as cnst
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
-from ..compat.spectralcoord import SpectralCoord
+from ..extern.spectralcoord import SpectralCoord
 from .spectral_axis import SpectralAxis
 from ..utils.wcs_utils import gwcs_from_array
 

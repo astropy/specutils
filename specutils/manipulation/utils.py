@@ -3,7 +3,7 @@ import warnings
 
 from astropy.utils.exceptions import AstropyUserWarning
 from ..spectra import Spectrum1D, SpectralRegion
-from ..compat.spectralcoord import SpectralCoord
+from ..extern.spectralcoord import SpectralCoord
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
