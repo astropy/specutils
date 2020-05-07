@@ -2,8 +2,9 @@ from __future__ import print_function, division, absolute_import
 
 import numpy as np
 from scipy import interpolate
+import warnings
 
-from astropy.modeling.core import FittableModel, Model
+from astropy.modeling.core import FittableModel, Fittable1DModel, Model
 from astropy.modeling.functional_models import Shift
 from astropy.modeling.parameters import Parameter
 from astropy.modeling.utils import poly_map_domain, comb
@@ -14,20 +15,17 @@ from astropy.units import Quantity
 __all__ = []
 
 
-class SplineModel(FittableModel):
+class SplineModel(Fittable1DModel):
     """
     Wrapper around scipy.interpolate.splrep and splev
-
+    
     Analogous to scipy.interpolate.UnivariateSpline() if knots unspecified,
     and scipy.interpolate.LSQUnivariateSpline if knots are specified
-
+    
     There are two ways to make a spline model.
         1. you have the spline auto-determine knots from the data
         2. you specify the knots
     """
-
-    linear = False  # I think? I have no idea?
-    col_fit_deriv = False  # Not sure what this is
 
     def __init__(self, degree=3, smoothing=None, knots=None,
                  extrapolate_mode=0, *args, **kwargs):
@@ -39,11 +37,12 @@ class SplineModel(FittableModel):
 
         smoothing (optional): smoothing value for automatically determining knots
             In scipy fitpack, this is "s"
-            By default, uses a
+            By default, uses s = len(w) (see scipy.interpolate.UnivariateSpline)
 
         knots (optional): spline knots (boundaries of piecewise polynomial)
             If not specified, will automatically determine knots based on
-            degree + smoothing
+            degree + smoothing. The fit is identical to scipy.interpolate.UnivariateSpline.
+            If specified, analogous to scipy.interpolate.LSQUnivariateSpline.
 
         extrapolate_mode (optional): how to deal with solution outside of interval.
             (see scipy.interpolate.splev)
@@ -52,8 +51,9 @@ class SplineModel(FittableModel):
             if 2, raise a ValueError
             if 3, return the boundary value
         """
-        super().__init__(*args, **kwargs)
 
+        self._param_names = ()
+        
         self._degree = degree
         self._smoothing = smoothing
         self._knots = self.verify_knots(knots)
@@ -63,8 +63,8 @@ class SplineModel(FittableModel):
         # trying to evaluate the spline.
         self._tck = None
 
-        self._param_names = ()
-
+        super().__init__(*args, **kwargs)
+        
     def verify_knots(self, knots):
         """
         Basic knot array vetting. The goal of having this is to enable more
@@ -105,69 +105,90 @@ class SplineModel(FittableModel):
             raise RuntimeError("SplineModel has not been fit yet.")
 
     # Setters
-    # TODO: not really implemented or tested
     def reset_model(self):
         """ Resets model so it needs to be refit to be valid """
         self._tck = None
+        self._param_names = ()
 
     @degree.setter
     def degree(self, degree):
         """ Spline degree (k in FITPACK) """
-        raise NotImplementedError
         self._degree = degree
         self.reset_model()
 
     @smoothing.setter
     def smoothing(self, smoothing):
         """ Spline smoothing (s in FITPACK) """
-        raise NotImplementedError
         self._smoothing = smoothing
         self.reset_model()
 
     @knots.setter
     def knots(self, knots):
         """ Spline knots (t in FITPACK) """
-        raise NotImplementedError
         self._knots = self.verify_knots(knots)
         self.reset_model()
 
     def set_model_from_tck(self, tck):
         """
+        Main way to update model
         Use output of scipy.interpolate.splrep
         """
+        t, c, k = tck
+        self.degree = k
+        self.knots = t[k:-k]
         self._tck = tck
+        self._param_names = self._generate_coeff_names()
 
     # Spline methods
-    # TODO: not tested at all
     def derivative(self, n=1):
         if self._tck is None:
             raise RuntimeError("SplineModel has not been fit yet")
         else:
-            t, c, k = self._tck
-            return scipy.interpolate.BSpline.construct_fast(
-                t, c, k, extrapolate=(self.extrapolate_mode == 0)).derivative(n)
+            ext = 1 if self.extrapolate_mode == 3 else self.extrapolate_mode
+            new_tck = interpolate.fitpack.splder(self._tck, n)
+            newmodel = SplineModel(degree=self.degree, smoothing=self.smoothing,
+                                   knots=self.knots, extrapolate_mode=ext)
+            newmodel.set_model_from_tck(new_tck)
+            return newmodel
 
     def antiderivative(self, n=1):
         if self._tck is None:
             raise RuntimeError("SplineModel has not been fit yet.")
         else:
-            t, c, k = self._tck
-            return scipy.interpolate.BSpline.construct_fast(
-                t, c, k, extrapolate=(self.extrapolate_mode == 0)).antiderivative(n)
+            new_tck = interpolate.fitpack.splantider(self._tck, n)
+            newmodel = SplineModel(degree=self.degree, smoothing=self.smoothing,
+                                   knots=self.knots, extrapolate_mode=self.extrapolate_mode)
+            newmodel.set_model_from_tck(new_tck)
+            return newmodel
 
     def integral(self, a, b):
         if self._tck is None:
             raise RuntimeError("SplineModel has not been fit yet.")
         else:
             t, c, k = self._tck
-            return scipy.interpolate.BSpline.construct_fast(
-                t, c, k, extrapolate=(self.extrapolate_mode == 0)).integral(a, b)
+            return interpolate.dfitpack.splint(t, c, k, a, b)
 
     def derivatives(self, x):
-        raise NotImplementedError
+        if self._tck is None:
+            raise RuntimeError("SplineModel has not been fit yet.")
+        else:
+            t, c, k = self._tck
+            d, ier = interpolate.dfitpack.spalde(t, c, k, x)
+            if not ier == 0:
+                raise ValueError("Error code returned by spalde: %s" % ier)
+            return d
 
     def roots(self):
-        raise NotImplementedError
+        if self._tck is None:
+            raise RuntimeError("SplineModel has not been fit yet.")
+        t, c, k = self._tck
+        if k == 3:
+            z, m, ier = interpolate.dfitpack.sproot(t, c)
+            if not ier == 0:
+                raise ValueError("Error code returned by spalde: %s" % ier)
+            return z[:m]
+        raise NotImplementedError('finding roots unsupported for '
+                                  'non-cubic splines')
 
     def __call__(self, x, der=0):
         """
@@ -187,30 +208,13 @@ class SplineModel(FittableModel):
         Coefficient names generated based on the model's knots and polynomial degree.
         Not Implemented
         """
-        raise NotImplementedError("SplineModel does not currently expose parameters")
-        return self._param_names
-
-    #def __getattr__(self, attr):
-    #    """
-    #    Fails right now. Future code:
-    #    # From astropy.modeling.polynomial.PolynomialBase
-    #    if self._param_names and attr in self._param_names:
-    #        return Parameter(attr, default=0.0, model=self)
-    #    raise AttributeError(attr)
-    #    """
-    #    raise NotImplementedError("SplineModel does not currently expose parameters")
-
-    #def __setattr__(self, attr, value):
-    #    """
-    #    Fails right now. Future code:
-    #    # From astropy.modeling.polynomial.PolynomialBase
-    #    if attr[0] != '_' and self._param_names and attr in self._param_names:
-    #        param = Parameter(attr, default=0.0, model=self)
-    #        param.__set__(self, value)
-    #    else:
-    #        super().__setattr__(attr, value)
-    #    """
-    #    raise NotImplementedError("SplineModel does not currently expose parameters")
+        #raise NotImplementedError("SplineModel does not currently expose parameters")
+        warnings.warn("SplineModel does not currently expose parameters\n"
+                      "Will only work with SplineFitter")
+        try:
+            return self._param_names
+        except AttributeError:
+            return ()
 
     def _generate_coeff_names(self):
         names = []
@@ -251,22 +255,22 @@ class SplineFitter(metaclass=_FitterMeta):
         self.validate_model(model)
 
         # Case (1): fit smoothing spline
-        if model.get_knots() is None:
+        if model.knots is None:
             tck, fp, ier, msg = interpolate.splrep(x, y, w=w,
                                                    t=None,
-                                                   k=model.get_degree(),
-                                                   s=model.get_smoothing(),
+                                                   k=model.degree,
+                                                   s=model.smoothing,
                                                    task=0, full_output=True
                                                    )
         # Case (2): leastsq spline
         else:
-            knots = model.get_knots()
+            knots = model.knots
             ## TODO some sort of validation that the knots are internal, since
             ## this procedure automatically adds knots at the two endpoints
             tck, fp, ier, msg = interpolate.splrep(x, y, w=w,
                                                    t=knots,
-                                                   k=model.get_degree(),
-                                                   s=model.get_smoothing(),
+                                                   k=model.degree,
+                                                   s=model.smoothing,
                                                    task=-1, full_output=True
                                                    )
 
