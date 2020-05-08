@@ -117,7 +117,7 @@ class FluxConservingResampler(ResamplerBase):
                          orig_upp, fin_upp[:, np.newaxis])
 
         resamp_mat = (l_sup - l_inf).clip(0)
-        resamp_mat *= (orig_upp - orig_low)
+        resamp_mat = resamp_mat * (orig_upp - orig_low)
 
         # set bins that don't overlap 100% with original bins
         # to zero by checking edges, and applying generated mask
