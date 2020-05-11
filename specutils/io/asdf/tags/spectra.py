@@ -9,7 +9,8 @@ from asdf.yamlutil import (custom_tree_to_tagged_tree,
                            tagged_tree_to_custom_tree)
 from astropy.io.misc.asdf.tags.unit.unit import UnitType
 
-from ....spectra import SpectralCoord, Spectrum1D, SpectrumList
+from ....extern.spectralcoord import SpectralCoord
+from ....spectra import Spectrum1D, SpectrumList
 from ..types import SpecutilsType
 
 __all__ = ['Spectrum1DType', 'SpectrumListType', 'SpectralCoordType']

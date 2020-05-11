@@ -102,7 +102,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
                 rest_value = wcs.rest_wavelength * u.AA
             else:
-                rest_value = 0 * u.AA
+                rest_value = None
         else:
             if not isinstance(rest_value, u.Quantity):
                 logging.info("No unit information provided with rest value. "
