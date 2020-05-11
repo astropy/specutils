@@ -135,6 +135,17 @@ def test_spectral_axis_conversions():
     new_spec = spec.with_spectral_unit(u.GHz)
 
 
+@pytest.mark.parametrize('unit', ['micron', 'GHz', 'cm**-1', 'eV'])
+def test_spectral_axis_equivalencies(unit):
+    """Test that `u.spectral` equivalencies are enabled for `spectral_axis`."""
+
+    spectral_axis=np.array([3400, 5000, 6660]) * u.AA
+    spec = Spectrum1D(flux=np.array([26.0, 30.0, 44.5]) * u.Jy, spectral_axis=spectral_axis)
+
+    new_axis = spectral_axis.to(unit, equivalencies=u.spectral())
+    assert u.allclose(spec.spectral_axis.to(unit), new_axis)
+
+
 def test_redshift():
     spec = Spectrum1D(flux=np.array([26.0, 30., 44.5]) * u.Jy,
                       spectral_axis=np.array([4000, 6000, 8000]) * u.AA,
@@ -387,3 +398,14 @@ def test_str():
 """Spectrum1D (length=1)
 flux:             [ 1.0 Jy ],  mean=1.0 Jy
 spectral axis:    [ 0.0 nm ],  mean=0.0 nm"""
+
+
+def test_equivalencies():
+    """
+    Test that after import `u.spectral` equivalencies are not enabled in the global namespace.
+    """
+    assert u.micron.is_equivalent(u.cm**-1) is False
+    assert u.micron.is_equivalent(u.Hz) is False
+    assert u.micron.is_equivalent(u.eV) is False
+    assert u.Hz.is_equivalent(u.cm**-1) is False
+    assert u.Hz.is_equivalent(u.eV) is False

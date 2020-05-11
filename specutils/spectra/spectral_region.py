@@ -155,9 +155,10 @@ class SpectralRegion:
     def _valid(self):
 
         # Lower bound < Upper bound for all sub regions in length physical type
-        sub_regions = [(x[0].to('m'), x[1].to('m'))
-                       if x[0].unit.is_equivalent(u.m) else x
-                       for x in self._subregions]
+        with u.set_enabled_equivalencies(u.spectral()):
+            sub_regions = [(x[0].to('m'), x[1].to('m'))
+                           if x[0].unit.is_equivalent(u.m) else x
+                           for x in self._subregions]
 
         if any(x[0] >= x[1] for x in sub_regions):
             raise ValueError('Lower bound must be strictly less than the upper bound')

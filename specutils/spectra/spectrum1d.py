@@ -15,8 +15,6 @@ __all__ = ['Spectrum1D']
 
 __doctest_skip__ = ['Spectrum1D.spectral_resolution']
 
-u.set_enabled_equivalencies(u.spectral())
-
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
@@ -111,8 +109,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                              "Assuming units of spectral axis ('%s').",
                              spectral_axis.unit)
                 rest_value = u.Quantity(rest_value, spectral_axis.unit)
-            elif not rest_value.unit.is_equivalent(u.AA) \
-                    and not rest_value.unit.is_equivalent(u.Hz):
+            elif not rest_value.unit.is_equivalent(u.AA, equivalencies=u.spectral()):
                 raise u.UnitsError("Rest value must be "
                                    "energy/wavelength/frequency equivalent.")
 
