@@ -4,3 +4,8 @@ py:class astropy.nddata.mixins.ndslicing.NDSlicingMixin
 py:class astropy.nddata.mixins.ndarithmetic.NDArithmeticMixin
 py:obj NDData
 py:obj NDUncertainty
+
+# Classes that now live in astropy
+py:class specutils.extern.spectralcoord.spectral_coordinate.SpectralCoord
+py:class specutils.extern.spectralcoord.spectral_quantity.SpectralQuantity
+py:obj SpectralCoord

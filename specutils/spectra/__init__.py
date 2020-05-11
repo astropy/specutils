@@ -6,5 +6,4 @@ from .spectrum1d import *  # noqa
 from .spectral_region import *  # noqa
 from .spectrum_collection import *  # noqa
 from .spectrum_list import * # noqa
-from specutils.extern.spectralcoord import *  # noqa
 from .spectral_axis import *  # noqa

@@ -137,7 +137,7 @@ class SpectralCoord(SpectralQuantity):
     """
     A spectral coordinate with its corresponding unit.
 
-    .. note:: The |SpectralCoord| class is new in Astropy v4.1 and should be
+    .. note:: The `SpectralCoord` class is new in Astropy v4.1 and should be
               considered experimental at this time. Note that we do not fully
               support cases where the observer and target are moving
               relativistically relative to each other, so care should be taken
