@@ -3,11 +3,9 @@ from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
-from astropy import constants as cnst
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
-from ..extern.spectralcoord import SpectralCoord
 from .spectral_axis import SpectralAxis
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -185,6 +183,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # If spectral_axis wasn't provided, set _spectral_axis based on
             # the WCS
             spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+
+            if spec_axis.unit.is_equivalent(u.one):
+                spec_axis = spec_axis * u.pixel
 
             self._spectral_axis = SpectralAxis(
                 spec_axis,

@@ -149,8 +149,8 @@ def test_redshift():
                       rest_value=6000 * u.AA,
                       redshift= 0.1)
 
-    assert u.allclose(spec.velocity, [-69951.3, 29979.2, 129910.1]*u.km/u.s,
-                     atol=0.5*u.km/u.s)
+    assert u.allclose(spec.velocity, [-71443.75318854, 28487.0661448, 128417.88547813]*u.km/u.s,
+                      atol=0.5*u.km/u.s)
 
     #-------------------------
 
@@ -160,7 +160,7 @@ def test_redshift():
                       rest_value=11.0 * u.GHz)
 
     assert u.allclose(spec.velocity, [13626., 0, -13626]*u.km/u.s,
-                     atol=1*u.km/u.s)
+                      atol=1*u.km/u.s)
 
     spec = Spectrum1D(flux=np.array([26.0, 30.0, 44.5]) * u.Jy,
                       spectral_axis=np.array([10.5, 11.0, 11.5]) * u.GHz,
@@ -168,7 +168,7 @@ def test_redshift():
                       rest_value=11.0 * u.GHz,
                       redshift= 0.1)
 
-    assert u.allclose(spec.velocity, [43606., 29979., 16352.]*u.km/u.s,
+    assert u.allclose(spec.velocity, [42113.99605389, 28487.0661448 , 14860.13623571]*u.km/u.s,
                       atol=1*u.km/u.s)
 
     #------------------------- radial velocity mode
@@ -329,7 +329,7 @@ def test_repr():
                                flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<SpectralAxis [' in result
+    assert 'spectral_axis=<SpectralAxis' in result
 
     spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy,
@@ -337,7 +337,7 @@ def test_repr():
                                    np.random.sample(10), unit='Jy'))
     result = repr(spec_with_unc)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<SpectralAxis [' in result
+    assert 'spectral_axis=<SpectralAxis' in result
     assert 'uncertainty=StdDevUncertainty(' in result
 
 
