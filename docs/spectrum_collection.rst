@@ -107,3 +107,4 @@ Reference/API
     :skip: Spectrum1D
     :skip: SpectralRegion
     :skip: UnsupportedPythonError
+    :skip: SpectralAxis
