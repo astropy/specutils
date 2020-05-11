@@ -101,6 +101,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 rest_value = wcs.rest_frequency * u.Hz
             elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
                 rest_value = wcs.rest_wavelength * u.AA
+            elif hasattr(wcs, 'wcs') and hasattr(wcs.wcs, 'restfrq') and wcs.wcs.restfrq > 0:
+                rest_value = wcs.wcs.restfrq * u.Hz
+            elif hasattr(wcs, 'wcs') and hasattr(wcs.wcs, 'restwav') and wcs.wcs.restwav > 0:
+                rest_value = wcs.wcs.restwav * u.m
             else:
                 rest_value = None
         else:
