@@ -5,21 +5,22 @@ A module for analysis tools focused on determining fluxes of spectral features.
 import warnings
 from functools import wraps
 
-import astropy.units as u
 import numpy as np
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+
+from .. import conf
+from ..manipulation import extract_region, LinearInterpolatedResampler
+from .utils import computation_wrapper
+import astropy.units as u
 from astropy.stats import mad_std
 from astropy.utils.exceptions import AstropyUserWarning
 
-from .utils import computation_wrapper
-from .. import conf
-from ..manipulation import extract_region
 
 __all__ = ['line_flux', 'equivalent_width', 'is_continuum_below_threshold',
            'warn_continuum_below_threshold']
 
 
-def line_flux(spectrum, regions=None):
+def line_flux(spectrum, regions=None, mask_interpolation=LinearInterpolatedResampler):
     """
     Computes the integrated flux in a spectrum or region of a spectrum.
 
@@ -35,6 +36,10 @@ def line_flux(spectrum, regions=None):
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
+    mask_interpolation : `~specutils.manipulation.LinearInterpolatedResampler`
+        Interpolator class used to fill up the gaps in the spectrum's flux
+        array, when the spectrum mask is not None.
+
     Returns
     -------
     flux : `~astropy.units.Quantity`
@@ -46,7 +51,8 @@ def line_flux(spectrum, regions=None):
     While the flux can be computed on any spectrum or region, it should be
     continuum-subtracted to compute actual line fluxes.
     """
-    return computation_wrapper(_compute_line_flux, spectrum, regions)
+    return computation_wrapper(_compute_line_flux, spectrum, regions,
+                               mask_interpolation=mask_interpolation)
 
 
 def equivalent_width(spectrum, continuum=1, regions=None):
@@ -89,7 +95,7 @@ def equivalent_width(spectrum, continuum=1, regions=None):
     return computation_wrapper(_compute_equivalent_width, spectrum, regions, **kwargs)
 
 
-def _compute_line_flux(spectrum, regions=None):
+def _compute_line_flux(spectrum, regions=None, mask_interpolation=LinearInterpolatedResampler):
 
     if regions is not None:
         calc_spectrum = extract_region(spectrum, regions)
@@ -103,10 +109,12 @@ def _compute_line_flux(spectrum, regions=None):
     line_flux.uncertainty = None
 
     # Account for the existence of a mask.
-    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
-        # Cannot use unmasked values because of average dispersion.
-        # Masked values must enter sum calculation valued as zeros.
-        flux = np.where(calc_spectrum.mask, 0, calc_spectrum.flux)[1:]
+    if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
+        # For now, we interpolate over the masked values. A better solution
+        # would be to account for the masked values when computing the dispersion.
+        interpolator = mask_interpolation()
+        sp = interpolator(calc_spectrum, calc_spectrum.spectral_axis)
+        flux = sp.flux[1:]
     else:
         flux = calc_spectrum.flux[1:]
 

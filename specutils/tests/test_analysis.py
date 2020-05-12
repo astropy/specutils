@@ -3,7 +3,7 @@ import numpy as np
 
 import astropy.units as u
 from astropy.modeling import models
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, InverseVariance
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
 from astropy.utils.exceptions import AstropyUserWarning
@@ -43,27 +43,27 @@ def test_line_flux_masked():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(100, 1, 100) * u.GHz
-    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
-    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
-    flux = g(frequencies) + noise
+    wavelengths = np.linspace(0.4, 1.05, 100) * u.um
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux,
-                          uncertainty=StdDevUncertainty(noise))
+    g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
+    flux = g(wavelengths) + 1000 * u.mJy
+    noise = 400 * np.random.random(flux.shape)* u.mJy
+    flux += noise
 
-    spectrum_masked = snr_threshold(spectrum, 50.)
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum.uncertainty = StdDevUncertainty(noise)
+
+    spectrum_masked = snr_threshold(spectrum, 10.)
 
     result = line_flux(spectrum_masked)
 
-    assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
+    assert result.unit.is_equivalent(u.Jy * u.um)
 
-    # Flux from masked spectrum should be smaller than from the
-    # same spectrum but with no mask.
+    # Flux from masked spectrum should be identical with the
+    # flux from same spectrum but with no mask (because we
+    # interpolate over the masked data).
     result_unmasked = line_flux(spectrum)
-    assert result < result_unmasked
-
-    # Test that flux is correct by comparing with hand-derived value.
-    assert quantity_allclose(result.value, 2.23, atol=0.01)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
 
 
 def test_line_flux_uncertainty():
