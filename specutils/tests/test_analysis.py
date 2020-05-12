@@ -3,7 +3,7 @@ import numpy as np
 
 import astropy.units as u
 from astropy.modeling import models
-from astropy.nddata import StdDevUncertainty, InverseVariance
+from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
 from astropy.utils.exceptions import AstropyUserWarning
@@ -13,7 +13,7 @@ from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
-from ..manipulation import snr_threshold
+from ..manipulation import snr_threshold, FluxConservingResampler
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -43,7 +43,9 @@ def test_line_flux_masked():
 
     np.random.seed(42)
 
-    wavelengths = np.linspace(0.4, 1.05, 100) * u.um
+    N = 100
+
+    wavelengths = np.linspace(0.4, 1.05, N) * u.um
 
     g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
     flux = g(wavelengths) + 1000 * u.mJy
@@ -55,6 +57,9 @@ def test_line_flux_masked():
 
     spectrum_masked = snr_threshold(spectrum, 10.)
 
+    # Ensure we have at least 50% of the data being masked.
+    assert len(np.where(spectrum_masked.mask)[0]) > N/2
+
     result = line_flux(spectrum_masked)
 
     assert result.unit.is_equivalent(u.Jy * u.um)
@@ -63,6 +68,10 @@ def test_line_flux_masked():
     # flux from same spectrum but with no mask (because we
     # interpolate over the masked data).
     result_unmasked = line_flux(spectrum)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
+
+    # With flux conserving resampler
+    result = line_flux(spectrum_masked, mask_interpolation=FluxConservingResampler)
     assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
 
 
@@ -105,30 +114,35 @@ def test_equivalent_width_masked ():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(100, 1, 1000) * u.GHz
-    g = models.Gaussian1D(amplitude=1*u.Jy, mean=50*u.GHz, stddev=1*u.GHz)
-    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
-    flux = g(frequencies) + noise + 1*u.Jy
+    N = 100
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux,
-                          uncertainty=StdDevUncertainty(noise))
+    wavelengths = np.linspace(0.4, 1.05, N) * u.um
+
+    g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
+    flux = g(wavelengths) + 1000 * u.mJy
+    noise = 400 * np.random.random(flux.shape)* u.mJy
+    flux += noise
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum.uncertainty = StdDevUncertainty(noise)
 
     spectrum_masked = snr_threshold(spectrum, 10.)
+
+    # Ensure we have at least 50% of the data being masked.
+    assert len(np.where(spectrum_masked.mask)[0]) > N/2
 
     result = equivalent_width(spectrum_masked)
 
     assert result.unit.is_equivalent(spectrum.wcs.unit)
 
-    # EW from masked spectrum should be larger than from the
-    # same spectrum but with no mask. This happens because the
-    # contribution from the continuum that is removed by the
-    # mask is larger than the same contribution in the unmasked
-    # spectrum.
+    # Compare with unmasked computation.
     result_unmasked = equivalent_width(spectrum)
-    assert abs(result.value) > abs(result_unmasked.value)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
 
-    # Test that EW is correct by comparing with hand-derived value.
-    assert quantity_allclose(result.value, -2.63, atol=0.01)
+    # With flux conserving resampler
+    result = equivalent_width(spectrum_masked,
+                              mask_interpolation=FluxConservingResampler)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
 
 
 def test_equivalent_width_regions():

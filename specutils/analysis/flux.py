@@ -20,7 +20,8 @@ __all__ = ['line_flux', 'equivalent_width', 'is_continuum_below_threshold',
            'warn_continuum_below_threshold']
 
 
-def line_flux(spectrum, regions=None, mask_interpolation=LinearInterpolatedResampler):
+def line_flux(spectrum, regions=None,
+              mask_interpolation=LinearInterpolatedResampler):
     """
     Computes the integrated flux in a spectrum or region of a spectrum.
 
@@ -55,7 +56,8 @@ def line_flux(spectrum, regions=None, mask_interpolation=LinearInterpolatedResam
                                mask_interpolation=mask_interpolation)
 
 
-def equivalent_width(spectrum, continuum=1, regions=None):
+def equivalent_width(spectrum, continuum=1, regions=None,
+                     mask_interpolation=LinearInterpolatedResampler):
     """
     Computes the equivalent width of a region of the spectrum.
 
@@ -77,6 +79,10 @@ def equivalent_width(spectrum, continuum=1, regions=None):
         will be assumed, otherwise units are required and must be the same as
         the ``spectrum.flux``.
 
+    mask_interpolation : `~specutils.manipulation.LinearInterpolatedResampler`
+        Interpolator class used to fill up the gaps in the spectrum's flux
+        array, when the spectrum mask is not None.
+
     Returns
     -------
     ew : `~astropy.units.Quantity`
@@ -92,7 +98,8 @@ def equivalent_width(spectrum, continuum=1, regions=None):
     """
 
     kwargs = dict(continuum=continuum)
-    return computation_wrapper(_compute_equivalent_width, spectrum, regions, **kwargs)
+    return computation_wrapper(_compute_equivalent_width, spectrum, regions,
+                               mask_interpolation=mask_interpolation, **kwargs)
 
 
 def _compute_line_flux(spectrum, regions=None, mask_interpolation=LinearInterpolatedResampler):
@@ -141,8 +148,8 @@ def _compute_line_flux(spectrum, regions=None, mask_interpolation=LinearInterpol
     return line_flux
 
 
-def _compute_equivalent_width(spectrum, continuum=1, regions=None):
-
+def _compute_equivalent_width(spectrum, continuum=1, regions=None,
+                              mask_interpolation=LinearInterpolatedResampler):
     if regions is not None:
         calc_spectrum = extract_region(spectrum, regions)
     else:
@@ -155,16 +162,8 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
     dx = (np.abs(spectral_axis[-1] - spectral_axis[0]))
 
-    line_flux = _compute_line_flux(spectrum, regions)
-
-    # Account for the existence of a mask. A correction factor
-    # is applied to the continuum value to account for the
-    # data points that are not included in the line flux due to
-    # masking.
-    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
-        valid = np.sum(np.where(calc_spectrum.mask, 0., 1.))
-        factor = valid / len(spectral_axis)
-        continuum *= factor
+    line_flux = _compute_line_flux(spectrum, regions,
+                                   mask_interpolation=mask_interpolation)
 
     # Calculate equivalent width
     ew = dx - (line_flux / continuum)
