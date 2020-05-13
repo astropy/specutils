@@ -1,11 +1,12 @@
 import astropy.units as u
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 from astropy.nddata import StdDevUncertainty
 from gwcs.wcs import WCS as GWCS
 
 from ..spectra.spectrum1d import Spectrum1D
-from ..spectra.spectral_coordinate import SpectralCoord
+from ..extern.spectralcoord import SpectralCoord
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -93,7 +94,7 @@ def test_create_collection_from_spectrum1D():
     assert isinstance(spec_coll.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.unit == spec_coll.spectral_axis.unit
     assert spec.flux.unit == spec_coll.flux.unit
-    assert spec_coll.spectral_axis.redshift == 0.1
+    assert_allclose(spec_coll.spectral_axis.redshift.value, 0.1)
 
 
 def test_create_collection_from_collections():

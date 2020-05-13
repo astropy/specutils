@@ -3,11 +3,9 @@ from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
-from astropy import constants as cnst
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from .spectrum_mixin import OneDSpectrumMixin
-from .spectral_coordinate import SpectralCoord
 from .spectral_axis import SpectralAxis
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -24,7 +22,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     ----------
     flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `astropy.units.Quantity` or `specutils.SpectralCoord`
+    spectral_axis : `astropy.units.Quantity` or `specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
         if specifying bin edges.
@@ -101,8 +99,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 rest_value = wcs.rest_frequency * u.Hz
             elif hasattr(wcs, 'rest_wavelength') and wcs.rest_wavelength != 0:
                 rest_value = wcs.rest_wavelength * u.AA
+            elif hasattr(wcs, 'wcs') and hasattr(wcs.wcs, 'restfrq') and wcs.wcs.restfrq > 0:
+                rest_value = wcs.wcs.restfrq * u.Hz
+            elif hasattr(wcs, 'wcs') and hasattr(wcs.wcs, 'restwav') and wcs.wcs.restwav > 0:
+                rest_value = wcs.wcs.restwav * u.m
             else:
-                rest_value = 0 * u.AA
+                rest_value = None
         else:
             if not isinstance(rest_value, u.Quantity):
                 logging.info("No unit information provided with rest value. "
@@ -153,7 +155,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
                     doppler_convention=velocity_convention,
-                    bin_specification = bin_specification)
+                    bin_specification=bin_specification)
             # If a SpectralAxis object is provided, we assume it doesn't need
             # information from other keywords added
             else:
@@ -182,6 +184,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             # If spectral_axis wasn't provided, set _spectral_axis based on
             # the WCS
             spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+
+            if spec_axis.unit.is_equivalent(u.one):
+                spec_axis = spec_axis * u.pixel
 
             self._spectral_axis = SpectralAxis(
                 spec_axis,

@@ -1,6 +1,11 @@
 """
 Contains classes that serialize spectral data types into ASDF representations.
 """
+
+from distutils.version import LooseVersion
+
+from astropy import __version__ as astropy_version
+
 from numpy.testing import assert_allclose
 from astropy.units import allclose
 import astropy.nddata
@@ -9,10 +14,10 @@ from asdf.yamlutil import (custom_tree_to_tagged_tree,
                            tagged_tree_to_custom_tree)
 from astropy.io.misc.asdf.tags.unit.unit import UnitType
 
-from ....spectra import SpectralCoord, Spectrum1D, SpectrumList
+from ....spectra import Spectrum1D, SpectrumList
 from ..types import SpecutilsType
 
-__all__ = ['Spectrum1DType', 'SpectrumListType', 'SpectralCoordType']
+__all__ = ['Spectrum1DType', 'SpectrumListType']
 
 UNCERTAINTY_TYPE_MAPPING = {
     'std': astropy.nddata.StdDevUncertainty,
@@ -111,30 +116,39 @@ class SpectrumListType(SpecutilsType):
             Spectrum1DType.assert_equal(x, y)
 
 
-class SpectralCoordType(SpecutilsType):
-    """
-    ASDF tag implementation used to serialize/derialize SpectralCoord objects
-    """
-    name = 'spectra/spectral_coord'
-    types = [SpectralCoord]
-    version = '1.0.0'
+if LooseVersion(astropy_version) < '4.1':
 
-    @classmethod
-    def to_tree(cls, spec_coord, ctx):
-        node = {}
-        if isinstance(spec_coord, SpectralCoord):
-            node['value'] = custom_tree_to_tagged_tree(spec_coord.value, ctx)
-            node['unit'] = custom_tree_to_tagged_tree(spec_coord.unit, ctx)
-            return node
-        raise TypeError(f"'{spec_coord}' is not a valid SpectralCoord")
+    # If using astropy 4.1 or later, the ASDF schema and type are defined
+    # in astropy so we shouldn't also define it here.
 
-    @classmethod
-    def from_tree(cls, node, ctx):
-        if isinstance(node, SpectralCoord):
-            return node
+    from specutils.extern.spectralcoord import SpectralCoord
 
-        unit = UnitType.from_tree(node['unit'], ctx)
-        value = node['value']
-        if isinstance(value, NDArrayType):
-            value = value._make_array()
-        return SpectralCoord(value, unit=unit)
+    class SpectralCoordType(SpecutilsType):
+        """
+        ASDF tag implementation used to serialize/derialize SpectralCoord objects
+        """
+        name = 'spectra/spectral_coord'
+        types = [SpectralCoord]
+        version = '1.0.0'
+
+        @classmethod
+        def to_tree(cls, spec_coord, ctx):
+            node = {}
+            if isinstance(spec_coord, SpectralCoord):
+                node['value'] = custom_tree_to_tagged_tree(spec_coord.value, ctx)
+                node['unit'] = custom_tree_to_tagged_tree(spec_coord.unit, ctx)
+                return node
+            raise TypeError(f"'{spec_coord}' is not a valid SpectralCoord")
+
+        @classmethod
+        def from_tree(cls, node, ctx):
+            if isinstance(node, SpectralCoord):
+                return node
+
+            unit = UnitType.from_tree(node['unit'], ctx)
+            value = node['value']
+            if isinstance(value, NDArrayType):
+                value = value._make_array()
+            return SpectralCoord(value, unit=unit)
+
+    __all__.append('SpectralCoordType')

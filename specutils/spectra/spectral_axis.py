@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.utils.decorators import lazyproperty
 import numpy as np
 
-from .spectral_coordinate import SpectralCoord
+from ..extern.spectralcoord import SpectralCoord
 
 
 __all__ = ['SpectralAxis']
@@ -25,6 +25,8 @@ class SpectralAxis(SpectralCoord):
         are interpreted as bin edges or bin centers. Defaults to "centers".
     """
 
+    _equivalent_unit = SpectralCoord._equivalent_unit + (u.pixel,)
+
     def __new__(cls, value, *args, bin_specification="centers", **kwargs):
 
         # Convert to bin centers if bin edges were given, since SpectralCoord
@@ -39,13 +41,6 @@ class SpectralAxis(SpectralCoord):
             obj._bin_edges = bin_edges
 
         return obj
-
-    def __quantity_subclass__(self, unit):
-        """
-        Overridden by subclasses to change what kind of view is
-        created based on the output unit of an operation.
-        """
-        return SpectralAxis, True
 
     @staticmethod
     def _edges_from_centers(centers, unit):
@@ -76,3 +71,18 @@ class SpectralAxis(SpectralCoord):
             return self._bin_edges
         else:
             return self._edges_from_centers(self.value, self.unit)
+
+    def with_observer_stationary_relative_to(self, frame,
+                                             velocity=None,
+                                             preserve_observer_frame=False):
+        if self.unit is u.pixel:
+            raise u.UnitsError("Cannot transform spectral coordinates in pixel units")
+        super().with_observer_stationary_relative_to(frame,
+                                                     velocity=velocity,
+                                                     preserve_observer_frame=preserve_observer_frame)
+
+    def with_radial_velocity_shift(self, target_shift=None, observer_shift=None):
+        if self.unit is u.pixel:
+            raise u.UnitsError("Cannot transform spectral coordinates in pixel units")
+        super().with_radial_velocity_shift(target_shift=target_shift,
+                                           observer_shift=observer_shift)

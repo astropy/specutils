@@ -178,7 +178,7 @@ class OneDSpectrumMixin:
         equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
             self.velocity_convention))(self.rest_value)
 
-        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv)
+        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv).quantity
 
         # if redshift/rv is present, apply it:
         if self.spectral_axis.radial_velocity is not None:
