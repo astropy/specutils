@@ -44,6 +44,14 @@ from astropy import __version__ as astropy_version
 if LooseVersion(astropy_version) >= '4.1':
     from astropy.coordinates import SpectralCoord
 else:
+    from warnings import warn
+    from astropy.utils.exceptions import AstropyDeprecationWarning
+    warn('You are using SpectralCoord with a version of astropy earlier than '
+         '4.1. This uses a version of SpectralCoord supplied with specutils '
+         'that may not be fully compatible with the astropy SpectralCoord. '
+         'It is recommended that you upgrade to a version of Astropy >=4.1 if '
+         'you can.', AstropyDeprecationWarning)
+
     from .spectral_coordinate import SpectralCoord
 
 __all__ = ['SpectralCoord']
