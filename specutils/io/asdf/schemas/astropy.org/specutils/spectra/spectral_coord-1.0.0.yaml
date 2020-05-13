@@ -1,13 +1,11 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
-id: "http://astropy.org/schemas/specutils/spectra/spectral_coord-1.0.0"
-tag: "tag:astropy.org:specutils/spectra/spectral_coord-1.0.0"
+id: "http://astropy.org/schemas/astropy/coordinates/spectralcoord-1.0.0"
+tag: "tag:astropy.org:astropy/coordinates/spectralcoord-1.0.0"
 
 title: >
-  Represents a spectral coordinate
-description: |
-  This schema represents a SpectralCoord object from specutils
+  Represents a SpectralCoord object from astropy
 
 type: object
 properties:
@@ -21,5 +19,13 @@ properties:
     description: |
       The unit corresponding to the values
     $ref: "http://stsci.edu/schemas/asdf/unit/unit-1.0.0"
+  observer:
+    description: |
+      The observer frame for this coordinate
+    $ref: "http://astropy.org/schemas/astropy/coordinates/frames/baseframe-1.0.0"
+  target:
+    description: |
+      The target frame for this coordinate
+    $ref: "http://astropy.org/schemas/astropy/coordinates/frames/baseframe-1.0.0"
 required: [value, unit]
 ...
