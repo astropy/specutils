@@ -6,11 +6,11 @@ import numpy as np
 
 from ..extern.spectralcoord import SpectralCoord
 
-
 __all__ = ['SpectralAxis']
 
 # We don't want to run doctests in the docstrings we inherit from Quantity
 __doctest_skip__ = ['SpectralAxis.*']
+
 
 class SpectralAxis(SpectralCoord):
     """

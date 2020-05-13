@@ -2,7 +2,7 @@
 ---
 $schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
 id: "http://astropy.org/schemas/astropy/coordinates/spectralcoord-1.0.0"
-tag: "tag:astropy.org:astropy/coordinates/spectralcoord-1.0.0"
+tag: "tag:astropy.org:specutils/spectra/spectral_coord-1.0.0"
 
 title: >
   Represents a SpectralCoord object from astropy
