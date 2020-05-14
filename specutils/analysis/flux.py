@@ -100,15 +100,15 @@ def _compute_line_flux(spectrum, regions=None):
     avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis)))
 
     if isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
-        stddev_uncert = np.sqrt(calc_spectrum.uncertainty.array)
+        stddev_sq = calc_spectrum.uncertainty.array
     elif isinstance(calc_spectrum.uncertainty, InverseVariance):
-        stddev_uncert = np.sqrt(1/calc_spectrum.uncertainty.array)
+        stddev_sq = 1/calc_spectrum.uncertainty.array
     else:
-        stddev_uncert = calc_spectrum.uncertainty.array
+        stddev_sq = calc_spectrum.uncertainty.array**2
 
     line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
     line_flux.uncertainty = np.sqrt(
-        np.sum((stddev_uncert[1:] * avg_dx.value) ** 2)) * line_flux.unit
+        np.sum(stddev_sq[1:] * avg_dx.value**2) * line_flux.unit
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
