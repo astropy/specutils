@@ -47,6 +47,13 @@ def test_from_center():
     with pytest.raises(ValueError) as exc:
         sr = SpectralRegion.from_center(center=6563*u.AA, width=0*u.AA)
 
+    # Test with frequency spectral axis
+    sr = SpectralRegion.from_center(center=1*u.GHz, width=0.1*u.GHz)
+
+    with pytest.raises(ValueError) as e:
+        sr = SpectralRegion.from_center(center=1*u.GHz, width=-0.1*u.GHz)
+
+
 def test_adding_spectral_regions():
 
     # Combine two Spectral regions into one:

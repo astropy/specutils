@@ -4,3 +4,49 @@ py:class astropy.nddata.mixins.ndslicing.NDSlicingMixin
 py:class astropy.nddata.mixins.ndarithmetic.NDArithmeticMixin
 py:obj NDData
 py:obj NDUncertainty
+
+# Links that might not work yet, depending on the astropy version
+py:obj astropy.coordinates.SpectralQuantity
+
+# Classes that now live in astropy and which don't want to expose here
+py:class specutils.extern.spectralcoord.spectral_coordinate.SpectralCoord
+py:class specutils.extern.spectralcoord.spectral_quantity.SpectralQuantity
+
+# Classes in the SpectralCoord/SpectralQuantity methods for which we can't
+# control the API links.
+py:obj SpectralCoord
+py:obj SpectralQuantity
+py:obj SkyCoord
+
+# SpectralAxis inherits methods which have warnings we can't fix here.
+# FIXME: https://github.com/astropy/sphinx-automodapi/issues/101
+py:obj Quantity
+py:obj a
+py:obj n
+py:obj axis1
+py:obj axis2
+py:obj data_as
+py:obj ndarray.setflags
+py:obj ndarray.reshape
+py:obj ndarray.flat
+py:obj ndarray.T
+py:obj a.size
+py:obj x
+py:obj order
+py:obj subok
+py:obj arr_t
+py:obj inplace
+py:obj a.size == 1
+py:obj args
+py:obj ndarray
+py:obj new_order
+py:obj refcheck
+py:obj val
+py:obj offset
+py:obj lexsort
+py:obj np.atleast2d(a).T
+py:obj a[:, np.newaxis]
+py:obj i
+py:obj j
+py:obj a.transpose()
+py:obj ndarray_subclass

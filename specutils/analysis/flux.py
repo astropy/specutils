@@ -97,7 +97,7 @@ def _compute_line_flux(spectrum, regions=None):
         calc_spectrum = spectrum
 
     # Average dispersion in the line region
-    avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis))).quantity
+    avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis)))
 
     line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
 
@@ -117,7 +117,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None):
 
     spectral_axis = calc_spectrum.spectral_axis
 
-    dx = (np.abs(spectral_axis[-1] - spectral_axis[0])).quantity
+    dx = (np.abs(spectral_axis[-1] - spectral_axis[0]))
 
     line_flux = _compute_line_flux(spectrum, regions)
 

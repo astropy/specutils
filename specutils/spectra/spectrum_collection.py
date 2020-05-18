@@ -5,7 +5,7 @@ import numpy as np
 from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from .spectrum1d import Spectrum1D
-from .spectral_coordinate import SpectralCoord
+from ..extern.spectralcoord import SpectralCoord
 
 __all__ = ['SpectrumCollection']
 

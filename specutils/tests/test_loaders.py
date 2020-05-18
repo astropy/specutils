@@ -140,10 +140,10 @@ def test_sdss_spec():
         assert spec.flux.size > 0
 
     with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
-        with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
+        with tempfile.NamedTemporaryFile() as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            # Read from local disk via filename
+            # Read from local disk via file signature
             spec = Spectrum1D.read(tmp_file.name)
 
             assert isinstance(spec, Spectrum1D)
@@ -151,7 +151,13 @@ def test_sdss_spec():
 
             # Read from HDUList object
             hdulist = fits.open(tmp_file.name)
-            spec = Spectrum1D.read(hdulist, format="SDSS-III/IV spec")
+            spec = Spectrum1D.read(hdulist)
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+
+            # Read from file handle
+            fileio = open(tmp_file.name, mode='rb')
+            spec = Spectrum1D.read(fileio)
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
 
@@ -166,20 +172,26 @@ def test_sdss_spspec():
         assert spec.flux.size > 0
 
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
-        with tempfile.NamedTemporaryFile(prefix=sp_pattern) as tmp_file:
+        with tempfile.NamedTemporaryFile() as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            # Read from local disk via filename
+            # Read from local disk via file signature
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', FITSFixedWarning)
-                spec = Spectrum1D.read(tmp_file.name, format="SDSS-I/II spSpec")
+                spec = Spectrum1D.read(tmp_file.name)
 
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
 
             # Read from HDUList object
             hdulist = fits.open(tmp_file.name)
-            spec = Spectrum1D.read(hdulist, format="SDSS-I/II spSpec")
+            spec = Spectrum1D.read(hdulist)
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
+
+            # Read from file handle
+            fileio = open(tmp_file.name, mode='rb')
+            spec = Spectrum1D.read(fileio)
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
 
@@ -242,6 +254,56 @@ def test_sdss_compressed(compress):
             assert isinstance(spec, Spectrum1D)
             assert spec.flux.size > 0
             assert spec.uncertainty.array.min() >= 0.0
+
+
+@pytest.mark.remote_data
+def test_sdss_spplate():
+    """Test loading of multi-object spectrum from SDSS `spPlate` format FITS file.
+    """
+    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+        # Read reference spectrum from open file object
+        spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
+        assert isinstance(spec, Spectrum1D)
+        assert spec.flux.size > 0
+        specid = spec.meta['header']['FIBERID']
+
+    with urllib.request.urlopen('https://data.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
+        # Read "plate" spectrum with 2D flux array from open file object
+        plate = Spectrum1D.read(response, format="SDSS spPlate")
+        assert isinstance(plate, Spectrum1D)
+        assert plate.flux.ndim == 2
+        assert plate.flux.shape[0] == 640
+        assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
+        assert quantity_allclose(spec.flux, plate.flux[specid-1])
+
+    with urllib.request.urlopen('https://data.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
+
+            # Read from local disk via file signature
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                plate = Spectrum1D.read(tmp_file.name, limit=32)
+
+            assert isinstance(plate, Spectrum1D)
+            assert plate.flux.ndim == 2
+            assert plate.flux.shape[0] == 32
+            assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
+            assert quantity_allclose(spec.flux, plate.flux[specid-1])
+
+            # Read from HDUList object
+            hdulist = fits.open(tmp_file.name)
+            plate = Spectrum1D.read(hdulist, limit=32)
+            assert plate.flux.shape[0] == 32
+            assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
+            assert quantity_allclose(spec.flux, plate.flux[specid-1])
+
+            # Read from file handle
+            fileio = open(tmp_file.name, mode='rb')
+            plate = Spectrum1D.read(fileio, limit=32)
+            assert plate.flux.shape[0] == 32
+            assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
+            assert quantity_allclose(spec.flux, plate.flux[specid-1])
 
 
 @pytest.mark.parametrize("name", ['file.fit', 'file.fits', 'file.dat'])
