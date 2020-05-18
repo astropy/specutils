@@ -47,8 +47,8 @@ def test_line_flux_uncertainty():
 
     lf = line_flux(spec)
 
-    assert quantity_allclose(lf, u.Quantity(4.82682724, u.Jy * u.AA))
-    assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544278, u.Jy * u.AA))
+    assert quantity_allclose(lf, u.Quantity(5.20136736, u.Jy * u.AA))
+    assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544415, u.Jy * u.AA))
 
 
 def test_equivalent_width():
