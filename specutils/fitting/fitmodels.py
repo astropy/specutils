@@ -437,7 +437,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     # should fit
     elif window is not None and isinstance(window, tuple):
         window_indices = np.nonzero((dispersion >= window[0]) &
-                             (dispersion < window[1]))
+                             (dispersion <= window[1]))
 
     # in this case the window is spectral regions that determine where
     # to fit.
