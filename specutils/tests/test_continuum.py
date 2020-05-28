@@ -80,15 +80,12 @@ def test_continuum_full_window():
 
     # Check that a full width window recovers the original, non-windowed fit.
     g1_fit = fit_continuum(spectrum_smoothed, window=(0.*u.um, 10.*u.um))
+    g1_fit_orig = fit_continuum(spectrum_smoothed)
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    sp_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    sp_normalized_orig = spectrum / g1_fit_orig(spectrum.spectral_axis)
 
-    y_continuum_fitted_expected = np.array([1.15139925, 0.98509363, 0.73700614, 1.00911864, 0.913129,
-                                            0.93145533, 0.94904202, 1.04162879, 0.90851397, 0.9494352,
-                                            1.07812394, 1.06376489, 0.98705237, 0.94569623, 0.83502377,
-                                            0.91909416, 0.89662208, 1.01458511, 0.96124191, 0.94847744])
-
-    assert np.allclose(spectrum_normalized.flux.value[::10], y_continuum_fitted_expected, atol=1e-5)
+    assert np.allclose(sp_normalized.flux.value, sp_normalized_orig.flux.value, atol=1e-5)
 
 
 def test_continuum_spectral_region():
