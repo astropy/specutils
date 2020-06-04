@@ -9,13 +9,15 @@ from ..manipulation.smoothing import median_smooth
 
 
 
-def single_peak_continuum(noise=0.2):
+def single_peak_continuum(noise=0.2, constant_continuum=False):
     np.random.seed(0)
     x = np.linspace(0., 10., 200)
     y_single = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
     y_single += np.random.normal(0., noise, x.shape)
-
-    y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    if not constant_continuum:
+        y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    else:
+        y_continuum = 3.2
     y_single += y_continuum
     return x, y_single
 
@@ -145,5 +147,29 @@ def test_continuum_window_no_noise():
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 
     # Check fit over the red end.
+    assert np.allclose(spectrum_normalized.flux.value[160:], y_continuum_fitted_expected[160:],
+                       atol=1.e-5)
+
+
+def test_constant_continuum_window():
+    """
+    Fit to no-noise spectrum comprised of a constant continuum plus an emission Gaussian
+    """
+    x_single_continuum, y_single_continuum = single_peak_continuum(noise=0.,constant_continuum=True)
+    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+
+    # Smooth in the same way fit_generic_continuum does.
+    spectrum_smoothed = median_smooth(spectrum, 3)
+
+    # Window selects the first half of the spectrum.
+    g1_fit = fit_continuum(spectrum_smoothed, window=[(0.*u.um, 5.*u.um),(8.*u.um, 10.*u.um)])
+
+    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+
+    y_continuum_fitted_expected = np.ones(shape=(spectrum_normalized.spectral_axis.shape))
+
+    # Check fit over the windowed regions.
+    assert np.allclose(spectrum_normalized.flux.value[0:100], y_continuum_fitted_expected[0:100],
+                       atol=1.e-5)
     assert np.allclose(spectrum_normalized.flux.value[160:], y_continuum_fitted_expected[160:],
                        atol=1.e-5)
