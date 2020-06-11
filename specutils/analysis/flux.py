@@ -102,14 +102,14 @@ def _compute_line_flux(spectrum, regions=None):
 
     if calc_spectrum.uncertainty is not None:
         if isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
-            stddev_sq = calc_spectrum.uncertainty.quantity
+            variance_q = calc_spectrum.uncertainty.quantity
         elif isinstance(calc_spectrum.uncertainty, InverseVariance):
-            stddev_sq = 1/calc_spectrum.uncertainty.quantity
+            variance_q = 1/calc_spectrum.uncertainty.quantity
         else:
-            stddev_sq = calc_spectrum.uncertainty.quantity ** 2
+            variance_q = calc_spectrum.uncertainty.quantity ** 2
 
         line_flux.uncertainty = np.sqrt(
-            np.sum(stddev_sq * avg_dx**2))
+            np.sum(variance_q * avg_dx**2))
     else:
         line_flux.uncertainty = None
 
