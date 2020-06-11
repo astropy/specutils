@@ -7,7 +7,7 @@ from functools import wraps
 
 import astropy.units as u
 import numpy as np
-from astropy.nddata import VarianceUncertainty, InverseVariance
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from astropy.stats import mad_std
 from astropy.utils.exceptions import AstropyUserWarning
 
@@ -100,18 +100,24 @@ def _compute_line_flux(spectrum, regions=None):
     avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis.bin_edges)))
     line_flux = np.sum(calc_spectrum.flux * avg_dx)
 
+    line_flux.uncertainty = None
+
     if calc_spectrum.uncertainty is not None:
-        if isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
+        if isinstance(calc_spectrum.uncertainty, StdDevUncertainty):
+            variance_q = calc_spectrum.uncertainty.quantity ** 2
+        elif isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
             variance_q = calc_spectrum.uncertainty.quantity
         elif isinstance(calc_spectrum.uncertainty, InverseVariance):
             variance_q = 1/calc_spectrum.uncertainty.quantity
         else:
-            variance_q = calc_spectrum.uncertainty.quantity ** 2
+            message = ('Uncertainty type "{}" was not recognized by line_flux.  '
+                       'Proceeding without uncertainty in result.').format(calc_spectrum.uncertainty.uncertainty_type)
+            warnings.warn(message, AstropyUserWarning)
+            variance_q = None
 
-        line_flux.uncertainty = np.sqrt(
-            np.sum(variance_q * avg_dx**2))
-    else:
-        line_flux.uncertainty = None
+        if variance_q is not None:
+            line_flux.uncertainty = np.sqrt(
+                np.sum(variance_q * avg_dx**2))
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
