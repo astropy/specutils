@@ -38,6 +38,19 @@ def test_line_flux():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
 
 
+def test_line_flux_uncertainty():
+    np.random.seed(42)
+
+    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
+                      flux=np.random.sample(10) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(10) * 0.01))
+
+    lf = line_flux(spec)
+
+    assert quantity_allclose(lf, u.Quantity(5.20136736, u.Jy * u.AA))
+    assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544415, u.Jy * u.AA))
+
+
 def test_equivalent_width():
 
     np.random.seed(42)
