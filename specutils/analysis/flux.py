@@ -2,18 +2,18 @@
 A module for analysis tools focused on determining fluxes of spectral features.
 """
 
-from functools import wraps
 import warnings
+from functools import wraps
 
-import numpy as np
-from .. import conf
-from ..manipulation import extract_region
-from .utils import computation_wrapper
 import astropy.units as u
-from astropy.stats import sigma_clip
+import numpy as np
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from astropy.stats import mad_std
 from astropy.utils.exceptions import AstropyUserWarning
 
+from .utils import computation_wrapper
+from .. import conf
+from ..manipulation import extract_region
 
 __all__ = ['line_flux', 'equivalent_width', 'is_continuum_below_threshold',
            'warn_continuum_below_threshold']
@@ -97,9 +97,27 @@ def _compute_line_flux(spectrum, regions=None):
         calc_spectrum = spectrum
 
     # Average dispersion in the line region
-    avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis)))
+    avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis.bin_edges)))
+    line_flux = np.sum(calc_spectrum.flux * avg_dx)
 
-    line_flux = np.sum(calc_spectrum.flux[1:] * avg_dx)
+    line_flux.uncertainty = None
+
+    if calc_spectrum.uncertainty is not None:
+        if isinstance(calc_spectrum.uncertainty, StdDevUncertainty):
+            variance_q = calc_spectrum.uncertainty.quantity ** 2
+        elif isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
+            variance_q = calc_spectrum.uncertainty.quantity
+        elif isinstance(calc_spectrum.uncertainty, InverseVariance):
+            variance_q = 1/calc_spectrum.uncertainty.quantity
+        else:
+            message = ('Uncertainty type "{}" was not recognized by line_flux.  '
+                       'Proceeding without uncertainty in result.').format(calc_spectrum.uncertainty.uncertainty_type)
+            warnings.warn(message, AstropyUserWarning)
+            variance_q = None
+
+        if variance_q is not None:
+            line_flux.uncertainty = np.sqrt(
+                np.sum(variance_q * avg_dx**2))
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
