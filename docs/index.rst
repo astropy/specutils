@@ -95,7 +95,7 @@ containing the line:
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
     >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA)) # doctest: +REMOTE_DATA
-    <Quantity -14.78092438 Angstrom>
+    <Quantity -16.25232188 Angstrom>
 
 
 While there are other tools and spectral representations detailed more below,

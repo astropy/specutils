@@ -90,10 +90,20 @@ of a spectrum.  Both are demonstrated below:
 .. code-block:: python
 
     >>> from specutils.analysis import line_flux
+    >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 4.93784874 GHz Jy>
     >>> line_flux(noisy_gaussian).to(u.erg * u.cm**-2 * u.s**-1)  # doctest:+FLOAT_CMP
     <Quantity 4.97826284e-14 erg / (cm2 s)>
-    >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity 4.93254052 GHz Jy>
+
+These line_flux measurements also include uncertainties if the spectrum itself
+has uncertainties::
+
+.. code-block:: python
+
+    >>> flux = line_flux(noisy_gaussian)
+    >>> flux.uncertainty.to(u.erg * u.cm**-2 * u.s**-1) # doctest:+FLOAT_CMP
+    <Quantity 1.42132016e-15 erg / (cm2 s)>
+
 
 For the equivalent width, note the need to add a continuum level:
 
@@ -102,9 +112,9 @@ For the equivalent width, note the need to add a continuum level:
     >>> from specutils.analysis import equivalent_width
     >>> noisy_gaussian_with_continuum = noisy_gaussian + 1*u.Jy
     >>> equivalent_width(noisy_gaussian_with_continuum)  # doctest:+FLOAT_CMP
-    <Quantity -4.97826284 GHz>
+    <Quantity -5.02976212 GHz>
     >>> equivalent_width(noisy_gaussian_with_continuum, regions=SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity -4.93254052 GHz>
+    <Quantity -4.9881 GHz>
 
 
 Centroid
