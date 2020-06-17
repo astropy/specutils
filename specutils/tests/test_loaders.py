@@ -688,3 +688,34 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
     assert len(specs) == 3
 
     hdulist.close()
+
+
+# Commented out until science only is discussed
+# @pytest.mark.remote_data
+# def test_2slaq_lrg_loader_science_only():
+#     """Test remote read and automatic recognition of 2SLAQ-LRG data from URL.
+#     """
+#     url = ("https://datacentral.org.au/services/sov/81480/download/"
+#            "gama.dr2.spectra.2slaq-lrg.spectrum_1d/J143529.78-004306.4_1.fit/")
+#     spec = Spectrum1D.read(url)
+#
+#     assert spec.spectral_axis.unit == u.AA
+#     assert spec.flux.unit == u.count / u.s
+#     assert spec.uncertainty is None
+
+
+@pytest.mark.remote_data
+def test_2slaq_lrg_loader_science_and_sky():
+    """Test remote read and automatic recognition of 2SLAQ-LRG data from URL.
+    """
+    url = ("https://datacentral.org.au/services/sov/81480/download/"
+           "gama.dr2.spectra.2slaq-lrg.spectrum_1d/J143529.78-004306.4_1.fit/")
+    science, sky = SpectrumList.read(url)
+
+    assert science.spectral_axis.unit == u.AA
+    assert science.flux.unit == u.count / u.s
+    assert science.uncertainty is None
+
+    assert sky.spectral_axis.unit == u.AA
+    assert sky.flux.unit == u.count / u.s
+    assert sky.uncertainty is None
