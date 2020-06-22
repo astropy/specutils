@@ -18,6 +18,18 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
 
+    Note that "1d" in this case refers to the fact that there is only one
+    spectral axis.  `Spectrum1D` can contain "vector 1d spectra" by having the
+    ``flux`` have a shape with dimension great than 1 - the requirement then
+    is that the last dimension of ``flux`` match the length of the
+    ``spectral_axis``.
+
+    For multidimensional spectra that are all the same shape but have different
+    spectral axes, use a :class:`~specutils.SpectrumCollection`.  For a
+    collection of spectra that have different shapes, use
+    :class:`~specutils.SpectrumList`. For more on this topic, see
+    :ref:`specutils-representation-overview`.
+
     Parameters
     ----------
     flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like

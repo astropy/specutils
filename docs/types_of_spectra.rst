@@ -1,5 +1,8 @@
 .. currentmodule:: specutils
 
+.. _specutils-representation-overview:
+
+
 Overview of How Specutils Represents Spectra
 --------------------------------------------
 
