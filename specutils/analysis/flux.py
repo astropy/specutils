@@ -102,7 +102,8 @@ def equivalent_width(spectrum, continuum=1, regions=None,
                                mask_interpolation=mask_interpolation, **kwargs)
 
 
-def _compute_line_flux(spectrum, regions=None, mask_interpolation=LinearInterpolatedResampler):
+def _compute_line_flux(spectrum, regions=None,
+                       mask_interpolation=LinearInterpolatedResampler):
 
     if regions is not None:
         calc_spectrum = extract_region(spectrum, regions)
@@ -121,13 +122,17 @@ def _compute_line_flux(spectrum, regions=None, mask_interpolation=LinearInterpol
         # would be to account for the masked values when computing the dispersion.
         interpolator = mask_interpolation()
         sp = interpolator(calc_spectrum, calc_spectrum.spectral_axis)
-        flux = sp.flux[1:]
+        flux = sp.flux
     else:
-        flux = calc_spectrum.flux[1:]
+        flux = calc_spectrum.flux
 
     line_flux = np.sum(flux * avg_dx)
 
+    line_flux.uncertainty = None
+
     if calc_spectrum.uncertainty is not None:
+        # Can't handle masks via interpolation here, since interpolators
+        # only work with the flux array.
         if isinstance(calc_spectrum.uncertainty, StdDevUncertainty):
             variance_q = calc_spectrum.uncertainty.quantity ** 2
         elif isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
