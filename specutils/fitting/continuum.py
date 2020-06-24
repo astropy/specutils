@@ -74,7 +74,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
     fitmodels_type: str
         String representation of fit method to use as defined by the dict fitmodels_types.
 
-    window : tuple of wavelengths  (NOT IMPLEMENTED YET)
+    window : tuple of wavelengths
         Start and end wavelengths used for fitting.
 
     weights : list  (NOT IMPLEMENTED YET)
@@ -87,13 +87,14 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
 
     """
 
-    if window is not None or weights is not None:
-        raise NotImplementedError('window and weights are not yet implemented')
+    if weights is not None:
+        raise NotImplementedError('weights are not yet implemented')
 
     #
     # Fit the flux to the model.
     #
 
-    continuum_spectrum = fit_lines(spectrum, model, fitter, exclude_regions, weights)
+    continuum_spectrum = fit_lines(spectrum, model, fitter, exclude_regions,
+                                   weights, window)
 
     return continuum_spectrum

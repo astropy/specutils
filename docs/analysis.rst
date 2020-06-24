@@ -103,7 +103,8 @@ has uncertainties::
     >>> flux = line_flux(noisy_gaussian)
     >>> flux.uncertainty.to(u.erg * u.cm**-2 * u.s**-1) # doctest:+FLOAT_CMP
     <Quantity 1.42132016e-15 erg / (cm2 s)>
-
+    >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
+    <Quantity 4.93784874 GHz Jy>
 
 For the equivalent width, note the need to add a continuum level:
 
