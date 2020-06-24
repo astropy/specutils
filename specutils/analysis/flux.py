@@ -81,7 +81,8 @@ def equivalent_width(spectrum, continuum=1, regions=None,
 
     mask_interpolation : `~specutils.manipulation.LinearInterpolatedResampler`
         Interpolator class used to fill up the gaps in the spectrum's flux
-        array, when the spectrum mask is not None.
+        array after an excise operation to ensure the mask shape can always be applied when 
+        the spectrum mask is not None.
 
     Returns
     -------
