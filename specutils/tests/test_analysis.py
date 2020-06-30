@@ -13,6 +13,7 @@ from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
+from ..manipulation import snr_threshold, FluxConservingResampler
 from ..tests.spectral_examples import simulated_spectra
 
 
@@ -51,6 +52,55 @@ def test_line_flux_uncertainty():
     assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544415, u.Jy * u.AA))
 
 
+def test_line_flux_masked():
+
+    np.random.seed(42)
+
+    N = 100
+
+    wavelengths = np.linspace(0.4, 1.05, N) * u.um
+
+    g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
+    flux = g(wavelengths) + 1000 * u.mJy
+    noise = 400 * np.random.random(flux.shape)* u.mJy
+    flux += noise
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum.uncertainty = StdDevUncertainty(noise)
+
+    spectrum_masked = snr_threshold(spectrum, 10.)
+
+    # Ensure we have at least 50% of the data being masked.
+    assert len(np.where(spectrum_masked.mask)[0]) > N/2
+
+    result = line_flux(spectrum_masked)
+
+    assert result.unit.is_equivalent(u.Jy * u.um)
+
+    # Flux from masked spectrum should be identical with the
+    # flux from same spectrum but with no mask (because we
+    # interpolate over the masked data).
+    result_unmasked = line_flux(spectrum)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
+
+    # With flux conserving resampler
+    result = line_flux(spectrum_masked, mask_interpolation=FluxConservingResampler)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
+
+
+def test_line_flux_uncertainty():
+    np.random.seed(42)
+
+    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
+                      flux=np.random.sample(10) * u.Jy,
+                      uncertainty=StdDevUncertainty(np.random.sample(10) * 0.01))
+
+    lf = line_flux(spec)
+
+    assert quantity_allclose(lf, u.Quantity(5.20136736, u.Jy * u.AA))
+    assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544415, u.Jy * u.AA))
+
+
 def test_equivalent_width():
 
     np.random.seed(42)
@@ -71,6 +121,41 @@ def test_equivalent_width():
     expected = -(np.sqrt(2*np.pi) * u.GHz)
 
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
+def test_equivalent_width_masked ():
+
+    np.random.seed(42)
+
+    N = 100
+
+    wavelengths = np.linspace(0.4, 1.05, N) * u.um
+
+    g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
+    flux = g(wavelengths) + 1000 * u.mJy
+    noise = 400 * np.random.random(flux.shape)* u.mJy
+    flux += noise
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum.uncertainty = StdDevUncertainty(noise)
+
+    spectrum_masked = snr_threshold(spectrum, 10.)
+
+    # Ensure we have at least 50% of the data being masked.
+    assert len(np.where(spectrum_masked.mask)[0]) > N/2
+
+    result = equivalent_width(spectrum_masked)
+
+    assert result.unit.is_equivalent(spectrum.wcs.unit)
+
+    # Compare with unmasked computation.
+    result_unmasked = equivalent_width(spectrum)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
+
+    # With flux conserving resampler
+    result = equivalent_width(spectrum_masked,
+                              mask_interpolation=FluxConservingResampler)
+    assert quantity_allclose(result.value, result_unmasked.value, atol=0.001)
 
 
 def test_equivalent_width_regions():
@@ -151,7 +236,6 @@ def test_snr(simulated_spectra):
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    wavelengths = spectrum.spectral_axis
     flux = spectrum.flux
 
     spec_snr_expected = np.mean(flux / (uncertainty.array*uncertainty.unit))
@@ -159,6 +243,28 @@ def test_snr(simulated_spectra):
     #
     # SNR of the whole spectrum
     #
+
+    spec_snr = snr(spectrum)
+
+    assert isinstance(spec_snr, u.Quantity)
+    assert np.allclose(spec_snr.value, spec_snr_expected.value)
+
+
+def test_snr_masked(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR, with masked spectrum.
+    """
+
+    np.random.seed(42)
+
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    uncertainty_array = uncertainty.array[~spectrum.mask]
+    flux = spectrum.flux[~spectrum.mask]
+
+    spec_snr_expected = np.mean(flux / (uncertainty_array * uncertainty.unit))
 
     spec_snr = snr(spectrum)
 
@@ -287,6 +393,7 @@ def test_snr_derived():
 
     x = np.arange(1, 101) * u.um
     y = np.random.random(len(x))*u.Jy
+
     spectrum = Spectrum1D(spectral_axis=x, flux=y)
 
     assert np.allclose(snr_derived(spectrum), 1.604666860424951)
@@ -296,6 +403,23 @@ def test_snr_derived():
 
     sr2 = SpectralRegion(48*u.um, 57*u.um)
     assert np.allclose(snr_derived(spectrum, [sr, sr2]), [2.330463630828406, 2.9673559890209305])
+
+
+def test_snr_derived_masked():
+    np.random.seed(42)
+
+    x = np.arange(1, 101) * u.um
+    y = np.random.random(len(x))*u.Jy
+    mask = (np.random.randn(x.shape[0])) > 0
+    spectrum = Spectrum1D(spectral_axis=x, flux=y, mask=mask)
+
+    assert np.allclose(snr_derived(spectrum), 2.08175408)
+
+    sr = SpectralRegion(38*u.um, 48*u.um)
+    assert np.allclose(snr_derived(spectrum, sr), 4.01610033)
+
+    sr2 = SpectralRegion(48*u.um, 57*u.um)
+    assert np.allclose(snr_derived(spectrum, [sr, sr2]), [4.01610033, 1.94906157])
 
 
 def test_centroid(simulated_spectra):
@@ -328,6 +452,32 @@ def test_centroid(simulated_spectra):
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
 
 
+def test_centroid_masked(simulated_spectra):
+    """
+    Test centroid with masked spectrum.
+    """
+
+    np.random.seed(42)
+
+    # Same as in test for unmasked spectrum, but using
+    # masked version of same spectrum.
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    # Use masked flux and dispersion arrays to compute
+    # the expected value for centroid.
+    wavelengths = spectrum.spectral_axis[~spectrum.mask]
+    flux = spectrum.flux[~spectrum.mask]
+
+    spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(flux)
+
+    spec_centroid = centroid(spectrum, None)
+
+    assert isinstance(spec_centroid, u.Quantity)
+    assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
+
+
 def test_inverted_centroid(simulated_spectra):
     """
     Ensures the centroid calculation also works for *inverted* spectra - i.e.
@@ -339,6 +489,24 @@ def test_inverted_centroid(simulated_spectra):
 
     spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
                                    flux=-spectrum.flux)
+    spec_centroid_inverted = centroid(spectrum_inverted, None)
+    assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
+
+
+def test_inverted_centroid_masked(simulated_spectra):
+    """
+    Ensures the centroid calculation also works for *inverted* spectra with
+    masked data - i.e. continuum-subtracted absorption lines.
+    """
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    spec_centroid_expected = (np.sum(spectrum.flux[~spectrum.mask] *
+                                     spectrum.spectral_axis[~spectrum.mask]) /
+                              np.sum(spectrum.flux[~spectrum.mask]))
+
+    spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+                                   flux=-spectrum.flux,
+                                   mask=spectrum.mask)
+
     spec_centroid_inverted = centroid(spectrum_inverted, None)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
@@ -373,6 +541,26 @@ def test_gaussian_sigma_width():
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+
+    result = gaussian_sigma_width(spectrum)
+
+    assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
+
+
+def test_gaussian_sigma_width_masked():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian masked spectrum for testing
+    mean = 5
+    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
+
+    mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          uncertainty=uncertainty, mask=mask)
 
     result = gaussian_sigma_width(spectrum)
 
@@ -457,6 +645,27 @@ def test_gaussian_fwhm():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
+def test_gaussian_fwhm_masked():
+
+    np.random.seed(42)
+
+    # Create a (centered) gaussian masked spectrum for testing
+    mean = 5
+    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
+
+    mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          uncertainty=uncertainty, mask=mask)
+
+    result = gaussian_fwhm(spectrum)
+
+    expected = g1.stddev * gaussian_sigma_to_fwhm
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+
 @pytest.mark.parametrize('mean', range(3,8))
 def test_gaussian_fwhm_uncentered(mean):
 
@@ -472,6 +681,63 @@ def test_gaussian_fwhm_uncentered(mean):
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.05*u.GHz)
+
+
+def test_fwhm_masked():
+
+    np.random.seed(42)
+
+    # Create a masked (uncentered) spectrum for testing
+    frequencies = np.linspace(0, 10, 1000) * u.GHz
+    stddev = 0.8*u.GHz
+    g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
+    mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          mask=mask)
+
+    result = fwhm(spectrum)
+
+    expected = stddev * gaussian_sigma_to_fwhm
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+
+    # Highest point at the first point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    # Note that this makes a little more sense than the previous version;
+    # since the maximum value occurs at wavelength=1, and the half-value of
+    # flux (0.5) occurs at exactly wavelength=2, the result should be
+    # exactly 1 (2 - 1).
+    assert result == 1.0 * u.um
+
+    # Test the interpolation used in FWHM for wavelength values that are not
+    # on the grid
+    wavelengths = np.linspace(1, 10, 31) * u.um
+    flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+
+    assert quantity_allclose(result, 1.01 * u.um)
+
+    # Highest point at the last point
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = wavelengths.value*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 5*u.um
+
+    # Flat spectrum
+    wavelengths = np.linspace(1, 10, 100) * u.um
+    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
+
+    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    result = fwhm(spectrum)
+    assert result == 9*u.um
 
 
 def test_fwhm():
@@ -570,6 +836,28 @@ def test_fwzi():
 
     assert quantity_allclose(fwzi(spec), 226.89732509 * u.AA)
     assert quantity_allclose(fwzi(spec_with_noise), 106.99998944 * u.AA)
+
+
+def test_fwzi_masked():
+    np.random.seed(42)
+
+    disp = np.linspace(0, 100, 100) * u.AA
+
+    g = models.Gaussian1D(mean=np.mean(disp),
+                          amplitude=1 * u.Jy,
+                          stddev=10 * u.AA)
+    flux = g(disp) + ((np.random.sample(disp.size) - 0.5) * 0.1) * u.Jy
+
+    # Add mask. It is built such that about 50% of the data points
+    # on and around the Gaussian peak are masked out (this was checked
+    # with the debugger to examine in-memory data).
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(disp))*u.Jy)
+    mask = (np.random.randn(disp.shape[0]) - 0.5) > 0
+
+    spec = Spectrum1D(spectral_axis=disp, flux=flux, uncertainty=uncertainty,
+                      mask=mask)
+
+    assert quantity_allclose(fwzi(spec), 35.9996284 * u.AA)
 
 
 def test_fwzi_multi_spectrum():
