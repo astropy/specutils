@@ -1,8 +1,11 @@
+import astropy.units as u
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.modeling.fitting import LevMarLSQFitter
 
 from ..fitting import fit_lines
 from ..manipulation.smoothing import median_smooth
+from ..spectra import SpectralRegion
+
 
 
 __all__ = ['fit_continuum', 'fit_generic_continuum']
@@ -78,7 +81,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
         Start and end wavelengths used for fitting.
 
     weights : list  (NOT IMPLEMENTED YET)
-        List of weights to define importance of fitting regions.
+        List of weights to define importance of fitting regions. and
 
     Returns
     -------
@@ -90,11 +93,25 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
     if weights is not None:
         raise NotImplementedError('weights are not yet implemented')
 
+    w = window
+    if type(w) in [list, tuple] and all([_is_valid_sequence(x) for x in w]):
+        w = SpectralRegion(w)
+
     #
     # Fit the flux to the model.
     #
 
     continuum_spectrum = fit_lines(spectrum, model, fitter, exclude_regions,
-                                   weights, window)
+                                   weights, w)
 
     return continuum_spectrum
+
+
+# Checks for sequences of of 2-tuples with Quantities
+def _is_valid_sequence(value):
+    if type(value) in [list, tuple]:
+        return len(value) == 2 and \
+               isinstance(value[0], u.Quantity) and \
+               isinstance(value[1], u.Quantity)
+    else:
+        return False

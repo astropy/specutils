@@ -679,13 +679,9 @@ fitted continuum, which returns a new object:
 
 
 When fitting over a specific wavelength region of a spectrum, one
-should use the `window` parameter to specify the region. This
-parameter accepts one single instance of a region. It is usually
-specified as a tuple of two wavelength values, but in cases where
-one wants to fit over multiple, disjoint regions, it is possible
-to pass to the parameter a single instance of a SpectralRegion.
-In this case, a Spectral Region can have multiple subregions, defined
-as a tuple of tuples in the constructor call:
+should use the `window` parameter to specify the region. Windows
+can be comprisewd of more than one wavelength interval; each interval
+is specified by a sequence:
 
 .. plot::
     :include-source:
@@ -697,7 +693,6 @@ as a tuple of tuples in the constructor call:
     import astropy.units as u
 
     from specutils.spectra.spectrum1d import Spectrum1D
-    from specutils.spectra import SpectralRegion
     from specutils.fitting.continuum import fit_continuum
 
     np.random.seed(0)
@@ -708,7 +703,7 @@ as a tuple of tuples in the constructor call:
 
     spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
 
-    region = SpectralRegion(((4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)))
+    region = [(4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)]
 
     fitted_continuum = fit_continuum(spectrum, window=region)
 

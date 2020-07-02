@@ -152,7 +152,7 @@ def test_continuum_window_no_noise():
                        atol=1.e-5)
 
 
-def test_constant_continuum_window():
+def test_double_continuum_window():
     """
     Fit to no-noise spectrum comprised of a exponential continuum plus an emission Gaussian
     """
@@ -167,7 +167,41 @@ def test_constant_continuum_window():
     # window as a SpectralRegion with sub-regions at the blue and red halves of the spectrum,
     # avoiding the Gaussian in between. The polynomial degree is high to accomodate the large
     # amplitude range of the expoinential continuum.
-    region = SpectralRegion(((0.*u.um, 5.*u.um), (8.* u.um, 10.* u.um)))
+    region = SpectralRegion([(0.*u.um, 5.*u.um), (8.* u.um, 10.* u.um)])
+    g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
+
+    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+
+    y_continuum_fitted_expected = np.ones(shape=(spectrum_normalized.spectral_axis.shape))
+
+    # Check fit over the windowed regions. Note that we fit a noiseless spectrum so we can
+    # actually measure the degree of mismatch between model and data (polynomial X exponential).
+    assert np.allclose(spectrum_normalized.flux.value[0:90], y_continuum_fitted_expected[0:90],
+                       atol=1.e-4)
+    assert np.allclose(spectrum_normalized.flux.value[170:], y_continuum_fitted_expected[170:],
+                       atol=1.e-4)
+
+
+def test_double_continuum_window_alternate():
+    """
+    Fit to no-noise spectrum comprised of a exponential continuum plus an emission Gaussian
+
+    This is the same test as above, but with a different form for the double window
+    specification.
+
+    """
+    x_single_continuum, y_single_continuum = single_peak_continuum(noise=0.,constant_continuum=False)
+    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+
+    # Smooth in the same way fit_generic_continuum does.
+    spectrum_smoothed = median_smooth(spectrum, 3)
+
+    # Test spectrum is comprised of an exponential continuum that increases sharply at the
+    # long wavelength end, plus a large-amplitude narrow Gaussian. We define the fitting
+    # window as a SpectralRegion with sub-regions at the blue and red halves of the spectrum,
+    # avoiding the Gaussian in between. The polynomial degree is high to accomodate the large
+    # amplitude range of the expoinential continuum.
+    region = [(0.*u.um, 5.*u.um), (8.* u.um, 10.* u.um)]
     g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
