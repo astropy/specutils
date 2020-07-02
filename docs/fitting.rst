@@ -678,6 +678,25 @@ fitted continuum, which returns a new object:
     plt.grid('on')
 
 
+When fitting over a specific wavelength region of a spectrum, one
+should use the `window` parameter to specify the region. This
+parameter accepts one single instance of a region. It is usually
+specified as a tuple of two wavelength values, but in cases where
+one wants to fit over multiple, disjoint regions, it is possible
+to pass to the parameter a single instance of a SpectralRegion.
+In this case, a Spectral Region can have multiple subregions, defined
+as a tuple of tuples in the constructor call:
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    region = SpectralRegion(((4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)))
+
+    fitted_continuum = fit_continuum(spectrum, model=Chebyshev1D(5), window=region)
+
+
 Reference/API
 -------------
 
