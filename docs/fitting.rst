@@ -692,11 +692,25 @@ as a tuple of tuples in the constructor call:
     :align: center
     :context: close-figs
 
-    from specutils.fitting import fit_continuum
+    import numpy as np
+
+    import astropy.units as u
+
+    from specutils.spectra.spectrum1d import Spectrum1D
+    from specutils.spectra import SpectralRegion
+    from specutils.fitting.continuum import fit_continuum
+
+    np.random.seed(0)
+    x = np.linspace(0., 10., 200)
+    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
+    y += np.random.normal(0., 0.2, x.shape)
+    y += 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+
+    spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
 
     region = SpectralRegion(((4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)))
 
-    fitted_continuum = fit_continuum(spectrum, model=Chebyshev1D(5), window=region)
+    fitted_continuum = fit_continuum(spectrum, window=region)
 
 
 Reference/API
