@@ -154,7 +154,7 @@ def test_continuum_window_no_noise():
 
 def test_constant_continuum_window():
     """
-    Fit to no-noise spectrum comprised of a constant continuum plus an emission Gaussian
+    Fit to no-noise spectrum comprised of a exponential continuum plus an emission Gaussian
     """
     x_single_continuum, y_single_continuum = single_peak_continuum(noise=0.,constant_continuum=False)
     spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
