@@ -692,6 +692,8 @@ as a tuple of tuples in the constructor call:
     :align: center
     :context: close-figs
 
+    from specutils.fitting import fit_continuum
+
     region = SpectralRegion(((4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)))
 
     fitted_continuum = fit_continuum(spectrum, model=Chebyshev1D(5), window=region)
