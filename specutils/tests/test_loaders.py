@@ -719,3 +719,51 @@ def test_2slaq_lrg_loader_science_and_sky():
     assert sky.spectral_axis.unit == u.AA
     assert sky.flux.unit == u.count / u.s
     assert sky.uncertainty is None
+
+
+@remote_access([
+    {'id': '3895436', 'filename': '000002.fits'},
+    {'id': '3895436', 'filename': '000003.fits'},
+    {'id': '3895436', 'filename': '000004.fits'},
+])
+def test_spectrum_list_2dfgrs_single(remote_data_path):
+    specs = SpectrumList.read(remote_data_path)
+
+    assert len(specs) == 1
+
+    for spec in specs:
+        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    specs = SpectrumList.read(hdulist, format="2dFGRS")
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+
+    assert len(specs) == 1
+
+    hdulist.close()
+
+
+@remote_access([{'id': '3895436', 'filename': '000001.fits'}])
+def test_spectrum_list_2dfgrs_multiple(remote_data_path):
+    specs = SpectrumList.read(remote_data_path)
+
+    assert len(specs) == 2
+
+    for spec in specs:
+        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+
+
+    # Read from HDUList object
+    hdulist = fits.open(remote_data_path)
+    specs = SpectrumList.read(hdulist, format="2dFGRS")
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+
+    assert len(specs) == 2
+
+    hdulist.close()
