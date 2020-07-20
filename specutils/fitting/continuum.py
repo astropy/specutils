@@ -7,7 +7,6 @@ from ..manipulation.smoothing import median_smooth
 from ..spectra import SpectralRegion
 
 
-
 __all__ = ['fit_continuum', 'fit_generic_continuum']
 
 
@@ -115,4 +114,3 @@ def _is_valid_sequence(value):
                isinstance(value[1], u.Quantity)
     else:
         return False
-
