@@ -115,3 +115,4 @@ def _is_valid_sequence(value):
                isinstance(value[1], u.Quantity)
     else:
         return False
+
