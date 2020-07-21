@@ -679,7 +679,7 @@ fitted continuum, which returns a new object:
 
 
 When fitting over a specific wavelength region of a spectrum, one
-should use the `window` parameter to specify the region. Windows
+should use the ``window`` parameter to specify the region. Windows
 can be comprisewd of more than one wavelength interval; each interval
 is specified by a sequence:
 
