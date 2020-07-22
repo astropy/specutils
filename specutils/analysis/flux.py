@@ -156,6 +156,13 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     else:
         calc_spectrum = spectrum
 
+    # Account for the existence of a mask.
+    if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
+        mask = calc_spectrum.mask
+        new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
+                              spectral_axis=calc_spectrum.spectral_axis[~mask])
+        return _compute_equivalent_width(new_spec, continuum=continuum)
+
     if continuum == 1:
         continuum = 1*calc_spectrum.flux.unit
 
