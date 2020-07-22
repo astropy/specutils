@@ -8,12 +8,11 @@ import sys
 from functools import wraps
 
 from astropy.io import registry as io_registry
-from astropy.utils.data import get_readable_fileobj
 
 from ..spectra import Spectrum1D, SpectrumList
 
 
-__all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension']
+__all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
@@ -172,7 +171,7 @@ def _load_user_io():
                     pass
 
 
-def identify_spectrum_format(filename, cache=False):
+def identify_spectrum_format(filename):
     """ Attempt to identify a spectrum file format
 
     Given a filename, attempts to identify a valid file format
@@ -184,8 +183,6 @@ def identify_spectrum_format(filename, cache=False):
     ----------
     filename : str
         The absolute filename to the object
-    cache : bool
-        If True, caches the readable file object
 
     Returns
     -------
@@ -198,20 +195,9 @@ def identify_spectrum_format(filename, cache=False):
     if not isinstance(filename, (str, pathlib.Path)) or not os.path.isfile(filename):
         raise ValueError(f'{filename} is not a valid string path to a file')
 
-    # open the file
-    ctx = None
-    try:
-        ctx = get_readable_fileobj(str(filename), encoding='binary', cache=cache)
-        stream = ctx.__enter__()
-    except OSError:
-        raise
-    finally:
-        if ctx:
-            ctx.__exit__(*sys.exc_info())
-
     # identify the file format
     valid_format = io_registry.identify_format(
-        'read', Spectrum1D, filename, stream, {}, {})
+        'read', Spectrum1D, filename, None, {}, {})
 
     if valid_format and len(valid_format) == 1:
         return valid_format[0]
