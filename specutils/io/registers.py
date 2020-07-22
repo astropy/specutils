@@ -5,7 +5,7 @@ import os
 import logging
 from functools import wraps
 
-from astropy.io import registry as io_registry
+from astropy.io import registry as io_registry, fits
 
 from ..spectra import Spectrum1D, SpectrumList
 
@@ -167,3 +167,33 @@ def _load_user_io():
                     import_module(file[:-3])
                 except ModuleNotFoundError:  # noqa
                     pass
+
+
+def identify_spectrum_format(filename):
+    """ Attempt to identify a spectrum file format
+
+    Given a filename, attempts to identify a valid file format
+    from the list of registered specutils loaders.  Essentially a wrapper for
+    `~astropy.io.registry.identify_format` setting origin to `read` and
+    data_class to `Spectrum1D`.
+
+    Parameters
+    ----------
+    filename : str
+        The absolute filename to the object
+
+    Returns
+    -------
+    valid_format : list | str
+        A list of valid file formats.  If only one valid format found, returns
+        just that element.
+
+    """
+    stream = fits.open(filename)
+    valid_format = io_registry.identify_format(
+        'read', Spectrum1D, filename, stream, {}, {})
+
+    if valid_format and len(valid_format) == 1:
+        return valid_format[0]
+
+    return valid_format
