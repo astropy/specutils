@@ -1,6 +1,5 @@
 
 
-from __future__ import print_function, division, absolute_import
 from astropy.io import fits
 import astropy.units as u
 from ...spectra import Spectrum1D

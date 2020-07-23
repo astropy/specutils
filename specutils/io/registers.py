@@ -176,8 +176,8 @@ def identify_spectrum_format(filename):
 
     Given a filename, attempts to identify a valid file format
     from the list of registered specutils loaders.  Essentially a wrapper for
-    `~astropy.io.registry.identify_format` setting origin to `read` and
-    data_class to `Spectrum1D`.
+    `~astropy.io.registry.identify_format` setting origin to ``read`` and
+    data_class to `~specutils.Spectrum1D`.
 
     Parameters
     ----------
@@ -186,7 +186,7 @@ def identify_spectrum_format(filename):
 
     Returns
     -------
-    valid_format : list | str
+    valid_format : list, str
         A list of valid file formats.  If only one valid format found, returns
         just that element.
 
