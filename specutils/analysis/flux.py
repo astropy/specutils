@@ -143,7 +143,7 @@ def _compute_line_flux(spectrum, regions=None,
 
         if variance_q is not None:
             line_flux.uncertainty = np.sqrt(
-                np.sum(variance_q * avg_dx**2))
+                np.sum(variance_q * dx**2))
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
