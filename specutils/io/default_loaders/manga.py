@@ -1,14 +1,3 @@
-# !/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Filename: manga.py
-# Project: default_loaders
-# Author: Brian Cherinka
-# Created: Tuesday, 21st July 2020 2:40:56 pm
-# License: BSD 3-clause "New" or "Revised" License
-# Copyright (c) 2020 Brian Cherinka
-# Last Modified: Tuesday, 21st July 2020 2:40:56 pm
-# Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
@@ -114,4 +103,3 @@ def _load_manga_spectra(hdulist, per_unit=None, transpose=None):
 
     return Spectrum1D(flux=flux, meta={'header': hdr}, spectral_axis=wave,
                       uncertainty=ivar)
-
