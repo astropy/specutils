@@ -117,7 +117,9 @@ def _compute_line_flux(spectrum, regions=None,
         mask = calc_spectrum.mask
         new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
                               spectral_axis=calc_spectrum.spectral_axis[~mask])
-        return _compute_line_flux(new_spec)
+        interpolator = mask_interpolation(extrapolation_treatment='zero_fill')
+        sp = interpolator(new_spec, calc_spectrum.spectral_axis)
+        flux = sp.flux
     else:
         flux = calc_spectrum.flux
 
