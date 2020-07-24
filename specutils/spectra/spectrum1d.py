@@ -231,7 +231,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             return self._copy(
                 flux=self.flux[item],
                 uncertainty=self.uncertainty[item]
-                if self.uncertainty is not None else None)
+                if self.uncertainty is not None else None,
+                mask=self.mask[item] if self.mask is not None else None)
 
         if not isinstance(item, slice):
             item = slice(item, item+1, None)
