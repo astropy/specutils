@@ -43,7 +43,7 @@ def identify_manga_rss(origin, *args, **kwargs):
 
 @data_loader("MaNGA cube", identifier=identify_manga_cube, dtype=Spectrum1D,
              extensions=['fits'])
-def manga_cube_loader(filename, **kwargs):
+def manga_cube_loader(file_obj, **kwargs):
     """
     Loader for MaNGA 3D rectified spectral data in FITS format.
 
@@ -58,14 +58,23 @@ def manga_cube_loader(filename, **kwargs):
         The spectrum contained in the file.
     """
 
-    with fits.open(filename, memmap=False) as hdulist:
-        spaxel = u.Unit('spaxel', represents=u.pixel, doc='0.5" spatial pixel', parse_strict='silent')
-        return _load_manga_spectra(hdulist, per_unit=spaxel, transpose=True)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
+
+    spaxel = u.Unit('spaxel', represents=u.pixel, doc='0.5" spatial pixel', parse_strict='silent')
+    spectrum = _load_manga_spectra(hdulist, per_unit=spaxel, transpose=True)
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
+
+    return spectrum
 
 
 @data_loader("MaNGA rss", identifier=identify_manga_rss, dtype=Spectrum1D,
              extensions=['fits'])
-def manga_rss_loader(filename, **kwargs):
+def manga_rss_loader(file_obj, **kwargs):
     """
     Loader for MaNGA 2D row-stacked spectral data in FITS format.
 
@@ -80,9 +89,18 @@ def manga_rss_loader(filename, **kwargs):
         The spectrum contained in the file.
     """
 
-    with fits.open(filename, memmap=False) as hdulist:
-        fiber = u.Unit('fiber', represents=u.pixel, doc='spectroscopic fiber', parse_strict='silent')
-        return _load_manga_spectra(hdulist, per_unit=fiber)
+    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist = file_obj
+    else:
+        hdulist = fits.open(file_obj, **kwargs)
+
+    fiber = u.Unit('fiber', represents=u.pixel, doc='spectroscopic fiber', parse_strict='silent')
+    spectrum = _load_manga_spectra(hdulist, per_unit=fiber)
+
+    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
+        hdulist.close()
+
+    return spectrum
 
 
 def _load_manga_spectra(hdulist, per_unit=None, transpose=None):
