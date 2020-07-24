@@ -114,9 +114,11 @@ def _load_manga_spectra(hdulist, per_unit=None, transpose=None):
     if transpose:
         flux = hdulist['FLUX'].data.T * unit
         ivar = InverseVariance(hdulist["IVAR"].data.T)
+        mask = hdulist['MASK'].data.T
     else:
         flux = hdulist['FLUX'].data * unit
         ivar = InverseVariance(hdulist["IVAR"].data)
+        mask = hdulist['MASK'].data
 
     return Spectrum1D(flux=flux, meta={'header': hdr}, spectral_axis=wave,
-                      uncertainty=ivar)
+                      uncertainty=ivar, mask=mask)
