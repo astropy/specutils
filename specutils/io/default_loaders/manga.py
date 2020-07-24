@@ -104,6 +104,27 @@ def manga_rss_loader(file_obj, **kwargs):
 
 
 def _load_manga_spectra(hdulist, per_unit=None, transpose=None):
+    """ Return a MaNGA Spectrum1D object
+
+    Returns a Spectrum1D object for a MaNGA data files.  Set
+    `transpose` kwarg to True for MaNGA cubes, as they are flipped relative
+    to what Spectrum1D expects.  Use the `per_unit` kwarg to indicate the
+    "spaxel" or "fiber" unit for cubes and rss files, respectively.
+
+    Parameters
+    ----------
+    hdulist : fits.HDUList
+        A MaNGA read astropy fits HDUList
+    per_unit : astropy.units.Unit
+        An astropy unit to divide the default flux unit by
+    transpose : bool
+        If True, transpose the data arrays
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file.
+    """
     unit = u.Unit('1e-17 erg / (Angstrom cm2 s)')
     if per_unit:
         unit = unit / per_unit
