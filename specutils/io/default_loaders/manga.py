@@ -135,11 +135,13 @@ def _load_manga_spectra(hdulist, per_unit=None, transpose=None):
     if transpose:
         flux = hdulist['FLUX'].data.T * unit
         ivar = InverseVariance(hdulist["IVAR"].data.T)
-        mask = hdulist['MASK'].data.T
+        # SDSS masks are arrays of bit values storing multiple boolean conditions.
+        # Setting non-zero bit values to True to map to specutils standard
+        mask = hdulist['MASK'].data.T != 0
     else:
         flux = hdulist['FLUX'].data * unit
         ivar = InverseVariance(hdulist["IVAR"].data)
-        mask = hdulist['MASK'].data
+        mask = hdulist['MASK'].data != 0
 
     return Spectrum1D(flux=flux, meta={'header': hdr}, spectral_axis=wave,
                       uncertainty=ivar, mask=mask)
