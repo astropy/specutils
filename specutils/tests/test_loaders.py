@@ -704,13 +704,11 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
 #     assert spec.uncertainty is None
 
 
-@pytest.mark.remote_data
-def test_2slaq_lrg_loader_science_and_sky():
+@remote_access([{'id': '3970324', 'filename': 'J143529.78-004306.4_1.fit'}])
+def test_2slaq_lrg_loader_science_and_sky(remote_data_path):
     """Test remote read and automatic recognition of 2SLAQ-LRG data from URL.
     """
-    url = ("https://datacentral.org.au/services/sov/81480/download/"
-           "gama.dr2.spectra.2slaq-lrg.spectrum_1d/J143529.78-004306.4_1.fit/")
-    science, sky = SpectrumList.read(url)
+    science, sky = SpectrumList.read(remote_data_path)
 
     assert science.spectral_axis.unit == u.AA
     assert science.flux.unit == u.count / u.s
