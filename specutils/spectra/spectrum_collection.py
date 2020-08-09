@@ -6,11 +6,12 @@ from astropy.nddata import NDUncertainty, StdDevUncertainty
 
 from .spectrum1d import Spectrum1D
 from ..extern.spectralcoord import SpectralCoord
+from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
 
 
-class SpectrumCollection:
+class SpectrumCollection(NDIOMixin):
     """
     A class to represent a heterogeneous set of spectra that are the same length
     but have different spectral axes. Spectra that meet this requirement can be
