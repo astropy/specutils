@@ -1,5 +1,6 @@
 import logging
 import warnings
+import _io
 
 from astropy import units as u
 from astropy.io import fits
@@ -17,22 +18,33 @@ __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
-    # args[0] = filename
-    # check if filename conforms to naming convention for writer
+    """
+    Check whether given input is FITS and has WCS definition of WCSDIM=1 in
+    specified (default primary) HDU. This is used for Astropy I/O Registry.
+    On writing check if filename conforms to naming convention for this format.
+    """
     if origin == 'write':
         return (args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) and not
                 hasattr(args[2], 'uncertainty'))
 
-    # check if file can be opened with this reader
-    with fits.open(args[0]) as hdulist:
-        hdu = kwargs.get('hdu', 0)
-        # check if number of axes is one
-        return (hdulist[hdu].header['NAXIS'] == 1 and
-                hdulist[hdu].header.get('WCSDIM', 1) == 1 and
-                # check in CTYPE1 key for linear solution
-                hdulist[hdu].header.get('CTYPE1', '').upper() != 'MULTISPEC')
+    if isinstance(args[2], fits.hdu.hdulist.HDUList):
+        hdulist = args[2]
+    elif isinstance(args[2], _io.BufferedReader):
+        hdulist = fits.open(args[2])
+    else:  # if isinstance(args[2], _io.FileIO):
+        hdulist = fits.open(args[0], **kwargs)
+    hdu = kwargs.get('hdu', 0)
 
-    return False
+    # Check if number of axes is one and dimension of WCS is one
+    is_wcs = (hdulist[hdu].header['NAXIS'] == 1 and
+              hdulist[hdu].header.get('WCSDIM', 1) == 1 and not
+              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF') and not
+              # Check in CTYPE1 key for linear solution (single spectral axis)
+              hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+
+    return is_wcs
 
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
@@ -146,8 +158,8 @@ def wcs1d_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     # Cannot include uncertainty in IMAGE_HDU - maybe provide option to
     # separately write this to BINARY_TBL extension later.
     if spectrum.uncertainty is not None:
-        message = "Saving uncertainties in wcs1d format is not yet supported!"
-        warnings.warn(message, AstropyUserWarning)
+        warnings.warn("Saving uncertainties in wcs1d format is not yet supported!",
+                      AstropyUserWarning)
 
     # Add flux array and unit
     ftype = kwargs.pop('dtype', spectrum.flux.dtype)
