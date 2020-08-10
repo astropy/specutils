@@ -290,13 +290,13 @@ def non_linear_multispec_fits(file_obj, **kwargs):
     spectral_axis_unit : `~astropy.Unit` or str, optional
         Spectral axis unit, default is None in which case will search for it
         in the header under the keyword 'WAT1_001'.
-        Note that if provided  this will *override* any units from the header.
+        Note that if provided this will *override* any units from the header.
 
     flux_unit : `~astropy.Unit` or str, optional
         Flux units, default is None. If not specified will attempt to read it
         using the keyword 'BUNIT' and if this keyword does not exist it will
         assume 'ADU'.
-        Note that if provided  this will *override* any units from the header.
+        Note that if provided this will *override* any units from the header.
 
     Returns
     -------
@@ -334,13 +334,13 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
     spectral_axis_unit : `~astropy.Unit` or str, optional
         Spectral axis unit, default is None in which case will search for it
         in the header under the keyword 'WAT1_001'.
-        Note that if provided  this will *override* any units from the header.
+        Note that if provided this will *override* any units from the header.
 
     flux_unit : `~astropy.Unit` or str, optional
         Flux units, default is None. If not specified will attempt to read it
         using the keyword 'BUNIT' and if this keyword does not exist it will
         assume 'ADU'.
-        Note that if provided  this will *override* any units from the header.
+        Note that if provided this will *override* any units from the header.
 
     Returns
     -------
