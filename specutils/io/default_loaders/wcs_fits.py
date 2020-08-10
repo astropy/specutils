@@ -38,7 +38,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
     # Check if number of axes is one and dimension of WCS is one
     is_wcs = (hdulist[hdu].header['NAXIS'] == 1 and
               hdulist[hdu].header.get('WCSDIM', 1) == 1 and not
-              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF') and not
+              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
               # Check in CTYPE1 key for linear solution (single spectral axis)
               hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
     if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
@@ -176,18 +176,34 @@ def wcs1d_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     hdulist.writeto(file_name, **kwargs)
 
 
-def identify_iraf_wcs(origin, *args):
-    """IRAF WCS identifier
-
-    The difference of this with respect to wcs1d is that this can work with
-    WCSDIM == 2
+def identify_iraf_wcs(origin, *args, **kwargs):
     """
-    with fits.open(args[0]) as hdulist:
-        return ('WAT1_001' in hdulist[0].header and not
-                (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
-                 hdulist[0].header['FIBERID'] > 0) and
-                (hdulist[0].header.get('WCSDIM', 1) > 1 or
-                 hdulist[0].header.get('CTYPE1', '').upper() == 'MULTISPEC'))
+    IRAF WCS identifier, checking whether input is FITS and has WCS definition
+    of WCSDIM=2 in specified (default primary) HDU.
+    The difference to wcs1d is that this format supports 2D WCS with non-linear
+    wavelength solutions. This is used for Astropy I/O Registry.
+    """
+    if isinstance(args[2], fits.hdu.hdulist.HDUList):
+        hdulist = args[2]
+    elif isinstance(args[2], _io.BufferedReader):
+        hdulist = fits.open(args[2])
+    else:
+        hdulist = fits.open(args[0], **kwargs)
+    hdu = kwargs.get('hdu', 0)
+
+    # Check if dimension of WCS is greater one.
+    is_wcs = ('WAT1_001' in hdulist[hdu].header and
+              'WAT2_001' in hdulist[hdu].header and not
+              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
+              (hdulist[hdu].header.get('TELESCOP', 't') == 'SDSS 2.5-M' and
+               hdulist[hdu].header.get('FIBERID', 0) > 0) and
+              (hdulist[hdu].header.get('WCSDIM', 1) > 1 or
+               hdulist[hdu].header.get('CTYPE1', '').upper().startswith('MULTISPE')))
+
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+
+    return is_wcs
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
