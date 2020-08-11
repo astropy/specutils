@@ -42,16 +42,16 @@ class SpectralRegion:
            The center of the spectral region.
 
         width : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The width of the spectral region.
+           The full width of the spectral region (upper bound - lower bound).
         """
 
         if width.value <= 0:
             raise ValueError('SpectralRegion width must be positive.')
 
         if center.unit.physical_type != 'length':
-            return cls(center + width, center - width)
+            return cls(center + width/2, center - width/2)
 
-        return cls(center - width, center + width)
+        return cls(center - width/2, center + width/2)
 
     def __init__(self, *args):
         """

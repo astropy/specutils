@@ -36,8 +36,8 @@ def test_from_center():
 
     # Spectral region from center with width
     sr = SpectralRegion.from_center(center=6563*u.AA, width=10*u.AA)
-    assert sr.lower == 6553.0*u.AA
-    assert sr.upper == 6573.0*u.AA
+    assert sr.lower == 6558.0*u.AA
+    assert sr.upper == 6568.0*u.AA
 
     # Check the exception if the width is negative.
     with pytest.raises(ValueError) as exc:
