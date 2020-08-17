@@ -1,21 +1,50 @@
 
-
-from astropy.io import fits
 import astropy.units as u
-from ...spectra import Spectrum1D
-from ..registers import data_loader
+from astropy.io import fits
 from astropy.nddata import InverseVariance
 
+import _io
+import contextlib
+from ...spectra import Spectrum1D
+from ..registers import data_loader
 
 __all__ = ["identify_manga_cube", "identify_manga_rss", "manga_cube_loader", "manga_rss_loader"]
 
 
-def _identify_sdss_fits(filename):
+@contextlib.contextmanager
+def _read_fileobj(*args, **kwargs):
+    """ Context manager for reading a filename or file object
+
+    Returns:
+        an Astropy HDUList
+    """
+    # access the fileobj or filename arg
+    # do this so identify functions are useable outside of Spectrum1d.read context
+    try:
+        fileobj = args[2]
+    except IndexError:
+        fileobj = args[0]
+
+    if isinstance(fileobj, fits.hdu.hdulist.HDUList):
+        hdulist = fileobj
+    elif isinstance(fileobj, _io.BufferedReader):
+        hdulist = fits.open(fileobj)
+    else:
+        hdulist = fits.open(fileobj, **kwargs)
+
+    yield hdulist
+
+    if not isinstance(fileobj, (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+
+
+def _identify_sdss_fits(*args, **kwargs):
     """
     Check whether the given file is a SDSS data product.
     """
+
     try:
-        with fits.open(filename, memmap=True) as hdulist:
+        with _read_fileobj(*args, **kwargs) as hdulist:
             return hdulist[0].header["TELESCOP"] == "SDSS 2.5-M"
     except Exception:
         return False
@@ -25,8 +54,9 @@ def identify_manga_cube(origin, *args, **kwargs):
     """
     Check whether the given file is a MaNGA CUBE.
     """
-    is_sdss = _identify_sdss_fits(args[0])
-    with fits.open(args[0], memmap=True) as hdulist:
+
+    is_sdss = _identify_sdss_fits(*args, **kwargs)
+    with _read_fileobj(*args, **kwargs) as hdulist:
         return (is_sdss and "FLUX" in hdulist and hdulist[1].header['INSTRUME'] == 'MaNGA'
                 and hdulist[1].header["NAXIS"] == 3)
 
@@ -35,8 +65,8 @@ def identify_manga_rss(origin, *args, **kwargs):
     """
     Check whether the given file is a MaNGA RSS.
     """
-    is_sdss = _identify_sdss_fits(args[0])
-    with fits.open(args[0], memmap=True) as hdulist:
+    is_sdss = _identify_sdss_fits(*args, **kwargs)
+    with _read_fileobj(*args, **kwargs) as hdulist:
         return (is_sdss and "FLUX" in hdulist and hdulist[1].header['INSTRUME'] == 'MaNGA'
                 and hdulist[1].header["NAXIS"] == 2)
 
