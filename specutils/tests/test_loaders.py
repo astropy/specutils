@@ -131,6 +131,28 @@ def test_hst_stis(remote_data_path):
 
 
 @pytest.mark.remote_data
+def test_manga_cube():
+    url = 'https://dr15.sdss.org/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
+    spec = Spectrum1D.read(url, format='MaNGA cube')
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.meta['header']['INSTRUME'] == 'MaNGA'
+    assert spec.shape == (34, 34, 4563)
+
+
+@pytest.mark.remote_data
+def test_manga_rss():
+    url = 'https://dr15.sdss.org/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGRSS.fits.gz'
+    spec = Spectrum1D.read(url, format='MaNGA rss')
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.meta['header']['INSTRUME'] == 'MaNGA'
+    assert spec.shape == (171, 4563)
+
+
+@pytest.mark.remote_data
 def test_sdss_spec():
     sp_pattern = 'spec-4055-55359-0596.fits.'
     with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
