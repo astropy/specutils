@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- Added writer to ``wcs1d-fits`` and support for multi-D flux arrays with
+  1D WCS (identical ``spectral_axis`` scale). [#632]
+
 Bug Fixes
 ^^^^^^^^^
 

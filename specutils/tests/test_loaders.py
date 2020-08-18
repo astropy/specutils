@@ -14,11 +14,11 @@ from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy.units import UnitsWarning
-from astropy.wcs import FITSFixedWarning
+from astropy.wcs import FITSFixedWarning, WCS
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
-from astropy.nddata import NDUncertainty, StdDevUncertainty
+from astropy.nddata import StdDevUncertainty
 
 from numpy.testing import assert_allclose
 
@@ -81,15 +81,15 @@ def test_ctypye_not_compliant(remote_data_path, caplog):
 
 def test_generic_ecsv_reader(tmpdir):
     # Create a small data set
-    wave = np.arange(1,1.1,0.01)*u.AA
+    wave = np.arange(1, 1.1, 0.01)*u.AA
     flux = np.ones(len(wave))*1.e-14*u.Jy
     uncertainty = 0.01*flux
-    table = Table([wave,flux,uncertainty],names=["wave","flux","uncertainty"])
+    table = Table([wave, flux, uncertainty], names=["wave", "flux", "uncertainty"])
     tmpfile = str(tmpdir.join('_tst.ecsv'))
-    table.write(tmpfile,format='ascii.ecsv')
+    table.write(tmpfile, format='ascii.ecsv')
 
     # Read it in and check against the original
-    spectrum = Spectrum1D.read(tmpfile,format='ECSV')
+    spectrum = Spectrum1D.read(tmpfile, format='ECSV')
     assert spectrum.spectral_axis.unit == table['wave'].unit
     assert spectrum.flux.unit == table['flux'].unit
     assert spectrum.uncertainty.unit == table['uncertainty'].unit
@@ -114,7 +114,7 @@ def test_hst_cos(remote_data_path):
     assert spec.flux.size > 0
 
 
-@remote_access([{'id': '1481192', 'filename':'STIS_FUV.fits'},
+@remote_access([{'id': '1481192', 'filename': 'STIS_FUV.fits'},
                 {'id': '1481185', 'filename': 'STIS_NUV.fits'},
                 {'id': '1481183', 'filename': 'STIS_CCD.fits'}])
 def test_hst_stis(remote_data_path):
@@ -324,7 +324,7 @@ def test_no_reader_matches(name):
             spec = Spectrum1D.read(filename)
 
 
-@remote_access([{'id':'3359174', 'filename':'linear_fits_solution.fits'}])
+@remote_access([{'id': '3359174', 'filename': 'linear_fits_solution.fits'}])
 def test_iraf_linear(remote_data_path):
 
     spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
@@ -337,14 +337,14 @@ def test_iraf_linear(remote_data_path):
                              u.Quantity(0.653432383823 * 100, unit='Angstrom'))
 
 
-@remote_access([{'id':'3359180', 'filename':'log-linear_fits_solution.fits'}])
+@remote_access([{'id': '3359180', 'filename': 'log-linear_fits_solution.fits'}])
 def test_iraf_log_linear(remote_data_path):
 
     with pytest.raises(NotImplementedError):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
 
-@remote_access([{'id':'3359190', 'filename':'non-linear_fits_solution_cheb.fits'}])
+@remote_access([{'id': '3359190', 'filename': 'non-linear_fits_solution_cheb.fits'}])
 def test_iraf_non_linear_chebyshev(remote_data_path):
     chebyshev_model = models.Chebyshev1D(degree=2, domain=[1616, 3259])
     chebyshev_model.c0.value = 5115.64008186
@@ -382,14 +382,14 @@ def test_iraf_non_linear_legendre(remote_data_path):
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
 
-@remote_access([{'id':'3359196', 'filename':'non-linear_fits_solution_linear-spline.fits'}])
+@remote_access([{'id': '3359196', 'filename': 'non-linear_fits_solution_linear-spline.fits'}])
 def test_iraf_non_linear_linear_spline(remote_data_path):
 
     with pytest.raises(NotImplementedError):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
 
-@remote_access([{'id':'3359200', 'filename':'non-linear_fits_solution_cubic-spline.fits'}])
+@remote_access([{'id': '3359200', 'filename': 'non-linear_fits_solution_cubic-spline.fits'}])
 def test_iraf_non_linear_cubic_spline(remote_data_path):
 
     with pytest.raises(NotImplementedError):
@@ -514,6 +514,168 @@ def test_tabular_fits_header(tmpdir):
     assert 'OBSDATE' not in hdulist[0].header
     assert 'OBSDATE' not in hdulist[1].header
     hdulist.close()
+
+
+def test_tabular_fits_autowrite(tmpdir):
+    """Test writing of Spectrum1D with automatic selection of BINTABLE format."""
+    disp = np.linspace(1, 1.2, 21) * u.AA
+    flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.W / (u.m**2 * u.AA)
+    hdr = fits.header.Header({'TELESCOP': 'Leviathan', 'APERTURE': 1.8,
+                              'OBSERVER': 'Parsons', 'NAXIS': 1, 'NAXIS1': 8})
+
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile)
+
+    # Read it in and check against the original
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[0].header['NAXIS'] == 0
+        assert hdulist[1].header['NAXIS'] == 2
+        assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+
+    # Trigger exception for illegal HDU (primary HDU only accepts IMAGE_HDU)
+    with pytest.raises(ValueError, match=r'FITS does not support BINTABLE'):
+        spectrum.write(tmpfile, format='tabular-fits', overwrite=True, hdu=0)
+
+    # Test automatic selection of wcs1d format, which will fail without suitable wcs
+    with pytest.raises(ValueError, match=r'Only Spectrum1D objects with valid WCS'):
+        spectrum.write(tmpfile, overwrite=True, hdu=0)
+
+    tmpfile = str(tmpdir.join('_wcs.fits'))
+    with pytest.raises(ValueError, match=r'Only Spectrum1D objects with valid WCS'):
+        spectrum.write(tmpfile, overwrite=True)
+
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_wcs1d_fits_writer(tmpdir, spectral_axis):
+    """Test write/read for Spectrum1D with WCS-constructed spectral_axis."""
+    wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
+               'wavenumber': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + len(flux[1:]) * dwl, dwl) * wlu
+
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, hdu=0)
+
+    # Read it in and check against the original
+    spec = Spectrum1D.read(tmpfile)
+    assert spec.flux.unit == spectrum.flux.unit
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.spectral_axis, disp)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+
+    # Read from HDUList
+    hdulist = fits.open(tmpfile)
+    spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+    assert isinstance(spec, Spectrum1D)
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+
+
+@pytest.mark.parametrize("hdu", range(3))
+def test_wcs1d_fits_hdus(tmpdir, hdu):
+    """Test writing of Spectrum1D in WCS1D format to different IMAGE_HDUs."""
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': 'wavelength', 'CUNIT1': 'um',
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flu = u.W / (u.m**2 * u.nm)
+    flux = np.arange(1, 11)**2 * 1.e-14 * flu
+
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, hdu=hdu, format='wcs1d-fits')
+
+    # Read it in and check against the original
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[hdu].is_image
+        assert hdulist[hdu].header['NAXIS'] == 1
+        assert hdulist[hdu].header['NAXIS1'] == flux.shape[0]
+        assert u.Unit(hdulist[hdu].header['CUNIT1']) == u.Unit(hdr['CUNIT1'])
+        assert quantity_allclose(hdulist[hdu].data * flu, flux)
+
+    # Test again with automatic format selection by filename pattern
+    tmpfile = str(tmpdir.join('_wcs.fits'))
+    spectrum.write(tmpfile, hdu=hdu)
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[hdu].is_image
+        assert quantity_allclose(hdulist[hdu].data * flu, flux)
+
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['wavelength', 'frequency', 'energy', 'wavenumber'])
+def test_wcs1d_fits_multid(tmpdir, spectral_axis):
+    """Test spectrum with WCS-1D spectral_axis and higher dimension in flux."""
+    wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
+               'wavenumber': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + len(flux[1:]) * dwl, dwl) * wlu
+
+    # Construct up to 4D flux array, write and read (no auto-identify)
+    shape = [-1, 1]
+    for i in range(2, 5):
+        flux = flux * np.arange(i, i+5).reshape(*shape)
+        spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+        tmpfile = str(tmpdir.join(f'_{i}d.fits'))
+        spectrum.write(tmpfile, format='wcs1d-fits')
+
+        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
+        assert spec.flux.ndim == i
+        assert quantity_allclose(spec.spectral_axis, disp)
+        assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+        assert quantity_allclose(spec.flux, spectrum.flux)
+        shape.append(1)
+
+    # Test exception for NAXIS > 4
+    flux = flux * np.arange(i+1, i+6).reshape(*shape)
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join(f'_{i+1}d.fits'))
+    spectrum.write(tmpfile, format='wcs1d-fits')
+
+    with pytest.raises(ValueError, match='input to wcs1d_fits_loader is > 4D'):
+        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
+
+
+@pytest.mark.parametrize("spectral_axis", ['wavelength', 'frequency'])
+def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
+    """Test exception on trying to load FITS with 2D flux and irreducible WCS
+    spectral_axis.
+    """
+    wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
+               'wavenumber': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small 2D data set
+    flux = np.arange(1, 11)**2 * np.arange(4).reshape(-1, 1) * 1.e-14 * u.Jy
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join(f'_{2}d.fits'))
+    spectrum.write(tmpfile, format='wcs1d-fits')
+
+    # Reopen file and update header with off-diagonal element
+    hdulist = fits.open(tmpfile, mode='update')
+    hdulist[0].header.update([('PC1_2', 0.2)])
+    hdulist.close()
+
+    with pytest.raises(ValueError, match='WCS cannot be reduced to 1D'):
+        Spectrum1D.read(tmpfile, format='wcs1d-fits')
 
 
 @pytest.mark.remote_data

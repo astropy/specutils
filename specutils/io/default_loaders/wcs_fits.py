@@ -1,36 +1,61 @@
 import logging
-import os
+import warnings
+import _io
 
 from astropy import units as u
 from astropy.io import fits
-from astropy.wcs import WCS
-from astropy.modeling import models, fitting
+from astropy.wcs import WCS, _wcs
+from astropy.modeling import models
+from astropy.utils.exceptions import AstropyUserWarning
 
+import numpy as np
 import shlex
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader
+from ..registers import data_loader, custom_writer
 
 __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
-    # check if file can be opened with this reader
-    # args[0] = filename
-    with fits.open(args[0]) as hdulist:
-        # check if number of axes is one
-        return (hdulist[0].header['NAXIS'] == 1 and
-                hdulist[0].header.get('WCSDIM', 1) == 1 and
-                # check in CTYPE1 key for linear solution
-                hdulist[0].header.get('CTYPE1', '').upper() != 'MULTISPEC')
+    """
+    Check whether given input is FITS and has WCS definition of WCSDIM=1 in
+    specified (default primary) HDU. This is used for Astropy I/O Registry.
+    On writing check if filename conforms to naming convention for this format.
+    """
+    whdu = kwargs.get('hdu', 1)
+    # Default FITS format is BINTABLE in 1st extension HDU, unless IMAGE is
+    # indicated via naming pattern or (explicitly) selecting primary HDU.
+    if origin == 'write':
+        return ((args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) or
+                 (args[0].endswith(('.fits', '.fit')) and whdu == 0)) and not
+                hasattr(args[2], 'uncertainty'))
 
-    return False
+    hdu = kwargs.get('hdu', 0)
+    if isinstance(args[2], fits.hdu.hdulist.HDUList):
+        hdulist = args[2]
+    elif isinstance(args[2], _io.BufferedReader):
+        hdulist = fits.open(args[2])
+    else:  # if isinstance(args[2], _io.FileIO):
+        hdulist = fits.open(args[0], **kwargs)
+
+    # Check if number of axes is one and dimension of WCS is one
+    is_wcs = (hdulist[hdu].header.get('WCSDIM', 1) == 1 and
+              (hdulist[hdu].header['NAXIS'] == 1 or
+              hdulist[hdu].header.get('WCSAXES', 0) == 1 )and not
+              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
+              # Check in CTYPE1 key for linear solution (single spectral axis)
+              hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+
+    return is_wcs
 
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
-             dtype=Spectrum1D, extensions=['fits'])
+             dtype=Spectrum1D, extensions=['fits', 'fit'], priority=5)
 def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
-                      hdu_idx=0, **kwargs):
+                      hdu=0, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
     axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
@@ -44,13 +69,13 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         or HDUList (as resulting from astropy.io.fits.open()).
     spectral_axis_unit: str or `~astropy.Unit`, optional
         Units of the spectral axis. If not given (or None), the unit will be
-        inferred from the CUNIT in the WCS.  Not that if this is providded it
+        inferred from the CUNIT in the WCS. Note that if this is provided it
         will *override* any units the CUNIT provides.
     flux_unit: str or `~astropy.Unit`, optional
         Units of the flux for this spectrum. If not given (or None), the unit
         will be inferred from the BUNIT keyword in the header. Note that this
         unit will attempt to convert from BUNIT if BUNIT is present
-    hdu_idx : int
+    hdu : int
         The index of the HDU to load into this spectrum.
 
     Notes
@@ -64,18 +89,15 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     else:
         hdulist = fits.open(file_obj, **kwargs)
 
-    header = hdulist[hdu_idx].header
+    header = hdulist[hdu].header
     wcs = WCS(header)
 
-    if wcs.naxis != 1:
-        raise ValueError('FITS fle input to wcs1d_fits_loader is not 1D')
-
     if 'BUNIT' in header:
-        data = u.Quantity(hdulist[hdu_idx].data, unit=header['BUNIT'])
+        data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
         if flux_unit is not None:
             data = data.to(flux_unit)
     else:
-        data = u.Quantity(hdulist[hdu_idx].data, unit=flux_unit)
+        data = u.Quantity(hdulist[hdu].data, unit=flux_unit)
 
     if spectral_axis_unit is not None:
         wcs.wcs.cunit[0] = str(spectral_axis_unit)
@@ -85,21 +107,115 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist.close()
 
+        if wcs.naxis > 4:
+            raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
+        elif wcs.naxis > 1:
+            for i in range(wcs.naxis - 1, 0, -1):
+                try:
+                    wcs = wcs.dropaxis(i)
+                except(_wcs.NonseparableSubimageCoordinateSystemError) as e:
+                    raise ValueError(f'WCS cannot be reduced to 1D: {e} {wcs}')
+
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
 
 
-def identify_iraf_wcs(origin, *args):
-    """IRAF WCS identifier
-
-    The difference of this with respect to wcs1d is that this can work with
-    WCSDIM == 2
+@custom_writer("wcs1d-fits")
+def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs):
     """
-    with fits.open(args[0]) as hdulist:
-        return ('WAT1_001' in hdulist[0].header and not
-                (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
-                 hdulist[0].header['FIBERID'] > 0) and
-                (hdu[0].header.get('WCSDIM', 1) > 1 or
-                 hdu[0].header.get('CTYPE1', '').upper() == 'MULTISPEC'))
+    Write spectrum with spectral axis defined by its WCS to (primary)
+    IMAGE_HDU of a FITS file.
+
+    Parameters
+    ----------
+    spectrum: Spectrum1D
+    file_name: str
+        The path to the FITS file
+    hdu: int
+        Header Data Unit in FITS file to write to (base 0; default primary HDU)
+    update_header: bool
+        Update FITS header with all compatible entries in `spectrum.meta`
+    unit : str or `~astropy.units.Unit`
+        Unit for the flux (and associated uncertainty)
+    dtype : str or `~numpy.dtype`
+        Floating point type for storing flux array
+    """
+    # Create HDU list from WCS
+    try:
+        wcs = spectrum.wcs
+        hdulist = wcs.to_fits()
+        header = hdulist[0].header
+    except AttributeError as err:
+        raise ValueError(f'Only Spectrum1D objects with valid WCS can be written as wcs1d: {err}')
+
+    # Verify spectral axis constructed from WCS
+    wl = spectrum.spectral_axis
+    dwl = (wcs.all_pix2world(np.arange(len(wl)), 0) - wl.value) / wl.value
+    if np.abs(dwl).max() > 1.e-10:
+        m = np.abs(dwl).argmax()
+        raise ValueError('Relative difference between WCS spectral axis and'
+                         f'spectral_axis at {m:}: dwl[m]')
+
+    if update_header:
+        hdr_types = (str, int, float, complex, bool,
+                     np.floating, np.integer, np.complexfloating, np.bool_)
+        header.update([keyword for keyword in spectrum.meta.items() if
+                       (isinstance(keyword[1], hdr_types) and
+                        keyword[0] not in ('NAXIS', 'NAXIS1', 'NAXIS2'))])
+
+    # Cannot include uncertainty in IMAGE_HDU - maybe provide option to
+    # separately write this to BINARY_TBL extension later.
+    if spectrum.uncertainty is not None:
+        warnings.warn("Saving uncertainties in wcs1d format is not yet supported!",
+                      AstropyUserWarning)
+
+    # Add flux array and unit
+    ftype = kwargs.pop('dtype', spectrum.flux.dtype)
+    funit = u.Unit(kwargs.pop('unit', spectrum.flux.unit))
+    flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(wl))
+    hdulist[0].data = flux.value.astype(ftype)
+
+    if hasattr(funit, 'long_names') and len(funit.long_names) > 0:
+        comment = f'[{funit.long_names[0]}] {funit.physical_type}'
+    else:
+        comment = f'[{funit.to_string()}] {funit.physical_type}'
+    header.insert('CRPIX1', card=('BUNIT', f'{funit}', comment))
+
+    # If hdu > 0 selected, prepend empty HDUs
+    # Todo: implement `update` mode to write to existing files
+    while len(hdulist) < hdu + 1:
+        hdulist.insert(0, fits.ImageHDU())
+
+    hdulist.writeto(file_name, **kwargs)
+
+
+def identify_iraf_wcs(origin, *args, **kwargs):
+    """
+    IRAF WCS identifier, checking whether input is FITS and has WCS definition
+    of WCSDIM=2 in specified (default primary) HDU.
+    The difference to wcs1d is that this format supports 2D WCS with non-linear
+    wavelength solutions. This is used for Astropy I/O Registry.
+    """
+    if isinstance(args[2], fits.hdu.hdulist.HDUList):
+        hdulist = args[2]
+    elif isinstance(args[2], _io.BufferedReader):
+        hdulist = fits.open(args[2])
+    else:
+        hdulist = fits.open(args[0], **kwargs)
+    hdu = kwargs.get('hdu', 0)
+
+    # Check if dimension of WCS is greater one.
+    is_wcs = ('WAT1_001' in hdulist[hdu].header and
+              'WAT2_001' in hdulist[hdu].header and not
+              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
+              (hdulist[hdu].header.get('TELESCOP', 't') == 'SDSS 2.5-M' and
+               hdulist[hdu].header.get('FIBERID', 0) > 0) and
+              (hdulist[hdu].header.get('WCSDIM', 1) > 1 or
+               hdulist[hdu].header.get('CTYPE1', '').upper().startswith('MULTISPE')))
+
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+
+    return is_wcs
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
@@ -144,7 +260,7 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
         ctypen = header['CTYPE{:d}'.format(wcsdim)]
         if ctypen == 'LINEAR':
             logging.info("linear Solution: Try using "
-                             "`format='wcs1d-fits'` instead")
+                         "`format='wcs1d-fits'` instead")
             wcs = WCS(header)
             spectral_axis = _read_linear_iraf_wcs(wcs=wcs,
                                                   dc_flag=header['DC-FLAG'])
@@ -399,8 +515,7 @@ def _none():
         A mathematical model instance of `~astropy.modeling.models.Linear1D`
         with slope 1 and intercept 0.
     """
-    model = models.Linear1D(slope=1,
-                            intercept=0)
+    model = models.Linear1D(slope=1, intercept=0)
     return model
 
 
@@ -408,11 +523,8 @@ def _linear_solution(wcs_dict):
     """Constructs a Linear1D model based on the WCS information obtained
     from the header.
     """
-    intercept = wcs_dict['crval'] - \
-                (wcs_dict['crpix'] - 1) * \
-                wcs_dict['cdelt']
-    model = models.Linear1D(slope=wcs_dict['cdelt'],
-                            intercept=intercept)
+    intercept = wcs_dict['crval'] - (wcs_dict['crpix'] - 1) * wcs_dict['cdelt']
+    model = models.Linear1D(slope=wcs_dict['cdelt'], intercept=intercept)
 
     return model
 
@@ -448,8 +560,7 @@ def _chebyshev(wcs_dict):
 
     """
     model = models.Chebyshev1D(degree=wcs_dict['order'] - 1,
-                               domain=[wcs_dict['pmin'],
-                                       wcs_dict['pmax']], )
+                               domain=[wcs_dict['pmin'], wcs_dict['pmax']], )
 
     new_params = [wcs_dict['fpar'][i] for i in range(wcs_dict['order'])]
     model.parameters = new_params
@@ -476,8 +587,7 @@ def _non_linear_legendre(wcs_dict):
 
     """
     model = models.Legendre1D(degree=wcs_dict['order'] - 1,
-                              domain=[wcs_dict['pmin'],
-                                      wcs_dict['pmax']], )
+                              domain=[wcs_dict['pmin'], wcs_dict['pmax']], )
 
     new_params = [wcs_dict['fpar'][i] for i in range(wcs_dict['order'])]
     model.parameters = new_params
