@@ -23,21 +23,26 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
     specified (default primary) HDU. This is used for Astropy I/O Registry.
     On writing check if filename conforms to naming convention for this format.
     """
+    whdu = kwargs.get('hdu', 1)
+    # Default FITS format is BINTABLE in 1st extension HDU, unless IMAGE is
+    # indicated via naming pattern or (explicitly) selecting primary HDU.
     if origin == 'write':
-        return (args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) and not
+        return ((args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) or
+                 (args[0].endswith(('.fits', '.fit')) and whdu == 0)) and not
                 hasattr(args[2], 'uncertainty'))
 
+    hdu = kwargs.get('hdu', 0)
     if isinstance(args[2], fits.hdu.hdulist.HDUList):
         hdulist = args[2]
     elif isinstance(args[2], _io.BufferedReader):
         hdulist = fits.open(args[2])
     else:  # if isinstance(args[2], _io.FileIO):
         hdulist = fits.open(args[0], **kwargs)
-    hdu = kwargs.get('hdu', 0)
 
     # Check if number of axes is one and dimension of WCS is one
-    is_wcs = (hdulist[hdu].header['NAXIS'] == 1 and
-              hdulist[hdu].header.get('WCSDIM', 1) == 1 and not
+    is_wcs = (hdulist[hdu].header.get('WCSDIM', 1) == 1 and
+              (hdulist[hdu].header['NAXIS'] == 1 or
+              hdulist[hdu].header.get('WCSAXES', 0) == 1 )and not
               hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
               # Check in CTYPE1 key for linear solution (single spectral axis)
               hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
@@ -48,7 +53,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
-             dtype=Spectrum1D, extensions=['fits'], priority=5)
+             dtype=Spectrum1D, extensions=['fits', 'fit'], priority=5)
 def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
                       hdu=0, **kwargs):
     """
@@ -64,7 +69,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         or HDUList (as resulting from astropy.io.fits.open()).
     spectral_axis_unit: str or `~astropy.Unit`, optional
         Units of the spectral axis. If not given (or None), the unit will be
-        inferred from the CUNIT in the WCS.  Note that if this is provided it
+        inferred from the CUNIT in the WCS. Note that if this is provided it
         will *override* any units the CUNIT provides.
     flux_unit: str or `~astropy.Unit`, optional
         Units of the flux for this spectrum. If not given (or None), the unit
@@ -115,7 +120,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
 
 @custom_writer("wcs1d-fits")
-def wcs1d_fits_writer(spectrum, file_name, update_header=False, **kwargs):
+def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs):
     """
     Write spectrum with spectral axis defined by its WCS to (primary)
     IMAGE_HDU of a FITS file.
@@ -125,6 +130,8 @@ def wcs1d_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     spectrum: Spectrum1D
     file_name: str
         The path to the FITS file
+    hdu: int
+        Header Data Unit in FITS file to write to (base 0; default primary HDU)
     update_header: bool
         Update FITS header with all compatible entries in `spectrum.meta`
     unit : str or `~astropy.units.Unit`
@@ -172,6 +179,11 @@ def wcs1d_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     else:
         comment = f'[{funit.to_string()}] {funit.physical_type}'
     header.insert('CRPIX1', card=('BUNIT', f'{funit}', comment))
+
+    # If hdu > 0 selected, prepend empty HDUs
+    # Todo: implement `update` mode to write to existing files
+    while len(hdulist) < hdu + 1:
+        hdulist.insert(0, fits.ImageHDU())
 
     hdulist.writeto(file_name, **kwargs)
 

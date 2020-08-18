@@ -454,6 +454,36 @@ def test_tabular_fits_header(tmpdir):
     hdulist.close()
 
 
+def test_tabular_fits_autowrite(tmpdir):
+    """Test writing of Spectrum1D with automatic selection of BINTABLE format."""
+    disp = np.linspace(1, 1.2, 21) * u.AA
+    flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.W / (u.m**2 * u.AA)
+    hdr = fits.header.Header({'TELESCOP': 'Leviathan', 'APERTURE': 1.8,
+                              'OBSERVER': 'Parsons', 'NAXIS': 1, 'NAXIS1': 8})
+
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile)
+
+    # Read it in and check against the original
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[0].header['NAXIS'] == 0
+        assert hdulist[1].header['NAXIS'] == 2
+        assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+
+    # Trigger exception for illegal HDU (primary HDU only accepts IMAGE_HDU)
+    with pytest.raises(ValueError, match=r'FITS does not support BINTABLE'):
+        spectrum.write(tmpfile, format='tabular-fits', overwrite=True, hdu=0)
+
+    # Test automatic selection of wcs1d format, which will fail without suitable wcs
+    with pytest.raises(ValueError, match=r'Only Spectrum1D objects with valid WCS'):
+        spectrum.write(tmpfile, overwrite=True, hdu=0)
+
+    tmpfile = str(tmpdir.join('_wcs.fits'))
+    with pytest.raises(ValueError, match=r'Only Spectrum1D objects with valid WCS'):
+        spectrum.write(tmpfile, overwrite=True)
+
+
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
 def test_wcs1d_fits_writer(tmpdir, spectral_axis):
@@ -472,7 +502,7 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
 
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
     tmpfile = str(tmpdir.join('_tst.fits'))
-    spectrum.write(tmpfile, format='wcs1d-fits')
+    spectrum.write(tmpfile, hdu=0)
 
     # Read it in and check against the original
     spec = Spectrum1D.read(tmpfile)
@@ -488,6 +518,36 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     assert isinstance(spec, Spectrum1D)
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
+
+
+@pytest.mark.parametrize("hdu", range(3))
+def test_wcs1d_fits_hdus(tmpdir, hdu):
+    """Test writing of Spectrum1D in WCS1D format to different IMAGE_HDUs."""
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': 'wavelength', 'CUNIT1': 'um',
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flu = u.W / (u.m**2 * u.nm)
+    flux = np.arange(1, 11)**2 * 1.e-14 * flu
+
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, hdu=hdu, format='wcs1d-fits')
+
+    # Read it in and check against the original
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[hdu].is_image
+        assert hdulist[hdu].header['NAXIS'] == 1
+        assert hdulist[hdu].header['NAXIS1'] == flux.shape[0]
+        assert u.Unit(hdulist[hdu].header['CUNIT1']) == u.Unit(hdr['CUNIT1'])
+        assert quantity_allclose(hdulist[hdu].data * flu, flux)
+
+    # Test again with automatic format selection by filename pattern
+    tmpfile = str(tmpdir.join('_wcs.fits'))
+    spectrum.write(tmpfile, hdu=hdu)
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[hdu].is_image
+        assert quantity_allclose(hdulist[hdu].data * flu, flux)
 
 
 @pytest.mark.parametrize("spectral_axis",

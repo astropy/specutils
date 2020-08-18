@@ -1,5 +1,6 @@
 import logging
 import os
+import _io
 
 import numpy as np
 
@@ -18,28 +19,41 @@ __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 
 def identify_tabular_fits(origin, *args, **kwargs):
     # args[0] = filename
-    # check if filename conforms to naming convention for writer
+    hdu = kwargs.get('hdu', 1)
+    # Check if filename conforms to naming convention and writer has not been
+    # asked to write to primary (IMAGE-only) HDU
     if origin == 'write':
-        return args[0].endswith(('.fits', '.fit'))
+        return (hdu > 0 and args[0].endswith(('.fits', '.fit')) and not
+                args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')))
 
-    # check if file can be opened with this reader
-    with fits.open(args[0]) as hdulist:
-        # Test if fits has extension of type BinTable and check against
-        # known keys of already defined specific formats
-        return (len(hdulist) > 1 and
-                isinstance(hdulist[1], fits.BinTableHDU) and not
-                (fits.getheader(args[0]).get('TELESCOP') == 'MULTI' and
-                 fits.getheader(args[0]).get('HLSPACRN') == 'MUSCLES' and
-                 fits.getheader(args[0]).get('PROPOSID') == 13650) and not
-                (fits.getheader(args[0]).get('TELESCOP') == 'SDSS 2.5-M' and
-                 fits.getheader(args[0]).get('FIBERID') > 0) and not
-                (fits.getheader(args[0]).get('TELESCOP') == 'HST' and
-                 fits.getheader(args[0]).get('INSTRUME') in ('COS', 'STIS')) and not
-                fits.getheader(args[0]).get('TELESCOP') == 'JWST')
+    if isinstance(args[2], fits.hdu.hdulist.HDUList):
+        hdulist = args[2]
+    elif isinstance(args[2], _io.BufferedReader):
+        hdulist = fits.open(args[2])
+    else:  # if isinstance(args[2], _io.FileIO):
+        hdulist = fits.open(args[0], **kwargs)
+
+    # Test if fits has extension of type BinTable and check against
+    # known keys of already defined specific formats
+    is_tab = (len(hdulist) > 1 and
+              isinstance(hdulist[hdu], fits.BinTableHDU) and not
+              (hdulist[0].header.get('TELESCOP') == 'MULTI' and
+               hdulist[0].header.get('HLSPACRN') == 'MUSCLES' and
+               hdulist[0].header.get('PROPOSID') == 13650) and not
+              (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
+               hdulist[0].header.get('FIBERID') > 0) and not
+              (hdulist[0].header.get('TELESCOP') == 'HST' and
+               hdulist[0].header.get('INSTRUME') in ('COS', 'STIS')) and not
+              hdulist[0].header.get('TELESCOP') == 'JWST')
+
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
+
+    return is_tab
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
-             dtype=Spectrum1D, extensions=['fits'], priority=6)
+             dtype=Spectrum1D, extensions=['fits', 'fit'], priority=6)
 def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     Load spectrum from a FITS file.
@@ -92,7 +106,7 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
 
 
 @custom_writer("tabular-fits")
-def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
+def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwargs):
     """
     Write spectrum to BINTABLE extension of a FITS file.
 
@@ -101,6 +115,8 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     spectrum: Spectrum1D
     file_name: str
         The path to the FITS file
+    hdu: int
+        Header Data Unit in FITS file to write to (currently only extension HDU 1)
     update_header: bool
         Update FITS header with all compatible entries in `spectrum.meta`
     wunit : str or `~astropy.units.Unit`
@@ -112,6 +128,9 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
     ftype : str or `~numpy.dtype`
         Floating point type for storing flux array
     """
+    if hdu < 1:
+        raise ValueError(f'FITS does not support BINTABLE extension in HDU {hdu}.')
+
     header = spectrum.meta.get('header', fits.header.Header()).copy()
 
     if update_header:
@@ -163,4 +182,6 @@ def tabular_fits_writer(spectrum, file_name, update_header=False, **kwargs):
 
     tab = Table(columns, names=colnames, meta=header)
 
+    # Todo: support writing to other HDUs than the default (1st)
+    #       and an 'update' mode so different HDUs can be written to separately
     tab.write(file_name, format="fits", **kwargs)
