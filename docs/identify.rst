@@ -26,7 +26,7 @@ An example is given to identify a SDSS MaNGA data cube file:
     >>> from specutils.io.registers import identify_spectrum_format
     >>>
     >>> url='https://dr15.sdss.org/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
-    >>> dd = download_file(url)
+    >>> dd = download_file(url)  # doctest: +SKIP
     >>> identify_spectrum_format(dd)
     'MaNGA cube'
 

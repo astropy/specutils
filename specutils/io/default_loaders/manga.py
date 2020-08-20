@@ -79,8 +79,9 @@ def manga_cube_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    filename : str
-        The path to the FITS file
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
@@ -110,8 +111,9 @@ def manga_rss_loader(file_obj, **kwargs):
 
     Parameters
     ----------
-    filename : str
-        The path to the FITS file
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
 
     Returns
     -------
