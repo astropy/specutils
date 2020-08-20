@@ -38,36 +38,25 @@ def _read_fileobj(*args, **kwargs):
         hdulist.close()
 
 
-def _identify_sdss_fits(*args, **kwargs):
-    """
-    Check whether the given file is a SDSS data product.
-    """
-
-    try:
-        with _read_fileobj(*args, **kwargs) as hdulist:
-            return hdulist[0].header["TELESCOP"] == "SDSS 2.5-M"
-    except Exception:
-        return False
-
-
 def identify_manga_cube(origin, *args, **kwargs):
     """
     Check whether the given file is a MaNGA CUBE.
     """
 
-    is_sdss = _identify_sdss_fits(*args, **kwargs)
     with _read_fileobj(*args, **kwargs) as hdulist:
-        return (is_sdss and "FLUX" in hdulist and hdulist[1].header['INSTRUME'] == 'MaNGA'
+        return (hdulist[0].header["TELESCOP"] == "SDSS 2.5-M" and "FLUX" in hdulist
+                and hdulist[1].header['INSTRUME'] == 'MaNGA'
                 and hdulist[1].header["NAXIS"] == 3)
 
 
-def identify_manga_rss(origin, *args, **kwargs):
+def identify_manga_rss(origin, path, fileobj, *args, **kwargs):
     """
     Check whether the given file is a MaNGA RSS.
     """
-    is_sdss = _identify_sdss_fits(*args, **kwargs)
+
     with _read_fileobj(*args, **kwargs) as hdulist:
-        return (is_sdss and "FLUX" in hdulist and hdulist[1].header['INSTRUME'] == 'MaNGA'
+        return (hdulist[0].header["TELESCOP"] == "SDSS 2.5-M" and "FLUX" in hdulist
+                and hdulist[1].header['INSTRUME'] == 'MaNGA'
                 and hdulist[1].header["NAXIS"] == 2)
 
 
