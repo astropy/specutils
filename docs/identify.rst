@@ -8,8 +8,11 @@ Identifying Spectrum1D Formats
 essentially acts as a wrapper on `~astropy.io.registry.identify_format`.
 
 This function is useful for identifying a spectrum file format without the need to
-read it in with Spectrum1d's `~specutils.Spectrum1D.read` method.  It returns the best guess as to a
-valid format from the list of ``Formats`` as given by `~astropy.io.registry.get_formats`.
+read it in with Spectrum1d's `~specutils.Spectrum1D.read` method.  It uses the
+same identification method as `read` however, so it simply provides a convenience
+of access outside of calling `read` without any change in underlying functionality.
+It returns the best guess as to a valid format from the list of ``Formats``
+as given by `~astropy.io.registry.get_formats`.
 
 General usage is as follows, passing in an absolute filename path:
 
