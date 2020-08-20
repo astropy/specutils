@@ -9,7 +9,7 @@ from functools import wraps
 
 from astropy.io import registry as io_registry
 
-from ..spectra import Spectrum1D, SpectrumList
+from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
 
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
@@ -171,7 +171,7 @@ def _load_user_io():
                     pass
 
 
-def identify_spectrum_format(filename):
+def identify_spectrum_format(filename, dtype=Spectrum1D):
     """ Attempt to identify a spectrum file format
 
     Given a filename, attempts to identify a valid file format
@@ -183,6 +183,9 @@ def identify_spectrum_format(filename):
     ----------
     filename : str
         The absolute filename to the object
+    dtype: object
+        class type of Spectrum1D, SpectrumList, or SpectrumCollection. Default is
+        Spectrum1D.
 
     Returns
     -------
@@ -195,9 +198,14 @@ def identify_spectrum_format(filename):
     if not isinstance(filename, (str, pathlib.Path)) or not os.path.isfile(filename):
         raise ValueError(f'{filename} is not a valid string path to a file')
 
+    # check for proper class type
+    assert dtype in \
+        [Spectrum1D, SpectrumList, SpectrumCollection], \
+        'dtype class must be either Spectrum1D, SpectrumList, or SpectrumCollection'
+
     # identify the file format
     valid_format = io_registry.identify_format(
-        'read', Spectrum1D, filename, None, {}, {})
+        'read', dtype, filename, None, {}, {})
 
     if valid_format and len(valid_format) == 1:
         return valid_format[0]
