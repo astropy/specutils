@@ -3,39 +3,12 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.nddata import InverseVariance
 
-import _io
-import contextlib
 from ...spectra import Spectrum1D
 from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
+
 
 __all__ = ["identify_manga_cube", "identify_manga_rss", "manga_cube_loader", "manga_rss_loader"]
-
-
-@contextlib.contextmanager
-def _read_fileobj(*args, **kwargs):
-    """ Context manager for reading a filename or file object
-
-    Returns:
-        an Astropy HDUList
-    """
-    # access the fileobj or filename arg
-    # do this so identify functions are useable outside of Spectrum1d.read context
-    try:
-        fileobj = args[2]
-    except IndexError:
-        fileobj = args[0]
-
-    if isinstance(fileobj, fits.hdu.hdulist.HDUList):
-        hdulist = fileobj
-    elif isinstance(fileobj, _io.BufferedReader):
-        hdulist = fits.open(fileobj)
-    else:
-        hdulist = fits.open(fileobj, **kwargs)
-
-    yield hdulist
-
-    if not isinstance(fileobj, (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
 
 
 def identify_manga_cube(origin, *args, **kwargs):
@@ -43,18 +16,18 @@ def identify_manga_cube(origin, *args, **kwargs):
     Check whether the given file is a MaNGA CUBE.
     """
 
-    with _read_fileobj(*args, **kwargs) as hdulist:
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (hdulist[0].header["TELESCOP"] == "SDSS 2.5-M" and "FLUX" in hdulist
                 and hdulist[1].header['INSTRUME'] == 'MaNGA'
                 and hdulist[1].header["NAXIS"] == 3)
 
 
-def identify_manga_rss(origin, path, fileobj, *args, **kwargs):
+def identify_manga_rss(origin, *args, **kwargs):
     """
     Check whether the given file is a MaNGA RSS.
     """
 
-    with _read_fileobj(*args, **kwargs) as hdulist:
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (hdulist[0].header["TELESCOP"] == "SDSS 2.5-M" and "FLUX" in hdulist
                 and hdulist[1].header['INSTRUME'] == 'MaNGA'
                 and hdulist[1].header["NAXIS"] == 2)
