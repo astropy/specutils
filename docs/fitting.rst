@@ -689,7 +689,7 @@ is specified by a sequence:
     :context: close-figs
 
     import numpy as np
-
+import matplotlib.pyplot as plt
     import astropy.units as u
 
     from specutils.spectra.spectrum1d import Spectrum1D
@@ -707,7 +707,12 @@ is specified by a sequence:
 
     fitted_continuum = fit_continuum(spectrum, window=region)
 
+y_fit = fitted_continuum(x*u.um)
 
+plt.plot(x,y)
+plt.plot(x,y_fit)
+plt.title('Continuum Fitting')
+plt.grid(True)
 Reference/API
 -------------
 
