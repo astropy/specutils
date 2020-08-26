@@ -80,7 +80,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
         Start and end wavelengths used for fitting.
 
     weights : list  (NOT IMPLEMENTED YET)
-        List of weights to define importance of fitting regions. and
+        List of weights to define importance of fitting regions.
 
     Returns
     -------
