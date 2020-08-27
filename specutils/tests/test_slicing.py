@@ -88,7 +88,8 @@ def test_slicing_with_fits():
 
 def test_slicing_multidim():
     spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
-                      flux=np.random.sample((5, 10)) * u.Jy)
+                      flux=np.random.sample((5, 10)) * u.Jy,
+                      mask=np.random.sample((5, 10)) > 0.5)
 
     spec1 = spec[0]
     spec2 = spec[1:3]
@@ -99,3 +100,6 @@ def test_slicing_multidim():
 
     assert quantity_allclose(spec2.flux, spec.flux[1:3])
     assert quantity_allclose(spec2.spectral_axis, spec.spectral_axis)
+
+    assert spec1.mask[0] == spec.mask[0][0]
+    assert spec1.mask.shape == (10,)
