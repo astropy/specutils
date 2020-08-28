@@ -678,6 +678,43 @@ fitted continuum, which returns a new object:
     plt.grid('on')
 
 
+When fitting over a specific wavelength region of a spectrum, one
+should use the ``window`` parameter to specify the region. Windows
+can be comprised of more than one wavelength interval; each interval
+is specified by a sequence:
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import astropy.units as u
+
+    from specutils.spectra.spectrum1d import Spectrum1D
+    from specutils.fitting.continuum import fit_continuum
+
+    np.random.seed(0)
+    x = np.linspace(0., 10., 200)
+    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
+    y += np.random.normal(0., 0.2, x.shape)
+    y += 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+
+    spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+
+    region = [(4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)]
+
+    fitted_continuum = fit_continuum(spectrum, window=region)
+
+    y_fit = fitted_continuum(x*u.um)
+
+    plt.plot(x, y)
+    plt.plot(x, y_fit)
+    plt.title("Continuum Fitting")
+    plt.grid(True)
+
+
 Reference/API
 -------------
 
