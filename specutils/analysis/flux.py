@@ -117,9 +117,12 @@ def _compute_line_flux(spectrum, regions=None,
         mask = calc_spectrum.mask
         new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
                               spectral_axis=calc_spectrum.spectral_axis[~mask])
-        interpolator = mask_interpolation(extrapolation_treatment='zero_fill')
-        sp = interpolator(new_spec, calc_spectrum.spectral_axis)
-        flux = sp.flux
+        if mask_interpolation is None:
+            return _compute_line_flux(new_spec)
+        else:
+            interpolator = mask_interpolation(extrapolation_treatment='zero_fill')
+            sp = interpolator(new_spec, calc_spectrum.spectral_axis)
+            flux = sp.flux
     else:
         flux = calc_spectrum.flux
 
@@ -161,9 +164,8 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     # Account for the existence of a mask.
     if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
         mask = calc_spectrum.mask
-        new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
+        calc_spectrum = Spectrum1D(flux=calc_spectrum.flux[~mask],
                               spectral_axis=calc_spectrum.spectral_axis[~mask])
-        return _compute_equivalent_width(new_spec, continuum=continuum)
 
     if continuum == 1:
         continuum = 1*calc_spectrum.flux.unit
