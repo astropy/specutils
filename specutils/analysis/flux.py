@@ -41,8 +41,8 @@ def line_flux(spectrum, regions=None,
     mask_interpolation : ``None`` or `~specutils.manipulation.LinearInterpolatedResampler`
         Interpolator class used to fill up the gaps in the spectrum's flux
         array, when the spectrum mask is not None. If set to ``None``, the
-         masked spectral bins are excised from the data without interpolation
-         and the bin edges of the adjacent bins are extended to fill the gap.
+        masked spectral bins are excised from the data without interpolation
+        and the bin edges of the adjacent bins are extended to fill the gap.
 
     Returns
     -------
