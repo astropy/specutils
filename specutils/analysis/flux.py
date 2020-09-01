@@ -9,6 +9,7 @@ import numpy as np
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from .. import conf
+from ..spectra import Spectrum1D
 from ..manipulation import extract_region, LinearInterpolatedResampler
 from .utils import computation_wrapper
 import astropy.units as u
@@ -37,9 +38,11 @@ def line_flux(spectrum, regions=None,
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
-    mask_interpolation : `~specutils.manipulation.LinearInterpolatedResampler`
+    mask_interpolation : ``None`` or `~specutils.manipulation.LinearInterpolatedResampler`
         Interpolator class used to fill up the gaps in the spectrum's flux
-        array, when the spectrum mask is not None.
+        array, when the spectrum mask is not None. If set to ``None``, the
+        masked spectral bins are excised from the data without interpolation
+        and the bin edges of the adjacent bins are extended to fill the gap.
 
     Returns
     -------
@@ -79,10 +82,12 @@ def equivalent_width(spectrum, continuum=1, regions=None,
         will be assumed, otherwise units are required and must be the same as
         the ``spectrum.flux``.
 
-    mask_interpolation : `~specutils.manipulation.LinearInterpolatedResampler`
+    mask_interpolation : ``None`` or `~specutils.manipulation.LinearInterpolatedResampler`
         Interpolator class used to fill up the gaps in the spectrum's flux
         array after an excise operation to ensure the mask shape can always be
-        applied when the spectrum mask is not None.
+        applied when the spectrum mask is not None. If set to ``None``, the
+        masked spectral bins are excised from the data without interpolation
+        and the bin edges of the adjacent bins are extended to fill the gap.
 
     Returns
     -------
@@ -111,23 +116,22 @@ def _compute_line_flux(spectrum, regions=None,
     else:
         calc_spectrum = spectrum
 
-    # Average dispersion in the line region
-    avg_dx = (np.abs(np.diff(calc_spectrum.spectral_axis.bin_edges)))
-    line_flux = np.sum(calc_spectrum.flux * avg_dx)
-
-    line_flux.uncertainty = None
-
     # Account for the existence of a mask.
     if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
-        # For now, we interpolate over the masked values. A better solution
-        # would be to account for the masked values when computing the dispersion.
-        interpolator = mask_interpolation()
-        sp = interpolator(calc_spectrum, calc_spectrum.spectral_axis)
-        flux = sp.flux
+        mask = calc_spectrum.mask
+        new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
+                              spectral_axis=calc_spectrum.spectral_axis[~mask])
+        if mask_interpolation is None:
+            return _compute_line_flux(new_spec)
+        else:
+            interpolator = mask_interpolation(extrapolation_treatment='zero_fill')
+            sp = interpolator(new_spec, calc_spectrum.spectral_axis)
+            flux = sp.flux
     else:
         flux = calc_spectrum.flux
 
-    line_flux = np.sum(flux * avg_dx)
+    dx = (np.abs(np.diff(calc_spectrum.spectral_axis.bin_edges)))
+    line_flux = np.sum(flux * dx)
 
     line_flux.uncertainty = None
 
@@ -148,7 +152,7 @@ def _compute_line_flux(spectrum, regions=None,
 
         if variance_q is not None:
             line_flux.uncertainty = np.sqrt(
-                np.sum(variance_q * avg_dx**2))
+                np.sum(variance_q * dx**2))
 
     # TODO: we may want to consider converting to erg / cm^2 / sec by default
     return line_flux
@@ -160,6 +164,12 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
         calc_spectrum = extract_region(spectrum, regions)
     else:
         calc_spectrum = spectrum
+
+    # Account for the existence of a mask.
+    if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
+        mask = calc_spectrum.mask
+        calc_spectrum = Spectrum1D(flux=calc_spectrum.flux[~mask],
+                              spectral_axis=calc_spectrum.spectral_axis[~mask])
 
     if continuum == 1:
         continuum = 1*calc_spectrum.flux.unit
