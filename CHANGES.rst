@@ -7,6 +7,25 @@ New Features
 - Added writer to ``wcs1d-fits`` and support for multi-D flux arrays with
   1D WCS (identical ``spectral_axis`` scale). [#632]
 
+- Implement ``SpectralCoord`` for ``SpectrumCollection`` objects. [#619]
+
+- Default loaders work with fits file-like objects. [#637]
+
+- Implement bin edge support on ``SpectralCoord`` objects using
+  ``SpectralAxis`` subclass. [#645]
+
+- Implement new 6dFGS loader. [#608]
+
+- Implement uncertainty handling for ``line_flux``. [#669]
+
+- Implement new 2SLAQ-LRG loader. [#633]
+
+- Implement new 2dFGRS loader. [#695]
+
+- Default loaders now include WCS 1D (with multi-dimensional flux handling) writer. [#632]
+
+- Allow continuum fitting over multiple windows. [#698]
+
 Bug Fixes
 ^^^^^^^^^
 
@@ -14,9 +33,51 @@ Bug Fixes
   identification and parsing of metadata and units for ``apogee``
   and ``muscles`` improved; enabled loading from file-like objects. [#573]
 
+- Fix ASDF handling of ``SpectralCoord``. [#642]
+
+- Preserve flux unit in ``resample1d`` for older versions of numpy. [#649]
+
+- Fix setting the doppler values on ``SpectralCoord`` instances. [#657]
+
+- Properly handle malformed distances in ``SkyCoord`` instances. [#663]
+
+- Restrict spectral equivalencies to contexts where it is required. [#573]
+
+- Fix ``from_center`` descending spectral axis handling. [#656]
+
+- Fix factor of two error in ``from_center`` method of ``SpectralRegion`` object. [#710]
+
+- Fix handling of multi-dimensional mask slicing. [#704]
+
+Documentation
+^^^^^^^^^^^^^
+
+- Display supported loaders in specutils documentation. [#675]
+
+- Clarify inter-relation of specutils objects in relevant docstrings. [#654]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Remove pytest runtime dependency. [#603]
+
+- Change implementation of ``.quantity`` to ``.view`` in ``SpectralCoord``. [#614]
+
+- Ensure underlying references point to ``SpectralCoord`` object. [#640]
+
+- Deprecate ``spectral_axis_unit`` property. [#618]
+
+- Backport ``SpectralCoord`` from astropy core for versions <4.1. [#674]
+
+- Improve SDSS loaders and improve handling of extensions. [#667]
+
+- Remove spectral cube testing utilities. [#683]
+
+- Change local specutils directory creation behavior. [#691]
+
+- Ensure existing manipulation and analysis functions use ``mask`` attribute. [#670]
+
+- Improve mask handling in analysis functions. [#701]
 
 1.0
 ---
