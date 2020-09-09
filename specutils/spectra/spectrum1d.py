@@ -57,8 +57,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
         the unit defined in the flux.
-    mask : `~numpy.ndarray`-like and bool
-        Boolean array where values in the flux to be masked are set to `True`.
+    mask : `~numpy.ndarray`-like
+        Array where values in the flux to be masked are those that
+        ``astype(bool)`` converts to True. (For example, integer arrays are not
+        masked where they are 0, and masked for any other value.)
     meta : dict
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
