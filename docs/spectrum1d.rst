@@ -30,7 +30,7 @@ create it explicitly from arrays or `~astropy.units.Quantity` objects:
     >>> ax.set_ylabel("Flux")  # doctest: +SKIP
 
 .. note::
-    Note that the ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralAxis` object, 
+    Note that the ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralAxis` object,
     and in fact will internally convert the spectral_axis to :class:`~specutils.SpectralAxis` if it
     is provided as an array or `~astropy.units.Quantity`.
 
@@ -47,15 +47,15 @@ encouraged to :doc:`create their own loader </custom_loading>`.
     >>> from specutils import Spectrum1D
     >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
 
-Most of the built-in specutils default loaders can also read an existing 
-`astropy.io.fits.HDUList` object or an open file object (as resulting 
-from e.g. streaming a file from the internet). Note that in these cases, a 
-format string corresponding to an existing loader must be supplied because 
+Most of the built-in specutils default loaders can also read an existing
+`astropy.io.fits.HDUList` object or an open file object (as resulting
+from e.g. streaming a file from the internet). Note that in these cases, a
+format string corresponding to an existing loader must be supplied because
 these objects lack enough contextual information to automatically identify
 a loader.
 
 .. code-block:: python
-    
+
     >>> from specutils import Spectrum1D
     >>> import urllib
     >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
@@ -106,6 +106,27 @@ specify the uncertainty type at creation time
              :class:`~astropy.nddata.UnknownUncertainty` object which will not
              propagate uncertainties in arithmetic operations.
 
+
+Including Masks
+---------------
+
+Masks are also available for :class:`~specutils.Spectrum1D`, following the
+same mechanisms as :class:`~astropy.nddata.NDData`.  That is, the mask should
+have the property that it is ``False``/``0`` wherever the data is *good*, and
+``True``/anything else where it should be masked.  This allows "data quality"
+arrays to function as masks by default.
+
+Note that this is distinct from "missing data" implementations, which generally
+use ``NaN`` as a masking technique.  This method has the problem that ``NaN``
+values are frequently "infectious", in that arithmetic operations sometimes
+propagate to yield results as just ``NaN`` where the intent is instead to skip
+that particular pixel. It also makes it impossible to store data that in the
+spectrum that may have meaning but should *sometimes* be masked.  The separate
+``mask`` attribute in :class:`~specutils.Spectrum1D` addresses that in that the
+spectrum may still have a value underneath the mask, but it is not used in most
+calculations. To allow for compatibility with ``NaN``-masking representations,
+however, specutils will recognize ``flux`` values input as ``NaN`` and set the
+mask to ``True`` for those values unless explicitly overridden.
 
 
 Defining WCS
