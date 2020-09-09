@@ -104,3 +104,16 @@ def test_masks(simulated_spectra):
     masked_diff = masked_sum - masked_spec
     assert u.allclose(masked_diff.flux, masked_spec.flux)
     assert np.all(masked_diff.mask == masked_sum.mask | masked_spec.mask)
+
+
+def test_mask_nans():
+    flux1 = np.random.random(10)
+    flux2 = np.random.random(10)
+    nan_idx = [1, 3, 5]
+    flux2[nan_idx] = np.nan
+    spec1 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=flux1 * u.Jy)
+    spec2 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=flux2 * u.Jy)
+
+    spec3 = spec1 + spec2
+
+    assert spec3.mask[nan_idx].all() == True

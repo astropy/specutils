@@ -18,9 +18,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
 
-    Note that "1d" in this case refers to the fact that there is only one
-    spectral axis.  `Spectrum1D` can contain "vector 1d spectra" by having the
-    ``flux`` have a shape with dimension great than 1 - the requirement then
+    Note that "1D" in this case refers to the fact that there is only one
+    spectral axis.  `Spectrum1D` can contain "vector 1D spectra" by having the
+    ``flux`` have a shape with dimension greater than 1.  The requirement
     is that the last dimension of ``flux`` match the length of the
     ``spectral_axis``.
 
@@ -32,13 +32,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     Parameters
     ----------
-    flux : `astropy.units.Quantity` or astropy.nddata.NDData`-like
+    flux : `~astropy.units.Quantity` or `~astropy.nddata.NDData`-like
         The flux data for this spectrum.
-    spectral_axis : `astropy.units.Quantity` or `specutils.SpectralAxis`
+    spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
         if specifying bin edges.
-    wcs : `astropy.wcs.WCS` or `gwcs.wcs.WCS`
+    wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
         WCS information object.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
@@ -50,10 +50,17 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         See `redshift` for more information.
     radial_velocity
         See `radial_velocity` for more information.
+    bin_specification : str
+        Either "edges" or "centers" to indicate whether the `spectral_axis`
+        values represent edges of the wavelength bin, or centers of the bin.
     uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
         the unit defined in the flux.
+    mask : `~numpy.ndarray`-like
+        Array where values in the flux to be masked are those that
+        ``astype(bool)`` converts to True. (For example, integer arrays are not
+        masked where they are 0, and masked for any other value.)
     meta : dict
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
@@ -72,8 +79,19 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, NDDataRef):
-            super(Spectrum1D, self).__init__(flux)
+            super().__init__(flux)
             return
+
+        # If the mask kwarg is not passed to the constructor, but the flux array
+        # contains NaNs, add the NaN locations to the mask.
+        if "mask" not in kwargs and flux is not None:
+            nan_mask = np.isnan(flux)
+            if nan_mask.any():
+                if hasattr(self, "mask"):
+                    kwargs["mask"] = np.logical_or(nan_mask, self.mask)
+                else:
+                    kwargs["mask"] = nan_mask.copy()
+            del nan_mask
 
         # Ensure that the flux argument is an astropy quantity
         if flux is not None:
@@ -186,9 +204,10 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             size = len(flux) if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
 
-        super(Spectrum1D, self).__init__(
+        super().__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
-            wcs=wcs, **kwargs)
+            wcs=wcs, **kwargs
+            )
 
         # If no spectral_axis was provided, create a SpectralCoord based on
         # the WCS
@@ -274,14 +293,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @property
     def frequency(self):
         """
-        The frequency as a `~astropy.units.Quantity` in units of GHz
+        The `spectral_axis` as a `~astropy.units.Quantity` in units of GHz
         """
         return self.spectral_axis.to(u.GHz, u.spectral())
 
     @property
     def wavelength(self):
         """
-        The wavelength as a `~astropy.units.Quantity` in units of Angstroms
+        The `spectral_axis` as a `~astropy.units.Quantity` in units of Angstroms
         """
         return self.spectral_axis.to(u.AA, u.spectral())
 

@@ -335,6 +335,16 @@ def test_energy_photon_flux():
     assert spec.photon_flux.unit == u.photon * u.cm**-2 * u.s**-1 * u.nm**-1
 
 
+def test_flux_nans_propagate_to_mask():
+    """Check that indices in input flux with NaNs get propagated to the mask"""
+    flux = np.random.randn(10)
+    nan_idx = [0, 3, 5]
+    flux[nan_idx] = np.nan
+    spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                      flux=flux * u.Jy)
+    assert spec.mask[nan_idx].all() == True
+
+
 def test_repr():
     spec_with_wcs = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy)
