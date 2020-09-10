@@ -20,8 +20,7 @@ def identify_jwst_x1d_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        return (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist
-            and "SCI" not in hdulist)
+        return (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist)
 
 
 def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
@@ -30,7 +29,7 @@ def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(args[0])
     with fits.open(args[0], memmap=False) as hdulist:
-        return is_jwst and ('EXTRACT1D', 2) in hdulist and "SCI" not in hdulist
+        return is_jwst and ('EXTRACT1D', 2) in hdulist
 
 
 def identify_jwst_s2d_fits(origin, *args, **kwargs):
