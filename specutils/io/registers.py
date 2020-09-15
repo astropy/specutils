@@ -182,7 +182,7 @@ def identify_spectrum_format(filename, dtype=Spectrum1D):
     Parameters
     ----------
     filename : str
-        The absolute filename to the object
+        A path to a file to be identified
     dtype: object
         class type of Spectrum1D, SpectrumList, or SpectrumCollection. Default is
         Spectrum1D.
