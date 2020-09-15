@@ -7,21 +7,14 @@ Identifying Spectrum1D Formats
 `~specutils.Spectrum1D` file format from the list of registered formats, and
 essentially acts as a wrapper on `~astropy.io.registry.identify_format`.
 
-This function is useful for identifying a spectrum file format without the need to
-read it in with Spectrum1d's `~specutils.Spectrum1D.read` method.  It uses the
-same identification method as ``read`` however, so it simply provides a convenience
+This function is useful for identifying a spectrum file format without reading the
+whole file with the  `~specutils.Spectrum1D.read` method.  It uses the
+same identification method as ``read`` however, so it provides a convenience
 of access outside of calling ``read`` without any change in underlying functionality.
 It returns the best guess as to a valid format from the list of ``Formats``
 as given by `~astropy.io.registry.get_formats`.
 
-General usage is as follows, passing in an absolute filename path:
-
-.. code-block:: python
-
-    >>> from specutils.io.registers import identify_spectrum_format
-    >>> identify_spectrum_format("/path/to/file.fits")  # doctest: +SKIP
-
-An example is given to identify a SDSS MaNGA data cube file:
+For eample, to identify a SDSS MaNGA data cube file:
 
 .. code-block:: python
 
