@@ -120,6 +120,7 @@ For more details on usage of specutils, see the sections listed below.
     manipulation
     arithmetic
     custom_loading
+    identify
 
 Get Involved - Developer Docs
 -----------------------------

@@ -3,14 +3,16 @@ A module containing the mechanics of the specutils io registry.
 """
 import os
 import logging
+import pathlib
+import sys
 from functools import wraps
 
 from astropy.io import registry as io_registry
 
-from ..spectra import Spectrum1D, SpectrumList
+from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
 
 
-__all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension']
+__all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
@@ -167,3 +169,45 @@ def _load_user_io():
                     import_module(file[:-3])
                 except ModuleNotFoundError:  # noqa
                     pass
+
+
+def identify_spectrum_format(filename, dtype=Spectrum1D):
+    """ Attempt to identify a spectrum file format
+
+    Given a filename, attempts to identify a valid file format
+    from the list of registered specutils loaders.  Essentially a wrapper for
+    `~astropy.io.registry.identify_format` setting **origin** to ``read`` and
+    **data_class_required** to `~specutils.Spectrum1D`.
+
+    Parameters
+    ----------
+    filename : str
+        A path to a file to be identified
+    dtype: object
+        class type of Spectrum1D, SpectrumList, or SpectrumCollection. Default is
+        Spectrum1D.
+
+    Returns
+    -------
+    valid_format : list, str
+        A list of valid file formats.  If only one valid format found, returns
+        just that element.
+
+    """
+    # check for valid string input
+    if not isinstance(filename, (str, pathlib.Path)) or not os.path.isfile(filename):
+        raise ValueError(f'{filename} is not a valid string path to a file')
+
+    # check for proper class type
+    assert dtype in \
+        [Spectrum1D, SpectrumList, SpectrumCollection], \
+        'dtype class must be either Spectrum1D, SpectrumList, or SpectrumCollection'
+
+    # identify the file format
+    valid_format = io_registry.identify_format(
+        'read', dtype, filename, None, {}, {})
+
+    if valid_format and len(valid_format) == 1:
+        return valid_format[0]
+
+    return valid_format

@@ -1,10 +1,11 @@
+import contextlib
+import _io
 import numpy as np
 import os
 import re
 import urllib
 
 from astropy.io import fits
-from astropy.table import Table
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
@@ -12,6 +13,33 @@ import warnings
 import logging
 
 from specutils.spectra import Spectrum1D
+
+
+@contextlib.contextmanager
+def read_fileobj_or_hdulist(*args, **kwargs):
+    """ Context manager for reading a filename or file object
+
+    Returns:
+        an Astropy HDUList
+    """
+    # access the fileobj or filename arg
+    # do this so identify functions are useable outside of Spectrum1d.read context
+    try:
+        fileobj = args[2]
+    except IndexError:
+        fileobj = args[0]
+
+    if isinstance(fileobj, fits.hdu.hdulist.HDUList):
+        hdulist = fileobj
+    elif isinstance(fileobj, _io.BufferedReader):
+        hdulist = fits.open(fileobj)
+    else:
+        hdulist = fits.open(fileobj, **kwargs)
+
+    yield hdulist
+
+    if not isinstance(fileobj, (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
 
 
 def spectrum_from_column_mapping(table, column_mapping, wcs=None):
