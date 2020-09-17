@@ -1,3 +1,18 @@
+1.2 (unreleased)
+----------------
+
+New Features
+^^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Documentation
+^^^^^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1.1
 ---
 
