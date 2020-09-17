@@ -252,7 +252,7 @@ def s2d_multi(generate_wcs_transform, request):
     return model
 
 
-@pytest.xfail('Needs investigation! See #717')
+@pytest.mark.xfail(reason="Needs investigation! See #717")
 def test_jwst_s2d_reader(tmpdir, s2d_single):
     path = str(tmpdir.join("test.fits"))
     model = s2d_single
