@@ -116,6 +116,8 @@ def spec_loader(file_obj, **kwargs):
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist = file_obj
+    elif fits.util.fileobj_closed(file_obj):
+        hdulist = fits.open(file_obj.name, **kwargs)
     else:
         hdulist = fits.open(file_obj, **kwargs)
 
@@ -164,6 +166,8 @@ def spSpec_loader(file_obj, **kwargs):
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist = file_obj
+    elif fits.util.fileobj_closed(file_obj):
+        hdulist = fits.open(file_obj.name, **kwargs)
     else:
         hdulist = fits.open(file_obj, **kwargs)
 
@@ -220,6 +224,8 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
     """
     if isinstance(file_obj, fits.hdu.hdulist.HDUList):
         hdulist = file_obj
+    elif fits.util.fileobj_closed(file_obj):
+        hdulist = fits.open(file_obj.name, **kwargs)
     else:
         hdulist = fits.open(file_obj, **kwargs)
 

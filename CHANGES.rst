@@ -51,6 +51,8 @@ Bug Fixes
 
 - Fix handling of multi-dimensional mask slicing. [#704]
 
+- Fix identifier for JWST 1D loader. [#715]
+
 Documentation
 ^^^^^^^^^^^^^
 
