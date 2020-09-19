@@ -12,7 +12,8 @@ from astropy.wcs import WCS
 from ...spectra import Spectrum1D
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import (generic_spectrum_from_table,
-                             spectrum_from_column_mapping)
+                             spectrum_from_column_mapping,
+                             read_fileobj_or_hdulist)
 
 __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 
@@ -26,30 +27,19 @@ def identify_tabular_fits(origin, *args, **kwargs):
         return (hdu > 0 and args[0].endswith(('.fits', '.fit')) and not
                 args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')))
 
-    if isinstance(args[2], fits.hdu.hdulist.HDUList):
-        hdulist = args[2]
-    elif isinstance(args[2], _io.BufferedReader):
-        hdulist = fits.open(args[2])
-    else:  # if isinstance(args[2], _io.FileIO):
-        hdulist = fits.open(args[0], **kwargs)
-
     # Test if fits has extension of type BinTable and check against
     # known keys of already defined specific formats
-    is_tab = (len(hdulist) > 1 and
-              isinstance(hdulist[hdu], fits.BinTableHDU) and not
-              (hdulist[0].header.get('TELESCOP') == 'MULTI' and
-               hdulist[0].header.get('HLSPACRN') == 'MUSCLES' and
-               hdulist[0].header.get('PROPOSID') == 13650) and not
-              (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
-               hdulist[0].header.get('FIBERID') > 0) and not
-              (hdulist[0].header.get('TELESCOP') == 'HST' and
-               hdulist[0].header.get('INSTRUME') in ('COS', 'STIS')) and not
-              hdulist[0].header.get('TELESCOP') == 'JWST')
-
-    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
-
-    return is_tab
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (len(hdulist) > 1 and
+                isinstance(hdulist[hdu], fits.BinTableHDU) and not
+                (hdulist[0].header.get('TELESCOP') == 'MULTI' and
+                hdulist[0].header.get('HLSPACRN') == 'MUSCLES' and
+                hdulist[0].header.get('PROPOSID') == 13650) and not
+                (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
+                hdulist[0].header.get('FIBERID') > 0) and not
+                (hdulist[0].header.get('TELESCOP') == 'HST' and
+                hdulist[0].header.get('INSTRUME') in ('COS', 'STIS')) and not
+                hdulist[0].header.get('TELESCOP') == 'JWST')
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
@@ -82,11 +72,8 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     # Parse the wcs information. The wcs will be passed to the column finding
     # routines to search for spectral axis information in the file.
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        wcs = WCS(file_obj[hdu].header)
-    else:
-        with fits.open(file_obj) as hdulist:
-            wcs = WCS(hdulist[hdu].header)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        wcs = WCS(hdulist[hdu].header)
 
     tab = Table.read(file_obj, format='fits', hdu=hdu)
 

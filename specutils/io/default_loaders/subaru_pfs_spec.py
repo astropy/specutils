@@ -14,7 +14,7 @@ import numpy as np
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader
-from ..parsing_utils import _fits_identify_by_name
+from ..parsing_utils import _fits_identify_by_name, read_fileobj_or_hdulist
 
 __all__ = ['spec_identify', 'spec_loader']
 
@@ -51,6 +51,9 @@ def pfs_spec_loader(file_obj, **kwargs):
     data : Spectrum1D
         The spectrum that is represented by the data in this table.
     """
+
+    # This will fail for file-like objects without 'name' property like `bz2.BZ2File`,
+    # workarund needed (or better yet, a scheme to parse the `meta` items from the header).
     if isinstance(file_obj, str):
         file_name = file_obj
     else:
@@ -58,7 +61,7 @@ def pfs_spec_loader(file_obj, **kwargs):
 
     m = _spec_pattern.match(os.path.basename(file_name))
 
-    with fits.open(file_obj, **kwargs) as hdulist:
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
         meta = {'header': header,
                 'tract': m['tract'],

@@ -1,29 +1,18 @@
-import astropy.io.fits as fits
 from astropy.nddata import VarianceUncertainty
 from astropy.units import Unit
 from astropy.wcs import WCS
-from specutils.io.registers import data_loader
-from specutils import Spectrum1D, SpectrumList
+
+from ...spectra import Spectrum1D, SpectrumList
+from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
 
 
 def identify_2dfgrs(origin, *args, **kwargs):
     """
     Identify if the current file is a 2dFGRS file
     """
-    file_obj = args[0]
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
-
-    if hdulist[0].header.get("IMAGE", "").strip() in ("SKYCHART", "SPECTRUM"):
-        if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-            hdulist.close()
-        return True
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
-    return False
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return hdulist[0].header.get("IMAGE", "").strip() in ("SKYCHART", "SPECTRUM")
 
 
 def load_spectrum_from_extension(hdu, primary_header):
@@ -74,22 +63,15 @@ def twodfgrs_fits_loader(file_obj, **kwargs):
     data: SpectrumList
         The 2dFGRS spectra represented by the data in this file.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
 
     spectra = []
 
-    primary_header = hdulist[0].header
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        primary_header = hdulist[0].header
 
-    for hdu in hdulist:
-        if hdu.header.get("IMAGE", "").strip() == "SKYCHART":
-            continue
-        spectra.append(load_spectrum_from_extension(hdu, primary_header))
-
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+        for hdu in hdulist:
+            if hdu.header.get("IMAGE", "").strip() == "SKYCHART":
+                continue
+            spectra.append(load_spectrum_from_extension(hdu, primary_header))
 
     return SpectrumList(spectra)

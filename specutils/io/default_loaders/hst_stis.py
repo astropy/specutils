@@ -4,17 +4,17 @@ from astropy.io import fits
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
-from specutils.io.registers import data_loader
-from specutils import Spectrum1D
+from ...spectra import Spectrum1D
+from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ['stis_identify', 'stis_spectrum_loader']
 
 
 def stis_identify(origin, *args, **kwargs):
     """Check whether given file contains HST/STIS spectral data."""
-    with fits.open(args[0]) as hdulist:
-        if hdulist[0].header['TELESCOP'] == 'HST' and hdulist[0].header['INSTRUME'] == 'STIS':
-            return True
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (hdulist[0].header['TELESCOP'] == 'HST' and hdulist[0].header['INSTRUME'] == 'STIS')
 
     return False
 
@@ -35,28 +35,22 @@ def stis_spectrum_loader(file_obj, **kwargs):
     data: Spectrum1D
         The spectrum that is represented by the data in this table.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
 
-    header = hdulist[0].header
-    name = header.get('FILENAME')
-    meta = {'header': header}
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[0].header
+        name = header.get('FILENAME')
+        meta = {'header': header}
 
-    unit = Unit("erg/cm**2 Angstrom s")
-    disp_unit = Unit('Angstrom')
-    data = hdulist[1].data['FLUX'].flatten() * unit
-    dispersion = hdulist[1].data['wavelength'].flatten() * disp_unit
-    uncertainty = StdDevUncertainty(hdulist[1].data["ERROR"].flatten() * unit)
+        unit = Unit("erg/cm**2 Angstrom s")
+        disp_unit = Unit('Angstrom')
+        data = hdulist[1].data['FLUX'].flatten() * unit
+        dispersion = hdulist[1].data['wavelength'].flatten() * disp_unit
+        uncertainty = StdDevUncertainty(hdulist[1].data["ERROR"].flatten() * unit)
 
     sort_idx = dispersion.argsort()
     dispersion = dispersion[sort_idx]
     data = data[sort_idx]
     uncertainty = uncertainty[sort_idx]
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
 
     return Spectrum1D(flux=data,
                       spectral_axis=dispersion,

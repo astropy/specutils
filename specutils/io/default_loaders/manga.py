@@ -51,16 +51,9 @@ def manga_cube_loader(file_obj, **kwargs):
         The spectrum contained in the file.
     """
 
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
-
     spaxel = u.Unit('spaxel', represents=u.pixel, doc='0.5" spatial pixel', parse_strict='silent')
-    spectrum = _load_manga_spectra(hdulist, per_unit=spaxel, transpose=True)
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        spectrum = _load_manga_spectra(hdulist, per_unit=spaxel, transpose=True)
 
     return spectrum
 
@@ -83,16 +76,9 @@ def manga_rss_loader(file_obj, **kwargs):
         The spectrum contained in the file.
     """
 
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
-
     fiber = u.Unit('fiber', represents=u.pixel, doc='spectroscopic fiber', parse_strict='silent')
-    spectrum = _load_manga_spectra(hdulist, per_unit=fiber)
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        spectrum = _load_manga_spectra(hdulist, per_unit=fiber)
 
     return spectrum
 

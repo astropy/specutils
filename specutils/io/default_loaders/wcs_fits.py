@@ -13,6 +13,7 @@ import shlex
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader, custom_writer
+from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
 
@@ -32,24 +33,14 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
                 hasattr(args[2], 'uncertainty'))
 
     hdu = kwargs.get('hdu', 0)
-    if isinstance(args[2], fits.hdu.hdulist.HDUList):
-        hdulist = args[2]
-    elif isinstance(args[2], _io.BufferedReader):
-        hdulist = fits.open(args[2])
-    else:  # if isinstance(args[2], _io.FileIO):
-        hdulist = fits.open(args[0], **kwargs)
-
     # Check if number of axes is one and dimension of WCS is one
-    is_wcs = (hdulist[hdu].header.get('WCSDIM', 1) == 1 and
-              (hdulist[hdu].header['NAXIS'] == 1 or
-              hdulist[hdu].header.get('WCSAXES', 0) == 1 )and not
-              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
-              # Check in CTYPE1 key for linear solution (single spectral axis)
-              hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
-    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
-
-    return is_wcs
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (hdulist[hdu].header.get('WCSDIM', 1) == 1 and
+                (hdulist[hdu].header['NAXIS'] == 1 or
+                 hdulist[hdu].header.get('WCSAXES', 0) == 1 )and not
+                hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
+                # Check in CTYPE1 key for linear solution (single spectral axis)
+                hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
 
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
@@ -84,37 +75,29 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     """
     logging.info("Spectrum file looks like wcs1d-fits")
 
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[hdu].header
+        wcs = WCS(header)
 
-    header = hdulist[hdu].header
-    wcs = WCS(header)
-
-    if 'BUNIT' in header:
-        data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
-        if flux_unit is not None:
-            data = data.to(flux_unit)
-    else:
-        data = u.Quantity(hdulist[hdu].data, unit=flux_unit)
+        if 'BUNIT' in header:
+            data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
+            if flux_unit is not None:
+                data = data.to(flux_unit)
+        else:
+            data = u.Quantity(hdulist[hdu].data, unit=flux_unit)
 
     if spectral_axis_unit is not None:
         wcs.wcs.cunit[0] = str(spectral_axis_unit)
-
     meta = {'header': header}
 
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
-
-        if wcs.naxis > 4:
-            raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
-        elif wcs.naxis > 1:
-            for i in range(wcs.naxis - 1, 0, -1):
-                try:
-                    wcs = wcs.dropaxis(i)
-                except(_wcs.NonseparableSubimageCoordinateSystemError) as e:
-                    raise ValueError(f'WCS cannot be reduced to 1D: {e} {wcs}')
+    if wcs.naxis > 4:
+        raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
+    elif wcs.naxis > 1:
+        for i in range(wcs.naxis - 1, 0, -1):
+            try:
+                wcs = wcs.dropaxis(i)
+            except(_wcs.NonseparableSubimageCoordinateSystemError) as e:
+                raise ValueError(f'WCS cannot be reduced to 1D: {e} {wcs}')
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
 
@@ -195,27 +178,17 @@ def identify_iraf_wcs(origin, *args, **kwargs):
     The difference to wcs1d is that this format supports 2D WCS with non-linear
     wavelength solutions. This is used for Astropy I/O Registry.
     """
-    if isinstance(args[2], fits.hdu.hdulist.HDUList):
-        hdulist = args[2]
-    elif isinstance(args[2], _io.BufferedReader):
-        hdulist = fits.open(args[2])
-    else:
-        hdulist = fits.open(args[0], **kwargs)
+
     hdu = kwargs.get('hdu', 0)
-
     # Check if dimension of WCS is greater one.
-    is_wcs = ('WAT1_001' in hdulist[hdu].header and
-              'WAT2_001' in hdulist[hdu].header and not
-              hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
-              (hdulist[hdu].header.get('TELESCOP', 't') == 'SDSS 2.5-M' and
-               hdulist[hdu].header.get('FIBERID', 0) > 0) and
-              (hdulist[hdu].header.get('WCSDIM', 1) > 1 or
-               hdulist[hdu].header.get('CTYPE1', '').upper().startswith('MULTISPE')))
-
-    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
-
-    return is_wcs
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return ('WAT1_001' in hdulist[hdu].header and
+                'WAT2_001' in hdulist[hdu].header and not
+                hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
+                (hdulist[hdu].header.get('TELESCOP', 't') == 'SDSS 2.5-M' and
+                 hdulist[hdu].header.get('FIBERID', 0) > 0) and
+                (hdulist[hdu].header.get('WCSDIM', 1) > 1 or
+                 hdulist[hdu].header.get('CTYPE1', '').upper().startswith('MULTISPE')))
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
@@ -250,51 +223,42 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     logging.info('Loading 1D non-linear fits solution')
 
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[0].header
+        for wcsdim in range(1, header['WCSDIM'] + 1):
+            ctypen = header['CTYPE{:d}'.format(wcsdim)]
+            if ctypen == 'LINEAR':
+                logging.info("linear Solution: Try using "
+                             "`format='wcs1d-fits'` instead")
+                wcs = WCS(header)
+                spectral_axis = _read_linear_iraf_wcs(wcs=wcs, dc_flag=header['DC-FLAG'])
+            elif ctypen == 'MULTISPE':
+                logging.info("Multi spectral or non-linear solution")
+                spectral_axis = _read_non_linear_iraf_wcs(header=header, wcsdim=wcsdim)
+            else:
+                raise NotImplementedError
 
-    header = hdulist[0].header
-    for wcsdim in range(1, header['WCSDIM'] + 1):
-        ctypen = header['CTYPE{:d}'.format(wcsdim)]
-        if ctypen == 'LINEAR':
-            logging.info("linear Solution: Try using "
-                         "`format='wcs1d-fits'` instead")
-            wcs = WCS(header)
-            spectral_axis = _read_linear_iraf_wcs(wcs=wcs,
-                                                  dc_flag=header['DC-FLAG'])
-        elif ctypen == 'MULTISPE':
-            logging.info("Multi spectral or non-linear solution")
-            spectral_axis = _read_non_linear_iraf_wcs(header=header,
-                                                      wcsdim=wcsdim)
+        if flux_unit is not None:
+            data = hdulist[0].data * flux_unit
+        elif 'BUNIT' in header:
+            data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
         else:
-            raise NotImplementedError
+            logging.info("Flux unit was not provided, neither it was in the"
+                         "header. Assuming ADU.")
+            data = u.Quantity(hdulist[0].data, unit='adu')
 
-    if flux_unit is not None:
-        data = hdulist[0].data * flux_unit
-    elif 'BUNIT' in header:
-        data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
-    else:
-        logging.info("Flux unit was not provided, neither it was in the"
-                     "header. Assuming ADU.")
-        data = u.Quantity(hdulist[0].data, unit='adu')
-
-    if spectral_axis_unit is not None:
-        spectral_axis *= spectral_axis_unit
-    else:
-        wat_head = header['WAT1_001']
-        wat_dict = dict()
-        for pair in wat_head.split(' '):
-            wat_dict[pair.split('=')[0]] = pair.split('=')[1]
-        if wat_dict['units'] == 'angstroms':
-            logging.info("Found spectral axis units to be angstrom")
-            spectral_axis *= u.angstrom
+        if spectral_axis_unit is not None:
+            spectral_axis *= spectral_axis_unit
+        else:
+            wat_head = header['WAT1_001']
+            wat_dict = dict()
+            for pair in wat_head.split(' '):
+                wat_dict[pair.split('=')[0]] = pair.split('=')[1]
+            if wat_dict['units'] == 'angstroms':
+                logging.info("Found spectral axis units to be angstrom")
+                spectral_axis *= u.angstrom
 
     meta = {'header': header}
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
 
     return Spectrum1D(flux=data, spectral_axis=spectral_axis, meta=meta)
 

@@ -14,23 +14,24 @@ from astropy.io import fits
 from astropy.units import Unit
 from astropy.wcs import WCS
 
-from ..registers import data_loader
 from ...spectra import Spectrum1D
+from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
 
 
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
-    with fits.open(args[0]) as hdulist:
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (hdulist[0].header['NAXIS'] == 3)
 
 
 # not yet ready because it's not generic enough and does not use column_mapping
 # @data_loader("Cube", identifier=identify_generic_fits, extensions=['fits'])
-def generic_fits(file_name, **kwargs):
+def generic_fits(file_obj, **kwargs):
     name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
-    with fits.open(file_name, **kwargs) as hdulist:
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
         data3  = hdulist[0].data
         wcs    = WCS(header)
