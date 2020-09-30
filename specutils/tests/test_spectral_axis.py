@@ -10,6 +10,9 @@ from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, GCRS, Galactic,
 
 from ..extern.spectralcoord import SpectralCoord
 from ..spectra.spectral_axis import SpectralAxis
+from ..spectra.spectrum1d import Spectrum1D
+
+from astropy.tests.helper import assert_quantity_allclose
 
 
 def get_greenwich_earthlocation():
@@ -121,3 +124,27 @@ def test_create_from_spectral_axis(observer, target):
     assert spec_axis1.radial_velocity == spec_axis2.radial_velocity
     assert spec_axis1.doppler_convention == spec_axis2.doppler_convention
     assert spec_axis1.doppler_rest == spec_axis2.doppler_rest
+
+
+def test_change_radial_velocity():
+    wave = np.linspace(100, 200, 100) * u.AA
+    flux = np.ones(100) * u.one
+    spec = Spectrum1D(spectral_axis=wave, flux=flux, radial_velocity=0 * u.km / u.s)
+
+    assert spec.radial_velocity == 0 * u.km/u.s
+
+    spec.radial_velocity = 1 * u.km / u.s
+
+    assert spec.radial_velocity == 1 * u.km/u.s
+
+
+def test_change_redshift():
+    wave = np.linspace(100, 200, 100) * u.AA
+    flux = np.ones(100) * u.one
+    spec = Spectrum1D(spectral_axis=wave, flux=flux, redshift=0)
+
+    assert_quantity_allclose(spec.redshift, u.Quantity(0))
+
+    spec.redshift = 0.1
+
+    assert_quantity_allclose(spec.redshift, u.Quantity(0.1))
