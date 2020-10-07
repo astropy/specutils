@@ -20,9 +20,10 @@ from specutils.spectra import Spectrum1D, SpectrumCollection
 def read_fileobj_or_hdulist(*args, **kwargs):
     """ Context manager for reading a filename or file object
 
-    Returns:
-        an Astropy HDUList
-    """
+    Returns
+    -------
+    hdulist : `astropy.io.fits.HDUList`
+        Provides a generator-iterator representing the open file object handle.
     # Access the fileobj or filename arg
     # Do this so identify functions are useable outside of Spectrum1d.read context
     try:

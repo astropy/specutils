@@ -173,7 +173,7 @@ def _jwst_x1d_loader(file_obj, **kwargs):
             slit_header = hdu.header
             header = primary_header.copy()
             header.extend(slit_header, strip=True, update=True)
-            meta = {k: v for k, v in header.items()}
+            meta = dict(header)
 
             spec = Spectrum1D(flux=flux, spectral_axis=wavelength,
                               uncertainty=uncertainty, meta=meta)
@@ -312,7 +312,7 @@ def _jwst_s2d_loader(filename, **kwargs):
             slit_header = hdu.header
             header = primary_header.copy()
             header.extend(slit_header, strip=True, update=True)
-            meta = {k: v for k, v in header.items()}
+            meta = dict(header)
 
             spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
             spectra.append(spec)
@@ -396,7 +396,7 @@ def _jwst_s3d_loader(filename, **kwargs):
             slit_header = hdu.header
             header = primary_header.copy()
             header.extend(slit_header, strip=True, update=True)
-            meta = {k: v for k, v in header.items()}
+            meta = dict(header)
 
             spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
             spectra.append(spec)
