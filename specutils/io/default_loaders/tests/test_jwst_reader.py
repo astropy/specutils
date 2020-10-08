@@ -132,8 +132,8 @@ def test_jwst_x1d_reader_meta(tmpdir, x1d_single):
     x1d_single.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile)
-    assert ('TELESCOP', 'JWST') in data.meta.items()
-    assert ('SRCTYPE', 'POINT') in data.meta.items()
+    assert ('TELESCOP', 'JWST') in data.meta['header'].items()
+    assert ('SRCTYPE', 'POINT') in data.meta['header'].items()
 
 
 def test_jwst_x1d_single_reader_fail_on_multi(tmpdir, x1d_multi):

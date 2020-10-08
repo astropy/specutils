@@ -22,7 +22,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
 
     Returns
     -------
-    hdulist : `astropy.io.fits.HDUList`
+    hdulist : :class:`~astropy.io.fits.HDUList`
         Provides a generator-iterator representing the open file object handle.
     """
     # Access the fileobj or filename arg
@@ -76,6 +76,11 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
+
+    Returns
+    -------
+    :class:`~specutils.Spectrum1D`
+        The spectrum that is represented by the data in this table.
     """
     spec_kwargs = {}
 
@@ -123,7 +128,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
         spec_kwargs['uncertainty'] = StdDevUncertainty(
             spec_kwargs.get('uncertainty'))
 
-    return Spectrum1D(**spec_kwargs, wcs=wcs, meta=table.meta)
+    return Spectrum1D(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
 def generic_spectrum_from_table(table, wcs=None, **kwargs):
@@ -150,7 +155,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    :class:`~specutils.Spectrum1D`
         The spectrum that is represented by the data in this table.
 
     Raises
@@ -273,7 +278,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
         # For > 1D spectral axis transpose to row-major format and return SpectrumCollection
         spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                              uncertainty=err, meta=table.meta, wcs=wcs)
+                              uncertainty=err, meta={'header': table.meta}, wcs=wcs)
 
     return spectrum
 
