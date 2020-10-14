@@ -149,7 +149,18 @@ def extract_region(spectrum, region):
             if left_index > right_index:
                 left_index, right_index = right_index, left_index
 
-            extracted_spectrum.append(spectrum[left_index:right_index])
+            sub_spec = Spectrum1D(
+                        spectral_axis=spectrum.spectral_axis[left_index:right_index],
+                        flux=spectrum.flux[...,left_index:right_index],
+                        meta=spectrum.meta)
+
+            if spectrum.mask is not None:
+                sub_spec.mask=np.array(spectrum.mask)[...,left_index:right_index]
+
+            if spectrum.uncertainty is not None:
+                sub_spec.uncertainty=spectrum.uncertainty[...,left_index:right_index]
+
+            extracted_spectrum.append(sub_spec)
 
     # If there is only one subregion in the region then we will
     # just return a spectrum.
