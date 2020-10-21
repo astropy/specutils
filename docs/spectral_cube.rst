@@ -7,6 +7,14 @@ Spectral cubes can be read in using the
 collapsed using various methods to yield a Spectrum1D object.  A specific
 example of this workflow is demonstrated here.
 
+Note that the workflow described here is for spectral cubes that are rectified
+such that one of the axes is entirely spectral and all the spaxels have the same
+`spectral_axis` values - i.e., case 2 in
+:ref:`specutils-representation-overview`. For less-rectified cubes,
+pre-processing steps (not addressed by specutils at the time of this writing)
+will be necessary to rectify the cubes into that form.
+
+
 Collapsing Cubes
 ================
 Currently, the ``specutils`` library does not support loading three dimensional
