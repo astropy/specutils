@@ -3,7 +3,7 @@ Working with Spectral Cubes
 ###########################
 
 Spectral cubes can be read in using the
-`SpectralCube <https://spectral-cube.readthedocs.io/en/latest/>` package then
+`SpectralCube <https://spectral-cube.readthedocs.io/en/latest/>`_ package then
 collapsed using various methods to yield a Spectrum1D object.  A specific
 example of this workflow is demonstrated here.
 
