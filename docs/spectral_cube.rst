@@ -28,7 +28,7 @@ Loading a cube
 ==============
 
 We'll use the example cube data found in the ``spectral-cube`` package, and
-load the data from the repository directly into a new :class:`~spectral_cube.SpectralCube`
+load the data from the repository directly into a new ``SpectralCube``
 object::
 
     >>> from astropy.utils.data import download_file
