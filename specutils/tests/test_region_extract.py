@@ -200,3 +200,14 @@ def test_extract_masked():
 
     assert np.all(extracted.mask == [False, True])
     assert np.all(extracted.flux.value == [1, 2])
+
+def test_extract_multid_flux():
+    flux = np.random.sample((10, 49)) * 100
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=flux * u.Jy)
+
+    region = SpectralRegion(10 * u.nm, 20 * u.nm)
+    extracted = extract_region(spec, region)
+
+    assert extracted.shape == (10, 11)
+    assert extracted[0,0].flux == spec[0,9].flux

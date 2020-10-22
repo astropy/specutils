@@ -246,9 +246,26 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         The first case is handled by the parent class, while the second is
         handled here.
         """
-        if len(self.flux.shape) > 1:
+
+        if self.flux.ndim > 1 or (type(item) == tuple and item[0] == Ellipsis):
+            if type(item) == tuple:
+                if len(item) == len(self.flux.shape) or item[0] == Ellipsis:
+                    spec_item = item[-1]
+                    if not isinstance(spec_item, slice):
+                        spec_item = slice(spec_item, spec_item+1, None)
+                        item = item[:-1] + (spec_item,)
+                else:
+                    # Slicing on less than the full number of axes means we want
+                    # to keep the whole spectral axis
+                    spec_item = slice(None, None, None)
+            else:
+                # Slicing with a single integer or slice uses the leading axis,
+                # so we keep the whole spectral axis, which is last
+                spec_item = slice(None, None, None)
+
             return self._copy(
                 flux=self.flux[item],
+                spectral_axis=self.spectral_axis[spec_item],
                 uncertainty=self.uncertainty[item]
                 if self.uncertainty is not None else None,
                 mask=self.mask[item] if self.mask is not None else None)
