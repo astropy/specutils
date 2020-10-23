@@ -11,6 +11,7 @@ from ..manipulation.smoothing import (convolution_smooth, box_smooth,
                                       gaussian_smooth, trapezoid_smooth,
                                       median_smooth)
 
+
 def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
     """
     There are two things to compare for each set of smoothing:
@@ -31,6 +32,13 @@ def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
     """
 
     # Compare, element by element, the two smoothed fluxes.
+    # Workaround for astropy dev (4.2) which seems to return quantities in
+    #  convolutions
+    if isinstance(flux_smooth1, u.Quantity):
+        flux_smooth1 = flux_smooth1.value
+    if isinstance(flux_smooth2, u.Quantity):
+        flux_smooth2 = flux_smooth2.value
+
     assert np.allclose(flux_smooth1, flux_smooth2)
 
     # Compare the total spectral flux of the smoothed to the original.
@@ -81,6 +89,7 @@ def test_smooth_box_good(simulated_spectra, width):
     # Check the input and output units
     assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
     assert spec1.flux.unit == spec1_smoothed.flux.unit
+
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
 def test_smooth_box_bad(simulated_spectra, width):
