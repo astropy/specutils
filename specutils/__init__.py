@@ -20,6 +20,7 @@ __minimum_python_version__ = "3.5"
 class UnsupportedPythonError(Exception):
     pass
 
+
 if sys.version_info < tuple((int(val) for val in __minimum_python_version__.split('.'))):
     raise UnsupportedPythonError("packagename does not support Python < {}".format(__minimum_python_version__))
 
@@ -36,6 +37,7 @@ if not _ASTROPY_SETUP_:
 
 __citation__ = 'https://doi.org/10.5281/zenodo.1421356'
 
+
 class Conf(_config.ConfigNamespace):
     """
     Configuration parameters for specutils.
@@ -48,3 +50,9 @@ class Conf(_config.ConfigNamespace):
     )
 
 conf = Conf()
+
+
+import logging
+
+logging.basicConfig(format='specutils [%(levelname)-8s]: %(message)s',
+level=logging.INFO)
