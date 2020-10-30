@@ -167,21 +167,10 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
         columns.append(unc.astype(ftype))
         colnames.append("uncertainty")
 
-    # For 2D data transpose from row-major format
-    ndim = 1
-
+    # For > 1D data transpose from row-major format
     for c in range(1, len(columns)):
         if columns[c].ndim > 1:
-            ndim = columns[c].ndim
             columns[c] = columns[c].T
-
-    if ndim > 1:
-        spec_shape = np.ones(ndim, dtype=np.int)
-        spec_shape[0] = -1
-
-        for c in range(1, len(columns)):
-            if columns[c].ndim == 1:
-                columns[c] = columns[c].reshape(spec_shape)
 
     tab = Table(columns, names=colnames, meta=header)
 
