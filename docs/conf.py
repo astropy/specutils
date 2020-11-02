@@ -210,4 +210,4 @@ for line in open('nitpick-exceptions'):
         continue
     dtype, target = line.split(None, 1)
     target = target.strip()
-    nitpick_ignore.append((dtype, six.u(target)))
+    nitpick_ignore.append((dtype, target))
