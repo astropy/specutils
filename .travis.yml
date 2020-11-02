@@ -156,6 +156,7 @@ install:
       fi
 
 script:
+    - pip install virtualenv==20.0.33  # 20.0.34 broken!
     - pip install tox
     - tox $TOXARGS -- $TOXPOSARGS
 
