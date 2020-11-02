@@ -33,6 +33,9 @@ docs/_build
 .floo
 .flooignore
 
+# Visual Studio Code project files
+.vscode
+
 # Packages/installer info
 *.egg
 *.egg-info

@@ -1,6 +1,6 @@
 This project is based upon the Astropy package template
-(https://github.com/astropy/package-template/) which is licenced under the terms
-of the following licence.
+(https://github.com/astropy/package-template/) which is licensed under the terms
+of the following license.
 
 ---
 

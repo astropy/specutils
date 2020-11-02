@@ -52,7 +52,7 @@ highlight_language = 'python3'
 #needs_sphinx = '1.2'
 
 # To perform a Sphinx version check that needs to be more specific than
-# major.minor, call `check_sphinx_version("x.y.z")` here.
+# major.minor, call `check_sphinx_version("X.Y.Z")` here.
 # check_sphinx_version("1.2.1")
 
 # Include other packages to link against
@@ -142,6 +142,9 @@ html_title = '{0} v{1}'.format(project, release)
 # Output file base name for HTML help builder.
 htmlhelp_basename = project + 'doc'
 
+# Prefixes that are ignored for sorting the Python module index
+modindex_common_prefix = ["specutils."]
+
 
 # -- Options for LaTeX output -------------------------------------------------
 
@@ -174,6 +177,15 @@ if setup_cfg.get('edit_on_github').lower() == 'true':
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
 
+
+# -- Options for linkcheck output -------------------------------------------
+linkcheck_retry = 5
+linkcheck_ignore = [
+    r'https://github\.com/astropy/specutils/(?:issues|pull)/\d+',
+]
+linkcheck_timeout = 180
+linkcheck_anchors = False
+
 # -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
 #
 nitpicky = True
@@ -198,4 +210,4 @@ for line in open('nitpick-exceptions'):
         continue
     dtype, target = line.split(None, 1)
     target = target.strip()
-    nitpick_ignore.append((dtype, target))
+    nitpick_ignore.append((dtype, six.u(target)))
