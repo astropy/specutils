@@ -66,6 +66,14 @@ def test_region_simple_check_ends(simulated_spectra):
     assert sub_spectrum.spectral_axis.value[0] == 8
     assert sub_spectrum.spectral_axis.value[-1] == 15
 
+    region = SpectralRegion(0*u.um, 15*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum.spectral_axis.value[0] == 1
+
+    region = SpectralRegion(8*u.um, 30*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum.spectral_axis.value[-1] == 25
+
 
 def test_region_empty(simulated_spectra):
     np.random.seed(42)

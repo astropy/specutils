@@ -307,6 +307,17 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         return self.__class__(**alt_kwargs)
 
+    @NDDataRef.mask.setter
+    def mask(self, value):
+        # Impose stricter checks than the base NDData mask setter
+        if value is not None:
+            value = np.array(value)
+            if not self.data.shape == value.shape:
+                raise ValueError(
+                    "Flux axis ({}) and mask ({}) shapes must be the "
+                    "same.".format(self.data.shape, value.shape))
+        self._mask = value
+
     @property
     def frequency(self):
         """

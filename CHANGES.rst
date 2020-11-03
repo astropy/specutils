@@ -7,6 +7,11 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fix ``extract_region`` behavior and slicing for ``Spectrum1D`` objects
+  that have multi-dimensional flux arrays. Extracting a region that extends
+  beyond the limits of the data no longer drops the last data point in the
+  returned spectrum. [#724]
+
 Documentation
 ^^^^^^^^^^^^^
 

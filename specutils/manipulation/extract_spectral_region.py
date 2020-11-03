@@ -51,7 +51,7 @@ def _to_edge_pixel(subregion, spectrum):
         if left_reg_in_spec_unit < spectral_axis[0]:
             left_index = 0
         elif left_reg_in_spec_unit > spectral_axis[-1]:
-            left_index = len(spectrum.spectral_axis)-1
+            left_index = len(spectrum.spectral_axis)
         else:
             try:
                 left_index = int(np.ceil(spectrum.wcs.world_to_pixel(
@@ -74,7 +74,7 @@ def _to_edge_pixel(subregion, spectrum):
                                                  u.spectral())
 
         if right_reg_in_spec_unit > spectral_axis[-1]:
-            right_index = len(spectrum.spectral_axis)-1
+            right_index = len(spectrum.spectral_axis)
         elif right_reg_in_spec_unit < spectral_axis[0]:
             right_index = 0
         else:
@@ -99,13 +99,17 @@ def extract_region(spectrum, region):
 
     Parameters
     ----------
-    spectrum: `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum: `~specutils.Spectrum1D`
         The spectrum object from which the region will be extracted.
+
+    region: `~specutils.SpectralRegion`
+        The spectral region to extract from the original spectrum.
 
     Returns
     -------
-    spectrum: `~specutils.spectra.spectrum1d.Spectrum1D`
-        Excised spectrum.
+    spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
+        Excised spectrum, or list of spectra if the input region contained multiple 
+        subregions.
 
     Notes
     -----
