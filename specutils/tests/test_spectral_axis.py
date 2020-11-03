@@ -91,6 +91,7 @@ LSRD_DIR_STATIONARY_EQUIV = [
 def target(request):
     return request.param
 
+
 def test_create_from_spectral_coord(observer, target):
     """
     Checks that parameters are correctly copied from the SpectralCoord object
@@ -105,6 +106,7 @@ def test_create_from_spectral_coord(observer, target):
     assert spec_coord.radial_velocity == spec_axis.radial_velocity
     assert spec_coord.doppler_convention == spec_axis.doppler_convention
     assert spec_coord.doppler_rest == spec_axis.doppler_rest
+
 
 def test_create_from_spectral_axis(observer, target):
     """

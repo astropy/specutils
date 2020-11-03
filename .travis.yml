@@ -1,10 +1,11 @@
-# We set the language to c because python isn't supported on the MacOS X nodes
-# on Travis. However, the language ends up being irrelevant anyway, since we
-# install Python ourselves using conda.
-language: c
+language: python
+
+# We need a full clone to make sure setuptools_scm works properly
+git:
+    depth: false
 
 os:
-  - linux
+    - linux
 
 # The apt packages below are needed for sphinx builds. A full list of packages
 # that can be included can be found here:
@@ -12,160 +13,172 @@ os:
 # https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
 
 addons:
-  apt:
-    packages:
-      - graphviz
+    apt:
+        packages:
+            - graphviz
 
-
-stage: Comprehensive tests
 
 stages:
-  # Do the style check and a single test job, don't proceed if it fails
-  - name: Initial tests
-  # Test docs, astropy dev, and without optional dependencies
-  - name: Comprehensive tests
-  # Slow tests that should only run if comprehensive ones passed
-  - name: Slow tests
-  # These will only run when cron is opted in
-  - name: Cron tests
-    if: type = cron
+   # Do the style check and a single test job, don't proceed if it fails
+   - name: Initial tests
+   # Test docs, astropy dev, and without optional dependencies
+   - name: Comprehensive tests
+   # These will only run when cron is opted in
+   - name: Cron tests
+     if: type = cron
 
 
 env:
-  global:
-    # The following versions are the 'default' for tests, unless
-    # overridden underneath. They are defined here in order to save having
-    # to repeat them for all configurations.
-    - PYTHON_VERSION=3.7
-    - NUMPY_VERSION=stable
-    - ASTROPY_VERSION=stable
-    - MAIN_CMD='python setup.py'
-    - SETUP_CMD='test --remote-data=any'
-    - EVENT_TYPE='pull_request push'
+    global:
 
+        # The following versions are the 'default' for tests, unless
+        # overridden underneath. They are defined here in order to save having
+        # to repeat them for all configurations.
 
-    # List runtime dependencies for the package that are available as conda
-    # packages here.
-    - CONDA_DEPENDENCIES='pytest-remotedata'
-    - CONDA_DEPENDENCIES_DOC='sphinx-astropy'
+        # The following three variables are for tox. TOXENV is a standard
+        # variable that tox uses to determine the environment to run,
+        # TOXARGS are arguments passed to tox, and TOXPOSARGS are arguments
+        # that tox passes through to the {posargs} indicator in tox.ini.
+        # The latter can be used for example to pass arguments to pytest.
+        - TOXENV='test'
+        - TOXARGS='-v'
+        - TOXPOSARGS=''
 
-    # List other runtime dependencies for the package that are available as
-    # pip packages here.
-    - PIP_DEPENDENCIES='gwcs scipy matplotlib pytest-astropy'
-
-    # Conda packages for affiliated packages are hosted in channel
-    # "astropy" while builds for astropy LTS with recent numpy versions
-    # are in astropy-ci-extras. If your package uses either of these,
-    # add the channels to CONDA_CHANNELS along with any other channels
-    # you want to use.
-    - CONDA_CHANNELS='astropy'
-
-    # If there are matplotlib or other GUI tests, uncomment the following
-    # line to use the X virtual framebuffer.
-    # - SETUP_XVFB=True
-
-    # If you want to ignore certain flake8 errors, you can list them
-    # in FLAKE8_OPT, for example:
-    # - FLAKE8_OPT='--ignore=E501'
-    # - FLAKE8_OPT='--select=E101,W191,W291,W292,W293,W391,E111,E112,E113,E502,E722,E901,E902'
-
-    # Extra dependencies
-    - GWCS_DEV="git+https://github.com/spacetelescope/gwcs.git#egg=gwcs"
-    - ASDF_DEV="git+https://github.com/spacetelescope/asdf.git#egg=asdf"
+        # The following is needed to avoid issues if e.g. Matplotlib tries
+        # to open a GUI window.
+        - SETUP_XVFB=True
 
 matrix:
 
-  # Don't wait for allowed failures
-  fast_finish: true
+    # Don't wait for allowed failures
+    fast_finish: true
 
-  include:
-    # Make sure that egg_info works without dependencies
-    - stage: Initial tests
-      env: PYTHON_VERSION=3.7 SETUP_CMD='egg_info'
+    include:
 
-    # Try MacOS X, usually enough only to run from cron as hardly there are
-    # issues that are not picked up by a linux worker
-    - os: osx
-      stage: Cron tests
-      env: SETUP_CMD='test' EVENT_TYPE='cron'
+        # Try MacOS X, usually enough only to run from cron as hardly there are
+        # issues that are not picked up by a linux worker. We set language to
+        # 'c' since 'python' doesn't work on non-Linux platforms.
+        - os: osx
+          language: c
+          name: Python 3.7 with required dependencies
+          stage: Cron tests
+          env: PYTHON_VERSION=3.7 TOXENV=py37-test
 
-    # Do a coverage test.
-    - stage: Initial tests
-      env: SETUP_CMD='test --coverage'
+        # Do a regular build on Linux with Python 3.8, with cov
+        # For Linux we use language: python to avoid using conda.
+        - os: linux
+          python: 3.8
+          name: Python 3.8 with required dependencies and measure coverage
+          stage: Initial tests
+          env: TOXENV=py38-test-cov
 
-    # Check for sphinx doc build warnings - we do this first because it
-    # may run for a long time
-    - env: SETUP_CMD='build_docs -w'
-        CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
+        # Check for sphinx doc build warnings
+        - os: linux
+          python: 3.8
+          name: Documentation build
+          stage: Comprehensive tests
+          env: TOXENV=build_docs
 
-    # check on somewhat older versions LTS version
-    - env: PYTHON_VERSION=3.6 ASTROPY_VERSION=lts NUMPY_VERSION=1.17
+        # Now try Astropy dev with the latest Python
+        - os: linux
+          python: 3.8
+          name: Python 3.8 with developer version of astropy
+          stage: Comprehensive tests
+          env: TOXENV=py38-test-devdeps
 
-    # Add a job that runs from cron only and tests against astropy dev and
-    # numpy dev to give a change for early discovery of issues and feedback
-    # for both developer teams.
-    - stage: Cron tests
-      env: ASTROPY_VERSION=development NUMPY_VERSION=development
-        EVENT_TYPE='cron'
-    - env: ASTROPY_VERSION=development
-        EVENT_TYPE='pull_request push cron'
+        # And with an older Python, Astropy LTS, and the oldest supported Numpy
+        - os: linux
+          python: 3.6
+          name: Python 3.6 astropy LTS and Numpy 1.16
+          stage: Comprehensive tests
+          env: TOXENV=py36-test-astropylts-numpy116
 
-    # Try on Windows.
-    - os: windows
-      stage: Slow tests
-      env: SETUP_CMD='test'
+        # Add a job that runs from cron only and tests against astropy dev and
+        # numpy dev to give a change for early discovery of issues and feedback
+        # for both developer teams.
+        - os: linux
+          python: 3.8
+          name: Python 3.8 latest developer version of key dependencies
+          stage: Cron tests
+          env: TOXENV=py38-test-devdeps
 
-    # Note we are not doing any numpy versions older than 1.16 since those are not compatible with Astropy 4.0
+        # Try on Windows.
+        - os: windows
+          language: c
+          name: Python 3.8 with required dependencies
+          stage: Comprehensive tests
+          env: PYTHON_VERSION=3.8 TOXENV=py38-test
 
-    # Do a PEP8 test with flake8
-    # - stage: Initial tests
-    #   env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
-    # Do a PEP8 test with pycodestyle
-    - stage: Initial tests
-      env: MAIN_CMD='pycodestyle specutils --count'
-           SETUP_CMD=''
+        # Try other python versions and Numpy versions. Since we can assume that
+        # the Numpy developers have taken care of testing Numpy with different
+        # versions of Python, we can vary Python and Numpy versions at the same
+        # time.
 
-    # Try development version of Astropy and GWCS
-    - env: ASTROPY_VERSION=dev EVENT_TYPE='pull_request push cron'
-        PIP_DEPENDENCIES="$GWCS_DEV $ASDF_DEV scipy matplotlib"
+        - os: linux
+          python: 3.7
+          name: Python 3.7 with astropy 3.0 and Numpy 1.17
+          stage: Comprehensive tests
+          env: TOXENV=py37-test-astropy30-numpy117
 
-    - env: PIP_DEPENDENCIES="$PIP_DEPENDENCIES git+https://github.com/spacetelescope/jwst@stable"
+        # Do a code style check
+        - os: linux
+          python: 3.8
+          name: Code style checks
+          stage: Initial tests
+          env: TOXENV=codestyle
 
-  allow_failures:
-  # Do a PEP8 test with flake8
-  # (do allow to fail unless your code completely compliant)
-   # - stage: Initial tests
-   #   env: MAIN_CMD='flake8 specutils --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+        # Run documentation link check in a cron job.
+        - language: python
+          python: 3.8
+          name: Documentation link check
+          stage: Cron tests
+          env: TOXENV=linkcheck
+          addons:
+              apt:
+                  packages:
+                      - graphviz
+
+    allow_failures:
+        # Do a PEP8 test with flake8
+        # (do allow to fail unless your code completely compliant)
+        # - os: linux
+        #   python: 3.8
+        #   name: Code style checks
+        #   stage: Initial tests
+        #   env: TOXENV=codestyle
+
+
+before_install:
+    # Create a coverage.xml for use by coveralls or codecov
+    - if [[ $TOXENV == *-cov ]]; then
+        export TOXPOSARGS=$TOXPOSARGS" --cov-report=xml:"$TRAVIS_BUILD_DIR"/coverage.xml";
+      fi
 
 install:
 
-  # We now use the ci-helpers package to set up our testing environment.
-  # This is done by using Miniconda and then using conda and pip to install
-  # dependencies. Which dependencies are installed using conda and pip is
-  # determined by the CONDA_DEPENDENCIES and PIP_DEPENDENCIES variables,
-  # which should be space-delimited lists of package names. See the README
-  # in https://github.com/astropy/ci-helpers for information about the full
-  # list of environment variables that can be used to customize your
-  # environment. In some cases, ci-helpers may not offer enough flexibility
-  # in how to install a package, in which case you can have additional
-  # commands in the install: section below.
+    # We now use the ci-helpers package to set up our Python environment
+    # on Windows and MacOS X but we don't set up any other dependencies,
+    # instead using tox to do this. See https://github.com/astropy/ci-helpers
+    # for more information about ci-helpers.
 
-  - git clone --depth 1 git://github.com/astropy/ci-helpers.git
-  - source ci-helpers/travis/setup_conda.sh
-
-  # As described above, using ci-helpers, you should be able to set up an
-  # environment with dependencies installed using conda and pip, but in some
-  # cases this may not provide enough flexibility in how to install a
-  # specific dependency (and it will not be able to install non-Python
-  # dependencies). Therefore, you can also include commands below (as
-  # well as at the start of the install section or in the before_install
-  # section if they are needed before setting up conda) to install any
-  # other dependencies.
+    - if [[ $TRAVIS_OS_NAME != linux ]]; then
+        git clone --depth 1 git://github.com/astropy/ci-helpers.git;
+        source ci-helpers/travis/setup_python.sh;
+      fi
 
 script:
-  - $MAIN_CMD $SETUP_CMD
+    - pip install virtualenv==20.0.33  # 20.0.34 broken!
+    - pip install tox
+    - tox $TOXARGS -- $TOXPOSARGS
 
 after_success:
-# If coveralls.io is set up for this package, uncomment the line below.
-# The coveragerc file may be customized as needed for your package.
-# - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='specutils/tests/coveragerc'; fi
+    # if either coveralls or codecov is used, uncomment the if and fi statements
+    # and the appropriate two lines inside the if statement
+    # - if [[ $TOXENV == *-cov ]]; then
+    #    # If coveralls.io is set up for this package, uncomment the two lines below.
+    #    pip install coveralls;
+    #    coveralls;
+    #    # If codecov is set up for this package, uncomment the two lines below
+    #    pip install codecov;
+    #    codecov;
+    # fi

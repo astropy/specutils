@@ -1,4 +1,10 @@
-Copyright (c) 2017, Astropy-specutils Developers
+This project is based upon the Astropy package template
+(https://github.com/astropy/package-template/) which is licensed under the terms
+of the following license.
+
+---
+
+Copyright (c) 2018, Astropy Developers
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
