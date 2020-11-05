@@ -487,15 +487,17 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
                              spectrum.uncertainty.quantity)
 
 
+@pytest.mark.parametrize("ndim", range(1, 4))
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
-def test_tabular_fits_2d(tmpdir, spectral_axis):
+def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
     wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
            'wavenumber': u.cm**-1}
-    # Create a small data set with 2D flux + uncertainty
+    # Create a small data set with ndim-D flux + uncertainty
     disp = np.arange(1, 1.1, 0.01) * wlu[spectral_axis]
-    flux = np.ones((3, len(disp))) * np.arange(1, len(disp)+1)**2 * 1.e-14*u.Jy
-    unc = StdDevUncertainty(0.01 * np.random.rand(3, len(disp)))
+    shape = (3, 2, 4)[:ndim+1] + disp.shape
+    flux = np.random.normal(0., 1.e-9, shape) * u.W * u.m**-2 * u.AA**-1
+    unc = StdDevUncertainty(0.01 * np.random.sample(shape))
     if spectral_axis not in ('wavelength', ):
         disp = np.flip(disp)
 
@@ -509,6 +511,19 @@ def test_tabular_fits_2d(tmpdir, spectral_axis):
     assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
     assert spec.flux.shape == flux.shape
     assert spec.uncertainty.array.shape == flux.shape
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
+
+    # Test again, using `column_mapping` to convert to different flux unit
+    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+            'flux': ('flux', 'erg / (s cm**2 AA)'),
+            'uncertainty': ('uncertainty', None)}
+
+    spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
+    assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,

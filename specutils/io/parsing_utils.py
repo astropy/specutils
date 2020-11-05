@@ -72,7 +72,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
         unit for the file column (or ``None`` to take unit from the table)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
-                              'WAVE': ('spectral_axis', 'um')}
+                              'WAVE': ('spectral_axis'spectral_axisu', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
@@ -80,7 +80,8 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
     Returns
     -------
     :class:`~specutils.Spectrum1D`
-        The spectrum that is represented by the data in this table.
+        The spectrum with 'spectral_axis', 'flux' and optionally 'uncertainty'
+        as identified by `column_mapping`.
     """
     spec_kwargs = {}
 
@@ -121,6 +122,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             # This may be desired e.g. for the mask or bit flag arrays.
             kwarg_val = table[col_name]
 
+        # Transpose > 1D data to row-major format
+        if kwarg_val.ndim > 1:
+            kwarg_val = kwarg_val.T
+
         spec_kwargs.setdefault(kwarg_name, kwarg_val)
 
     # Ensure that the uncertainties are a subclass of NDUncertainty
@@ -156,7 +161,8 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     Returns
     -------
     :class:`~specutils.Spectrum1D`
-        The spectrum that is represented by the data in this table.
+        The spectrum that is represented by the data from the columns
+        as automatically identified above.
 
     Raises
     ------
