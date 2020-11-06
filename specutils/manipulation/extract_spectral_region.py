@@ -108,7 +108,7 @@ def extract_region(spectrum, region):
     Returns
     -------
     spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
-        Excised spectrum, or list of spectra if the input region contained multiple 
+        Excised spectrum, or list of spectra if the input region contained multiple
         subregions.
 
     Notes
