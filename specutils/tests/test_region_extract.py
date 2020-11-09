@@ -66,6 +66,14 @@ def test_region_simple_check_ends(simulated_spectra):
     assert sub_spectrum.spectral_axis.value[0] == 8
     assert sub_spectrum.spectral_axis.value[-1] == 15
 
+    region = SpectralRegion(0*u.um, 15*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum.spectral_axis.value[0] == 1
+
+    region = SpectralRegion(8*u.um, 30*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+    assert sub_spectrum.spectral_axis.value[-1] == 25
+
 
 def test_region_empty(simulated_spectra):
     np.random.seed(42)
@@ -200,3 +208,14 @@ def test_extract_masked():
 
     assert np.all(extracted.mask == [False, True])
     assert np.all(extracted.flux.value == [1, 2])
+
+def test_extract_multid_flux():
+    flux = np.random.sample((10, 49)) * 100
+    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+                      flux=flux * u.Jy)
+
+    region = SpectralRegion(10 * u.nm, 20 * u.nm)
+    extracted = extract_region(spec, region)
+
+    assert extracted.shape == (10, 11)
+    assert extracted[0,0].flux == spec[0,9].flux

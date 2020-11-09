@@ -267,7 +267,7 @@ the line:
     >>> noise_region = SpectralRegion([(10, 7), (3, 0)] * u.GHz)
     >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, noise_region)
     >>> spec_w_unc.uncertainty # doctest: +ELLIPSIS
-    StdDevUncertainty([0.18823157, ..., 0.18823157])
+    StdDevUncertainty([0.1886835, ..., 0.1886835])
 
 Or similarly, expressed in pixels:
 
