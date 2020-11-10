@@ -15,8 +15,9 @@ from astropy.nddata import StdDevUncertainty, InverseVariance
 
 import numpy as np
 
-from specutils.io.registers import data_loader, custom_writer
-from specutils import Spectrum1D
+from ...spectra import Spectrum1D
+from ..registers import data_loader, custom_writer
+from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ['spec_identify', 'spSpec_identify',
            'spec_loader', 'spSpec_loader']
@@ -30,23 +31,13 @@ def spec_identify(origin, *args, **kwargs):
     Check whether given input is FITS and has SDSS-III/IV spec type
     BINTABLE in first extension. This is used for Astropy I/O Registry.
     """
-    if isinstance(args[2], fits.hdu.hdulist.HDUList):
-        hdulist = args[2]
-    elif isinstance(args[2], _io.BufferedReader):
-        hdulist = fits.open(args[2])
-    else:
-        hdulist = fits.open(args[0], **kwargs)
-
     # Test if fits has extension of type BinTable and check for spec-specific keys
-    is_sdss = (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
-               hdulist[0].header.get('FIBERID', 0) > 0 and
-               len(hdulist) > 1 and
-               isinstance(hdulist[1], fits.BinTableHDU) and
-               hdulist[1].header['TTYPE3'] == 'ivar')
-
-    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
-    return is_sdss
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
+                hdulist[0].header.get('FIBERID', 0) > 0 and
+                len(hdulist) > 1 and
+                (isinstance(hdulist[1], fits.BinTableHDU) and
+                 hdulist[1].header.get('TTYPE3') == 'ivar'))
 
 
 def spSpec_identify(origin, *args, **kwargs):
@@ -54,23 +45,13 @@ def spSpec_identify(origin, *args, **kwargs):
     Check whether given input is FITS with SDSS-I/II spSpec tyamepe data.
     This is used for Astropy I/O Registry.
     """
-    if isinstance(args[2], fits.hdu.hdulist.HDUList):
-        hdulist = args[2]
-    elif isinstance(args[2], _io.BufferedReader):
-        hdulist = fits.open(args[2])
-    else:
-        hdulist = fits.open(args[0])
-
     # Test telescope keyword and check if primary HDU contains data
     # consistent with spSpec format
-    is_sdss = (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
-               hdulist[0].header.get('FIBERID', 0) > 0 and
-               isinstance(hdulist[0].data, np.ndarray) and
-               hdulist[0].data.shape[0] == 5)
-
-    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
-    return is_sdss
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
+                hdulist[0].header.get('FIBERID', 0) > 0 and
+                isinstance(hdulist[0].data, np.ndarray) and
+                hdulist[0].data.shape[0] == 5)
 
 
 def spPlate_identify(origin, *args, **kwargs):
@@ -78,23 +59,13 @@ def spPlate_identify(origin, *args, **kwargs):
     Check whether given input is FITS with SDSS spPlate fibre spectral data.
     This is used for Astropy I/O Registry.
     """
-    if isinstance(args[2], fits.hdu.hdulist.HDUList):
-        hdulist = args[2]
-    elif isinstance(args[2], _io.BufferedReader):
-        hdulist = fits.open(args[2])
-    else:
-        hdulist = fits.open(args[0], **kwargs)
-
     # Test telescope keyword and check if primary HDU contains data
     # consistent with spSpec format
-    is_sdss = (hdulist[0].header['TELESCOP'] == 'SDSS 2.5-M' and
-               hdulist[0].header.get('FIBERID', 0) <= 0 and
-               isinstance(hdulist[0].data, np.ndarray) and
-               hdulist[0].data.shape[0] > 5)
-
-    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
-    return is_sdss
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
+                hdulist[0].header.get('FIBERID', 0) <= 0 and
+                isinstance(hdulist[0].data, np.ndarray) and
+                hdulist[0].data.shape[0] > 5)
 
 
 @data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
@@ -114,34 +85,25 @@ def spec_loader(file_obj, **kwargs):
         The spectrum that is represented by the 'loglam' (wavelength) and 'flux'
         data columns in the BINTABLE extension of the FITS `file_obj`.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    elif fits.util.fileobj_closed(file_obj):
-        hdulist = fits.open(file_obj.name, **kwargs)
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[0].header
+        name = header.get('NAME')
+        meta = {'header': header}
 
-    header = hdulist[0].header
-    name = header.get('NAME')
-    meta = {'header': header}
+        bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
+        if 'Ang' in bunit and 'strom' not in bunit:
+            bunit = bunit.replace('Ang', 'Angstrom')
+        flux_unit = Unit(bunit)
 
-    bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
-    if 'Ang' in bunit and 'strom' not in bunit:
-        bunit = bunit.replace('Ang', 'Angstrom')
-    flux_unit = Unit(bunit)
+        # spectrum is in HDU 1
+        flux = hdulist[1].data['flux'] * flux_unit
 
-    # spectrum is in HDU 1
-    flux = hdulist[1].data['flux'] * flux_unit
+        uncertainty = InverseVariance(hdulist[1].data['ivar'] / flux_unit**2)
 
-    uncertainty = InverseVariance(hdulist[1].data['ivar'] / flux_unit**2)
+        dispersion = 10**hdulist[1].data['loglam']
+        dispersion_unit = Unit('Angstrom')
 
-    dispersion = 10**hdulist[1].data['loglam']
-    dispersion_unit = Unit('Angstrom')
-
-    mask = hdulist[1].data['and_mask'] != 0
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+        mask = hdulist[1].data['and_mask'] != 0
 
     return Spectrum1D(flux=flux, spectral_axis=dispersion * dispersion_unit,
                       uncertainty=uncertainty, meta=meta, mask=mask)
@@ -164,39 +126,30 @@ def spSpec_loader(file_obj, **kwargs):
         The spectrum that is represented by the wavelength solution from the
         header WCS and data array of the primary HDU.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    elif fits.util.fileobj_closed(file_obj):
-        hdulist = fits.open(file_obj.name, **kwargs)
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[0].header
+        # name = header.get('NAME')
+        meta = {'header': header}
+        wcs = WCS(header).dropaxis(1)
 
-    header = hdulist[0].header
-    # name = header.get('NAME')
-    meta = {'header': header}
-    wcs = WCS(header).dropaxis(1)
+        bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
+        # fix mutilated flux unit
+        bunit = bunit.replace('/cm/s/Ang', '/ (Angstrom cm2 s)')
+        if 'Ang' in bunit and 'strom' not in bunit:
+            bunit = bunit.replace('Ang', 'Angstrom')
+        flux_unit = Unit(bunit)
+        flux = hdulist[0].data[0, :] * flux_unit
 
-    bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
-    # fix mutilated flux unit
-    bunit = bunit.replace('/cm/s/Ang', '/ (Angstrom cm2 s)')
-    if 'Ang' in bunit and 'strom' not in bunit:
-        bunit = bunit.replace('Ang', 'Angstrom')
-    flux_unit = Unit(bunit)
-    flux = hdulist[0].data[0, :] * flux_unit
+        uncertainty = StdDevUncertainty(hdulist[0].data[2, :] * flux_unit)
 
-    uncertainty = StdDevUncertainty(hdulist[0].data[2, :] * flux_unit)
+        # dispersion along NAXIS1 from the WCS
+        dispersion = wcs.pixel_to_world(np.arange(flux.shape[0]))
+        # convert out of logspace (default for spSpec/spPlate spectra)?
+        if header.get('DC-Flag', 1) == 1:
+            dispersion = 10**dispersion
+        dispersion_unit = Unit('Angstrom')
 
-    # dispersion along NAXIS1 from the WCS
-    dispersion = wcs.pixel_to_world(np.arange(flux.shape[0]))
-    # convert out of logspace (default for spSpec/spPlate spectra)?
-    if header.get('DC-Flag', 1) == 1:
-        dispersion = 10**dispersion
-    dispersion_unit = Unit('Angstrom')
-
-    mask = hdulist[0].data[3, :] != 0
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+        mask = hdulist[0].data[3, :] != 0
 
     return Spectrum1D(flux=flux, spectral_axis=dispersion * dispersion_unit,
                       uncertainty=uncertainty, meta=meta, mask=mask)
@@ -222,39 +175,30 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
         The spectra represented by the wavelength solution from the header WCS
         and the data array of the primary HDU (typically 640 along dimension 1).
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    elif fits.util.fileobj_closed(file_obj):
-        hdulist = fits.open(file_obj.name, **kwargs)
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[0].header
+        meta = {'header': header}
+        wcs = WCS(header).dropaxis(1)
+        if limit is None:
+            limit = header['NAXIS2']
 
-    header = hdulist[0].header
-    meta = {'header': header}
-    wcs = WCS(header).dropaxis(1)
-    if limit is None:
-        limit = header['NAXIS2']
+        bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
+        if 'Ang' in bunit and 'strom' not in bunit:
+            bunit = bunit.replace('Ang', 'Angstrom')
+        flux_unit = Unit(bunit)
+        flux = hdulist[0].data[0:limit, :] * flux_unit
+        uncertainty = InverseVariance(hdulist[1].data[0:limit, :] / flux_unit**2)
 
-    bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')
-    if 'Ang' in bunit and 'strom' not in bunit:
-        bunit = bunit.replace('Ang', 'Angstrom')
-    flux_unit = Unit(bunit)
-    flux = hdulist[0].data[0:limit, :] * flux_unit
-    uncertainty = InverseVariance(hdulist[1].data[0:limit, :] / flux_unit**2)
+        # dispersion along NAXIS1 from the WCS
+        wcs = WCS(header).dropaxis(1)
+        dispersion = wcs.pixel_to_world(np.arange(flux.shape[-1]))
+        # convert out of logspace (default for spSpec/spPlate spectra)?
+        if header.get('DC-Flag', 1) == 1:
+            dispersion = 10**dispersion
+        dispersion_unit = Unit('Angstrom')
 
-    # dispersion along NAXIS1 from the WCS
-    wcs = WCS(header).dropaxis(1)
-    dispersion = wcs.pixel_to_world(np.arange(flux.shape[-1]))
-    # convert out of logspace (default for spSpec/spPlate spectra)?
-    if header.get('DC-Flag', 1) == 1:
-        dispersion = 10**dispersion
-    dispersion_unit = Unit('Angstrom')
-
-    mask = hdulist[2].data[0:limit, :] != 0
-    meta['plugmap'] = Table.read(hdulist[5])[0:limit]
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+        mask = hdulist[2].data[0:limit, :] != 0
+        meta['plugmap'] = Table.read(hdulist[5])[0:limit]
 
     return Spectrum1D(flux=flux, spectral_axis=dispersion*dispersion_unit,
                       uncertainty=uncertainty, meta=meta, mask=mask)

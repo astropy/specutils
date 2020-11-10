@@ -1,45 +1,57 @@
-import contextlib
-import _io
 import numpy as np
 import os
 import re
 import urllib
+import io
+import contextlib
 
 from astropy.io import fits
+from astropy.table import Table
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
 import logging
 
-from specutils.spectra import Spectrum1D
+from specutils.spectra import Spectrum1D, SpectrumCollection
 
 
 @contextlib.contextmanager
 def read_fileobj_or_hdulist(*args, **kwargs):
     """ Context manager for reading a filename or file object
 
-    Returns:
-        an Astropy HDUList
+    Returns
+    -------
+    hdulist : :class:`~astropy.io.fits.HDUList`
+        Provides a generator-iterator representing the open file object handle.
     """
-    # access the fileobj or filename arg
-    # do this so identify functions are useable outside of Spectrum1d.read context
+    # Access the fileobj or filename arg
+    # Do this so identify functions are useable outside of Spectrum1d.read context
     try:
         fileobj = args[2]
     except IndexError:
         fileobj = args[0]
 
     if isinstance(fileobj, fits.hdu.hdulist.HDUList):
-        hdulist = fileobj
-    elif isinstance(fileobj, _io.BufferedReader):
+        if fits.util.fileobj_closed(fileobj):
+            hdulist = fits.open(fileobj.name, **kwargs)
+        else:
+            hdulist = fileobj
+    elif isinstance(fileobj, io.BufferedReader):
         hdulist = fits.open(fileobj)
     else:
         hdulist = fits.open(fileobj, **kwargs)
 
-    yield hdulist
+    try:
+        yield hdulist
 
-    if not isinstance(fileobj, (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
-        hdulist.close()
+    # Cleanup even after identifier function has thrown an exception: rewind generic file handles.
+    finally:
+        if not isinstance(fileobj, fits.hdu.hdulist.HDUList):
+            try:
+                fileobj.seek(0)
+            except (AttributeError, io.UnsupportedOperation):
+                hdulist.close()
 
 
 def spectrum_from_column_mapping(table, column_mapping, wcs=None):
@@ -60,10 +72,16 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
         unit for the file column (or ``None`` to take unit from the table)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
-                              'WAVE': ('spectral_axis', 'um')}
+                              'WAVE': ('spectral_axis'spectral_axisu', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
+
+    Returns
+    -------
+    :class:`~specutils.Spectrum1D`
+        The spectrum with 'spectral_axis', 'flux' and optionally 'uncertainty'
+        as identified by `column_mapping`.
     """
     spec_kwargs = {}
 
@@ -104,6 +122,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             # This may be desired e.g. for the mask or bit flag arrays.
             kwarg_val = table[col_name]
 
+        # Transpose > 1D data to row-major format
+        if kwarg_val.ndim > 1:
+            kwarg_val = kwarg_val.T
+
         spec_kwargs.setdefault(kwarg_name, kwarg_val)
 
     # Ensure that the uncertainties are a subclass of NDUncertainty
@@ -111,7 +133,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
         spec_kwargs['uncertainty'] = StdDevUncertainty(
             spec_kwargs.get('uncertainty'))
 
-    return Spectrum1D(**spec_kwargs, wcs=wcs, meta=table.meta)
+    return Spectrum1D(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
 def generic_spectrum_from_table(table, wcs=None, **kwargs):
@@ -138,8 +160,9 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
-        The spectrum that is represented by the data in this table.
+    :class:`~specutils.Spectrum1D`
+        The spectrum that is represented by the data from the columns
+        as automatically identified above.
 
     Raises
     ------
@@ -254,15 +277,14 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         err = StdDevUncertainty(err.to(err.unit))
         if np.min(table[err_column]) <= 0.:
             warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
+    else:
+        err = None
 
     # Create the Spectrum1D object and return it
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
-        if err_column is not None:
-            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                                  uncertainty=err, meta=table.meta, wcs=wcs)
-        else:
-            spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                                  meta=table.meta, wcs=wcs)
+        # For > 1D spectral axis transpose to row-major format and return SpectrumCollection
+        spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+                              uncertainty=err, meta={'header': table.meta}, wcs=wcs)
 
     return spectrum
 
