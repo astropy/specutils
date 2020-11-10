@@ -27,6 +27,21 @@ from .. import Spectrum1D, SpectrumList
 from ..io import get_loaders_by_extension
 from ..io.default_loaders import subaru_pfs_spec
 
+# NOTE: Python can be built without bz2 or lzma.
+try:
+    import bz2  # noqa
+except ImportError:
+    HAS_BZ2 = False
+else:
+    HAS_BZ2 = True
+
+try:
+    import lzma  # noqa
+except ImportError:
+    HAS_LZMA = False
+else:
+    HAS_LZMA = True
+
 
 def test_get_loaders_by_extension():
     loader_labels = get_loaders_by_extension('fits')
@@ -256,13 +271,16 @@ def test_sdss_spspec_stream():
 @pytest.mark.skipif('sys.platform.startswith("win")',
                     reason='Uncertain availability of compression utilities')
 @pytest.mark.remote_data
-@pytest.mark.parametrize('compress', ['gzip', 'bzip2'])
+@pytest.mark.parametrize('compress', ['gzip', 'bzip2', 'xz'])
 def test_sdss_compressed(compress, tmp_path):
     """Test automatic recognition of supported compression formats.
     """
-    if compress == 'bzip2':
-        pytest.xfail("bzip2 decompression fails for obscure reasons (may be an upstream issue?)")
-    ext = {'gzip': '.gz', 'bzip2': '.bz2'}
+    ext = {'gzip': '.gz', 'bzip2': '.bz2', 'xz': '.xz'}
+    if compress == 'bzip2' and not HAS_BZ2:
+        pytest.xfail("Python installation has no bzip2 support")
+    if compress == 'xz' and not HAS_LZMA:
+        pytest.xfail("Python installation has no lzma support")
+
     # Deliberately not using standard filename pattern to test header info.
     tmp_filename = tmp_path / 'SDSS-I.fits'
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
@@ -435,9 +453,9 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
     wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
            'wavenumber': u.cm**-1}
     # Create a small data set
-    disp = np.arange(1, 1.1, 0.01)*wlu[spectral_axis]
-    flux = np.ones(len(disp))*1.e-14*u.Jy
-    unc = StdDevUncertainty(0.01*flux)
+    disp = np.arange(1, 1.1, 0.01) * wlu[spectral_axis]
+    flux = np.ones(len(disp)) * 1.e-14 * u.Jy
+    unc = StdDevUncertainty(0.01 * flux)
     if spectral_axis not in ('wavelength', ):
         disp = np.flip(disp)
 
@@ -478,15 +496,17 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
                              spectrum.uncertainty.quantity)
 
 
+@pytest.mark.parametrize("ndim", range(1, 4))
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
-def test_tabular_fits_2d(tmpdir, spectral_axis):
+def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
     wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
            'wavenumber': u.cm**-1}
-    # Create a small data set with 2D flux + uncertainty
-    disp = np.arange(1, 1.1, 0.01)*wlu[spectral_axis]
-    flux = np.ones((3, len(disp)))*np.arange(1, len(disp)+1)**2*1.e-14*u.Jy
-    unc = StdDevUncertainty(0.01*np.random.rand(3, len(disp)))
+    # Create a small data set with ndim-D flux + uncertainty
+    disp = np.arange(1, 1.1, 0.01) * wlu[spectral_axis]
+    shape = (3, 2, 4)[:ndim+1] + disp.shape
+    flux = np.random.normal(0., 1.e-9, shape) * u.W * u.m**-2 * u.AA**-1
+    unc = StdDevUncertainty(0.01 * np.random.sample(shape))
     if spectral_axis not in ('wavelength', ):
         disp = np.flip(disp)
 
@@ -500,6 +520,19 @@ def test_tabular_fits_2d(tmpdir, spectral_axis):
     assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
     assert spec.flux.shape == flux.shape
     assert spec.uncertainty.array.shape == flux.shape
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity,
+                             spectrum.uncertainty.quantity)
+
+    # Test again, using `column_mapping` to convert to different flux unit
+    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+            'flux': ('flux', 'erg / (s cm**2 AA)'),
+            'uncertainty': ('uncertainty', None)}
+
+    spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
+    assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
+    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,
@@ -579,6 +612,52 @@ def test_tabular_fits_autowrite(tmpdir):
         spectrum.write(tmpfile, overwrite=True)
 
 
+@pytest.mark.skipif('sys.platform.startswith("win")',
+                    reason='Uncertain availability of compression utilities')
+@pytest.mark.parametrize('compress', ['gzip', 'bzip2', 'xz'])
+def test_tabular_fits_compressed(compress, tmpdir):
+    """Test automatic recognition of supported compression formats for BINTABLE.
+    """
+    ext = {'gzip': '.gz', 'bzip2': '.bz2', 'xz': '.xz'}
+    if compress == 'bzip2' and not HAS_BZ2:
+        pytest.xfail("Python installation has no bzip2 support")
+    if compress == 'xz' and not HAS_LZMA:
+        pytest.xfail("Python installation has no lzma support")
+
+    # Create a small data set
+    disp = np.linspace(1, 1.2, 23) * u.AA
+    flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.Jy
+    unc = StdDevUncertainty(0.01 * np.abs(flux))
+
+    spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, format='tabular-fits')
+
+    # Deliberately not using standard filename pattern to test header info.
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        os.system(f'{compress} {tmpfile}')
+        spec = Spectrum1D.read(tmpfile + ext[compress])
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.spectral_axis.shape[0] == len(disp)
+    assert spec.flux.size == len(disp)
+    assert spec.uncertainty.array.min() >= 0.0
+    assert quantity_allclose(spec.flux, spectrum.flux)
+
+    # Try again without compression suffix:
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        os.system(f'mv {tmpfile}{ext[compress]} {tmpfile}')
+        spec = Spectrum1D.read(tmpfile)
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.spectral_axis.shape[0] == len(disp)
+    assert spec.flux.size == len(disp)
+    assert spec.uncertainty.array.min() >= 0.0
+    assert quantity_allclose(spec.flux, spectrum.flux)
+
+
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
 def test_wcs1d_fits_writer(tmpdir, spectral_axis):
@@ -593,7 +672,7 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     wlu = u.Unit(hdr['CUNIT1'])
     wl0 = hdr['CRVAL1']
     dwl = hdr['CDELT1']
-    disp = np.arange(wl0, wl0 + len(flux[1:]) * dwl, dwl) * wlu
+    disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
 
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
     tmpfile = str(tmpdir.join('_tst.fits'))
@@ -709,6 +788,53 @@ def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
 
     with pytest.raises(ValueError, match='WCS cannot be reduced to 1D'):
         Spectrum1D.read(tmpfile, format='wcs1d-fits')
+
+
+@pytest.mark.skipif('sys.platform.startswith("win")',
+                    reason='Uncertain availability of compression utilities')
+@pytest.mark.parametrize('compress', ['gzip', 'bzip2', 'xz'])
+def test_wcs1d_fits_compressed(compress, tmpdir):
+    """Test automatic recognition of supported compression formats for IMAGE/WCS.
+    """
+    ext = {'gzip': '.gz', 'bzip2': '.bz2', 'xz': '.xz'}
+    if compress == 'bzip2' and not HAS_BZ2:
+        pytest.xfail("Python installation has no bzip2 support")
+    if compress == 'xz' and not HAS_LZMA:
+        pytest.xfail("Python installation has no lzma support")
+
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': 'wavelength', 'CUNIT1': 'Angstrom',
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flux = np.arange(1, 43)**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
+
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, hdu=0)
+
+    # Deliberately not using standard filename pattern to test header info.
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        os.system(f'{compress} {tmpfile}')
+        spec = Spectrum1D.read(tmpfile + ext[compress])
+
+    assert isinstance(spec, Spectrum1D)
+    assert quantity_allclose(spec.spectral_axis, disp)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+
+    # Try again without compression suffix:
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        os.system(f'mv {tmpfile}{ext[compress]} {tmpfile}')
+        spec = Spectrum1D.read(tmpfile)
+
+    assert isinstance(spec, Spectrum1D)
+    assert quantity_allclose(spec.spectral_axis, disp)
+    assert quantity_allclose(spec.flux, spectrum.flux)
 
 
 @pytest.mark.remote_data
@@ -948,7 +1074,6 @@ def test_spectrum_list_2dfgrs_multiple(remote_data_path):
 
     for spec in specs:
         assert spec.spectral_axis.unit == u.Unit("Angstrom")
-
 
     # Read from HDUList object
     hdulist = fits.open(remote_data_path)

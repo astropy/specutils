@@ -1,10 +1,11 @@
-import astropy.io.fits as fits
 from astropy.nddata import VarianceUncertainty
 from astropy.table import Table
 from astropy.units import Quantity, Unit
 from astropy.wcs import WCS
-from specutils.io.registers import data_loader
-from specutils import Spectrum1D, SpectrumList
+
+from ...spectra import Spectrum1D, SpectrumList
+from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
 
 SIXDFGS_PRIMARY_HDU_KEYWORDS = ["OBSRA", "OBSDEC", "Z", "Z_HELIO", "QUALITY"]
 COUNTS_PER_SECOND = Unit("counts/s", parse_strict="silent")
@@ -15,7 +16,7 @@ def identify_6dfgs_tabular_fits(origin, *args, **kwargs):
     """
     Identify if the current file is a 6dFGS file (stored as a table)
     """
-    with fits.open(args[0]) as hdulist:
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         if len(hdulist) != 2:
             return False
         primary_hdu = hdulist[0]
@@ -31,7 +32,7 @@ def identify_6dfgs_split_fits(origin, *args, **kwargs):
     """
     Identify if the current file is a 6dFGS file (stored in the split variant).
     """
-    with fits.open(args[0]) as hdulist:
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         if len(hdulist) != 1:
             return False
         primary_hdu = hdulist[0]
@@ -48,7 +49,7 @@ def identify_6dfgs_combined_fits(origin, *args, **kwargs):
     Identify if the current file is a 6dFGS file (stored in the combined
     variant).
     """
-    with fits.open(args[0]) as hdulist:
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         if len(hdulist) < 8:
             return False
         first_spectrum_hdu = hdulist[5]
@@ -87,22 +88,17 @@ def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
     data: Spectrum1D
         The 6dF spectrum that is represented by the data in this table.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
 
-    header = hdulist[0].header
-    table = Table.read(hdulist)
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        header = hdulist[0].header
+        table = Table.read(hdulist)
+
     flux = Quantity(table["FLUX"])
     wavelength = Quantity(table["WAVE"])
 
     if flux.unit == COUNTS_PER_SECOND:
         flux._unit = Unit("count/s")
     meta = {"header": header}
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
 
     return Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
 
@@ -133,15 +129,9 @@ def sixdfgs_split_fits_loader(file_obj, **kwargs):
     data: Spectrum1D
         The 6dF spectrum that is represented by the data in this file.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
 
-    spec = _load_single_6dfgs_hdu(hdulist[0])
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        spec = _load_single_6dfgs_hdu(hdulist[0])
 
     return spec
 
@@ -171,15 +161,9 @@ def sixdfgs_combined_fits_loader(file_obj, **kwargs):
     data: SpectrumList
         The 6dF spectra that are represented by the data in this file.
     """
-    if isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist = file_obj
-    else:
-        hdulist = fits.open(file_obj, **kwargs)
 
-    specs = SpectrumList([_load_single_6dfgs_hdu(hdu) for hdu in hdulist[5:]])
-
-    if not isinstance(file_obj, fits.hdu.hdulist.HDUList):
-        hdulist.close()
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        specs = SpectrumList([_load_single_6dfgs_hdu(hdu) for hdu in hdulist[5:]])
 
     return specs
 
