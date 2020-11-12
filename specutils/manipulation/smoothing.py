@@ -19,29 +19,33 @@ def convolution_smooth(spectrum, kernel):
     Apply a convolution based smoothing to the spectrum. The kernel must be one
     of the 1D kernels defined in `astropy.convolution`.
 
-    This method can be used along but also is used by other specific methods below.
+    This method can be used along but also is used by other specific methods
+    below.
 
-    If the spectrum uncertainty exists and is StdDevUncertainty, VarianceUncertainty or InverseVariance
-    then the errors will be propagated through the convolution using a standard propagation of errors. The
-    covariance is not considered, currently.
+    If the spectrum uncertainty exists and is ``StdDevUncertainty``,
+    ``VarianceUncertainty`` or ``InverseVariance``then the errors will be
+    propagated through the convolution using a standard propagation of errors.
+    The covariance is not considered, currently.
 
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the smoothing will be
+        applied.
     kernel : `astropy.convolution.Kernel1D` subclass or array.
-        The convolution based smoothing kernel - anything that `astropy.convolution.convolve` accepts.
+        The convolution based smoothing kernel - anything that
+        `astropy.convolution.convolve` accepts.
 
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with
+        the updated flux.
 
     Raises
     ------
     ValueError
        In the case that ``spectrum`` and ``kernel`` are not the correct types.
-
     """
     # Parameter checks
     if not isinstance(spectrum, Spectrum1D):
@@ -89,8 +93,11 @@ def convolution_smooth(spectrum, kernel):
             uncertainty.array = prop_ivar_values
         else:
             uncertainty = None
-            warnings.warn("Uncertainty is {} but convolutional error propagation is not defined for that type. Uncertainty will be dropped in the convolved spectrum.".format(type(uncertainty)),
-                          AstropyUserWarning)
+            warnings.warn(
+                "Uncertainty is {} but convolutional error propagation is "
+                "not defined for that type. Uncertainty will be dropped in "
+                "the convolved spectrum.".format(type(uncertainty)),
+                AstropyUserWarning)
 
 
     # Return a new object with the smoothed flux.
@@ -102,19 +109,22 @@ def convolution_smooth(spectrum, kernel):
 
 def box_smooth(spectrum, width):
     """
-    Smooth a `~specutils.Spectrum1D` instance based on a `astropy.convolution.Box1DKernel` kernel.
+    Smooth a `~specutils.Spectrum1D` instance based on a
+    `astropy.convolution.Box1DKernel` kernel.
 
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     width : number
-        The width of the kernel, in pixels, as defined in `astropy.convolution.Box1DKernel`
+        The width of the kernel, in pixels, as defined in
+        `astropy.convolution.Box1DKernel`
 
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which a copy of the one passed in with the updated flux.
+        Output `~specutils.Spectrum1D` which a copy of the one passed in with
+        the updated flux.
 
     Raises
     ------
@@ -124,8 +134,8 @@ def box_smooth(spectrum, width):
     """
     # Parameter checks
     if not isinstance(width, (int, float)) or width <= 0:
-        raise ValueError('The width parameter, {}, must be a number greater than 0'.format(
-                width))
+        raise ValueError("The width parameter, {}, must be a number greater "
+                         "than 0".format(width))
 
     # Create the gaussian kernel
     box1d_kernel = convolution.Box1DKernel(width)
@@ -136,19 +146,22 @@ def box_smooth(spectrum, width):
 
 def gaussian_smooth(spectrum, stddev):
     """
-    Smooth a `~specutils.Spectrum1D` instance based on a `astropy.convolution.Gaussian1DKernel`.
+    Smooth a `~specutils.Spectrum1D` instance based on a
+    `astropy.convolution.Gaussian1DKernel`.
 
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
         The spectrum object to which the smoothing will be applied.
     stddev : number
-        The stddev of the kernel, in pixels, as defined in `astropy.convolution.Gaussian1DKernel`
+        The stddev of the kernel, in pixels, as defined in
+        `astropy.convolution.Gaussian1DKernel`
 
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with
+        the updated flux.
 
     Raises
     ------
@@ -158,8 +171,8 @@ def gaussian_smooth(spectrum, stddev):
     """
     # Parameter checks
     if not isinstance(stddev, (int, float)) or stddev <= 0:
-        raise ValueError('The stddev parameter, {}, must be a number greater than 0'.format(
-                stddev))
+        raise ValueError("The stddev parameter, {}, must be a number greater "
+                         "than 0".format(stddev))
 
     # Create the gaussian kernel
     gaussian_kernel = convolution.Gaussian1DKernel(stddev)
@@ -175,14 +188,17 @@ def trapezoid_smooth(spectrum, width):
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the smoothing will be
+        applied.
     width : number
-        The width of the kernel, in pixels, as defined in `astropy.convolution.Trapezoid1DKernel`
+        The width of the kernel, in pixels, as defined in
+        `astropy.convolution.Trapezoid1DKernel`
 
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with
+        the updated flux.
 
     Raises
     ------
@@ -192,8 +208,8 @@ def trapezoid_smooth(spectrum, width):
     """
     # Parameter checks
     if not isinstance(width, (int, float)) or width <= 0:
-        raise ValueError('The stddev parameter, {}, must be a number greater than 0'.format(
-                width))
+        raise ValueError("The stddev parameter, {}, must be a number greater "
+                         "than 0".format(width))
 
     # Create the gaussian kernel
     trapezoid_kernel = convolution.Trapezoid1DKernel(width)
@@ -210,19 +226,22 @@ def median_smooth(spectrum, width):
     Parameters
     ----------
     spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+        The `~specutils.Spectrum1D` object to which the smoothing will be
+        applied.
     width : number
         The width of the median filter in pixels.
 
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+        Output `~specutils.Spectrum1D` which is copy of the one passed in with
+        the updated flux.
 
     Raises
     ------
     ValueError
-       In the case that ``spectrum`` or ``width`` are not the correct type or value.
+       In the case that ``spectrum`` or ``width`` are not the correct type or
+       value.
 
     """
     # Parameter checks
@@ -230,8 +249,8 @@ def median_smooth(spectrum, width):
         raise ValueError('The spectrum parameter must be a Spectrum1D object')
 
     if not isinstance(width, (int, float)) or width <= 0:
-        raise ValueError('The stddev parameter, {}, must be a number greater than 0'.format(
-                width))
+        raise ValueError("The stddev parameter, {}, must be a number greater "
+                         "than 0".format(width))
 
     # Get the flux of the input spectrum
     flux = spectrum.flux
