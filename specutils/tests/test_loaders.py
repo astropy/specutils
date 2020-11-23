@@ -1027,7 +1027,7 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
 
 
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732.fits'}])
-def test_spectrum1d_6dfgs_split_combined(remote_data_path):
+def test_spectrum1d_6dfgs_combined(remote_data_path):
     specs = SpectrumList.read(remote_data_path)
 
     for spec in specs:
@@ -1043,6 +1043,8 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.unit == u.Unit("count/Angstrom")
         assert spec.flux.size > 0
+        assert spec.meta["sky"].flux.unit == u.Unit("count/Angstrom")
+        assert spec.meta["sky"].flux.size > 0
 
     assert len(specs) == 3
 
