@@ -1,0 +1,38 @@
+name: Daily cron
+
+on:
+  schedule:
+    # run every day at 3am UTC
+    - cron: '0 3 * * *'
+
+jobs:
+  tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    if: github.repository == 'astropy/specutils'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+
+          - name: Bundling with pyinstaller
+            os: ubuntu-latest
+            python: 3.8
+            toxenv: pyinstaller
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install language-pack-de and tzdata
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: sudo apt-get install language-pack-de tzdata
+    - name: Install Python dependencies
+      run: python -m pip install --upgrade tox
+    - name: Run tests
+      run: tox ${{ matrix.toxargs}} -e ${{ matrix.toxenv}} -- ${{ matrix.toxposargs}}
