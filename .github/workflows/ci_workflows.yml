@@ -43,7 +43,7 @@ jobs:
           - name: Python 3.7 with numpy 1.17 and full coverage
             os: ubuntu-latest
             python: 3.7
-            toxenv: py37-test-alldeps-numpy117-cov-clocale
+            toxenv: py37-test-alldeps-numpy117-cov
             toxposargs: --remote-data=astropy
 
           - name: Python 3.8 with all optional dependencies (Windows)
