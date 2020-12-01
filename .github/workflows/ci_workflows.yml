@@ -60,7 +60,7 @@ jobs:
 
           - name: Python 3.6 with astropy LTS
             os: ubuntu-16.04
-            python: 3.7
+            python: 3.6
             toxenv: py36-test-astropylts-numpy116
             toxposargs: --remote-data=astropy
 
