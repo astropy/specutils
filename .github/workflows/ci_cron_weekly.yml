@@ -22,8 +22,8 @@ jobs:
           # releases.
           - name: Python 3.7 with dev version of key dependencies
             os: ubuntu-latest
-            python: 3.7
-            toxenv: py37-test-devdeps
+            python: 3.8
+            toxenv: py38-test-devdeps
 
           - name: Documentation link check
             os: ubuntu-latest
