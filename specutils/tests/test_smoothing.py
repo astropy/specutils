@@ -89,6 +89,7 @@ def test_smooth_box_good(simulated_spectra, width):
     # Check the input and output units
     assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
     assert spec1.flux.unit == spec1_smoothed.flux.unit
+    assert len(spec1.meta) == len(spec1_smoothed.meta)
 
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
@@ -130,6 +131,7 @@ def test_smooth_gaussian_good(simulated_spectra, stddev):
     # Check the input and output units
     assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
     assert spec1.flux.unit == spec1_smoothed.flux.unit
+    assert len(spec1.meta) == len(spec1_smoothed.meta)
 
 
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
@@ -171,6 +173,7 @@ def test_smooth_trapezoid_good(simulated_spectra, stddev):
     # Check the input and output units
     assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
     assert spec1.flux.unit == spec1_smoothed.flux.unit
+    assert len(spec1.meta) == len(spec1_smoothed.meta)
 
 
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
@@ -211,6 +214,7 @@ def test_smooth_median_good(simulated_spectra, width):
     # Check the input and output units
     assert spec1.wavelength.unit == spec1_smoothed.wavelength.unit
     assert spec1.flux.unit == spec1_smoothed.flux.unit
+    assert len(spec1.meta) == len(spec1_smoothed.meta)
 
 
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
