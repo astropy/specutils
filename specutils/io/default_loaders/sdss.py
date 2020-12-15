@@ -3,7 +3,6 @@ Loader for SDSS individual spectrum files: spec_ files.
 
 .. _spec: https://data.sdss.org/datamodel/files/BOSS_SPECTRO_REDUX/RUN2D/spectra/PLATE4/spec.html
 """
-from math import log
 import os
 import re
 import _io
@@ -43,7 +42,7 @@ def _sdss_wcs_to_log_wcs(old_wcs):
     w0 = old_wcs.wcs.crval[0]
     w1 = old_wcs.wcs.cd[0,0]
     crval = 10 ** w0
-    cdelt = crval * w1 * log(10)
+    cdelt = crval * w1 * np.log(10)
     cunit = old_wcs.wcs.cunit[0] or Unit('Angstrom')
     ctype = "WAVE-LOG"
 
