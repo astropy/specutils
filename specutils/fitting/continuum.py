@@ -21,14 +21,18 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
     ----------
     spectrum : Spectrum1D
         The spectrum object overwhich the equivalent width will be calculated.
-
     model : list of `~astropy.modeling.Model`
         The list of models that contain the initial guess.
-
+    median_window : float
+        The width of the median smoothing kernel used to filter the data before
+        fitting the continuum. See `~scipy.signal.medfilt` for more
+        information.
+    fitter : `~astropy.fitting._FitterMeta`
+        The astropy fitter to use for fitting the model.
+        Default: `~astropy.fitting.LevMarLSQFitter`
     exclude_regions : list of 2-tuples
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
-
     weights : list  (NOT IMPLEMENTED YET)
         List of weights to define importance of fitting regions.
 
@@ -45,16 +49,8 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
          compound model to the `~astropy.modeling.fitting.Fitter` class instance.
 
     """
-
-    #
     # Simple median smooth to remove spikes and peaks
-    #
-
     spectrum_smoothed = median_smooth(spectrum, median_window)
-
-    #
-    # Return the fitted continuum
-    #
 
     return fit_continuum(spectrum_smoothed, model, fitter, exclude_regions, weights)
 
@@ -69,16 +65,16 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
     ----------
     spectrum : Spectrum1D
         The spectrum object overwhich the equivalent width will be calculated.
-
     model: list of `~astropy.modeling.Model`
         The list of models that contain the initial guess.
-
-    fitmodels_type: str
-        String representation of fit method to use as defined by the dict fitmodels_types.
-
+    fitter : `~astropy.fitting._FitterMeta`
+        The astropy fitter to use for fitting the model.
+        Default: `~astropy.fitting.LevMarLSQFitter`
+    exclude_regions : list of 2-tuples
+        List of regions to exclude in the fitting. Passed through
+        to the fitmodels routine.
     window : tuple of wavelengths
         Start and end wavelengths used for fitting.
-
     weights : list  (NOT IMPLEMENTED YET)
         List of weights to define importance of fitting regions.
 
@@ -86,20 +82,15 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
     -------
     models : list of `~astropy.modeling.Model`
         The list of models that contain the fitted model parmeters.
-
     """
-
     if weights is not None:
-        raise NotImplementedError('weights are not yet implemented')
+        raise NotImplementedError("Weights support is not yet implemented.")
 
     w = window
     if type(w) in [list, tuple] and all([_is_valid_sequence(x) for x in w]):
         w = SpectralRegion(w)
 
-    #
-    # Fit the flux to the model.
-    #
-
+    # Fit the flux to the model
     continuum_spectrum = fit_lines(spectrum, model, fitter, exclude_regions,
                                    weights, w)
 
@@ -112,5 +103,5 @@ def _is_valid_sequence(value):
         return len(value) == 2 and \
                isinstance(value[0], u.Quantity) and \
                isinstance(value[1], u.Quantity)
-    else:
-        return False
+
+    return False
