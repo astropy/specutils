@@ -61,26 +61,26 @@ class SpectralRegion:
         # Create instance variables
         self._subregions = None
 
-        #
         # Set the values (using the setters for doing the proper checking)
-        #
-
         if self._is_2_element(args):
             self._subregions = [tuple(args)]
-        elif isinstance(args, (list, tuple)) and all([self._is_2_element(x) for x in args[0]]):
-            self._subregions = [tuple(x) for x in args[0]]
+        elif isinstance(args, (list, tuple)):
+            if all([self._is_2_element(x) for x in args[0]]):
+                self._subregions = [tuple(x) for x in args[0]]
+            else:
+                raise ValueError("Region bounds must be given as a tuple of "
+                                 "`Quantity` objects, or as a length 2 "
+                                 "`Quantity` object.")
         else:
-            raise ValueError('SpectralRegion input must be a 2-tuple or a list of 2-tuples.')
+            raise ValueError("`SpectralRegion` input must be a 2-tuple or a "
+                             "list of 2-tuples.")
 
-        #
         #  Check validity of the input sub regions.
-        #
         if not self._valid():
-            raise ValueError('SpectralRegion 2-tuple lower extent must be less than upper extent.')
+            raise ValueError("SpectralRegion 2-tuple lower extent must be "
+                             "less than upper extent.")
 
-        #
         # The sub-regions are to always be ordered based on the lower bound.
-        #
         self._reorder()
 
     def _info(self):
@@ -88,7 +88,8 @@ class SpectralRegion:
         Pretty print the sub-regions.
         """
 
-        toreturn = 'Spectral Region, {} sub-regions:\n'.format(len(self._subregions))
+        toreturn = "Spectral Region, {} sub-regions:\n".format(
+            len(self._subregions))
 
         # Setup the subregion text.
         subregion_text = []
