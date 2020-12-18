@@ -128,7 +128,9 @@ def find_lines_threshold(spectrum, noise_factor=1):
 
     # Threshold based on noise estimate and factor.
     uncertainty = spectrum.uncertainty
-    inds = np.where(np.abs(spectrum.flux) > (noise_factor*uncertainty.array) *
+    uncert_val = uncertainty.array if uncertainty is not None else 0
+
+    inds = np.where(np.abs(spectrum.flux) > (noise_factor * uncert_val) *
                     spectrum.flux.unit)[0]
     pos_inds = inds[spectrum.flux.value[inds] > 0]
     line_inds_grouped = _consecutive(pos_inds, stepsize=1)
@@ -152,23 +154,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
     else:
         absorption_inds = []
 
-    #
-    # Create the QTable to return the lines
-    #
-
-    qtable = QTable()
-    qtable['line_center'] = list(
-        itertools.chain(
-            *[spectrum.spectral_axis.value[emission_inds],
-              spectrum.spectral_axis.value[absorption_inds]]
-        )) * spectrum.spectral_axis.unit
-    qtable['line_type'] = ['emission'] * len(emission_inds) + \
-                          ['absorption'] * len(absorption_inds)
-    qtable['line_center_index'] = list(
-        itertools.chain(
-            *[emission_inds, absorption_inds]))
-
-    return qtable
+    return _generate_line_list_table(spectrum, emission_inds, absorption_inds)
 
 
 @warn_continuum_below_threshold(threshold=0.01)
@@ -250,10 +236,10 @@ def find_lines_derivative(spectrum, flux_threshold=None):
     else:
         absorption_inds = []
 
-    #
-    # Create the QTable to return the lines
-    #
+    return _generate_line_list_table(spectrum, emission_inds, absorption_inds)
 
+
+def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
     qtable = QTable()
     qtable['line_center'] = list(
         itertools.chain(
