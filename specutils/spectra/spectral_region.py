@@ -32,26 +32,51 @@ class SpectralRegion:
     @classmethod
     def from_center(cls, center=None, width=None):
         """
-        SpectralRegion class method that enables the definition of a `SpectralRegion`
-        from the center and width rather than lower and upper bounds.
+        SpectralRegion class method that enables the definition of a
+        `SpectralRegion` from the center and width rather than lower and
+        upper bounds.
 
         Parameters
         ----------
-
         center : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The center of the spectral region.
-
         width : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
            The full width of the spectral region (upper bound - lower bound).
         """
 
         if width.value <= 0:
-            raise ValueError('SpectralRegion width must be positive.')
+            raise ValueError("SpectralRegion width must be positive.")
 
         if center.unit.physical_type != 'length':
             return cls(center + width/2, center - width/2)
 
         return cls(center - width/2, center + width/2)
+
+    @classmethod
+    def from_line_list(cls, table, width=1):
+        """
+        Generate a ``SpectralRegion`` instance from the `~astropy.table.QTable`
+        object returned from `~specutils.fitting.find_lines_derivative` or
+        `~specutils.fitting.find_lines_threshold`.
+
+        Parameters
+        ----------
+        table : `~astropy.table.QTable`
+            List of found lines.
+        width : float
+            The width of the spectral line region. If not unit information is
+            provided, it's assumed to be the same units as used in the line
+            list table.
+
+        Returns
+        -------
+        `~specutils.SpectralRegion`
+            The spectral region based on the line list.
+        """
+        width = u.Quantity(width, table['line_center'].unit)
+
+        return cls([(x - width * 0.5, x + width * 0.5)
+                    for x in table['line_center']])
 
     def __init__(self, *args):
         """
@@ -236,15 +261,14 @@ class SpectralRegion:
         object defines, create a new `SpectralRegion` such that the sub-regions
         are defined in the new one as regions *not* in this `SpectralRegion`.
 
-
         Parameters
         ----------
-
-        lower_bound : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The lower bound of the region.
-
-        upper_bound : Scalar `~astropy.units.Quantity` with pixel or any valid ``spectral_axis`` unit
-           The upper bound of the region.
+        lower_bound : `~astropy.units.Quantity`
+           The lower bound of the region. Can be scalar with pixel or any
+           valid ``spectral_axis`` unit
+        upper_bound : `~astropy.units.Quantity`
+           The upper bound of the region. Can be scalar with pixel or any
+           valid ``spectral_axis`` unit
 
         Returns
         -------
