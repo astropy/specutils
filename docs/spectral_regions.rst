@@ -209,6 +209,51 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
     >>> sub_spectra[1].spectral_axis
     <SpectralAxis [34., 35., 36., 37., 38., 39., 40.] nm>
 
+
+Line List Compatibility
+-----------------------
+
+`~specutils.SpectralRegion` objects can also be created from the `~astropy.table.QTable` object returned from the line
+finding routines
+
+.. code-block:: python
+
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from astropy.modeling.models import Gaussian1D
+    >>> from specutils.fitting import find_lines_derivative
+
+    >>> g1 = Gaussian1D(1, 4.6, 0.2)
+    >>> g2 = Gaussian1D(2.5, 5.5, 0.1)
+    >>> g3 = Gaussian1D(-1.7, 8.2, 0.1)
+
+    >>> x = np.linspace(0, 10, 200)
+    >>> y = g1(x) + g2(x) + g3(x)
+    >>> spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+
+    >>> lines = find_lines_derivative(spectrum, flux_threshold=0.01)
+    >>> spec_reg = SpectralRegion.from_line_list(lines)
+    Spectral Region, 3 sub-regions:
+      (4.072864321608041 um, 5.072864321608041 um)
+      (4.977386934673367 um, 5.977386934673367 um)
+      (7.690954773869347 um, 8.690954773869347 um)
+
+This can be fed into the ``exclude_regions`` argument of the `~specutils.fitting.fit_generic_continuum` or
+`~specutils.fitting.fit_continuum` functions to avoid fitting regions that contain line features. Conversely, users can
+also invert the spectral region
+
+.. code-block:: python
+
+    >>> inv_spec_reg = spec_reg.invert(spectrum.spectral_axis[0], spectrum.spectral_axis[-1])
+    Spectral Region, 3 sub-regions:
+      (0.0 um, 4.072864321608041 um)
+      (5.977386934673367 um, 7.690954773869347 um)
+      (8.690954773869347 um, 10.0 um)
+
+and use that result as the ``exclude_regions`` argument in the `~specutils.fitting.fit_lines` function in order to avoid
+attempting to fit any of the continuum region.
+
 Reference/API
 -------------
 
