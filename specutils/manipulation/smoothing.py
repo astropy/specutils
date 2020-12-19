@@ -1,12 +1,12 @@
 import copy
 import warnings
 
+import astropy.units as u
+import numpy as np
 from astropy import convolution
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
-import astropy.units as u
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.signal import medfilt
-import numpy as np
 
 from ..spectra import Spectrum1D
 
@@ -19,7 +19,7 @@ def convolution_smooth(spectrum, kernel):
     Apply a convolution based smoothing to the spectrum. The kernel must be one
     of the 1D kernels defined in `astropy.convolution`.
 
-    This method can be used along but also is used by other specific methods
+    This method can be used alone but also is used by other specific methods
     below.
 
     If the spectrum uncertainty exists and is ``StdDevUncertainty``,
@@ -98,7 +98,6 @@ def convolution_smooth(spectrum, kernel):
                 "not defined for that type. Uncertainty will be dropped in "
                 "the convolved spectrum.".format(type(uncertainty)),
                 AstropyUserWarning)
-
 
     # Return a new object with the smoothed flux.
     return spectrum._copy(flux=u.Quantity(smoothed_flux, spectrum.unit),

@@ -29,7 +29,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
         information.
     fitter : `~astropy.fitting._FitterMeta`
         The astropy fitter to use for fitting the model.
-        Default: `~astropy.fitting.LevMarLSQFitter`
+        Default: `~astropy.modeling.fitting.LevMarLSQFitter`
     exclude_regions : list of 2-tuples
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
@@ -52,7 +52,8 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
     # Simple median smooth to remove spikes and peaks
     spectrum_smoothed = median_smooth(spectrum, median_window)
 
-    return fit_continuum(spectrum_smoothed, model, fitter, exclude_regions, weights)
+    return fit_continuum(spectrum_smoothed, model, fitter, exclude_regions,
+                         weights)
 
 
 def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
@@ -69,7 +70,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
         The list of models that contain the initial guess.
     fitter : `~astropy.fitting._FitterMeta`
         The astropy fitter to use for fitting the model.
-        Default: `~astropy.fitting.LevMarLSQFitter`
+        Default: `~astropy.modeling.fitting.LevMarLSQFitter`
     exclude_regions : list of 2-tuples
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
@@ -81,7 +82,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
     Returns
     -------
     models : list of `~astropy.modeling.Model`
-        The list of models that contain the fitted model parmeters.
+        The list of models that contain the fitted model parameters.
     """
     if weights is not None:
         raise NotImplementedError("Weights support is not yet implemented.")
