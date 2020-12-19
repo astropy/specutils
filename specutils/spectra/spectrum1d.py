@@ -1,17 +1,18 @@
 import logging
 from copy import deepcopy
 
+import gwcs
 import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-from .spectrum_mixin import OneDSpectrumMixin
+from packaging import version
+
 from .spectral_axis import SpectralAxis
+from .spectrum_mixin import OneDSpectrumMixin
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
-
-__doctest_skip__ = ['Spectrum1D.spectral_resolution']
 
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
@@ -214,7 +215,14 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if spectral_axis is None:
             # If spectral_axis wasn't provided, set _spectral_axis based on
             # the WCS
-            spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+
+            pix_arr = np.arange(self.flux.shape[-1])
+
+            # TODO: temporary hack to get around gwcs 0.16.0 regression
+            if version.parse(gwcs.__version__) == version.parse('0.16.0'):
+                pix_arr = [pix_arr]
+
+            spec_axis = self.wcs.pixel_to_world(pix_arr)
 
             if spec_axis.unit.is_equivalent(u.one):
                 spec_axis = spec_axis * u.pixel
@@ -289,7 +297,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     def _copy(self, **kwargs):
         """
-        Peform deep copy operations on each attribute of the ``Spectrum1D``
+        Perform deep copy operations on each attribute of the ``Spectrum1D``
         object.
         """
         alt_kwargs = dict(
