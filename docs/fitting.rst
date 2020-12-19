@@ -635,47 +635,31 @@ convenience functions to perform exactly this task.  An example is shown below.
     :align: center
     :context: close-figs
 
-    import numpy as np
-    import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from astropy.modeling import models
+    >>> from astropy import units as u
+    >>> from specutils.spectra import Spectrum1D, SpectralRegion
+    >>> from specutils.fitting import fit_generic_continuum
 
-    from astropy.modeling import models
-    from astropy import units as u
+    >>> np.random.seed(0)
+    >>> x = np.linspace(0., 10., 200)
+    >>> y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
+    >>> y += np.random.normal(0., 0.2, x.shape)
 
-    from specutils.spectra import Spectrum1D, SpectralRegion
-    from specutils.fitting import fit_generic_continuum
+    >>> y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    >>> y += y_continuum
 
-    np.random.seed(0)
-    x = np.linspace(0., 10., 200)
-    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
-    y += np.random.normal(0., 0.2, x.shape)
+    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
-    y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
-    y += y_continuum
+    >>> g1_fit = fit_generic_continuum(spectrum)
 
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    >>> y_continuum_fitted = g1_fit(x*u.um)
 
-    g1_fit = fit_generic_continuum(spectrum)
-
-    y_continuum_fitted = g1_fit(x*u.um)
-
-    plt.plot(x, y)
-    plt.plot(x, y_continuum_fitted)
-    plt.title('Continuum Fitting')
-    plt.grid(True)
-
-The normalized spectrum is simply the old spectrum devided by the
-fitted continuum, which returns a new object:
-
-.. plot::
-    :include-source:
-    :align: center
-    :context: close-figs
-
-    spec_normalized = spectrum / y_continuum_fitted
-
-    plt.plot(spec_normalized.spectral_axis, spec_normalized.flux)
-    plt.title('Continuum normalized spectrum')
-    plt.grid('on')
+    >>> plt.plot(x, y)
+    >>> plt.plot(x, y_continuum_fitted)
+    >>> plt.title('Continuum Fitting')
+    >>> plt.grid(True)
 
 
 When fitting over a specific wavelength region of a spectrum, one
@@ -688,31 +672,29 @@ is specified by a sequence:
     :align: center
     :context: close-figs
 
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import astropy.units as u
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> import astropy.units as u
 
-    from specutils.spectra.spectrum1d import Spectrum1D
-    from specutils.fitting.continuum import fit_continuum
+    >>> from specutils.spectra.spectrum1d import Spectrum1D
+    >>> from specutils.fitting.continuum import fit_continuum
 
-    np.random.seed(0)
-    x = np.linspace(0., 10., 200)
-    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
-    y += np.random.normal(0., 0.2, x.shape)
-    y += 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    >>> np.random.seed(0)
+    >>> x = np.linspace(0., 10., 200)
+    >>> y = 3 * np.exp(-0.5 * (x - 6.3) ** 2 / 0.1 ** 2)
+    >>> y += np.random.normal(0., 0.2, x.shape)
+    >>> y += 3.2 * np.exp(-0.5 * (x - 5.6) ** 2 / 4.8 ** 2)
 
-    spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    >>> spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    >>> region = [(1 * u.um, 5 * u.um), (7 * u.um, 10 * u.um)]
+    >>> fitted_continuum = fit_continuum(spectrum, window=region)
+    >>> y_fit = fitted_continuum(x*u.um)
 
-    region = [(4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)]
-
-    fitted_continuum = fit_continuum(spectrum, window=region)
-
-    y_fit = fitted_continuum(x*u.um)
-
-    plt.plot(x, y)
-    plt.plot(x, y_fit)
-    plt.title("Continuum Fitting")
-    plt.grid(True)
+    >>> f, ax = plt.subplots()
+    >>> ax.plot(x, y)
+    >>> ax.plot(x, y_fit)
+    >>> ax.set_title("Continuum Fitting")
+    >>> plt.grid(True)
 
 
 Reference/API
