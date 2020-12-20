@@ -188,4 +188,4 @@ def test_from_list_list():
                 (7.690954773869347 * u.um, 8.690954773869347 * u.um)]
 
     for i, reg in enumerate(expected):
-        assert quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].lower))
+        assert quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].upper))

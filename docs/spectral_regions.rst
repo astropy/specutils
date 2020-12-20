@@ -234,6 +234,7 @@ finding routines
 
     >>> lines = find_lines_derivative(spectrum, flux_threshold=0.01)
     >>> spec_reg = SpectralRegion.from_line_list(lines)
+    >>> spec_reg
     Spectral Region, 3 sub-regions:
       (4.072864321608041 um, 5.072864321608041 um)
       (4.977386934673367 um, 5.977386934673367 um)
@@ -246,6 +247,7 @@ also invert the spectral region
 .. code-block:: python
 
     >>> inv_spec_reg = spec_reg.invert(spectrum.spectral_axis[0], spectrum.spectral_axis[-1])
+    >>> inv_spec_reg
     Spectral Region, 3 sub-regions:
       (0.0 um, 4.072864321608041 um)
       (5.977386934673367 um, 7.690954773869347 um)
