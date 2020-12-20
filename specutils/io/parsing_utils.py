@@ -330,5 +330,9 @@ def _fits_identify_by_name(origin, fileinp, *args,
         if fileinp.seekable():
             fileobj = fileinp
 
-    return (_spec_pattern.match(os.path.basename(filepath)) is not None and
-            fits.connect.is_fits(origin, filepath, fileobj, *args))
+    check = (_spec_pattern.match(os.path.basename(filepath)) is not None and
+             fits.connect.is_fits(origin, filepath, fileobj, *args))
+
+    fileobj.close()
+
+    return check
