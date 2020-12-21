@@ -26,6 +26,7 @@ from .conftest import remote_access
 from .. import Spectrum1D, SpectrumList
 from ..io import get_loaders_by_extension
 from ..io.default_loaders import subaru_pfs_spec
+from ..io.default_loaders.sdss import _sdss_wcs_to_log_wcs
 
 # NOTE: Python can be built without bz2 or lzma.
 try:
@@ -1085,3 +1086,16 @@ def test_spectrum_list_2dfgrs_multiple(remote_data_path):
     assert len(specs) == 2
 
     hdulist.close()
+
+
+def test_sdss_wcs_handler():
+    sdss_wcs = WCS(naxis=2)
+    sdss_wcs.wcs.crval[0] = 3.57880000000000E+00
+    sdss_wcs.wcs.cd = [[1.00000000000000E-04, 0], [0, 1]]
+    sdss_wcs.wcs.cunit[0] = u.Unit('Angstrom')
+    fixed_wcs = _sdss_wcs_to_log_wcs(sdss_wcs)
+    dropped_sdss_wcs = sdss_wcs.dropaxis(1)
+    dropped_sdss_wcs.wcs.cunit[0] = ''  # Cannot handle units in powers
+    sdss_wave = 10 ** dropped_sdss_wcs.pixel_to_world(np.arange(10)) * u.Unit('Angstrom')
+    fixed_wave = fixed_wcs.pixel_to_world(np.arange(10))
+    assert quantity_allclose(sdss_wave, fixed_wave)

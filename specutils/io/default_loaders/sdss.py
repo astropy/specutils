@@ -49,8 +49,9 @@ def _sdss_wcs_to_log_wcs(old_wcs):
     w = WCS(naxis=1)
     w.wcs.crval[0] = crval
     w.wcs.cdelt[0] = cdelt
-    w.wcs.cunit[0] = cunit
     w.wcs.ctype[0] = ctype
+    w.wcs.cunit[0] = cunit
+    w.wcs.set()
 
     return w
 
