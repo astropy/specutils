@@ -10,11 +10,13 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
+#from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
 
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
+#class Spectrum1D(OneDSpectrumMixin, NDCube):
     """
     Spectrum container for 1D spectral data.
 
