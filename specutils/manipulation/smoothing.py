@@ -23,7 +23,7 @@ def convolution_smooth(spectrum, kernel):
     below.
 
     If the spectrum uncertainty exists and is ``StdDevUncertainty``,
-    ``VarianceUncertainty`` or ``InverseVariance``then the errors will be
+    ``VarianceUncertainty`` or ``InverseVariance`` then the errors will be
     propagated through the convolution using a standard propagation of errors.
     The covariance is not considered, currently.
 
