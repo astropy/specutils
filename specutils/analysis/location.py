@@ -33,7 +33,7 @@ def centroid(spectrum, region):
     -----
     The spectrum will need to be continuum subtracted before calling
     this method. See the
-    `analysis documentation <https://specutils.readthedocs.io/en/latest/basic_analysis.html>`_ for more information.
+    `analysis documentation <https://specutils.readthedocs.io/en/latest/analysis.html>`_ for more information.
 
     """
 
