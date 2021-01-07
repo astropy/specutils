@@ -1,3 +1,13 @@
+1.1.1
+-----
+
+Bug Fixes
+^^^^^^^^^
+
+- Fixed several interconnected bugs in the loaders, particularly when using
+certain filenames. [#718]
+
+
 1.1
 ---
 
