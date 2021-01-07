@@ -3,7 +3,6 @@ from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
-from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 
 from .spectral_axis import SpectralAxis
@@ -80,7 +79,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
 
         # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if isinstance(flux, NDDataRef):
+        if isinstance(flux, NDCube):
             super().__init__(flux)
             return
 
@@ -363,7 +362,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
-    @NDDataRef.mask.setter
+    @NDCube.mask.setter
     def mask(self, value):
         # Impose stricter checks than the base NDData mask setter
         if value is not None:
@@ -459,31 +458,31 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         self._spectral_axis = new_spectral_axis
 
     def __add__(self, other):
-        if not isinstance(other, NDDataRef):
+        if not isinstance(other, NDCube):
             other = u.Quantity(other, unit=self.unit)
 
         return self.add(other)
 
     def __sub__(self, other):
-        if not isinstance(other, NDDataRef):
+        if not isinstance(other, NDCube):
             other = u.Quantity(other, unit=self.unit)
 
         return self.subtract(other)
 
     def __mul__(self, other):
-        if not isinstance(other, NDDataRef):
+        if not isinstance(other, NDCube):
             other = u.Quantity(other)
 
         return self.multiply(other)
 
     def __div__(self, other):
-        if not isinstance(other, NDDataRef):
+        if not isinstance(other, NDCube):
             other = u.Quantity(other)
 
         return self.divide(other)
 
     def __truediv__(self, other):
-        if not isinstance(other, NDDataRef):
+        if not isinstance(other, NDCube):
             other = u.Quantity(other)
 
         return self.divide(other)
