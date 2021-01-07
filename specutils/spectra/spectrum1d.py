@@ -10,13 +10,12 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-#from ndcube import NDCube
+from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
 
 
-class Spectrum1D(OneDSpectrumMixin, NDDataRef):
-#class Spectrum1D(OneDSpectrumMixin, NDCube):
+class Spectrum1D(OneDSpectrumMixin, NDCube):
     """
     Spectrum container for 1D spectral data.
 
@@ -72,7 +71,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                  radial_velocity=None, bin_specification=None, **kwargs):
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
-            {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy'})
+            {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy',
+             'extra_coords'})
 
         if len(unknown_kwargs) > 0:
             raise ValueError("Initializer contains unknown arguments(s): {}."
