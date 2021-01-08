@@ -3,7 +3,7 @@ from math import floor, ceil  # faster than int(np.floor/ceil(float))
 import numpy as np
 
 from astropy import units as u
-from .. import Spectrum1D
+from ..spectra import Spectrum1D, SpectralRegion
 
 __all__ = ['extract_region', 'spectral_slab']
 
@@ -163,7 +163,7 @@ def extract_region(spectrum, region):
     return extracted_spectrum
 
 
-def spectral_slab(spectrum, region):
+def spectral_slab(spectrum, s1, s2):
     """
     Extract a slab from the input `~specutils.Spectrum1D`
     defined by the lower and upper bounds defined by the ``region``
@@ -175,8 +175,9 @@ def spectral_slab(spectrum, region):
     spectrum: `~specutils.Spectrum1D`
         The spectrum object from which the region will be extracted.
 
-    region: `~specutils.SpectralRegion`
-        The spectral region to extract from the original spectrum.
+    s1, s2: spectral coordinates limiting the slab
+        Define the spectral coordinate bound of the region to extract
+        from the original spectrum.
 
     Returns
     -------
@@ -190,4 +191,6 @@ def spectral_slab(spectrum, region):
     transition from `spectral-cube`.
 
     """
+    region = SpectralRegion(s1, s2)
+
     return extract_region(spectrum, region)
