@@ -257,4 +257,3 @@ def extract_bounding_region(spectrum, region):
             min_left, max_right = max_right, min_left
 
         return spectrum[..., min_left:max_right]
-
