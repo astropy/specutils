@@ -44,9 +44,7 @@ def test_slab_simple(simulated_spectra):
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    region = SpectralRegion(0.6*u.um, 0.8*u.um)
-
-    sub_spectrum = spectral_slab(spectrum, region)
+    sub_spectrum = spectral_slab(spectrum, 0.6*u.um, 0.8*u.um)
 
     sub_spectrum_flux_expected = np.array(TEST_ARRAY)
 
@@ -231,8 +229,7 @@ def test_slab_multid_flux():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=flux * u.Jy)
 
-    region = SpectralRegion(10 * u.nm, 20 * u.nm)
-    extracted = spectral_slab(spec, region)
+    extracted = spectral_slab(spec, 10 * u.nm, 20 * u.nm)
 
     assert extracted.shape == (10, 11)
     assert extracted[0,0].flux == spec[0,9].flux
