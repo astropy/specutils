@@ -77,10 +77,28 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
             raise ValueError("Initializer contains unknown arguments(s): {}."
                              "".format(', '.join(map(str, unknown_kwargs))))
 
-        # If the flux (data) argument is a subclass of nddataref (as it would
+        # If the flux (data) argument is already a Spectrum1D (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if isinstance(flux, NDCube):
+        if isinstance(flux, Spectrum1D):
             super().__init__(flux)
+            return
+
+        # Handle initializing from NDCube objects
+        elif isinstance(flux, NDCube):
+            if flux.unit is None:
+                raise ValueError("Input NDCube missing unit parameter")
+            temp_axes = []
+            phys_axes = flux.wcs.world_axis_physical_types
+            for i in range(len(phys_axes)):
+                if phys_axes[i].split('.')[0] == "em":
+                    temp_axes.append(i)
+            if len(temp_axes) != 1:
+                raise ValueError("Input NDCube must have exactly one axis "
+                                 "with spectral units")
+            spectral_axis = flux.axis_world_coords(temp_axes[0])[0]
+            q_flux = flux.data*u.Unit(flux.unit)
+            self.__init__(flux=q_flux, spectral_axis=spectral_axis,
+                          mask=flux.mask, uncertainty=flux.uncertainty)
             return
 
         # If the mask kwarg is not passed to the constructor, but the flux array
