@@ -9,6 +9,7 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
+from ..extern.spectralcoord import SpectralCoord
 from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
@@ -88,15 +89,29 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
             if flux.unit is None:
                 raise ValueError("Input NDCube missing unit parameter")
             temp_axes = []
-            phys_axes = flux.wcs.world_axis_physical_types
+
+            # NDCube uses SpectralCoord for its spectral axis
+            for c in flux.axis_world_coords():
+                if type(c) == SpectralCoord:
+                    spectral_axis = c
+                    break
+
+            print(spectral_axis)
+
+            # Get the index of the spectral axis in case we need to reorder
+            phys_axes = flux.array_axis_physical_types
             for i in range(len(phys_axes)):
-                if phys_axes[i].split('.')[0] == "em":
+                if phys_axes[i][0][0:2] == "em":
                     temp_axes.append(i)
             if len(temp_axes) != 1:
                 raise ValueError("Input NDCube must have exactly one axis "
                                  "with spectral units")
-            spectral_axis = flux.axis_world_coords(temp_axes[0])[0]
+
+            # Change the flux array from bare ndarray to a Quantity
             q_flux = flux.data*u.Unit(flux.unit)
+            # Spectrum1D expects the spectral axis to be last
+            q_flux = np.moveaxis(q_flux, temp_axes[0], -1)
+
             self.__init__(flux=q_flux, spectral_axis=spectral_axis,
                           mask=flux.mask, uncertainty=flux.uncertainty)
             return
