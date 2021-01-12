@@ -4,12 +4,9 @@ spectral features.
 """
 
 import numpy as np
-from astropy.stats.funcs import gaussian_sigma_to_fwhm
-from astropy.modeling.models import Gaussian1D
 from ..manipulation import extract_region
 from . import centroid
 from .utils import computation_wrapper
-from scipy.signal import chirp, find_peaks, peak_widths
 
 
 __all__ = ['moment']
@@ -35,7 +32,7 @@ def moment(spectrum, regions=None, order=0):
     Returns
     -------
     moment: `float` or list (based on region input)
-        Moment of the spectrum
+        Moment of the spectrum. Returns None if (order < 0 or None)
 
     """
     return computation_wrapper(_compute_moment, spectrum, regions, order=order)
@@ -58,13 +55,37 @@ def _compute_moment(spectrum, regions=None, order=0):
         flux = calc_spectrum.flux
         spectral_axis = calc_spectrum.spectral_axis
 
-    centroid_result = centroid(spectrum, regions)
+    if order is None or order < 0:
+        return None
 
-    if flux.ndim > 1:
-        spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
-        centroid_result = centroid_result[:, np.newaxis]
+    if order == 0:
+        # the axis=-1 will enable this to run on single-dispersion, single-flux
+        # and single-dispersion, multiple-flux
+        return np.sum(flux, axis=-1)
 
-    dx = (spectral_axis - centroid_result)
-    sigma = np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+    dispersion = spectral_axis
+    if len(flux.shape) > 1:
+        dispersion = np.tile(spectral_axis, [flux.shape[0], 1])
 
-    return sigma
+    if order == 1:
+        return np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
+
+    if order > 1:
+        m0 = np.sum(flux, axis=-1)
+        m1 = np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
+
+        return np.sum(flux * (dispersion - m1)**order, axis=-1) / m0
+
+
+
+
+
+
+    # if flux.ndim > 1:
+    #     spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
+    #     centroid_result = centroid_result[:, np.newaxis]
+    #
+    # dx = (spectral_axis - centroid_result)
+    # sigma = np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+    #
+    # return sigma

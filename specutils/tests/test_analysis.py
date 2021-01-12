@@ -934,12 +934,19 @@ def test_moment():
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
-    result = moment(spectrum, order=0)
+    moment_0 = moment(spectrum, order=0)
+    assert moment_0.unit.is_equivalent(u.Jy )
+    assert quantity_allclose(moment_0, 252.96*u.Jy, atol=0.01*u.Jy)
 
-    assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
+    moment_1 = moment(spectrum, order=1)
+    assert moment_1.unit.is_equivalent(u.GHz)
+    assert quantity_allclose(moment_1, 10.08*u.GHz, atol=0.01*u.GHz)
 
-    # Account for the fact that Astropy uses a different normalization of the
-    # Gaussian where the integral is not 1
-    expected = np.sqrt(2*np.pi) * u.GHz * u.Jy
+    moment_2 = moment(spectrum, order=2)
+    assert moment_2.unit.is_equivalent(u.GHz**2)
+    assert quantity_allclose(moment_2, 13.40*u.GHz**2, atol=0.01*u.GHz**2)
 
-    assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
+    moment_3 = moment(spectrum, order=3)
+    assert moment_3.unit.is_equivalent(u.GHz**3)
+    assert quantity_allclose(moment_3, 1233.78*u.GHz**3, atol=0.01*u.GHz**3)
+
