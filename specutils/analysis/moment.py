@@ -5,7 +5,6 @@ spectral features.
 
 import numpy as np
 from ..manipulation import extract_region
-from . import centroid
 from .utils import computation_wrapper
 
 
@@ -75,17 +74,3 @@ def _compute_moment(spectrum, regions=None, order=0):
         m1 = np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
 
         return np.sum(flux * (dispersion - m1)**order, axis=-1) / m0
-
-
-
-
-
-
-    # if flux.ndim > 1:
-    #     spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
-    #     centroid_result = centroid_result[:, np.newaxis]
-    #
-    # dx = (spectral_axis - centroid_result)
-    # sigma = np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
-    #
-    # return sigma

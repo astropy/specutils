@@ -950,3 +950,25 @@ def test_moment():
     assert moment_3.unit.is_equivalent(u.GHz**3)
     assert quantity_allclose(moment_3, 1233.78*u.GHz**3, atol=0.01*u.GHz**3)
 
+
+def test_moment_cube():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    # use identical arrays in each spaxel. The purpose here is not to
+    # check accuracy (already tested elsewhere), but dimensionality.
+
+    flux_cube = np.broadcast_to(flux, [10,10,flux.shape[0]]) * u.Jy
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_cube)
+
+    moment_1 = moment(spectrum, order=1)
+
+    assert moment_1.shape == (10,10)
+    assert moment_1.unit.is_equivalent(u.GHz )
+    assert quantity_allclose(moment_1, 10.08*u.GHz, atol=0.01*u.GHz)
