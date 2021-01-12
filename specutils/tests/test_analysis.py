@@ -10,7 +10,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
-                        gaussian_sigma_width, gaussian_fwhm, fwhm,
+                        gaussian_sigma_width, gaussian_fwhm, fwhm, moment,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
 from ..manipulation import snr_threshold, FluxConservingResampler
@@ -921,3 +921,25 @@ def test_is_continuum_below_threshold():
     with pytest.warns(AstropyUserWarning) as e_info:
         find_lines_threshold(spectrum, noise_factor=1)
         assert len(e_info)==1 and 'if you want to suppress this warning' in e_info[0].message.args[0].lower()
+
+
+def test_moment():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    result = moment(spectrum, order=0)
+
+    assert result.unit.is_equivalent(u.erg / u.cm**2 / u.s)
+
+    # Account for the fact that Astropy uses a different normalization of the
+    # Gaussian where the integral is not 1
+    expected = np.sqrt(2*np.pi) * u.GHz * u.Jy
+
+    assert quantity_allclose(result, expected, atol=0.01*u.GHz*u.Jy)
