@@ -951,7 +951,7 @@ def test_moment():
     assert quantity_allclose(moment_3, 1233.78*u.GHz**3, atol=0.01*u.GHz**3)
 
 
-def test_moment_cube():
+def test_moment_multid():
 
     np.random.seed(42)
 
@@ -963,9 +963,9 @@ def test_moment_cube():
     # use identical arrays in each spaxel. The purpose here is not to
     # check accuracy (already tested elsewhere), but dimensionality.
 
-    flux_cube = np.broadcast_to(flux, [10,10,flux.shape[0]]) * u.Jy
+    flux_multid = np.broadcast_to(flux, [10,10,flux.shape[0]]) * u.Jy
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_cube)
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
 
     moment_1 = moment(spectrum, order=1)
 
