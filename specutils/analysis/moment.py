@@ -39,7 +39,7 @@ def moment(spectrum, regions=None, order=0):
 
 def _compute_moment(spectrum, regions=None, order=0):
     """
-    This is a helper function for the above `gaussian_sigma_width()` method.
+    This is a helper function for the above `moment()` method.
     """
 
     if regions is not None:
