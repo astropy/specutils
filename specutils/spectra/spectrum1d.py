@@ -96,8 +96,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                     spectral_axis = c
                     break
 
-            print(spectral_axis)
-
             # Get the index of the spectral axis in case we need to reorder
             phys_axes = flux.array_axis_physical_types
             for i in range(len(phys_axes)):
@@ -110,6 +108,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
             # Change the flux array from bare ndarray to a Quantity
             q_flux = flux.data*u.Unit(flux.unit)
             # Spectrum1D expects the spectral axis to be last
+
             q_flux = np.moveaxis(q_flux, temp_axes[0], -1)
 
             self.__init__(flux=q_flux, spectral_axis=spectral_axis,
