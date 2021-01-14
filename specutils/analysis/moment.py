@@ -11,7 +11,7 @@ from .utils import computation_wrapper
 __all__ = ['moment']
 
 
-def moment(spectrum, regions=None, order=0):
+def moment(spectrum, regions=None, order=0, axis=-1):
     """
     Estimate the moment of the spectrum.
 
@@ -25,8 +25,13 @@ def moment(spectrum, regions=None, order=0):
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
-    order : int, default: 0
-        The order of the moment to be calculated.
+    order : int
+        The order of the moment to be calculated. Default=0
+
+    axis : int
+        Axis along which a moment is calculated. Default=-1, computes along
+        the last axis (spectral axis).
+
 
     Returns
     -------
@@ -34,10 +39,11 @@ def moment(spectrum, regions=None, order=0):
         Moment of the spectrum. Returns None if (order < 0 or None)
 
     """
-    return computation_wrapper(_compute_moment, spectrum, regions, order=order)
+    return computation_wrapper(_compute_moment, spectrum, regions,
+                               order=order, axis=axis)
 
 
-def _compute_moment(spectrum, regions=None, order=0):
+def _compute_moment(spectrum, regions=None, order=0, axis=-1):
     """
     This is a helper function for the above `moment()` method.
     """
@@ -58,19 +64,17 @@ def _compute_moment(spectrum, regions=None, order=0):
         return None
 
     if order == 0:
-        # the axis=-1 will enable this to run on single-dispersion, single-flux
-        # and single-dispersion, multiple-flux
-        return np.sum(flux, axis=-1)
+        return np.sum(flux, axis=axis)
 
     dispersion = spectral_axis
     if len(flux.shape) > 1:
         dispersion = np.tile(spectral_axis, [flux.shape[0], 1])
 
     if order == 1:
-        return np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
+        return np.sum(flux * dispersion, axis=axis) / np.sum(flux, axis=axis)
 
     if order > 1:
-        m0 = np.sum(flux, axis=-1)
-        m1 = np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
+        m0 = np.sum(flux, axis=axis)
+        m1 = np.sum(flux * dispersion, axis=axis) / np.sum(flux, axis=axis)
 
-        return np.sum(flux * (dispersion - m1)**order, axis=-1) / m0
+        return np.sum(flux * (dispersion - m1)**order, axis=axis) / m0

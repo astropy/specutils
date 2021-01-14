@@ -956,7 +956,7 @@ def test_moment_multid():
     np.random.seed(42)
 
     frequencies = np.linspace(100, 1, 10000) * u.GHz
-    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    g = models.Gaussian1D(amplitude=100*u.Jy, mean=50*u.GHz, stddev=1000*u.GHz)
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
 
@@ -971,4 +971,19 @@ def test_moment_multid():
 
     assert moment_1.shape == (10,10)
     assert moment_1.unit.is_equivalent(u.GHz )
-    assert quantity_allclose(moment_1, 10.08*u.GHz, atol=0.01*u.GHz)
+    assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
+
+    # select the last axis of the cube. Should be identical with
+    # the default call above.
+    moment_1 = moment(spectrum, order=1, axis=2)
+
+    assert moment_1.shape == (10,10)
+    assert moment_1.unit.is_equivalent(u.GHz )
+    assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
+
+    # cross-cube - returns the dispersion
+    moment_1 = moment(spectrum, order=1, axis=1)
+
+    assert moment_1.shape == (10,10000)
+    assert moment_1.unit.is_equivalent(u.GHz )
+    assert quantity_allclose(moment_1, frequencies, atol=0.01*u.GHz)
