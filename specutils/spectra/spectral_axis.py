@@ -84,5 +84,5 @@ class SpectralAxis(SpectralCoord):
     def with_radial_velocity_shift(self, target_shift=None, observer_shift=None):
         if self.unit is u.pixel:
             raise u.UnitsError("Cannot transform spectral coordinates in pixel units")
-        super().with_radial_velocity_shift(target_shift=target_shift,
-                                           observer_shift=observer_shift)
+        return super().with_radial_velocity_shift(target_shift=target_shift,
+                                                  observer_shift=observer_shift)
