@@ -188,7 +188,7 @@ def spectral_slab(spectrum, s1, s2):
     Notes
     -----
     This is for now just a proxy for function `extract_region`, to ease the
-    transition from `spectral-cube`.
+    transition from spectral-cube.
 
     """
     region = SpectralRegion(s1, s2)
