@@ -377,7 +377,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     @redshift.setter
     def redshift(self, val):
         new_spec_coord = self.spectral_axis.with_radial_velocity_shift(
-            val - self.spectral_axis.redshift)
+            -self.spectral_axis.radial_velocity).with_radial_velocity_shift(val)
         self._spectral_axis = new_spec_coord
 
     @property
@@ -399,7 +399,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 raise u.UnitsError("Radial velocity must be a velocity.")
 
         new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
-            val - self.spectral_axis.radial_velocity)
+            -self.spectral_axis.radial_velocity).with_radial_velocity_shift(val)
         self._spectral_axis = new_spectral_axis
 
     def __add__(self, other):
