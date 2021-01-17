@@ -333,6 +333,7 @@ def _fits_identify_by_name(origin, fileinp, *args,
     check = (_spec_pattern.match(os.path.basename(filepath)) is not None and
              fits.connect.is_fits(origin, filepath, fileobj, *args))
 
-    fileobj.close()
+    if fileobj is not None:
+        fileobj.close()
 
     return check
