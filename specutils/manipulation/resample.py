@@ -194,7 +194,7 @@ class FluxConservingResampler(ResamplerBase):
             spectrum. If False (default), the output spectrum contains only the
             region spanned by the resample grid. If True, the output spectrum
             will have the same shape as the input's, with the regions outside
-            the resampling grid filled with the origibal data.
+            the resampling grid filled with the original data.
 
         Returns
         -------
@@ -326,7 +326,7 @@ class LinearInterpolatedResampler(ResamplerBase):
             spectrum. If False (default), the output spectrum contains only the
             region spanned by the resample grid. If True, the output spectrum
             will have the same shape as the input's, with the regions outside
-            the resampling grid filled with the origibal data.
+            the resampling grid filled with the original data.
 
         Returns
         -------
@@ -414,7 +414,7 @@ class SplineInterpolatedResampler(ResamplerBase):
             spectrum. If False (default), the output spectrum contains only the
             region spanned by the resample grid. If True, the output spectrum
             will have the same shape as the input's, with the regions outside
-            the resampling grid filled with the origibal data.
+            the resampling grid filled with the original data.
 
         Returns
         -------
@@ -440,6 +440,13 @@ class SplineInterpolatedResampler(ResamplerBase):
             if new_unc is not None:
                 new_unc.array[off_edges] = 0
 
-        return Spectrum1D(spectral_axis=fin_spec_axis,
-                          flux=out_flux_val*orig_spectrum.flux.unit,
+        out_spec_axis = fin_spec_axis
+        out_flux = out_flux_val * orig_spectrum.flux.unit
+        if keep_shape:
+            out_flux, new_unc, out_spec_axis = self.keep_shape(orig_spectrum,
+                                                               fin_spec_axis,
+                                                               out_flux_val,
+                                                               new_unc)
+        return Spectrum1D(spectral_axis=out_spec_axis,
+                          flux=out_flux,
                           uncertainty=new_unc)
