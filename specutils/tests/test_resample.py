@@ -227,8 +227,6 @@ def test_keep_shape_linear():
     input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
                                 uncertainty=StdDevUncertainty(uncert_val*u.mJy))
 
-    # testing several corner cases associated with coincident spectral axis
-    # values at the extremities.
     resamp_grid = [3.5, 4.7, 6.8, 7.1] * u.AA
     inst = LinearInterpolatedResampler()
     results = inst(input_spectrum, resamp_grid, keep_shape=True)
@@ -236,6 +234,8 @@ def test_keep_shape_linear():
     assert_quantity_allclose(results.uncertainty.quantity,
                              np.array([0.1, 0.2, 0.3, 0.35, 0.47, 0.68, 0.71, 0.8, 0.9, 1])*u.mJy)
 
+    # testing several corner cases associated with coincident spectral axis
+    # values at the extremities.
     resamp_grid = [3.5, 4.7, 6.8, 7.1, 8.0] * u.AA
     inst = LinearInterpolatedResampler()
     results = inst(input_spectrum, resamp_grid, keep_shape=True)
@@ -269,8 +269,6 @@ def test_keep_shape_spline():
     input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
                                 uncertainty=StdDevUncertainty(uncert_val*u.mJy))
 
-    # testing several corner cases associated with coincident spectral axis
-    # values at the extremities.
     resamp_grid = [3.5, 4.7, 6.8, 7.1] * u.AA
     inst = SplineInterpolatedResampler()
     results = inst(input_spectrum, resamp_grid, keep_shape=True)
@@ -278,6 +276,8 @@ def test_keep_shape_spline():
     assert_quantity_allclose(results.uncertainty.quantity,
                              np.array([0.1, 0.2, 0.3, 0.35, 0.47, 0.68, 0.71, 0.8, 0.9, 1])*u.mJy)
 
+    # testing corner case associated with coincident spectral axis
+    # values at the extremities.
     resamp_grid = [3., 4.7, 6.8, 7.] * u.AA
     inst = SplineInterpolatedResampler()
     results = inst(input_spectrum, resamp_grid, keep_shape=True)
