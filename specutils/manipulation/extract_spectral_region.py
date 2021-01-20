@@ -163,7 +163,7 @@ def extract_region(spectrum, region):
     return extracted_spectrum
 
 
-def spectral_slab(spectrum, s1, s2):
+def spectral_slab(spectrum, lower, upper):
     """
     Extract a slab from the input `~specutils.Spectrum1D`
     defined by the lower and upper bounds defined by the ``region``
@@ -175,8 +175,8 @@ def spectral_slab(spectrum, s1, s2):
     spectrum: `~specutils.Spectrum1D`
         The spectrum object from which the region will be extracted.
 
-    s1, s2: spectral coordinates limiting the slab
-        Define the spectral coordinate bound of the region to extract
+    lower, upper: `~astropy.units.Quantity`
+        The lower and upper bounds of the region to extract
         from the original spectrum.
 
     Returns
@@ -191,6 +191,6 @@ def spectral_slab(spectrum, s1, s2):
     transition from spectral-cube.
 
     """
-    region = SpectralRegion(s1, s2)
+    region = SpectralRegion(lower, upper)
 
     return extract_region(spectrum, region)
