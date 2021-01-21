@@ -47,8 +47,8 @@ class ResamplerBase(ABC):
         """
         return NotImplemented
 
-    def keep_shape(self, orig_spectrum, resample_spec_axis, resampled_flux_arr,
-                   resampled_unc):
+    def _keep_shape(self, orig_spectrum, resample_spec_axis, resampled_flux_arr,
+                    resampled_unc):
         """
         Returns the resampled data as a patch on the original spectrum. This
         is used when one needs the resampled data to be of same shape as the
@@ -58,6 +58,12 @@ class ResamplerBase(ABC):
 
         indices_min = np.where(orig_spec_axis.value < resample_spec_axis[0].value)
         indices_max = np.where(orig_spec_axis.value > resample_spec_axis[-1].value)
+
+        # in case extrapolation is taking place, we return immediately. There is no
+        # point in keeping the spectrum shape if the user wants explicitly to
+        # change it.
+        if len(indices_min[0]) == 0 or len(indices_max[0]) == 0:
+            return resampled_flux_arr * orig_spectrum.flux.unit, resampled_unc, resample_spec_axis
 
         extended_flux = np.zeros(shape=orig_spectrum.flux.shape)
 
@@ -70,7 +76,7 @@ class ResamplerBase(ABC):
         extended_flux[i1:i2] = resampled_flux_arr
 
         # this handles the case of a coincident spectral coordinate value
-        # at the exact beginning of the resampling interval.
+        # at the exact beginning (lower end) of the resampling interval.
         delta = orig_spec_axis.value[i1] - resample_spec_axis[0].value
         if delta - int(delta) == 0.0:
             extended_flux[i2] = orig_spectrum.flux.value[i2+1]
@@ -272,9 +278,18 @@ class FluxConservingResampler(ResamplerBase):
         # more about how to handle that... could convert before and after
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
+
+        out_spec_axis = np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit
+        new_unc = out_uncertainty
+        if keep_shape:
+            out_flux, new_unc, out_spec_axis = self._keep_shape(orig_spectrum,
+                                                                out_spec_axis,
+                                                                out_flux,
+                                                                new_unc)
+
         resampled_spectrum = Spectrum1D(flux=out_flux,
-                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit,
-                                        uncertainty=out_uncertainty)
+                                        spectral_axis=out_spec_axis,
+                                        uncertainty=new_unc)
 
         return resampled_spectrum
 
@@ -354,10 +369,10 @@ class LinearInterpolatedResampler(ResamplerBase):
 
         out_spec_axis = fin_spec_axis
         if keep_shape:
-            out_flux, new_unc, out_spec_axis = self.keep_shape(orig_spectrum,
-                                                               fin_spec_axis,
-                                                               out_flux_arr,
-                                                               new_unc)
+            out_flux, new_unc, out_spec_axis = self._keep_shape(orig_spectrum,
+                                                                fin_spec_axis,
+                                                                out_flux_arr,
+                                                                new_unc)
 
         return Spectrum1D(spectral_axis=out_spec_axis,
                           flux=out_flux,
@@ -443,10 +458,10 @@ class SplineInterpolatedResampler(ResamplerBase):
         out_spec_axis = fin_spec_axis
         out_flux = out_flux_val * orig_spectrum.flux.unit
         if keep_shape:
-            out_flux, new_unc, out_spec_axis = self.keep_shape(orig_spectrum,
-                                                               fin_spec_axis,
-                                                               out_flux_val,
-                                                               new_unc)
+            out_flux, new_unc, out_spec_axis = self._keep_shape(orig_spectrum,
+                                                                fin_spec_axis,
+                                                                out_flux_val,
+                                                                new_unc)
         return Spectrum1D(spectral_axis=out_spec_axis,
                           flux=out_flux,
                           uncertainty=new_unc)
