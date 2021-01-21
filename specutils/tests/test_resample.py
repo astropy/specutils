@@ -316,9 +316,3 @@ def test_keep_shape_flux_conserving():
     assert_quantity_allclose(results.flux, np.array([1, 2, 3, 4.789474, 6.347826, 7, 8, 8, 9, 10])*u.mJy)
     assert_quantity_allclose(results.uncertainty.quantity,
         np.array([0.1, 0.2, 10.873362, 4.366363, 2.57209,2.040816, 0.8, 0.8, 0.9, 1])*u.mJy, rtol=2.e-7)
-
-
-
-
-
-
