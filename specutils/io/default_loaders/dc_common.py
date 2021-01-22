@@ -1,7 +1,7 @@
+from collections.abc import Callable
 from copy import deepcopy
 from enum import Enum
 
-import astropy.io.fits as fits
 from astropy.nddata import (
     VarianceUncertainty,
     StdDevUncertainty,
@@ -11,8 +11,10 @@ import astropy.units as u
 from astropy.wcs import WCS
 from astropy.wcs.utils import pixel_to_pixel
 
-from specutils import Spectrum1D, SpectrumList
-from specutils.io.registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
+from ..registers import data_loader
+from ... import Spectrum1D, SpectrumList
+
 
 HEADER_PUPOSE_KEYWORDS = ["EXTNAME", "HDUNAME"]
 HEADER_INDEX_PUPOSE_KEYWORDS = ["ROW", "ARRAY"]
@@ -67,6 +69,10 @@ class Purpose(Enum):
     UNREDUCED_ERROR_STDEV = "unreduced_error_stdev"
     UNREDUCED_ERROR_VARIANCE = "unreduced_error_variance"
     UNREDUCED_ERROR_INVERSEVARIANCE = "unreduced_error_inversevariance"
+    NORMALISED_SCIENCE = "normalised_science"
+    NORMALISED_ERROR_STDEV = "normalised_error_stdev"
+    NORMALISED_ERROR_VARIANCE = "normalised_error_variance"
+    NORMALISED_ERROR_INVERSEVARIANCE = "normalised_error_inversevariance"
 
 
 CREATE_SPECTRA = {
@@ -74,6 +80,7 @@ CREATE_SPECTRA = {
     Purpose.SKY,
     Purpose.COMBINED_SCIENCE,
     Purpose.UNREDUCED_SCIENCE,
+    Purpose.NORMALISED_SCIENCE,
 }
 ERROR_PURPOSES = {
     Purpose.ERROR_STDEV,
@@ -85,6 +92,9 @@ ERROR_PURPOSES = {
     Purpose.UNREDUCED_ERROR_STDEV,
     Purpose.UNREDUCED_ERROR_VARIANCE,
     Purpose.UNREDUCED_ERROR_INVERSEVARIANCE,
+    Purpose.NORMALISED_ERROR_STDEV,
+    Purpose.NORMALISED_ERROR_VARIANCE,
+    Purpose.NORMALISED_ERROR_INVERSEVARIANCE,
 }
 PURPOSE_SPECTRA_MAP = {
     Purpose.SCIENCE: "reduced",
@@ -100,6 +110,10 @@ PURPOSE_SPECTRA_MAP = {
     Purpose.UNREDUCED_ERROR_STDEV: "unreduced",
     Purpose.UNREDUCED_ERROR_VARIANCE: "unreduced",
     Purpose.UNREDUCED_ERROR_INVERSEVARIANCE: "unreduced",
+    Purpose.NORMALISED_SCIENCE: "normalised",
+    Purpose.NORMALISED_ERROR_STDEV: "normalised",
+    Purpose.NORMALISED_ERROR_VARIANCE: "normalised",
+    Purpose.NORMALISED_ERROR_INVERSEVARIANCE: "normalised",
 }
 UNCERTAINTY_MAP = {
     Purpose.ERROR_STDEV: StdDevUncertainty,
@@ -111,6 +125,9 @@ UNCERTAINTY_MAP = {
     Purpose.UNREDUCED_ERROR_STDEV: StdDevUncertainty,
     Purpose.UNREDUCED_ERROR_VARIANCE: VarianceUncertainty,
     Purpose.UNREDUCED_ERROR_INVERSEVARIANCE: InverseVariance,
+    Purpose.NORMALISED_ERROR_STDEV: StdDevUncertainty,
+    Purpose.NORMALISED_ERROR_VARIANCE: VarianceUncertainty,
+    Purpose.NORMALISED_ERROR_INVERSEVARIANCE: InverseVariance,
 }
 GUESS_TO_PURPOSE = {
     "badpix": Purpose.SKIP,
@@ -201,24 +218,27 @@ def compute_wcs_from_keys_and_values(
 def get_flux_units_from_keys_and_values(
     header,
     *,
-    flux_unit_keyword=None,
+    flux_unit_keyword="BUNIT",
     flux_unit=None,
-    flux_scale_keyword=None,
+    flux_scale_keyword="BSCALE",
     flux_scale=None,
 ):
-    if flux_unit is None:
-        if flux_unit_keyword is None:
-            raise ValueError(
-                "Either flux_unit or flux_unit_keyword must be provided"
-            )
-        flux_unit = header[flux_unit_keyword]
-    flux_unit = u.Unit(flux_unit)
+    if flux_unit is None and flux_unit_keyword is None:
+        raise ValueError(
+            "Either flux_unit or flux_unit_keyword must be provided"
+        )
+    flux_unit_from_header = header.get(flux_unit_keyword)
+    if flux_unit is None and flux_unit_from_header is None:
+        raise ValueError(
+            "No units found for flux, check flux_unit and flux_unit_keyword"
+        )
+    flux_unit = u.Unit(flux_unit_from_header or flux_unit)
 
-    if flux_scale is None:
-        if flux_scale_keyword is None:
-            flux_scale = 1
-        else:
-            flux_scale = header[flux_scale_keyword]
+    flux_scale_from_header = header.get(flux_scale_keyword)
+    if flux_scale is None and flux_scale_from_header is None:
+        flux_scale = 1
+    else:
+        flux_scale = flux_scale_from_header or flux_scale
     return flux_scale * flux_unit
 
 
@@ -235,6 +255,7 @@ def add_single_spectra_to_map(
     all_keywords,
     valid_wcs,
     index=None,
+    drop_wcs_axes=None,
 ):
     spec_wcs_info = {}
     spec_units_info = {}
@@ -263,11 +284,16 @@ def add_single_spectra_to_map(
 
     if valid_wcs or not spec_wcs_info:
         wcs = WCS(header)
+        if drop_wcs_axes is not None:
+            if isinstance(drop_wcs_axes, Callable):
+                wcs = drop_wcs_axes(wcs)
+            else:
+                wcs = wcs.dropaxis(drop_wcs_axes)
     else:
         wcs = compute_wcs_from_keys_and_values(header, **spec_wcs_info)
 
     if all_standard_units:
-        spec_units_info = {"flux_unit_keyword": "BUNIT"}
+        spec_units_info = {}
     flux_unit = get_flux_units_from_keys_and_values(header, **spec_units_info)
     flux = data * flux_unit
 
@@ -352,15 +378,17 @@ def load_single_split_file(
     all_keywords,
     valid_wcs,
     label=True,
+    drop_wcs_axes=None,
 ):
     spectra_map = {
         "sky": [],
         "combined": [],
         "unreduced": [],
+        "normalised": [],
         "reduced": [],
     }
 
-    with fits.open(filename) as fits_file:
+    with read_fileobj_or_hdulist(filename) as fits_file:
         hdus = deepcopy(hdus)
         if hdus is not None:
             # extract hdu information and validate it
@@ -416,16 +444,19 @@ def load_single_split_file(
                 all_standard_units=all_standard_units,
                 all_keywords=all_keywords,
                 valid_wcs=valid_wcs,
+                drop_wcs_axes=drop_wcs_axes,
             )
 
     if label:
         add_labels(spectra_map["combined"])
         add_labels(spectra_map["reduced"])
+        add_labels(spectra_map["normalised"])
         add_labels(spectra_map["unreduced"], use_purpose=True)
         add_labels(spectra_map["sky"], use_purpose=True)
 
     return SpectrumList(
         spectra_map["combined"] +
+        spectra_map["normalised"] +
         spectra_map["reduced"] +
         spectra_map["unreduced"] +
         spectra_map["sky"]
@@ -446,15 +477,17 @@ def load_multiline_single_file(
     all_keywords,
     valid_wcs,
     label=True,
+    drop_wcs_axes=1,
 ):
     spectra_map = {
         "sky": [],
         "combined": [],
         "unreduced": [],
+        "normalised": [],
         "reduced": [],
     }
 
-    with fits.open(filename) as fits_file:
+    with read_fileobj_or_hdulist(filename) as fits_file:
         fits_header = fits_file[0].header
         fits_data = fits_file[0].data
         hdu = deepcopy(hdu)
@@ -490,16 +523,19 @@ def load_multiline_single_file(
                 all_standard_units=all_standard_units,
                 all_keywords=all_keywords,
                 valid_wcs=valid_wcs,
+                drop_wcs_axes=drop_wcs_axes,
             )
 
     if label:
         add_labels(spectra_map["combined"])
         add_labels(spectra_map["reduced"])
+        add_labels(spectra_map["normalised"])
         add_labels(spectra_map["unreduced"], use_purpose=True)
         add_labels(spectra_map["sky"], use_purpose=True)
 
     return SpectrumList(
         spectra_map["combined"] +
+        spectra_map["normalised"] +
         spectra_map["reduced"] +
         spectra_map["unreduced"] +
         spectra_map["sky"]

@@ -7,7 +7,7 @@ import astropy.units as u
 
 from .conftest import remote_access
 from .. import Spectrum1D, SpectrumList
-from ..io.default_loaders import common as loaders
+from ..io.default_loaders import dc_common as loaders
 
 REMOTE_ID = "4059032"
 
