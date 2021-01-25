@@ -1182,3 +1182,89 @@ class TestAAOmega2dF:
             assert spec.meta.get("header") is not None
             assert spec.meta.get("purpose") is not None
             assert spec.meta.get("fibre_index") is not None
+
+
+@remote_access([
+    {'id': "4460981", 'filename':"1812260046012353.fits"}, # 4 exts
+    {'id': "4460981", 'filename':"1311160005010021.fits"} # 5 exts
+])
+def test_galah(remote_data_path):
+    spectra = SpectrumList.read(remote_data_path, format="GALAH")
+    # Should be main spectra, without sky, and normalised (not in 4 ext)
+    nspec = len(spectra)
+    if spectra[0].meta["galah_hdu_format"] == 4:
+        assert nspec == 2
+    elif spectra[0].meta["galah_hdu_format"] == 5:
+        assert nspec == 3
+    else:
+        assert False, "Unknown format"
+    # normalised
+    if nspec == 3:
+        assert spectra[0].flux.unit == u.Unit('') # dimensionless
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert spectra[0].uncertainty is None
+        assert spectra[0].meta.get("label") == "normalised spectra"
+        assert spectra[0].meta.get("header") is not None
+
+        # drop the normalised spectra, so 4 and 5 should now look the same
+        spectra = spectra[1:]
+
+    # main spectra
+    assert spectra[0].flux.unit == u.count
+    assert spectra[0].spectral_axis.unit == u.Angstrom
+    assert isinstance(spectra[0].uncertainty, StdDevUncertainty)
+    assert spectra[0].meta.get("label") is not None
+    assert spectra[0].meta.get("header") is not None
+
+    # No sky
+    assert spectra[1].spectral_axis.unit == u.Angstrom
+    assert spectra[1].flux.unit == u.count
+    assert isinstance(spectra[1].uncertainty, StdDevUncertainty)
+    assert spectra[1].meta.get("label") is not None
+    assert spectra[1].meta.get("header") is not None
+
+
+@pytest.mark.xfail(reason="Format is ambiguous")
+@remote_access([
+    {'id': "4460981", 'filename':"1812260046012353.fits"}, # 4 exts
+    {'id': "4460981", 'filename':"1311160005010021.fits"} # 5 exts
+])
+def test_galah_guess(remote_data_path):
+    spectra = SpectrumList.read(remote_data_path)
+    # Should be main spectra, without sky, and normalised (not in 4 ext)
+    nspec = len(spectra)
+    if spectra[0].meta["galah_hdu_format"] == 4:
+        assert nspec == 2
+    elif spectra[0].meta["galah_hdu_format"] == 5:
+        assert nspec == 3
+    else:
+        assert False, "Unknown format"
+
+    # main spectra
+    assert spectra[0].flux.unit == u.count
+    assert spectra[0].spectral_axis.unit == u.Angstrom
+    assert isinstance(spectra[0].uncertainty, StdDevUncertainty)
+    assert spectra[0].meta.get("label") is not None
+    assert spectra[0].meta.get("header") is not None
+
+    # normalised
+    if nspec == 3:
+        assert spectra[1].flux.unit == u.Unit('') # dimensionless
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+        assert spectra[1].uncertainty is None
+        assert spectra[1].meta.get("label") == "normalised spectra"
+        assert spectra[1].meta.get("header") is not None
+
+    # No sky
+    if nspec == 3:
+        assert spectra[2].spectral_axis.unit == u.Angstrom
+        assert spectra[2].flux.unit == u.count
+        assert isinstance(spectra[2].uncertainty, StdDevUncertainty)
+        assert spectra[2].meta.get("label") is not None
+        assert spectra[2].meta.get("header") is not None
+    else:
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+        assert spectra[1].flux.unit == u.count
+        assert isinstance(spectra[1].uncertainty, StdDevUncertainty)
+        assert spectra[1].meta.get("label") is not None
+        assert spectra[1].meta.get("header") is not None
