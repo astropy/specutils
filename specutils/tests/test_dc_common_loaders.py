@@ -18,6 +18,7 @@ GAMA_GAMA_TEST_FILENAME = "G12_Y2_009_044.fit"
 GAMA_MGC_TEST_FILENAME = "MGC23320.fit"
 GAMA_WIGGLEZ_TEST_FILENAME = "Spectrum-195254.fit"
 OZDES_TEST_FILENAME = "OzDES-DR2_04720.fits"
+WIGGLEZ_TEST_FILENAME = "wig206635.fits"
 
 OZDES_CONFIG = {
     "hdus": {
@@ -130,6 +131,29 @@ GAMA_MGC_CONFIG = {
 
 
 class TestSingleSplit:
+    @remote_access([{'id': "4460981", 'filename': WIGGLEZ_TEST_FILENAME}])
+    def test_wigglez(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="WiggleZ")
+
+        assert len(spectra) == 1
+        assert spectra[0].flux.unit == u.Unit("1e-16 erg / (A cm2 s)")
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @pytest.mark.xfail(reason="Format is ambiguous")
+    @remote_access([{'id': "4460981", 'filename': WIGGLEZ_TEST_FILENAME}])
+    def test_wigglez_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+
+        assert len(spectra) == 1
+        assert spectra[0].flux.unit == u.Unit("1e-16 erg / (A cm2 s)")
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
     @remote_access([{'id': REMOTE_ID, 'filename': OZDES_TEST_FILENAME}])
     def test_ozdes(self, remote_data_path):
         spectra = SpectrumList.read(
