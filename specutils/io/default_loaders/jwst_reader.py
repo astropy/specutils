@@ -159,10 +159,11 @@ def _jwst_x1d_loader(file_obj, **kwargs):
                 # srctype = hdulist["SCI"].header.get("srctype")
 
 
+                print("@@@@  jwst_reader.py-164: ", hdulist['PRIMARY'].header)
                 print("@@@@  jwst_reader.py-164: ", hdulist['EXTRACT1D'].header)
 
 
-                srctype = hdulist["EXTRACT1D"].header.get("srctype")
+                # srctype = hdulist["EXTRACT1D"].header.get("srctype")
 
 
 
