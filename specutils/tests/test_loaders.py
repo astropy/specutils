@@ -1136,3 +1136,49 @@ def test_sdss_wcs_handler():
     sdss_wave = 10 ** dropped_sdss_wcs.pixel_to_world(np.arange(10)) * u.Unit('Angstrom')
     fixed_wave = fixed_wcs.pixel_to_world(np.arange(10))
     assert quantity_allclose(sdss_wave, fixed_wave)
+
+
+class TestAAOmega2dF:
+    @remote_access([{'id': '4460981', 'filename': "OBJ0039red.fits"}])
+    def test_with_rwss(self, remote_data_path):
+        spectra = SpectrumList.read(
+            remote_data_path, format="Data Central AAOmega",
+        )
+        assert len(spectra) == 139
+        for spec in spectra:
+            assert spec.meta.get("label") is not None
+            assert spec.meta.get("header") is not None
+            assert spec.meta.get("purpose") is not None
+            assert spec.meta.get("fibre_index") is not None
+
+    @remote_access([{'id': '4460981', 'filename': "OBJ0032red.fits"}])
+    def test_without_rwss(self, remote_data_path):
+        spectra = SpectrumList.read(
+            remote_data_path, format="Data Central AAOmega",
+        )
+        assert len(spectra) == 153
+        for spec in spectra:
+            assert spec.meta.get("label") is not None
+            assert spec.meta.get("header") is not None
+            assert spec.meta.get("purpose") is not None
+            assert spec.meta.get("fibre_index") is not None
+
+    @remote_access([{'id': '4460981', 'filename': "OBJ0039red.fits"}])
+    def test_with_rwss_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+        assert len(spectra) == 139
+        for spec in spectra:
+            assert spec.meta.get("label") is not None
+            assert spec.meta.get("header") is not None
+            assert spec.meta.get("purpose") is not None
+            assert spec.meta.get("fibre_index") is not None
+
+    @remote_access([{'id': '4460981', 'filename': "OBJ0032red.fits"}])
+    def test_without_rwss_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+        assert len(spectra) == 153
+        for spec in spectra:
+            assert spec.meta.get("label") is not None
+            assert spec.meta.get("header") is not None
+            assert spec.meta.get("purpose") is not None
+            assert spec.meta.get("fibre_index") is not None
