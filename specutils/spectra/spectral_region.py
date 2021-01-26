@@ -7,12 +7,12 @@ import astropy.units as u
 
 class SpectralRegion:
     """
-    A `SpectralRegion` is a container class that enables some simplicty
-    in defining and passing a region (interval) for a spectrum.
+    A `SpectralRegion` is a container class for regions (intervals) along a
+    spectral coordinate.
 
-    In the future, there might be more functionality added in here, and there
-    is some discussion that this might/could move to
-    `Astropy Regions <http://astropy-regions.readthedocs.io/en/latest/>`_.
+    This class can either represent a single contiguous region or a set of
+    regions related to each other in some way (For example, a pair of 
+    continuum windows around a line or a doublet of lines).
 
     Parameters
     ----------
