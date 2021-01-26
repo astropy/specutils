@@ -214,7 +214,7 @@ Line List Compatibility
 -----------------------
 
 `~specutils.SpectralRegion` objects can also be created from the `~astropy.table.QTable` object returned from the line
-finding routines
+finding functions:
 
 .. code-block:: python
 
