@@ -53,13 +53,9 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
     else:
         calc_spectrum = spectrum
 
-    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
-        flux = calc_spectrum.flux[~spectrum.mask]
-    else:
-        flux = calc_spectrum.flux
-    # we don't apply the mask to the spectral axis because of
-    # dimensionality issues. This should be fully addresses when
+    # Ignore masks for now. This should be fully addressed when
     # specutils gets revamped to handle multi-dimensional masks.
+    flux = calc_spectrum.flux
     spectral_axis = calc_spectrum.spectral_axis
 
     if order is None or order < 0:
