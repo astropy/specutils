@@ -653,10 +653,26 @@ convenience functions to perform exactly this task.  An example is shown below.
 
     >>> y_continuum_fitted = g1_fit(x*u.um)
 
-    >>> plt.plot(x, y)  # doctest: +IGNORE_OUTPUT
-    >>> plt.plot(x, y_continuum_fitted)  # doctest: +IGNORE_OUTPUT
-    >>> plt.title('Continuum Fitting')  # doctest: +IGNORE_OUTPUT
-    >>> plt.grid(True)  # doctest: +IGNORE_OUTPUT
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y)  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y_continuum_fitted)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Continuum Fitting")  # doctest: +IGNORE_OUTPUT
+    >>> ax.grid(True)  # doctest: +IGNORE_OUTPUT
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    The normalized spectrum is simply the old spectrum devided by the
+    fitted continuum, which returns a new object:
+
+    >>> spec_normalized = spectrum / y_continuum_fitted
+
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(spec_normalized.spectral_axis, spec_normalized.flux)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Continuum normalized spectrum")  # doctest: +IGNORE_OUTPUT
+    >>> ax.grid(True)  # doctest: +IGNORE_OUTPUT
 
 
 When fitting over a specific wavelength region of a spectrum, one
