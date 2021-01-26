@@ -128,7 +128,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
 
     # Threshold based on noise estimate and factor.
     uncertainty = spectrum.uncertainty
-    uncert_val = uncertainty.array if uncertainty is not None else 0
+    uncert_val = 0 if uncertainty is None else uncertainty.array 
 
     inds = np.where(np.abs(spectrum.flux) > (noise_factor * uncert_val) *
                     spectrum.flux.unit)[0]
