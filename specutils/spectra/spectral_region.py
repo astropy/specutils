@@ -28,6 +28,34 @@ class SpectralRegion:
     The subregions will be ordered based on the lower bound of each subregion.
 
     """
+    def __init__(self, *args):
+        # Create instance variables
+        self._subregions = None
+
+        # Set the values (using the setters for doing the proper checking)
+        if len(args) == 1:
+            if all([self._is_2_element(x) for x in args[0]]):
+                self._subregions = [tuple(x) for x in args[0]]
+            else:
+                raise ValueError("SpectralRegion 1-argument input must be "
+                                 "a list of length-two Quantity objects.")
+        elif len(args) == 2:
+            if self._is_2_element(args):
+                self._subregions = [tuple(args)]
+            else:
+                raise ValueError("SpectralRegion 2-argument inputs must be "
+                                 "Quantity objects.")
+        else:
+            raise TypeError(f'SpectralRegion initializer takes 1 or 2'
+                            f'positional arguments but {len(args)} were given')
+
+        #  Check validity of the input sub regions.
+        if not self._valid():
+            raise ValueError("SpectralRegion 2-tuple lower extent must be "
+                             "less than upper extent.")
+
+        # The sub-regions are to always be ordered based on the lower bound.
+        self._reorder()
 
     @classmethod
     def from_center(cls, center=None, width=None):
@@ -77,36 +105,6 @@ class SpectralRegion:
 
         return cls([(x - width * 0.5, x + width * 0.5)
                     for x in table['line_center']])
-
-    def __init__(self, *args):
-        """
-        Lower and upper values for the interval.
-        """
-
-        # Create instance variables
-        self._subregions = None
-
-        # Set the values (using the setters for doing the proper checking)
-        if self._is_2_element(args):
-            self._subregions = [tuple(args)]
-        elif isinstance(args, (list, tuple)):
-            if all([self._is_2_element(x) for x in args[0]]):
-                self._subregions = [tuple(x) for x in args[0]]
-            else:
-                raise ValueError("Region bounds must be given as a tuple of "
-                                 "`Quantity` objects, or as a length 2 "
-                                 "`Quantity` object.")
-        else:
-            raise ValueError("`SpectralRegion` input must be a 2-tuple or a "
-                             "list of 2-tuples.")
-
-        #  Check validity of the input sub regions.
-        if not self._valid():
-            raise ValueError("SpectralRegion 2-tuple lower extent must be "
-                             "less than upper extent.")
-
-        # The sub-regions are to always be ordered based on the lower bound.
-        self._reorder()
 
     def _info(self):
         """
@@ -194,10 +192,11 @@ class SpectralRegion:
 
         return True
 
-    def _is_2_element(self, value):
+    @staticmethod
+    def _is_2_element(value):
         """
         Helper function to check a variable to see if it
-        is a 2-tuple.
+        is a 2-tuple of Quantity objects.
         """
         return len(value) == 2 and \
                isinstance(value[0], u.Quantity) and \
