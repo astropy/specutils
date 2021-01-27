@@ -239,6 +239,9 @@ def test_keep_shape_linear():
     assert_quantity_allclose(results.uncertainty.quantity,
                              np.array([0.1, 0.2, 0.3, 0.35, 0.47, 0.68, 0.71, 0.8, 0.9, 1])*u.mJy)
 
+    # check that spectral axis gets properly resampled
+    assert_quantity_allclose(results.spectral_axis, np.array([1, 2, 3, 3.5, 4.7, 6.8, 7.1, 8, 9, 10])*u.AA)
+
     # testing several corner cases associated with coincident spectral axis
     # values at the extremities.
     resamp_grid = [3.5, 4.7, 6.8, 7.1, 8.0] * u.AA

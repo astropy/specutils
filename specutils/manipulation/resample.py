@@ -66,20 +66,26 @@ class ResamplerBase(ABC):
             return resampled_flux_arr * orig_spectrum.flux.unit, resampled_unc, resample_spec_axis
 
         extended_flux = np.zeros(shape=orig_spectrum.flux.shape)
+        out_spec_axis = np.zeros(shape=orig_spectrum.flux.shape)
 
         extended_flux[indices_min] = orig_spectrum.flux[indices_min]
         extended_flux[indices_max] = orig_spectrum.flux[indices_max]
+
+        out_spec_axis[indices_min] = orig_spectrum.spectral_axis[indices_min]
+        out_spec_axis[indices_max] = orig_spectrum.spectral_axis[indices_max]
 
         i1 = indices_min[0][-1] + 1
         i2 = i1 + len(resampled_flux_arr)
 
         extended_flux[i1:i2] = resampled_flux_arr
+        out_spec_axis[i1:i2] = resample_spec_axis
 
         # this handles the case of a coincident spectral coordinate value
         # at the exact beginning (lower end) of the resampling interval.
         delta = orig_spec_axis.value[i1] - resample_spec_axis[0].value
         if delta - int(delta) == 0.0:
             extended_flux[i2] = orig_spectrum.flux.value[i2+1]
+            out_spec_axis[i2] = orig_spectrum.spectral_axis.value[i2+1]
 
         extended_flux = extended_flux * orig_spectrum.flux.unit
 
@@ -97,7 +103,9 @@ class ResamplerBase(ABC):
             extended_unc = orig_spectrum.uncertainty.__class__(array=extended_unc_arr,
                                                                unit=orig_spectrum.unit)
 
-        return extended_flux, extended_unc, orig_spec_axis
+        out_spec_axis = out_spec_axis * orig_spectrum.spectral_axis.unit
+
+        return extended_flux, extended_unc, out_spec_axis
 
 
 class FluxConservingResampler(ResamplerBase):
