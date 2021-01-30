@@ -3,9 +3,9 @@ from math import floor, ceil  # faster than int(np.floor/ceil(float))
 import numpy as np
 
 from astropy import units as u
-from .. import Spectrum1D
+from ..spectra import Spectrum1D, SpectralRegion
 
-__all__ = ['extract_region']
+__all__ = ['extract_region', 'spectral_slab']
 
 
 def _to_edge_pixel(subregion, spectrum):
@@ -161,3 +161,36 @@ def extract_region(spectrum, region):
         extracted_spectrum = extracted_spectrum[0]
 
     return extracted_spectrum
+
+
+def spectral_slab(spectrum, lower, upper):
+    """
+    Extract a slab from the input `~specutils.Spectrum1D`
+    defined by the lower and upper bounds defined by the ``region``
+    instance.  The extracted region will be returned as a new
+    `~specutils.Spectrum1D`.
+
+    Parameters
+    ----------
+    spectrum: `~specutils.Spectrum1D`
+        The spectrum object from which the region will be extracted.
+
+    lower, upper: `~astropy.units.Quantity`
+        The lower and upper bounds of the region to extract
+        from the original spectrum.
+
+    Returns
+    -------
+    spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
+        Excised spectrum, or list of spectra if the input region contained multiple
+        subregions.
+
+    Notes
+    -----
+    This is for now just a proxy for function `extract_region`, to ease the
+    transition from spectral-cube.
+
+    """
+    region = SpectralRegion(lower, upper)
+
+    return extract_region(spectrum, region)
