@@ -6,7 +6,7 @@ from astropy.nddata import StdDevUncertainty
 from astropy.tests.helper import quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
-from ..manipulation import extract_region, extract_bounding_region, spectral_slab
+from ..manipulation import extract_region, extract_bounding_spectral_region, spectral_slab
 from ..manipulation.utils import linear_exciser
 from .spectral_examples import simulated_spectra
 
@@ -170,7 +170,7 @@ def test_bounding_region(simulated_spectra):
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
 
-    extracted_spectrum = extract_bounding_region(spectrum, region)
+    extracted_spectrum = extract_bounding_spectral_region(spectrum, region)
 
     # Confirm the end points are correct
     assert quantity_allclose(extracted_spectrum.spectral_axis[[0, -1]],
@@ -187,7 +187,7 @@ def test_bounding_region(simulated_spectra):
     # also ensure this works if the multi-region is expressed as a single
     # Quantity
     region2 = SpectralRegion([(0.6, 0.8), (0.86, 0.89)]*u.um)
-    extracted_spectrum2 = extract_bounding_region(spectrum, region2)
+    extracted_spectrum2 = extract_bounding_spectral_region(spectrum, region2)
     assert quantity_allclose(extracted_spectrum2.spectral_axis[[0, -1]],
                        [0.6035353535353536, 0.8858585858585859]*u.um)
     assert quantity_allclose(extracted_spectrum2.flux, flux_expected)

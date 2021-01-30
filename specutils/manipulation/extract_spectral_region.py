@@ -7,7 +7,7 @@ import numpy as np
 from astropy import units as u
 from ..spectra import Spectrum1D, SpectralRegion
 
-__all__ = ['extract_region', 'extract_bounding_region', 'spectral_slab']
+__all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
 
 def _to_edge_pixel(subregion, spectrum):
@@ -198,7 +198,7 @@ def spectral_slab(spectrum, lower, upper):
     return extract_region(spectrum, region)
 
 
-def extract_bounding_region(spectrum, region):
+def extract_bounding_spectral_region(spectrum, region):
     """
     Extract the entire bounding region that encompasses all sub-regions
     contained in a multi-sub-region instance of `~specutils.SpectralRegion`.
