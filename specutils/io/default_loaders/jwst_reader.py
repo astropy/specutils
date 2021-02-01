@@ -150,23 +150,12 @@ def _jwst_x1d_loader(file_obj, **kwargs):
             wavelength = Quantity(data["WAVELENGTH"])
 
             # Determine if FLUX or SURF_BRIGHT column should be returned
-            # based on whether it is point or extended source
+            # based on whether it is point or extended source.
+            #
+            # SRCTYPE used to be in primary header, but was moved around. As
+            # per most recent pipeline definition, it will be either in the
+            # EXTRACT1D or the SCI extension.
             srctype = hdu.header.get("srctype")
-
-            # SRCTYPE is in primary header because there is only one spectrum
-            if srctype is None:
-                # srctype = hdulist["PRIMARY"].header.get("srctype")
-                # srctype = hdulist["SCI"].header.get("srctype")
-
-
-                print("@@@@  jwst_reader.py-164: ", hdulist['PRIMARY'].header)
-                print("@@@@  jwst_reader.py-164: ", hdulist['EXTRACT1D'].header)
-
-
-                # srctype = hdulist["EXTRACT1D"].header.get("srctype")
-
-
-
 
             if srctype == "POINT":
                 flux = Quantity(data["FLUX"])
