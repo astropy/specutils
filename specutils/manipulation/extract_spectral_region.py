@@ -219,7 +219,7 @@ def extract_bounding_spectral_region(spectrum, region):
     -------
     spectrum: `~specutils.Spectrum1D`
         Excised spectrum from the bounding region defined by the set of
-        sub-regions in the input `region` instance.
+        sub-regions in the input ``region`` instance.
 
     """
     # If there is only one subregion in the region then we will
