@@ -141,7 +141,7 @@ def _jwst_x1d_loader(file_obj, **kwargs):
         primary_header = hdulist["PRIMARY"].header
 
         for hdu in hdulist:
-            # Read only the BinaryTableHDUs named EXTRACT1D
+            # Read only the BinaryTableHDUs named EXTRACT1D and SCI
             if hdu.name != 'EXTRACT1D':
                 continue
 
@@ -153,9 +153,11 @@ def _jwst_x1d_loader(file_obj, **kwargs):
             # based on whether it is point or extended source.
             #
             # SRCTYPE used to be in primary header, but was moved around. As
-            # per most recent pipeline definition, it will be either in the
-            # EXTRACT1D or the SCI extension.
-            srctype = hdu.header.get("srctype")
+            # per most recent pipeline definition, it should be in the
+            # EXTRACT1D extension.
+            srctype = None
+            if "srctype" in hdu.header:
+                srctype = hdu.header.get("srctype")
 
             if srctype == "POINT":
                 flux = Quantity(data["FLUX"])
