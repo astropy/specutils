@@ -209,6 +209,25 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
     >>> sub_spectra[1].spectral_axis
     <SpectralAxis [34., 35., 36., 37., 38., 39., 40.] nm>
 
+
+The bounding region that includes all data, including the ones that lie
+in between disjoint spectral regions, can be extracted with
+`extract_bounding_spectral_region`:
+
+.. code-block:: python
+
+    >>> from astropy import units as u
+    >>> import numpy as np
+    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils.manipulation import extract_bounding_spectral_region
+
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> region = SpectralRegion([(8*u.nm, 12*u.nm), (24*u.nm, 30*u.nm)])
+    >>> sub_spectrum = extract_bounding_spectral_region(spectrum, region)
+    >>> sub_spectrum.spectral_axis
+    <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,
+        22., 23., 24., 25., 26., 27., 28., 29., 30.] nm>
+
 Reference/API
 -------------
 
