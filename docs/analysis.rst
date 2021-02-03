@@ -138,13 +138,13 @@ below.
 Moment
 --------
 
-The `specutils.analysis.moment` computes moments of any order:
+The `specutils.analysis.moment` function computes moments of any order:
 
 .. code-block:: python
 
     >>> from specutils.analysis import moment
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz)) # doctest:+FLOAT_CMP
-    <Quantity 98.30864342 Jy>
+    <Quantity 98.26318995 Jy>
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=1) # doctest:+FLOAT_CMP
     <Quantity 4.99956613 GHz>
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=2) # doctest:+FLOAT_CMP
