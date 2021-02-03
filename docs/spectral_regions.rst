@@ -243,7 +243,7 @@ into `specutils`:
 
     >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> sub_spectrum = spectral_slab(spectrum, 8*u.nm, 20*u.nm)
-    >>> sub_spectrum.spectral_axis
+    >>> sub_spectrum.spectral_axis  #doctest:+SKIP
     <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.] nm>
 
 
