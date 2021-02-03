@@ -224,7 +224,7 @@ in between disjoint spectral regions, can be extracted with
     >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> region = SpectralRegion([(8*u.nm, 12*u.nm), (24*u.nm, 30*u.nm)])
     >>> sub_spectrum = extract_bounding_spectral_region(spectrum, region)
-    >>> sub_spectrum.spectral_axis
+    >>> sub_spectrum.spectral_axis #doctest:+SKIP
     <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,
         22., 23., 24., 25., 26., 27., 28., 29., 30.] nm>
 
