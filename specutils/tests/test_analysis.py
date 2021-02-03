@@ -10,7 +10,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
-                        gaussian_sigma_width, gaussian_fwhm, fwhm,
+                        gaussian_sigma_width, gaussian_fwhm, fwhm, moment,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
 from ..manipulation import snr_threshold, FluxConservingResampler
@@ -921,3 +921,69 @@ def test_is_continuum_below_threshold():
     with pytest.warns(AstropyUserWarning) as e_info:
         find_lines_threshold(spectrum, noise_factor=1)
         assert len(e_info)==1 and 'if you want to suppress this warning' in e_info[0].message.args[0].lower()
+
+
+def test_moment():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    moment_0 = moment(spectrum, order=0)
+    assert moment_0.unit.is_equivalent(u.Jy )
+    assert quantity_allclose(moment_0, 252.96*u.Jy, atol=0.01*u.Jy)
+
+    moment_1 = moment(spectrum, order=1)
+    assert moment_1.unit.is_equivalent(u.GHz)
+    assert quantity_allclose(moment_1, 10.08*u.GHz, atol=0.01*u.GHz)
+
+    moment_2 = moment(spectrum, order=2)
+    assert moment_2.unit.is_equivalent(u.GHz**2)
+    assert quantity_allclose(moment_2, 13.40*u.GHz**2, atol=0.01*u.GHz**2)
+
+    moment_3 = moment(spectrum, order=3)
+    assert moment_3.unit.is_equivalent(u.GHz**3)
+    assert quantity_allclose(moment_3, 1233.78*u.GHz**3, atol=0.01*u.GHz**3)
+
+
+def test_moment_multid():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=100*u.Jy, mean=50*u.GHz, stddev=1000*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    # use identical arrays in each spaxel. The purpose here is not to
+    # check accuracy (already tested elsewhere), but dimensionality.
+
+    flux_multid = np.broadcast_to(flux, [10,10,flux.shape[0]]) * u.Jy
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+
+    moment_1 = moment(spectrum, order=1)
+
+    assert moment_1.shape == (10,10)
+    assert moment_1.unit.is_equivalent(u.GHz )
+    assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
+
+    # select the last axis of the cube. Should be identical with
+    # the default call above.
+    moment_1 = moment(spectrum, order=1, axis=2)
+
+    assert moment_1.shape == (10,10)
+    assert moment_1.unit.is_equivalent(u.GHz )
+    assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
+
+    # cross-cube - returns the dispersion
+    moment_1 = moment(spectrum, order=1, axis=1)
+
+    assert moment_1.shape == (10,10000)
+    assert moment_1.unit.is_equivalent(u.GHz )
+    assert quantity_allclose(moment_1, frequencies, atol=0.01*u.GHz)

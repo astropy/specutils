@@ -1,11 +1,13 @@
+import sys
+
 from math import floor, ceil  # faster than int(np.floor/ceil(float))
 
 import numpy as np
 
 from astropy import units as u
-from .. import Spectrum1D
+from ..spectra import Spectrum1D, SpectralRegion
 
-__all__ = ['extract_region']
+__all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
 
 def _to_edge_pixel(subregion, spectrum):
@@ -135,7 +137,7 @@ def extract_region(spectrum, region):
     for subregion in region._subregions:
         left_index, right_index = _to_edge_pixel(subregion, spectrum)
 
-        # If both indices are out of bounds then return None
+        # If both indices are out of bounds then return an empty spectrum
         if left_index is None and right_index is None:
             empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit,
                                         flux=[]*spectrum.flux.unit)
@@ -161,3 +163,97 @@ def extract_region(spectrum, region):
         extracted_spectrum = extracted_spectrum[0]
 
     return extracted_spectrum
+
+
+def spectral_slab(spectrum, lower, upper):
+    """
+    Extract a slab from the input `~specutils.Spectrum1D`
+    defined by the lower and upper bounds defined by the ``region``
+    instance.  The extracted region will be returned as a new
+    `~specutils.Spectrum1D`.
+
+    Parameters
+    ----------
+    spectrum: `~specutils.Spectrum1D`
+        The spectrum object from which the region will be extracted.
+
+    lower, upper: `~astropy.units.Quantity`
+        The lower and upper bounds of the region to extract
+        from the original spectrum.
+
+    Returns
+    -------
+    spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
+        Excised spectrum, or list of spectra if the input region contained multiple
+        subregions.
+
+    Notes
+    -----
+    This is for now just a proxy for function `extract_region`, to ease the
+    transition from spectral-cube.
+
+    """
+    region = SpectralRegion(lower, upper)
+
+    return extract_region(spectrum, region)
+
+
+def extract_bounding_spectral_region(spectrum, region):
+    """
+    Extract the entire bounding region that encompasses all sub-regions
+    contained in a multi-sub-region instance of `~specutils.SpectralRegion`.
+
+    In case only one sub-region exists, this method is equivalent to
+    `extract_region`.
+
+    Parameters
+    ----------
+    spectrum: `~specutils.Spectrum1D`
+        The spectrum object from which the region will be extracted.
+
+    region: `~specutils.SpectralRegion`
+        The spectral region to extract from the original spectrum, comprised
+        of one or more sub-regions.
+
+    Returns
+    -------
+    spectrum: `~specutils.Spectrum1D`
+        Excised spectrum from the bounding region defined by the set of
+        sub-regions in the input ``region`` instance.
+
+    """
+    # If there is only one subregion in the region then we will
+    # just return a spectrum.
+    if len(region) == 1:
+        return extract_region(spectrum, region)
+
+    min_left = sys.maxsize
+    max_right = -sys.maxsize - 1
+
+    # Look for indices that bound the entire set of sub-regions.
+    index_list = [_to_edge_pixel(sr, spectrum) for sr in region._subregions]
+
+    for left_index, right_index in index_list:
+        if left_index is not None:
+            min_left = min(left_index, min_left)
+        if right_index is not None:
+            max_right = max(right_index, max_right)
+
+    # If both indices are out of bounds then return an empty spectrum
+    if min_left is None and max_right is None:
+        empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit,
+                                    flux=[]*spectrum.flux.unit)
+        return empty_spectrum
+    else:
+        # If only one index is out of bounds then set it to
+        # the lower or upper extent
+        if min_left is None:
+            min_left = 0
+
+        if max_right is None:
+            max_right = len(spectrum.spectral_axis)
+
+        if min_left > max_right:
+            min_left, max_right = max_right, min_left
+
+        return spectrum[..., min_left:max_right]

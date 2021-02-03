@@ -26,6 +26,36 @@ _spSpec_pattern = re.compile(r'spSpec-\d{5}-\d{4}-\d{3}\.fit')
 _spec_pattern = re.compile(r'spec-\d{4,5}-\d{5}-\d{4}\.fits')
 
 
+def _sdss_wcs_to_log_wcs(old_wcs):
+    """
+    The WCS in the SDSS files does not appear to follow the WCS standard - it
+    claims to be linear, but is logarithmic in base-10.
+    The wavelength is given by:
+    λ = 10^(w0 + w1 * i)
+    with i being the pixel index starting from 0.
+
+    The FITS standard uses a natural log with a sightly different formulation,
+    see WCS Paper 3 (which discusses spectral WCS).
+
+    This function does the conversion from the SDSS WCS to FITS WCS.
+    """
+    w0 = old_wcs.wcs.crval[0]
+    w1 = old_wcs.wcs.cd[0,0]
+    crval = 10 ** w0
+    cdelt = crval * w1 * np.log(10)
+    cunit = old_wcs.wcs.cunit[0] or Unit('Angstrom')
+    ctype = "WAVE-LOG"
+
+    w = WCS(naxis=1)
+    w.wcs.crval[0] = crval
+    w.wcs.cdelt[0] = cdelt
+    w.wcs.ctype[0] = ctype
+    w.wcs.cunit[0] = cunit
+    w.wcs.set()
+
+    return w
+
+
 def spec_identify(origin, *args, **kwargs):
     """
     Check whether given input is FITS and has SDSS-III/IV spec type
@@ -142,16 +172,15 @@ def spSpec_loader(file_obj, **kwargs):
 
         uncertainty = StdDevUncertainty(hdulist[0].data[2, :] * flux_unit)
 
-        # dispersion along NAXIS1 from the WCS
-        dispersion = wcs.pixel_to_world(np.arange(flux.shape[0]))
-        # convert out of logspace (default for spSpec/spPlate spectra)?
+        # Fix the WCS if it is claimed to be linear
         if header.get('DC-Flag', 1) == 1:
-            dispersion = 10**dispersion
-        dispersion_unit = Unit('Angstrom')
+            fixed_wcs = _sdss_wcs_to_log_wcs(wcs)
+        else:
+            fixed_wcs = wcs
 
         mask = hdulist[0].data[3, :] != 0
 
-    return Spectrum1D(flux=flux, spectral_axis=dispersion * dispersion_unit,
+    return Spectrum1D(flux=flux, wcs=fixed_wcs,
                       uncertainty=uncertainty, meta=meta, mask=mask)
 
 
@@ -189,16 +218,14 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
         flux = hdulist[0].data[0:limit, :] * flux_unit
         uncertainty = InverseVariance(hdulist[1].data[0:limit, :] / flux_unit**2)
 
-        # dispersion along NAXIS1 from the WCS
-        wcs = WCS(header).dropaxis(1)
-        dispersion = wcs.pixel_to_world(np.arange(flux.shape[-1]))
-        # convert out of logspace (default for spSpec/spPlate spectra)?
+        # Fix the WCS if it is claimed to be linear
         if header.get('DC-Flag', 1) == 1:
-            dispersion = 10**dispersion
-        dispersion_unit = Unit('Angstrom')
+            fixed_wcs = _sdss_wcs_to_log_wcs(wcs)
+        else:
+            fixed_wcs = wcs
 
         mask = hdulist[2].data[0:limit, :] != 0
         meta['plugmap'] = Table.read(hdulist[5])[0:limit]
 
-    return Spectrum1D(flux=flux, spectral_axis=dispersion*dispersion_unit,
+    return Spectrum1D(flux=flux, wcs=fixed_wcs,
                       uncertainty=uncertainty, meta=meta, mask=mask)
