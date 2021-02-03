@@ -146,11 +146,9 @@ The `specutils.analysis.moment` function computes moments of any order:
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz)) # doctest:+FLOAT_CMP
     <Quantity 98.26318995 Jy>
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=1) # doctest:+FLOAT_CMP
-    <Quantity 4.99956613 GHz>
+    <Quantity 4.99909151 GHz>
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=2) # doctest:+FLOAT_CMP
     <Quantity 0.5847392 GHz2>
-    >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=3) # doctest:+FLOAT_CMP
-    <Quantity -0.00099272 GHz3>
 
 
 Line Widths
