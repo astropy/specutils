@@ -12,7 +12,7 @@ Specutils Documentation
 
 .. _specutils:
 
-.. image:: img/logo.png
+.. image:: _static/logo.png
 
 
 ``specutils`` is a Python package for representing, loading,
