@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- Add support for reading IRAF MULTISPEC format with non-linear 2D WCS into
+  ``SpectrumCollection`` to default_loaders. [#708]
+
 Bug Fixes
 ^^^^^^^^^
 

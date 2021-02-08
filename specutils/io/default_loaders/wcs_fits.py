@@ -11,11 +11,11 @@ from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 import shlex
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum1D, SpectrumCollection
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import read_fileobj_or_hdulist
 
-__all__ = ['wcs1d_fits_loader', 'wcs1d_fits_writer', 'non_linear_wcs1d_fits']
+__all__ = ['wcs1d_fits_loader', 'non_linear_wcs1d_fits', 'non_linear_multispec_fits']
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
@@ -55,19 +55,25 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     Parameters
     ----------
-    file_obj: str, file-like or HDUList
+    file_obj : str, file-like or HDUList
         FITS file name, object (provided from name by Astropy I/O Registry),
         or HDUList (as resulting from astropy.io.fits.open()).
-    spectral_axis_unit: str or `~astropy.Unit`, optional
+    spectral_axis_unit : :class:`~astropy.units.Unit` or str, optional
         Units of the spectral axis. If not given (or None), the unit will be
         inferred from the CUNIT in the WCS. Note that if this is provided it
-        will *override* any units the CUNIT provides.
-    flux_unit: str or `~astropy.Unit`, optional
+        will *override* any units the CUNIT specifies.
+        The WCS CUNIT will be obtained by default from the header CUNIT1 card;
+        if missing, the loader will try to extract it from the WAT1_001 card.
+    flux_unit : :class:`~astropy.units.Unit` or str, optional
         Units of the flux for this spectrum. If not given (or None), the unit
         will be inferred from the BUNIT keyword in the header. Note that this
-        unit will attempt to convert from BUNIT if BUNIT is present
+        unit will attempt to convert from BUNIT if BUNIT is present.
     hdu : int
         The index of the HDU to load into this spectrum.
+
+    Returns
+    -------
+    :class:`~specutils.Spectrum1D`
 
     Notes
     -----
@@ -88,6 +94,21 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     if spectral_axis_unit is not None:
         wcs.wcs.cunit[0] = str(spectral_axis_unit)
+    elif wcs.wcs.cunit[0] == '' and 'WAT1_001' in header:
+        # Try to extract from IRAF-style card or use Angstrom as default.
+        wat_dict = dict((rec.split('=') for rec in header['WAT1_001'].split()))
+        unit = wat_dict.get('units', 'Angstrom')
+        if hasattr(u, unit):
+            wcs.wcs.cunit[0] = unit
+        else:  # try with unit name stripped of excess plural 's'...
+            wcs.wcs.cunit[0] = unit.rstrip('s')
+        logging.info(f"Extracted spectral axis unit '{unit}' from 'WAT1_001'")
+    elif wcs.wcs.cunit[0] == '':
+        wcs.wcs.cunit[0] = 'Angstrom'
+
+    # Compatibility attribute for lookup_table (gwcs) WCS
+    wcs.unit = tuple(wcs.wcs.cunit)
+
     meta = {'header': header}
 
     if wcs.naxis > 4:
@@ -110,16 +131,16 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
 
     Parameters
     ----------
-    spectrum: Spectrum1D
-    file_name: str
+    spectrum : :class:`~specutils.Spectrum1D`
+    file_name : str
         The path to the FITS file
-    hdu: int
+    hdu : int
         Header Data Unit in FITS file to write to (base 0; default primary HDU)
-    update_header: bool
+    update_header : bool
         Update FITS header with all compatible entries in `spectrum.meta`
-    unit : str or `~astropy.units.Unit`
+    unit : str or :class:`~astropy.units.Unit`
         Unit for the flux (and associated uncertainty)
-    dtype : str or `~numpy.dtype`
+    dtype : str or :class:`~numpy.dtype`
         Floating point type for storing flux array
     """
     # Create HDU list from WCS
@@ -190,35 +211,149 @@ def identify_iraf_wcs(origin, *args, **kwargs):
                 (hdulist[hdu].header.get('WCSDIM', 1) > 1 or
                  hdulist[hdu].header.get('CTYPE1', '').upper().startswith('MULTISPE')))
 
+    # Check if dimension of WCS is greater one.
+    is_wcs = ('WAT1_001' in hdulist[0].header and
+              'WAT2_001' in hdulist[0].header and not
+              (hdulist[0].header.get('TELESCOP', 'LEVIATHAN') == 'SDSS 2.5-M' and
+               hdulist[0].header.get('FIBERID', 0) > 0) and
+              (hdulist[0].header.get('WCSDIM', 1) == 2 or
+               hdulist[0].header.get('CTYPE1', '').upper().startswith('MULTISPE')))
 
-@data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D,
-             extensions=['fits'])
-def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
-                          **kwargs):
-    """Read wcs from files written by IRAF
+    if not isinstance(args[2], (fits.hdu.hdulist.HDUList, _io.BufferedReader)):
+        hdulist.close()
 
-    IRAF does not strictly follow the fits standard specially for non-linear
-     wavelength solutions
+    return is_wcs
+
+
+@data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D, extensions=['fits'])
+def non_linear_wcs1d_fits(file_obj, **kwargs):
+    """Load Spectrum1D with WCS spectral axis from FITS files written by IRAF
 
     Parameters
     ----------
 
-    file_obj: str, file-like or HDUList
+    file_obj : str, file-like or HDUList
         FITS file name, object (provided from name by Astropy I/O Registry),
         or HDUList (as resulting from astropy.io.fits.open()).
 
-    spectral_axis_unit : `~astropy.Unit`, optional
+    spectral_axis_unit : :class:`~astropy.units.Unit` or str, optional
         Spectral axis unit, default is None in which case will search for it
-        in the header under the keyword 'WAT1_001'
+        in the header under the keyword 'WAT1_001'.
+        Note that if provided  this will *override* any units from the header.
 
-    flux_unit : `~astropy.Unit`, optional
+    flux_unit : :class:`~astropy.units.Unit` or str, optional
         Flux units, default is None. If not specified will attempt to read it
         using the keyword 'BUNIT' and if this keyword does not exist it will
         assume 'ADU'.
+        Note that if provided  this will *override* any units from the header.
 
     Returns
     -------
-    `specutils.Spectrum1D`
+    :class:`~specutils.Spectrum1D`
+    """
+    spectral_axis, flux, meta = _read_non_linear_iraf_fits(file_obj, **kwargs)
+
+    if spectral_axis.ndim > 1:
+        logging.info(f'Read spectral axis of shape {spectral_axis.shape} - '
+                     'consider loading into SpectrumCollection.')
+        spectral_axis = spectral_axis.flatten()
+
+    # Check for ascending or descending values, as flattening might have joined overlapping orders.
+    ds = (spectral_axis[1:] - spectral_axis[:-1]) / (spectral_axis[-1] - spectral_axis[0])
+    if ds.min() < 0:
+        logging.warning('Non-monotonous spectral axis found, consider loading '
+                        'into SpectrumCollection.')
+
+    if flux.shape[-1] != spectral_axis.shape[-1]:
+        if np.prod(flux.shape) == spectral_axis.shape[-1]:
+            flux = flux.flatten()
+        else:
+            raise ValueError('Spectral axis and flux dimensions do not match: '
+                             f'{spectral_axis.shape} != {flux.shape}!')
+
+    return Spectrum1D(flux=flux, spectral_axis=spectral_axis, meta=meta)
+
+
+@data_loader('iraf', identifier=identify_iraf_wcs, dtype=SpectrumCollection, extensions=['fits'])
+def non_linear_multispec_fits(file_obj, **kwargs):
+    """Load SpectrumCollection with WCS spectral axes from FITS files written by IRAF
+
+    Loader for files containing 2D spectra, i.e. flux rows of equal length but
+    different spectral axes, such as the individual orders of an Echelle spectrum.
+
+    Parameters
+    ----------
+
+    file_obj : str, file-like or HDUList
+        FITS file name, object (provided from name by Astropy I/O Registry),
+        or HDUList (as resulting from astropy.io.fits.open()).
+
+    spectral_axis_unit : :class:`~astropy.units.Unit` or str, optional
+        Spectral axis unit, default is None in which case will search for it
+        in the header under the keyword 'WAT1_001'.
+        Note that if provided this will *override* any units from the header.
+
+    flux_unit : :class:`~astropy.units.Unit` or str, optional
+        Flux units, default is None. If not specified will attempt to read it
+        using the keyword 'BUNIT' and if this keyword does not exist it will
+        assume 'ADU'.
+        Note that if provided this will *override* any units from the header.
+
+    Returns
+    -------
+    :class:`~specutils.SpectrumCollection`
+    """
+    spectral_axis, flux, meta = _read_non_linear_iraf_fits(file_obj, **kwargs)
+
+    if spectral_axis.ndim == 1:
+        logging.info(f'Read 1D spectral axis of length {spectral_axis.shape[0]} - '
+                     'consider loading into Spectrum1D.')
+        spectral_axis = spectral_axis.reshape((1, -1))
+    if flux.ndim == 1:
+        flux = flux.reshape((1, -1))
+
+    if spectral_axis.shape != flux.shape:
+        raise ValueError('Spectral axis and flux dimensions do not match: '
+                         f'{spectral_axis.shape} != {flux.shape}!')
+
+    return SpectrumCollection(flux=flux, spectral_axis=spectral_axis, meta=meta)
+
+
+def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None, **kwargs):
+    """Read spectrum data with WCS spectral axis from FITS files written by IRAF
+
+    IRAF does not strictly follow the fits standard especially for non-linear
+     wavelength solutions.
+
+    Parameters
+    ----------
+
+    file_obj : str, file-like or HDUList
+        FITS file name, object (provided from name by Astropy I/O Registry),
+        or HDUList (as resulting from astropy.io.fits.open()).
+
+    spectral_axis_unit : :class:`~astropy.Unit` or str, optional
+        Spectral axis unit, default is None in which case will search for it
+        in the header under the keyword 'WAT1_001', and if none found there,
+        will assume 'Angstrom'.
+        Note that if provided this will *override* any units from the header.
+
+    flux_unit : :class:`~astropy.Unit` or str, optional
+        Flux units, default is None. If not specified will attempt to read it
+        using the keyword 'BUNIT' and if this keyword does not exist will
+        assume 'ADU'.
+        Note that if provided this will *override* any units from the header.
+
+    Returns
+    -------
+    Tuple of data to pass to SpectrumCollection() or Spectrum1D():
+
+    spectral_axis : :class:`~astropy.units.Quantity`
+        The spectral axis or axes as constructed from WCS(hdulist[0].header).
+    flux : :class:`~astropy.units.Quantity`
+        The flux data from hdulist[0].data.
+    meta : dict
+        Dictionary of {'header': hdulist[0].header}.
     """
 
     logging.info('Loading 1D non-linear fits solution')
@@ -228,8 +363,7 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
         for wcsdim in range(1, header['WCSDIM'] + 1):
             ctypen = header['CTYPE{:d}'.format(wcsdim)]
             if ctypen == 'LINEAR':
-                logging.info("linear Solution: Try using "
-                             "`format='wcs1d-fits'` instead")
+                logging.info("linear Solution: Try using `format='wcs1d-fits'` instead")
                 wcs = WCS(header)
                 spectral_axis = _read_linear_iraf_wcs(wcs=wcs, dc_flag=header['DC-FLAG'])
             elif ctypen == 'MULTISPE':
@@ -239,28 +373,25 @@ def non_linear_wcs1d_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
                 raise NotImplementedError
 
         if flux_unit is not None:
-            data = hdulist[0].data * flux_unit
+            data = hdulist[0].data * u.Unit(flux_unit)
         elif 'BUNIT' in header:
             data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
         else:
-            logging.info("Flux unit was not provided, neither it was in the"
-                         "header. Assuming ADU.")
+            logging.info("Flux unit was not provided, nor found in the header. Assuming ADU.")
             data = u.Quantity(hdulist[0].data, unit='adu')
 
-        if spectral_axis_unit is not None:
-            spectral_axis *= spectral_axis_unit
-        else:
-            wat_head = header['WAT1_001']
-            wat_dict = dict()
-            for pair in wat_head.split(' '):
-                wat_dict[pair.split('=')[0]] = pair.split('=')[1]
-            if wat_dict['units'] == 'angstroms':
-                logging.info("Found spectral axis units to be angstrom")
-                spectral_axis *= u.angstrom
+    if spectral_axis_unit is None:
+        # Try to extract from IRAF-style card or use Angstrom as default.
+        wat_dict = dict((rec.split('=') for rec in header['WAT1_001'].split()))
+        unit = wat_dict.get('units', 'Angstrom')
+        if hasattr(u, unit):
+            spectral_axis_unit = unit
+        else:  # try with unit name stripped of excess plural 's'...
+            spectral_axis_unit = unit.rstrip('s')
+        logging.info(f"Extracted spectral axis unit '{spectral_axis_unit}' from 'WAT1_001'")
+    spectral_axis *= u.Unit(spectral_axis_unit)
 
-    meta = {'header': header}
-
-    return Spectrum1D(flux=data, spectral_axis=spectral_axis, meta=meta)
+    return spectral_axis, data, dict(header=header)
 
 
 def _read_linear_iraf_wcs(wcs, dc_flag):
@@ -273,7 +404,7 @@ def _read_linear_iraf_wcs(wcs, dc_flag):
     Parameters
     ----------
 
-    wcs : `~astropy.wcs.WCS`
+    wcs : :class:`~astropy.wcs.WCS`
         Contains wcs information extracted from the header
 
     dc_flag : int
@@ -283,8 +414,8 @@ def _read_linear_iraf_wcs(wcs, dc_flag):
     Returns
     -------
 
-    spectral_axis : `~numpy.ndarray`
-        Mathematical model of wavelength solution evluated for each pixel
+    spectral_axis : :class:`~numpy.ndarray`
+        Mathematical model of wavelength solution evaluated for each pixel
         position
 
     """
@@ -312,7 +443,7 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
     Parameters
     ----------
 
-    header : `~astropy.io.fits.header.Header`
+    header : :class:`~astropy.io.fits.header.Header`
         Full header of file being loaded
 
     wcsdim : int
@@ -321,16 +452,24 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
     Returns
     -------
 
-    spectral_axis : `~numpy.ndarray`
-        Mathematical model of wavelength solution evluated for each pixel
+    spectral_axis : :class:`~numpy.ndarray`
+        Mathematical model of wavelength solution evaluated for each pixel
         position
     """
 
     wat_wcs_dict = {}
+    wcs_parser = {'aperture': int, 'beam': int, 'dtype': int,
+                  'dstart': float, 'avdelt': float,
+                  'pnum': lambda x: int(float(x)), 'z': float,
+                  'alow': lambda x: int(float(x)), 'ahigh': lambda x: int(float(x)),
+                  'weight': float, 'zeropoint': float,
+                  'ftype': int, 'order': lambda x: int(float(x)),
+                  'pmin': lambda x: int(float(x)), 'pmax': lambda x: int(float(x))}
+
     ctypen = header['CTYPE{:d}'.format(wcsdim)]
     logging.info('Attempting to read CTYPE{:d}: {:s}'.format(wcsdim, ctypen))
     if ctypen == 'MULTISPE':
-        # TODO (simon): What is the * (asterisc) doing here?.
+        # This is extracting all header cards for f'WAT{wcsdim}_*' into a list
         wat_head = header['WAT{:d}*'.format(wcsdim)]
         if len(wat_head) == 1:
             logging.debug('Get units')
@@ -338,11 +477,10 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
             for pair in wat_array:
                 split_pair = pair.split('=')
                 wat_wcs_dict[split_pair[0]] = split_pair[1]
-                # print(wat_head[0].split(' '))
         elif len(wat_head) > 1:
             wat_string = ''
             for key in wat_head:
-                wat_string += header[key]
+                wat_string += f'{header[key]:68s}'  # Keep header from stripping trailing blanks!
             wat_array = shlex.split(wat_string.replace('=', ' '))
             if len(wat_array) % 2 == 0:
                 for i in range(0, len(wat_array), 2):
@@ -351,51 +489,22 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
                     # print(wat_array[i], wat_array[i + 1])
 
     for key in wat_wcs_dict.keys():
-        logging.debug("{:d} -{:s}- {:s}".format(wcsdim,
-                                                key,
-                                                wat_wcs_dict[key]))
+        logging.debug("{:d} -{:s}- {:s}".format(wcsdim, key, wat_wcs_dict[key]))
 
-    if 'spec1' in wat_wcs_dict.keys():
-        spec = wat_wcs_dict['spec1'].split()
-        aperture = int(spec[0])
-        beam = int(spec[1])
-        disp_type = int(spec[2])
-        disp_start = float(spec[3])
-        disp_del_av = float(spec[4])
-        pix_num = int(spec[5])
-        dopp_fact = float(spec[6])
-        aper_low = int(float(spec[7]))
-        aper_high = int(float(spec[8]))
-        weight = float(spec[9])
-        zeropoint = float(spec[10])
-        function_type = int(spec[11])
-        order = int(float(spec[12]))
-        min_pix_val = int(float(spec[13]))
-        max_pix_val = int(float(spec[14]))
+    specn = [k for k in wat_wcs_dict.keys() if k.startswith('spec')]
+    spectral_axis = np.empty((len(specn), header['NAXIS1']))
+    for n, sp in enumerate(specn):
+        spec = wat_wcs_dict[sp].split()
+        wcs_dict = dict((k, wcs_parser[k](spec[i])) for i, k in enumerate(wcs_parser.keys()))
+        wcs_dict['fpar'] = [float(i) for i in spec[15:]]
 
-        params = [float(i) for i in spec[15:]]
-        wcs_dict = {'aperture': aperture,
-                    'beam': beam,
-                    'dtype': disp_type,
-                    'dstart': disp_start,
-                    'avdelt': disp_del_av,
-                    'pnum': pix_num,
-                    'z': dopp_fact,
-                    'alow': aper_low,
-                    'ahigh': aper_high,
-                    'weight': weight,
-                    'zeropoint': zeropoint,
-                    'ftype': function_type,
-                    'order': order,
-                    'pmin': min_pix_val,
-                    'pmax': max_pix_val,
-                    'fpar': params}
-
-        logging.info('Retrieving model')
+        logging.debug(f'Retrieving model for {sp}: {wcs_dict["dtype"]} {wcs_dict["ftype"]}')
         math_model = _set_math_model(wcs_dict=wcs_dict)
 
-        spectral_axis = math_model(range(1, wcs_dict['pnum'] + 1))
-        return spectral_axis
+        spectral_axis[n] = math_model(range(1, wcs_dict['pnum'] + 1)) / (1. + wcs_dict['z'])
+
+    logging.info(f'Constructed spectral axis of shape {spectral_axis.shape}')
+    return spectral_axis
 
 
 def _set_math_model(wcs_dict):
@@ -436,12 +545,16 @@ def _set_math_model(wcs_dict):
 
     """
     if wcs_dict['dtype'] == -1:
+        logging.debug('No wavelength solution found (DTYPE={dtype:d})'.format(**wcs_dict))
         return _none()
     elif wcs_dict['dtype'] == 0:
+        logging.debug('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
         return _linear_solution(wcs_dict=wcs_dict)
     elif wcs_dict['dtype'] == 1:
+        logging.debug('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
         return _log_linear(wcs_dict=wcs_dict)
     elif wcs_dict['dtype'] == 2:
+        logging.debug('Setting model for DTYPE={dtype:d} FTYPE={ftype:d}'.format(**wcs_dict))
         if wcs_dict['ftype'] == 1:
             return _chebyshev(wcs_dict=wcs_dict)
         elif wcs_dict['ftype'] == 2:
@@ -547,7 +660,7 @@ def _non_linear_legendre(wcs_dict):
     Returns
     -------
 
-        `~astropy.modeling.Model`
+        :class:`~astropy.modeling.Model`
 
     """
     model = models.Legendre1D(degree=wcs_dict['order'] - 1,

@@ -23,7 +23,7 @@ from astropy.nddata import StdDevUncertainty
 from numpy.testing import assert_allclose
 
 from .conftest import remote_access
-from .. import Spectrum1D, SpectrumList
+from .. import Spectrum1D, SpectrumCollection, SpectrumList
 from ..io import get_loaders_by_extension
 from ..io.default_loaders import subaru_pfs_spec
 from ..io.default_loaders.sdss import _sdss_wcs_to_log_wcs
@@ -446,6 +446,43 @@ def test_iraf_non_linear_cubic_spline(remote_data_path):
 
     with pytest.raises(NotImplementedError):
         assert Spectrum1D.read(remote_data_path, format='iraf')
+
+
+@pytest.mark.remote_data
+def test_iraf_multispec_chebyshev():
+    """Test loading of SpectrumCollection from IRAF MULTISPEC format FITS file -
+    nonlinear 2D WCS with Chebyshev solution (FTYPE=1).
+    """
+    iraf_url = 'https://github.com/astropy/specutils/raw/legacy-specutils/specutils/io/tests/files'
+    # Read reference ASCII spectrum from remote file.
+    spec10 = Table.read(iraf_url + '/AAO_11.txt', format='ascii.no_header',
+                        data_start=175, names=['spectral_axis', 'flux'])
+
+    # Read full collection of 51 spectra from open FITS file object
+    speccol = SpectrumCollection.read(iraf_url + '/AAO.fits')
+
+    assert len(speccol) == 51
+    # Numpy allclose does support quantities, but not with unit 'adu'!
+    assert quantity_allclose(speccol[10].spectral_axis, spec10['spectral_axis'] * u.AA)
+    assert quantity_allclose(speccol[10].flux, spec10['flux'] * u.adu)
+
+
+@pytest.mark.remote_data
+def test_iraf_multispec_legendre():
+    """Test loading of SpectrumCollection from IRAF MULTISPEC format FITS file -
+    nonlinear 2D WCS with Legendre solution (FTYPE=2).
+    """
+    iraf_url = 'https://github.com/astropy/specutils/raw/legacy-specutils/specutils/io/tests/files'
+    # Read reference ASCII spectrum from remote file.
+    spec10 = Table.read(iraf_url + '/TRES.dat', format='ascii.no_header',
+                        data_start=127, names=['spectral_axis', 'flux'])
+
+    # Read full collection of 51 spectra from remote FITS file object
+    speccol = SpectrumCollection.read(iraf_url + '/TRES.fits')
+
+    assert len(speccol) == 51
+    # The reference spectrum flux is normalised/flatfielded, just check the wavelength solution
+    assert_allclose(speccol[10].spectral_axis, spec10['spectral_axis'] * u.AA)
 
 
 @pytest.mark.parametrize("spectral_axis",
