@@ -987,3 +987,9 @@ def test_moment_multid():
     assert moment_1.shape == (10,10000)
     assert moment_1.unit.is_equivalent(u.GHz )
     assert quantity_allclose(moment_1, frequencies, atol=0.01*u.GHz)
+
+    moment_2 = moment(spectrum, order=2, axis=1)
+
+    assert moment_2.shape == (10,10)
+    assert moment_2.unit.is_equivalent(u.GHz**2 )
+    assert quantity_allclose(moment_2, 816.64782527*u.GHz**2, atol=0.01*u.GHz**2)
