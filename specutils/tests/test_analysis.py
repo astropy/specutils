@@ -9,6 +9,8 @@ from astropy.tests.helper import quantity_allclose
 from astropy.utils.exceptions import AstropyUserWarning
 
 from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra.spectrum_collection import SpectrumCollection
+
 from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         gaussian_sigma_width, gaussian_fwhm, fwhm, moment,
                         snr_derived, fwzi, is_continuum_below_threshold)
@@ -1004,3 +1006,32 @@ def test_moment_multid():
     assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)
+
+
+def test_moment_collection():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+    s1 = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    frequencies = np.linspace(200, 2, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=2*u.Jy, mean=20*u.GHz, stddev=2*u.GHz)
+    noise = np.random.normal(0., 0.02, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+    s2 = Spectrum1D(spectral_axis=frequencies, flux=flux)
+
+    collection = SpectrumCollection.from_spectra([s1, s2])
+
+    moment_0 = moment(collection, order=0)
+    assert moment_0.unit.is_equivalent(u.Jy )
+    assert quantity_allclose(moment_0[0], 252.96*u.Jy, atol=0.01*u.Jy)
+    assert quantity_allclose(moment_0[1], 509.05*u.Jy, atol=0.01*u.Jy)
+
+    moment_1 = moment(collection, order=1)
+    assert moment_1.unit.is_equivalent(u.GHz)
+    assert quantity_allclose(moment_1[0], 10.08*u.GHz, atol=0.01*u.GHz)
+    assert quantity_allclose(moment_1[1], 20.20*u.GHz, atol=0.01*u.GHz)
