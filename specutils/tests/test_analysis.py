@@ -988,8 +988,19 @@ def test_moment_multid():
     assert moment_1.unit.is_equivalent(u.GHz )
     assert quantity_allclose(moment_1, frequencies, atol=0.01*u.GHz)
 
-    moment_2 = moment(spectrum, order=2, axis=1)
+    # higher order
+    moment_2 = moment(spectrum, order=2)
 
     assert moment_2.shape == (10,10)
     assert moment_2.unit.is_equivalent(u.GHz**2 )
-    assert quantity_allclose(moment_2, 816.64782527*u.GHz**2, atol=0.01*u.GHz**2)
+    assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
+
+    # higher order, cross-cube (what is the meaning of this?)
+    moment_2 = moment(spectrum, order=2, axis=1)
+
+    assert moment_2.shape == (10,10000)
+    assert moment_2.unit.is_equivalent(u.GHz**2 )
+    # check assorted values.
+    assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)

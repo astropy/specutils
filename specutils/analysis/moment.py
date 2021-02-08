@@ -47,7 +47,6 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
     """
     This is a helper function for the above `moment()` method.
     """
-
     if regions is not None:
         calc_spectrum = extract_region(spectrum, regions)
     else:
@@ -66,8 +65,8 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
 
     dispersion = spectral_axis
     if len(flux.shape) > len(spectral_axis.shape):
-        shape_ = flux.shape[:-1] + (1,)
-        dispersion = np.tile(spectral_axis, shape_)
+        _shape = flux.shape[:-1] + (1,)
+        dispersion = np.tile(spectral_axis, _shape)
 
     if order == 1:
         return np.sum(flux * dispersion, axis=axis) / np.sum(flux, axis=axis)
@@ -75,7 +74,8 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
     if order > 1:
         m0 = np.sum(flux, axis=axis)
         m1 = np.sum(flux * dispersion, axis=axis) / np.sum(flux, axis=axis)
-        if len(flux.shape) > 1:
-            m1 = np.tile(m1.T, flux.shape[-1:] + tuple(np.ones(flux.ndim - 1, dtype='i'))).T
+        if len(flux.shape) > 1 and (axis == len(flux.shape)-1 or axis == -1):
+            _shape = flux.shape[-1:] + tuple(np.ones(flux.ndim - 1, dtype='i'))
+            m1 = np.tile(m1, _shape).T
 
-        return np.sum(flux * (dispersion - m1)**order, axis=axis) / m0
+        return np.sum(flux * (dispersion - m1) ** order, axis=axis) / m0
