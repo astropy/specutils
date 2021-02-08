@@ -1035,3 +1035,8 @@ def test_moment_collection():
     assert moment_1.unit.is_equivalent(u.GHz)
     assert quantity_allclose(moment_1[0], 10.08*u.GHz, atol=0.01*u.GHz)
     assert quantity_allclose(moment_1[1], 20.20*u.GHz, atol=0.01*u.GHz)
+
+    moment_2 = moment(collection, order=2)
+    assert moment_2.unit.is_equivalent(u.GHz**2 )
+    assert quantity_allclose(moment_2[0], 13.40*u.GHz**2, atol=0.01*u.GHz**2)
+    assert quantity_allclose(moment_2[1], 3.99*u.GHz**2, atol=0.01*u.GHz**2)
