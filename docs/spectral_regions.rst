@@ -211,7 +211,7 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
 
 
 The bounding region that includes all data, including the ones that lie
-in between disjoint spectral regions, can be extracted with
+in between disjointed spectral regions, can be extracted with
 `extract_bounding_spectral_region`:
 
 .. code-block:: python

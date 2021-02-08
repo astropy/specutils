@@ -136,7 +136,7 @@ below.
 
 
 Moment
---------
+------
 
 The `specutils.analysis.moment` function computes moments of any order:
 
