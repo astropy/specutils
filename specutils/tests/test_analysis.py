@@ -1026,17 +1026,22 @@ def test_moment_collection():
 
     collection = SpectrumCollection.from_spectra([s1, s2])
 
+    # Compare moments derived from collection, with moments
+    # derrived of individual members.
     moment_0 = moment(collection, order=0)
-    assert moment_0.unit.is_equivalent(u.Jy )
-    assert quantity_allclose(moment_0[0], 252.96*u.Jy, atol=0.01*u.Jy)
-    assert quantity_allclose(moment_0[1], 509.05*u.Jy, atol=0.01*u.Jy)
+    moment_0_s1 = moment(s1, order=0)
+    moment_0_s2 = moment(s2, order=0)
+    assert quantity_allclose(moment_0[0], moment_0_s1, rtol=1.E-5)
+    assert quantity_allclose(moment_0[1], moment_0_s2, rtol=1.E-5)
 
     moment_1 = moment(collection, order=1)
-    assert moment_1.unit.is_equivalent(u.GHz)
-    assert quantity_allclose(moment_1[0], 10.08*u.GHz, atol=0.01*u.GHz)
-    assert quantity_allclose(moment_1[1], 20.20*u.GHz, atol=0.01*u.GHz)
+    moment_1_s1 = moment(s1, order=1)
+    moment_1_s2 = moment(s2, order=1)
+    assert quantity_allclose(moment_1[0], moment_1_s1, rtol=1.E-5)
+    assert quantity_allclose(moment_1[1], moment_1_s2, rtol=1.E-5)
 
     moment_2 = moment(collection, order=2)
-    assert moment_2.unit.is_equivalent(u.GHz**2 )
-    assert quantity_allclose(moment_2[0], 13.40*u.GHz**2, atol=0.01*u.GHz**2)
-    assert quantity_allclose(moment_2[1], 3.99*u.GHz**2, atol=0.01*u.GHz**2)
+    moment_2_s1 = moment(s1, order=2)
+    moment_2_s2 = moment(s2, order=2)
+    assert quantity_allclose(moment_2[0], moment_2_s1, rtol=1.E-5)
+    assert quantity_allclose(moment_2[1], moment_2_s2, rtol=1.E-5)
