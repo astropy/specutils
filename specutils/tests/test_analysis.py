@@ -953,7 +953,7 @@ def test_moment():
     assert quantity_allclose(moment_3, 1233.78*u.GHz**3, atol=0.01*u.GHz**3)
 
 
-def test_moment_multid():
+def test_moment_cube():
 
     np.random.seed(42)
 
@@ -972,36 +972,36 @@ def test_moment_multid():
     moment_1 = moment(spectrum, order=1)
 
     assert moment_1.shape == (10,10)
-    assert moment_1.unit.is_equivalent(u.GHz )
+    assert moment_1.unit.is_equivalent(u.GHz)
     assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
 
     # select the last axis of the cube. Should be identical with
     # the default call above.
-    moment_1 = moment(spectrum, order=1, axis=2)
+    moment_1_last = moment(spectrum, order=1, axis=2)
 
-    assert moment_1.shape == (10,10)
-    assert moment_1.unit.is_equivalent(u.GHz )
-    assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
+    assert moment_1_last.shape == moment_1.shape
+    assert moment_1_last.unit.is_equivalent(moment_1.unit)
+    assert quantity_allclose(moment_1, moment_1_last, rtol=1.E-5)
 
-    # cross-cube - returns the dispersion
+    # spatial 1st order - returns the dispersion
     moment_1 = moment(spectrum, order=1, axis=1)
 
     assert moment_1.shape == (10,10000)
-    assert moment_1.unit.is_equivalent(u.GHz )
-    assert quantity_allclose(moment_1, frequencies, atol=0.01*u.GHz)
+    assert moment_1.unit.is_equivalent(u.GHz)
+    assert quantity_allclose(moment_1, frequencies, rtol=1.E-5)
 
     # higher order
     moment_2 = moment(spectrum, order=2)
 
     assert moment_2.shape == (10,10)
-    assert moment_2.unit.is_equivalent(u.GHz**2 )
+    assert moment_2.unit.is_equivalent(u.GHz**2)
     assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
 
-    # higher order, cross-cube (what is the meaning of this?)
+    # spatial higher order (what's the meaning of this?)
     moment_2 = moment(spectrum, order=2, axis=1)
 
     assert moment_2.shape == (10,10000)
-    assert moment_2.unit.is_equivalent(u.GHz**2 )
+    assert moment_2.unit.is_equivalent(u.GHz**2)
     # check assorted values.
     assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
@@ -1027,7 +1027,7 @@ def test_moment_collection():
     collection = SpectrumCollection.from_spectra([s1, s2])
 
     # Compare moments derived from collection, with moments
-    # derrived of individual members.
+    # derived from individual members.
     moment_0 = moment(collection, order=0)
     moment_0_s1 = moment(s1, order=0)
     moment_0_s2 = moment(s2, order=0)
