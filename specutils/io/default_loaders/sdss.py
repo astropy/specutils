@@ -41,7 +41,7 @@ def _sdss_wcs_to_log_wcs(old_wcs):
     w1 = old_wcs.wcs.cd[0,0]
     crval = 10 ** w0
     cdelt = crval * w1 * np.log(10)
-    cunit = old_wcs.wcs.cunit[0] or Unit('Angstrom')
+    cunit = Unit('Angstrom')
     ctype = "WAVE-LOG"
 
     w = WCS(naxis=1)
