@@ -158,6 +158,7 @@ def test_jwst_reader_fail(tmpdir, x1d_single, srctype):
         SpectrumList.read(tmpfile, format='JWST x1d multi')
 
 
+@pytest.mark.xfail(reason="JWST loader no longer attempts to auto-find flux column.")
 def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
     """Check that the reader raises warning when stddev is zeros"""
     tmpfile = str(tmpdir.join('jwst.fits'))

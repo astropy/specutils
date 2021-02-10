@@ -49,7 +49,7 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> from astropy.visualization import quantity_support
     >>> quantity_support()  # for getting units on the axes below  # doctest: +IGNORE_OUTPUT
 
-    Now we load the dataset from it's canonical source:
+    Now we load the dataset from its canonical source:
 
     >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> # The spectrum is in the second HDU of this file.
@@ -69,9 +69,6 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.step(spec.spectral_axis, spec.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
-Now maybe you want the equivalent width of a spectral line.  That requires
-normalizing by a continuum estimate:
-
 .. testsetup::
 
     >>> fig = plt.figure()  # necessary because otherwise the doctests fail due to quantity_support and the flux units being different from the last figure
@@ -81,20 +78,22 @@ normalizing by a continuum estimate:
     :align: center
     :context: close-figs
 
+    Now maybe you want the equivalent width of a spectral line. That requires
+    normalizing by a continuum estimate:
+
     >>> from specutils.fitting import fit_generic_continuum
     >>> cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis) # doctest: +REMOTE_DATA
+
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.step(cont_norm_spec.wavelength, cont_norm_spec.flux)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
-    >>> ax.set_xlim(654*u.nm, 660*u.nm)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    >>> ax.set_xlim(654 * u.nm, 660 * u.nm)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
-But then you can apply a single function over the region of the spectrum
-containing the line:
-
-.. code-block:: python
+    But then you can apply a single function over the region of the spectrum
+    containing the line:
 
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
-    >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562*u.AA, 6575*u.AA)) # doctest: +REMOTE_DATA +FLOAT_CMP
+    >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562 * u.AA, 6575 * u.AA)) # doctest: +REMOTE_DATA +FLOAT_CMP
     <Quantity -16.25232188 Angstrom>
 
 

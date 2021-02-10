@@ -546,38 +546,37 @@ the corresponding window.
     :include-source:
     :align: center
 
-    import numpy as np
-    import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from astropy.modeling import models
+    >>> from astropy import units as u
+    >>> from specutils.spectra import Spectrum1D
+    >>> from specutils.fitting import fit_lines
 
-    from astropy.modeling import models
-    from astropy import units as u
+    >>> # Create a simple spectrum with a Gaussian.
+    >>> np.random.seed(42)
 
-    from specutils.spectra import Spectrum1D
-    from specutils.fitting import fit_lines
+    >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
+    >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+    >>> x = np.linspace(0, 10, 200)
+    >>> y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
-    # Create a simple spectrum with a Gaussian.
-    np.random.seed(42)
+    >>> # Create the spectrum to fit
+    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
-    g1 = models.Gaussian1D(1, 4.6, 0.2)
-    g2 = models.Gaussian1D(2.5, 5.5, 0.1)
-    x = np.linspace(0, 10, 200)
-    y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
+    >>> # Fit each peak
+    >>> gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
+    >>> gr_init = models.Gaussian1D(amplitude=2.*u.Jy, mean=5.3*u.um, stddev=0.2*u.um)
+    >>> gl_fit, gr_fit = fit_lines(spectrum, [gl_init, gr_init], window=[(4.6*u.um, 5.3*u.um), (5.3*u.um, 5.8*u.um)])
+    >>> yl_fit = gl_fit(x*u.um)
+    >>> yr_fit = gr_fit(x*u.um)
 
-    # Create the spectrum to fit
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
-
-    # Fit each peak
-    gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
-    gr_init = models.Gaussian1D(amplitude=2.*u.Jy, mean=5.3*u.um, stddev=0.2*u.um)
-    gl_fit, gr_fit = fit_lines(spectrum, [gl_init, gr_init], window=[(5.3*u.um, 5.8*u.um), (4.6*u.um, 5.3*u.um)])
-    yl_fit = gl_fit(x*u.um)
-    yr_fit = gr_fit(x*u.um)
-
-    plt.plot(x, y)
-    plt.plot(x, yl_fit)
-    plt.plot(x, yr_fit)
-    plt.title('Double Peak - Two Models and Two Windows')
-    plt.grid(True)
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y)  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, yl_fit)  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, yr_fit)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Double Peak - Two Models and Two Windows")  # doctest: +IGNORE_OUTPUT
+    >>> ax.grid(True)  # doctest: +IGNORE_OUTPUT
 
 
 Double Peak Fit - Exclude One Region
@@ -590,35 +589,33 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
     :include-source:
     :align: center
 
-    import numpy as np
-    import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from astropy.modeling import models
+    >>> from astropy import units as u
+    >>> from specutils.spectra import Spectrum1D, SpectralRegion
+    >>> from specutils.fitting import fit_lines
 
-    from astropy.modeling import models
-    from astropy import units as u
+    >>> # Create a simple spectrum with a Gaussian.
+    >>> np.random.seed(42)
+    >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
+    >>> g2 = models.Gaussian1D(2.5, 5.5, 0.1)
+    >>> x = np.linspace(0, 10, 200)
+    >>> y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
-    from specutils.spectra import Spectrum1D, SpectralRegion
-    from specutils.fitting import fit_lines
+    >>> # Create the spectrum to fit
+    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
-    # Create a simple spectrum with a Gaussian.
-    np.random.seed(42)
+    >>> # Fit each peak
+    >>> gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
+    >>> gl_fit = fit_lines(spectrum, gl_init, exclude_regions=[SpectralRegion(5.2*u.um, 5.8*u.um)])
+    >>> yl_fit = gl_fit(x*u.um)
 
-    g1 = models.Gaussian1D(1, 4.6, 0.2)
-    g2 = models.Gaussian1D(2.5, 5.5, 0.1)
-    x = np.linspace(0, 10, 200)
-    y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
-
-    # Create the spectrum to fit
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
-
-    # Fit each peak
-    gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
-    gl_fit = fit_lines(spectrum, gl_init, exclude_regions=[SpectralRegion(5.2*u.um, 5.8*u.um)])
-    yl_fit = gl_fit(x*u.um)
-
-    plt.plot(x, y)
-    plt.plot(x, yl_fit)
-    plt.title('Double Peak - Single Models and Exclude Region')
-    plt.grid(True)
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y)  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, yl_fit)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Double Peak - Single Models and Exclude Region")  # doctest: +IGNORE_OUTPUT
+    >>> ax.grid(True)  # doctest: +IGNORE_OUTPUT
 
 .. _specutils-continuum-fitting:
 
@@ -635,47 +632,47 @@ convenience functions to perform exactly this task.  An example is shown below.
     :align: center
     :context: close-figs
 
-    import numpy as np
-    import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from astropy.modeling import models
+    >>> from astropy import units as u
+    >>> from specutils.spectra import Spectrum1D, SpectralRegion
+    >>> from specutils.fitting import fit_generic_continuum
 
-    from astropy.modeling import models
-    from astropy import units as u
+    >>> np.random.seed(0)
+    >>> x = np.linspace(0., 10., 200)
+    >>> y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
+    >>> y += np.random.normal(0., 0.2, x.shape)
 
-    from specutils.spectra import Spectrum1D, SpectralRegion
-    from specutils.fitting import fit_generic_continuum
+    >>> y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    >>> y += y_continuum
 
-    np.random.seed(0)
-    x = np.linspace(0., 10., 200)
-    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
-    y += np.random.normal(0., 0.2, x.shape)
+    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
-    y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
-    y += y_continuum
+    >>> g1_fit = fit_generic_continuum(spectrum)
 
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    >>> y_continuum_fitted = g1_fit(x*u.um)
 
-    g1_fit = fit_generic_continuum(spectrum)
-
-    y_continuum_fitted = g1_fit(x*u.um)
-
-    plt.plot(x, y)
-    plt.plot(x, y_continuum_fitted)
-    plt.title('Continuum Fitting')
-    plt.grid(True)
-
-The normalized spectrum is simply the old spectrum devided by the
-fitted continuum, which returns a new object:
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y)  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y_continuum_fitted)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Continuum Fitting")  # doctest: +IGNORE_OUTPUT
+    >>> ax.grid(True)  # doctest: +IGNORE_OUTPUT
 
 .. plot::
     :include-source:
     :align: center
     :context: close-figs
 
-    spec_normalized = spectrum / y_continuum_fitted
+    The normalized spectrum is simply the old spectrum devided by the
+    fitted continuum, which returns a new object:
 
-    plt.plot(spec_normalized.spectral_axis, spec_normalized.flux)
-    plt.title('Continuum normalized spectrum')
-    plt.grid('on')
+    >>> spec_normalized = spectrum / y_continuum_fitted
+
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(spec_normalized.spectral_axis, spec_normalized.flux)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Continuum normalized spectrum")  # doctest: +IGNORE_OUTPUT
+    >>> ax.grid(True)  # doctest: +IGNORE_OUTPUT
 
 
 When fitting over a specific wavelength region of a spectrum, one
@@ -688,31 +685,29 @@ is specified by a sequence:
     :align: center
     :context: close-figs
 
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import astropy.units as u
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> import astropy.units as u
 
-    from specutils.spectra.spectrum1d import Spectrum1D
-    from specutils.fitting.continuum import fit_continuum
+    >>> from specutils.spectra.spectrum1d import Spectrum1D
+    >>> from specutils.fitting.continuum import fit_continuum
 
-    np.random.seed(0)
-    x = np.linspace(0., 10., 200)
-    y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.1**2)
-    y += np.random.normal(0., 0.2, x.shape)
-    y += 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
+    >>> np.random.seed(0)
+    >>> x = np.linspace(0., 10., 200)
+    >>> y = 3 * np.exp(-0.5 * (x - 6.3) ** 2 / 0.1 ** 2)
+    >>> y += np.random.normal(0., 0.2, x.shape)
+    >>> y += 3.2 * np.exp(-0.5 * (x - 5.6) ** 2 / 4.8 ** 2)
 
-    spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    >>> spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    >>> region = [(1 * u.um, 5 * u.um), (7 * u.um, 10 * u.um)]
+    >>> fitted_continuum = fit_continuum(spectrum, window=region)
+    >>> y_fit = fitted_continuum(x*u.um)
 
-    region = [(4.*u.um, 5.*u.um), (8.*u.um, 10.*u.um)]
-
-    fitted_continuum = fit_continuum(spectrum, window=region)
-
-    y_fit = fitted_continuum(x*u.um)
-
-    plt.plot(x, y)
-    plt.plot(x, y_fit)
-    plt.title("Continuum Fitting")
-    plt.grid(True)
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y)  # doctest: +IGNORE_OUTPUT
+    >>> ax.plot(x, y_fit)  # doctest: +IGNORE_OUTPUT
+    >>> ax.set_title("Continuum Fitting")  # doctest: +IGNORE_OUTPUT
+    >>> plt.grid(True)  # doctest: +IGNORE_OUTPUT
 
 
 Reference/API
