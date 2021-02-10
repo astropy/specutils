@@ -7,6 +7,9 @@ New Features
 - Add support for reading IRAF MULTISPEC format with non-linear 2D WCS into
   ``SpectrumCollection`` to default_loaders. [#708]
 
+- ``SpectralRegion`` objects can now be created from the ``QTable``
+  object returned from the line finding rountines. [#759]
+
 Bug Fixes
 ^^^^^^^^^
 
@@ -15,11 +18,15 @@ Bug Fixes
   beyond the limits of the data no longer drops the last data point in the
   returned spectrum. [#724]
 
+- Fixes to the jwst loaders. [#759]
+
 Documentation
 ^^^^^^^^^^^^^
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Improved error messages when creating ``SpectralRegion`` objects. [#759]
 
 1.1
 ---
