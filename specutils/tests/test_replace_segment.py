@@ -19,6 +19,7 @@ def test_replace_spline():
 
     spline_points = [3.5, 4.7, 6.8, 7.1] * u.AA
 
-    result = spline_replace(input_spectrum, spline_points)
+    result = spline_replace(input_spectrum, spline_points, extrapolation_treatment='zero_fill')
 
     assert_quantity_allclose(result.flux, flux_val*u.mJy)
+    assert_quantity_allclose(result.spectral_axis, input_spectrum.spectral_axis)
