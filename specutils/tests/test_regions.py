@@ -1,9 +1,10 @@
-import pytest
-import numpy as np
-
 import astropy.units as u
-from astropy.nddata import StdDevUncertainty
+import numpy as np
+import pytest
+from astropy.modeling.models import Gaussian1D
+from astropy.tests.helper import quantity_allclose
 
+from specutils.fitting import find_lines_derivative
 from ..spectra import Spectrum1D, SpectralRegion
 
 
@@ -21,8 +22,8 @@ def test_lower_upper():
     assert sr.upper == 0.9*u.um
 
     # Spectral region with multiple ranges and not ordered
-    sr = SpectralRegion([(0.3*u.um, 1.0*u.um), (0.45*u.um, 0.6*u.um), (0.04*u.um, 0.05*u.um),
-                         (0.8*u.um, 0.9*u.um)])
+    sr = SpectralRegion([(0.3*u.um, 1.0*u.um), (0.45*u.um, 0.6*u.um),
+                         (0.04*u.um, 0.05*u.um), (0.8*u.um, 0.9*u.um)])
 
     assert sr.lower == 0.04*u.um
     assert sr.upper == 1.0*u.um
@@ -57,20 +58,22 @@ def test_from_center():
 def test_adding_spectral_regions():
 
     # Combine two Spectral regions into one:
-    sr = SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um)
+    sr = (SpectralRegion(0.45*u.um, 0.6*u.um) +
+          SpectralRegion(0.8*u.um, 0.9*u.um))
 
-    assert set(sr.subregions) == set([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
+    assert set(sr.subregions) == set([(0.45*u.um, 0.6*u.um),
+                                      (0.8*u.um, 0.9*u.um)])
 
     # In-place adding spectral regions:
     sr1 = SpectralRegion(0.45*u.um, 0.6*u.um)
     sr2 = SpectralRegion(0.8*u.um, 0.9*u.um)
     sr1 += sr2
 
-    assert set(sr1.subregions) == set([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
+    assert set(sr1.subregions) == set([(0.45*u.um, 0.6*u.um),
+                                       (0.8*u.um, 0.9*u.um)])
 
 
 def test_getitem():
-
     sr = SpectralRegion([(0.8*u.um, 0.9*u.um), (0.3*u.um, 1.0*u.um),
                          (0.45*u.um, 0.6*u.um), (0.04*u.um, 0.05*u.um)])
 
@@ -127,9 +130,12 @@ def test_iterate():
 
 def test_slicing():
 
-    sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
-         SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
-         SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
+    sr = (SpectralRegion(0.15*u.um, 0.2*u.um) +
+          SpectralRegion(0.3*u.um, 0.4*u.um) +
+          SpectralRegion(0.45*u.um, 0.6*u.um) +
+          SpectralRegion(0.8*u.um, 0.9*u.um) +
+          SpectralRegion(1.0*u.um, 1.2*u.um) +
+          SpectralRegion(1.3*u.um, 1.5*u.um))
 
     subsr = sr[3:5]
 
@@ -138,12 +144,16 @@ def test_slicing():
 
 
 def test_invert():
-    sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
-         SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
-         SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
+    sr = (SpectralRegion(0.15*u.um, 0.2*u.um) +
+          SpectralRegion(0.3*u.um, 0.4*u.um) +
+          SpectralRegion(0.45*u.um, 0.6*u.um) +
+          SpectralRegion(0.8*u.um, 0.9*u.um) +
+          SpectralRegion(1.0*u.um, 1.2*u.um) +
+          SpectralRegion(1.3*u.um, 1.5*u.um))
 
-    sr_inverted_expected = [(0.05*u.um, 0.15*u.um), (0.2*u.um, 0.3*u.um), (0.4*u.um, 0.45*u.um),
-                            (0.6*u.um, 0.8*u.um), (0.9*u.um, 1.0*u.um), (1.2*u.um, 1.3*u.um),
+    sr_inverted_expected = [(0.05*u.um, 0.15*u.um), (0.2*u.um, 0.3*u.um),
+                            (0.4*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um),
+                            (0.9*u.um, 1.0*u.um), (1.2*u.um, 1.3*u.um),
                             (1.5*u.um, 3.0*u.um)]
 
     # Invert from range.
@@ -153,7 +163,29 @@ def test_invert():
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
     # Invert from spectrum.
-    spectrum = Spectrum1D(spectral_axis=np.linspace(0.05, 3, 20)*u.um, flux=np.random.random(20)*u.Jy)
+    spectrum = Spectrum1D(spectral_axis=np.linspace(0.05, 3, 20)*u.um,
+                          flux=np.random.random(20)*u.Jy)
     sr_inverted = sr.invert_from_spectrum(spectrum)
     for ii, expected in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+
+
+def test_from_list_list():
+    g1 = Gaussian1D(1, 4.6, 0.2)
+    g2 = Gaussian1D(2.5, 5.5, 0.1)
+    g3 = Gaussian1D(-1.7, 8.2, 0.1)
+
+    x = np.linspace(0, 10, 200)
+    y = g1(x) + g2(x) + g3(x)
+
+    spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+
+    lines = find_lines_derivative(spectrum, flux_threshold=0.01)
+
+    spec_reg = SpectralRegion.from_line_list(lines)
+    expected = [(4.072864321608041 * u.um, 5.072864321608041 * u.um),
+                (4.977386934673367 * u.um, 5.977386934673367 * u.um),
+                (7.690954773869347 * u.um, 8.690954773869347 * u.um)]
+
+    for i, reg in enumerate(expected):
+        assert quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].upper))

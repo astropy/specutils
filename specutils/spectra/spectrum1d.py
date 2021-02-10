@@ -5,13 +5,13 @@ import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-from .spectrum_mixin import OneDSpectrumMixin
+from packaging import version
+
 from .spectral_axis import SpectralAxis
+from .spectrum_mixin import OneDSpectrumMixin
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
-
-__doctest_skip__ = ['Spectrum1D.spectral_resolution']
 
 
 class Spectrum1D(OneDSpectrumMixin, NDDataRef):
@@ -289,7 +289,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
     def _copy(self, **kwargs):
         """
-        Peform deep copy operations on each attribute of the ``Spectrum1D``
+        Perform deep copy operations on each attribute of the ``Spectrum1D``
         object.
         """
         alt_kwargs = dict(

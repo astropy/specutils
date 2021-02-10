@@ -59,7 +59,9 @@ def true_exciser(spectrum, region):
         new_mask = None
 
     if spectrum.uncertainty is not None:
-        new_uncertainty = np.delete(spectrum.uncertainty, excise_indices)
+        new_uncertainty = spectrum.uncertainty.__class__(
+            np.delete(spectrum.uncertainty.array, excise_indices),
+            unit=spectrum.uncertainty.unit)
     else:
         new_uncertainty = None
 
