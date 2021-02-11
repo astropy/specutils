@@ -13,7 +13,7 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
     ----------
 
     spectrum : `~specutils.Spectrum1D`
-        The spectrum to which we want to set the uncertainty.
+        The spectrum to be modified.
 
     spline_knots : array of `~astropy.units.Quantity`
         List of spectral axis values to be used as spline knots.
