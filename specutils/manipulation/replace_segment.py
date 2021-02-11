@@ -22,7 +22,7 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
 
     extrapolation_treatment : str
         What to do with data off the edges of the region encompassed by
-        the spline points. Can be ``'data_fill'`` to have points filled
+        the spline knots. Can be ``'data_fill'`` to have points filled
         with the input flux values, or ``'zero_fill'`` to be set to zero.
 
     Returns
