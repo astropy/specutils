@@ -25,87 +25,26 @@ class ResamplerBase(ABC):
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN, or
-        ``'zero_fill'`` to be set to zero
-
+        ``'zero_fill'`` to be set to zero.
     """
     def __init__(self, extrapolation_treatment='nan_fill'):
         if extrapolation_treatment not in ('nan_fill', 'zero_fill'):
             raise ValueError('invalid extrapolation_treatment value: ' + str(extrapolation_treatment))
         self.extrapolation_treatment = extrapolation_treatment
 
-    def __call__(self, orig_spectrum, fin_spec_axis, keep_shape=False):
+    def __call__(self, orig_spectrum, fin_spec_axis):
         """
         Return the resulting `~specutils.Spectrum1D` of the resampling.
         """
-        return self.resample1d(orig_spectrum, fin_spec_axis, keep_shape=keep_shape)
+        return self.resample1d(orig_spectrum, fin_spec_axis)
 
     @abstractmethod
-    def resample1d(self, orig_spectrum, fin_spec_axis, keep_shape=False):
+    def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Workhorse method that will return the resampled Spectrum1D
         object.
         """
         return NotImplemented
-
-    def _keep_shape(self, orig_spectrum, resample_spec_axis, resampled_flux_arr,
-                    resampled_unc):
-        """
-        Returns the resampled data as a patch on the original spectrum. This
-        is used when one needs the resampled data to be of same shape as the
-        input spectrum.
-        """
-        orig_spec_axis = orig_spectrum.spectral_axis.to(resample_spec_axis.unit)
-
-        indices_min = np.where(orig_spec_axis.value < resample_spec_axis[0].value)
-        indices_max = np.where(orig_spec_axis.value > resample_spec_axis[-1].value)
-
-        # in case extrapolation is taking place, we return immediately. There is no
-        # point in keeping the spectrum shape if the user wants explicitly to
-        # change it.
-        if len(indices_min[0]) == 0 or len(indices_max[0]) == 0:
-            return resampled_flux_arr * orig_spectrum.flux.unit, resampled_unc, resample_spec_axis
-
-        extended_flux = np.zeros(shape=orig_spectrum.flux.shape)
-        out_spec_axis = np.zeros(shape=orig_spectrum.flux.shape)
-
-        extended_flux[indices_min] = orig_spectrum.flux[indices_min]
-        extended_flux[indices_max] = orig_spectrum.flux[indices_max]
-
-        out_spec_axis[indices_min] = orig_spectrum.spectral_axis[indices_min]
-        out_spec_axis[indices_max] = orig_spectrum.spectral_axis[indices_max]
-
-        i1 = indices_min[0][-1] + 1
-        i2 = i1 + len(resampled_flux_arr)
-
-        extended_flux[i1:i2] = resampled_flux_arr
-        out_spec_axis[i1:i2] = resample_spec_axis
-
-        # this handles the case of a coincident spectral coordinate value
-        # at the exact beginning (lower end) of the resampling interval.
-        delta = orig_spec_axis.value[i1] - resample_spec_axis[0].value
-        if delta - int(delta) == 0.0:
-            extended_flux[i2] = orig_spectrum.flux.value[i2+1]
-            out_spec_axis[i2] = orig_spectrum.spectral_axis.value[i2+1]
-
-        extended_flux = extended_flux * orig_spectrum.flux.unit
-
-        # repeat above for the uncertainty array
-        extended_unc = None
-        if resampled_unc is not None:
-            extended_unc_arr = np.zeros(shape=orig_spectrum.flux.shape)
-            extended_unc_arr[indices_min] = orig_spectrum.uncertainty.array[indices_min]
-            extended_unc_arr[indices_max] = orig_spectrum.uncertainty.array[indices_max]
-            extended_unc_arr[i1:i2] = resampled_unc.array
-            if delta - int(delta) == 0.0:
-                extended_unc_arr[i2] = orig_spectrum.uncertainty.array[i2+1]
-            extended_unc_arr = extended_unc_arr * orig_spectrum.uncertainty.unit
-
-            extended_unc = orig_spectrum.uncertainty.__class__(array=extended_unc_arr,
-                                                               unit=orig_spectrum.unit)
-
-        out_spec_axis = out_spec_axis * orig_spectrum.spectral_axis.unit
-
-        return extended_flux, extended_unc, out_spec_axis
 
 
 class FluxConservingResampler(ResamplerBase):
@@ -190,7 +129,7 @@ class FluxConservingResampler(ResamplerBase):
 
         return resamp_mat.value
 
-    def resample1d(self, orig_spectrum, fin_spec_axis, keep_shape=False):
+    def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Create a re-sampling matrix to be used in re-sampling spectra in a way
         that conserves flux. If an uncertainty is present in the input spectra
@@ -203,12 +142,6 @@ class FluxConservingResampler(ResamplerBase):
             The original 1D spectrum.
         fin_spec_axis :  Quantity
             The desired spectral axis array.
-        keep_shape : bool
-            Handles cases where the resample grid is located inside the input
-            spectrum. If False (default), the output spectrum contains only the
-            region spanned by the resample grid. If True, the output spectrum
-            will have the same shape as the input's, with the regions outside
-            the resampling grid filled with the original data.
 
         Returns
         -------
@@ -286,18 +219,9 @@ class FluxConservingResampler(ResamplerBase):
         # more about how to handle that... could convert before and after
         # calculation, which is probably easiest. Matrix math algorithm is
         # geometry based, so won't work to just let quantity math handle it.
-
-        out_spec_axis = np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit
-        new_unc = out_uncertainty
-        if keep_shape:
-            out_flux, new_unc, out_spec_axis = self._keep_shape(orig_spectrum,
-                                                                out_spec_axis,
-                                                                out_flux,
-                                                                new_unc)
-
         resampled_spectrum = Spectrum1D(flux=out_flux,
-                                        spectral_axis=out_spec_axis,
-                                        uncertainty=new_unc)
+                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit,
+                                        uncertainty=out_uncertainty)
 
         return resampled_spectrum
 
@@ -333,7 +257,7 @@ class LinearInterpolatedResampler(ResamplerBase):
     def __init__(self, extrapolation_treatment='nan_fill'):
         super().__init__(extrapolation_treatment)
 
-    def resample1d(self, orig_spectrum, fin_spec_axis, keep_shape=False):
+    def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Call interpolation, repackage new spectra
 
@@ -344,12 +268,6 @@ class LinearInterpolatedResampler(ResamplerBase):
             The original 1D spectrum.
         fin_spec_axis : ndarray
             The desired spectral axis array.
-        keep_shape : bool
-            Handles cases where the resample grid is located inside the input
-            spectrum. If False (default), the output spectrum contains only the
-            region spanned by the resample grid. If True, the output spectrum
-            will have the same shape as the input's, with the regions outside
-            the resampling grid filled with the original data.
 
         Returns
         -------
@@ -375,14 +293,7 @@ class LinearInterpolatedResampler(ResamplerBase):
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_arr,
                                                           unit=orig_spectrum.unit)
 
-        out_spec_axis = fin_spec_axis
-        if keep_shape:
-            out_flux, new_unc, out_spec_axis = self._keep_shape(orig_spectrum,
-                                                                fin_spec_axis,
-                                                                out_flux_arr,
-                                                                new_unc)
-
-        return Spectrum1D(spectral_axis=out_spec_axis,
+        return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux,
                           uncertainty=new_unc)
 
@@ -421,7 +332,7 @@ class SplineInterpolatedResampler(ResamplerBase):
     def __init__(self, bin_edges='nan_fill'):
         super().__init__(bin_edges)
 
-    def resample1d(self, orig_spectrum, fin_spec_axis, keep_shape=False):
+    def resample1d(self, orig_spectrum, fin_spec_axis):
         """
         Call interpolation, repackage new spectra
 
@@ -432,12 +343,6 @@ class SplineInterpolatedResampler(ResamplerBase):
             The original 1D spectrum.
         fin_spec_axis : Quantity
             The desired spectral axis array.
-        keep_shape : bool
-            Handles cases where the resample grid is located inside the input
-            spectrum. If False (default), the output spectrum contains only the
-            region spanned by the resample grid. If True, the output spectrum
-            will have the same shape as the input's, with the regions outside
-            the resampling grid filled with the original data.
 
         Returns
         -------
@@ -463,13 +368,6 @@ class SplineInterpolatedResampler(ResamplerBase):
             if new_unc is not None:
                 new_unc.array[off_edges] = 0
 
-        out_spec_axis = fin_spec_axis
-        out_flux = out_flux_val * orig_spectrum.flux.unit
-        if keep_shape:
-            out_flux, new_unc, out_spec_axis = self._keep_shape(orig_spectrum,
-                                                                fin_spec_axis,
-                                                                out_flux_val,
-                                                                new_unc)
-        return Spectrum1D(spectral_axis=out_spec_axis,
-                          flux=out_flux,
+        return Spectrum1D(spectral_axis=fin_spec_axis,
+                          flux=out_flux_val*orig_spectrum.flux.unit,
                           uncertainty=new_unc)
