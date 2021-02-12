@@ -229,10 +229,10 @@ in between disjointed spectral regions, can be extracted with
         22., 23., 24., 25., 26., 27., 28., 29., 30.] nm>
 
 
-`specutils.manipulation.spectral_slab` is basically an alternate entry point for `extract_region`. Notice
+``spectral_slab`` is basically an alternate entry point for ``extract_region``. Notice
 the slightly different way to input the spectral axis range to be extracted.
-This function's purpose is to facilitate migration of `spectral_cube` functionality
-into `specutils`:
+This function's purpose is to facilitate migration of ``spectral_cube`` functionality
+into ``specutils``:
 
 .. code-block:: python
 
