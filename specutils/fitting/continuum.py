@@ -25,7 +25,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
         The list of models that contain the initial guess.
     median_window : float
         The width of the median smoothing kernel used to filter the data before
-        fitting the continuum. See the ``kernel_size`` parameter of 
+        fitting the continuum. See the ``kernel_size`` parameter of
         `~scipy.signal.medfilt` for more information.
     fitter : `~astropy.fitting._FitterMeta`
         The astropy fitter to use for fitting the model.
