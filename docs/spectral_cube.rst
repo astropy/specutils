@@ -59,7 +59,7 @@ a simple median function over the spatial axes::
     (7,)
 
 The ``projection`` keyword returns a lower dimesional object that retains the WCS
-information that we'll need to use when constructing the `Spectrum1D` object.
+information that we'll need to use when constructing the `~specutils.Spectrum1D` object.
 
 Creating a spectrum object
 ==========================
