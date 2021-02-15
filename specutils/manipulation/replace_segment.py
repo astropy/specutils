@@ -48,8 +48,7 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
     >>> flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
     >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
-    >>> result = spline_replace(input_spectrum, spline_knots,
-    ...     extrapolation_treatment='data_fill') # doctest: +IGNORE_OUTPUT
+    >>> result = spline_replace(input_spectrum, spline_knots) # doctest: +IGNORE_OUTPUT
 
     """
     if extrapolation_treatment not in ('data_fill', 'zero_fill'):
