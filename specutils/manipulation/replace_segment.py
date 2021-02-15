@@ -40,10 +40,10 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
     Examples
     --------
 
-    >>>> import numpy as np
-    >>>> import astropy.units as u
-    >>>> from specutils.spectra.spectrum1d import Spectrum1D
-    >>>> from specutils.manipulation.replace_segment import spline_replace
+    >>> import numpy as np
+    >>> import astropy.units as u
+    >>> from specutils.spectra.spectrum1d import Spectrum1D
+    >>> from specutils.manipulation.replace_segment import spline_replace
     >>> wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
     >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
