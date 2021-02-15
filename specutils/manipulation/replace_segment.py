@@ -72,7 +72,7 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
     out = np.where(np.isnan(out_flux_val), 0., out_flux_val)
 
     if extrapolation_treatment == 'data_fill':
-        data = np.where(np.isnan(out_flux_val), spectrum.flux.value, 0.)
-        out += data * spectrum.flux.unit
+        data = np.where(np.isnan(out_flux_val), spectrum.flux, 0.)
+        out += data
 
     return Spectrum1D(spectral_axis=new_spectral_axis, flux=out)
