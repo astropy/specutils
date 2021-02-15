@@ -66,13 +66,16 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
     # to compute flux at each spectral value in input spectrum.
     flux_spline_2 = CubicSpline(spline_knots.value, spline_knots_flux_val,
                                 extrapolate=False)
-    out_flux_val = flux_spline_2(new_spectral_axis.value) * spectrum.flux.unit
+    out_flux_val = flux_spline_2(new_spectral_axis.value)
 
-    # default behavior (zero_fill)
-    out = np.where(np.isnan(out_flux_val), 0., out_flux_val)
+    # Careful with units handling from here on: astropylts handles the
+    # np.where filter differently than the other supported environments.
+
+    # default behavior (zero_fill).
+    out = np.where(np.isnan(out_flux_val), 0., out_flux_val) * spectrum.flux.unit
 
     if extrapolation_treatment == 'data_fill':
-        data = np.where(np.isnan(out_flux_val), spectrum.flux, 0.)
-        out += data
+        data = np.where(np.isnan(out_flux_val), spectrum.flux.value, 0.)
+        out += (data * spectrum.flux.unit)
 
     return Spectrum1D(spectral_axis=new_spectral_axis, flux=out)
