@@ -113,6 +113,7 @@ For more details on usage of specutils, see the sections listed below.
     types_of_spectra
     spectrum1d
     spectrum_collection
+    spectral_cube
     spectral_regions
     analysis
     fitting

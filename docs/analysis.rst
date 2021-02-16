@@ -134,6 +134,23 @@ While this example is "pre-subtracted", this function only performs well if the
 contiuum has already been subtracted, as for the other functions above and
 below.
 
+
+Moment
+------
+
+The `specutils.analysis.moment` function computes moments of any order:
+
+.. code-block:: python
+
+    >>> from specutils.analysis import moment
+    >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz)) # doctest:+FLOAT_CMP
+    <Quantity 98.26318995 Jy>
+    >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=1) # doctest:+FLOAT_CMP
+    <Quantity 4.99909151 GHz>
+    >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=2) # doctest:+FLOAT_CMP
+    <Quantity 0.58586695 GHz2>
+
+
 Line Widths
 -----------
 
