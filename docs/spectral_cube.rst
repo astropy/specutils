@@ -7,7 +7,7 @@ A specific example of this is demonstrated here.
 
 Note that the workflow described here is for spectral cubes that are rectified
 such that one of the axes is entirely spectral and all the spaxels have the same
-``spectral_axis`` values - i.e., case 2 in :ref:`specutils-representation-overview`.
+``spectral_axis`` values (i.e., case 2 in :ref:`specutils-representation-overview`).
 For less-rectified cubes, pre-processing steps (not addressed by specutils at the
 time of this writing) will be necessary to rectify the cubes into that form.
 
@@ -15,7 +15,7 @@ time of this writing) will be necessary to rectify the cubes into that form.
 Loading a cube
 ==============
 
-We'll use the example cube data ``MaNGA cube``, and load the data from the
+We'll use a ``MaNGA cube`` for our example, and load the data from the
 repository directly into a new ``Spectrum1D`` object:
 
 .. code-block:: python
@@ -128,8 +128,9 @@ Moments
 =======
 
 The `~specutils.analysis.moment` function can be used to compute moments of any order
-along one of the cube's axis. By default, ``axis=2`` (or alternatively, ``axis=-1``)
-is used to compute moments along the spectral axis.
+along one of the cube's axes. By default, ``axis=-1``, which computes moments
+along the spectral axis (remember that the spectral axis is always last in a
+:class:`~specutils.Spectrum1D`).
 
 .. code-block:: python
 
