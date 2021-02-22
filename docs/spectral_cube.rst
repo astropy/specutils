@@ -110,7 +110,7 @@ Spectral Bounding Region
 ========================
 
 The `~specutils.manipulation.extract_bounding_spectral_region` function can be used to
-extract the bounding region that encompases a set of disjoint `~specutils.spectra.SpectralRegion`
+extract the bounding region that encompases a set of disjoint `~specutils.SpectralRegion`
 instances, or a composite instance of `~specutils.spectra.SpectralRegion` that contains
 disjoint sub-regions.
 
