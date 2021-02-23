@@ -141,3 +141,62 @@ along the spectral axis (remember that the spectral axis is always last in a
     >>> m[30:33,30:33] #doctest:+SKIP
     [[6452.6131, 6462.6506, 6481.2816], [6464.6792, 6479.4128, 6514.6099],
      [6486.7277, 6526.3187, 6567.3308]]A˚
+
+
+Use Case
+========
+
+Example of computing moment maps for specific wavelength ranges in a
+cube, using `~specutils.manipulation.spectral_slab` and
+`~specutils.analysis.moment`.
+
+.. plot::
+    :include-source:
+    :align: center
+    :context: close-figs
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import astropy.units as u
+    from astropy.utils.data import download_file
+    from specutils import Spectrum1D, SpectralRegion
+    from specutils.analysis import moment
+    from specutils.manipulation import spectral_slab
+
+    filename = "https://stsci.box.com/shared/static/28a88k1qfipo4yxc4p4d40v4axtlal8y.fits"
+    fn = download_file(filename, cache=True)
+    spec1d = Spectrum1D.read(fn)
+
+    # Extract H-alpha sub-cube for moment maps using spectral_slab
+    subspec = spectral_slab(spec1d, 6745.*u.AA, 6765*u.AA)
+    ha_wave = subspec.spectral_axis
+
+    # Extract wider sub-cube covering H-alpha and [N II] using spectral_slab
+    subspec_wide = spectral_slab(spec1d, 6705.*u.AA, 6805*u.AA)
+    ha_wave_wide= subspec_wide.spectral_axis
+
+    # Convert flux density to microJy and correct negative flux offset for
+    # this particular dataset
+    ha_flux = (np.sum(subspec.flux.value, axis=(0,1)) + 0.0093) * 1.0E-6*u.Jy
+    ha_flux_wide = (np.sum(subspec_wide.flux.value, axis=(0,1)) + 0.0093) * 1.0E-6*u.Jy
+
+    # Compute moment maps for H-alpha line
+    moment0_halpha = moment(subspec, order=0)
+    moment1_halpha = moment(subspec, order=1)
+
+    # Convert moment1 from AA to velocity
+    # H-alpha is redshifted to 6750.5AA for this galaxy
+    vel_map = 3.0E5 * (moment1_halpha.value - 6750.5) / 6750.5
+
+    # Plot results in 3 panels (subspec_wide,  H-alpha line flux, H-alpha velocity map)
+    f,(ax1,ax2,ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    ax1.plot(ha_wave_wide, (ha_flux_wide)*1000.)
+    ax1.set_xlabel('Angstrom', fontsize=14)
+    ax1.set_ylabel('uJy', fontsize=14)
+    ax1.tick_params(axis="both", which='major', labelsize=14, length=8, width=2, direction='in', top=True, right=True)
+    ax2.imshow(moment0_halpha.value)
+    ax2.set_title('moment = 0')
+    ax2.set_xlabel('x pixels', fontsize=14)
+    ax3.imshow(vel_map, vmin=100., vmax=2000., cmap=plt.get_cmap('flag'))
+    ax3.set_title('moment = 1')
+    ax3.set_xlabel('x pixels', fontsize=14)
