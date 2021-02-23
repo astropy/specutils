@@ -193,6 +193,43 @@ class TestSingleSplit:
         assert spectra[4].meta.get("label") is not None
         assert spectra[4].meta.get("header") is not None
 
+    @remote_access([{'id': REMOTE_ID, 'filename': OZDES_TEST_FILENAME}])
+    def test_ozdes_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="OzDES")
+
+        # The test file has the combined obs, and 4 other sets
+        assert len(spectra) == 5
+
+        assert spectra[0].flux.unit == u.count / u.Angstrom
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+        assert spectra[0].meta.get("label") is None
+        assert spectra[0].meta.get("header") is not None
+
+        assert spectra[1].flux.unit == u.count / u.Angstrom
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[1].uncertainty, VarianceUncertainty)
+        assert spectra[1].meta.get("label") is not None
+        assert spectra[1].meta.get("header") is not None
+
+        assert spectra[2].flux.unit == u.count / u.Angstrom
+        assert spectra[2].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[2].uncertainty, VarianceUncertainty)
+        assert spectra[2].meta.get("label") is not None
+        assert spectra[2].meta.get("header") is not None
+
+        assert spectra[3].flux.unit == u.count / u.Angstrom
+        assert spectra[3].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[3].uncertainty, VarianceUncertainty)
+        assert spectra[3].meta.get("label") is not None
+        assert spectra[3].meta.get("header") is not None
+
+        assert spectra[4].flux.unit == u.count / u.Angstrom
+        assert spectra[4].spectral_axis.unit == u.Angstrom
+        assert isinstance(spectra[4].uncertainty, VarianceUncertainty)
+        assert spectra[4].meta.get("label") is not None
+        assert spectra[4].meta.get("header") is not None
+
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2QZ_TEST_FILENAME}])
     def test_gama_2qz(self, remote_data_path):
         spectra = SpectrumList.read(
