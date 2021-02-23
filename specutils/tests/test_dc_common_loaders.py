@@ -209,12 +209,66 @@ class TestSingleSplit:
         assert spectra[0].meta.get("label") is not None
         assert spectra[0].meta.get("header") is not None
 
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2QZ_TEST_FILENAME}])
+    def test_gama_2qz_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="GAMA-2QZ")
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2QZ_TEST_FILENAME}])
+    @pytest.mark.xfail(reason="Format is ambiguous")
+    def test_gama_2qz_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2SLAQ_QSO_TEST_FILENAME}])
     def test_2slaq_qso(self, remote_data_path):
         spectra = SpectrumList.read(
             remote_data_path, format=loaders.SINGLE_SPLIT_LABEL,
             **GAMA_2SLAQ_QSO_CONFIG
         )
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2SLAQ_QSO_TEST_FILENAME}])
+    def test_2slaq_qso_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="GAMA-2SLAQ-QSO")
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2SLAQ_QSO_TEST_FILENAME}])
+    @pytest.mark.xfail(reason="Format is ambiguous")
+    def test_2slaq_qso_normalised(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 1
 
         assert spectra[0].flux.unit == u.count
@@ -242,12 +296,66 @@ class TestSingleSplit:
         assert spectra[0].meta.get("label") is not None
         assert spectra[0].meta.get("header") is not None
 
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_GAMA_LT_TEST_FILENAME}])
+    def test_gama_lt_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="GAMA-LT")
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert spectra[0].uncertainty is None
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_GAMA_LT_TEST_FILENAME}])
+    @pytest.mark.xfail(reason="Format is ambiguous")
+    def test_gama_lt_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert spectra[0].uncertainty is None
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_WIGGLEZ_TEST_FILENAME}])
     def test_gama_wigglez(self, remote_data_path):
         spectra = SpectrumList.read(
             remote_data_path, format=loaders.SINGLE_SPLIT_LABEL,
             **GAMA_WIGGLEZ_CONFIG
         )
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_WIGGLEZ_TEST_FILENAME}])
+    def test_gama_wigglez_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="GAMA-WiggleZ")
+        assert len(spectra) == 1
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, VarianceUncertainty)
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_WIGGLEZ_TEST_FILENAME}])
+    @pytest.mark.xfail(reason="Format is ambiguous")
+    def test_gama_wigglez_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 1
 
         assert spectra[0].flux.unit == u.count
@@ -286,12 +394,94 @@ class TestMultilineSingle:
         assert spectra[2].meta.get("label") is not None
         assert spectra[2].meta.get("header") is not None
 
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_GAMA_TEST_FILENAME}])
+    def test_gama_gama_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="GAMA")
+        assert len(spectra) == 3
+
+        assert spectra[0].flux.unit == u.Unit("10^-17 erg/s/cm^2/A")
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert spectra[1].flux.unit == u.count
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+        assert spectra[2].flux.unit == u.count
+        assert spectra[2].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, StdDevUncertainty)
+        assert isinstance(spectra[1].uncertainty, StdDevUncertainty)
+        assert spectra[2].uncertainty is None
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+        assert spectra[1].meta.get("label") is not None
+        assert spectra[1].meta.get("header") is not None
+        assert spectra[2].meta.get("label") is not None
+        assert spectra[2].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_GAMA_TEST_FILENAME}])
+    def test_gama_gama_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+        assert len(spectra) == 3
+
+        assert spectra[0].flux.unit == u.Unit("10^-17 erg/s/cm^2/A")
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert spectra[1].flux.unit == u.count
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+        assert spectra[2].flux.unit == u.count
+        assert spectra[2].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, StdDevUncertainty)
+        assert isinstance(spectra[1].uncertainty, StdDevUncertainty)
+        assert spectra[2].uncertainty is None
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+        assert spectra[1].meta.get("label") is not None
+        assert spectra[1].meta.get("header") is not None
+        assert spectra[2].meta.get("label") is not None
+        assert spectra[2].meta.get("header") is not None
+
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_MGC_TEST_FILENAME}])
     def test_gama_mgc(self, remote_data_path):
         spectra = SpectrumList.read(
             remote_data_path, format=loaders.MULTILINE_SINGLE_LABEL,
             **GAMA_MGC_CONFIG
         )
+        assert len(spectra) == 2
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert spectra[1].flux.unit == u.count
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, StdDevUncertainty)
+        assert spectra[1].uncertainty is None
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+        assert spectra[1].meta.get("label") is not None
+        assert spectra[1].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_MGC_TEST_FILENAME}])
+    def test_gama_mgc_named_loader(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path, format="GAMA-MGC")
+        assert len(spectra) == 2
+
+        assert spectra[0].flux.unit == u.count
+        assert spectra[0].spectral_axis.unit == u.Angstrom
+        assert spectra[1].flux.unit == u.count
+        assert spectra[1].spectral_axis.unit == u.Angstrom
+
+        assert isinstance(spectra[0].uncertainty, StdDevUncertainty)
+        assert spectra[1].uncertainty is None
+
+        assert spectra[0].meta.get("label") is not None
+        assert spectra[0].meta.get("header") is not None
+        assert spectra[1].meta.get("label") is not None
+        assert spectra[1].meta.get("header") is not None
+
+    @remote_access([{'id': REMOTE_ID, 'filename': GAMA_MGC_TEST_FILENAME}])
+    def test_gama_mgc_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 2
 
         assert spectra[0].flux.unit == u.count
