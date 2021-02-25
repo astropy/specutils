@@ -5,7 +5,8 @@ from scipy.interpolate import CubicSpline
 from ..spectra import Spectrum1D
 
 
-def spline_replace(spectrum, spline_knots, extrapolation_treatment='data_fill'):
+def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
+                   interpolate_uncertainty=True):
     """
     Generates a new spectrum with a region replaced by a smooth spline.
 
@@ -15,7 +16,7 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='data_fill'):
     spectrum : `~specutils.Spectrum1D`
         The spectrum to be modified.
 
-    spline_knots : array of `~astropy.units.Quantity`
+    spline_knots : 1d `~astropy.units.Quantity`
         List of spectral axis values to be used as spline knots.
         They all should share the same units, which can be different
         from the units of the input spectrum spectral axis.
@@ -25,17 +26,16 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='data_fill'):
         the spline knots. Default is ``'data_fill'`` to have points filled
         with the input flux values. ``'zero_fill'`` sets them to zero.
 
+    interpolate_uncertainty : bool
+        If True, the uncertainty is also interpolated over the replaced
+        segment.
+
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
         The spectrum with the region replaced by spline values, and data
         values or zeros outside the spline region. The spectral axis will
         have the same units as the spline knots.
-
-    Notes
-    -----
-    The uncertainty attribute, if present in the input spectrum, is not
-    carried over into the output.
 
     Examples
     --------
@@ -68,14 +68,39 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='data_fill'):
                                 extrapolate=False)
     out_flux_val = flux_spline_2(new_spectral_axis.value)
 
+    # Do the same in case we want to interpolate the uncertainty.
+    # Otherwise, do not propagate uncertainty into output.
+    out_uncert_val = None
+    if spectrum.uncertainty is not None and interpolate_uncertainty:
+        uncert_spline = CubicSpline(new_spectral_axis.value, spectrum.uncertainty.quantity,
+                                  extrapolate=False)
+        spline_knots_uncert_val = uncert_spline(spline_knots.value)
+
+        uncert_spline_2 = CubicSpline(spline_knots.value, spline_knots_uncert_val,
+                                    extrapolate=False)
+        out_uncert_val = uncert_spline_2(new_spectral_axis.value)
+
     # Careful with units handling from here on: astropylts handles the
     # np.where filter differently than the other supported environments.
 
     # Initialize with zero fill.
     out = np.where(np.isnan(out_flux_val), 0., out_flux_val) * spectrum.flux.unit
 
+    # Fill extrapolated regions with original flux
     if extrapolation_treatment == 'data_fill':
         data = np.where(np.isnan(out_flux_val), spectrum.flux.value, 0.)
         out += (data * spectrum.flux.unit)
 
-    return Spectrum1D(spectral_axis=new_spectral_axis, flux=out)
+    # Do the same in case we want to interpolate the uncertainty.
+    # Otherwise, do not propagate uncertainty into output.
+    new_unc = None
+    if out_uncert_val is not None:
+        out_uncert = np.where(np.isnan(out_uncert_val), 0., out_uncert_val) * \
+                     spectrum.uncertainty.unit
+        data = np.where(np.isnan(out_uncert_val), spectrum.uncertainty.quantity, 0.)
+        out_uncert += data
+
+        new_unc = spectrum.uncertainty.__class__(array=out_uncert,
+                                                 unit=spectrum.uncertainty.unit)
+
+    return Spectrum1D(spectral_axis=new_spectral_axis, flux=out, uncertainty=new_unc)
