@@ -97,8 +97,8 @@ def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
     if out_uncert_val is not None:
         out_uncert = np.where(np.isnan(out_uncert_val), 0., out_uncert_val) * \
                      spectrum.uncertainty.unit
-        data = np.where(np.isnan(out_uncert_val), spectrum.uncertainty.quantity, 0.)
-        out_uncert += data
+        data = np.where(np.isnan(out_uncert_val), spectrum.uncertainty.quantity.value, 0.)
+        out_uncert += (data * spectrum.uncertainty.unit)
 
         new_unc = spectrum.uncertainty.__class__(array=out_uncert,
                                                  unit=spectrum.uncertainty.unit)
