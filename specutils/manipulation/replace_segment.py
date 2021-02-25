@@ -5,7 +5,7 @@ from scipy.interpolate import CubicSpline
 from ..spectra import Spectrum1D
 
 
-def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
+def spline_replace(spectrum, spline_knots, extrapolation_treatment='data_fill'):
     """
     Generates a new spectrum with a region replaced by a smooth spline.
 
@@ -22,8 +22,8 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
 
     extrapolation_treatment : str
         What to do with data off the edges of the region encompassed by
-        the spline knots. Can be ``'data_fill'`` to have points filled
-        with the input flux values, or ``'zero_fill'`` to be set to zero.
+        the spline knots. Default is ``'data_fill'`` to have points filled
+        with the input flux values. ``'zero_fill'`` sets them to zero.
 
     Returns
     -------
@@ -71,7 +71,7 @@ def spline_replace(spectrum, spline_knots, extrapolation_treatment='zero_fill'):
     # Careful with units handling from here on: astropylts handles the
     # np.where filter differently than the other supported environments.
 
-    # default behavior (zero_fill).
+    # Initialize with zero fill.
     out = np.where(np.isnan(out_flux_val), 0., out_flux_val) * spectrum.flux.unit
 
     if extrapolation_treatment == 'data_fill':

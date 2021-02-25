@@ -15,14 +15,14 @@ def test_replace_spline():
 
     spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
 
-    # with data fill, recovers the input flux
-    result = spline_replace(input_spectrum, spline_knots, extrapolation_treatment='data_fill')
+    # with default extrapolation, recovers the input flux
+    result = spline_replace(input_spectrum, spline_knots)
 
     assert_quantity_allclose(result.flux, flux_val*u.mJy)
     assert_quantity_allclose(result.spectral_axis, input_spectrum.spectral_axis)
 
-    # with default extrapolation, fills with zeros.
-    result = spline_replace(input_spectrum, spline_knots)
+    # with zero fill extrapolation, fills with zeros.
+    result = spline_replace(input_spectrum, spline_knots, extrapolation_treatment='zero_fill')
 
     assert_quantity_allclose(result.flux[0], 0.*u.mJy)
     assert_quantity_allclose(result.flux[1], 0.*u.mJy)
