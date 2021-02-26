@@ -6,7 +6,7 @@ from ..spectra import Spectrum1D
 
 
 def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
-                   interpolate_uncertainty=True):
+                  interpolate_uncertainty=True):
     """
     Generates a new spectrum with a region replaced by a smooth spline.
 
@@ -27,8 +27,8 @@ def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
         with the input flux values. ``'zero_fill'`` sets them to zero.
 
     interpolate_uncertainty : bool
-        If True, the uncertainty is also interpolated over the replaced
-        segment.
+        If True, the uncertainty, if present in the input spectrum, is
+        also interpolated over the replaced segment.
 
     Returns
     -------
@@ -57,28 +57,16 @@ def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
     # Output spectral axis will have the same units as spline knots
     new_spectral_axis = spectrum.spectral_axis.to(spline_knots.unit)
 
-    # Interpolate on input data to get flux at each spline knot
-    flux_spline = CubicSpline(new_spectral_axis.value, spectrum.flux.value,
-                              extrapolate=False)
-    spline_knots_flux_val = flux_spline(spline_knots.value)
-
-    # Now, evaluate spline over spline knots only, and use it
-    # to compute flux at each spectral value in input spectrum.
-    flux_spline_2 = CubicSpline(spline_knots.value, spline_knots_flux_val,
-                                extrapolate=False)
-    out_flux_val = flux_spline_2(new_spectral_axis.value)
+    # Compute output flux values interpolated over the spline knots.
+    out_flux_val = _interpolate_spline(spectrum.flux.value, new_spectral_axis,
+                                       spline_knots)
 
     # Do the same in case we want to interpolate the uncertainty.
     # Otherwise, do not propagate uncertainty into output.
     out_uncert_val = None
     if spectrum.uncertainty is not None and interpolate_uncertainty:
-        uncert_spline = CubicSpline(new_spectral_axis.value, spectrum.uncertainty.quantity,
-                                  extrapolate=False)
-        spline_knots_uncert_val = uncert_spline(spline_knots.value)
-
-        uncert_spline_2 = CubicSpline(spline_knots.value, spline_knots_uncert_val,
-                                    extrapolate=False)
-        out_uncert_val = uncert_spline_2(new_spectral_axis.value)
+        out_uncert_val = _interpolate_spline(spectrum.uncertainty.quantity,
+                                             new_spectral_axis, spline_knots)
 
     # Careful with units handling from here on: astropylts handles the
     # np.where filter differently than the other supported environments.
@@ -104,3 +92,23 @@ def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
                                                  unit=spectrum.uncertainty.unit)
 
     return Spectrum1D(spectral_axis=new_spectral_axis, flux=out, uncertainty=new_unc)
+
+
+def _interpolate_spline(input_values, spectral_axis, spline_knots):
+
+    # Create spline to interpolate on input data.
+    # Knots are the spectral axis values themselves.
+    spline_1 = CubicSpline(spectral_axis.value, input_values,
+                           extrapolate=False)
+
+    # Now use that spline interpolator to compute interpolated
+    # values from the input array at each spline knot.
+    values_at_spline_knots = spline_1(spline_knots.value)
+
+    # Finally, compute another spline interpolator over only the values
+    # at spline knots, and use it to interpolate the output value at each
+    # point on the spectral axis.
+    spline_2 = CubicSpline(spline_knots.value, values_at_spline_knots,
+                           extrapolate=False)
+
+    return spline_2(spectral_axis.value)
