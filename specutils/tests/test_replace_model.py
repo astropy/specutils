@@ -2,10 +2,13 @@ import numpy as np
 
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty
+from astropy.modeling import models
+
 from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..manipulation.replace_model import model_replace
+from ..fitting import fit_lines
 
 
 def test_replace_spline():
@@ -79,3 +82,25 @@ def test_replace_spline_uncert_zerofill():
     assert result.flux.unit == result.uncertainty.unit
 
     assert_quantity_allclose(result.uncertainty.quantity, uncert_val*u.mJy)
+#
+#
+# def test_replace_fitted_model():
+#     wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+#     flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
+#     uncert_val = flux_val / 10.
+#
+#     uncert = StdDevUncertainty(uncert_val * u.mJy)
+#
+#     input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
+#                                 uncertainty=uncert)
+#
+#     model = models.Gaussian1D(10, 5.6, 1.2)
+#     fitted_model = fit_lines(input_spectrum, model)
+#
+#     result = model_replace(input_spectrum, fitted_model)
+#
+#     assert isinstance(result.uncertainty, StdDevUncertainty)
+#     assert result.flux.unit == result.uncertainty.unit
+#     assert_quantity_allclose(result.flux, flux_val*u.mJy)
+#     assert_quantity_allclose(result.spectral_axis, input_spectrum.spectral_axis)
+#     assert_quantity_allclose(result.uncertainty.quantity, uncert_val*u.mJy)

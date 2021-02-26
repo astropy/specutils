@@ -1,11 +1,12 @@
 import numpy as np
 
 from scipy.interpolate import CubicSpline
+from astropy.units import Quantity
 
 from ..spectra import Spectrum1D
 
 
-def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
+def model_replace(spectrum, model, extrapolation_treatment='data_fill',
                   interpolate_uncertainty=True):
     """
     Generates a new spectrum with a region replaced by a smooth spline.
@@ -16,7 +17,7 @@ def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
     spectrum : `~specutils.Spectrum1D`
         The spectrum to be modified.
 
-    spline_knots : 1d `~astropy.units.Quantity`
+    model : 1d `~astropy.units.Quantity`
         List of spectral axis values to be used as spline knots.
         They all should share the same units, which can be different
         from the units of the input spectrum spectral axis.
@@ -52,21 +53,24 @@ def model_replace(spectrum, spline_knots, extrapolation_treatment='data_fill',
 
     """
     if extrapolation_treatment not in ('data_fill', 'zero_fill'):
-        raise ValueError('invalid extrapolation_treatment value: ' + str(extrapolation_treatment))
+        raise ValueError('invalid extrapolation_treatment value: ' + \
+                         str(extrapolation_treatment))
 
-    # Output spectral axis will have the same units as spline knots
-    new_spectral_axis = spectrum.spectral_axis.to(spline_knots.unit)
+    # If input model is an array with spline knots, output spectral
+    # axis will have the same units as knots.
+    new_spectral_axis = spectrum.spectral_axis
+    if isinstance(model, Quantity):
+        new_spectral_axis = spectrum.spectral_axis.to(model.unit)
 
     # Compute output flux values interpolated over the spline knots.
-    out_flux_val = _interpolate_spline(spectrum.flux.value, new_spectral_axis,
-                                       spline_knots)
+    out_flux_val = _interpolate_spline(spectrum.flux.value, new_spectral_axis, model)
 
     # Do the same in case we want to interpolate the uncertainty.
     # Otherwise, do not propagate uncertainty into output.
     out_uncert_val = None
     if spectrum.uncertainty is not None and interpolate_uncertainty:
         out_uncert_val = _interpolate_spline(spectrum.uncertainty.quantity,
-                                             new_spectral_axis, spline_knots)
+                                             new_spectral_axis, model)
 
     # Careful with units handling from here on: astropylts handles the
     # np.where filter differently than the other supported environments.
