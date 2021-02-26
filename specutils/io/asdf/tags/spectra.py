@@ -112,4 +112,3 @@ class SpectrumListType(SpecutilsType):
         assert len(old) == len(new)
         for x, y in zip(old, new):
             Spectrum1DType.assert_equal(x, y)
-
