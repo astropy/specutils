@@ -9,7 +9,6 @@ omit =
     specutils/*setup*
     specutils/*tests/*
     specutils/version*
-    specutils/extern/*
 
 [report]
 exclude_lines =

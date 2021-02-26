@@ -3,9 +3,9 @@ import logging
 import astropy.units as u
 import numpy as np
 from astropy.nddata import NDUncertainty, StdDevUncertainty
+from astropy.coordinates import SpectralCoord
 
 from .spectrum1d import Spectrum1D
-from ..extern.spectralcoord import SpectralCoord
 from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
