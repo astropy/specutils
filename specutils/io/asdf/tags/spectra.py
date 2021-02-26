@@ -2,8 +2,6 @@
 Contains classes that serialize spectral data types into ASDF representations.
 """
 
-from distutils.version import LooseVersion
-
 from astropy import __version__ as astropy_version
 
 from numpy.testing import assert_allclose
