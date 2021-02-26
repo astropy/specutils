@@ -53,7 +53,7 @@ def model_replace(spectrum, model, extrapolation_treatment='data_fill',
 
     """
     if extrapolation_treatment not in ('data_fill', 'zero_fill'):
-        raise ValueError('invalid extrapolation_treatment value: ' + \
+        raise ValueError('invalid extrapolation_treatment value: ' +
                          str(extrapolation_treatment))
 
     # If input model is an array with spline knots, output spectral
