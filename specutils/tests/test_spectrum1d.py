@@ -4,10 +4,10 @@ import gwcs
 import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
+from astropy.coordinates import SpectralCoord
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
-from ..extern.spectralcoord import SpectralCoord
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,

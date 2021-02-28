@@ -4,11 +4,10 @@ import pytest
 from astropy import time
 from astropy.constants import c
 from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, GCRS, Galactic,
-                                 CartesianDifferential,
+                                 CartesianDifferential, SpectralCoord,
                                  get_body_barycentric_posvel,
                                  FK5, CartesianRepresentation)
 
-from ..extern.spectralcoord import SpectralCoord
 from ..spectra.spectral_axis import SpectralAxis
 from ..spectra.spectrum1d import Spectrum1D
 
