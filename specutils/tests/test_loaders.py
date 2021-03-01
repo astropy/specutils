@@ -44,6 +44,9 @@ else:
     HAS_LZMA = True
 
 
+EBOSS_SPECTRUM_URL = 'https://data.sdss.org/sas/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/4055/spec-4055-55359-0596.fits'
+
+
 def test_get_loaders_by_extension():
     loader_labels = get_loaders_by_extension('fits')
 
@@ -171,13 +174,13 @@ def test_manga_rss():
 @pytest.mark.remote_data
 def test_sdss_spec():
     sp_pattern = 'spec-4055-55359-0596.fits.'
-    with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
+    with urllib.request.urlopen(EBOSS_SPECTRUM_URL) as response:
         # Read from open file object
         spec = Spectrum1D.read(response, format="SDSS-III/IV spec")
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.size > 0
 
-    with urllib.request.urlopen('https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055') as response:
+    with urllib.request.urlopen(EBOSS_SPECTRUM_URL) as response:
         # On Windows, NamedTemporaryFile cannot be opened a second time while
         #  already being open, so we avoid using that method.
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -248,8 +251,7 @@ def test_sdss_spec_stream():
     """Test direct read and recognition of SDSS-III/IV spec from remote URL,
     i.e. do not rely on filename pattern.
     """
-    sdss_url = 'https://dr14.sdss.org/optical/spectrum/view/data/format%3Dfits/spec%3Dlite?mjd=55359&fiberid=596&plateid=4055'
-    spec = Spectrum1D.read(sdss_url)
+    spec = Spectrum1D.read(EBOSS_SPECTRUM_URL)
 
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
