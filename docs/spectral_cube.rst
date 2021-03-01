@@ -10,6 +10,9 @@ such that one of the axes is entirely spectral and all the spaxels have the same
 ``spectral_axis`` values (i.e., case 2 in :ref:`specutils-representation-overview`).
 For less-rectified cubes, pre-processing steps (not addressed by specutils at the
 time of this writing) will be necessary to rectify the cubes into that form.
+Note, though, that such cubes can be stored in specutils data structures (cases
+3 and 4 in :ref:`specutils-representation-overview`), which support *some* of 
+these behaviors, even though the fulkl set of tools do not yet apply.
 
 
 Loading a cube
