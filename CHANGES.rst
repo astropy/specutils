@@ -1,5 +1,5 @@
-1.2 (unreleased)
-----------------
+1.2
+---
 
 New Features
 ^^^^^^^^^^^^
@@ -9,6 +9,30 @@ New Features
 
 - ``SpectralRegion`` objects can now be created from the ``QTable``
   object returned from the line finding rountines. [#759]
+
+- Include new 6dFGS loaders. [#734]
+
+- Include new OzDES loaders. [#764]
+
+- Include new GAMA survey loaders. [#765]
+
+- Include new GALAH loaders. [#766]
+
+- Include new WiggleZ loaders. [#767]
+
+- Include new 2dF/AAOmega loaders. [#768]
+
+- Add loader to handle IRAF MULTISPEC non-linear 2D WCS. [#708]
+
+- Add ability to extract minimum bounding regions of ``SpectralRegion`` objects. [#755]
+
+- Implement new moment analysis function for specutils objects. [#758]
+
+- Add new spectral slab extraction functionality. [#753]
+
+- Include new loaders for AAT and other Australian surveys. [#719]
+
+- Move from Travis to GitHub actions. [#736]
 
 Bug Fixes
 ^^^^^^^^^
@@ -20,13 +44,47 @@ Bug Fixes
 
 - Fixes to the jwst loaders. [#759]
 
+- Fix handling of ``SpectralCollection`` objects in moment calculations. [#781]
+
+- Fix issue with non-loadable x1d files. [#775]
+
+- Fix WCS handling in SDSS loaders. [#738]
+
+- Fix the property setters for radial velocity and redshift. [#722]
+
+- Fix line test errors and include python 3.9 in tests. [#751]
+
+- Fix smoothing functionality dropping spectrum meta information. [#732]
+
+- Fix region extraction for ``Spectrum1D`` objects with multi-dimensional fluxes. [#724]
+
 Documentation
 ^^^^^^^^^^^^^
+
+- Update SDSS spectrum documentation examples. [#778]
+
+- Include new documentation on working with ``SpectralCube`` objects. [#726, #784]
+
+- Add documentation on spectral cube related functionality. [#783]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Improved error messages when creating ``SpectralRegion`` objects. [#759]
+
+- Improve docstrings and intialization of ``SpectralRegion`` objects. [#770]
+
+- Prevent CI from fast-failing on test failure. [#752]
+
+- Update documentation favicons and ensure color consistency. [#780]
+
+- Remove fallback ``SpectralCoord`` code and rely on upstream. [#786]
+
+- Move remaining loaders to use utility functions for parsing files. [#718]
+
+- Remove unnecessary data reshaping in tabular fits writer. [#730]
+
+- Remove astropy helpers and CI helpers dependencies. [#562]
 
 1.1
 ---
