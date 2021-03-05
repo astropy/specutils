@@ -32,7 +32,8 @@ New Features
 
 - Include new loaders for AAT and other Australian surveys. [#719]
 
-- Move from Travis to GitHub actions. [#736]
+- Improve docstrings and intialization of ``SpectralRegion`` objects. [#770]
+
 
 Bug Fixes
 ^^^^^^^^^
@@ -71,10 +72,6 @@ Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Improved error messages when creating ``SpectralRegion`` objects. [#759]
-
-- Improve docstrings and intialization of ``SpectralRegion`` objects. [#770]
-
-- Prevent CI from fast-failing on test failure. [#752]
 
 - Update documentation favicons and ensure color consistency. [#780]
 
