@@ -5,7 +5,6 @@ import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-from packaging import version
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -246,6 +245,8 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         The first case is handled by the parent class, while the second is
         handled here.
         """
+
+        print(item)
 
         if self.flux.ndim > 1 or (type(item) == tuple and item[0] == Ellipsis):
             if type(item) == tuple:
