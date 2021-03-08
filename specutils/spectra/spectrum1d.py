@@ -8,7 +8,9 @@ from astropy.utils.decorators import lazyproperty
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
+from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
+from ..manipulation import extract_region
 
 __all__ = ['Spectrum1D']
 
@@ -259,6 +261,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     # Slicing on less than the full number of axes means we want
                     # to keep the whole spectral axis
                     spec_item = slice(None, None, None)
+            elif isinstance(item, slice) and (isinstance(item.start, u.Quantity) or
+                    isinstance(item.end, u.Quantity)):
+                # Allow slicing with spectral axis values
+                reg = SpectralRegion(item.start or self.spectral_axis[0],
+                                     item.stop or self.spectral_axis[-1])
+                return extract_region(self, reg)
             else:
                 # Slicing with a single integer or slice uses the leading axis,
                 # so we keep the whole spectral axis, which is last
@@ -272,7 +280,19 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 mask=self.mask[item] if self.mask is not None else None)
 
         if not isinstance(item, slice):
-            item = slice(item, item+1, None)
+            if isinstance(item, u.Quantity):
+                # Allow indexing on a single spectral axis value
+                match = np.where(self.spectral_axis == target)[0]
+                # Should have either 1 or 0 exact matches in the spectral axis
+                if len(match) == 1:
+                    item = slice(match[0], match[0]+1, None)
+                else:
+                    logging.warn("No exact match in spectral axis, returning two"
+                                 " closest points")
+                    closest_lower =  np.argsort(np.abs(w-2.5*u.nm))[0:2].min()
+                    item = slice(closest_lower, closest_lower+2, None)
+            else:
+                item = slice(item, item+1, None)
 
         tmp_spec = super().__getitem__(item)
 
