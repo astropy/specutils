@@ -10,7 +10,6 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-from ..manipulation import extract_region
 
 __all__ = ['Spectrum1D']
 
@@ -262,8 +261,9 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     # to keep the whole spectral axis
                     spec_item = slice(None, None, None)
             elif isinstance(item, slice) and (isinstance(item.start, u.Quantity) or
-                    isinstance(item.end, u.Quantity)):
+                    isinstance(item.stop, u.Quantity)):
                 # Allow slicing with spectral axis values
+                from ..manipulation import extract_region
                 reg = SpectralRegion(item.start or self.spectral_axis[0],
                                      item.stop or self.spectral_axis[-1])
                 return extract_region(self, reg)
@@ -282,17 +282,22 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if not isinstance(item, slice):
             if isinstance(item, u.Quantity):
                 # Allow indexing on a single spectral axis value
-                match = np.where(self.spectral_axis == target)[0]
+                match = np.where(self.spectral_axis == item)[0]
                 # Should have either 1 or 0 exact matches in the spectral axis
                 if len(match) == 1:
-                    item = slice(match[0], match[0]+1, None)
+                    item = slice(match[0], match[0] + 1, None)
                 else:
                     logging.warn("No exact match in spectral axis, returning two"
                                  " closest points")
-                    closest_lower =  np.argsort(np.abs(w-2.5*u.nm))[0:2].min()
-                    item = slice(closest_lower, closest_lower+2, None)
+                    closest_lower =  np.argsort(np.abs(self.spectral_axis - item))[0:2].min()
+                    item = slice(closest_lower, closest_lower + 2, None)
             else:
-                item = slice(item, item+1, None)
+                item = slice(item, item + 1, None)
+        elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
+            from ..manipulation import extract_region
+            reg = SpectralRegion(item.start or self.spectral_axis[0],
+                                 item.stop or self.spectral_axis[-1])
+            return extract_region(self, reg)
 
         tmp_spec = super().__getitem__(item)
 
