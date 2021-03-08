@@ -185,9 +185,9 @@ common spectral axis.
     >>> from specutils import Spectrum1D
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
-    >>> spec_slice = spec[0] #doctest:+SKIP
-    >>> spec_slice.spectral_axis #doctest:+SKIP
-    <Quantity [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
+    >>> spec_slice = spec[0]
+    >>> spec_slice.spectral_axis
+    <SpectralAxis [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
     >>> spec_slice.flux #doctest:+SKIP
     <Quantity [0.72722821, 0.32147784, 0.70256482, 0.04445197, 0.03390352,
            0.50835299, 0.87581725, 0.50270413, 0.08556376, 0.53713355] Jy>
@@ -196,6 +196,39 @@ While the above example only shows two dimensions, this concept generalizes to
 any number of dimensions for `~specutils.Spectrum1D`, as long as the spectral
 axis is always the last.
 
+
+Slicing
+-------
+
+As seen above, `~specutils.Spectrum1D` supports slicing in the same way as any 
+other array-like object. Additionally, a `~specutils.Spectrum1D` can be sliced 
+along the spectral axis using world coordinates. 
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec_slice = spec[5002*u.AA:5006*u.AA]
+    >>> spec_slice.spectral_axis
+    <SpectralAxis [5002., 5003., 5004., 5005., 5006.] Angstrom>
+
+Note that this uses `~specutils.manipulation.extract_region` on the backend,
+which means that the upper bound is inclusive.
+
+Note that slicing on world coordinates for axes other than the spectral axis is
+not currently supported. It is, however, possible to slice on other axes using 
+simple array indices at the same time as slicing the spectral axis based on 
+spectral values.
+
+.. code-block:: python
+
+    >>> from specutils import Spectrum1D
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec_slice = spec[2:4, 5002*u.AA:5006*u.AA]
+    >>> spec_slice.shape
+    (2, 5)
 
 
 Reference/API
