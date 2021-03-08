@@ -267,10 +267,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 # We only allow slicing with world coordinates along the spectral
                 # axis for now
                 for attr in ("start", "stop"):
+                    if getattr(item, attr) is None:
+                        continue
                     if not getattr(item, attr).unit.is_equivalent(u.AA,
                             equivalencies=u.spectral()):
-                        raise ValueError("Slicing with world coordinates is only enabled"
-                                         " for the spectral axis.")
+                        raise ValueError("Slicing with world coordinates is only"
+                                         " enabled for spectral coordinates.")
                         break
                 spec_item = item
             else:
@@ -342,8 +344,15 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         Perform a region extraction given a slice on the spectral axis.
         """
         from ..manipulation import extract_region
-        reg = SpectralRegion(item.start or self.spectral_axis[0],
-                             item.stop or self.spectral_axis[-1])
+        if item.start is None:
+            start = self.spectral_axis[0]
+        else:
+            start = item.start
+        if item.stop is None:
+            stop = self.spectral_axis[-1]
+        else:
+            stop = item.stop
+        reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
     @NDDataRef.mask.setter
