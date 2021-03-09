@@ -20,7 +20,7 @@ manipulating, and analyzing astronomical spectroscopic data. The
 generic data containers and accompanying modules provide a toolbox that the
 astronomical community can use to build more domain-specific packages. For more
 details about the underlying principles, see
-`APE13 <https://github.com/astropy/astropy-APEs/blob/master/APE13.rst>`_, the
+`APE13 <https://github.com/astropy/astropy-APEs/blob/main/APE13.rst>`_, the
 guiding document for spectroscopic development in the Astropy Project.
 
 .. note::

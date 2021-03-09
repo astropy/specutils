@@ -944,7 +944,7 @@ def test_subaru_pfs_loader(tmpdir):
     """Test remote read and automatic recognition of Subaru PFS spec from URL.
     """
     pfs = "pfsObject-00000-0,0-000-00000001-01-0x395428ab.fits"
-    url = f"https://github.com/Subaru-PFS/datamodel/raw/master/examples/{pfs}"
+    url = f"https://github.com/Subaru-PFS/datamodel/raw/main/examples/{pfs}"
 
     assert subaru_pfs_spec.identify_pfs_spec(url, url)
 

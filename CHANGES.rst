@@ -363,5 +363,5 @@ Bug Fixes
 ----------------
 
 This was the first release of specutils executing the
-[APE14](https://github.com/astropy/astropy-APEs/blob/master/APE14.rst)
+[APE14](https://github.com/astropy/astropy-APEs/blob/main/APE14.rst)
 plan (i.e. the "new" specutils) and therefore intended for broad use.
