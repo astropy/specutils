@@ -1,8 +1,9 @@
 Specutils
 =========
 
-.. image:: https://travis-ci.org/astropy/specutils.svg?branch=main
-    :target: https://travis-ci.org/astropy/specutils
+.. image:: https://github.com/astropy/specutils/workflows/CI/badge.svg
+    :target: https://github.com/astropy/specutils/actions
+    :alt: GitHub Actions CI Status
 
 .. image:: https://readthedocs.org/projects/specutils/badge/?version=latest
     :target: http://specutils.readthedocs.io/en/latest/?badge=latest

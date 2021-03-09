@@ -1,7 +1,7 @@
 """
 Loader for PFS spectrum files.
 
-https://github.com/Subaru-PFS/datamodel/blob/main/datamodel.txt
+https://github.com/Subaru-PFS/datamodel/blob/master/datamodel.txt
 """
 import os
 import re
