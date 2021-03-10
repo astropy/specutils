@@ -352,7 +352,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
             stop = self.spectral_axis[-1]
         else:
             # Force the upper bound to be open, as in normal python array slicing
-            exact_match = np.where(self.spectral_axis == stop)
+            exact_match = np.where(self.spectral_axis == item.stop)
             if len(exact_match[0]) == 1:
                 stop_index = exact_match[0][0] - 1
                 stop = self.spectral_axis[stop_index]

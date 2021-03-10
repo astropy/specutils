@@ -211,10 +211,7 @@ along the spectral axis using world coordinates.
     >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
     >>> spec_slice = spec[5002*u.AA:5006*u.AA]
     >>> spec_slice.spectral_axis
-    <SpectralAxis [5002., 5003., 5004., 5005., 5006.] Angstrom>
-
-Note that this uses `~specutils.manipulation.extract_region` on the backend,
-which means that the upper bound is inclusive.
+    <SpectralAxis [5002., 5003., 5004., 5005.] Angstrom>
 
 Note that slicing on world coordinates for axes other than the spectral axis is
 not currently supported. It is, however, possible to slice on other axes using 
@@ -228,7 +225,7 @@ spectral values.
     >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
     >>> spec_slice = spec[2:4, 5002*u.AA:5006*u.AA]
     >>> spec_slice.shape
-    (2, 5)
+    (2, 4)
 
 
 Reference/API
