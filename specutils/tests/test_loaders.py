@@ -173,7 +173,7 @@ def test_manga_rss():
 
 @pytest.mark.remote_data
 def test_sdss_spec():
-    sp_pattern = 'spec-4055-55359-0596.fits.'
+    sp_pattern = 'spec-4055-55359-0596.fits'
     with urllib.request.urlopen(EBOSS_SPECTRUM_URL) as response:
         # Read from open file object
         spec = Spectrum1D.read(response, format="SDSS-III/IV spec")
@@ -190,6 +190,7 @@ def test_sdss_spec():
                 shutil.copyfileobj(response, tmp_file)
 
                 # Read from local disk via filename
+                print(tmp_file.name)
                 spec = Spectrum1D.read(tmp_file.name)
 
                 assert isinstance(spec, Spectrum1D)
@@ -210,7 +211,7 @@ def test_sdss_spec():
 
 @pytest.mark.remote_data
 def test_sdss_spspec():
-    sp_pattern = 'spSpec-51957-0273-016.fit.'
+    sp_pattern = 'spSpec-51957-0273-016.fit'
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
         # Read from open file object
         spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
