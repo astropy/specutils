@@ -298,7 +298,7 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
 
         if not isinstance(item, slice):
             if isinstance(item, u.Quantity):
-                raise ValueError("Indexing on single spectral axis values is not"
+                raise ValueError("Indexing on a single spectral axis values is not"
                                  " currently allowed, please use a slice.")
             else:
                 item = slice(item, item + 1, None)
@@ -351,7 +351,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         if item.stop is None:
             stop = self.spectral_axis[-1]
         else:
-            stop = item.stop
+            # Force the upper bound to be open, as in normal python array slicing
+            exact_match = np.where(self.spectral_axis == stop)
+            if len(exact_match[0]) == 1:
+                stop_index = exact_match[0][0] - 1
+                stop = self.spectral_axis[stop_index]
+            else:
+                stop = item.stop
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
