@@ -1,3 +1,16 @@
+1.3.x (unreleased)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 1.2
 ---
 
