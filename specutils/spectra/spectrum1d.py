@@ -107,12 +107,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
 
             # Change the flux array from bare ndarray to a Quantity
             q_flux = flux.data*u.Unit(flux.unit)
+
             # Spectrum1D expects the spectral axis to be last
-
             q_flux = np.moveaxis(q_flux, temp_axes[0], -1)
+            wcs = flux.wcs.swapaxes(temp_axes[0], -1)
 
-            self.__init__(flux=q_flux, spectral_axis=spectral_axis,
-                          mask=flux.mask, uncertainty=flux.uncertainty)
+            self.__init__(flux=q_flux, wcs=wcs, mask=flux.mask,
+                          uncertainty=flux.uncertainty)
             return
 
         # If the mask kwarg is not passed to the constructor, but the flux array
@@ -230,7 +231,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
 
                 self._spectral_axis = spectral_axis
 
-            wcs = gwcs_from_array(self._spectral_axis)
+            if wcs is None:
+                wcs = gwcs_from_array(self._spectral_axis)
+
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
@@ -247,7 +250,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         if spectral_axis is None:
             # If spectral_axis wasn't provided, set _spectral_axis based on
             # the WCS
-            spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+            try:
+                spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+            except ValueError:
+                print("Falling back to wcs.spectral")
+                spec_axis = self.wcs.spectral.pixel_to_world(np.arange(self.flux.shape[-1]))
 
             if spec_axis.unit.is_equivalent(u.one):
                 spec_axis = spec_axis * u.pixel
