@@ -9,7 +9,7 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-from ..extern.spectralcoord import SpectralCoord
+from astropy.coordinates import SpectralCoord
 from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
