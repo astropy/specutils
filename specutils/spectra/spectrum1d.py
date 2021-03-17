@@ -340,7 +340,14 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
             if isinstance(item, u.Quantity):
                 raise ValueError("Indexing on a single spectral axis values is not"
                                  " currently allowed, please use a slice.")
+            # Handle tuple slice as input by NDCube crop method
+            elif isinstance(item, tuple):
+                if len(item) == 1 and isinstance(item[0], slice):
+                    item = item[0]
+                else:
+                    raise ValueError(f"Unclear how to slice with tuple {item}")
             else:
+                print(f"{type(item)}: {item}")
                 item = slice(item, item + 1, None)
         elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
             return self._spectral_slice(item)
