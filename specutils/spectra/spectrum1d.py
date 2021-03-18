@@ -40,7 +40,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         dimension of flux, or one greater than the last dimension of flux
         if specifying bin edges.
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
-        WCS information object.
+        WCS information object that either has a spectral component or is
+        only spectral.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
     rest_value : `~astropy.units.Quantity`
@@ -88,29 +89,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         elif isinstance(flux, NDCube):
             if flux.unit is None:
                 raise ValueError("Input NDCube missing unit parameter")
-            temp_axes = []
-
-            # NDCube uses SpectralCoord for its spectral axis
-            for c in flux.axis_world_coords():
-                if type(c) == SpectralCoord:
-                    spectral_axis = c
-                    break
-
-            # Get the index of the spectral axis in case we need to reorder
-            phys_axes = flux.array_axis_physical_types
-            for i in range(len(phys_axes)):
-                if phys_axes[i][0][0:2] == "em":
-                    temp_axes.append(i)
-            if len(temp_axes) != 1:
-                raise ValueError("Input NDCube must have exactly one axis "
-                                 "with spectral units")
 
             # Change the flux array from bare ndarray to a Quantity
             q_flux = flux.data*u.Unit(flux.unit)
-
-            # Spectrum1D expects the spectral axis to be last
-            q_flux = np.moveaxis(q_flux, temp_axes[0], -1)
-            wcs = flux.wcs.swapaxes(temp_axes[0], -1)
 
             self.__init__(flux=q_flux, wcs=wcs, mask=flux.mask,
                           uncertainty=flux.uncertainty)
@@ -199,6 +180,35 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                     "flux axis ({})".format(spectral_axis.shape[0],
                                             flux.shape[-1]))
 
+        # If a WCS is provided, check that the spectral axis is last and reorder
+        # the arrays if not
+        if wcs is not None:
+            temp_axes = []
+            phys_axes = wcs.world_axis_physical_types
+            for i in range(len(phys_axes)):
+                if phys_axes[i][0:2] == "em":
+                    temp_axes.append(i)
+            if len(temp_axes) != 1:
+                raise ValueError("Input WCS must have exactly one axis "
+                                 "with spectral units")
+
+            # Due to FITS conventions, a WCS with spectral axis first corresponds
+            # to a flux array with spectral axis last.
+            if temp_axes[0] != 0:
+                logging.warn("Input WCS indicates that the spectral axis is not"
+                             " last. Reshaping arrays to put spectral axis last.")
+                wcs = wcs.swapaxes(0, temp_axes[0])
+                if flux is not None:
+                    print(len(flux.shape), temp_axes[0])
+                    flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)
+                if "mask" in kwargs:
+                    kwargs["mask"] = np.moveaxis(kwargs["mask"],
+                                                 len(mask.shape)-temp_axes[0]-1, -1)
+                if "uncertainty" in kwargs:
+                    kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
+                                                        len(uncertainty.shape)-temp_axes[0]-1,
+                                                        -1)
+
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
         # then be used behind-the-scenes for all specutils operations.
@@ -248,13 +258,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         # If no spectral_axis was provided, create a SpectralCoord based on
         # the WCS
         if spectral_axis is None:
-            # If spectral_axis wasn't provided, set _spectral_axis based on
-            # the WCS
-            try:
-                spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
-            except ValueError:
-                print("Falling back to wcs.spectral")
+            # If the WCS doesn't have a spectral attribute, we assume it's the
+            # dummy GWCS we created or a solely spectral WCS
+            if hasattr(self.wcs, "spectral"):
                 spec_axis = self.wcs.spectral.pixel_to_world(np.arange(self.flux.shape[-1]))
+            else:
+                spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
 
             if spec_axis.unit.is_equivalent(u.one):
                 spec_axis = spec_axis * u.pixel
