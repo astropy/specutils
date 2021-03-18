@@ -182,32 +182,33 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
 
         # If a WCS is provided, check that the spectral axis is last and reorder
         # the arrays if not
-        if wcs is not None:
-            temp_axes = []
-            phys_axes = wcs.world_axis_physical_types
-            for i in range(len(phys_axes)):
-                if phys_axes[i][0:2] == "em":
-                    temp_axes.append(i)
-            if len(temp_axes) != 1:
-                raise ValueError("Input WCS must have exactly one axis "
-                                 "with spectral units")
+        if wcs is not None and hasattr(wcs, "naxis"):
+            if wcs.naxis > 1:
+                temp_axes = []
+                phys_axes = wcs.world_axis_physical_types
+                for i in range(len(phys_axes)):
+                    if phys_axes[i][0:2] == "em":
+                        temp_axes.append(i)
+                if len(temp_axes) != 1:
+                    raise ValueError("Input WCS must have exactly one axis"
+                                     " with spectral units")
 
-            # Due to FITS conventions, a WCS with spectral axis first corresponds
-            # to a flux array with spectral axis last.
-            if temp_axes[0] != 0:
-                logging.warn("Input WCS indicates that the spectral axis is not"
-                             " last. Reshaping arrays to put spectral axis last.")
-                wcs = wcs.swapaxes(0, temp_axes[0])
-                if flux is not None:
-                    print(len(flux.shape), temp_axes[0])
-                    flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)
-                if "mask" in kwargs:
-                    kwargs["mask"] = np.moveaxis(kwargs["mask"],
-                                                 len(mask.shape)-temp_axes[0]-1, -1)
-                if "uncertainty" in kwargs:
-                    kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
-                                                        len(uncertainty.shape)-temp_axes[0]-1,
-                                                        -1)
+                # Due to FITS conventions, a WCS with spectral axis first corresponds
+                # to a flux array with spectral axis last.
+                if temp_axes[0] != 0:
+                    logging.warn("Input WCS indicates that the spectral axis is not"
+                                 " last. Reshaping arrays to put spectral axis last.")
+                    wcs = wcs.swapaxes(0, temp_axes[0])
+                    if flux is not None:
+                        print(len(flux.shape), temp_axes[0])
+                        flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)
+                    if "mask" in kwargs:
+                        kwargs["mask"] = np.moveaxis(kwargs["mask"],
+                                            len(mask.shape)-temp_axes[0]-1, -1)
+                    if "uncertainty" in kwargs:
+                        kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
+                                                    len(uncertainty.shape)-temp_axes[0]-1,
+                                                    -1)
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
