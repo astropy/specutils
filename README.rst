@@ -1,8 +1,9 @@
 Specutils
 =========
 
-.. image:: https://travis-ci.org/astropy/specutils.svg?branch=master
-    :target: https://travis-ci.org/astropy/specutils
+.. image:: https://github.com/astropy/specutils/workflows/CI/badge.svg
+    :target: https://github.com/astropy/specutils/actions
+    :alt: GitHub Actions CI Status
 
 .. image:: https://readthedocs.org/projects/specutils/badge/?version=latest
     :target: http://specutils.readthedocs.io/en/latest/?badge=latest
@@ -17,7 +18,7 @@ astronomical spectra and basic tools to operate on these spectra. The effort is
 also meant to be a "hub", helping to unite the Python astronomical spectroscopy
 community around shared effort, much as Astropy is meant to for the wider
 astronomy Python ecosystem. This broader effort is outlined in the
-`APE13 document <https://github.com/astropy/astropy-APEs/blob/master/APE13.rst>`_.
+`APE13 document <https://github.com/astropy/astropy-APEs/blob/main/APE13.rst>`_.
 
 Note that Specutils is not intended to meet all possible spectroscopic analysis or
 reduction needs. While it provides some standard analysis functionality
