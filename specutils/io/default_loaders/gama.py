@@ -21,11 +21,16 @@ GAMA_2QZ_CONFIG = {
 }
 GAMA_2SLAQ_QSO_CONFIG = {
     "hdus": None,
-    "wcs": None,
+    "wcs": {
+        "pixel_reference_point_keyword": "CRPIX1",
+        "pixel_reference_point_value_keyword": "CRVAL1",
+        "pixel_width_keyword": "CDELT1",
+        "wavelength_unit": "Angstrom",
+    },
     "units": {"flux_unit": "count"},
     "all_standard_units": False,
     "all_keywords": True,
-    "valid_wcs": True,
+    "valid_wcs": False,
 }
 GAMA_CONFIG = {
     "hdu": {

@@ -134,6 +134,31 @@ def test_spectral_axis_conversions():
     new_spec = spec.with_spectral_unit(u.GHz)
 
 
+def test_spectral_slice():
+    spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                      flux=np.random.random(10) * u.Jy)
+    sliced_spec = spec[300*u.nm:600*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [300, 400, 500] * u.nm)
+
+    sliced_spec = spec[300*u.nm:605*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [300, 400, 500, 600] * u.nm)
+
+    sliced_spec = spec[:300*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [100, 200] * u.nm)
+
+    sliced_spec = spec[800*u.nm:]
+    assert np.all(sliced_spec.spectral_axis == [800, 900, 1000] * u.nm)
+
+    # Test higher dimensional slicing
+    spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                       flux=np.random.random((10, 10)) * u.Jy)
+    sliced_spec = spec[300*u.nm:600*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [300, 400, 500] * u.nm)
+
+    sliced_spec = spec[4:6, 300*u.nm:600*u.nm]
+    assert sliced_spec.shape == (2, 3)
+
+
 @pytest.mark.parametrize('unit', ['micron', 'GHz', 'cm**-1', 'eV'])
 def test_spectral_axis_equivalencies(unit):
     """Test that `u.spectral` equivalencies are enabled for `spectral_axis`."""
