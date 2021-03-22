@@ -81,3 +81,16 @@ Note: This disclaimer was originally written by
 `PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`_, and was adapted by
 specutils based on its use in the README file for the
 `MetPy project <https://github.com/Unidata/MetPy>`_.
+
+If you locally cloned this repo before 22 Mar 2021
+--------------------------------------------------
+
+The primary branch for this repo has been transitioned from ``master`` to ``main``.  If you have a local clone of this repository and want to keep your local branch in sync with this repo, you'll need to do the following in your local clone from your terminal::
+
+   git fetch --all --prune
+   # you can stop here if you don't use your local "master"/"main" branch
+   git branch -m master main
+   git branch -u origin/main main
+
+If you are using a GUI to manage your repos you'll have to find the equivalent commands as it's different for different programs. Alternatively, you can just delete your local clone and re-clone!
+
