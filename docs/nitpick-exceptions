@@ -18,6 +18,19 @@ py:obj SpectralCoord
 py:obj SpectralQuantity
 py:obj SkyCoord
 
+# Super class for Spectrum1D for which we don't control the API links.
+py:class ndcube.ndcube.NDCube
+py:class ndcube.ndcube.NDCubeBase
+py:class ndcube.ndcube.NDCubeABC
+py:class ndcube.mixins.plotting.NDCubePlotMixin
+py:class ndcube.mixins.ndslicing.NDCubeSlicingMixin
+py:obj ndcube.NDCube
+py:obj NDCube
+py:obj ExtraCoords
+py:obj GlobalCoords
+py:obj ndcube.NDCube.world_axis_physical_types
+py:obj specutils.Spectrum1D.crop
+
 # SpectralAxis inherits methods which have warnings we can't fix here.
 # FIXME: https://github.com/astropy/sphinx-automodapi/issues/101
 py:obj Quantity
