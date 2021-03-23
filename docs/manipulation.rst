@@ -143,7 +143,7 @@ Here's a set of simple examples showing each of the three types of resampling:
     >>> from astropy.visualization import quantity_support
     >>> quantity_support()  # for getting units on the axes below  # doctest: +IGNORE_OUTPUT
 
-    >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    >>> f = fits.open('https://data.sdss.org/sas/dr16/sdss/spectro/redux/26/spectra/1323/spec-1323-52797-0012.fits')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> # The spectrum is in the second HDU of this file.
     >>> specdata = f[1].data[1020:1250] # doctest: +REMOTE_DATA
     >>> f.close() # doctest: +REMOTE_DATA

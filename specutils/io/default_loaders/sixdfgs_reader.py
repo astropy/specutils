@@ -185,4 +185,9 @@ def _load_single_6dfgs_hdu(hdu):
     flux = hdu.data[0] * Unit("count") / w.wcs.cunit[0]
     uncertainty = VarianceUncertainty(hdu.data[1])
 
+    sky_flux = hdu.data[2] * Unit("count") / w.wcs.cunit[0]
+    sky_meta = {"header": header}
+    sky_spec = Spectrum1D(flux=sky_flux, wcs=w, meta=sky_meta)
+    meta["sky"] = sky_spec
+
     return Spectrum1D(flux=flux, wcs=w, meta=meta, uncertainty=uncertainty)

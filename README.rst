@@ -1,8 +1,9 @@
 Specutils
 =========
 
-.. image:: https://travis-ci.org/astropy/specutils.svg?branch=master
-    :target: https://travis-ci.org/astropy/specutils
+.. image:: https://github.com/astropy/specutils/workflows/CI/badge.svg
+    :target: https://github.com/astropy/specutils/actions
+    :alt: GitHub Actions CI Status
 
 .. image:: https://readthedocs.org/projects/specutils/badge/?version=latest
     :target: http://specutils.readthedocs.io/en/latest/?badge=latest
@@ -17,7 +18,7 @@ astronomical spectra and basic tools to operate on these spectra. The effort is
 also meant to be a "hub", helping to unite the Python astronomical spectroscopy
 community around shared effort, much as Astropy is meant to for the wider
 astronomy Python ecosystem. This broader effort is outlined in the
-`APE13 document <https://github.com/astropy/astropy-APEs/blob/master/APE13.rst>`_.
+`APE13 document <https://github.com/astropy/astropy-APEs/blob/main/APE13.rst>`_.
 
 Note that Specutils is not intended to meet all possible spectroscopic analysis or
 reduction needs. While it provides some standard analysis functionality
@@ -80,3 +81,16 @@ Note: This disclaimer was originally written by
 `PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`_, and was adapted by
 specutils based on its use in the README file for the
 `MetPy project <https://github.com/Unidata/MetPy>`_.
+
+If you locally cloned this repo before 22 Mar 2021
+--------------------------------------------------
+
+The primary branch for this repo has been transitioned from ``master`` to ``main``.  If you have a local clone of this repository and want to keep your local branch in sync with this repo, you'll need to do the following in your local clone from your terminal::
+
+   git fetch --all --prune
+   # you can stop here if you don't use your local "master"/"main" branch
+   git branch -m master main
+   git branch -u origin/main main
+
+If you are using a GUI to manage your repos you'll have to find the equivalent commands as it's different for different programs. Alternatively, you can just delete your local clone and re-clone!
+

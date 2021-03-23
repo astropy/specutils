@@ -2,8 +2,6 @@
 Contains classes that serialize spectral data types into ASDF representations.
 """
 
-from distutils.version import LooseVersion
-
 from astropy import __version__ as astropy_version
 
 from numpy.testing import assert_allclose
@@ -114,41 +112,3 @@ class SpectrumListType(SpecutilsType):
         assert len(old) == len(new)
         for x, y in zip(old, new):
             Spectrum1DType.assert_equal(x, y)
-
-
-if LooseVersion(astropy_version) < '4.1':
-
-    # If using astropy 4.1 or later, the ASDF schema and type are defined
-    # in astropy so we shouldn't also define it here.
-
-    from specutils.extern.spectralcoord import SpectralCoord
-
-    class SpectralCoordType(SpecutilsType):
-        """
-        ASDF tag implementation used to serialize/derialize SpectralCoord objects
-        """
-        name = 'spectra/spectral_coord'
-        types = [SpectralCoord]
-        version = '1.0.0'
-
-        @classmethod
-        def to_tree(cls, spec_coord, ctx):
-            node = {}
-            if isinstance(spec_coord, SpectralCoord):
-                node['value'] = custom_tree_to_tagged_tree(spec_coord.value, ctx)
-                node['unit'] = custom_tree_to_tagged_tree(spec_coord.unit, ctx)
-                return node
-            raise TypeError(f"'{spec_coord}' is not a valid SpectralCoord")
-
-        @classmethod
-        def from_tree(cls, node, ctx):
-            if isinstance(node, SpectralCoord):
-                return node
-
-            unit = UnitType.from_tree(node['unit'], ctx)
-            value = node['value']
-            if isinstance(value, NDArrayType):
-                value = value._make_array()
-            return SpectralCoord(value, unit=unit)
-
-    __all__.append('SpectralCoordType')

@@ -4,10 +4,10 @@ import gwcs
 import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
+from astropy.coordinates import SpectralCoord
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
-from ..extern.spectralcoord import SpectralCoord
 
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
@@ -132,6 +132,31 @@ def test_spectral_axis_conversions():
                       flux=np.random.randn(49) * u.Jy)
 
     new_spec = spec.with_spectral_unit(u.GHz)
+
+
+def test_spectral_slice():
+    spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                      flux=np.random.random(10) * u.Jy)
+    sliced_spec = spec[300*u.nm:600*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [300, 400, 500] * u.nm)
+
+    sliced_spec = spec[300*u.nm:605*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [300, 400, 500, 600] * u.nm)
+
+    sliced_spec = spec[:300*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [100, 200] * u.nm)
+
+    sliced_spec = spec[800*u.nm:]
+    assert np.all(sliced_spec.spectral_axis == [800, 900, 1000] * u.nm)
+
+    # Test higher dimensional slicing
+    spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
+                       flux=np.random.random((10, 10)) * u.Jy)
+    sliced_spec = spec[300*u.nm:600*u.nm]
+    assert np.all(sliced_spec.spectral_axis == [300, 400, 500] * u.nm)
+
+    sliced_spec = spec[4:6, 300*u.nm:600*u.nm]
+    assert sliced_spec.shape == (2, 3)
 
 
 @pytest.mark.parametrize('unit', ['micron', 'GHz', 'cm**-1', 'eV'])
