@@ -129,7 +129,7 @@ html_sidebars['index'] = ['globaltoc.html', 'localtoc.html']
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'img/logo_icon.svg'
+html_favicon = '_static/logo_icon.ico'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -169,7 +169,7 @@ if setup_cfg.get('edit_on_github').lower() == 'true':
     extensions += ['sphinx_astropy.ext.edit_on_github']
 
     edit_on_github_project = setup_cfg['github_project']
-    edit_on_github_branch = "master"
+    edit_on_github_branch = "main"
 
     edit_on_github_source_root = ""
     edit_on_github_doc_root = "docs"

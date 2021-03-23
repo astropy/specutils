@@ -67,7 +67,7 @@ def spec_identify(origin, *args, **kwargs):
                 hdulist[0].header.get('FIBERID', 0) > 0 and
                 len(hdulist) > 1 and
                 (isinstance(hdulist[1], fits.BinTableHDU) and
-                 hdulist[1].header.get('TTYPE3') == 'ivar'))
+                 hdulist[1].header.get('TTYPE3').lower() == 'ivar'))
 
 
 def spSpec_identify(origin, *args, **kwargs):

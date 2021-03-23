@@ -137,7 +137,16 @@ def get_loaders_by_extension(extension):
     loaders : list
         A list of loader names that are associated with the extension.
     """
-    return [fmt for (fmt, cls), func in io_registry._readers.items()
+    def _registered_readers():
+        # With the implementation of priorities support in the astropy registry
+        # loaders, astropy version 4.2 and up return a tuple of ``func`` and
+        # ``priority``, while versions < 4.2 return just the ``func`` object.
+        # This function ignores priorities when calling extension loaders.
+        return [((fmt, cls), func[0])
+                if isinstance(func, tuple) else ((fmt, cls), func)
+                for (fmt, cls), func in io_registry._readers.items()]
+
+    return [fmt for (fmt, cls), func in _registered_readers()
             if issubclass(cls, Spectrum1D) and
             func.extensions is not None and
             extension in func.extensions]

@@ -5,10 +5,10 @@ import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-from packaging import version
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
+from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['Spectrum1D']
@@ -252,16 +252,42 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 if len(item) == len(self.flux.shape) or item[0] == Ellipsis:
                     spec_item = item[-1]
                     if not isinstance(spec_item, slice):
+                        if isinstance(item, u.Quantity):
+                            raise ValueError("Indexing on single spectral axis "
+                                             "values is not currently allowed, "
+                                             "please use a slice.")
                         spec_item = slice(spec_item, spec_item+1, None)
                         item = item[:-1] + (spec_item,)
                 else:
                     # Slicing on less than the full number of axes means we want
                     # to keep the whole spectral axis
                     spec_item = slice(None, None, None)
+            elif isinstance(item, slice) and (isinstance(item.start, u.Quantity) or
+                    isinstance(item.stop, u.Quantity)):
+                # We only allow slicing with world coordinates along the spectral
+                # axis for now
+                for attr in ("start", "stop"):
+                    if getattr(item, attr) is None:
+                        continue
+                    if not getattr(item, attr).unit.is_equivalent(u.AA,
+                            equivalencies=u.spectral()):
+                        raise ValueError("Slicing with world coordinates is only"
+                                         " enabled for spectral coordinates.")
+                        break
+                spec_item = item
             else:
                 # Slicing with a single integer or slice uses the leading axis,
                 # so we keep the whole spectral axis, which is last
                 spec_item = slice(None, None, None)
+
+            if (isinstance(spec_item.start, u.Quantity) or
+                    isinstance(spec_item.stop, u.Quantity)):
+                temp_spec = self._spectral_slice(spec_item)
+                if spec_item is item:
+                    return temp_spec
+                else:
+                    # Drop the spectral axis slice and perform only the spatial part
+                    return temp_spec[item[:-1]]
 
             return self._copy(
                 flux=self.flux[item],
@@ -271,7 +297,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 mask=self.mask[item] if self.mask is not None else None)
 
         if not isinstance(item, slice):
-            item = slice(item, item+1, None)
+            if isinstance(item, u.Quantity):
+                raise ValueError("Indexing on a single spectral axis values is not"
+                                 " currently allowed, please use a slice.")
+            else:
+                item = slice(item, item + 1, None)
+        elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
+            return self._spectral_slice(item)
 
         tmp_spec = super().__getitem__(item)
 
@@ -306,6 +338,28 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
         alt_kwargs.update(kwargs)
 
         return self.__class__(**alt_kwargs)
+
+    def _spectral_slice(self, item):
+        """
+        Perform a region extraction given a slice on the spectral axis.
+        """
+        from ..manipulation import extract_region
+        if item.start is None:
+            start = self.spectral_axis[0]
+        else:
+            start = item.start
+        if item.stop is None:
+            stop = self.spectral_axis[-1]
+        else:
+            # Force the upper bound to be open, as in normal python array slicing
+            exact_match = np.where(self.spectral_axis == item.stop)
+            if len(exact_match[0]) == 1:
+                stop_index = exact_match[0][0] - 1
+                stop = self.spectral_axis[stop_index]
+            else:
+                stop = item.stop
+        reg = SpectralRegion(start, stop)
+        return extract_region(self, reg)
 
     @NDDataRef.mask.setter
     def mask(self, value):

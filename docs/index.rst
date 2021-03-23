@@ -12,7 +12,7 @@ Specutils Documentation
 
 .. _specutils:
 
-.. image:: img/logo.png
+.. image:: _static/logo.png
 
 
 ``specutils`` is a Python package for representing, loading,
@@ -20,7 +20,7 @@ manipulating, and analyzing astronomical spectroscopic data. The
 generic data containers and accompanying modules provide a toolbox that the
 astronomical community can use to build more domain-specific packages. For more
 details about the underlying principles, see
-`APE13 <https://github.com/astropy/astropy-APEs/blob/master/APE13.rst>`_, the
+`APE13 <https://github.com/astropy/astropy-APEs/blob/main/APE13.rst>`_, the
 guiding document for spectroscopic development in the Astropy Project.
 
 .. note::
@@ -51,7 +51,7 @@ may have downloaded from some archive, or reduced from your own observations.
 
     Now we load the dataset from its canonical source:
 
-    >>> f = fits.open('https://dr14.sdss.org/optical/spectrum/view/data/format=fits/spec=lite?plateid=1323&mjd=52797&fiberid=12')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    >>> f = fits.open('https://data.sdss.org/sas/dr16/sdss/spectro/redux/26/spectra/1323/spec-1323-52797-0012.fits')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> # The spectrum is in the second HDU of this file.
     >>> specdata = f[1].data # doctest: +REMOTE_DATA
     >>> f.close() # doctest: +REMOTE_DATA
