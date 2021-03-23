@@ -32,6 +32,12 @@ py:obj ndcube.NDCube.world_axis_physical_types
 py:obj specutils.Spectrum1D.crop
 py:obj pixel_edges
 py:obj pixel_values
+py:obj ndcube.NDCube.wcs.world_axis_physical_types
+py:obj ndcube.NDCubeSequence
+py:obj sunpy.visualization.animator.ArrayAnimatorWCS
+py:obj ndcube.mixins.plotting.NDCubePlotMixin.plot
+py:obj matplotllib.pyplot.imshow
+py:obj matplotllib.pyplot.plot
 
 # SpectralAxis inherits methods which have warnings we can't fix here.
 # FIXME: https://github.com/astropy/sphinx-automodapi/issues/101
