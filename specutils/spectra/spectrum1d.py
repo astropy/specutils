@@ -200,7 +200,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                                  " last. Reshaping arrays to put spectral axis last.")
                     wcs = wcs.swapaxes(0, temp_axes[0])
                     if flux is not None:
-                        print(len(flux.shape), temp_axes[0])
                         flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)
                     if "mask" in kwargs:
                         if kwargs["mask"] is not None:
@@ -367,7 +366,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 else:
                     raise ValueError(f"Unclear how to slice with tuple {item}")
             else:
-                print(f"{type(item)}: {item}")
                 item = slice(item, item + 1, None)
         elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
             return self._spectral_slice(item)
