@@ -52,8 +52,8 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
     # Simple median smooth to remove spikes and peaks
     spectrum_smoothed = median_smooth(spectrum, median_window)
 
-    return fit_continuum(spectrum_smoothed, model, fitter, exclude_regions,
-                         weights)
+    return fit_continuum(spectrum_smoothed, model=model, fitter=fitter,
+                         exclude_regions=exclude_regions, weights=weights)
 
 
 def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
