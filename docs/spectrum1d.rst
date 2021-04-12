@@ -10,7 +10,7 @@ This section describes some of the basic features of this class.
 Basic Spectrum Creation
 -----------------------
 
-The simplest (and most powerful) way to create a `~specutils.Spectrum1D` is to
+The simplest way to create a `~specutils.Spectrum1D` is to
 create it explicitly from arrays or `~astropy.units.Quantity` objects:
 
 .. plot::

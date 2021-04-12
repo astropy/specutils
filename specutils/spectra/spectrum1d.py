@@ -34,7 +34,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
     Parameters
     ----------
     flux : `~astropy.units.Quantity` or `~astropy.nddata.NDData`-like
-        The flux data for this spectrum.
+        The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
+        or an existing `~Spectrum1D` or `~ndcube.NDCube` object.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux

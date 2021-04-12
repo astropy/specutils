@@ -31,7 +31,9 @@ with their corresponding ``specutils`` representations:
    ``n x m (x ...)``,  with a spectral axis strictly of length ``n`` (and a
    matched WCS). In ``specutils`` this is represented by the
    `~specutils.Spectrum1D` object where ``len(flux.shape) > 1`` . In this sense
-   the "1D" refers to the spectral axis, *not* the flux.
+   the "1D" refers to the spectral axis, *not* the flux. Note that 
+   `~specutils.Spectrum1D` subclasses `NDCube <https://github.com/sunpy/ndcube>`_,
+   which provideds utilities useful for these sorts of multidimensional fluxes.
 3. A set of fluxes  of shape ``n x m (x ...)``, and a set of spectral axes that
    are the same shape. This is distinguished from the above cases because there
    are as many spectral axes as there are spectra.  In this sense it is a
