@@ -91,7 +91,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 raise ValueError("Input NDCube missing unit parameter")
 
             # Change the flux array from bare ndarray to a Quantity
-            q_flux = flux.data*u.Unit(flux.unit)
+            q_flux = flux.data << u.Unit(flux.unit)
 
             self.__init__(flux=q_flux, wcs=flux.wcs, mask=flux.mask,
                           uncertainty=flux.uncertainty)
