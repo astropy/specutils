@@ -58,12 +58,6 @@ jobs:
             toxenv: py37-test-alldeps
             toxposargs: --durations=50
 
-          - name: Python 3.6 with astropy LTS
-            os: ubuntu-16.04
-            python: 3.6
-            toxenv: py36-test-astropylts-numpy116
-            toxposargs: --remote-data=astropy
-
           - name: Python 3.7 doc build
             os: ubuntu-latest
             python: 3.7

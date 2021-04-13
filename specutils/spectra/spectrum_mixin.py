@@ -1,9 +1,10 @@
 import logging
 from copy import deepcopy
 
-import astropy.units.equivalencies as eq
 import numpy as np
+import astropy.units.equivalencies as eq
 from astropy import units as u
+from astropy.nddata import NDIOMixin
 from astropy.utils.decorators import lazyproperty, deprecated
 from astropy.wcs.wcsapi import HighLevelWCSWrapper
 
@@ -17,7 +18,7 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 __all__ = ['OneDSpectrumMixin']
 
 
-class OneDSpectrumMixin:
+class OneDSpectrumMixin(NDIOMixin):
     @property
     def _spectral_axis_numpy_index(self):
         return self.data.ndim - 1 - self.wcs.wcs.spec
