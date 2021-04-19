@@ -20,6 +20,9 @@ from ..manipulation.utils import excise_regions
 __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
            'estimate_line_parameters']
 
+
+log = logging.getLogger('specutils')
+
 # Define the initial estimators. This are the default methods to use to
 # estimate astropy model parameters. This is based on only a small subset of
 # the astropy models but it was determined that this is a decent start as most
@@ -383,7 +386,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
             if uncerts is not None:
                 weights = uncerts.array ** -1
             else:
-                logging.warning("Uncertainty values are not defined, but are "
+                log.warning("Uncertainty values are not defined, but are "
                                 "trying to be used in model fitting.")
         else:
             raise ValueError("Unrecognized value `%s` in keyword argument.",

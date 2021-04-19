@@ -19,6 +19,8 @@ from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
 
+log = logging.getLogger('specutils')
+
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
@@ -54,7 +56,7 @@ def generic_fits(file_obj, **kwargs):
             # if len(data.shape) != 1:
             #    raise Exception,"not a true cube"
         else:
-            logging.error("Unexpected shape %s.", shape)
+            log.error("Unexpected shape %s.", shape)
 
         # store some meta data
         meta = {'header': header}
