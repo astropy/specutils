@@ -17,6 +17,7 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 __all__ = ['OneDSpectrumMixin']
 
+log = logging.getLogger('specutils')
 
 class OneDSpectrumMixin(NDIOMixin):
     @property
@@ -287,7 +288,7 @@ class OneDSpectrumMixin(NDIOMixin):
                 self.wcs.unit[0], equivalencies=u.spectral()):
             return gwcs_from_array(self.spectral_axis), meta
 
-        logging.error("WCS units incompatible: {} and {}.".format(
+        log.error("WCS units incompatible: {} and {}.".format(
             unit, self._wcs_unit))
 
 

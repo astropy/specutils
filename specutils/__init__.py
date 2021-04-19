@@ -51,8 +51,3 @@ class Conf(_config.ConfigNamespace):
 
 conf = Conf()
 
-
-import logging
-
-logging.basicConfig(format='specutils [%(levelname)-8s]: %(message)s',
-level=logging.INFO)

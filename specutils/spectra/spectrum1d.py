@@ -1,5 +1,5 @@
-import logging
 from copy import deepcopy
+import logging
 
 import numpy as np
 from astropy import units as u
@@ -14,6 +14,7 @@ from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
 
+log = logging.getLogger('specutils')
 
 class Spectrum1D(OneDSpectrumMixin, NDCube):
     """
@@ -153,7 +154,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 rest_value = None
         else:
             if not isinstance(rest_value, u.Quantity):
-                logging.info("No unit information provided with rest value. "
+                log.info("No unit information provided with rest value. "
                              "Assuming units of spectral axis ('%s').",
                              spectral_axis.unit)
                 rest_value = u.Quantity(rest_value, spectral_axis.unit)
@@ -197,8 +198,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 # Due to FITS conventions, a WCS with spectral axis first corresponds
                 # to a flux array with spectral axis last.
                 if temp_axes[0] != 0:
-                    logging.warn("Input WCS indicates that the spectral axis is not"
-                                 " last. Reshaping arrays to put spectral axis last.")
+                    log.warn("Input WCS indicates that the spectral axis is not"
+                             " last. Reshaping arrays to put spectral axis last.")
                     wcs = wcs.swapaxes(0, temp_axes[0])
                     if flux is not None:
                         flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)

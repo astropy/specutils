@@ -10,6 +10,7 @@ from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
 
+log = logging.getLogger('specutils')
 
 class SpectrumCollection(NDIOMixin):
     """
@@ -81,7 +82,7 @@ class SpectrumCollection(NDIOMixin):
             # If the uncertainties are not provided a unit, raise a warning
             # and use the flux units
             if not isinstance(uncertainty, u.Quantity):
-                logging.warning("No unit associated with uncertainty, assuming"
+                log.warning("No unit associated with uncertainty, assuming"
                                 "flux units of '{}'.".format(flux.unit))
                 uncertainty = u.Quantity(uncertainty, unit=flux.unit)
 
@@ -167,7 +168,7 @@ class SpectrumCollection(NDIOMixin):
         else:
             uncertainty = None
 
-            logging.warning("Not all spectra have associated uncertainties of "
+            log.warning("Not all spectra have associated uncertainties of "
                             "the same type, skipping uncertainties.")
 
         # Check that either all spectra have associated masks, or that
@@ -178,7 +179,7 @@ class SpectrumCollection(NDIOMixin):
         else:
             mask = None
 
-            logging.warning("Not all spectra have associated masks, "
+            log.warning("Not all spectra have associated masks, "
                             "skipping masks.")
 
         # Store the wcs and meta as lists
