@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 
 import numpy as np
 from astropy import units as u
@@ -8,11 +9,12 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-from ..utils.logger import log
 from astropy.coordinates import SpectralCoord
 from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
+
+log = logging.getLogger(__name__)
 
 
 class Spectrum1D(OneDSpectrumMixin, NDCube):

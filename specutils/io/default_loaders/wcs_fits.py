@@ -1,5 +1,6 @@
 import warnings
 import _io
+import logging
 
 from astropy import units as u
 from astropy.io import fits
@@ -13,9 +14,10 @@ import shlex
 from ...spectra import Spectrum1D, SpectrumCollection
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import read_fileobj_or_hdulist
-from ...utils.logger import log
 
 __all__ = ['wcs1d_fits_loader', 'non_linear_wcs1d_fits', 'non_linear_multispec_fits']
+
+log = logging.getLogger(__name__)
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):

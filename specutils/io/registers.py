@@ -5,13 +5,15 @@ import os
 import pathlib
 import sys
 from functools import wraps
+import logging
 
 from astropy.io import registry as io_registry
 
 from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
-from ..utils.logger import log
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
+
+log = logging.getLogger(__name__)
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,

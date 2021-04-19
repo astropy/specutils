@@ -4,6 +4,7 @@ import re
 import urllib
 import io
 import contextlib
+import logging
 
 from astropy.io import fits
 from astropy.table import Table
@@ -13,7 +14,8 @@ import astropy.units as u
 import warnings
 
 from specutils.spectra import Spectrum1D, SpectrumCollection
-from ..utils.logger import log
+
+log = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager

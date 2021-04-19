@@ -35,10 +35,6 @@ if not _ASTROPY_SETUP_:
     from .io.registers import _load_user_io
     _load_user_io()
 
-    # Set up non-root logger
-    from .utils.logger import log
-    log = log
-
 __citation__ = 'https://doi.org/10.5281/zenodo.1421356'
 
 

@@ -6,6 +6,7 @@
 #  21-apr-2016  Peter Teuben    hackday at "SPECTROSCOPY TOOLS IN PYTHON WORKSHOP" STSCI
 
 import os
+import logging
 
 import numpy as np
 from astropy.io import fits
@@ -15,7 +16,8 @@ from astropy.wcs import WCS
 from ...spectra import Spectrum1D
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
-from ...utils.logger import log
+
+log = logging.getLogger(__name__)
 
 
 # Define an optional identifier. If made specific enough, this circumvents the
