@@ -2,7 +2,6 @@
 A module containing the mechanics of the specutils io registry.
 """
 import os
-import logging
 import pathlib
 import sys
 from functools import wraps
@@ -10,12 +9,10 @@ from functools import wraps
 from astropy.io import registry as io_registry
 
 from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
-
+from ..utils.logger import log
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
 
-
-log = logging.getLogger('specutils')
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
                 priority=0):

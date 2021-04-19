@@ -1,5 +1,4 @@
 import itertools
-import logging
 import operator
 
 import numpy as np
@@ -12,6 +11,7 @@ import astropy.units as u
 
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
+from specutils import log
 from ..utils import QuantityModel
 from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
 from ..manipulation import extract_region, noise_region_uncertainty
@@ -20,8 +20,6 @@ from ..manipulation.utils import excise_regions
 __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
            'estimate_line_parameters']
 
-
-log = logging.getLogger('specutils')
 
 # Define the initial estimators. This are the default methods to use to
 # estimate astropy model parameters. This is based on only a small subset of

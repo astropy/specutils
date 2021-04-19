@@ -1,4 +1,3 @@
-import logging
 from copy import deepcopy
 
 import numpy as np
@@ -9,6 +8,7 @@ from astropy.utils.decorators import lazyproperty, deprecated
 from astropy.wcs.wcsapi import HighLevelWCSWrapper
 
 from specutils.utils.wcs_utils import gwcs_from_array
+from ..utils.logger import log
 
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
@@ -17,7 +17,6 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 __all__ = ['OneDSpectrumMixin']
 
-log = logging.getLogger('specutils')
 
 class OneDSpectrumMixin(NDIOMixin):
     @property

@@ -11,12 +11,10 @@ from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
-import logging
 
 from specutils.spectra import Spectrum1D, SpectrumCollection
+from ..utils.logger import log
 
-
-log = logging.getLogger('specutils')
 
 @contextlib.contextmanager
 def read_fileobj_or_hdulist(*args, **kwargs):

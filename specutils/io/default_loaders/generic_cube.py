@@ -5,8 +5,6 @@
 #
 #  21-apr-2016  Peter Teuben    hackday at "SPECTROSCOPY TOOLS IN PYTHON WORKSHOP" STSCI
 
-import logging
-#
 import os
 
 import numpy as np
@@ -17,9 +15,8 @@ from astropy.wcs import WCS
 from ...spectra import Spectrum1D
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
+from ...utils.logger import log
 
-
-log = logging.getLogger('specutils')
 
 # Define an optional identifier. If made specific enough, this circumvents the
 # need to add `format="my-format"` in the `Spectrum1D.read` call.
