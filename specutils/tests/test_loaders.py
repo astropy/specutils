@@ -1273,3 +1273,18 @@ def test_galah_guess(remote_data_path):
         assert isinstance(spectra[1].uncertainty, StdDevUncertainty)
         assert spectra[1].meta.get("label") is not None
         assert spectra[1].meta.get("header") is not None
+
+
+@pytest.mark.remote_data
+def test_jwst_s3d_loader():
+    url = ('https://data.science.stsci.edu/redirect/JWST/jwst-data_analysis_tools/JWST_s3d_example/',
+           'NRS00001-faintQSO-F100LP-G140H-01_1_491_SE_2020-08-25T12h15m00_s3d.fits')
+
+    spec = Spectrum1D.read(url, format='JWST s3d')
+
+    assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+    assert spec.meta['header']['INSTRUME'] == 'NIRSPEC'
+    assert spec.shape == (33, 39, 2059)
+
+    assert spec.wcs.world_axis_names == ('RA', 'DEC', 'wavelength')
