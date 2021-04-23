@@ -3,6 +3,7 @@ from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
+import logging
 import numpy as np
 import asdf
 from gwcs.wcstools import grid_from_bounding_box
@@ -13,6 +14,26 @@ from ..parsing_utils import read_fileobj_or_hdulist
 
 
 __all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader"]
+
+log = logging.getLogger(__name__)
+
+
+def identify_jwst_c1d_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST c1d spectral data product.
+    """
+    is_jwst = _identify_jwst_fits(*args)
+    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        return (is_jwst and 'COMBINE1D' in hdulist and ('COMBINE1D', 2) not in hdulist)
+
+
+def identify_jwst_c1d_multi_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST x1d spectral data product with many slits.
+    """
+    is_jwst = _identify_jwst_fits(*args)
+    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        return is_jwst and ('COMBINE1D', 2) in hdulist
 
 
 def identify_jwst_x1d_fits(origin, *args, **kwargs):
@@ -73,6 +94,107 @@ def _identify_jwst_fits(*args):
     # This probably means we didn't have a FITS file
     except Exception:
         return False
+
+
+@data_loader("JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum1D,
+             extensions=['fits'])
+def jwst_c1d_single_loader(file_obj, **kwargs):
+    """
+    Loader for JWST c1d 1-D spectral data in FITS format
+
+    Parameters
+    ----------
+    filename : str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file.
+    """
+    spectrum_list = _jwst_c1d_loader(file_obj, **kwargs)
+    if len(spectrum_list) == 1:
+        return spectrum_list[0]
+    else:
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. "
+                           "Use SpectrumList.read() instead.")
+
+
+@data_loader("JWST c1d multi", identifier=identify_jwst_c1d_multi_fits,
+             dtype=SpectrumList, extensions=['fits'])
+def jwst_c1d_multi_loader(file_obj, **kwargs):
+    """
+    Loader for JWST x1d 1-D spectral data in FITS format
+
+    Parameters
+    ----------
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
+
+    Returns
+    -------
+    SpectrumList
+        A list of the spectra that are contained in the file.
+    """
+    return _jwst_c1d_loader(file_obj, **kwargs)
+
+
+def _jwst_c1d_loader(file_obj, **kwargs):
+    spectra = []
+
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+
+        primary_header = hdulist["PRIMARY"].header
+
+        for hdu in hdulist:
+            # Read only the BinaryTableHDUs named COMBINE1D and SCI
+            if hdu.name != 'COMBINE1D':
+                continue
+
+            data = Table.read(hdu)
+
+            wavelength = Quantity(data["WAVELENGTH"])
+
+            # Determine if FLUX or SURF_BRIGHT column should be returned
+            # based on whether it is point or extended source.
+            #
+            # SRCTYPE used to be in primary header, but was moved around. As
+            # per most recent pipeline definition, it should be in the
+            # EXTRACT1D extension.
+            srctype = None
+            if "srctype" in hdu.header:
+                srctype = hdu.header.get("srctype", None)
+
+            flux = Quantity(data["FLUX"])
+            uncertainty = StdDevUncertainty(data["ERROR"])
+
+            # if srctype == "POINT":
+            #     flux = Quantity(data["FLUX"])
+            #     uncertainty = StdDevUncertainty(data["ERROR"])
+            # elif srctype == "EXTENDED":
+            #     flux = Quantity(data["SURF_BRIGHT"])
+            #     uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
+            # elif srctype == 'UNKNOWN':
+            #     flux = Quantity(data["FLUX"])
+            #     uncertainty = StdDevUncertainty(data["ERROR"])
+            #     log.warning('SRCTYPE is UNKNOWN.  Defaulting to loading FLUX and ERROR data.')
+            # else:
+            #     raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
+            #                        "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
+            #                        "`surf_bright` columns.")
+
+            # Merge primary and slit headers and dump into meta
+            slit_header = hdu.header
+            header = primary_header.copy()
+            header.extend(slit_header, strip=True, update=True)
+            meta = {'header': header}
+
+            spec = Spectrum1D(flux=flux, spectral_axis=wavelength,
+                              uncertainty=uncertainty, meta=meta)
+            spectra.append(spec)
+
+    return SpectrumList(spectra)
 
 
 @data_loader("JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
@@ -157,16 +279,18 @@ def _jwst_x1d_loader(file_obj, **kwargs):
             # EXTRACT1D extension.
             srctype = None
             if "srctype" in hdu.header:
-                srctype = hdu.header.get("srctype")
+                srctype = hdu.header.get("srctype", None)
 
             if srctype == "POINT":
                 flux = Quantity(data["FLUX"])
                 uncertainty = StdDevUncertainty(data["ERROR"])
-
             elif srctype == "EXTENDED":
                 flux = Quantity(data["SURF_BRIGHT"])
                 uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
-
+            elif srctype == 'UNKNOWN':
+                flux = Quantity(data["FLUX"])
+                uncertainty = StdDevUncertainty(data["ERROR"])
+                log.warning('SRCTYPE is UNKNOWN.  Defaulting to loading FLUX and ERROR data.')
             else:
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
                                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
