@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 
 
 def _identify_spec1d_fits(origin, extname, *args, **kwargs):
+    """ Generic spec 1d identifier function """
     is_jwst = _identify_jwst_fits(*args)
     with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
         return (is_jwst and extname in hdulist and (extname, 2) not in hdulist)
@@ -254,7 +255,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
                                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
                                    "`surf_bright` columns.")
-            breakpoint()
+
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
             header = primary_header.copy()
