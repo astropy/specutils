@@ -13,15 +13,15 @@ import pytest
 from specutils import Spectrum1D, SpectrumList
 
 
-# The x1d reader tests --------------------------
+# The c1d/x1d reader tests --------------------------
 
-def create_spectrum_hdu(data_len, srctype=None, ver=1):
+def create_spectrum_hdu(data_len, srctype=None, ver=1, name='EXTRACT1D'):
     """Mock a JWST x1d BinTableHDU"""
     data = np.random.random((data_len, 5))
     table = Table(data=data, names=['WAVELENGTH', 'FLUX', 'ERROR', 'SURF_BRIGHT',
         'SB_ERROR'])
 
-    hdu = fits.BinTableHDU(table, name='EXTRACT1D')
+    hdu = fits.BinTableHDU(table, name=name)
     hdu.header['TUNIT1'] = 'um'
     hdu.header['TUNIT2'] = 'Jy'
     hdu.header['TUNIT3'] = 'Jy'
@@ -48,27 +48,46 @@ def x1d_single():
 
 
 @pytest.fixture(scope="function")
-def x1d_multi():
-    """Mock a JWST x1d multispec HDUList with 3 spectra"""
+def spec_single(request):
+    """Mock a JWST c1d/x1d HDUList with a single spectrum"""
+    name = request.param
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
-    hdulist["PRIMARY"].header["TELESCOP"] = "JWST"
-    # Add a few BinTableHDUs that contain spectral data
-    hdulist.append(create_spectrum_hdu(100, 'POINT', ver=1))
-    hdulist.append(create_spectrum_hdu(120, 'EXTENDED', ver=2))
-    hdulist.append(create_spectrum_hdu(110, 'POINT', ver=3))
+    hdulist["PRIMARY"].header["TELESCOP"] = ("JWST", "comment")
+    # Add a BinTableHDU that contains spectral data
+    hdulist.append(create_spectrum_hdu(100, 'POINT', ver=1, name=name))
     # Mock the ASDF extension
     hdulist.append(fits.BinTableHDU(name='ASDF'))
 
     return hdulist
 
 
-def test_jwst_x1d_multi_reader(tmpdir, x1d_multi):
-    """Test SpectrumList.read for JWST x1d multi data"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_multi.writeto(tmpfile)
+@pytest.fixture(scope="function")
+def spec_multi(request):
+    """Mock a JWST c1d/x1d multispec HDUList with 3 spectra"""
+    name = request.param
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
+    hdulist["PRIMARY"].header["TELESCOP"] = "JWST"
+    # Add a few BinTableHDUs that contain spectral data
+    hdulist.append(create_spectrum_hdu(100, 'POINT', ver=1, name=name))
+    hdulist.append(create_spectrum_hdu(120, 'EXTENDED', ver=2, name=name))
+    hdulist.append(create_spectrum_hdu(110, 'POINT', ver=3, name=name))
+    # Mock the ASDF extension
+    hdulist.append(fits.BinTableHDU(name='ASDF'))
 
-    data = SpectrumList.read(tmpfile, format='JWST x1d multi')
+    return hdulist
+
+
+@pytest.mark.parametrize('spec_multi, format',
+                         [('EXTRACT1D', 'JWST x1d multi'),
+                          ('COMBINE1D', 'JWST c1d multi')], indirect=['spec_multi'])
+def test_jwst_1d_multi_reader(tmpdir, spec_multi, format):
+    """Test SpectrumList.read for JWST c1d/x1d multi data"""
+    tmpfile = str(tmpdir.join('jwst.fits'))
+    spec_multi.writeto(tmpfile)
+
+    data = SpectrumList.read(tmpfile, format=format)
     assert type(data) is SpectrumList
     assert len(data) == 3
 
@@ -80,20 +99,24 @@ def test_jwst_x1d_multi_reader(tmpdir, x1d_multi):
     assert data[2].shape == (110,)
 
 
-def test_jwst_x1d_single_reader(tmpdir, x1d_single):
+@pytest.mark.parametrize('spec_single, format',
+                         [('EXTRACT1D', 'JWST x1d'),
+                          ('COMBINE1D', 'JWST c1d')], indirect=['spec_single'])
+def test_jwst_1d_single_reader(tmpdir, spec_single, format):
     """Test Spectrum1D.read for JWST x1d data"""
     tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_single.writeto(tmpfile)
+    spec_single.writeto(tmpfile)
 
-    data = Spectrum1D.read(tmpfile, format='JWST x1d')
+    data = Spectrum1D.read(tmpfile, format=format)
     assert type(data) is Spectrum1D
     assert data.shape == (100,)
 
 
-def test_jwst_x1d_single_reader_no_format(tmpdir, x1d_single):
-    """Test Spectrum1D.read for JWST x1d data without format arg"""
+@pytest.mark.parametrize('spec_single', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_single'])
+def test_jwst_1d_single_reader_no_format(tmpdir, spec_single):
+    """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
     tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_single.writeto(tmpfile)
+    spec_single.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile)
     assert type(data) is Spectrum1D
@@ -102,10 +125,11 @@ def test_jwst_x1d_single_reader_no_format(tmpdir, x1d_single):
     assert data.spectral_axis.unit == u.um
 
 
-def test_jwst_x1d_multi_reader_no_format(tmpdir, x1d_multi):
-    """Test Spectrum1D.read for JWST x1d data without format arg"""
+@pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
+def test_jwst_1d_multi_reader_no_format(tmpdir, spec_multi):
+    """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
     tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_multi.writeto(tmpfile)
+    spec_multi.writeto(tmpfile)
 
     data = SpectrumList.read(tmpfile)
     assert type(data) is SpectrumList
@@ -115,10 +139,11 @@ def test_jwst_x1d_multi_reader_no_format(tmpdir, x1d_multi):
         assert isinstance(item, Spectrum1D)
 
 
-def test_jwst_x1d_multi_reader_check_units(tmpdir, x1d_multi):
-    """Test units for Spectrum1D.read for JWST x1d data"""
+@pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
+def test_jwst_1d_multi_reader_check_units(tmpdir, spec_multi):
+    """Test units for Spectrum1D.read for JWST c1d/x1d data"""
     tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_multi.writeto(tmpfile)
+    spec_multi.writeto(tmpfile)
 
     data = SpectrumList.read(tmpfile)
     assert data[0].unit == u.Jy
@@ -126,28 +151,30 @@ def test_jwst_x1d_multi_reader_check_units(tmpdir, x1d_multi):
     assert data[2].unit == u.Jy
 
 
-def test_jwst_x1d_reader_meta(tmpdir, x1d_single):
-    """Test that the Primary and EXTRACT1D extension headers are merged in meta"""
+@pytest.mark.parametrize('spec_single', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_single'])
+def test_jwst_1d_reader_meta(tmpdir, spec_single):
+    """Test that the Primary and COMBINE1D/EXTRACT1D extension headers are merged in meta"""
     tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_single.writeto(tmpfile)
+    spec_single.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile)
     assert ('TELESCOP', 'JWST') in data.meta['header'].items()
     assert ('SRCTYPE', 'POINT') in data.meta['header'].items()
 
 
-def test_jwst_x1d_single_reader_fail_on_multi(tmpdir, x1d_multi):
-    """Make sure Spectrum1D.read on JWST x1d with many spectra errors out"""
+@pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
+def test_jwst_1d_single_reader_fail_on_multi(tmpdir, spec_multi):
+    """Make sure Spectrum1D.read on JWST c1d/x1d with many spectra errors out"""
     tmpfile = str(tmpdir.join('jwst.fits'))
-    x1d_multi.writeto(tmpfile)
+    spec_multi.writeto(tmpfile)
 
     with pytest.raises(IORegistryError):
         Spectrum1D.read(tmpfile)
 
 
-@pytest.mark.parametrize("srctype", [None, "UNKNOWN"])
+@pytest.mark.parametrize("srctype", [None, "BADVAL"])
 def test_jwst_reader_fail(tmpdir, x1d_single, srctype):
-    """Check that the reader fails when SRCTYPE is not set or is UNKNOWN"""
+    """Check that the reader fails when SRCTYPE is not set or is BADVAL"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     hdulist = x1d_single
     # Add a spectrum with bad SRCTYPE (mutate the fixture)
