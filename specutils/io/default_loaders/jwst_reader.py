@@ -18,40 +18,47 @@ __all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader"]
 log = logging.getLogger(__name__)
 
 
+def _identify_spec1d_fits(origin, extname, *args, **kwargs):
+    is_jwst = _identify_jwst_fits(*args)
+    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        return (is_jwst and extname in hdulist and (extname, 2) not in hdulist)
+
+
+def _identify_spec1d_multi_fits(origin, extname, *args, **kwargs):
+    """
+    Check whether the given file is a JWST c1d/x1d spectral data product with many slits.
+    """
+    is_jwst = _identify_jwst_fits(*args)
+    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        return is_jwst and (extname, 2) in hdulist
+
+
 def identify_jwst_c1d_fits(origin, *args, **kwargs):
     """
     Check whether the given file is a JWST c1d spectral data product.
     """
-    is_jwst = _identify_jwst_fits(*args)
-    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return (is_jwst and 'COMBINE1D' in hdulist and ('COMBINE1D', 2) not in hdulist)
+    return _identify_spec1d_fits(origin, 'COMBINE1D', *args, **kwargs)
 
 
 def identify_jwst_c1d_multi_fits(origin, *args, **kwargs):
     """
-    Check whether the given file is a JWST x1d spectral data product with many slits.
+    Check whether the given file is a JWST c1d spectral data product with many slits.
     """
-    is_jwst = _identify_jwst_fits(*args)
-    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return is_jwst and ('COMBINE1D', 2) in hdulist
+    return _identify_spec1d_multi_fits(origin, 'COMBINE1D', *args, **kwargs)
 
 
 def identify_jwst_x1d_fits(origin, *args, **kwargs):
     """
     Check whether the given file is a JWST x1d spectral data product.
     """
-    is_jwst = _identify_jwst_fits(*args)
-    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist)
+    return _identify_spec1d_fits(origin, 'EXTRACT1D', *args, **kwargs)
 
 
 def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     """
     Check whether the given file is a JWST x1d spectral data product with many slits.
     """
-    is_jwst = _identify_jwst_fits(*args)
-    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return is_jwst and ('EXTRACT1D', 2) in hdulist
+    return _identify_spec1d_multi_fits(origin, 'EXTRACT1D', *args, **kwargs)
 
 
 def identify_jwst_s2d_fits(origin, *args, **kwargs):
@@ -112,7 +119,7 @@ def jwst_c1d_single_loader(file_obj, **kwargs):
     Spectrum1D
         The spectrum contained in the file.
     """
-    spectrum_list = _jwst_c1d_loader(file_obj, **kwargs)
+    spectrum_list = _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
     if len(spectrum_list) == 1:
         return spectrum_list[0]
     else:
@@ -137,64 +144,7 @@ def jwst_c1d_multi_loader(file_obj, **kwargs):
     SpectrumList
         A list of the spectra that are contained in the file.
     """
-    return _jwst_c1d_loader(file_obj, **kwargs)
-
-
-def _jwst_c1d_loader(file_obj, **kwargs):
-    spectra = []
-
-    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
-
-        primary_header = hdulist["PRIMARY"].header
-
-        for hdu in hdulist:
-            # Read only the BinaryTableHDUs named COMBINE1D and SCI
-            if hdu.name != 'COMBINE1D':
-                continue
-
-            data = Table.read(hdu)
-
-            wavelength = Quantity(data["WAVELENGTH"])
-
-            # Determine if FLUX or SURF_BRIGHT column should be returned
-            # based on whether it is point or extended source.
-            #
-            # SRCTYPE used to be in primary header, but was moved around. As
-            # per most recent pipeline definition, it should be in the
-            # EXTRACT1D extension.
-            srctype = None
-            if "srctype" in hdu.header:
-                srctype = hdu.header.get("srctype", None)
-
-            flux = Quantity(data["FLUX"])
-            uncertainty = StdDevUncertainty(data["ERROR"])
-
-            # if srctype == "POINT":
-            #     flux = Quantity(data["FLUX"])
-            #     uncertainty = StdDevUncertainty(data["ERROR"])
-            # elif srctype == "EXTENDED":
-            #     flux = Quantity(data["SURF_BRIGHT"])
-            #     uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
-            # elif srctype == 'UNKNOWN':
-            #     flux = Quantity(data["FLUX"])
-            #     uncertainty = StdDevUncertainty(data["ERROR"])
-            #     log.warning('SRCTYPE is UNKNOWN.  Defaulting to loading FLUX and ERROR data.')
-            # else:
-            #     raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
-            #                        "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
-            #                        "`surf_bright` columns.")
-
-            # Merge primary and slit headers and dump into meta
-            slit_header = hdu.header
-            header = primary_header.copy()
-            header.extend(slit_header, strip=True, update=True)
-            meta = {'header': header}
-
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength,
-                              uncertainty=uncertainty, meta=meta)
-            spectra.append(spec)
-
-    return SpectrumList(spectra)
+    return _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
 
 
 @data_loader("JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
@@ -213,7 +163,7 @@ def jwst_x1d_single_loader(file_obj, **kwargs):
     Spectrum1D
         The spectrum contained in the file.
     """
-    spectrum_list = _jwst_x1d_loader(file_obj, **kwargs)
+    spectrum_list = _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
     if len(spectrum_list) == 1:
         return spectrum_list[0]
     else:
@@ -238,10 +188,10 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
     SpectrumList
         A list of the spectra that are contained in the file.
     """
-    return _jwst_x1d_loader(file_obj, **kwargs)
+    return _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
 
 
-def _jwst_x1d_loader(file_obj, **kwargs):
+def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
 
     Parameters
@@ -249,12 +199,17 @@ def _jwst_x1d_loader(file_obj, **kwargs):
     file_obj: str, file-like, or HDUList
           FITS file name, object (provided from name by Astropy I/O Registry),
           or HDUList (as resulting from astropy.io.fits.open()).
+    extname: str
+        The name of the science extension. Either "COMBINE1D" or "EXTRACT1D".  By default "EXTRACT1D".
 
     Returns
     -------
     SpectrumList
         A list of the spectra that are contained in the file.
     """
+
+    if extname not in ['COMBINE1D', 'EXTRACT1D']:
+        raise ValueError('Incorrect extname given for 1d spectral data.')
 
     spectra = []
 
@@ -263,8 +218,8 @@ def _jwst_x1d_loader(file_obj, **kwargs):
         primary_header = hdulist["PRIMARY"].header
 
         for hdu in hdulist:
-            # Read only the BinaryTableHDUs named EXTRACT1D and SCI
-            if hdu.name != 'EXTRACT1D':
+            # Read only the BinaryTableHDUs named COMBINE1D/EXTRACT1D and SCI
+            if hdu.name != extname:
                 continue
 
             data = Table.read(hdu)
@@ -277,6 +232,10 @@ def _jwst_x1d_loader(file_obj, **kwargs):
             # SRCTYPE used to be in primary header, but was moved around. As
             # per most recent pipeline definition, it should be in the
             # EXTRACT1D extension.
+            #
+            # SRCTYPE should either be POINT or EXTENDED.  In some cases, it is UNKNOWN.
+            # if UNKNOWN, default to using the FLUX column.  Error out only when SRCTYPE
+            # cannot be found.
             srctype = None
             if "srctype" in hdu.header:
                 srctype = hdu.header.get("srctype", None)
@@ -295,7 +254,7 @@ def _jwst_x1d_loader(file_obj, **kwargs):
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
                                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
                                    "`surf_bright` columns.")
-
+            breakpoint()
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
             header = primary_header.copy()
