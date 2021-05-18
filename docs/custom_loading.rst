@@ -50,7 +50,9 @@ Creating a Custom Loader
 Defining a custom loader consists of importing the
 `~specutils.io.registers.data_loader` decorator from specutils and attaching
 it to a function that knows how to parse the user's data.  The return object
-of this function must be a :class:`~specutils.Spectrum1D` object.
+of this function must be an instance of one of the spectral classes
+(:class:`~specutils.Spectrum1D`, :class:`~specutils.SpectrumCollection`,
+:class:`~specutils.SpectrumList`).
 
 Optionally, the user may define an identifier function. This function acts to
 ensure that the data file being loaded is compatible with the loader function.
