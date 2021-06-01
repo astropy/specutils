@@ -206,23 +206,23 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                              " last. Reshaping arrays to put spectral axis last.")
                     wcs = wcs.swapaxes(0, temp_axes[0])
                     if flux is not None:
-                        flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)
+                        flux = np.swapaxes(flux, len(flux.shape)-temp_axes[0]-1, -1)
                     if "mask" in kwargs:
                         if kwargs["mask"] is not None:
-                            kwargs["mask"] = np.moveaxis(kwargs["mask"],
+                            kwargs["mask"] = np.swapaxes(kwargs["mask"],
                                                 len(kwargs["mask"].shape)-temp_axes[0]-1, -1)
                     if "uncertainty" in kwargs:
                         if kwargs["uncertainty"] is not None:
                             if isinstance(kwargs["uncertainty"], NDUncertainty):
                                 # Account for Astropy uncertainty types
                                 unc_len = len(kwargs["uncertainty"].array.shape)
-                                temp_unc = np.moveaxis(kwargs["uncertainty"].array,
+                                temp_unc = np.swapaxes(kwargs["uncertainty"].array,
                                                        unc_len-temp_axes[0]-1, -1)
                                 if kwargs["uncertainty"].unit is not None:
                                     temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
                                 kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
                             else:
-                                kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
+                                kwargs["uncertainty"] = np.swapaxes(kwargs["uncertainty"],
                                                         len(kwargs["uncertainty"].shape) -
                                                         temp_axes[0]-1, -1)
 
