@@ -1,5 +1,5 @@
-import logging
 from copy import deepcopy
+import logging
 
 import numpy as np
 import astropy.units.equivalencies as eq
@@ -16,6 +16,8 @@ DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
 DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 __all__ = ['OneDSpectrumMixin']
+
+log = logging.getLogger(__name__)
 
 
 class OneDSpectrumMixin(NDIOMixin):
@@ -287,7 +289,7 @@ class OneDSpectrumMixin(NDIOMixin):
                 self.wcs.unit[0], equivalencies=u.spectral()):
             return gwcs_from_array(self.spectral_axis), meta
 
-        logging.error("WCS units incompatible: {} and {}.".format(
+        log.error("WCS units incompatible: {} and {}.".format(
             unit, self._wcs_unit))
 
 
