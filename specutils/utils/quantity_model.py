@@ -41,7 +41,7 @@ class QuantityModel:
         return False
 
     def __getattr__(self, nm):
-        if hasattr(self.unitless_model, nm):
+        if nm != 'unitless_model' and hasattr(self.unitless_model, nm):
             return getattr(self.unitless_model, nm)
         else:
             raise AttributeError("'{}' object has no attribute '{}'"
