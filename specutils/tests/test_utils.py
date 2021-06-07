@@ -24,7 +24,7 @@ def test_quantity_model():
 
     assert uc(10*u.nm).to(u.m) == 0*u.m
 
-def test_pickle_quantity_model():
+def test_pickle_quantity_model(tmp_path):
     """
     Check that a QuantityModel can roundtrip through pickling, as it
     would if fit in a multiprocessing pool.
@@ -33,10 +33,12 @@ def test_pickle_quantity_model():
     c = modeling.models.Chebyshev1D(3)
     uc = QuantityModel(c, u.AA, u.km)
 
-    with open("qmodel.pkl", "wb") as f:
+    pkl_file = tmp_path / "qmodel.pkl"
+
+    with open(pkl_file, "wb") as f:
         pickle.dump(uc, f)
 
-    with open("qmodel.pkl", "rb") as f:
+    with open(pkl_file, "rb") as f:
         new_model = pickle.load(f)
 
     assert new_model.input_units == uc.input_units
