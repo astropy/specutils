@@ -1,7 +1,10 @@
+import pickle
+
 import pytest
 import numpy as np
 from astropy import units as u
 from astropy import modeling
+
 from specutils.utils import QuantityModel
 from ..utils.wcs_utils import refraction_index, vac_to_air, air_to_vac
 
@@ -20,6 +23,26 @@ def test_quantity_model():
     uc = QuantityModel(c, u.AA, u.km)
 
     assert uc(10*u.nm).to(u.m) == 0*u.m
+
+def test_pickle_quantity_model():
+    """
+    Check that a QuantityModel can roundtrip through pickling, as it
+    would if fit in a multiprocessing pool.
+    """
+
+    c = modeling.models.Chebyshev1D(3)
+    uc = QuantityModel(c, u.AA, u.km)
+
+    with open("qmodel.pkl", "wb") as f:
+        pickle.dump(uc, f)
+
+    with open("qmodel.pkl", "rb") as f:
+        new_model = pickle.load(f)
+
+    assert new_model.input_units == uc.input_units
+    assert new_model.return_units == uc.return_units
+    assert type(new_model.unitless_model) == type(uc.unitless_model)
+    assert np.all(new_model.unitless_model.parameters == uc.unitless_model.parameters)
 
 @pytest.mark.parametrize("method", data_index_refraction.keys())
 def test_refraction_index(method):
