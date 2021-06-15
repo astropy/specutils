@@ -126,11 +126,9 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
 def custom_writer(label, dtype=Spectrum1D, priority=0):
     def decorator(func):
         if _astropy_has_priorities():
-            io_registry.register_writer(
-                label, Spectrum1D, func, priority=priority,
-            )
+            io_registry.register_writer(label, dtype, func, priority=priority)
         else:
-            io_registry.register_writer(label, Spectrum1D, func)
+            io_registry.register_writer(label, dtype, func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
