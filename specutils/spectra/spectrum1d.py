@@ -1,9 +1,10 @@
-import logging
 from copy import deepcopy
+import logging
 
 import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
+from astropy.nddata import NDUncertainty
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -13,6 +14,8 @@ from astropy.coordinates import SpectralCoord
 from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
+
+log = logging.getLogger(__name__)
 
 
 class Spectrum1D(OneDSpectrumMixin, NDCube):
@@ -153,7 +156,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 rest_value = None
         else:
             if not isinstance(rest_value, u.Quantity):
-                logging.info("No unit information provided with rest value. "
+                log.info("No unit information provided with rest value. "
                              "Assuming units of spectral axis ('%s').",
                              spectral_axis.unit)
                 rest_value = u.Quantity(rest_value, spectral_axis.unit)
@@ -197,20 +200,30 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 # Due to FITS conventions, a WCS with spectral axis first corresponds
                 # to a flux array with spectral axis last.
                 if temp_axes[0] != 0:
-                    logging.warn("Input WCS indicates that the spectral axis is not"
-                                 " last. Reshaping arrays to put spectral axis last.")
+                    log.warn("Input WCS indicates that the spectral axis is not"
+                             " last. Reshaping arrays to put spectral axis last.")
                     wcs = wcs.swapaxes(0, temp_axes[0])
                     if flux is not None:
                         flux = np.moveaxis(flux, len(flux.shape)-temp_axes[0]-1, -1)
                     if "mask" in kwargs:
                         if kwargs["mask"] is not None:
                             kwargs["mask"] = np.moveaxis(kwargs["mask"],
-                                                len(kwargs["mask"])-temp_axes[0]-1, -1)
+                                                len(kwargs["mask"].shape)-temp_axes[0]-1, -1)
                     if "uncertainty" in kwargs:
                         if kwargs["uncertainty"] is not None:
-                            kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
-                                                    len(kwargs["uncertainty"].shape) -
-                                                    temp_axes[0]-1, -1)
+                            if isinstance(kwargs["uncertainty"], NDUncertainty):
+                                # Account for Astropy uncertainty types
+                                unc_len = len(kwargs["uncertainty"].array.shape)
+                                temp_unc = np.moveaxis(kwargs["uncertainty"].array,
+                                                       unc_len-temp_axes[0]-1, -1)
+                                if kwargs["uncertainty"].unit is not None:
+                                    temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
+                                kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
+                            else:
+                                kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
+                                                        len(kwargs["uncertainty"].shape) -
+                                                        temp_axes[0]-1, -1)
+
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to

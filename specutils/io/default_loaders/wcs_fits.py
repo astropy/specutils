@@ -1,6 +1,6 @@
-import logging
 import warnings
 import _io
+import logging
 
 from astropy import units as u
 from astropy.io import fits
@@ -16,6 +16,8 @@ from ..registers import data_loader, custom_writer
 from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ['wcs1d_fits_loader', 'non_linear_wcs1d_fits', 'non_linear_multispec_fits']
+
+log = logging.getLogger(__name__)
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
@@ -79,7 +81,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     -----
     Loader contributed by Kelle Cruz.
     """
-    logging.info("Spectrum file looks like wcs1d-fits")
+    log.info("Spectrum file looks like wcs1d-fits")
 
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[hdu].header
@@ -102,7 +104,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
             wcs.wcs.cunit[0] = unit
         else:  # try with unit name stripped of excess plural 's'...
             wcs.wcs.cunit[0] = unit.rstrip('s')
-        logging.info(f"Extracted spectral axis unit '{unit}' from 'WAT1_001'")
+        log.info(f"Extracted spectral axis unit '{unit}' from 'WAT1_001'")
     elif wcs.wcs.cunit[0] == '':
         wcs.wcs.cunit[0] = 'Angstrom'
 
@@ -254,14 +256,14 @@ def non_linear_wcs1d_fits(file_obj, **kwargs):
     spectral_axis, flux, meta = _read_non_linear_iraf_fits(file_obj, **kwargs)
 
     if spectral_axis.ndim > 1:
-        logging.info(f'Read spectral axis of shape {spectral_axis.shape} - '
+        log.info(f'Read spectral axis of shape {spectral_axis.shape} - '
                      'consider loading into SpectrumCollection.')
         spectral_axis = spectral_axis.flatten()
 
     # Check for ascending or descending values, as flattening might have joined overlapping orders.
     ds = (spectral_axis[1:] - spectral_axis[:-1]) / (spectral_axis[-1] - spectral_axis[0])
     if ds.min() < 0:
-        logging.warning('Non-monotonous spectral axis found, consider loading '
+        log.warning('Non-monotonous spectral axis found, consider loading '
                         'into SpectrumCollection.')
 
     if flux.shape[-1] != spectral_axis.shape[-1]:
@@ -306,7 +308,7 @@ def non_linear_multispec_fits(file_obj, **kwargs):
     spectral_axis, flux, meta = _read_non_linear_iraf_fits(file_obj, **kwargs)
 
     if spectral_axis.ndim == 1:
-        logging.info(f'Read 1D spectral axis of length {spectral_axis.shape[0]} - '
+        log.info(f'Read 1D spectral axis of length {spectral_axis.shape[0]} - '
                      'consider loading into Spectrum1D.')
         spectral_axis = spectral_axis.reshape((1, -1))
     if flux.ndim == 1:
@@ -356,18 +358,18 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
         Dictionary of {'header': hdulist[0].header}.
     """
 
-    logging.info('Loading 1D non-linear fits solution')
+    log.info('Loading 1D non-linear fits solution')
 
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
         for wcsdim in range(1, header['WCSDIM'] + 1):
             ctypen = header['CTYPE{:d}'.format(wcsdim)]
             if ctypen == 'LINEAR':
-                logging.info("linear Solution: Try using `format='wcs1d-fits'` instead")
+                log.info("linear Solution: Try using `format='wcs1d-fits'` instead")
                 wcs = WCS(header)
                 spectral_axis = _read_linear_iraf_wcs(wcs=wcs, dc_flag=header['DC-FLAG'])
             elif ctypen == 'MULTISPE':
-                logging.info("Multi spectral or non-linear solution")
+                log.info("Multi spectral or non-linear solution")
                 spectral_axis = _read_non_linear_iraf_wcs(header=header, wcsdim=wcsdim)
             else:
                 raise NotImplementedError
@@ -377,7 +379,7 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
         elif 'BUNIT' in header:
             data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
         else:
-            logging.info("Flux unit was not provided, nor found in the header. Assuming ADU.")
+            log.info("Flux unit was not provided, nor found in the header. Assuming ADU.")
             data = u.Quantity(hdulist[0].data, unit='adu')
 
     if spectral_axis_unit is None:
@@ -388,7 +390,7 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
             spectral_axis_unit = unit
         else:  # try with unit name stripped of excess plural 's'...
             spectral_axis_unit = unit.rstrip('s')
-        logging.info(f"Extracted spectral axis unit '{spectral_axis_unit}' from 'WAT1_001'")
+        log.info(f"Extracted spectral axis unit '{spectral_axis_unit}' from 'WAT1_001'")
     spectral_axis *= u.Unit(spectral_axis_unit)
 
     return spectral_axis, data, dict(header=header)
@@ -467,12 +469,12 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
                   'pmin': lambda x: int(float(x)), 'pmax': lambda x: int(float(x))}
 
     ctypen = header['CTYPE{:d}'.format(wcsdim)]
-    logging.info('Attempting to read CTYPE{:d}: {:s}'.format(wcsdim, ctypen))
+    log.info('Attempting to read CTYPE{:d}: {:s}'.format(wcsdim, ctypen))
     if ctypen == 'MULTISPE':
         # This is extracting all header cards for f'WAT{wcsdim}_*' into a list
         wat_head = header['WAT{:d}*'.format(wcsdim)]
         if len(wat_head) == 1:
-            logging.debug('Get units')
+            log.debug('Get units')
             wat_array = wat_head[0].split(' ')
             for pair in wat_array:
                 split_pair = pair.split('=')
@@ -489,7 +491,7 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
                     # print(wat_array[i], wat_array[i + 1])
 
     for key in wat_wcs_dict.keys():
-        logging.debug("{:d} -{:s}- {:s}".format(wcsdim, key, wat_wcs_dict[key]))
+        log.debug("{:d} -{:s}- {:s}".format(wcsdim, key, wat_wcs_dict[key]))
 
     specn = [k for k in wat_wcs_dict.keys() if k.startswith('spec')]
     spectral_axis = np.empty((len(specn), header['NAXIS1']))
@@ -498,12 +500,12 @@ def _read_non_linear_iraf_wcs(header, wcsdim):
         wcs_dict = dict((k, wcs_parser[k](spec[i])) for i, k in enumerate(wcs_parser.keys()))
         wcs_dict['fpar'] = [float(i) for i in spec[15:]]
 
-        logging.debug(f'Retrieving model for {sp}: {wcs_dict["dtype"]} {wcs_dict["ftype"]}')
+        log.debug(f'Retrieving model for {sp}: {wcs_dict["dtype"]} {wcs_dict["ftype"]}')
         math_model = _set_math_model(wcs_dict=wcs_dict)
 
         spectral_axis[n] = math_model(range(1, wcs_dict['pnum'] + 1)) / (1. + wcs_dict['z'])
 
-    logging.info(f'Constructed spectral axis of shape {spectral_axis.shape}')
+    log.info(f'Constructed spectral axis of shape {spectral_axis.shape}')
     return spectral_axis
 
 
@@ -545,16 +547,16 @@ def _set_math_model(wcs_dict):
 
     """
     if wcs_dict['dtype'] == -1:
-        logging.debug('No wavelength solution found (DTYPE={dtype:d})'.format(**wcs_dict))
+        log.debug('No wavelength solution found (DTYPE={dtype:d})'.format(**wcs_dict))
         return _none()
     elif wcs_dict['dtype'] == 0:
-        logging.debug('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
+        log.debug('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
         return _linear_solution(wcs_dict=wcs_dict)
     elif wcs_dict['dtype'] == 1:
-        logging.debug('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
+        log.debug('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
         return _log_linear(wcs_dict=wcs_dict)
     elif wcs_dict['dtype'] == 2:
-        logging.debug('Setting model for DTYPE={dtype:d} FTYPE={ftype:d}'.format(**wcs_dict))
+        log.debug('Setting model for DTYPE={dtype:d} FTYPE={ftype:d}'.format(**wcs_dict))
         if wcs_dict['ftype'] == 1:
             return _chebyshev(wcs_dict=wcs_dict)
         elif wcs_dict['ftype'] == 2:

@@ -5,9 +5,8 @@
 #
 #  21-apr-2016  Peter Teuben    hackday at "SPECTROSCOPY TOOLS IN PYTHON WORKSHOP" STSCI
 
-import logging
-#
 import os
+import logging
 
 import numpy as np
 from astropy.io import fits
@@ -17,6 +16,8 @@ from astropy.wcs import WCS
 from ...spectra import Spectrum1D
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
+
+log = logging.getLogger(__name__)
 
 
 # Define an optional identifier. If made specific enough, this circumvents the
@@ -54,7 +55,7 @@ def generic_fits(file_obj, **kwargs):
             # if len(data.shape) != 1:
             #    raise Exception,"not a true cube"
         else:
-            logging.error("Unexpected shape %s.", shape)
+            log.error("Unexpected shape %s.", shape)
 
         # store some meta data
         meta = {'header': header}

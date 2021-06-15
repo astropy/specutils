@@ -4,6 +4,7 @@ import re
 import urllib
 import io
 import contextlib
+import logging
 
 from astropy.io import fits
 from astropy.table import Table
@@ -11,9 +12,10 @@ from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
-import logging
 
 from specutils.spectra import Spectrum1D, SpectrumCollection
+
+log = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
@@ -97,7 +99,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             kwarg_val = u.Quantity(table[col_name], tab_unit)
 
             # Attempt to convert the table unit to the user-defined unit.
-            logging.debug("Attempting auto-convert of table unit '%s' to "
+            log.debug("Attempting auto-convert of table unit '%s' to "
                           "user-provided unit '%s'.", tab_unit, cm_unit)
 
             if not isinstance(cm_unit, u.Unit):

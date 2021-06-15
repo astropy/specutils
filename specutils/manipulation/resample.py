@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 
 from warnings import warn
