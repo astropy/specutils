@@ -3,7 +3,13 @@ Working with Spectral Cubes
 ###########################
 
 Spectral cubes can be read directly with :class:`~specutils.Spectrum1D`.
-A specific example of this is demonstrated here.
+A specific example of this is demonstrated here. In addition to the functions
+demonstrated below, as a subclass of `NDCube <https://github.com/sunpy/ndcube>`_, 
+:class:`~specutils.Spectrum1D` also inherits useful methods for e.g. cropping 
+based on combinations of world and spectral coordinates. Most of the 
+functionality inherited from `~ndcube.NDCube` requires initializing the 
+``Spectrum1D`` object with a WCS describing the coordinates for all axes of 
+the data.
 
 Note that the workflow described here is for spectral cubes that are rectified
 such that one of the axes is entirely spectral and all the spaxels have the same

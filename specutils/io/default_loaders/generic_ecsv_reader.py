@@ -1,5 +1,4 @@
 import os
-import logging
 
 from astropy.table import Table
 

@@ -1,5 +1,3 @@
-import warnings
-
 import astropy.units as u
 from astropy.utils.decorators import lazyproperty
 from astropy.coordinates import SpectralCoord

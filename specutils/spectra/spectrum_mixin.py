@@ -1,9 +1,10 @@
-import logging
 from copy import deepcopy
+import logging
 
-import astropy.units.equivalencies as eq
 import numpy as np
+import astropy.units.equivalencies as eq
 from astropy import units as u
+from astropy.nddata import NDIOMixin
 from astropy.utils.decorators import lazyproperty, deprecated
 from astropy.wcs.wcsapi import HighLevelWCSWrapper
 
@@ -16,8 +17,10 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 __all__ = ['OneDSpectrumMixin']
 
+log = logging.getLogger(__name__)
 
-class OneDSpectrumMixin:
+
+class OneDSpectrumMixin(NDIOMixin):
     @property
     def _spectral_axis_numpy_index(self):
         return self.data.ndim - 1 - self.wcs.wcs.spec
@@ -286,7 +289,7 @@ class OneDSpectrumMixin:
                 self.wcs.unit[0], equivalencies=u.spectral()):
             return gwcs_from_array(self.spectral_axis), meta
 
-        logging.error("WCS units incompatible: {} and {}.".format(
+        log.error("WCS units incompatible: {} and {}.".format(
             unit, self._wcs_unit))
 
 
