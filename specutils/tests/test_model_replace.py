@@ -105,3 +105,29 @@ def test_from_region():
     assert_quantity_allclose(result.flux, flux_val*u.mJy)
     assert_quantity_allclose(result.spectral_axis, input_spectrum.spectral_axis)
     assert_quantity_allclose(result.uncertainty.quantity, uncert_val*u.mJy)
+
+
+def test_from_fitted_model():
+    wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    flux_val = np.array([1, 1.1, 0.9, 4., 10., 5., 2., 1., 1.2, 1.1])
+    uncert_val = flux_val / 10.
+
+    uncert = StdDevUncertainty(uncert_val * u.mJy)
+
+    input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
+                                uncertainty=uncert)
+
+    model = models.Gaussian1D(10, 5.6, 1.2)
+    fitted_model = fit_lines(input_spectrum, model)
+    region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
+
+    result = model_replace(input_spectrum, region, model=fitted_model)
+
+    assert result.uncertainty is None
+    assert result.flux.unit == input_spectrum.flux.unit
+
+    expected_flux = np.array([1., 1.1, 0.9, 4.40801804, 9.58271877,
+                              5.61238054, 0.88556096, 1., 1.2, 1.1]) * u.mJy
+
+    assert_quantity_allclose(result.flux, expected_flux)
+    assert_quantity_allclose(result.spectral_axis, input_spectrum.spectral_axis)

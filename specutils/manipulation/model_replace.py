@@ -4,8 +4,9 @@ from scipy.interpolate import CubicSpline
 from astropy.units import Quantity
 from astropy.modeling import Fittable1DModel
 
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum1D
 from ..utils import QuantityModel
+from . import extract_region
 
 
 def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='data_fill',
@@ -21,8 +22,8 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
 
     replace_region : `~specutils.SpectralRegion`
         Spectral region that specifies the region to be replaced. If None,
-        `model` should define spline knots explicitly in the form of a list
-        or array of `~astropy.units.Quantity`
+        parameter `model` below should define spline knots explicitly in the
+        form of an `~astropy.units.Quantity` list or array
 
     model :
         An `~astropy.modeling` model object, which is assumed to have
@@ -74,8 +75,10 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
     if isinstance(model, Quantity) and replace_region is None:
         new_spectral_axis = spectrum.spectral_axis.to(model.unit)
 
-        out_flux_val, out_uncert_val = _compute_model(interpolate_uncertainty, model,
-                                                      new_spectral_axis, spectrum)
+        out_flux_val, out_uncert_val = _compute_spline_values(spectrum,
+                                                              model,
+                                                              new_spectral_axis,
+                                                              interpolate_uncertainty)
 
     # If input model is an int, use it and the spectral region to build a
     # list of equally spaced spline knots.
@@ -87,11 +90,34 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
         for k in range(nknots):
             spline_knots.append(replace_region.lower + k * dw)
 
-        spline_knots = spline_knots * spectrum.spectral_axis.unit
+        spline_knots = spline_knots * replace_region.lower.unit
+        new_spectral_axis = spectrum.spectral_axis.to(spline_knots.unit)
+
+        out_flux_val, out_uncert_val = _compute_spline_values(spectrum,
+                                                              spline_knots,
+                                                              new_spectral_axis,
+                                                              interpolate_uncertainty)
+
+    # If input model is a fitted model, use it and the spectral region to place the
+    # model values over the relevant stretch of the spectrum's spectral axis.
+    elif (isinstance(model, Fittable1DModel) or (isinstance(model, QuantityModel))) \
+            and replace_region is not None:
         new_spectral_axis = spectrum.spectral_axis
 
-        out_flux_val, out_uncert_val = _compute_model(interpolate_uncertainty, spline_knots,
-                                                      new_spectral_axis, spectrum)
+        subspectrum = extract_region(spectrum, replace_region)
+
+        model_values = model(subspectrum.spectral_axis)
+
+        out_flux_val = np.full(spectrum.spectral_axis.shape, np.nan)
+        indices_up = np.where(spectrum.spectral_axis >= replace_region.lower)
+        indices_dn = np.where(spectrum.spectral_axis <= replace_region.upper)
+        i = int(indices_up[0][0])
+        j = int(indices_dn[0][-1]) + 1
+
+        out_flux_val[i:j] = model_values
+
+        # models do not propagate uncertainties.
+        out_uncert_val = None
 
     else:
         raise NotImplementedError("This combination of input parameters is not yet implemented.")
@@ -122,7 +148,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
     return Spectrum1D(spectral_axis=new_spectral_axis, flux=out, uncertainty=new_unc)
 
 
-def _compute_model(interpolate_uncertainty, spline_knots, new_spectral_axis, spectrum):
+def _compute_spline_values(spectrum, spline_knots, new_spectral_axis, interpolate_uncertainty):
 
     # Compute output flux values interpolated over the spline knots.
     out_flux_val = _interpolate_spline(spectrum.flux.value, new_spectral_axis, spline_knots)
