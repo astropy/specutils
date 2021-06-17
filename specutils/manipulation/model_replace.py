@@ -31,7 +31,8 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
         Or
         a list or array of spectral axis values to be used as spline knots.
         They all should share the same units, which can be different
-        from the units of the input spectrum spectral axis;
+        from the units of the input spectrum spectral axis, but most
+        be of compatible physical type;
         Or
         an integer value that will be used to build a list of equally-spaced
         knots, based on the `replace_region` instance.
