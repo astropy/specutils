@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 from astropy import units as u
+from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
 from astropy.nddata import NDUncertainty
 
@@ -10,15 +11,13 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-from astropy.coordinates import SpectralCoord
-from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
 
 log = logging.getLogger(__name__)
 
 
-class Spectrum1D(OneDSpectrumMixin, NDCube):
+class Spectrum1D(OneDSpectrumMixin, NDDataRef):
     """
     Spectrum container for 1D spectral data.
 
@@ -37,15 +36,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
     Parameters
     ----------
     flux : `~astropy.units.Quantity` or `~astropy.nddata.NDData`-like
-        The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
-        or an existing `~Spectrum1D` or `~ndcube.NDCube` object.
+        The flux data for this spectrum.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
         if specifying bin edges.
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
-        WCS information object that either has a spectral component or is
-        only spectral.
+        WCS information object.
     velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
         Convention used for velocity conversions.
     rest_value : `~astropy.units.Quantity`
@@ -76,29 +73,16 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                  radial_velocity=None, bin_specification=None, **kwargs):
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
-            {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy',
-             'extra_coords'})
+            {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy'})
 
         if len(unknown_kwargs) > 0:
             raise ValueError("Initializer contains unknown arguments(s): {}."
                              "".format(', '.join(map(str, unknown_kwargs))))
 
-        # If the flux (data) argument is already a Spectrum1D (as it would
+        # If the flux (data) argument is a subclass of nddataref (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if isinstance(flux, Spectrum1D):
+        if isinstance(flux, NDDataRef):
             super().__init__(flux)
-            return
-
-        # Handle initializing from NDCube objects
-        elif isinstance(flux, NDCube):
-            if flux.unit is None:
-                raise ValueError("Input NDCube missing unit parameter")
-
-            # Change the flux array from bare ndarray to a Quantity
-            q_flux = flux.data << u.Unit(flux.unit)
-
-            self.__init__(flux=q_flux, wcs=flux.wcs, mask=flux.mask,
-                          uncertainty=flux.uncertainty)
             return
 
         # If the mask kwarg is not passed to the constructor, but the flux array
@@ -257,9 +241,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
 
                 self._spectral_axis = spectral_axis
 
-            if wcs is None:
-                wcs = gwcs_from_array(self._spectral_axis)
-
+            wcs = gwcs_from_array(self._spectral_axis)
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
@@ -274,23 +256,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         # If no spectral_axis was provided, create a SpectralCoord based on
         # the WCS
         if spectral_axis is None:
-            # If the WCS doesn't have a spectral attribute, we assume it's the
-            # dummy GWCS we created or a solely spectral WCS
-            if hasattr(self.wcs, "spectral"):
-                # Handle generated 1D WCS that aren't set to spectral
-                if not self.wcs.is_spectral and self.wcs.naxis == 1:
-                    spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
-                else:
-                    spec_axis = self.wcs.spectral.pixel_to_world(np.arange(self.flux.shape[-1]))
-            else:
-                spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+            # If spectral_axis wasn't provided, set _spectral_axis based on
+            # the WCS
+            spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
 
-            try:
-                if spec_axis.unit.is_equivalent(u.one):
-                    spec_axis = spec_axis * u.pixel
-            except AttributeError:
-                raise AttributeError(f"spec_axis does not have unit: "
-                                     f"{type(spec_axis)} {spec_axis}")
+            if spec_axis.unit.is_equivalent(u.one):
+                spec_axis = spec_axis * u.pixel
 
             self._spectral_axis = SpectralAxis(
                 spec_axis,
@@ -373,12 +344,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
             if isinstance(item, u.Quantity):
                 raise ValueError("Indexing on a single spectral axis values is not"
                                  " currently allowed, please use a slice.")
-            # Handle tuple slice as input by NDCube crop method
-            elif isinstance(item, tuple):
-                if len(item) == 1 and isinstance(item[0], slice):
-                    item = item[0]
-                else:
-                    raise ValueError(f"Unclear how to slice with tuple {item}")
             else:
                 item = slice(item, item + 1, None)
         elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
@@ -440,7 +405,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
-    @NDCube.mask.setter
+    @NDDataRef.mask.setter
     def mask(self, value):
         # Impose stricter checks than the base NDData mask setter
         if value is not None:
@@ -536,31 +501,31 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
         self._spectral_axis = new_spectral_axis
 
     def __add__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, NDDataRef):
             other = u.Quantity(other, unit=self.unit)
 
         return self.add(other)
 
     def __sub__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, NDDataRef):
             other = u.Quantity(other, unit=self.unit)
 
         return self.subtract(other)
 
     def __mul__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, NDDataRef):
             other = u.Quantity(other)
 
         return self.multiply(other)
 
     def __div__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, NDDataRef):
             other = u.Quantity(other)
 
         return self.divide(other)
 
     def __truediv__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, NDDataRef):
             other = u.Quantity(other)
 
         return self.divide(other)
