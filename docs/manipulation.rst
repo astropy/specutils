@@ -350,6 +350,58 @@ the ``spectral_axis``. Therefore one can use a construct like this:
                 46.94743859,  54.25600436] Jy>, spectral_axis=<SpectralAxis [ 1.23,  2.23,  3.23,  4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
 
 
+Replacing a region
+------------------
+
+A specific wavelength region of a spectrum can be replaced with a model
+fitted to that region. This is done by the ``model_replace`` function.
+By default, the function uses a cubic spline to model a specified region.
+Alternatively, it can use a previously fitted model from `~astropy.modeling`.
+
+The simplest way to use ``model_replace`` is to provide just a list or array
+with the spline knots:
+
+.. code-block:: python
+
+    >>> from specutils.manipulation import model_replace
+    >>> wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    >>> flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
+    >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
+    >>> result = model_replace(input_spectrum, None, model=spline_knots)
+    >>> result
+
+The default behavior is to keep the data outside the replaced region. Alternatively
+one can have the entire spectrum filled with zeros, outside the replaced region:
+
+.. code-block:: python
+
+    >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
+    >>> result = model_replace(input_spectrum, None, model=spline_knots,
+                               extrapolation_treatment='zero_fill')
+    >>> result
+
+One can define the spline knots by providing an instance of `~specutils.SpectralRegion`,
+and the number of knots to be evenly spread along the region:
+
+.. code-block:: python
+
+    >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
+    >>> result = model_replace(input_spectrum, region, model=4)
+    >>> result
+
+A model fitted over the region can also be used to replace data:
+
+.. code-block:: python
+
+    >>> flux_val = np.array([1, 1.1, 0.9, 4., 10., 5., 2., 1., 1.2, 1.1])
+    >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    >>> model = models.Gaussian1D(10, 5.6, 1.2)
+    >>> fitted_model = fit_lines(input_spectrum, model)
+    >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
+    >>> result = model_replace(input_spectrum, region, model=fitted_model)
+    >>> result
+
 Reference/API
 -------------
 
