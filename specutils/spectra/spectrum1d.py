@@ -5,7 +5,6 @@ import numpy as np
 from astropy import units as u
 from astropy.nddata import NDDataRef
 from astropy.utils.decorators import lazyproperty
-from astropy.nddata import NDUncertainty
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -192,22 +191,12 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                     if "mask" in kwargs:
                         if kwargs["mask"] is not None:
                             kwargs["mask"] = np.moveaxis(kwargs["mask"],
-                                                len(kwargs["mask"].shape)-temp_axes[0]-1, -1)
+                                                len(kwargs["mask"])-temp_axes[0]-1, -1)
                     if "uncertainty" in kwargs:
                         if kwargs["uncertainty"] is not None:
-                            if isinstance(kwargs["uncertainty"], NDUncertainty):
-                                # Account for Astropy uncertainty types
-                                unc_len = len(kwargs["uncertainty"].array.shape)
-                                temp_unc = np.moveaxis(kwargs["uncertainty"].array,
-                                                       unc_len-temp_axes[0]-1, -1)
-                                if kwargs["uncertainty"].unit is not None:
-                                    temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
-                                kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
-                            else:
-                                kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
-                                                        len(kwargs["uncertainty"].shape) -
-                                                        temp_axes[0]-1, -1)
-
+                            kwargs["uncertainty"] = np.moveaxis(kwargs["uncertainty"],
+                                                    len(kwargs["uncertainty"].shape) -
+                                                    temp_axes[0]-1, -1)
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to

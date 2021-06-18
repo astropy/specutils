@@ -1,7 +1,7 @@
+
 import astropy.units as u
 from astropy.io import fits
 from astropy.nddata import InverseVariance
-from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader
@@ -53,7 +53,7 @@ def manga_cube_loader(file_obj, **kwargs):
 
     spaxel = u.Unit('spaxel', represents=u.pixel, doc='0.5" spatial pixel', parse_strict='silent')
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
-        spectrum = _load_manga_spectra(hdulist, per_unit=spaxel)
+        spectrum = _load_manga_spectra(hdulist, per_unit=spaxel, transpose=True)
 
     return spectrum
 
@@ -83,13 +83,13 @@ def manga_rss_loader(file_obj, **kwargs):
     return spectrum
 
 
-def _load_manga_spectra(hdulist, per_unit=None):
+def _load_manga_spectra(hdulist, per_unit=None, transpose=None):
     """ Return a MaNGA Spectrum1D object
 
-    Returns a Spectrum1D object for a MaNGA data files. Use the `per_unit`
-    kwarg to indicate the "spaxel" or "fiber" unit for cubes and rss files,
-    respectively. Note that the spectral axis will automatically be moved to
-    be last during Spectrum1D initialization.
+    Returns a Spectrum1D object for a MaNGA data files.  Set
+    `transpose` kwarg to True for MaNGA cubes, as they are flipped relative
+    to what Spectrum1D expects.  Use the `per_unit` kwarg to indicate the
+    "spaxel" or "fiber" unit for cubes and rss files, respectively.
 
     Parameters
     ----------
@@ -97,6 +97,8 @@ def _load_manga_spectra(hdulist, per_unit=None):
         A MaNGA read astropy fits HDUList
     per_unit : astropy.units.Unit
         An astropy unit to divide the default flux unit by
+    transpose : bool
+        If True, transpose the data arrays
 
     Returns
     -------
@@ -108,12 +110,18 @@ def _load_manga_spectra(hdulist, per_unit=None):
         unit = unit / per_unit
 
     hdr = hdulist['PRIMARY'].header
-    wcs = WCS(hdulist['FLUX'].header)
+    wave = hdulist['WAVE'].data * u.angstrom
 
-    flux = hdulist['FLUX'].data * unit
-    ivar = InverseVariance(hdulist["IVAR"].data)
-    # SDSS masks are arrays of bit values storing multiple boolean conditions.
-    mask = hdulist['MASK'].data != 0
+    if transpose:
+        flux = hdulist['FLUX'].data.T * unit
+        ivar = InverseVariance(hdulist["IVAR"].data.T)
+        # SDSS masks are arrays of bit values storing multiple boolean conditions.
+        # Setting non-zero bit values to True to map to specutils standard
+        mask = hdulist['MASK'].data.T != 0
+    else:
+        flux = hdulist['FLUX'].data * unit
+        ivar = InverseVariance(hdulist["IVAR"].data)
+        mask = hdulist['MASK'].data != 0
 
-    return Spectrum1D(flux=flux, meta={'header': hdr}, wcs=wcs,
+    return Spectrum1D(flux=flux, meta={'header': hdr}, spectral_axis=wave,
                       uncertainty=ivar, mask=mask)
