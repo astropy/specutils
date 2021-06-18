@@ -1,15 +1,28 @@
-1.3.x (unreleased)
-------------------
+1.3
+---
 
 New Features
 ^^^^^^^^^^^^
 
+- Added ability to slice ``Spectrum1D`` with spectral axis values. [#790]
+
+- Added ability to replace a section of a spectrum with a spline or model fit. [#782]
+
 Bug Fixes
 ^^^^^^^^^
+
+- Fix infinite recursion when unpickling a ``QuantityModel``. [#823]
+
+- Changed positional to keyword arguments in ``fit_continuum``. [#806]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Fix inaccuracy about custom loading in docs. [#819]
+
+- Use non-root logger to prevent duplicate messages. [#810]
+
+- Removed unused astropy config code. [#805]
 
 1.2
 ---
