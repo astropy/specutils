@@ -112,6 +112,21 @@ def test_jwst_1d_single_reader(tmpdir, spec_single, format):
     assert data.shape == (100,)
 
 
+@pytest.mark.parametrize("srctype", [None, "UNKNOWN"])
+def test_jwst_srctpye_defaults(tmpdir, x1d_single, srctype):
+    """ Test """
+    tmpfile = str(tmpdir.join('jwst.fits'))
+
+    # Add a spectrum with missing or UNKNOWN SRCTYPE (mutate the fixture)
+    x1d_single['EXTRACT1D'].header['SRCTYPE'] == srctype
+    x1d_single.writeto(tmpfile)
+
+    data = Spectrum1D.read(tmpfile, format='JWST x1d')
+    assert type(data) is Spectrum1D
+    assert data.shape == (100,)
+    assert x1d_single['EXTRACT1D'].header['SRCTYPE'] == "POINT"
+
+
 @pytest.mark.parametrize('spec_single', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_single'])
 def test_jwst_1d_single_reader_no_format(tmpdir, spec_single):
     """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
@@ -172,9 +187,9 @@ def test_jwst_1d_single_reader_fail_on_multi(tmpdir, spec_multi):
         Spectrum1D.read(tmpfile)
 
 
-@pytest.mark.parametrize("srctype", [None, "BADVAL"])
+@pytest.mark.parametrize("srctype", ["BADVAL"])
 def test_jwst_reader_fail(tmpdir, x1d_single, srctype):
-    """Check that the reader fails when SRCTYPE is not set or is BADVAL"""
+    """Check that the reader fails when SRCTYPE is a BADVAL"""
     tmpfile = str(tmpdir.join('jwst.fits'))
     hdulist = x1d_single
     # Add a spectrum with bad SRCTYPE (mutate the fixture)

@@ -241,16 +241,17 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
             if "srctype" in hdu.header:
                 srctype = hdu.header.get("srctype", None)
 
+            # checking if SRCTPYE is missing or UNKNOWN
+            if not srctype or srctype == 'UNKNOWN':
+                log.warning('SRCTYPE is missing or UNKNOWN.  Defaulting to srctype="POINT".')
+                srctype = 'POINT'
+
             if srctype == "POINT":
                 flux = Quantity(data["FLUX"])
                 uncertainty = StdDevUncertainty(data["ERROR"])
             elif srctype == "EXTENDED":
                 flux = Quantity(data["SURF_BRIGHT"])
                 uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
-            elif srctype == 'UNKNOWN':
-                flux = Quantity(data["FLUX"])
-                uncertainty = StdDevUncertainty(data["ERROR"])
-                log.warning('SRCTYPE is UNKNOWN.  Defaulting to loading FLUX and ERROR data.')
             else:
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
                                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
