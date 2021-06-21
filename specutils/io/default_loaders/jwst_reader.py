@@ -234,9 +234,9 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
             # per most recent pipeline definition, it should be in the
             # EXTRACT1D extension.
             #
-            # SRCTYPE should either be POINT or EXTENDED.  In some cases, it is UNKNOWN.
-            # if UNKNOWN, default to using the FLUX column.  Error out only when SRCTYPE
-            # cannot be found.
+            # SRCTYPE should either be POINT or EXTENDED.  In some cases, it is UNKNOWN
+            # or missing.  If that's the case, default to using POINT as the SRCTYPE.
+            # Error out only when SRCTYPE is a bad value.
             srctype = None
             if "srctype" in hdu.header:
                 srctype = hdu.header.get("srctype", None)
