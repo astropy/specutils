@@ -104,8 +104,8 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
 
             if not isinstance(cm_unit, u.Unit):
                 cm_unit = u.Unit(cm_unit)
-            cm_type =  str(cm_unit.physical_type)
-            if 'length in cm_type' or 'frequency' in cm_type or 'energy' in cm_type:
+            cm_type = str(cm_unit.physical_type)
+            if 'length' in cm_type or 'frequency' in cm_type or 'energy' in cm_type:
                 # Spectral axis column information
                 kwarg_val = kwarg_val.to(cm_unit, equivalencies=u.spectral())
             elif 'spectral flux' in cm_type:
