@@ -522,14 +522,14 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
         spectrum.write(tmpfile, format='tabular-fits')
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
 
-    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+    cmap = {spectral_axis: ('spectral_axis', 'micron'),
             'flux': ('flux', 'erg / (s cm**2 AA)'),
             'uncertainty': ('uncertainty', None)}
 
     # Read it back again and check against the original
     spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
     assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
-    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert spec.spectral_axis.unit == u.um
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,
@@ -566,13 +566,13 @@ def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
                              spectrum.uncertainty.quantity)
 
     # Test again, using `column_mapping` to convert to different flux unit
-    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+    cmap = {spectral_axis: ('spectral_axis', 'THz'),
             'flux': ('flux', 'erg / (s cm**2 AA)'),
             'uncertainty': ('uncertainty', None)}
 
     spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
     assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
-    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert spec.spectral_axis.unit == u.THz
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,
