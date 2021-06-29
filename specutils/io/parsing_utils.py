@@ -99,8 +99,8 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             kwarg_val = u.Quantity(table[col_name], tab_unit)
 
             # Attempt to convert the table unit to the user-defined unit.
-            log.debug(f"Attempting auto-convert of table unit {tab_unit} to "
-                      f"user-provided unit {cm_unit}.")
+            log.debug("Attempting auto-convert of table unit '%s' to "
+                      "user-provided unit '%s'.", tab_unit, cm_unit)
 
             if not isinstance(cm_unit, u.Unit):
                 cm_unit = u.Unit(cm_unit)

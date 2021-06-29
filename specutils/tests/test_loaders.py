@@ -522,6 +522,7 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
         spectrum.write(tmpfile, format='tabular-fits')
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
 
+    # Map to alternative set of units
     cmap = {spectral_axis: ('spectral_axis', 'micron'),
             'flux': ('flux', 'erg / (s cm**2 AA)'),
             'uncertainty': ('uncertainty', None)}
@@ -565,7 +566,7 @@ def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
     assert quantity_allclose(spec.uncertainty.quantity,
                              spectrum.uncertainty.quantity)
 
-    # Test again, using `column_mapping` to convert to different flux unit
+    # Test again, using `column_mapping` to convert to different spectral axis and flux units
     cmap = {spectral_axis: ('spectral_axis', 'THz'),
             'flux': ('flux', 'erg / (s cm**2 AA)'),
             'uncertainty': ('uncertainty', None)}
