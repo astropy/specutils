@@ -67,8 +67,8 @@ LSRD = Galactic(u=0 * u.km, v=0 * u.km, w=0 * u.km,
 LSRD_EQUIV = [
               LSRD,
               SkyCoord(LSRD),  # as a SkyCoord
-              LSRD.transform_to(ICRS),  # different frame
-              LSRD.transform_to(ICRS).transform_to(Galactic)  # different representation
+              LSRD.transform_to(ICRS()),  # different frame
+              LSRD.transform_to(ICRS()).transform_to(Galactic())  # different representation
               ]
 
 
