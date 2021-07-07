@@ -1131,18 +1131,27 @@ def test_spectrum_list_2dfgrs_multiple(remote_data_path):
 
 # --remote-data='any'
 data_path = '/Users/busko/Desktop/Files/notebooks/directory'
-def test_spectrum_list__names_miri_mrs():
-    file1 = 'combine_dithers_all_exposures_ch1-long_x1d.fits'
-    file2 = 'combine_dithers_all_exposures_ch1-medium_x1d.fits'
+file1 = 'combine_dithers_all_exposures_ch1-long_x1d.fits'
+file2 = 'combine_dithers_all_exposures_ch1-medium_x1d.fits'
 
+def test_spectrum_list_names_miri_mrs():
     specs = SpectrumList.read([os.path.join(data_path, file1),
                                os.path.join(data_path, file2)])
+    assert len(specs) == 2
 
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
         assert spec.spectral_axis.unit == u.Unit("um")
 
-    assert len(specs) == 2
+
+def test_spectrum_list_directory_miri_mrs():
+    specs = SpectrumList.read(data_path)
+
+    assert len(specs) == 12
+
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("um")
 
 
 def test_sdss_wcs_handler():

@@ -1,3 +1,6 @@
+import os
+import glob
+
 import astropy.units as u
 from astropy.units import Quantity
 from astropy.table import Table
@@ -21,21 +24,22 @@ def identify_jwst_miri_mrs(origin, *args, **kwargs):
     """
     Check whether the given set of files is a JWST MIRI MRS spectral data product.
     """
-    result = False
+    input = args[2]
 
     # TODO partial logic that exists just to make sure it detects the case of
     # a list of file names. This must be further populated with more powerful
     # logic.
 
     # if string, it can be either a directory or a glob expression
-    if isinstance(args[2], str):
-        pass
+    if isinstance(input, str):
+        if os.path.isdir(input):
+            return True
 
     # or it can be either a list of file names, or a list of file objects
-    elif len(args[2]) > 1:
-        result = True
+    elif len(input) > 1:
+        return True
 
-    return result
+    return False
 
 log = logging.getLogger(__name__)
 
@@ -220,20 +224,34 @@ def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
     """
     Loader for JWST x1d MIRI MRS spectral data in FITS format
 
+    A single data set consists of a bunch of x1d files corresponding to
+    a variety of wavelength bands. This reader reads one by one and packs
+    the result into a SpectrumList instance.
+
     Parameters
     ----------
     file_obj_list: list with str or file-like
           List of FITS file names, or objects (provided from name by
-          Astropy I/O Registry)
+          Astropy I/O Registry). Alternatively, a directory path on
+          which glob.glob runs with pattern "_x1d.fits".
 
     Returns
     -------
     SpectrumList
         A list of the spectra that are contained in all the files.
     """
-    spectra = []
+    # if input is a list, go read each file
+    if isinstance(file_obj_list, list):
+        file_list = file_obj_list
 
-    for file_obj in file_obj_list:
+    # if directory, glob-expand list of file names. They must be x1d FITS files.
+    # (this test must be done *after* the check against list type. Otherwise
+    # isdir bombs out).
+    elif os.path.isdir(file_obj_list):
+        file_list = glob.glob(os.path.join(file_obj_list, "*_x1d.fits"), recursive=True)
+
+    spectra = []
+    for file_obj in file_list:
         sp =  _jwst_x1d_loader(file_obj, **kwargs)
 
         # note that the method above returns a single Spectrum1D instance
