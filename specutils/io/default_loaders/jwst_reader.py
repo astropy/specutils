@@ -13,7 +13,29 @@ from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
 
-__all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader"]
+__all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader", "jwst_x1d_miri_mrs_loader"]
+
+
+
+def identify_jwst_miri_mrs(origin, *args, **kwargs):
+    """
+    Check whether the given set of files is a JWST MIRI MRS spectral data product.
+    """
+    result = False
+
+    # TODO partial logic that exists just to make sure it detects the case of
+    # a list of file names. This must be further populated with more powerful
+    # logic.
+
+    # if string, it can be either a directory or a glob expression
+    if isinstance(args[2], str):
+        pass
+
+    # or it can be either a list of file names, or a list of file objects
+    elif len(args[2]) > 1:
+        result = True
+
+    return result
 
 log = logging.getLogger(__name__)
 
@@ -192,7 +214,37 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
     return _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
 
 
-def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
+@data_loader("JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs,
+             dtype=SpectrumList, extensions=['*'])
+def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
+    """
+    Loader for JWST x1d MIRI MRS spectral data in FITS format
+
+    Parameters
+    ----------
+    file_obj_list: list with str or file-like
+          List of FITS file names, or objects (provided from name by
+          Astropy I/O Registry)
+
+    Returns
+    -------
+    SpectrumList
+        A list of the spectra that are contained in all the files.
+    """
+    spectra = []
+
+    for file_obj in file_obj_list:
+        sp =  _jwst_x1d_loader(file_obj, **kwargs)
+
+        # note that the method above returns a single Spectrum1D instance
+        # packaged in a SpectrumList wrapper. We remove the wrapper so as
+        # to avoid ending up with a depth-2 SpectrumList.
+        spectra.append(sp[0])
+
+    return SpectrumList(spectra)
+
+
+def _jwst_x1d_loader(file_obj, **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
 
     Parameters
