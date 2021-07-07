@@ -240,15 +240,13 @@ def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
     SpectrumList
         A list of the spectra that are contained in all the files.
     """
-    # if input is a list, go read each file
-    if isinstance(file_obj_list, list):
+    # If input is a list, go read each file. If directory, glob-expand
+    # list of file names. They must be x1d FITS files.
+    if not isinstance(file_obj_list, list):
+        if os.path.isdir(file_obj_list):
+            file_list = glob.glob(os.path.join(file_obj_list, "*_x1d.fits"), recursive=True)
+    else:
         file_list = file_obj_list
-
-    # if directory, glob-expand list of file names. They must be x1d FITS files.
-    # (this test must be done *after* the check against list type. Otherwise
-    # isdir bombs out).
-    elif os.path.isdir(file_obj_list):
-        file_list = glob.glob(os.path.join(file_obj_list, "*_x1d.fits"), recursive=True)
 
     spectra = []
     for file_obj in file_list:
