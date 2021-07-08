@@ -26,11 +26,7 @@ def identify_jwst_miri_mrs(origin, *args, **kwargs):
     """
     input = args[2]
 
-    # TODO partial logic that exists just to make sure it detects the case of
-    # a list of file names. This must be further populated with more powerful
-    # logic.
-
-    # if string, it can be either a directory or a glob expression
+    # if string, it can be either a directory or a glob pattern
     if isinstance(input, str):
         if os.path.isdir(input):
             return True
@@ -224,7 +220,7 @@ def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
     """
     Loader for JWST x1d MIRI MRS spectral data in FITS format
 
-    A single data set consists of a bunch of x1d files corresponding to
+    A single data set consists of a bunch of _x1d files corresponding to
     a variety of wavelength bands. This reader reads one by one and packs
     the result into a SpectrumList instance.
 
@@ -241,7 +237,7 @@ def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
         A list of the spectra that are contained in all the files.
     """
     # If input is a list, go read each file. If directory, glob-expand
-    # list of file names. They must be x1d FITS files.
+    # list of file names. They must be _x1d FITS files.
     if not isinstance(file_obj_list, list):
         if os.path.isdir(file_obj_list):
             file_list = glob.glob(os.path.join(file_obj_list, "*_x1d.fits"), recursive=True)
