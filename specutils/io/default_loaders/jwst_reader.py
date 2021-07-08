@@ -26,9 +26,14 @@ def identify_jwst_miri_mrs(origin, *args, **kwargs):
     """
     input = args[2]
 
-    # if string, it can be either a directory or a glob pattern
+    # if string, it can be either a directory or a glob pattern (this last
+    # one not implemented yet due to astropy choking when passed an invalid
+    # file path string).
     if isinstance(input, str):
         if os.path.isdir(input):
+            return True
+
+        if len(glob.glob(input)) > 0:
             return True
 
     # or it can be either a list of file names, or a list of file objects
@@ -216,7 +221,7 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
 
 @data_loader("JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs,
              dtype=SpectrumList, extensions=['*'])
-def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
+def jwst_x1d_miri_mrs_loader(input, **kwargs):
     """
     Loader for JWST x1d MIRI MRS spectral data in FITS format
 
@@ -226,10 +231,11 @@ def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
 
     Parameters
     ----------
-    file_obj_list: list with str or file-like
+    input: list with str or file-like
           List of FITS file names, or objects (provided from name by
           Astropy I/O Registry). Alternatively, a directory path on
-          which glob.glob runs with pattern "_x1d.fits".
+          which glob.glob runs with pattern an implicit pattern "_x1d.fits",
+          or a directory path with a glob pattern already set.
 
     Returns
     -------
@@ -237,12 +243,15 @@ def jwst_x1d_miri_mrs_loader(file_obj_list, **kwargs):
         A list of the spectra that are contained in all the files.
     """
     # If input is a list, go read each file. If directory, glob-expand
-    # list of file names. They must be _x1d FITS files.
-    if not isinstance(file_obj_list, list):
-        if os.path.isdir(file_obj_list):
-            file_list = glob.glob(os.path.join(file_obj_list, "*_x1d.fits"), recursive=True)
+    # list of file names.
+    if not isinstance(input, list):
+        if os.path.isdir(input):
+            file_list = glob.glob(os.path.join(input, "*_x1d.fits"), recursive=True)
+        else:
+            file_list = glob.glob(input, recursive=True)
+
     else:
-        file_list = file_obj_list
+        file_list = input
 
     spectra = []
     for file_obj in file_list:
