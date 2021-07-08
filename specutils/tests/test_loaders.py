@@ -1297,16 +1297,16 @@ def test_loaddata_miri_mrs(remote_data_path):
 # loading from a list of file namesJWST x1d MIRI MRS
 def test_spectrum_list_names_miri_mrs():
 
-    # auto-detect format
-    specs = SpectrumList.read(filename_storage)
+    # format is explicitly set
+    specs = SpectrumList.read(filename_storage, format="JWST x1d MIRI MRS")
 
     assert len(specs) == 3
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
         assert spec.spectral_axis.unit == u.Unit("um")
 
-    # format is explicitly set
-    specs = SpectrumList.read(filename_storage, format="JWST x1d MIRI MRS")
+    # auto-detect format
+    specs = SpectrumList.read(filename_storage)
 
     assert len(specs) == 3
     for spec in specs:
