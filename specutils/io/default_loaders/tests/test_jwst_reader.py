@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -315,3 +317,39 @@ def test_jwst_s2d_multi_reader(tmpdir, s2d_multi):
     assert len(speclist) == 2
     assert hasattr(speclist[0], "spectral_axis")
     assert speclist[1].unit == u.Jy
+
+
+# --remote-data='any'
+data_path = '/Users/busko/Desktop/Files/notebooks/directory'
+file1 = 'combine_dithers_all_exposures_ch1-long_x1d.fits'
+file2 = 'combine_dithers_all_exposures_ch1-medium_x1d.fits'
+
+# MIRI_MRS_DATA = 'https://stsci.box.com/s/fyyj3ksz9wdpcy6nzqr2hno4p9bu4mw4/'
+
+# file1 = 'https://stsci.box.com/s/aj1yr2xz433yzsnrvn9254qh78mez876'
+# file2 = 'https://stsci.box.com/s/c28y4r3ybvki1kv8hxeo80kjlgxtx5ec'
+
+# @pytest.mark.remote_data
+def test_spectrum_list_names_miri_mrs():
+
+    specs = SpectrumList.read([os.path.join(data_path, file1),
+                               os.path.join(data_path, file2)])
+
+    # file1_remote = file1
+    # file2_remote = file2
+    # specs = SpectrumList.read([file1_remote, file2_remote])
+    assert len(specs) == 2
+
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("um")
+
+
+def test_spectrum_list_directory_miri_mrs():
+    specs = SpectrumList.read(data_path)
+
+    assert len(specs) == 12
+
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("um")
