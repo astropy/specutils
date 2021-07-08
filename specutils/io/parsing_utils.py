@@ -100,17 +100,16 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
 
             # Attempt to convert the table unit to the user-defined unit.
             log.debug("Attempting auto-convert of table unit '%s' to "
-                          "user-provided unit '%s'.", tab_unit, cm_unit)
+                      "user-provided unit '%s'.", tab_unit, cm_unit)
 
             if not isinstance(cm_unit, u.Unit):
                 cm_unit = u.Unit(cm_unit)
-            if cm_unit.physical_type in ('length', 'frequency'):
+            if cm_unit.physical_type in ('length', 'frequency', 'energy'):
                 # Spectral axis column information
                 kwarg_val = kwarg_val.to(cm_unit, equivalencies=u.spectral())
-            elif 'spectral flux' in cm_unit.physical_type:
+            elif 'spectral flux' in str(cm_unit.physical_type):
                 # Flux/error column information
-                kwarg_val = kwarg_val.to(
-                    cm_unit, equivalencies=u.spectral_density(1 * u.AA))
+                kwarg_val = kwarg_val.to(cm_unit, equivalencies=u.spectral_density(1 * u.AA))
         elif tab_unit:
             # The user has provided no unit in the column mapping, so we
             # use the unit as defined in the table object.
