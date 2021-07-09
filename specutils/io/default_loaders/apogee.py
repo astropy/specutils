@@ -146,8 +146,7 @@ def apStar_loader(file_obj, **kwargs):
     return Spectrum1D(data=data * unit,
                       uncertainty=uncertainty,
                       spectral_axis=dispersion * dispersion_unit,
-                      meta=meta,
-                      wcs=wcs)
+                      meta=meta)
 
 
 @data_loader(label="APOGEE aspcapStar", identifier=aspcapStar_identify, extensions=['fits'])
