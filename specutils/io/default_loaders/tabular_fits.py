@@ -134,10 +134,12 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
     wunit = u.Unit(kwargs.pop('wunit', spectrum.spectral_axis.unit))
     disp = spectrum.spectral_axis.to(wunit, equivalencies=u.spectral())
 
-    # Mapping of spectral_axis types to header TTYPE1
-    dispname = wunit.physical_type
+    # Mapping of spectral_axis types to header TTYPE1 (no "torque/work" types!)
+    dispname = str(wunit.physical_type)
     if dispname == "length":
         dispname = "wavelength"
+    elif "energy" in dispname:
+        dispname = "energy"
 
     # Add flux array and unit
     ftype = kwargs.pop('ftype', spectrum.flux.dtype)
