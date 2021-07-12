@@ -37,7 +37,7 @@ def identify_jwst_miri_mrs(origin, *args, **kwargs):
             return True
 
     # or it can be either a list of file names, or a list of file objects
-    elif len(input) > 1:
+    elif isinstance(input, (list, tuple)) and len(input) > 0:
         return True
 
     return False
@@ -231,11 +231,11 @@ def jwst_x1d_miri_mrs_loader(input, **kwargs):
 
     Parameters
     ----------
-    input: list with str or file-like
-          List of FITS file names, or objects (provided from name by
-          Astropy I/O Registry). Alternatively, a directory path on
-          which glob.glob runs with pattern an implicit pattern "_x1d.fits",
-          or a directory path with a glob pattern already set.
+    input : list with str or file-like
+        List of FITS file names, or objects (provided from name by
+        Astropy I/O Registry). Alternatively, a directory path on
+        which glob.glob runs with pattern an implicit pattern "_x1d.fits",
+        or a directory path with a glob pattern already set.
 
     Returns
     -------
@@ -244,12 +244,11 @@ def jwst_x1d_miri_mrs_loader(input, **kwargs):
     """
     # If input is a list, go read each file. If directory, glob-expand
     # list of file names.
-    if not isinstance(input, list):
+    if not isinstance(input, (list, tuple)):
         if os.path.isdir(input):
             file_list = glob.glob(os.path.join(input, "*_x1d.fits"), recursive=True)
         else:
             file_list = glob.glob(input, recursive=True)
-
     else:
         file_list = input
 
