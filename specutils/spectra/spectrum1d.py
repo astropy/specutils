@@ -193,7 +193,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube):
                 for i in range(len(phys_axes)):
                     if phys_axes[i] is None:
                         continue
-                    if phys_axes[i][0:2] == "em":
+                    if phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect":
                         temp_axes.append(i)
                 if len(temp_axes) != 1:
                     raise ValueError("Input WCS must have exactly one axis with "
