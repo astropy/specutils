@@ -113,9 +113,9 @@ For the equivalent width, note the need to add a continuum level:
     >>> from specutils.analysis import equivalent_width
     >>> noisy_gaussian_with_continuum = noisy_gaussian + 1*u.Jy
     >>> equivalent_width(noisy_gaussian_with_continuum)  # doctest:+FLOAT_CMP
-    <Quantity -5.02976212 GHz>
+    <Quantity -4.97951 GHz>
     >>> equivalent_width(noisy_gaussian_with_continuum, regions=SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
-    <Quantity -4.9881 GHz>
+    <Quantity -4.93785 GHz>
 
 
 Centroid
