@@ -176,7 +176,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
 
     spectral_axis = calc_spectrum.spectral_axis
 
-    dx = (np.abs(spectral_axis[-1] - spectral_axis[0]))
+    dx = (np.abs(spectral_axis.bin_edges[-1] - spectral_axis.bin_edges[0]))
 
     line_flux = _compute_line_flux(spectrum, regions,
                                    mask_interpolation=mask_interpolation)
