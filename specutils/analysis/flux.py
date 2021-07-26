@@ -169,7 +169,9 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
         mask = calc_spectrum.mask
         calc_spectrum = Spectrum1D(flux=calc_spectrum.flux[~mask],
-                              spectral_axis=calc_spectrum.spectral_axis[~mask])
+                                   spectral_axis=calc_spectrum.spectral_axis[~mask])
+    else:
+        mask = None
 
     if continuum == 1:
         continuum = 1*calc_spectrum.flux.unit
@@ -179,11 +181,14 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     if regions is not None:
         cont_spec = Spectrum1D(flux=continuum*np.ones(spectral_axis.shape),
                                spectral_axis=calc_spectrum.spectral_axis)
-        cont_flux = _compute_line_flux(cont_spec, regions, mask_interpolation=mask_interpolation)
+        cont_flux = _compute_line_flux(cont_spec, mask_interpolation=mask_interpolation)
     else:
         cont_flux = continuum * (np.abs(spectral_axis.bin_edges[-1] - spectral_axis.bin_edges[0]))
 
-    line_flux = _compute_line_flux(spectrum, regions, mask_interpolation=mask_interpolation)
+    if mask is not None:
+        line_flux = _compute_line_flux(spectrum, regions, mask_interpolation=mask_interpolation)
+    else:
+        line_flux = _compute_line_flux(calc_spectrum, mask_interpolation=mask_interpolation)
 
     # Calculate equivalent width
     ew = (cont_flux - line_flux) / continuum
