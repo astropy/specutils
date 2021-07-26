@@ -217,32 +217,38 @@ def test_equivalent_width_absorption():
     assert quantity_allclose(result, expected, atol=0.005*u.GHz)
 
 
-def test_equivalent_width_bin_edges():
+@pytest.mark.parametrize('bin_specification', ["centers", "edges"])
+def test_equivalent_width_bin_edges(bin_specification):
     """
-    Test spectrum with wavelength points defining bin edges, and at modest sampling.
+    Test spectrum with bin specifications as centers or edges, and at modest sampling.
     """
 
     np.random.seed(42)
 
     wavelengths = np.linspace(500, 2500, 401) * u.AA
-    spectral_axis = SpectralAxis(wavelengths, bin_specification="edges")
+    spectral_axis = SpectralAxis(wavelengths, bin_specification=bin_specification)
 
     flunit = u.Unit('W m-2 AA-1')
     amplitude = 0.5
-    g = models.Gaussian1D(amplitude=amplitude*flunit, mean=1000*u.AA, stddev=100*u.AA)
-    continuum = 1*flunit
-    noise = np.random.normal(0., 0.01, wavelengths[1:].shape) * flunit
-    flux = continuum - g(wavelengths[1:]) + noise
+    stddev = 100*u.AA
+    expected = amplitude*np.sqrt(2*np.pi) * stddev
+
+    g = models.Gaussian1D(amplitude=amplitude*flunit, mean=1000*u.AA, stddev=stddev)
+    continuum = 1 * flunit
+    noise = np.random.normal(0., 0.01, spectral_axis.shape) * flunit
+    flux = continuum - g(spectral_axis) + noise
 
     spectrum = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
 
     result = equivalent_width(spectrum)
 
     assert result.unit.is_equivalent(spectrum.wcs.unit, equivalencies=u.spectral())
-
-    expected = amplitude*np.sqrt(2*np.pi) * 100*u.AA
-
     assert quantity_allclose(result, expected, atol=0.5*u.AA)
+
+    # With SpectralRegion; need higher tolerance as this is cutting more of the wings.
+    result = equivalent_width(spectrum, regions=SpectralRegion(750*u.AA, 1500*u.AA))
+
+    assert quantity_allclose(result, expected, atol=1*u.AA)
 
 
 def test_snr(simulated_spectra):
