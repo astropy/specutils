@@ -487,7 +487,9 @@ def _jwst_s3d_loader(filename, **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta,
+                              wcs=wcs)
+
             spectra.append(spec)
 
     return SpectrumList(spectra)
