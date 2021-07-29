@@ -3,6 +3,7 @@ from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
+import logging
 import numpy as np
 import asdf
 from gwcs.wcstools import grid_from_bounding_box
@@ -14,23 +15,51 @@ from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader"]
 
+log = logging.getLogger(__name__)
+
+
+def _identify_spec1d_fits(origin, extname, *args, **kwargs):
+    """ Generic spec 1d identifier function """
+    is_jwst = _identify_jwst_fits(*args)
+    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        return (is_jwst and extname in hdulist and (extname, 2) not in hdulist)
+
+
+def _identify_spec1d_multi_fits(origin, extname, *args, **kwargs):
+    """
+    Check whether the given file is a JWST c1d/x1d spectral data product with many slits.
+    """
+    is_jwst = _identify_jwst_fits(*args)
+    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        return is_jwst and (extname, 2) in hdulist
+
+
+def identify_jwst_c1d_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST c1d spectral data product.
+    """
+    return _identify_spec1d_fits(origin, 'COMBINE1D', *args, **kwargs)
+
+
+def identify_jwst_c1d_multi_fits(origin, *args, **kwargs):
+    """
+    Check whether the given file is a JWST c1d spectral data product with many slits.
+    """
+    return _identify_spec1d_multi_fits(origin, 'COMBINE1D', *args, **kwargs)
+
 
 def identify_jwst_x1d_fits(origin, *args, **kwargs):
     """
     Check whether the given file is a JWST x1d spectral data product.
     """
-    is_jwst = _identify_jwst_fits(*args)
-    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return (is_jwst and 'EXTRACT1D' in hdulist and ('EXTRACT1D', 2) not in hdulist)
+    return _identify_spec1d_fits(origin, 'EXTRACT1D', *args, **kwargs)
 
 
 def identify_jwst_x1d_multi_fits(origin, *args, **kwargs):
     """
     Check whether the given file is a JWST x1d spectral data product with many slits.
     """
-    is_jwst = _identify_jwst_fits(*args)
-    with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return is_jwst and ('EXTRACT1D', 2) in hdulist
+    return _identify_spec1d_multi_fits(origin, 'EXTRACT1D', *args, **kwargs)
 
 
 def identify_jwst_s2d_fits(origin, *args, **kwargs):
@@ -75,6 +104,50 @@ def _identify_jwst_fits(*args):
         return False
 
 
+@data_loader("JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum1D,
+             extensions=['fits'])
+def jwst_c1d_single_loader(file_obj, **kwargs):
+    """
+    Loader for JWST c1d 1-D spectral data in FITS format
+
+    Parameters
+    ----------
+    filename : str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file.
+    """
+    spectrum_list = _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
+    if len(spectrum_list) == 1:
+        return spectrum_list[0]
+    else:
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. "
+                           "Use SpectrumList.read() instead.")
+
+
+@data_loader("JWST c1d multi", identifier=identify_jwst_c1d_multi_fits,
+             dtype=SpectrumList, extensions=['fits'])
+def jwst_c1d_multi_loader(file_obj, **kwargs):
+    """
+    Loader for JWST x1d 1-D spectral data in FITS format
+
+    Parameters
+    ----------
+    file_obj: str, file-like, or HDUList
+          FITS file name, object (provided from name by Astropy I/O Registry),
+          or HDUList (as resulting from astropy.io.fits.open()).
+
+    Returns
+    -------
+    SpectrumList
+        A list of the spectra that are contained in the file.
+    """
+    return _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
+
+
 @data_loader("JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
              extensions=['fits'])
 def jwst_x1d_single_loader(file_obj, **kwargs):
@@ -91,7 +164,7 @@ def jwst_x1d_single_loader(file_obj, **kwargs):
     Spectrum1D
         The spectrum contained in the file.
     """
-    spectrum_list = _jwst_x1d_loader(file_obj, **kwargs)
+    spectrum_list = _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
     if len(spectrum_list) == 1:
         return spectrum_list[0]
     else:
@@ -116,10 +189,10 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
     SpectrumList
         A list of the spectra that are contained in the file.
     """
-    return _jwst_x1d_loader(file_obj, **kwargs)
+    return _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
 
 
-def _jwst_x1d_loader(file_obj, **kwargs):
+def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
 
     Parameters
@@ -127,12 +200,17 @@ def _jwst_x1d_loader(file_obj, **kwargs):
     file_obj: str, file-like, or HDUList
           FITS file name, object (provided from name by Astropy I/O Registry),
           or HDUList (as resulting from astropy.io.fits.open()).
+    extname: str
+        The name of the science extension. Either "COMBINE1D" or "EXTRACT1D".  By default "EXTRACT1D".
 
     Returns
     -------
     SpectrumList
         A list of the spectra that are contained in the file.
     """
+
+    if extname not in ['COMBINE1D', 'EXTRACT1D']:
+        raise ValueError('Incorrect extname given for 1d spectral data.')
 
     spectra = []
 
@@ -141,8 +219,8 @@ def _jwst_x1d_loader(file_obj, **kwargs):
         primary_header = hdulist["PRIMARY"].header
 
         for hdu in hdulist:
-            # Read only the BinaryTableHDUs named EXTRACT1D and SCI
-            if hdu.name != 'EXTRACT1D':
+            # Read only the BinaryTableHDUs named COMBINE1D/EXTRACT1D and SCI
+            if hdu.name != extname:
                 continue
 
             data = Table.read(hdu)
@@ -155,18 +233,26 @@ def _jwst_x1d_loader(file_obj, **kwargs):
             # SRCTYPE used to be in primary header, but was moved around. As
             # per most recent pipeline definition, it should be in the
             # EXTRACT1D extension.
+            #
+            # SRCTYPE should either be POINT or EXTENDED.  In some cases, it is UNKNOWN
+            # or missing.  If that's the case, default to using POINT as the SRCTYPE.
+            # Error out only when SRCTYPE is a bad value.
             srctype = None
             if "srctype" in hdu.header:
-                srctype = hdu.header.get("srctype")
+                srctype = hdu.header.get("srctype", None)
+
+            # checking if SRCTPYE is missing or UNKNOWN
+            if not srctype or srctype == 'UNKNOWN':
+                log.warning('SRCTYPE is missing or UNKNOWN in JWST x1d loader. '
+                            'Defaulting to srctype="POINT".')
+                srctype = 'POINT'
 
             if srctype == "POINT":
                 flux = Quantity(data["FLUX"])
                 uncertainty = StdDevUncertainty(data["ERROR"])
-
             elif srctype == "EXTENDED":
                 flux = Quantity(data["SURF_BRIGHT"])
                 uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
-
             else:
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
                                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
