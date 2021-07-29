@@ -243,7 +243,8 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
 
             # checking if SRCTPYE is missing or UNKNOWN
             if not srctype or srctype == 'UNKNOWN':
-                log.warning('SRCTYPE is missing or UNKNOWN.  Defaulting to srctype="POINT".')
+                log.warning('SRCTYPE is missing or UNKNOWN in JWST x1d loader. 
+                             Defaulting to srctype="POINT".')
                 srctype = 'POINT'
 
             if srctype == "POINT":
