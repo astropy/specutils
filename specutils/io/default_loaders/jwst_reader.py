@@ -1,5 +1,6 @@
 import os
 import glob
+import logging
 
 import astropy.units as u
 from astropy.units import Quantity
@@ -18,6 +19,7 @@ from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader", "jwst_x1d_miri_mrs_loader"]
 
+log = logging.getLogger(__name__)
 
 
 def identify_jwst_miri_mrs(origin, *args, **kwargs):
@@ -221,7 +223,7 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
 
 @data_loader("JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs,
              dtype=SpectrumList, extensions=['*'])
-def jwst_x1d_miri_mrs_loader(input, **kwargs):
+def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     """
     Loader for JWST x1d MIRI MRS spectral data in FITS format
 
@@ -236,6 +238,11 @@ def jwst_x1d_miri_mrs_loader(input, **kwargs):
         Astropy I/O Registry). Alternatively, a directory path on
         which glob.glob runs with pattern an implicit pattern "_x1d.fits",
         or a directory path with a glob pattern already set.
+    missing : str
+        Allows the user to continue loading if one file is missing by setting
+        the value to "warn" or "silent". In the first case a warning will be issued
+        to the user, in the latter the file will silently be skipped. Any other
+        value will result in a FileNotFoundError if any files in the list are missing.
 
     Returns
     -------
@@ -254,7 +261,16 @@ def jwst_x1d_miri_mrs_loader(input, **kwargs):
 
     spectra = []
     for file_obj in file_list:
-        sp =  _jwst_x1d_loader(file_obj, **kwargs)
+        try:
+            sp =  _jwst_x1d_loader(file_obj, **kwargs)
+        except FileNotFoundError:
+            if missing.lower() == "warn":
+                log.warning(f'Failed to load {file_obj}: {repr(e)}')
+                continue
+            else:
+                raise FileNotFoundError(f"Failed to load {file_obj}: {repr(e)}. "
+                                        "To suppress this error, set argument missing='warn'")
+
 
         # note that the method above returns a single Spectrum1D instance
         # packaged in a SpectrumList wrapper. We remove the wrapper so as
