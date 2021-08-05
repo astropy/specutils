@@ -262,7 +262,7 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     spectra = []
     for file_obj in file_list:
         try:
-            sp =  _jwst_x1d_loader(file_obj, **kwargs)
+            sp =  _jwst_spec1d_loader(file_obj, **kwargs)
         except FileNotFoundError:
             if missing.lower() == "warn":
                 log.warning(f'Failed to load {file_obj}: {repr(e)}')
@@ -280,7 +280,7 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     return SpectrumList(spectra)
 
 
-def _jwst_x1d_loader(file_obj, **kwargs):
+def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
 
     Parameters
