@@ -1282,7 +1282,8 @@ def test_galah_guess(remote_data_path):
 # list via the remote_access machinery.
 #
 # MIRI MRS 1D data sets are comprised of 12 files.
-filename_list = []
+# We add one bad file to test the skip/warn on missing file functionality
+filename_list = ["bad_file.fits"]
 @remote_access([
     {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-long_x1d.fits'},
     {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-medium_x1d.fits'},
@@ -1303,18 +1304,32 @@ def test_loaddata_miri_mrs(remote_data_path):
 
 # loading from a list of file names
 @pytest.mark.remote_data
-def test_spectrum_list_names_miri_mrs():
+def test_spectrum_list_names_miri_mrs(caplog):
 
-    # format is explicitly set
-    specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS")
+    # Format is explicitly set
+    with pytest.raises(FileNotFoundError):
+        specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS")
+
+    # Skip missing file silently
+    specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS", missing='silent')
 
     assert len(specs) == 12
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
         assert spec.spectral_axis.unit == u.Unit("um")
 
-    # auto-detect format
-    specs = SpectrumList.read(filename_list)
+    # Warn about missing file
+    specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS", missing='warn')
+
+    assert "Failed to load bad_file.fits: FileNotFoundError" in caplog.text
+
+    assert len(specs) == 12
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("um")
+
+    # Auto-detect format
+    specs = SpectrumList.read(filename_list[1:])
 
     assert len(specs) == 12
     for spec in specs:
@@ -1331,7 +1346,7 @@ def test_spectrum_list_directory_miri_mrs(tmpdir):
     # run. And also because temp directories created in previous runs
     # may still be hanging around. This precludes the use of commonpath()
     tmp_dir = tmpdir.strpath
-    for file_path in filename_list:
+    for file_path in filename_list[1:]:
         shutil.copy(file_path, tmp_dir)
 
     specs = SpectrumList.read(tmp_dir)

@@ -44,8 +44,6 @@ def identify_jwst_miri_mrs(origin, *args, **kwargs):
 
     return False
 
-log = logging.getLogger(__name__)
-
 
 def _identify_spec1d_fits(origin, extname, *args, **kwargs):
     """ Generic spec 1d identifier function """
@@ -263,9 +261,11 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     for file_obj in file_list:
         try:
             sp =  _jwst_spec1d_loader(file_obj, **kwargs)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             if missing.lower() == "warn":
                 log.warning(f'Failed to load {file_obj}: {repr(e)}')
+                continue
+            elif missing.lower() == "silent":
                 continue
             else:
                 raise FileNotFoundError(f"Failed to load {file_obj}: {repr(e)}. "
