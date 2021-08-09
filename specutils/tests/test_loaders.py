@@ -1316,7 +1316,7 @@ def test_spectrum_list_names_miri_mrs(caplog):
     assert len(specs) == 12
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
-        assert spec.spectral_axis.unit == u.Unit("um")
+        assert spec.spectral_axis.unit == u.micron
 
     # Warn about missing file
     specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS", missing='warn')
@@ -1334,7 +1334,7 @@ def test_spectrum_list_names_miri_mrs(caplog):
     assert len(specs) == 12
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
-        assert spec.spectral_axis.unit == u.Unit("um")
+        assert spec.spectral_axis.unit == u.micron
 
 
 # loading from a directory via glob
@@ -1354,4 +1354,4 @@ def test_spectrum_list_directory_miri_mrs(tmpdir):
     assert len(specs) == 12
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
-        assert spec.spectral_axis.unit == u.Unit("um")
+        assert spec.spectral_axis.unit == u.micron

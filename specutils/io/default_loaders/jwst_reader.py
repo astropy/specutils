@@ -223,20 +223,20 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
              dtype=SpectrumList, extensions=['*'])
 def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     """
-    Loader for JWST x1d MIRI MRS spectral data in FITS format
+    Loader for JWST x1d MIRI MRS spectral data in FITS format.
 
     A single data set consists of a bunch of _x1d files corresponding to
-    a variety of wavelength bands. This reader reads one by one and packs
+    a variety of wavelength bands. This reader reads them one by one and packs
     the result into a SpectrumList instance.
 
     Parameters
     ----------
-    input : list with str or file-like
+    input : list of str or file-like
         List of FITS file names, or objects (provided from name by
         Astropy I/O Registry). Alternatively, a directory path on
         which glob.glob runs with pattern an implicit pattern "_x1d.fits",
         or a directory path with a glob pattern already set.
-    missing : str
+    missing : {'warn', 'silent'}
         Allows the user to continue loading if one file is missing by setting
         the value to "warn" or "silent". In the first case a warning will be issued
         to the user, in the latter the file will silently be skipped. Any other
@@ -270,7 +270,6 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
             else:
                 raise FileNotFoundError(f"Failed to load {file_obj}: {repr(e)}. "
                                         "To suppress this error, set argument missing='warn'")
-
 
         # note that the method above returns a single Spectrum1D instance
         # packaged in a SpectrumList wrapper. We remove the wrapper so as
