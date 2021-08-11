@@ -1,3 +1,7 @@
+import os
+import glob
+import logging
+
 import astropy.units as u
 from astropy.units import Quantity
 from astropy.table import Table
@@ -13,9 +17,32 @@ from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
 
-__all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader"]
+__all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader", "jwst_x1d_miri_mrs_loader"]
 
 log = logging.getLogger(__name__)
+
+
+def identify_jwst_miri_mrs(origin, *args, **kwargs):
+    """
+    Check whether the given set of files is a JWST MIRI MRS spectral data product.
+    """
+    input = args[2]
+
+    # if string, it can be either a directory or a glob pattern (this last
+    # one not implemented yet due to astropy choking when passed an invalid
+    # file path string).
+    if isinstance(input, str):
+        if os.path.isdir(input):
+            return True
+
+        if len(glob.glob(input)) > 0:
+            return True
+
+    # or it can be either a list of file names, or a list of file objects
+    elif isinstance(input, (list, tuple)) and len(input) > 0:
+        return True
+
+    return False
 
 
 def _identify_spec1d_fits(origin, extname, *args, **kwargs):
@@ -190,6 +217,66 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
         A list of the spectra that are contained in the file.
     """
     return _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
+
+
+@data_loader("JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs,
+             dtype=SpectrumList, extensions=['*'])
+def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
+    """
+    Loader for JWST x1d MIRI MRS spectral data in FITS format.
+
+    A single data set consists of a bunch of _x1d files corresponding to
+    a variety of wavelength bands. This reader reads them one by one and packs
+    the result into a SpectrumList instance.
+
+    Parameters
+    ----------
+    input : list of str or file-like
+        List of FITS file names, or objects (provided from name by
+        Astropy I/O Registry). Alternatively, a directory path on
+        which glob.glob runs with pattern an implicit pattern "_x1d.fits",
+        or a directory path with a glob pattern already set.
+    missing : {'warn', 'silent'}
+        Allows the user to continue loading if one file is missing by setting
+        the value to "warn" or "silent". In the first case a warning will be issued
+        to the user, in the latter the file will silently be skipped. Any other
+        value will result in a FileNotFoundError if any files in the list are missing.
+
+    Returns
+    -------
+    SpectrumList
+        A list of the spectra that are contained in all the files.
+    """
+    # If input is a list, go read each file. If directory, glob-expand
+    # list of file names.
+    if not isinstance(input, (list, tuple)):
+        if os.path.isdir(input):
+            file_list = glob.glob(os.path.join(input, "*_x1d.fits"), recursive=True)
+        else:
+            file_list = glob.glob(input, recursive=True)
+    else:
+        file_list = input
+
+    spectra = []
+    for file_obj in file_list:
+        try:
+            sp =  _jwst_spec1d_loader(file_obj, **kwargs)
+        except FileNotFoundError as e:
+            if missing.lower() == "warn":
+                log.warning(f'Failed to load {file_obj}: {repr(e)}')
+                continue
+            elif missing.lower() == "silent":
+                continue
+            else:
+                raise FileNotFoundError(f"Failed to load {file_obj}: {repr(e)}. "
+                                        "To suppress this error, set argument missing='warn'")
+
+        # note that the method above returns a single Spectrum1D instance
+        # packaged in a SpectrumList wrapper. We remove the wrapper so as
+        # to avoid ending up with a depth-2 SpectrumList.
+        spectra.append(sp[0])
+
+    return SpectrumList(spectra)
 
 
 def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
