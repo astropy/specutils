@@ -190,9 +190,10 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
                                    mask_interpolation=mask_interpolation)
 
     # Calculate equivalent width
-    ew = (cont_flux - line_flux) / continuum
+    dx = np.abs(np.diff(spectrum.spectral_axis.bin_edges))
+    ew = np.sum((1 - line_flux / cont_flux) * dx)
 
-    return ew.to(calc_spectrum.spectral_axis.unit)
+    return ew.to(spectrum.spectral_axis.unit)
 
 
 def is_continuum_below_threshold(spectrum, threshold=0.01):
