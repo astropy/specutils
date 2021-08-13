@@ -73,7 +73,7 @@ def equivalent_width(spectrum, continuum=1, regions=None,
         The spectrum object overwhich the equivalent width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
-        Region within the spectrum to calculate the gaussian sigma width. If
+        Region within the spectrum to calculate the equivalent width. If
         regions is `None`, computation is performed over entire spectrum.
 
     continuum : ``1`` or `~astropy.units.Quantity`, optional
@@ -182,7 +182,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     if continuum.size == 1:
         continuum = continuum * np.ones(spectrum.flux.size)
 
-    cont_spec = Spectrum1D(flux=continuum, 
+    cont_spec = Spectrum1D(flux=continuum,
                            spectral_axis=spectrum.spectral_axis)
     cont_flux = _compute_line_flux(cont_spec,
                                    mask_interpolation=mask_interpolation)
