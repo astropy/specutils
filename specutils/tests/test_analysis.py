@@ -152,7 +152,7 @@ def test_equivalent_width_masked ():
     # With flux conserving resampler
     result = equivalent_width(spectrum_masked,
                               mask_interpolation=FluxConservingResampler)
-    assert quantity_allclose(result.value, -719.987425, atol=0.0005)
+    assert quantity_allclose(result.value, -719.89962, atol=0.0005)
 
 
 def test_equivalent_width_regions():
