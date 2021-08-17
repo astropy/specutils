@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
-from astropy.nddata import NDUncertainty
+from astropy.nddata import NDUncertainty, NDArithmeticMixin
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -18,7 +18,7 @@ __all__ = ['Spectrum1D']
 log = logging.getLogger(__name__)
 
 
-class Spectrum1D(OneDSpectrumMixin, NDCube):
+class Spectrum1D(OneDSpectrumMixin, NDCube, NDArithmeticMixin):
     """
     Spectrum container for 1D spectral data.
 
