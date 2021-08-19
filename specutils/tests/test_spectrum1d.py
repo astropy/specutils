@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
+from astropy.wcs import WCS
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
@@ -106,6 +107,20 @@ def test_create_with_spectral_coord():
     assert isinstance(spec.spectral_axis, SpectralCoord)
     assert spec.spectral_axis.size == 50
 
+
+def test_create_from_cube():
+
+    flux = np.arange(24).reshape([2,3,4])*u.Jy
+    wcs_dict = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE-LOG",
+                "CRVAL1": 205, "CRVAL2": 27, "CRVAL3": 3.622e-7,
+                "CRDELT1": -0.0001, "CRDELT2": 0.0001, "CRDELT3": 8e-11,
+                "CRPIX1": 0, "CRPIX2": 0, "CRPIX3": 0}
+    w = WCS(wcs_dict)
+
+    spec = Spectrum1D(flux=flux, wcs=w)
+
+    assert spec.flux.shape == (4,3,2)
+    assert spec.flux[3,2,1] == 23*u.Jy
 
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
