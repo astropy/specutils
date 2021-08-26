@@ -1,15 +1,23 @@
-1.4 (unreleased)
-----------------
+1.3.1
+-----
 
 New Features
 ^^^^^^^^^^^^
 
+- Add ``SpectrumList`` loader for set of JWST _x1d files. [#838]
+
 Bug Fixes
 ^^^^^^^^^
+
+- Handle new ``astropy.units.PhysicalType`` class added in astropy 4.3. [#833]
+- Handle case of WCS with None values in ``world_axis_physical_types`` when
+  initializing Spectrum1D. [#839]
+- Fix bug in apStar loader. [#839]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Improve continuum flux calculation in ``equivalent_width``. [#843]
 
 1.3
 ---
