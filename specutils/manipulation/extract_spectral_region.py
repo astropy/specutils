@@ -45,6 +45,7 @@ def _to_edge_pixel(subregion, spectrum):
     if subregion[0].unit.is_equivalent(u.pix):
         left_index = floor(subregion[0].value)
     else:
+
         # Convert lower value to spectrum spectral_axis units
         left_reg_in_spec_unit = subregion[0].to(spectral_axis.unit,
                                                 u.spectral())
@@ -55,11 +56,8 @@ def _to_edge_pixel(subregion, spectrum):
             left_index = len(spectrum.spectral_axis)
         else:
             try:
-                if hasattr(spectrum.wcs, "spectral"):
-                    left_index = spectrum.wcs.spectral.world_to_pixel(left_reg_in_spec_unit)
-                else:
-                    left_index = spectrum.wcs.world_to_pixel(left_reg_in_spec_unit)
-                left_index = int(np.ceil(left_index))
+                left_index = int(np.ceil(spectrum.wcs.world_to_pixel(
+                    left_reg_in_spec_unit)))
             except Exception as e:
                 raise ValueError(
                     "Lower value, {}, could not convert using spectrum's WCS "
@@ -72,6 +70,7 @@ def _to_edge_pixel(subregion, spectrum):
     if subregion[1].unit.is_equivalent(u.pix):
         right_index = ceil(subregion[1].value)
     else:
+
         # Convert upper value to spectrum spectral_axis units
         right_reg_in_spec_unit = subregion[1].to(spectral_axis.unit,
                                                  u.spectral())
@@ -82,11 +81,8 @@ def _to_edge_pixel(subregion, spectrum):
             right_index = 0
         else:
             try:
-                if hasattr(spectrum.wcs, "spectral"):
-                    right_index = spectrum.wcs.spectral.world_to_pixel(right_reg_in_spec_unit)
-                else:
-                    right_index = spectrum.wcs.world_to_pixel(right_reg_in_spec_unit)
-                right_index = int(np.floor(right_index)) + 1
+                right_index = int(np.floor(spectrum.wcs.world_to_pixel(
+                    right_reg_in_spec_unit))) + 1
             except Exception as e:
                 raise ValueError(
                     "Upper value, {}, could not convert using spectrum's WCS "

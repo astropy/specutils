@@ -10,7 +10,7 @@ This section describes some of the basic features of this class.
 Basic Spectrum Creation
 -----------------------
 
-The simplest way to create a `~specutils.Spectrum1D` is to
+The simplest (and most powerful) way to create a `~specutils.Spectrum1D` is to
 create it explicitly from arrays or `~astropy.units.Quantity` objects:
 
 .. plot::
@@ -213,8 +213,10 @@ along the spectral axis using world coordinates.
     >>> spec_slice.spectral_axis
     <SpectralAxis [5002., 5003., 5004., 5005.] Angstrom>
 
-It is also possible to slice on other axes using simple array indices at the 
-same time as slicing the spectral axis based on spectral values.
+Note that slicing on world coordinates for axes other than the spectral axis is
+not currently supported. It is, however, possible to slice on other axes using 
+simple array indices at the same time as slicing the spectral axis based on 
+spectral values.
 
 .. code-block:: python
 
@@ -224,23 +226,6 @@ same time as slicing the spectral axis based on spectral values.
     >>> spec_slice = spec[2:4, 5002*u.AA:5006*u.AA]
     >>> spec_slice.shape
     (2, 4)
-
-If the `specutils.Spectrum1D` was created with a WCS that included spatial 
-information, for example in case of a spectral cube with two spatial dimensions,
-the `specutils.Spectrum1D.crop` method can be used to subset the data based on
-the world coordinates. The inputs required are two sets up `astropy.coordinates`
-objects defining the upper and lower corner of the region desired. Note that if
-one of the coordinates is decreasing along an axis, the higher world coordinate
-value will apply to the lower bound input.
-
-.. code-block:: python
-    
-    >>> from astropy.coordinates import SpectralCoord, SkyCoord
-    >>> import astropy.units as u
-
-    >>> lower = [SkyCoord(ra=201.1, dec=27.5, unit=u.deg), SpectralCoord(3000, unit=u.AA)]
-    >>> upper = [SkyCoord(ra=201.08, dec=27.52, unit=u.deg), SpectralCoord(3100, unit=u.AA)]
-    >>> cropped_spec = spec.crop(lower, upper) #doctest:+SKIP
 
 
 Reference/API
