@@ -522,14 +522,15 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
         spectrum.write(tmpfile, format='tabular-fits')
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
 
-    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+    # Map to alternative set of units
+    cmap = {spectral_axis: ('spectral_axis', 'micron'),
             'flux': ('flux', 'erg / (s cm**2 AA)'),
             'uncertainty': ('uncertainty', None)}
 
     # Read it back again and check against the original
     spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
     assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
-    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert spec.spectral_axis.unit == u.um
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,
@@ -565,14 +566,14 @@ def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
     assert quantity_allclose(spec.uncertainty.quantity,
                              spectrum.uncertainty.quantity)
 
-    # Test again, using `column_mapping` to convert to different flux unit
-    cmap = {spectral_axis: ('spectral_axis', wlu[spectral_axis]),
+    # Test again, using `column_mapping` to convert to different spectral axis and flux units
+    cmap = {spectral_axis: ('spectral_axis', 'THz'),
             'flux': ('flux', 'erg / (s cm**2 AA)'),
             'uncertainty': ('uncertainty', None)}
 
     spec = Spectrum1D.read(tmpfile, format='tabular-fits', column_mapping=cmap)
     assert spec.flux.unit == u.Unit('erg / (s cm**2 AA)')
-    assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+    assert spec.spectral_axis.unit == u.THz
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,
@@ -1272,3 +1273,85 @@ def test_galah_guess(remote_data_path):
         assert isinstance(spectra[1].uncertainty, StdDevUncertainty)
         assert spectra[1].meta.get("label") is not None
         assert spectra[1].meta.get("header") is not None
+
+
+# We cannot use remote_access directly in the MIRI MRS tests, because
+# the test functions are called once for every file in the remote access
+# list, but we need to feed the entire set to the functions at once. We
+# store the file names in a list and use a dummy test method to load the
+# list via the remote_access machinery.
+#
+# MIRI MRS 1D data sets are comprised of 12 files.
+# We add one bad file to test the skip/warn on missing file functionality
+filename_list = ["bad_file.fits"]
+@remote_access([
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-long_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-medium_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-short_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch2-long_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch2-medium_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch2-short_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch3-long_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch3-medium_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch3-short_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch4-long_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch4-medium_x1d.fits'},
+    {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch4-short_x1d.fits'},
+])
+def test_loaddata_miri_mrs(remote_data_path):
+    filename_list.append(remote_data_path)
+
+
+# loading from a list of file names
+@pytest.mark.remote_data
+def test_spectrum_list_names_miri_mrs(caplog):
+
+    # Format is explicitly set
+    with pytest.raises(FileNotFoundError):
+        specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS")
+
+    # Skip missing file silently
+    specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS", missing='silent')
+
+    assert len(specs) == 12
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.micron
+
+    # Warn about missing file
+    specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS", missing='warn')
+
+    assert "Failed to load bad_file.fits: FileNotFoundError" in caplog.text
+
+    assert len(specs) == 12
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.Unit("um")
+
+    # Auto-detect format
+    specs = SpectrumList.read(filename_list[1:])
+
+    assert len(specs) == 12
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.micron
+
+
+# loading from a directory via glob
+@pytest.mark.remote_data
+def test_spectrum_list_directory_miri_mrs(tmpdir):
+
+    # copy files to temp dir. We cannot use the directory generated by
+    # remote_access, because it may have variable structure from run to
+    # run. And also because temp directories created in previous runs
+    # may still be hanging around. This precludes the use of commonpath()
+    tmp_dir = tmpdir.strpath
+    for file_path in filename_list[1:]:
+        shutil.copy(file_path, tmp_dir)
+
+    specs = SpectrumList.read(tmp_dir)
+
+    assert len(specs) == 12
+    for spec in specs:
+        assert isinstance(spec, Spectrum1D)
+        assert spec.spectral_axis.unit == u.micron

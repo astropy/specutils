@@ -174,11 +174,13 @@ class Spectrum1D(OneDSpectrumMixin, NDDataRef):
                 temp_axes = []
                 phys_axes = wcs.world_axis_physical_types
                 for i in range(len(phys_axes)):
+                    if phys_axes[i] is None:
+                        continue
                     if phys_axes[i][0:2] == "em":
                         temp_axes.append(i)
                 if len(temp_axes) != 1:
-                    raise ValueError("Input WCS must have exactly one axis"
-                                     " with spectral units")
+                    raise ValueError("Input WCS must have exactly one axis with "
+                                     "spectral units, found {}".format(len(temp_axes)))
 
                 # Due to FITS conventions, a WCS with spectral axis first corresponds
                 # to a flux array with spectral axis last.

@@ -26,8 +26,8 @@ repository directly into a new ``Spectrum1D`` object:
     >>> from astropy.utils.data import download_file
     >>> from specutils.spectra import Spectrum1D
     >>> filename = "https://stsci.box.com/shared/static/28a88k1qfipo4yxc4p4d40v4axtlal8y.fits"
-    >>> file = download_file(filename, cache=True)
-    >>> sc = Spectrum1D.read(file, format='MaNGA cube')
+    >>> file = download_file(filename, cache=True) # doctest: +REMOTE_DATA
+    >>> sc = Spectrum1D.read(file, format='MaNGA cube') # doctest: +REMOTE_DATA
 
 
 The cube has  74x74 spaxels with 4563 spectral axis points in each one:
@@ -79,7 +79,7 @@ spectral regions from the cube.
 
     >>> import astropy.units as u
     >>> from specutils.manipulation import spectral_slab
-    >>> ss = spectral_slab(sc, 5000.*u.AA, 5003.*u.AA)
+    >>> ss = spectral_slab(sc, 5000.*u.AA, 5003.*u.AA) # doctest: +REMOTE_DATA
     >>> ss.shape  #doctest:+SKIP
     (74, 74, 3)
     >>> ss[30:33,30:33,::] #doctest:+SKIP
@@ -122,7 +122,7 @@ disjoint sub-regions.
     >>> from specutils import SpectralRegion
     >>> from specutils.manipulation import extract_bounding_spectral_region
     >>> composite_region = SpectralRegion([(5000*u.AA, 5002*u.AA), (5006*u.AA, 5008.*u.AA)])
-    >>> sub_spectrum = extract_bounding_spectral_region(sc, composite_region)
+    >>> sub_spectrum = extract_bounding_spectral_region(sc, composite_region) # doctest: +REMOTE_DATA
     >>> sub_spectrum.spectral_axis  #doctest:+SKIP
     [5000.3453, 5001.4969, 5002.6486, 5003.8007, 5004.953, 5006.1055, 5007.2584]A˚
 
@@ -138,7 +138,7 @@ along the spectral axis (remember that the spectral axis is always last in a
 .. code-block:: python
 
     >>> from specutils.analysis import moment
-    >>> m = moment(sc, order=1)
+    >>> m = moment(sc, order=1) # doctest: +REMOTE_DATA
     >>> m.shape #doctest:+SKIP
     (74, 74)
     >>> m[30:33,30:33] #doctest:+SKIP
