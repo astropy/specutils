@@ -4,6 +4,7 @@
 This module tests SpecUtils io routines
 """
 
+from collections import Counter
 from specutils.io.parsing_utils import generic_spectrum_from_table # or something like that
 from astropy.io import registry
 from astropy.table import Table
@@ -15,7 +16,8 @@ import pytest
 import warnings
 
 from specutils import Spectrum1D, SpectrumList
-from specutils.io import data_loader
+from specutils.io import data_loader, custom_writer
+from specutils.io.registers import _astropy_has_priorities
 
 
 def test_generic_spectrum_from_table(recwarn):
@@ -156,3 +158,48 @@ def test_custom_identifier(tmpdir):
         # Clean up after ourselves
         registry.unregister_reader(format_name, datatype)
         registry.unregister_identifier(format_name, datatype)
+
+
+@pytest.mark.xfail(
+    not _astropy_has_priorities(),
+    reason="Test requires priorities to be implemented in astropy",
+    raises=registry.IORegistryError,
+)
+def test_loader_uses_priority(tmpdir):
+    counter = Counter()
+    fname = str(tmpdir.join('good.txt'))
+
+    with open(fname, 'w') as ff:
+        ff.write('\n')
+
+    def identifier(origin, *args, **kwargs):
+        fname = args[0]
+        return 'good' in fname
+
+    @data_loader("test_counting_loader1", identifier=identifier, priority=1)
+    def counting_loader1(*args, **kwargs):
+        counter["test1"] += 1
+        wave = np.arange(1,1.1,0.01)*u.AA
+        return Spectrum1D(
+            spectral_axis=wave,
+            flux=np.ones(len(wave))*1.e-14*u.Jy,
+        )
+
+    @data_loader("test_counting_loader2", identifier=identifier, priority=2)
+    def counting_loader2(*args, **kwargs):
+        counter["test2"] += 1
+        wave = np.arange(1,1.1,0.01)*u.AA
+        return Spectrum1D(
+            spectral_axis=wave,
+            flux=np.ones(len(wave))*1.e-14*u.Jy,
+        )
+
+    Spectrum1D.read(fname)
+    assert counter["test2"] == 1
+    assert counter["test1"] == 0
+
+    for datatype in [Spectrum1D, SpectrumList]:
+        registry.unregister_reader("test_counting_loader1", datatype)
+        registry.unregister_identifier("test_counting_loader1", datatype)
+        registry.unregister_reader("test_counting_loader2", datatype)
+        registry.unregister_identifier("test_counting_loader2", datatype)

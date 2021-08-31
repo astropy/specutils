@@ -73,7 +73,7 @@ def equivalent_width(spectrum, continuum=1, regions=None,
         The spectrum object overwhich the equivalent width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
-        Region within the spectrum to calculate the gaussian sigma width. If
+        Region within the spectrum to calculate the equivalent width. If
         regions is `None`, computation is performed over entire spectrum.
 
     continuum : ``1`` or `~astropy.units.Quantity`, optional
@@ -121,6 +121,7 @@ def _compute_line_flux(spectrum, regions=None,
         mask = calc_spectrum.mask
         new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
                               spectral_axis=calc_spectrum.spectral_axis[~mask])
+
         if mask_interpolation is None:
             return _compute_line_flux(new_spec)
         else:
@@ -130,7 +131,7 @@ def _compute_line_flux(spectrum, regions=None,
     else:
         flux = calc_spectrum.flux
 
-    dx = (np.abs(np.diff(calc_spectrum.spectral_axis.bin_edges)))
+    dx = np.abs(np.diff(calc_spectrum.spectral_axis.bin_edges))
     line_flux = np.sum(flux * dx)
 
     line_flux.uncertainty = None
@@ -145,9 +146,11 @@ def _compute_line_flux(spectrum, regions=None,
         elif isinstance(calc_spectrum.uncertainty, InverseVariance):
             variance_q = 1/calc_spectrum.uncertainty.quantity
         else:
-            message = ('Uncertainty type "{}" was not recognized by line_flux.  '
-                       'Proceeding without uncertainty in result.').format(calc_spectrum.uncertainty.uncertainty_type)
-            warnings.warn(message, AstropyUserWarning)
+            warnings.warn(f"Uncertainty type "
+                          f"'{calc_spectrum.uncertainty.uncertainty_type}' "
+                          f"was not recognized by line_flux. Proceeding "
+                          f"without uncertainty in result.",
+                          AstropyUserWarning)
             variance_q = None
 
         if variance_q is not None:
@@ -161,30 +164,36 @@ def _compute_line_flux(spectrum, regions=None,
 def _compute_equivalent_width(spectrum, continuum=1, regions=None,
                               mask_interpolation=LinearInterpolatedResampler):
     if regions is not None:
-        calc_spectrum = extract_region(spectrum, regions)
-    else:
-        calc_spectrum = spectrum
+        spectrum = extract_region(spectrum, regions)
 
     # Account for the existence of a mask.
-    if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
-        mask = calc_spectrum.mask
-        calc_spectrum = Spectrum1D(flux=calc_spectrum.flux[~mask],
-                              spectral_axis=calc_spectrum.spectral_axis[~mask])
+    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
+        mask = spectrum.mask
+        spectrum = Spectrum1D(
+            flux=spectrum.flux[~mask],
+            spectral_axis=spectrum.spectral_axis[~mask])
 
-    if continuum == 1:
-        continuum = 1*calc_spectrum.flux.unit
+    # Calculate the continuum flux value
+    continuum = u.Quantity(continuum, unit=spectrum.flux.unit)
 
-    spectral_axis = calc_spectrum.spectral_axis
+    # If continuum is provided as a single scalar/quantity value, create an
+    # array the same size as the processed spectrum. Otherwise, assume that the
+    # continuum was provided as an array and use as-is.
+    if continuum.size == 1:
+        continuum = continuum * np.ones(spectrum.flux.size)
 
-    dx = (np.abs(spectral_axis[-1] - spectral_axis[0]))
-
-    line_flux = _compute_line_flux(spectrum, regions,
+    cont_spec = Spectrum1D(flux=continuum,
+                           spectral_axis=spectrum.spectral_axis)
+    cont_flux = _compute_line_flux(cont_spec,
+                                   mask_interpolation=mask_interpolation)
+    line_flux = _compute_line_flux(spectrum,
                                    mask_interpolation=mask_interpolation)
 
     # Calculate equivalent width
-    ew = dx - (line_flux / continuum)
+    dx = np.abs(np.diff(spectrum.spectral_axis.bin_edges))
+    ew = np.sum((1 - line_flux / cont_flux) * dx)
 
-    return ew.to(calc_spectrum.spectral_axis.unit)
+    return ew.to(spectrum.spectral_axis.unit)
 
 
 def is_continuum_below_threshold(spectrum, threshold=0.01):

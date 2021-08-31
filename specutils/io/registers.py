@@ -1,6 +1,7 @@
 """
 A module containing the mechanics of the specutils io registry.
 """
+import inspect
 import os
 import pathlib
 import sys
@@ -14,6 +15,16 @@ from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
 
 log = logging.getLogger(__name__)
+
+
+def _astropy_has_priorities():
+    """
+    Check if astropy has support for loader priorities
+    """
+    sig = inspect.signature(io_registry.register_reader)
+    if sig.parameters.get("priority") is not None:
+        return True
+    return False
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
@@ -52,7 +63,10 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         return wrapper
 
     def decorator(func):
-        io_registry.register_reader(label, dtype, func)
+        if _astropy_has_priorities():
+            io_registry.register_reader(label, dtype, func, priority=priority)
+        else:
+            io_registry.register_reader(label, dtype, func)
 
         if identifier is None:
             # If the identifier is not defined, but the extensions are, create
@@ -78,17 +92,6 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         # Include the file extensions as attributes on the function object
         func.extensions = extensions
 
-        # Include priority on the loader function attribute
-        func.priority = priority
-
-        # Sort the io_registry based on priority
-        sorted_loaders = sorted(io_registry._readers.items(),
-                                key=lambda item: getattr(item[1], 'priority', 0))
-
-        # Update the registry with the sorted dictionary
-        io_registry._readers.clear()
-        io_registry._readers.update(sorted_loaders)
-
         log.debug("Successfully loaded reader \"{}\".".format(label))
 
         # Automatically register a SpectrumList reader for any data_loader that
@@ -102,7 +105,14 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             load_spectrum_list.extensions = extensions
             load_spectrum_list.priority = priority
 
-            io_registry.register_reader(label, SpectrumList, load_spectrum_list)
+            if _astropy_has_priorities():
+                io_registry.register_reader(
+                    label, SpectrumList, load_spectrum_list, priority=priority,
+                )
+            else:
+                io_registry.register_reader(
+                    label, SpectrumList, load_spectrum_list,
+                )
             io_registry.register_identifier(label, SpectrumList, id_func)
             log.debug("Created SpectrumList reader for \"{}\".".format(label))
 
@@ -113,9 +123,12 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
     return decorator
 
 
-def custom_writer(label, dtype=Spectrum1D):
+def custom_writer(label, dtype=Spectrum1D, priority=0):
     def decorator(func):
-        io_registry.register_writer(label, Spectrum1D, func)
+        if _astropy_has_priorities():
+            io_registry.register_writer(label, dtype, func, priority=priority)
+        else:
+            io_registry.register_writer(label, dtype, func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):

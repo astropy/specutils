@@ -94,7 +94,7 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> from specutils import SpectralRegion
     >>> from specutils.analysis import equivalent_width
     >>> equivalent_width(cont_norm_spec, regions=SpectralRegion(6562 * u.AA, 6575 * u.AA)) # doctest: +REMOTE_DATA +FLOAT_CMP
-    <Quantity -16.25232188 Angstrom>
+    <Quantity -14.7396 Angstrom>
 
 
 While there are other tools and spectral representations detailed more below,
