@@ -1355,3 +1355,15 @@ def test_spectrum_list_directory_miri_mrs(tmpdir):
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
         assert spec.spectral_axis.unit == u.micron
+
+
+# loading a Spectrum1D from a MIRI x1d file
+@remote_access([
+    {'id': "5348062", 'filename':"jw00623-c1012_t002_miri_p750l_x1d.fits"},
+])
+def test_jwst_miri_x1d(remote_data_path):
+    data = Spectrum1D.read(remote_data_path)
+    assert type(data) is Spectrum1D
+    assert data.shape == (388,)
+    assert data.unit == u.Jy
+    assert data.spectral_axis.unit == u.um

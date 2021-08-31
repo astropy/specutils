@@ -336,7 +336,12 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
 
             if srctype == "POINT":
                 flux = Quantity(data["FLUX"])
-                uncertainty = StdDevUncertainty(data["ERROR"])
+                if 'ERROR' in data.colnames:
+                    uncertainty = StdDevUncertainty(data["ERROR"])
+                elif 'FLUX_ERROR' in data.colnames:
+                    uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
+                else:
+                    uncertainty = None
             elif srctype == "EXTENDED":
                 flux = Quantity(data["SURF_BRIGHT"])
                 uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
