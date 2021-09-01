@@ -1359,11 +1359,15 @@ def test_spectrum_list_directory_miri_mrs(tmpdir):
 
 # loading a Spectrum1D from a MIRI x1d file
 @remote_access([
-    {'id': "5348062", 'filename':"jw00623-c1012_t002_miri_p750l_x1d.fits"},
+    {'id': "5363560", 'filename':"jw00623-c1012_t002_miri_p750l_x1d.fits"},     # pipeline 1.2.3
+    {'id': "5363560", 'filename':"jw00212-o035_t007_miri_ch2-medium_x1d.fits"}, # pipeline 1.1
+    {'id': "5363560", 'filename':"jw00623-o057_t008_miri_ch1-long_x1d.fits"},   # pipeline 1.3.1
 ])
 def test_jwst_miri_x1d(remote_data_path):
+
     data = Spectrum1D.read(remote_data_path)
+
     assert type(data) is Spectrum1D
-    assert data.shape == (388,)
+    assert data.shape in [(745,), (388,), (1091,)]
     assert data.unit == u.Jy
     assert data.spectral_axis.unit == u.um
