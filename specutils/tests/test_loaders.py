@@ -1367,7 +1367,7 @@ def test_jwst_miri_x1d(remote_data_path):
 
     data = Spectrum1D.read(remote_data_path)
 
-    assert type(data) is Spectrum1D
+    assert isinstance(data, Spectrum1D)
     assert data.shape in [(745,), (388,), (1091,)]
     assert data.unit == u.Jy
     assert data.spectral_axis.unit == u.um
