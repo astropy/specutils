@@ -121,6 +121,7 @@ def test_create_from_cube():
 
     assert spec.flux.shape == (4,3,2)
     assert spec.flux[3,2,1] == 23*u.Jy
+    assert np.all(spec.spectral_axis.value == np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1])*w.wcs.crval[-1])
 
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
