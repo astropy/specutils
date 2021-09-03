@@ -113,7 +113,7 @@ def test_create_from_cube():
     flux = np.arange(24).reshape([2,3,4])*u.Jy
     wcs_dict = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE-LOG",
                 "CRVAL1": 205, "CRVAL2": 27, "CRVAL3": 3.622e-7,
-                "CRDELT1": -0.0001, "CRDELT2": 0.0001, "CRDELT3": 8e-11,
+                "CDELT1": -0.0001, "CDELT2": 0.0001, "CDELT3": 8e-11,
                 "CRPIX1": 0, "CRPIX2": 0, "CRPIX3": 0}
     w = WCS(wcs_dict)
 
