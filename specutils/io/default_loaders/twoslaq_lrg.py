@@ -20,8 +20,10 @@ def identify_2slaq_lrg(origin, *args, **kwargs):
                 return True
 
 
-@data_loader("2SLAQ-LRG", identifier=identify_2slaq_lrg, dtype=SpectrumList,
-             extensions=["fit", "fits"])
+@data_loader(
+    "2SLAQ-LRG", identifier=identify_2slaq_lrg, dtype=SpectrumList,
+    extensions=["fit", "fits"], priority=10,
+)
 def twoslaq_lrg_fits_loader(file_obj, **kwargs):
     """
     Load a file from the LRG subset of the 2dF-SDSS LRG/QSO survey (2SLAQ-LRG)

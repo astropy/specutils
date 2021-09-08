@@ -33,8 +33,10 @@ def identify_manga_rss(origin, *args, **kwargs):
                 and hdulist[1].header["NAXIS"] == 2)
 
 
-@data_loader("MaNGA cube", identifier=identify_manga_cube, dtype=Spectrum1D,
-             extensions=['fits'])
+@data_loader(
+    "MaNGA cube", identifier=identify_manga_cube, dtype=Spectrum1D,
+    extensions=['fits'], priority=10,
+)
 def manga_cube_loader(file_obj, **kwargs):
     """
     Loader for MaNGA 3D rectified spectral data in FITS format.
@@ -58,8 +60,10 @@ def manga_cube_loader(file_obj, **kwargs):
     return spectrum
 
 
-@data_loader("MaNGA rss", identifier=identify_manga_rss, dtype=Spectrum1D,
-             extensions=['fits'])
+@data_loader(
+    "MaNGA rss", identifier=identify_manga_rss, dtype=Spectrum1D,
+    extensions=['fits'], priority=10,
+)
 def manga_rss_loader(file_obj, **kwargs):
     """
     Loader for MaNGA 2D row-stacked spectral data in FITS format.

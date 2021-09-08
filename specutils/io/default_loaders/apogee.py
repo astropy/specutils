@@ -65,7 +65,10 @@ def aspcapStar_identify(origin, *args, **kwargs):
                 hdulist[-1].header.get('TTYPE45') == 'ASPCAPFLAG')
 
 
-@data_loader(label="APOGEE apVisit", identifier=apVisit_identify, extensions=['fits'])
+@data_loader(
+    label="APOGEE apVisit", identifier=apVisit_identify, extensions=['fits'],
+    priority=10,
+)
 def apVisit_loader(file_obj, **kwargs):
     """
     Loader for APOGEE apVisit files.
@@ -110,7 +113,10 @@ def apVisit_loader(file_obj, **kwargs):
                       meta=meta)
 
 
-@data_loader(label="APOGEE apStar", identifier=apStar_identify, extensions=['fits'])
+@data_loader(
+    label="APOGEE apStar", identifier=apStar_identify, extensions=['fits'],
+    priority=10,
+)
 def apStar_loader(file_obj, **kwargs):
     """
     Loader for APOGEE apStar files.
@@ -149,7 +155,10 @@ def apStar_loader(file_obj, **kwargs):
                       meta=meta)
 
 
-@data_loader(label="APOGEE aspcapStar", identifier=aspcapStar_identify, extensions=['fits'])
+@data_loader(
+    label="APOGEE aspcapStar", identifier=aspcapStar_identify,
+    extensions=['fits'], priority=10,
+)
 def aspcapStar_loader(file_obj, **kwargs):
     """
     Loader for APOGEE aspcapStar files.

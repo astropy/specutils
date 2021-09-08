@@ -25,8 +25,10 @@ def identify_muscles_sed(origin, *args, **kwargs):
                 hdulist[0].header.get('PROPOSID') == 13650)
 
 
-@data_loader(label="MUSCLES SED", identifier=identify_muscles_sed,
-             dtype=Spectrum1D, extensions=['fits'])
+@data_loader(
+    label="MUSCLES SED", identifier=identify_muscles_sed, dtype=Spectrum1D,
+    extensions=['fits'], priority=10,
+)
 def muscles_sed(file_obj, **kwargs):
     """
     Load spectrum from a MUSCLES Treasury Survey panchromatic SED FITS file.

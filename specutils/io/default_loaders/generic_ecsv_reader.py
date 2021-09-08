@@ -14,7 +14,7 @@ def identify_ecsv(origin, *args, **kwargs):
             os.path.splitext(args[0].lower())[1] == '.ecsv')
 
 
-@data_loader("ECSV", identifier=identify_ecsv, dtype=Spectrum1D)
+@data_loader("ECSV", identifier=identify_ecsv, dtype=Spectrum1D, priority=-10)
 def generic_ecsv(file_name, column_mapping=None, **kwargs):
     """
     Read a spectrum from an ECSV file, using generic_spectrum_from_table_loader()

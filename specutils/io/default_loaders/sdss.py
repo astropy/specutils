@@ -98,7 +98,10 @@ def spPlate_identify(origin, *args, **kwargs):
                 hdulist[0].data.shape[0] > 5)
 
 
-@data_loader(label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'])
+@data_loader(
+    label="SDSS-III/IV spec", identifier=spec_identify, extensions=['fits'],
+    priority=10,
+)
 def spec_loader(file_obj, **kwargs):
     """
     Loader for SDSS-III/IV optical spectrum "spec" files.
@@ -139,7 +142,10 @@ def spec_loader(file_obj, **kwargs):
                       uncertainty=uncertainty, meta=meta, mask=mask)
 
 
-@data_loader(label="SDSS-I/II spSpec", identifier=spSpec_identify, extensions=['fit', 'fits'])
+@data_loader(
+    label="SDSS-I/II spSpec", identifier=spSpec_identify,
+    extensions=['fit', 'fits'], priority=10,
+)
 def spSpec_loader(file_obj, **kwargs):
     """
     Loader for SDSS-I/II spSpec files.

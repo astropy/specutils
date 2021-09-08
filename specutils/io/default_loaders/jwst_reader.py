@@ -131,8 +131,10 @@ def _identify_jwst_fits(*args):
         return False
 
 
-@data_loader("JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum1D,
-             extensions=['fits'])
+@data_loader(
+    "JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum1D,
+    extensions=['fits'], priority=10,
+)
 def jwst_c1d_single_loader(file_obj, **kwargs):
     """
     Loader for JWST c1d 1-D spectral data in FITS format
@@ -155,8 +157,10 @@ def jwst_c1d_single_loader(file_obj, **kwargs):
                            "Use SpectrumList.read() instead.")
 
 
-@data_loader("JWST c1d multi", identifier=identify_jwst_c1d_multi_fits,
-             dtype=SpectrumList, extensions=['fits'])
+@data_loader(
+    "JWST c1d multi", identifier=identify_jwst_c1d_multi_fits,
+    dtype=SpectrumList, extensions=['fits'], priority=10,
+)
 def jwst_c1d_multi_loader(file_obj, **kwargs):
     """
     Loader for JWST x1d 1-D spectral data in FITS format
@@ -175,8 +179,10 @@ def jwst_c1d_multi_loader(file_obj, **kwargs):
     return _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
 
 
-@data_loader("JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
-             extensions=['fits'])
+@data_loader(
+    "JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
+    extensions=['fits'], priority=10
+)
 def jwst_x1d_single_loader(file_obj, **kwargs):
     """
     Loader for JWST x1d 1-D spectral data in FITS format
@@ -199,8 +205,10 @@ def jwst_x1d_single_loader(file_obj, **kwargs):
                            "Use SpectrumList.read() instead.")
 
 
-@data_loader("JWST x1d multi", identifier=identify_jwst_x1d_multi_fits,
-             dtype=SpectrumList, extensions=['fits'])
+@data_loader(
+    "JWST x1d multi", identifier=identify_jwst_x1d_multi_fits,
+    dtype=SpectrumList, extensions=['fits'], priority=10,
+)
 def jwst_x1d_multi_loader(file_obj, **kwargs):
     """
     Loader for JWST x1d 1-D spectral data in FITS format
@@ -219,8 +227,10 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
     return _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
 
 
-@data_loader("JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs,
-             dtype=SpectrumList, extensions=['*'])
+@data_loader(
+    "JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs, dtype=SpectrumList,
+    extensions=['*'], priority=10,
+)
 def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     """
     Loader for JWST x1d MIRI MRS spectral data in FITS format.
@@ -358,8 +368,10 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
     return SpectrumList(spectra)
 
 
-@data_loader("JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum1D,
-             extensions=['fits'])
+@data_loader(
+    "JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum1D,
+    extensions=['fits'], priority=10,
+)
 def jwst_s2d_single_loader(filename, **kwargs):
     """
     Loader for JWST s2d 2D rectified spectral data in FITS format.
@@ -384,8 +396,10 @@ def jwst_s2d_single_loader(filename, **kwargs):
         raise RuntimeError(f"Input data has {len(spectrum_list)} spectra.")
 
 
-@data_loader("JWST s2d multi", identifier=identify_jwst_s2d_multi_fits, dtype=SpectrumList,
-             extensions=['fits'])
+@data_loader(
+    "JWST s2d multi", identifier=identify_jwst_s2d_multi_fits,
+    dtype=SpectrumList, extensions=['fits'], priority=10,
+)
 def jwst_s2d_multi_loader(filename, **kwargs):
     """
     Loader for JWST s2d 2D rectified spectral data in FITS format.
@@ -496,8 +510,10 @@ def _jwst_s2d_loader(filename, **kwargs):
     return SpectrumList(spectra)
 
 
-@data_loader("JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum1D,
-             extensions=['fits'])
+@data_loader(
+    "JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum1D,
+    extensions=['fits'], priority=10,
+)
 def jwst_s3d_single_loader(filename, **kwargs):
     """
     Loader for JWST s3d 3D rectified spectral data in FITS format.

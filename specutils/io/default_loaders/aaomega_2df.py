@@ -43,7 +43,7 @@ def identify_aaomega(origin, *args, **kwargs):
 
 @data_loader(
     label=AAOMEGA_LOADER, extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_aaomega
+    identifier=identify_aaomega, priority=10,
 )
 def load_aaomega_file(filename, *args, **kwargs):
     with read_fileobj_or_hdulist(filename, *args, **kwargs) as fits_file:

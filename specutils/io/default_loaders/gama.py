@@ -114,7 +114,7 @@ def identify_2qz(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA-2QZ", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_2qz,
+    identifier=identify_2qz, priority=10,
 )
 def twoqz_loader(filename):
     spectra = SpectrumList.read(
@@ -136,7 +136,7 @@ def identify_2slaq_qso(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA-2SLAQ-QSO", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_2slaq_qso,
+    identifier=identify_2slaq_qso, priority=10,
 )
 def twoslaq_qso_loader(filename):
     spectra = SpectrumList.read(
@@ -158,7 +158,7 @@ def identify_gama(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_gama,
+    identifier=identify_gama, priority=10,
 )
 def gama_loader(filename):
     spectra = SpectrumList.read(
@@ -180,7 +180,7 @@ def identify_gama_lt(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA-LT", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_gama_lt,
+    identifier=identify_gama_lt, priority=10,
 )
 def gama_lt_loader(filename):
     spectra = SpectrumList.read(
@@ -202,7 +202,7 @@ def identify_mgc(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA-MGC", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_mgc,
+    identifier=identify_mgc, priority=10,
 )
 def mgc_loader(filename):
     spectra = SpectrumList.read(
@@ -224,7 +224,7 @@ def identify_wigglez(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA-WiggleZ", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_wigglez,
+    identifier=identify_wigglez, priority=10,
 )
 def wigglez_loader(filename):
     spectra = SpectrumList.read(
@@ -246,7 +246,7 @@ def identify_2dfgrs(origin, *args, **kwargs):
 
 @data_loader(
     label="GAMA-2dFGRS", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_2dfgrs,
+    identifier=identify_2dfgrs, priority=10,
 )
 def gama_2dfgrs_loader(filename):
     spectra = SpectrumList.read(

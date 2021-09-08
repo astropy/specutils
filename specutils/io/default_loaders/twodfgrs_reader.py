@@ -42,8 +42,10 @@ def load_spectrum_from_extension(hdu, primary_header):
     return Spectrum1D(flux=spectrum, wcs=wcs, meta=meta, uncertainty=variance)
 
 
-@data_loader("2dFGRS", identifier=identify_2dfgrs, dtype=SpectrumList,
-             extensions=["fit", "fits"])
+@data_loader(
+    "2dFGRS", identifier=identify_2dfgrs, dtype=SpectrumList,
+    extensions=["fit", "fits"], priority=10,
+)
 def twodfgrs_fits_loader(file_obj, **kwargs):
     """
     Load a file from the 2dF Galaxy Redshift Survey.
