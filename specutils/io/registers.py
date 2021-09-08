@@ -28,7 +28,7 @@ def _astropy_has_priorities():
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
-                priority=0):
+                priority=0, force=False):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
     file reading.
@@ -50,6 +50,10 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
     priority : int
         Set the priority of the loader. Currently influences the sorting of the
         returned loaders for a dtype.
+    force : bool, optional
+        Whether to override any existing function if already present.
+        Default is ``False``. Passed down to astropy registry.
+
     """
     def identifier_wrapper(ident):
         def wrapper(*args, **kwargs):
@@ -64,9 +68,13 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
 
     def decorator(func):
         if _astropy_has_priorities():
-            io_registry.register_reader(label, dtype, func, priority=priority)
+            io_registry.register_reader(
+                label, dtype, func, priority=priority, force=force,
+            )
         else:
-            io_registry.register_reader(label, dtype, func)
+            io_registry.register_reader(
+                label, dtype, func, force=force,
+            )
 
         if identifier is None:
             # If the identifier is not defined, but the extensions are, create
@@ -87,7 +95,9 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         else:
             id_func = identifier_wrapper(identifier)
 
-        io_registry.register_identifier(label, dtype, id_func)
+        io_registry.register_identifier(
+            label, dtype, id_func, force=force,
+        )
 
         # Include the file extensions as attributes on the function object
         func.extensions = extensions
@@ -108,12 +118,15 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             if _astropy_has_priorities():
                 io_registry.register_reader(
                     label, SpectrumList, load_spectrum_list, priority=priority,
+                    force=force,
                 )
             else:
                 io_registry.register_reader(
-                    label, SpectrumList, load_spectrum_list,
+                    label, SpectrumList, load_spectrum_list, force=force,
                 )
-            io_registry.register_identifier(label, SpectrumList, id_func)
+            io_registry.register_identifier(
+                label, SpectrumList, id_func, force=force,
+            )
             log.debug("Created SpectrumList reader for \"{}\".".format(label))
 
         @wraps(func)
@@ -123,12 +136,14 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
     return decorator
 
 
-def custom_writer(label, dtype=Spectrum1D, priority=0):
+def custom_writer(label, dtype=Spectrum1D, priority=0, force=False):
     def decorator(func):
         if _astropy_has_priorities():
-            io_registry.register_writer(label, dtype, func, priority=priority)
+            io_registry.register_writer(
+                label, dtype, func, priority=priority, force=force,
+            )
         else:
-            io_registry.register_writer(label, dtype, func)
+            io_registry.register_writer(label, dtype, func, force=force)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
