@@ -1355,3 +1355,89 @@ def test_spectrum_list_directory_miri_mrs(tmpdir):
     for spec in specs:
         assert isinstance(spec, Spectrum1D)
         assert spec.spectral_axis.unit == u.micron
+
+
+# x1d and c1d assorted files
+
+@remote_access([
+    {'id': "5394931", 'filename':"jw00623-c1012_t002_miri_p750l_x1d.fits"},                  # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00787-o014_s00002_niriss_f150w-gr150c-gr150r_c1d.fits"}, # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00623-o057_t008_miri_ch1-long_x1d.fits"},                # pipeline 1.3.1
+    {'id': "5394931", 'filename':"jw00626-o064_t007_nirspec_g235h-f170lp_x1d.fits"},         # pipeline 1.3.1
+])
+def test_jwst_x1d_c1d(remote_data_path):
+
+    data = Spectrum1D.read(remote_data_path)
+
+    assert isinstance(data, Spectrum1D)
+    assert data.shape in [(388,), (5,), (1091,), (3843,)]
+    assert data.unit == u.Jy
+    assert data.spectral_axis.unit == u.um
+
+
+# utility functions to be used with list comprehension in SpectrumList checking
+def assert_multi_isinstance(a, b):
+    assert isinstance(a, b)
+
+def assert_multi_equals(a, b):
+    assert a == b
+
+
+@remote_access([
+    {'id': "5394931", 'filename':"jw00624-o027_s00001_nircam_f356w-grismr_x1d.fits"}, # pipeline 1.2.3
+])
+def test_jwst_nircam_x1d_multi_v1_2_3(remote_data_path):
+
+    data = SpectrumList.read(remote_data_path)
+
+    assert isinstance(data, SpectrumList)
+    assert len(data) == 3
+    [assert_multi_isinstance(d, Spectrum1D) for d in data]
+    [assert_multi_equals(d.shape, r) for d,r in zip(data, [(459,), (336,), (962,)])]
+    [assert_multi_equals(d.unit, u.Jy) for d in data]
+    [assert_multi_equals(d.spectral_axis.unit, u.um) for d in data]
+
+
+@remote_access([
+    {'id': "5394931", 'filename':"jw00660-o016_s00002_nircam_f444w-grismr_x1d.fits"}, # pipeline 1.3.1
+])
+def test_jwst_nircam_x1d_multi_v1_3_1(remote_data_path):
+
+    data = SpectrumList.read(remote_data_path)
+
+    assert isinstance(data, SpectrumList)
+    assert len(data) == 4
+    [assert_multi_isinstance(d, Spectrum1D) for d in data]
+    [assert_multi_equals(d.shape, r) for d,r in zip(data, [(1166,), (786,), (1157,), (795,)])]
+    [assert_multi_equals(d.unit, u.Jy) for d in data]
+    [assert_multi_equals(d.spectral_axis.unit, u.um) for d in data]
+
+
+@remote_access([
+    {'id': "5394931", 'filename':"jw00776-o003_s00083_nircam_f322w2-grismr_c1d.fits"}, # pipeline 1.2.3
+])
+def test_jwst_nircam_c1d_v1_2_3(remote_data_path):
+
+    data = SpectrumList.read(remote_data_path)
+
+    assert isinstance(data, SpectrumList)
+    assert len(data) == 2
+    [assert_multi_isinstance(d, Spectrum1D) for d in data]
+    [assert_multi_equals(d.shape, r) for d,r in zip(data, [(133,), (1139,)])]
+    [assert_multi_equals(d.unit, u.MJy/u.sr) for d in data]
+    [assert_multi_equals(d.spectral_axis.unit, u.um) for d in data]
+
+
+@remote_access([
+    {'id': "5394931", 'filename':"jw00625-o018_s00001_niriss_f090w-gr150c_c1d.fits"}, # pipeline 1.2.3
+])
+def test_jwst_niriss_c1d_v1_2_3(remote_data_path):
+
+    data = SpectrumList.read(remote_data_path)
+
+    assert isinstance(data, SpectrumList)
+    assert len(data) == 2
+    [assert_multi_isinstance(d, Spectrum1D) for d in data]
+    [assert_multi_equals(d.shape, r) for d,r in zip(data, [(56,), (107,)])]
+    [assert_multi_equals(d.unit, u.Jy) for d in data]
+    [assert_multi_equals(d.spectral_axis.unit, u.um) for d in data]
