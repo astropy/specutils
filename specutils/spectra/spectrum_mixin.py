@@ -4,7 +4,6 @@ import logging
 import numpy as np
 import astropy.units.equivalencies as eq
 from astropy import units as u
-from astropy.nddata import NDIOMixin, NDArithmeticMixin
 from astropy.utils.decorators import lazyproperty, deprecated
 from astropy.wcs.wcsapi import HighLevelWCSWrapper
 
@@ -20,7 +19,7 @@ __all__ = ['OneDSpectrumMixin']
 log = logging.getLogger(__name__)
 
 
-class OneDSpectrumMixin(NDIOMixin, NDArithmeticMixin):
+class OneDSpectrumMixin():
     @property
     def _spectral_axis_numpy_index(self):
         return self.data.ndim - 1 - self.wcs.wcs.spec
