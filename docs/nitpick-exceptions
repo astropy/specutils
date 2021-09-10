@@ -26,6 +26,7 @@ py:class ndcube.mixins.plotting.NDCubePlotMixin
 py:class ndcube.mixins.ndslicing.NDCubeSlicingMixin
 py:obj ndcube.NDCube
 py:obj NDCube
+py:obj NDCube.plotter
 py:obj ExtraCoords
 py:obj GlobalCoords
 py:obj ndcube.NDCube.world_axis_physical_types
