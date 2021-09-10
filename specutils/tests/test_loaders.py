@@ -17,7 +17,7 @@ from astropy.wcs import FITSFixedWarning, WCS
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, InverseVariance
 
 from numpy.testing import assert_allclose
 
@@ -157,6 +157,9 @@ def test_manga_cube():
     assert spec.flux.size > 0
     assert spec.meta['header']['INSTRUME'] == 'MaNGA'
     assert spec.shape == (34, 34, 4563)
+
+    assert isinstance(spec.uncertainty, InverseVariance)
+    assert spec.uncertainty.array.shape == (34, 34, 4563)
 
 
 @pytest.mark.remote_data
