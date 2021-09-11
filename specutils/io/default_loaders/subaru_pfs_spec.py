@@ -35,8 +35,10 @@ def identify_pfs_spec(origin, *args, **kwargs):
     return _fits_identify_by_name(origin, *args, pattern=_spec_pattern)
 
 
-@data_loader(label="Subaru-pfsObject", identifier=identify_pfs_spec,
-             extensions=['fits'])
+@data_loader(
+    label="Subaru-pfsObject", identifier=identify_pfs_spec, extensions=['fits'],
+    priority=10,
+)
 def pfs_spec_loader(file_obj, **kwargs):
     """
     Loader for PFS combined spectrum files.

@@ -61,9 +61,10 @@ def identify_6dfgs_combined_fits(origin, *args, **kwargs):
         return True
 
 
-@data_loader("6dFGS-tabular",
-             identifier=identify_6dfgs_tabular_fits, dtype=Spectrum1D,
-             extensions=["fit", "fits"])
+@data_loader(
+    "6dFGS-tabular", identifier=identify_6dfgs_tabular_fits, dtype=Spectrum1D,
+    extensions=["fit", "fits"], priority=10,
+)
 def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
     """
     Load the tabular variant of a 6dF Galaxy Survey (6dFGS) file.
@@ -103,9 +104,10 @@ def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
     return Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
 
 
-@data_loader("6dFGS-split",
-             identifier=identify_6dfgs_split_fits, dtype=Spectrum1D,
-             extensions=["fit", "fits"])
+@data_loader(
+    "6dFGS-split", identifier=identify_6dfgs_split_fits, dtype=Spectrum1D,
+    extensions=["fit", "fits"], priority=10,
+)
 def sixdfgs_split_fits_loader(file_obj, **kwargs):
     """
     Load the split variant of a 6dF Galaxy Survey (6dFGS) file.
@@ -136,9 +138,10 @@ def sixdfgs_split_fits_loader(file_obj, **kwargs):
     return spec
 
 
-@data_loader("6dFGS-combined",
-             identifier=identify_6dfgs_combined_fits, dtype=SpectrumList,
-             extensions=["fit", "fits"])
+@data_loader(
+    "6dFGS-combined", identifier=identify_6dfgs_combined_fits,
+    dtype=SpectrumList, extensions=["fit", "fits"], priority=10,
+)
 def sixdfgs_combined_fits_loader(file_obj, **kwargs):
     """
     Load the combined variant of a 6dF Galaxy Survey (6dFGS) file.

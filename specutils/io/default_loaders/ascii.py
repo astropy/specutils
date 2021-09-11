@@ -22,7 +22,10 @@ def ascii_identify(origin, *args, **kwargs):
     return False
 
 
-@data_loader(label="ASCII", identifier=ascii_identify, extensions=['txt', 'ascii'])
+@data_loader(
+    label="ASCII", identifier=ascii_identify, extensions=['txt', 'ascii'],
+    priority=-10
+)
 def ascii_loader(file_name, column_mapping=None, **kwargs):
     """
     Load spectrum from ASCII file.

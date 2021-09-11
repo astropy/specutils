@@ -27,7 +27,7 @@ def identify_wigglez(origin, *args, **kwargs):
 
 @data_loader(
     label="WiggleZ", extensions=FITS_FILE_EXTS, dtype=SpectrumList,
-    identifier=identify_wigglez,
+    identifier=identify_wigglez, priority=10,
 )
 def wigglez_loader(fname):
     spectra = SpectrumList.read(

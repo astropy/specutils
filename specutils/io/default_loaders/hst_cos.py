@@ -17,7 +17,10 @@ def cos_identify(origin, *args, **kwargs):
         return (hdulist[0].header['TELESCOP'] == 'HST' and hdulist[0].header['INSTRUME'] == 'COS')
 
 
-@data_loader(label="HST/COS", identifier=cos_identify, extensions=['FITS', 'FIT', 'fits', 'fit'])
+@data_loader(
+    label="HST/COS", identifier=cos_identify,
+    extensions=['FITS', 'FIT', 'fits', 'fit'], priority=10,
+)
 def cos_spectrum_loader(file_obj, **kwargs):
     """
     Load COS spectral data from the MAST archive into a spectrum object.
