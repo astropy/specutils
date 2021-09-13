@@ -1,15 +1,73 @@
-1.3.x (unreleased)
-------------------
+1.4
+---
 
 New Features
 ^^^^^^^^^^^^
 
+- Allow overriding existing astropy registry elements. [#861]
+
+- ``Spectrum1D`` will now swap the spectral axis with the last axis on initialization 
+  if it can be identified from the WCS and is not last, rather than erroring. [#654, #822]
+
 Bug Fixes
 ^^^^^^^^^
+
+- Change loader priorities so survey loaders always override generic ones. [#860]
+
+- Handle "FLUX_ERROR" header keyword in addition to "ERROR" in JWST loader. [#856]
+
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- ``Spectrum1D`` now subclasses ``NDCube`` instead of ``NDDataRef``. [#754, #822, #850]
+
+1.3.1
+-----
+
+New Features
+^^^^^^^^^^^^
+
+- Add ``SpectrumList`` loader for set of JWST _x1d files. [#838]
+
+Bug Fixes
+^^^^^^^^^
+
+- Handle new ``astropy.units.PhysicalType`` class added in astropy 4.3. [#833]
+- Handle case of WCS with None values in ``world_axis_physical_types`` when
+  initializing Spectrum1D. [#839]
+- Fix bug in apStar loader. [#839]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Improve continuum flux calculation in ``equivalent_width``. [#843]
+
+1.3
+---
+
+New Features
+^^^^^^^^^^^^
+
+- Added ability to slice ``Spectrum1D`` with spectral axis values. [#790]
+
+- Added ability to replace a section of a spectrum with a spline or model fit. [#782]
+
+Bug Fixes
+^^^^^^^^^
+
+- Fix infinite recursion when unpickling a ``QuantityModel``. [#823]
+
+- Changed positional to keyword arguments in ``fit_continuum``. [#806]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fix inaccuracy about custom loading in docs. [#819]
+
+- Use non-root logger to prevent duplicate messages. [#810]
+
+- Removed unused astropy config code. [#805]
 
 1.2
 ---
