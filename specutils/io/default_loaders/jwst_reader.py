@@ -567,7 +567,7 @@ def _jwst_s3d_loader(filename, **kwargs):
 
             # Errors
             error_array = hdu_err.data.T
-            error = InverseVariance(error_array)
+            error = StdDevUncertainty(error_array)
 
             # Get the wavelength array from the GWCS object which returns a
             # tuple of (RA, Dec, lambda)

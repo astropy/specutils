@@ -174,7 +174,7 @@ def test_jwst_cube():
     assert spec.meta['header']['INSTRUME'] == 'NIRSPEC'
     assert spec.shape == (33, 39, 2059)
 
-    assert isinstance(spec.uncertainty, InverseVariance)
+    assert isinstance(spec.uncertainty, StdDevUncertainty)
     assert spec.uncertainty.array.shape == (33, 39, 2059)
 
 
