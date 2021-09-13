@@ -167,7 +167,7 @@ def test_jwst_cube():
 
     url = 'https://data.science.stsci.edu/redirect/JWST/jwst-data_analysis_tools/IFU_optimal_extraction/NRS00001-faintQSO-F100LP-G140H-01_1_491_SE_2020-08-25T12h15m00_s3d.fits'
 
-    spec = Spectrum1D.read(url, format="JWST s3d")
+    spec = Spectrum1D.read(url)
 
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0

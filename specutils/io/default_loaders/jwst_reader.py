@@ -6,7 +6,7 @@ import astropy.units as u
 from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, InverseVariance
 import logging
 import numpy as np
 import asdf
@@ -552,8 +552,9 @@ def _jwst_s3d_loader(filename, **kwargs):
         primary_header = hdulist["PRIMARY"].header
 
         hdulist_sci = [hdu for hdu in hdulist if hdu.name == "SCI"]
+        hdulist_err = [hdu for hdu in hdulist if hdu.name == "ERR"]
 
-        for hdu, wcs in zip(hdulist_sci, wcslist):
+        for hdu, hdu_err, wcs in zip(hdulist_sci, hdulist_err, wcslist):
             # Get flux
             try:
                 flux_unit = u.Unit(hdu.header["BUNIT"])
@@ -563,6 +564,10 @@ def _jwst_s3d_loader(filename, **kwargs):
             # The spectral axis is first.  We need it last
             flux_array = hdu.data.T
             flux = Quantity(flux_array, unit=flux_unit)
+
+            # Errors
+            error_array = hdu_err.data.T
+            error = InverseVariance(error_array)
 
             # Get the wavelength array from the GWCS object which returns a
             # tuple of (RA, Dec, lambda)
@@ -579,7 +584,8 @@ def _jwst_s3d_loader(filename, **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spec = Spectrum1D(flux=flux, uncertainty=error,
+                              spectral_axis=wavelength, meta=meta)
             spectra.append(spec)
 
     return SpectrumList(spectra)
