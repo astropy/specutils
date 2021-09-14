@@ -9,6 +9,7 @@ from astropy import coordinates as coord
 import gwcs.coordinate_frames as cf
 from gwcs.wcs import WCS
 import pytest
+from asdf import fits_embed
 
 from specutils import Spectrum1D, SpectrumList
 
@@ -315,3 +316,109 @@ def test_jwst_s2d_multi_reader(tmpdir, s2d_multi):
     assert len(speclist) == 2
     assert hasattr(speclist[0], "spectral_axis")
     assert speclist[1].unit == u.Jy
+
+
+# The s3d reader tests -------------------------------
+
+def generate_s3d_wcs():
+    """ create a fake gwcs for a cube """
+    # create input /output frames
+    detector = cf.CoordinateFrame(name='detector', axes_order=(0,1,2), axes_names=['x', 'y', 'z'],
+                                  axes_type=['spatial', 'spatial', 'spatial'], naxes=3,
+                                  unit=['pix', 'pix', 'pix'])
+    sky = cf.CelestialFrame(reference_frame=coord.ICRS(), name='sky', axes_names=("RA", "DEC"))
+    spec = cf.SpectralFrame(name='spectral', unit=['um'], axes_names=['wavelength'], axes_order=(2,))
+    world = cf.CompositeFrame(name="world", frames=[sky, spec])
+
+    # create fake transform to at least get a bounding box
+    # for the s3d jwst loader
+
+    # shape 30,10,10 (spec, y, x)
+    crpix1, crpix2, crpix3 = 5, 5, 15  # (x, y, spec)
+    crval1, crval2, crval3 = 1, 1, 1
+    cdelt1, cdelt2, cdelt3 = 0.01, 0.01, 0.05
+
+    shift = models.Shift(-crpix2) & models.Shift(-crpix1)
+    scale = models.Multiply(cdelt2) & models.Multiply(cdelt1)
+    proj = models.Pix2Sky_TAN()
+    skyrot = models.RotateNative2Celestial(crval2, 90 + crval1, 180)
+    celestial = shift | scale | proj | skyrot
+    wave_model = models.Shift(-crpix3) | models.Multiply(cdelt3) | models.Shift(crval3)
+    transform = models.Mapping((2, 0, 1)) | celestial & wave_model | models.Mapping((1, 2, 0))
+    # bounding box based on shape (30,10,10) in test
+    transform.bounding_box = ((0, 29), (0, 9), (0, 9))
+
+    # create final wcs
+    pipeline = [(detector, transform),
+                (world, None)]
+    return WCS(pipeline)
+
+@pytest.fixture()
+def tmp_asdf(tmpdir):
+    # Create some data
+    sequence = np.arange(100)
+    squares  = sequence**2
+    random = np.random.random(100)
+
+    # Store the data in an arbitrarily nested dictionary
+    tree = {
+        'foo': 42,
+        'name': 'Monty',
+        'sequence': sequence,
+        'powers': { 'squares' : squares },
+        'random': random,
+        'meta': {
+            'wcs' : generate_s3d_wcs()
+        }
+    }
+
+    yield tree
+    tree = {}
+
+def create_image_hdu(name='SCI', data=None, shape=None, hdrs=[], ndim=3):
+    """ Mock an Image HDU """
+    if data is None:
+        if not shape:
+            shape = [4, 2, 3] if ndim == 3 else [2, 2] if ndim == 2 else [2]
+        data = np.zeros(shape)
+    hdu = fits.ImageHDU(name=name, data=data, header=fits.Header(hdrs))
+    hdu.ver = 1
+    return hdu
+
+
+@pytest.fixture(scope='function')
+def cube(tmpdir, tmp_asdf):
+    """ Mock a JWST s3d cube """
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
+    hdulist["PRIMARY"].header["TELESCOP"] = ("JWST", "comment")
+    hdulist["PRIMARY"].header["FLUXEXT"] = ("ERR", "comment")
+    hdulist["PRIMARY"].header["ERREXT"] = ("ERR", "comment")
+    hdulist["PRIMARY"].header["MASKEXT"] = ("DQ", "comment")
+    # Add ImageHDU for cubes
+    shape = [30, 10, 10]
+    hdulist.append(create_image_hdu(name='SCI', shape=shape, hdrs=[("BUNIT", 'MJy')]))
+    hdulist.append(create_image_hdu(name='ERR', shape=shape,
+                                    hdrs=[("BUNIT", 'MJy'), ('ERRTYPE', 'ERR')]))
+    hdulist.append(create_image_hdu(name='DQ', shape=shape))
+
+    # Mock the ASDF extension
+    hdulist.append(fits.BinTableHDU(name='ASDF'))
+    ff = fits_embed.AsdfInFits(hdulist, tmp_asdf)
+    tmpfile = str(tmpdir.join('jwst_embedded_asdf.fits'))
+    ff.write_to(tmpfile)
+
+    return hdulist
+
+
+def test_jwst_s3d_single(tmpdir, cube):
+    """Test Spectrum1D.read for JWST x1d data"""
+    tmpfile = str(tmpdir.join('jwst_s3d.fits'))
+    cube.writeto(tmpfile)
+
+    data = Spectrum1D.read(tmpfile, format='JWST s3d')
+    assert type(data) is Spectrum1D
+    assert data.shape == (10, 10, 30)
+    assert data.uncertainty is not None
+    assert data.mask is not None
+    assert data.uncertainty.unit == 'MJy'
