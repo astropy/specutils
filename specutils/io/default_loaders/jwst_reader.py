@@ -12,7 +12,6 @@ import logging
 import numpy as np
 import asdf
 from gwcs.wcstools import grid_from_bounding_box
-from traitlets.traitlets import Undefined
 
 from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
