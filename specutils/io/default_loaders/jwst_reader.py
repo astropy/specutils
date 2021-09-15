@@ -1,12 +1,13 @@
 import os
 import glob
 import logging
+from astropy.nddata.nduncertainty import VarianceUncertainty
 
 import astropy.units as u
 from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, InverseVariance
 import logging
 import numpy as np
 import asdf
@@ -595,7 +596,32 @@ def _jwst_s3d_loader(filename, **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            # get uncertainty information
+            ext_name = primary_header.get("ERREXT", "ERR")
+            err_type = hdulist[ext_name].header.get("ERRTYPE", 'ERR')
+            err_unit = hdulist[ext_name].header.get("BUNIT", None)
+            err_array = hdulist[ext_name].data.T
+
+            # ERRTYPE can be one of "ERR", "IERR", "VAR", "IVAR"
+            # but mostly ERR for JWST cubes
+            # see https://jwst-pipeline.readthedocs.io/en/latest/jwst/data_products/science_products.html#s3d
+            if err_type == "ERR":
+                err = StdDevUncertainty(err_array, unit=err_unit)
+            elif err_type == 'VAR':
+                err = VarianceUncertainty(err_array, unit=err_unit)
+            elif err_type == 'IVAR':
+                err = InverseVariance(err_array, unit=err_unit)
+            elif err_type == 'IERR':
+                log.warning("Inverse Error is not yet a supported Astropy.nddata "
+                            "uncertainty. Setting err to None.")
+                err = None
+
+            # get mask information
+            mask_name = primary_header.get("MASKEXT", "DQ")
+            mask = hdulist[mask_name].data.T
+
+            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta,
+                              uncertainty=err, mask=mask)
             spectra.append(spec)
 
     return SpectrumList(spectra)
