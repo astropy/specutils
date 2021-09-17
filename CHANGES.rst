@@ -1,14 +1,10 @@
-1.5 (unreleased)
-------------------
-
-New Features
-^^^^^^^^^^^^
+1.4.1
+-----
 
 Bug Fixes
 ^^^^^^^^^
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Fix JWST s3d loader. [#866]
 
 1.4
 ---
