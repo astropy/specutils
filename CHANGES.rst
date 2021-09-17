@@ -1,3 +1,15 @@
+1.5 (unreleased)
+----------------
+
+New Features
+^^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1.4.1
 -----
 
