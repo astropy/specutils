@@ -2,8 +2,6 @@ name: CI
 
 on:
   push:
-    branches:
-    tags:
   pull_request:
 
 jobs:
@@ -36,7 +34,7 @@ jobs:
           # leave open any files. This has a performance impact on running the
           # tests, hence why it is not enabled by default.
           - name: Python 3.7 with oldest supported version of all dependencies
-            os: ubuntu-16.04
+            os: ubuntu-18.04
             python: 3.7
             toxenv: py37-test-oldestdeps
 
