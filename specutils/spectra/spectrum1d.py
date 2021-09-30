@@ -202,8 +202,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 # Due to FITS conventions, a WCS with spectral axis first corresponds
                 # to a flux array with spectral axis last.
                 if temp_axes[0] != 0:
-                    log.warn("Input WCS indicates that the spectral axis is not"
-                             " last. Reshaping arrays to put spectral axis last.")
+                    log.warning("Input WCS indicates that the spectral axis is not"
+                                " last. Reshaping arrays to put spectral axis last.")
                     wcs = wcs.swapaxes(0, temp_axes[0])
                     if flux is not None:
                         flux = np.swapaxes(flux, len(flux.shape)-temp_axes[0]-1, -1)
