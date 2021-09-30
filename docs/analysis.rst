@@ -50,8 +50,8 @@ spectrum:
 A second method to calculate SNR does not require the uncertainty defined
 on the `~specutils.Spectrum1D` object. This computes the signal to noise
 ratio DER_SNR following the definition set forth by the Spectral
-Container Working Group of ST-ECF, MAST and CADC. This is based on the
-code at http://www.stecf.org/software/ASTROsoft/DER_SNR/.
+Container Working Group of ST-ECF, MAST and CADC. This algorithm is described at
+https://esahubble.org/static/archives/stecfnewsletters/pdf/hst_stecf_0042.pdf
 
 .. code-block:: python
 

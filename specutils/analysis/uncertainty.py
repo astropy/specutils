@@ -122,8 +122,9 @@ def snr_derived(spectrum, region=None):
     regions, the signal over the scale of 5 or more pixels can be approximated
     by a straight line.
 
-    Code and some docs copied from
-    ``http://www.stecf.org/software/ASTROsoft/DER_SNR/der_snr.py``
+    The code and some documentation is derived from
+    ``http://www.stecf.org/software/ASTROsoft/DER_SNR/der_snr.py``, and the
+    algorithm itself is documented at https://esahubble.org/static/archives/stecfnewsletters/pdf/hst_stecf_0042.pdf
     """
 
     # No region, therefore whole spectrum.
