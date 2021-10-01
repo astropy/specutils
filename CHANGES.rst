@@ -7,6 +7,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Speed up JWST s3d loader and reduce memory usage. [#874]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
