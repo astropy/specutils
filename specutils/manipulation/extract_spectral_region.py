@@ -96,7 +96,7 @@ def _to_edge_pixel(subregion, spectrum):
     return left_index, right_index
 
 
-def extract_region(spectrum, region):
+def extract_region(spectrum, region, return_single_spectrum=False):
     """
     Extract a region from the input `~specutils.Spectrum1D`
     defined by the lower and upper bounds defined by the ``region``
@@ -111,11 +111,16 @@ def extract_region(spectrum, region):
     region: `~specutils.SpectralRegion`
         The spectral region to extract from the original spectrum.
 
+    return_single_spectrum: bool
+        If `region` has multiple sections, whether to return a single spectrum
+        instead of multiple `~specutils.Spectrum1D` objects.  The returned spectrum
+        will be a unique, concatenated, spectrum of all sub-regions.
+
     Returns
     -------
     spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
         Excised spectrum, or list of spectra if the input region contained multiple
-        subregions.
+        subregions and `return_single_spectrum` is `False`.
 
     Notes
     -----
@@ -165,6 +170,36 @@ def extract_region(spectrum, region):
     # just return a spectrum.
     if len(region) == 1:
         extracted_spectrum = extracted_spectrum[0]
+
+    # Otherwise, if requested to return a single spectrum, we need to combine
+    # the spectrum1d objects in extracted_spectrum and return a single object.
+    elif return_single_spectrum:
+        concat_keys = ['flux', 'uncertainty']  # spectral_axis handled manually
+        copy_keys = ['wcs', 'velocity_convention', 'rest_value', 'meta']
+
+        def _get_joined_value(sps, k, unique_inds=None):
+            if k == 'uncertainty':
+                # uncertainty cannot be appended directly as its an object,
+                # not an array so instead we'll take a copy of the first entry
+                # and overwrite the internal array with an appended array
+                uncert = sps[0].uncertainty
+                uncert._array = np.concatenate([sp.uncertainty._array for sp in sps])
+                return uncert[unique_inds] if unique_inds is not None else uncert
+            elif k in concat_keys or k == 'spectral_axis':
+                concat_arr = np.concatenate([getattr(sp, k) for sp in sps])
+                return concat_arr[unique_inds] if unique_inds is not None else concat_arr
+            else:
+                # all were extracted from the same input spectrum, so we don't
+                # need to make sure the properties match
+                return getattr(sps[0], k)
+
+        # we'll need to account for removing overlapped regions in the spectral axis,
+        # so we'll concatenate that first and track the unique indices
+        spectral_axis = _get_joined_value(extracted_spectrum, 'spectral_axis')
+        spectral_axis_unique, unique_inds = np.unique(spectral_axis, return_index=True)
+        return Spectrum1D(spectral_axis=spectral_axis_unique,
+                          **{k: _get_joined_value(extracted_spectrum, k, unique_inds)
+                             for k in concat_keys+copy_keys})
 
     return extracted_spectrum
 
