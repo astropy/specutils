@@ -183,6 +183,8 @@ def extract_region(spectrum, region, return_single_spectrum=False):
                 # not an array so instead we'll take a copy of the first entry
                 # and overwrite the internal array with an appended array
                 uncert = sps[0].uncertainty
+                if uncert is None:
+                    return None
                 uncert._array = np.concatenate([sp.uncertainty._array for sp in sps])
                 return uncert[unique_inds] if unique_inds is not None else uncert
             elif key in concat_keys or key == 'spectral_axis':
