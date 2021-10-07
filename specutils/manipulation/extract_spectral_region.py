@@ -177,29 +177,29 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         concat_keys = ['flux', 'uncertainty']  # spectral_axis handled manually
         copy_keys = ['wcs', 'velocity_convention', 'rest_value', 'meta']
 
-        def _get_joined_value(sps, k, unique_inds=None):
-            if k == 'uncertainty':
+        def _get_joined_value(sps, key, unique_inds=None):
+            if key == 'uncertainty':
                 # uncertainty cannot be appended directly as its an object,
                 # not an array so instead we'll take a copy of the first entry
                 # and overwrite the internal array with an appended array
                 uncert = sps[0].uncertainty
                 uncert._array = np.concatenate([sp.uncertainty._array for sp in sps])
                 return uncert[unique_inds] if unique_inds is not None else uncert
-            elif k in concat_keys or k == 'spectral_axis':
-                concat_arr = np.concatenate([getattr(sp, k) for sp in sps])
+            elif key in concat_keys or key == 'spectral_axis':
+                concat_arr = np.concatenate([getattr(sp, key) for sp in sps])
                 return concat_arr[unique_inds] if unique_inds is not None else concat_arr
             else:
                 # all were extracted from the same input spectrum, so we don't
                 # need to make sure the properties match
-                return getattr(sps[0], k)
+                return getattr(sps[0], key)
 
         # we'll need to account for removing overlapped regions in the spectral axis,
         # so we'll concatenate that first and track the unique indices
         spectral_axis = _get_joined_value(extracted_spectrum, 'spectral_axis')
         spectral_axis_unique, unique_inds = np.unique(spectral_axis, return_index=True)
         return Spectrum1D(spectral_axis=spectral_axis_unique,
-                          **{k: _get_joined_value(extracted_spectrum, k, unique_inds)
-                             for k in concat_keys+copy_keys})
+                          **{key: _get_joined_value(extracted_spectrum, key, unique_inds)
+                             for key in concat_keys+copy_keys})
 
     return extracted_spectrum
 
