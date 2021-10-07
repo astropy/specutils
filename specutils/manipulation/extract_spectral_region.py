@@ -111,8 +111,8 @@ def extract_region(spectrum, region, return_single_spectrum=False):
     region: `~specutils.SpectralRegion`
         The spectral region to extract from the original spectrum.
 
-    return_single_spectrum: bool
-        If `region` has multiple sections, whether to return a single spectrum
+    return_single_spectrum: `bool`
+        If ``region`` has multiple sections, whether to return a single spectrum
         instead of multiple `~specutils.Spectrum1D` objects.  The returned spectrum
         will be a unique, concatenated, spectrum of all sub-regions.
 
@@ -120,7 +120,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
     -------
     spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
         Excised spectrum, or list of spectra if the input region contained multiple
-        subregions and `return_single_spectrum` is `False`.
+        subregions and ``return_single_spectrum`` is `False`.
 
     Notes
     -----
