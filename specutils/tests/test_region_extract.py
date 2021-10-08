@@ -160,6 +160,11 @@ def test_region_two_sub(simulated_spectra):
     assert quantity_allclose(sub_spectra[0].flux, sub_spectra2[0].flux)
     assert quantity_allclose(sub_spectra[1].flux, sub_spectra2[1].flux)
 
+    # Check that the return_single_spectrum argument works properly
+    concatenated_spectrum = extract_region(spectrum, region2, return_single_spectrum=True)
+    assert concatenated_spectrum.flux.shape == (34,)
+    assert np.all(concatenated_spectrum.flux[0:30] == sub_spectra2[0].flux)
+    assert np.all(concatenated_spectrum.flux[30:34] == sub_spectra2[1].flux)
 
 def test_bounding_region(simulated_spectra):
     np.random.seed(42)
