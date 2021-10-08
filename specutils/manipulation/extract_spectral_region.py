@@ -174,8 +174,10 @@ def extract_region(spectrum, region, return_single_spectrum=False):
     # Otherwise, if requested to return a single spectrum, we need to combine
     # the spectrum1d objects in extracted_spectrum and return a single object.
     elif return_single_spectrum:
-        concat_keys = ['flux', 'uncertainty']  # spectral_axis handled manually
-        copy_keys = ['wcs', 'velocity_convention', 'rest_value', 'meta']
+        concat_keys = ['flux', 'uncertainty', 'mask']  # spectral_axis handled manually
+        copy_keys = ['velocity_convention', 'rest_value', 'meta']
+
+        # NOTE: WCS is intentionally dropped, which will then fallback on lookup
 
         def _get_joined_value(sps, key, unique_inds=None):
             if key == 'uncertainty':
@@ -188,6 +190,8 @@ def extract_region(spectrum, region, return_single_spectrum=False):
                 uncert._array = np.concatenate([sp.uncertainty._array for sp in sps])
                 return uncert[unique_inds] if unique_inds is not None else uncert
             elif key in concat_keys or key == 'spectral_axis':
+                if getattr(sps[0], key) is None:
+                    return None
                 concat_arr = np.concatenate([getattr(sp, key) for sp in sps])
                 return concat_arr[unique_inds] if unique_inds is not None else concat_arr
             else:
