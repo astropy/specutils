@@ -150,8 +150,10 @@ Region Extraction
 
 Given a `~specutils.SpectralRegion`, one can extract a sub-spectrum
 from a `~specutils.Spectrum1D` object. If the `~specutils.SpectralRegion`
-has multiple sub-regions then a list of `~specutils.Spectrum1D` objects will
-be returned.
+has multiple sub-regions then by default a list of `~specutils.Spectrum1D` objects 
+will be returned. If the ``return_single_spectrum`` argument is set to ``True``, 
+the resulting spectra will be concatenated together into a single 
+`~specutils.Spectrum1D` object instead.
 
 An example of a single sub-region `~specutils.SpectralRegion`:
 
@@ -209,6 +211,14 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
     >>> sub_spectra[1].spectral_axis
     <SpectralAxis [34., 35., 36., 37., 38., 39., 40.] nm>
 
+Multiple sub-regions can also be returned as a single concatenated spectrum:
+
+.. code-block:: python
+
+    >>> sub_spectrum = extract_region(spectrum, region, return_single_spectrum=True)
+    >>> sub_spectrum.spectral_axis
+    <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,
+        22., 34., 35., 36., 37., 38., 39., 40.] nm>
 
 The bounding region that includes all data, including the ones that lie
 in between disjointed spectral regions, can be extracted with
