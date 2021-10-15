@@ -164,13 +164,16 @@ def extract_region(spectrum, region, return_single_spectrum=False):
 
             if left_index > right_index:
                 left_index, right_index = right_index, left_index
-            
+
             # Slice spectrum to calculated indices
             extracted_spectra = spectrum[..., left_index:right_index]
-            
+
             # Set the Astropy WCS wavelength reference value to new lower bound of spectrum
             if type(extracted_spectra.wcs) is WCS:
-                extracted_spectra.wcs.wcs.crval[0] = min(extracted_spectra.wavelength).to(u.Unit(extracted_spectra.wcs.wcs.cunit[0])).value
+                extracted_spectra.wcs.wcs.crval[0] = min(extracted_spectra.wavelength
+                                                        ).to(
+                                                            u.Unit(extracted_spectra.wcs.wcs.cunit[0]) # noqa
+                                                            ).value
             extracted_spectrum.append(extracted_spectra)
 
     # If there is only one subregion in the region then we will
