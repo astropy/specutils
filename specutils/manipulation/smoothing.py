@@ -57,7 +57,12 @@ def convolution_smooth(spectrum, kernel):
 
     # Expand kernel with empty leading dimensions if flux is multidimensional
     # and kernel is 1D.
-    if flux.ndim > 1 and (kernel.ndim == 1 or kernel.array.ndim == 1):
+    if isinstance(kernel, np.ndarray):
+        kernel_ndim = kernel.ndim
+    else:
+        kernel_ndim = kernel.array.ndim
+
+    if flux.ndim > 1 and kernel_ndim == 1:
         expand_axes = tuple(np.arange(flux.ndim-1))
         kernel = np.expand_dims(kernel, expand_axes)
 
