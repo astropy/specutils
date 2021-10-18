@@ -2,10 +2,10 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.modeling.models import Gaussian1D
-from astropy.tests.helper import quantity_allclose
+from astropy.tests.helper import assert_quantity_allclose
 
 from specutils.fitting import find_lines_derivative
-from ..spectra import Spectrum1D, SpectralRegion
+from specutils.spectra import Spectrum1D, SpectralRegion
 
 
 def test_lower_upper():
@@ -33,26 +33,26 @@ def test_lower_upper():
     assert sr[0].upper == 0.05*u.um
 
 
-def test_from_center():
-
+@pytest.mark.parametrize(
+    ('center', 'width', 'lower', 'upper'),
+    [(6563 * u.AA, 10 * u.AA, 6558.0 * u.AA, 6568.0 * u.AA),
+     (1 * u.GHz, 0.1 * u.GHz, 1.05 * u.GHz, 0.95 * u.GHz),
+     (0.5 * u.pix, 1 * u.pix, 0 * u.pix, 1 * u.pix)])
+def test_from_center(center, width, lower, upper):
     # Spectral region from center with width
-    sr = SpectralRegion.from_center(center=6563*u.AA, width=10*u.AA)
-    assert sr.lower == 6558.0*u.AA
-    assert sr.upper == 6568.0*u.AA
+    sr = SpectralRegion.from_center(center=center, width=width)
+    assert_quantity_allclose(sr.lower, lower)
+    assert_quantity_allclose(sr.upper, upper)
 
-    # Check the exception if the width is negative.
-    with pytest.raises(ValueError) as exc:
-        sr = SpectralRegion.from_center(center=6563*u.AA, width=-10*u.AA)
 
-    # Check the exception if the width is 0.
-    with pytest.raises(ValueError) as exc:
-        sr = SpectralRegion.from_center(center=6563*u.AA, width=0*u.AA)
-
-    # Test with frequency spectral axis
-    sr = SpectralRegion.from_center(center=1*u.GHz, width=0.1*u.GHz)
-
-    with pytest.raises(ValueError) as e:
-        sr = SpectralRegion.from_center(center=1*u.GHz, width=-0.1*u.GHz)
+@pytest.mark.parametrize(
+    ('center', 'width'),
+    [(6563 * u.AA, -10 * u.AA),
+     (6563 * u.AA, 0 * u.AA),
+     (1 * u.GHz, -0.1 * u.GHz)])
+def test_from_center_error(center, width):
+    with pytest.raises(ValueError):
+        SpectralRegion.from_center(center=center, width=width)
 
 
 def test_adding_spectral_regions():
@@ -188,4 +188,4 @@ def test_from_list_list():
                 (7.690954773869347 * u.um, 8.690954773869347 * u.um)]
 
     for i, reg in enumerate(expected):
-        assert quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].upper))
+        assert_quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].upper))

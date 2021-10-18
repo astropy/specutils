@@ -9,6 +9,8 @@ Bug Fixes
 
 - Speed up JWST s3d loader and reduce memory usage. [#874]
 
+- ``SpectralRegion`` can now handle pixels. [#886]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
