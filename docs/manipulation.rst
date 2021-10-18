@@ -41,7 +41,10 @@ implemented are: :func:`~specutils.manipulation.box_smooth`
 :func:`~specutils.manipulation.gaussian_smooth`
 (:class:`~astropy.convolution.Gaussian1DKernel`), and
 :func:`~specutils.manipulation.trapezoid_smooth`
-(:class:`~astropy.convolution.Trapezoid1DKernel`).
+(:class:`~astropy.convolution.Trapezoid1DKernel`). Note that, although 
+these kernels are 1D, they can be applied to higher-dimensional
+data (e.g. spectral cubes), in which case the data will be smoothed only 
+along the spectral dimension.
 
 
 .. code-block:: python
@@ -83,7 +86,11 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
     >>> spec1_bsmooth2 = convolution_smooth(spec1, box1d_kernel)
 
 In this case, the ``spec1_bsmooth2`` result should be equivalent to the ``spec1_bsmooth`` in
-the section above (assuming the flux data of the input ``spec`` is the same).
+the section above (assuming the flux data of the input ``spec`` is the same). Note that, 
+as in the case of the kernel-specific functions, a 1D kernel can be applied to a 
+multi-dimensional spectrum and will smooth that spectrum along the spectral dimension.
+In the case of :func:`~specutils.manipulation.convolution_smooth`, one can also input
+a higher-dimensional kernel that matches the dimensionality of the data.
 
 The uncertainties are propagated using a standard "propagation of errors" method, if the uncertainty
 is defined for the spectrum *and* it is one of StdDevUncertainty, VarianceUncertainty or InverseVariance.

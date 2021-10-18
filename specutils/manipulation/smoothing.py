@@ -17,7 +17,8 @@ __all__ = ['convolution_smooth', 'box_smooth', 'gaussian_smooth',
 def convolution_smooth(spectrum, kernel):
     """
     Apply a convolution based smoothing to the spectrum. The kernel must be one
-    of the 1D kernels defined in `astropy.convolution`.
+    of the 1D kernels defined in `astropy.convolution`, and will be applied along
+    the spectral axis of the flux.
 
     This method can be used alone but also is used by other specific methods
     below.
@@ -53,6 +54,17 @@ def convolution_smooth(spectrum, kernel):
 
     # Get the flux of the input spectrum
     flux = spectrum.flux
+
+    # Expand kernel with empty leading dimensions if flux is multidimensional
+    # and kernel is 1D.
+    if isinstance(kernel, np.ndarray):
+        kernel_ndim = kernel.ndim
+    else:
+        kernel_ndim = kernel.array.ndim
+
+    if flux.ndim > 1 and kernel_ndim == 1:
+        expand_axes = tuple(np.arange(flux.ndim-1))
+        kernel = np.expand_dims(kernel, expand_axes)
 
     # Smooth based on the input kernel
     smoothed_flux = convolution.convolve(flux, kernel)
@@ -108,8 +120,8 @@ def convolution_smooth(spectrum, kernel):
 
 def box_smooth(spectrum, width):
     """
-    Smooth a `~specutils.Spectrum1D` instance based on a
-    `astropy.convolution.Box1DKernel` kernel.
+    Smooth a `~specutils.Spectrum1D` instance along the spectral axis
+    based on a `astropy.convolution.Box1DKernel` kernel.
 
     Parameters
     ----------
@@ -145,8 +157,8 @@ def box_smooth(spectrum, width):
 
 def gaussian_smooth(spectrum, stddev):
     """
-    Smooth a `~specutils.Spectrum1D` instance based on a
-    `astropy.convolution.Gaussian1DKernel`.
+    Smooth a `~specutils.Spectrum1D` instance along the spectral axis
+    based on a `astropy.convolution.Gaussian1DKernel`.
 
     Parameters
     ----------
@@ -182,7 +194,8 @@ def gaussian_smooth(spectrum, stddev):
 
 def trapezoid_smooth(spectrum, width):
     """
-    Smoothing based on a `astropy.convolution.Trapezoid1DKernel` kernel.
+    Smooth a `~specutils.Spectrum1D` instance along the spectral axis
+    based on a `astropy.convolution.Trapezoid1DKernel` kernel.
 
     Parameters
     ----------
