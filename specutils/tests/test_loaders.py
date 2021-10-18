@@ -518,7 +518,7 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
 
     # Try to overwrite the file
-    with pytest.raises(OSError, match=r'File exists:'):
+    with pytest.raises(OSError, match=r'File .*exists'):
         spectrum.write(tmpfile, format='tabular-fits')
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True)
 
