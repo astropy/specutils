@@ -280,16 +280,18 @@ class OneDSpectrumMixin():
         # Store the original unit information for posterity
         meta = self._meta.copy()
 
+        orig_unit = self.wcs.unit[0] if hasattr(self.wcs, 'unit') else self.spectral_axis.unit
+
         if 'original_unit' not in self._meta:
-            meta['original_unit'] = self.wcs.unit[0]
+            meta['original_unit'] = orig_unit
 
         # Create the new wcs object
         if isinstance(unit, u.UnitBase) and unit.is_equivalent(
-                self.wcs.unit[0], equivalencies=u.spectral()):
+                orig_unit, equivalencies=u.spectral()):
             return gwcs_from_array(self.spectral_axis), meta
 
         log.error("WCS units incompatible: {} and {}.".format(
-            unit, self._wcs_unit))
+            unit, orig_unit))
 
 
 class InplaceModificationMixin:
