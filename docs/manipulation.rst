@@ -354,11 +354,11 @@ Replacing a region
 ------------------
 
 A specific wavelength region of a spectrum can be replaced with a model
-fitted to that region. This is done by the ``model_replace`` function.
+fitted to that region by using the ``model_replace`` function.
 By default, the function uses a cubic spline to model the specified region.
 Alternatively, it can use a previously fitted model from `~astropy.modeling`.
 
-The simplest way to use ``model_replace`` is to provide just a list or array
+The simplest way to use ``model_replace`` is to provide a list or array
 with the spline knots:
 
 .. code-block:: python
@@ -373,8 +373,8 @@ with the spline knots:
     <Spectrum1D(flux=<Quantity [ 2., 4., 6., 8., 10., 12., 14., 16., 18., 20.] mJy>,
          spectral_axis=<SpectralAxis [ 1., 2., 3., 4., 5., 6., 7., 8., 9.,10.] Angstrom>)>
 
-The default behavior is to keep the data outside the replaced region, as is. Alternatively
-one can have the entire spectrum filled with zeros, outside the replaced region:
+The default behavior is to keep the data outside the replaced region unchanged. 
+Alternatively, the spectrum outside the replaced region can be filled with zeros:
 
 .. code-block:: python
 
