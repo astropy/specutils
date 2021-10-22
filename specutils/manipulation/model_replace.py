@@ -5,7 +5,6 @@ from astropy.units import Quantity
 from astropy.modeling import Fittable1DModel
 
 from ..spectra import Spectrum1D
-from ..utils import QuantityModel
 from . import extract_region
 
 
@@ -101,8 +100,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
 
     # If input model is a fitted model, use it and the spectral region to place the
     # model values over the relevant stretch of the spectrum's spectral axis.
-    elif (isinstance(model, Fittable1DModel) or (isinstance(model, QuantityModel))) \
-            and replace_region is not None:
+    elif isinstance(model, Fittable1DModel) and replace_region is not None:
         new_spectral_axis = spectrum.spectral_axis
 
         subspectrum = extract_region(spectrum, replace_region)

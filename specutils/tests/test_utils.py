@@ -5,7 +5,6 @@ import numpy as np
 from astropy import units as u
 from astropy import modeling
 
-from specutils.utils import QuantityModel
 from ..utils.wcs_utils import refraction_index, vac_to_air, air_to_vac
 
 wavelengths = [300, 500, 1000] * u.nm
@@ -17,34 +16,6 @@ data_index_refraction = {
    'Morton2000': np.array([2.91568573, 2.78973402, 2.74169531]),
    'Ciddor1996': np.array([2.91568633, 2.78973811, 2.74166131])
 }
-
-def test_quantity_model():
-    c = modeling.models.Chebyshev1D(3)
-    uc = QuantityModel(c, u.AA, u.km)
-
-    assert uc(10*u.nm).to(u.m) == 0*u.m
-
-def test_pickle_quantity_model(tmp_path):
-    """
-    Check that a QuantityModel can roundtrip through pickling, as it
-    would if fit in a multiprocessing pool.
-    """
-
-    c = modeling.models.Chebyshev1D(3)
-    uc = QuantityModel(c, u.AA, u.km)
-
-    pkl_file = tmp_path / "qmodel.pkl"
-
-    with open(pkl_file, "wb") as f:
-        pickle.dump(uc, f)
-
-    with open(pkl_file, "rb") as f:
-        new_model = pickle.load(f)
-
-    assert new_model.input_units == uc.input_units
-    assert new_model.return_units == uc.return_units
-    assert type(new_model.unitless_model) == type(uc.unitless_model)
-    assert np.all(new_model.unitless_model.parameters == uc.unitless_model.parameters)
 
 @pytest.mark.parametrize("method", data_index_refraction.keys())
 def test_refraction_index(method):
