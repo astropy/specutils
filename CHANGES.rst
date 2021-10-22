@@ -17,6 +17,8 @@ Other Changes and Additions
 - Convolution-based smoothing will now apply a 1D kernel to multi-dimensional fluxes
   by convolving along the spectral axis only, rather than raising an error.
 
+- ``fit_lines`` now makes use of unit support in ``astropy.modeling``.
+
 1.4.1
 -----
 
