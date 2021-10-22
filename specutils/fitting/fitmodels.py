@@ -473,6 +473,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         velocity_convention=input_spectrum.velocity_convention,
         rest_value=input_spectrum.rest_value)
 
+    if not model._supports_unit_fitting:
+        # Not all astropy models support units.  For those that don't
+        # we will strip the units and then re-add them before returning
+        # the model.
+        model, dispersion, flux = _strip_units_from_model(model, spectrum, convert=not ignore_units)
+
     #
     # Do the fitting of spectrum to the model.
     #
@@ -483,16 +489,15 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         if weights is not None:
             weights = weights[nmask]
 
-    return fitter(model, dispersion,
-                  flux, weights=weights, **kwargs)
+    fit_model = fitter(model, dispersion,
+                       flux, weights=weights, **kwargs)
 
-    # TODO: see if we can get rid of QuantityModel entirely
-#    fit_model = QuantityModel(fit_model_unitless,
-#                              spectrum.spectral_axis.unit,
-#                              spectrum.flux.unit)
-#
-#    return fit_model
+    if not model._supports_unit_fitting:
+        fit_model = QuantityModel(fit_model,
+                                  spectrum.spectral_axis.unit,
+                                  spectrum.flux.unit)
 
+    return fit_model
 
 def _convert(quantity, dispersion_unit, dispersion, flux_unit):
     """
