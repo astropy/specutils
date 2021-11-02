@@ -418,8 +418,8 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     window_indices = None
     if window is not None and isinstance(window, (float, int)):
         center = model.mean
-        window_indices = np.nonzero((spectrum.spectral_axis >= center-window) &
-                                    (spectrum.spectral_axis < center+window))
+        window_indices = np.nonzero((dispersion >= center-window) &
+                                    (dispersion < center+window))
 
     # In this case the window is the start and end points of where we
     # should fit
@@ -440,7 +440,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         # TODO: really the spectral region machinery should have the power
         # to create a mask, and we'd just use that...
         idxarr = np.arange(spectrum.flux.size).reshape(spectrum.flux.shape)
-        index_spectrum = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+        index_spectrum = Spectrum1D(spectral_axis=dispersion,
                                     flux=u.Quantity(idxarr, u.Jy, dtype=int))
 
         extracted_regions = extract_region(index_spectrum, window)
@@ -473,42 +473,31 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         velocity_convention=input_spectrum.velocity_convention,
         rest_value=input_spectrum.rest_value)
 
-    #
-    # Compound models with units can not be fit.
-    #
-    # Convert the model initial guess to the spectral
-    # units and then remove the units
-    #
-
-    model_unitless, dispersion_unitless, flux_unitless = \
-        _strip_units_from_model(model, spectrum, convert=not ignore_units)
+    if not model._supports_unit_fitting:
+        # Not all astropy models support units.  For those that don't
+        # we will strip the units and then re-add them before returning
+        # the model.
+        model, dispersion, flux = _strip_units_from_model(model, spectrum, convert=not ignore_units)
 
     #
     # Do the fitting of spectrum to the model.
     #
     if mask is not None:
         nmask = ~mask
-        dispersion_unitless = dispersion_unitless[nmask]
-        flux_unitless = flux_unitless[nmask]
+        dispersion = dispersion[nmask]
+        flux = flux[nmask]
         if weights is not None:
             weights = weights[nmask]
 
-    fit_model_unitless = fitter(model_unitless, dispersion_unitless,
-                                flux_unitless, weights=weights, **kwargs)
+    fit_model = fitter(model, dispersion,
+                       flux, weights=weights, **kwargs)
 
-    #
-    # Now add the units back onto the model....
-    #
-
-    if not ignore_units:
-        fit_model = _add_units_to_model(fit_model_unitless, model, spectrum)
-    else:
-        fit_model = QuantityModel(fit_model_unitless,
+    if not model._supports_unit_fitting:
+        fit_model = QuantityModel(fit_model,
                                   spectrum.spectral_axis.unit,
                                   spectrum.flux.unit)
 
     return fit_model
-
 
 def _convert(quantity, dispersion_unit, dispersion, flux_unit):
     """

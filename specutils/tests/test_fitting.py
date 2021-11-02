@@ -641,13 +641,13 @@ def test_masking():
     # in on the *second* peak since it's already close:
     g_init = models.Gaussian1D(2.5, 5.5, 0.2)
     g_fit1 = fit_lines(s, g_init)
-    assert u.allclose(g_fit1.mean, 5.5, atol=.1)
+    assert u.allclose(g_fit1.mean.value, 5.5, atol=.1)
 
     # now create a spectrum where the region around the second peak is masked.
     # The fit should now go to the *first* peak
     s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=(5.1 < wl)&(wl < 6.1))
     g_fit2 = fit_lines(s_msk, g_init)
-    assert u.allclose(g_fit2.mean, 4.6, atol=.1)
+    assert u.allclose(g_fit2.mean.value, 4.6, atol=.1)
 
     # double check that it works with weights as well
     g_fit3 = fit_lines(s_msk, g_init, weights=np.ones_like(s_msk.flux.value))
@@ -667,18 +667,18 @@ def test_window_extras():
     s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=mask)
 
     g_fit1 = fit_lines(s_msk, g_init, window=window_region)
-    assert u.allclose(g_fit1.mean, 4.6, atol=.1)
+    assert u.allclose(g_fit1.mean.value, 4.6, atol=.1)
 
     # check that if we weight instead of masking, we get the same result
     s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
     weights = (~mask).astype(float)
     g_fit2 = fit_lines(s, g_init, weights=weights, window=window_region)
-    assert u.allclose(g_fit2.mean, 4.6, atol=.1)
+    assert u.allclose(g_fit2.mean.value, 4.6, atol=.1)
 
     # and the same with both together
     weights = (~mask).astype(float)
     g_fit3 = fit_lines(s_msk, g_init, weights=weights, window=window_region)
-    assert u.allclose(g_fit3.mean, 4.6, atol=.1)
+    assert u.allclose(g_fit3.mean.value, 4.6, atol=.1)
 
 
 def test_fit_subspectrum():
