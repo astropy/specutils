@@ -214,6 +214,8 @@ def gwcs_from_array(array):
 
     class SpectralGWCS(GWCS):
         def pixel_to_world(self, *args, **kwargs):
+            if orig_array.unit == '':
+                return u.Quantity(super().pixel_to_world_values(*args, **kwargs))
             return super().pixel_to_world(*args, **kwargs).to(
                 orig_array.unit, equivalencies=u.spectral())
 
