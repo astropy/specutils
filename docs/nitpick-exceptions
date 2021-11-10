@@ -27,6 +27,7 @@ py:class ndcube.mixins.ndslicing.NDCubeSlicingMixin
 py:obj ndcube.NDCube
 py:obj NDCube
 py:obj NDCube.plotter
+py:obj MatplotlibPlotter
 py:obj ExtraCoords
 py:obj GlobalCoords
 py:obj ndcube.NDCube.world_axis_physical_types
@@ -37,6 +38,7 @@ py:obj ndcube.NDCube.wcs.world_axis_physical_types
 py:obj ndcube.NDCubeSequence
 py:obj sunpy.visualization.animator.ArrayAnimatorWCS
 py:obj ndcube.mixins.plotting.NDCubePlotMixin.plot
+py:obj astropy.wcs.wcsapi.BaseHighLevelWCS.world_to_array_index_values
 py:obj matplotllib.pyplot.imshow
 py:obj matplotllib.pyplot.plot
 
