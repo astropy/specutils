@@ -1,6 +1,6 @@
 import astropy.units as u
 import numpy as np
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..spectra.spectrum_collection import SpectrumCollection
@@ -367,3 +367,59 @@ def test_template_known_redshift():
     assert len(tm_result) == 5
     np.testing.assert_almost_equal(tm_result[1], redshift)
     np.testing.assert_almost_equal(tm_result[3], 1.9062409482056814e-31)
+
+
+def test_template_match_variance():
+    """
+    Test template_match when both observed and template spectra have the same wavelength axis.
+    """
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    spec = Spectrum1D(spectral_axis=spec_axis,
+                      flux=np.random.randn(50) * u.Jy,
+                      uncertainty=VarianceUncertainty(np.random.sample(50)**2, unit='Jy2'))
+
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=VarianceUncertainty(np.random.sample(50)**2, unit='Jy2'))
+
+    # Get result from template_match
+    tm_result = template_comparison.template_match(spec, spec1)
+
+    # Create new spectrum for comparison
+    spec_result = Spectrum1D(spectral_axis=spec_axis,
+                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
+
+    assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
+    np.testing.assert_almost_equal(tm_result[3], 40093.28353756253)
+
+
+def test_template_match_inverse_variance():
+    """
+    Test template_match when both observed and template spectra have the same wavelength axis.
+    """
+    # Seed np.random so that results are consistent
+    np.random.seed(42)
+
+    # Create test spectra
+    spec_axis = np.linspace(0, 50, 50) * u.AA
+    spec = Spectrum1D(spectral_axis=spec_axis,
+                      flux=np.random.randn(50) * u.Jy,
+                      uncertainty=InverseVariance(1/np.random.sample(50)**2, unit='1 / Jy2'))
+
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=np.random.randn(50) * u.Jy,
+                       uncertainty=InverseVariance(1/np.random.sample(50)**2, unit='1 / Jy2'))
+
+    # Get result from template_match
+    tm_result = template_comparison.template_match(spec, spec1)
+
+    # Create new spectrum for comparison
+    spec_result = Spectrum1D(spectral_axis=spec_axis,
+                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
+
+    assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
+    np.testing.assert_almost_equal(tm_result[3], 40093.28353756253)

@@ -1,4 +1,5 @@
 import numpy as np
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from ..manipulation import (FluxConservingResampler,
                             LinearInterpolatedResampler,
@@ -8,7 +9,33 @@ from ..spectra.spectrum1d import Spectrum1D
 __all__ = ['template_match', 'template_redshift']
 
 
-def _normalize_for_template_matching(observed_spectrum, template_spectrum):
+def _uncertainty_to_standard_deviation(uncertainty):
+    """
+    Convenience function to convert other uncertainty types to standard deviation,
+    for consistency in calculations elsewhere.
+
+    Parameters
+    ----------
+    uncertainty : :class:`~astropy.nddata.NDUncertainty`
+        The input uncertainty
+
+    Returns
+    -------
+    :class:`~numpy.ndarray`
+        The array of standard deviation values.
+
+    """
+    if uncertainty is not None:
+        if isinstance(uncertainty, StdDevUncertainty):
+            stddev = uncertainty.array
+        elif isinstance(uncertainty, VarianceUncertainty):
+            stddev = np.sqrt(uncertainty.array)
+        elif isinstance(uncertainty, InverseVariance):
+            stddev = 1 / np.sqrt(uncertainty.array)
+
+        return stddev
+
+def _normalize_for_template_matching(observed_spectrum, template_spectrum, stddev=None):
     """
     Calculate a scale factor to be applied to the template spectrum so the
     total flux in both spectra will be the same.
@@ -27,10 +54,10 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum):
         A float which will normalize the template spectrum's flux so that it
         can be compared to the observed spectrum.
     """
-    num = np.sum((observed_spectrum.flux*template_spectrum.flux) /
-                 (observed_spectrum.uncertainty.array**2))
-    denom = np.sum((template_spectrum.flux /
-                    observed_spectrum.uncertainty.array)**2)
+    if stddev is None:
+        stddev = _uncertainty_to_standard_deviation(observed_spectrum.uncertainty)
+    num = np.sum((observed_spectrum.flux*template_spectrum.flux) / (stddev**2))
+    denom = np.sum((template_spectrum.flux / stddev)**2)
 
     return num/denom
 
@@ -89,16 +116,20 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
         template_obswavelength = fluxc_resample(template_spectrum,
                                                 observed_spectrum.spectral_axis)
 
+    # Convert the uncertainty to standard deviation if needed
+    stddev = _uncertainty_to_standard_deviation(observed_spectrum.uncertainty)
+
     # Normalize spectra
     normalization = _normalize_for_template_matching(observed_spectrum,
-                                                     template_obswavelength)
+                                                     template_obswavelength,
+                                                     stddev)
 
     # Numerator
     num_right = normalization * template_obswavelength.flux
     num = observed_spectrum.flux - num_right
 
     # Denominator
-    denom = observed_spectrum.uncertainty.array * observed_spectrum.flux.unit
+    denom = stddev * observed_spectrum.flux.unit
 
     # Get chi square
     result = (num/denom)**2
