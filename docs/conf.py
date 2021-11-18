@@ -29,6 +29,7 @@ import os
 import sys
 import datetime
 from importlib import import_module
+import doctest
 
 try:
     from sphinx_astropy.conf.v1 import *  # noqa
@@ -67,6 +68,12 @@ exclude_patterns.append('_templates')
 # be used globally.
 rst_epilog += """
 """
+
+# Manually register doctest options since matplotlib 3.5 messed up allowing them
+# from pytest-doctestplus
+IGNORE_OUTPUT = doctest.register_optionflag('IGNORE_OUTPUT')
+REMOTE_DATA = doctest.register_optionflag('REMOTE_DATA')
+FLOAT_CMP = doctest.register_optionflag('FLOAT_CMP')
 
 # -- Project information ------------------------------------------------------
 
