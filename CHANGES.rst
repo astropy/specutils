@@ -1,8 +1,15 @@
-1.5 (unreleased)
-----------------
+1.5.0
+-----
 
 New Features
 ^^^^^^^^^^^^
+
+- Convolution-based smoothing will now apply a 1D kernel to multi-dimensional fluxes
+  by convolving along the spectral axis only, rather than raising an error. [#885]
+
+- ``template_comparison`` now handles ``astropy.nddata.Variance`` and 
+  ``astropy.nddata.InverseVariance`` uncertainties instead of assuming 
+  the uncertainty is standard deviation. [#899]
 
 Bug Fixes
 ^^^^^^^^^
@@ -11,13 +18,19 @@ Bug Fixes
 
 - ``SpectralRegion`` can now handle pixels. [#886]
 
+- Fix bug where ``template_comparison`` would return the wrong chi2 value. [#872]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Convolution-based smoothing will now apply a 1D kernel to multi-dimensional fluxes
-  by convolving along the spectral axis only, rather than raising an error.
+- ``fit_lines`` now makes use of unit support in ``astropy.modeling``. [#891]
 
-- ``fit_lines`` now makes use of unit support in ``astropy.modeling``.
+- ``Spectrum1D.with_spectral_units`` now attempts to fall back on the ``spectral_axis``
+  units if units could not be retrieved from the WCS. [#892]
+
+- ``ndcube`` package pin updated to released version (2.0). [#897]
+
+- Minor changes for astropy 5.0 compatibility. [#895]
 
 1.4.1
 -----
