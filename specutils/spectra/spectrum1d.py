@@ -442,6 +442,44 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
+    def collapse(method, axis=None, physical_type=None, spectral_region=None):
+        """
+        Collapse the flux array given a method. Will collapse either to a single
+        value (default), over a given axis if specified, or over the spectral or
+        non-spectral axes if `type` is specificied.
+
+        Parameters
+        ----------
+
+        method : str
+            The method by which the flux will be collapsed. Options are 'mean',
+            'min', 'max', 'sum', and 'median'.
+        axis : int, tuple, optional
+            The axis or axes over which to collapse the flux array.
+        physical_type : str, optional
+            Either 'spectral' or 'spatial'.
+        spectral_region : :class:`~specutils.SpectralRegion`
+            Limits the operation to only collapse the flux within the specified
+            spectral region.
+
+        Returns
+        -------
+        :class:`~specutils.Spectrum1D`
+
+        """
+        if physical_type is not None and axis is not None:
+            raise ValueError("Cannot set both axis and physical_type inputs")
+
+        if physical_type == 'spectral':
+            axis = -1
+        elif physical_type == 'spatial':
+            # generate tuple if needed for multiple spatial axes
+            axis = tuple([x for x in range(len(self.flux.shape) - 1)])
+        else:
+            raise ValueError("physical_type must be 'spatial' or 'spectral'")
+
+
+
     @NDCube.mask.setter
     def mask(self, value):
         # Impose stricter checks than the base NDData mask setter
