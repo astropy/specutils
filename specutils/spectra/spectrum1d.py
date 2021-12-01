@@ -10,7 +10,6 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-from ..manipulation import extract_region
 from astropy.coordinates import SpectralCoord
 from ndcube import NDCube
 
@@ -443,7 +442,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
-    def collapse(self, method, axis=None, physical_type=None, spectral_region=None):
+    def collapse(self, method, axis=None, physical_type=None):
         """
         Collapse the flux array given a method. Will collapse either to a single
         value (default), over a specified numerical axis or axes if specified, or
@@ -466,9 +465,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             The axis or axes over which to collapse the flux array.
         physical_type : str, optional
             Either 'spectral' or 'spatial'.
-        spectral_region : :class:`~specutils.SpectralRegion`
-            Limits the operation to only collapse the flux within the specified
-            spectral region.
 
         Returns
         -------
@@ -490,13 +486,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             if physical_type is not None:
                 raise ValueError("physical_type must be 'spatial' or 'spectral'")
 
-        if spectral_region is not None:
-            spec_to_collapse = extract_region(self, spectral_region,
-                                              return_single_spectrum=True)
-        else:
-            spec_to_collapse = self
-
-        collapsed_flux = collapse_func[method](spec_to_collapse.flux, axis=axis)
+        collapsed_flux = collapse_func[method](self.flux, axis=axis)
 
         # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
         if axis in (-1, None, len(self.flux.shape)-1):
