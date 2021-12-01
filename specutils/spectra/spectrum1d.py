@@ -446,7 +446,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         """
         Collapse the flux array given a method. Will collapse either to a single
         value (default), over a specified numerical axis or axes if specified, or
-        over the spectral or non-spectral axes if `physical_type` is specified.
+        over the spectral or non-spectral axes if ``physical_type`` is specified.
 
         If the collapse leaves the spectral axis unchanged, a `~specutils.Spectrum1D`
         will be returned. Otherwise an `~astropy.units.Quantity` array will be
