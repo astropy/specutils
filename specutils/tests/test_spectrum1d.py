@@ -459,3 +459,36 @@ def test_equivalencies():
     assert u.micron.is_equivalent(u.eV) is False
     assert u.Hz.is_equivalent(u.cm**-1) is False
     assert u.Hz.is_equivalent(u.eV) is False
+
+
+def test_collapse_flux():
+    flux = [[2,4,6], [0, 8, 12]] * u.Jy
+    sa = [100,200,300]*u.um
+    mask = [[False, True, False], [True, False, False]]
+    spec = Spectrum1D(flux, sa, mask=mask)
+
+    assert spec.mean() == 7 * u.Jy
+    assert spec.max() == 12 * u.Jy
+    assert spec.min() == 2 * u.Jy
+    assert spec.sum() == 28 * u.Jy
+    assert spec.median() == 7 * u.Jy
+
+    sum_spec = spec.sum(axis = 0)
+    assert isinstance(sum_spec, Spectrum1D)
+    assert np.all(sum_spec.flux == [2, 8, 18] * u.Jy)
+
+    mean_spec = spec.mean(axis = 0)
+    assert isinstance(mean_spec, Spectrum1D)
+    assert np.all(mean_spec.flux == [2, 8, 9] * u.Jy)
+
+    max_spec = spec.max(axis = 0)
+    assert isinstance(max_spec, Spectrum1D)
+    assert np.all(max_spec.flux == [2, 8, 12] * u.Jy)
+
+    min_spec = spec.min(axis = 0)
+    assert isinstance(min_spec, Spectrum1D)
+    assert np.all(min_spec.flux == [2, 8, 6] * u.Jy)
+
+    median_spec = spec.mean(axis = 0)
+    assert isinstance(median_spec, Spectrum1D)
+    assert np.all(median_spec.flux == [2, 8, 9] * u.Jy)
