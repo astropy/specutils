@@ -486,7 +486,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             if physical_type is not None:
                 raise ValueError("physical_type must be 'spatial' or 'spectral'")
 
-        collapsed_flux = collapse_func[method](self.flux, axis=axis)
+        # Set masked locations to NaN for the calculation, since the `where` argument
+        # does not seem to work consistently in the numpy functions.
+        flux_to_collapse = self.flux.copy()
+        flux_to_collapse[np.where(self.mask != 0)] = np.nan
+
+        collapsed_flux = collapse_func[method](flux_to_collapse, axis=axis)
 
         # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
         if axis in (-1, None, len(self.flux.shape)-1):
