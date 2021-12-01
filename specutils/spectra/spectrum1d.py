@@ -442,7 +442,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
-    def collapse(method, axis=None, physical_type=None, spectral_region=None):
+    def collapse(self, method, axis=None, physical_type=None, spectral_region=None):
         """
         Collapse the flux array given a method. Will collapse either to a single
         value (default), over a given axis if specified, or over the spectral or
@@ -464,9 +464,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         Returns
         -------
-        :class:`~specutils.Spectrum1D`
+        :class:`~specutils.Spectrum1D` or :class:`~astropy.units.Quantity`
 
         """
+        collapse_func = {"mean": np.nanmean, "max": np.nanmax, "min": np.nanmin,
+                         "median": np.nanmedian, "sum": np.nansum}
+
         if physical_type is not None and axis is not None:
             raise ValueError("Cannot set both axis and physical_type inputs")
 
@@ -476,8 +479,38 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             # generate tuple if needed for multiple spatial axes
             axis = tuple([x for x in range(len(self.flux.shape) - 1)])
         else:
-            raise ValueError("physical_type must be 'spatial' or 'spectral'")
+            if physical_type is not None:
+                raise ValueError("physical_type must be 'spatial' or 'spectral'")
 
+        if spectral_region is not None:
+            spec_to_collapse = extract_spectral_region(spectral_region)
+        else:
+            spec_to_collapse = self
+
+        collapsed_flux = collapse_func[method](spec_to_collapse.flux, axis=axis)
+
+        # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
+        if axis in (-1, None, len(self.flux.shape)-1):
+            return collapsed_flux
+        elif isinstance(axis, tuple) and -1 in axis:
+            return collapsed_flux
+        else:
+            return Spectrum1D(collapsed_flux, wcs=self.wcs)
+
+    def mean(self, **kwargs):
+        return self.collapse("mean", **kwargs)
+
+    def max(self, **kwargs):
+        return self.collapse("max", **kwargs)
+
+    def min(self, **kwargs):
+        return self.collapse("min", **kwargs)
+
+    def median(self, **kwargs):
+        return self.collapse("median", **kwargs)
+
+    def sum(self, **kwargs):
+        return self.collapse("sum", **kwargs)
 
 
     @NDCube.mask.setter
