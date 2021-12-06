@@ -442,7 +442,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
-    def collapse(self, method, axis=None, physical_type=None):
+    def collapse(self, method, axis=None):
         """
         Collapse the flux array given a method. Will collapse either to a single
         value (default), over a specified numerical axis or axes if specified, or
@@ -458,40 +458,43 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         Parameters
         ----------
 
-        method : str
-            The method by which the flux will be collapsed. Options are 'mean',
-            'min', 'max', 'sum', and 'median'.
-        axis : int, tuple, optional
-            The axis or axes over which to collapse the flux array.
-        physical_type : str, optional
-            Either 'spectral' or 'spatial'.
+        method : str, function
+            The method by which the flux will be collapsed. String options are
+            'mean', 'min', 'max', 'sum', and 'median'. Also accepts a function
+            as input, which must take an `astropy.units.Quantity` array as input
+            and accept an 'axis' argument.
+        axis : int, tuple, str, optional
+            The axis or axes over which to collapse the flux array. May also be
+            a string, either 'spectral' to collapse over the spectral axis, or
+            'spatial' to collapse over all other axes.
 
         Returns
         -------
         :class:`~specutils.Spectrum1D` or :class:`~astropy.units.Quantity`
 
         """
-        collapse_func = {"mean": np.nanmean, "max": np.nanmax, "min": np.nanmin,
+        collapse_funcs = {"mean": np.nanmean, "max": np.nanmax, "min": np.nanmin,
                          "median": np.nanmedian, "sum": np.nansum}
 
-        if physical_type is not None and axis is not None:
-            raise ValueError("Cannot set both axis and physical_type inputs")
-
-        if physical_type == 'spectral':
-            axis = -1
-        elif physical_type == 'spatial':
-            # generate tuple if needed for multiple spatial axes
-            axis = tuple([x for x in range(len(self.flux.shape) - 1)])
-        else:
-            if physical_type is not None:
-                raise ValueError("physical_type must be 'spatial' or 'spectral'")
+        if isinstance(axis, str):
+            if axis == 'spectral':
+                axis = -1
+            elif axis == 'spatial':
+                # generate tuple if needed for multiple spatial axes
+                axis = tuple([x for x in range(len(self.flux.shape) - 1)])
+            else:
+                raise ValueError("String axis input must be 'spatial' or 'spectral'")
 
         # Set masked locations to NaN for the calculation, since the `where` argument
         # does not seem to work consistently in the numpy functions.
         flux_to_collapse = self.flux.copy()
         flux_to_collapse[np.where(self.mask != 0)] = np.nan
 
-        collapsed_flux = collapse_func[method](flux_to_collapse, axis=axis)
+        # Leave open the possibility of the user providing their own method
+        if callable(method):
+            collapsed_flux = method(flux_to_collapse, axis=axis)
+        else:
+            collapsed_flux = collapse_funcs[method](flux_to_collapse, axis=axis)
 
         # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
         if axis in (-1, None, len(self.flux.shape)-1):
