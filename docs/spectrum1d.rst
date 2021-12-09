@@ -255,7 +255,7 @@ any ``uncertainty`` attached to the spectrum.
 .. code-block:: python
 
     >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
-    >>> spec.mean()
+    >>> spec.mean() # doctest: +IGNORE_OUTPUT
     <Quantity 0.4572145 Jy>
 
 The 'axis' argument of the collapse methods may either be an integer axis, or a
@@ -264,7 +264,7 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
 
 .. code-block:: python
 
-    >>> spec.mean(axis='spatial')
+    >>> spec.mean(axis='spatial') # doctest: +IGNORE_OUTPUT
     <Spectrum1D(flux=<Quantity [0.39985669, ... 0.38041483] Jy>, 
                 spectral_axis=<SpectralAxis ... [5000., ... 5009.]>
 
@@ -278,7 +278,7 @@ to the ``method`` argument.
 
 .. code-block:: python
 
-    >>> spec.collapse(method=np.nanmean, axis=1)
+    >>> spec.collapse(method=np.nanmean, axis=1) # doctest: +IGNORE_OUTPUT
     <Quantity [0.57646909, 0.37054038, 0.28779586, 0.58485113, 0.46641606] Jy>
 
 Reference/API
