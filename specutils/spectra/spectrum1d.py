@@ -442,6 +442,84 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         reg = SpectralRegion(start, stop)
         return extract_region(self, reg)
 
+    def collapse(self, method, axis=None):
+        """
+        Collapse the flux array given a method. Will collapse either to a single
+        value (default), over a specified numerical axis or axes if specified, or
+        over the spectral or non-spectral axes if ``physical_type`` is specified.
+
+        If the collapse leaves the spectral axis unchanged, a `~specutils.Spectrum1D`
+        will be returned. Otherwise an `~astropy.units.Quantity` array will be
+        returned.
+
+        Note that these calculations are not currently uncertainty-aware, but do
+        respect masks.
+
+        Parameters
+        ----------
+
+        method : str, function
+            The method by which the flux will be collapsed. String options are
+            'mean', 'min', 'max', 'sum', and 'median'. Also accepts a function
+            as input, which must take an `astropy.units.Quantity` array as input
+            and accept an 'axis' argument.
+        axis : int, tuple, str, optional
+            The axis or axes over which to collapse the flux array. May also be
+            a string, either 'spectral' to collapse over the spectral axis, or
+            'spatial' to collapse over all other axes.
+
+        Returns
+        -------
+        :class:`~specutils.Spectrum1D` or :class:`~astropy.units.Quantity`
+
+        """
+        collapse_funcs = {"mean": np.nanmean, "max": np.nanmax, "min": np.nanmin,
+                         "median": np.nanmedian, "sum": np.nansum}
+
+        if isinstance(axis, str):
+            if axis == 'spectral':
+                axis = -1
+            elif axis == 'spatial':
+                # generate tuple if needed for multiple spatial axes
+                axis = tuple([x for x in range(len(self.flux.shape) - 1)])
+            else:
+                raise ValueError("String axis input must be 'spatial' or 'spectral'")
+
+        # Set masked locations to NaN for the calculation, since the `where` argument
+        # does not seem to work consistently in the numpy functions.
+        flux_to_collapse = self.flux.copy()
+        flux_to_collapse[np.where(self.mask != 0)] = np.nan
+
+        # Leave open the possibility of the user providing their own method
+        if callable(method):
+            collapsed_flux = method(flux_to_collapse, axis=axis)
+        else:
+            collapsed_flux = collapse_funcs[method](flux_to_collapse, axis=axis)
+
+        # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
+        if axis in (-1, None, len(self.flux.shape)-1):
+            return collapsed_flux
+        elif isinstance(axis, tuple) and -1 in axis:
+            return collapsed_flux
+        else:
+            return Spectrum1D(collapsed_flux, wcs=self.wcs)
+
+    def mean(self, **kwargs):
+        return self.collapse("mean", **kwargs)
+
+    def max(self, **kwargs):
+        return self.collapse("max", **kwargs)
+
+    def min(self, **kwargs):
+        return self.collapse("min", **kwargs)
+
+    def median(self, **kwargs):
+        return self.collapse("median", **kwargs)
+
+    def sum(self, **kwargs):
+        return self.collapse("sum", **kwargs)
+
+
     @NDCube.mask.setter
     def mask(self, value):
         # Impose stricter checks than the base NDData mask setter
