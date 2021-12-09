@@ -254,8 +254,7 @@ any ``uncertainty`` attached to the spectrum.
 
 .. code-block:: python
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, 
-    >>>                   flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
     >>> spec.mean()
     <Quantity 0.4572145 Jy>
 
