@@ -488,7 +488,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # Set masked locations to NaN for the calculation, since the `where` argument
         # does not seem to work consistently in the numpy functions.
         flux_to_collapse = self.flux.copy()
-        flux_to_collapse[np.where(self.mask != 0)] = np.nan
+        if self.mask is not None:
+            flux_to_collapse[np.where(self.mask != 0)] = np.nan
 
         # Leave open the possibility of the user providing their own method
         if callable(method):

@@ -242,6 +242,44 @@ value will apply to the lower bound input.
     >>> upper = [SkyCoord(ra=201.08, dec=27.52, unit=u.deg), SpectralCoord(3100, unit=u.AA)]
     >>> cropped_spec = spec.crop(lower, upper) #doctest:+SKIP
 
+Collapsing
+----------
+
+`~specutils.Spectrum1D` has built-in convenience methods for collapsing the 
+flux array of the spectrum via various statistics. The available statistics are
+mean, median, sum, max, and min, and may be called either on a specific axis 
+(or axes) or over the entire flux array. The collapse methods currently respect
+the ``mask`` attribute of the `~specutils.Spectrum1D`, but do not propagate
+any ``uncertainty`` attached to the spectrum.
+
+.. code-block:: python
+
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec.mean() # doctest: +IGNORE_OUTPUT
+    <Quantity 0.4572145 Jy>
+
+The 'axis' argument of the collapse methods may either be an integer axis, or a
+string specifying either 'spectral', which will collapse along only the 
+spectral axis, or 'spatial', which will collapse along all non-spectral axes.
+
+.. code-block:: python
+
+    >>> spec.mean(axis='spatial') # doctest: +IGNORE_OUTPUT
+    <Spectrum1D(flux=<Quantity [0.39985669, ... 0.38041483] Jy>, 
+                spectral_axis=<SpectralAxis ... [5000., ... 5009.]>
+
+Note that in this case, the result of the collapse operation is a 
+`~specutils.Spectrum1D` rather than an `astropy.units.Quantity`, because the 
+collapse operation left the spectral axis intact. 
+
+It is also possible to supply your own function for the collapse operation by
+calling `~specutils.Spectrum1D.collapse()` and providing a callable function
+to the ``method`` argument.
+
+.. code-block:: python
+
+    >>> spec.collapse(method=np.nanmean, axis=1) # doctest: +IGNORE_OUTPUT
+    <Quantity [0.57646909, 0.37054038, 0.28779586, 0.58485113, 0.46641606] Jy>
 
 Reference/API
 -------------
