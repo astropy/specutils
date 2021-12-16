@@ -10,7 +10,24 @@ from ..spectra import Spectrum1D, SpectralRegion
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
 
-def _to_edge_pixel(subregion, spectrum):
+def _edge_value_to_pixel(edge_value, spectral_axis, order, side):
+    if order == "ascending":
+        if side == "right":
+            if edge_value > spectral_axis[-1]:
+                return len(spectral_axis)
+        elif side == "left":
+            if edge_value <= spectral_axis[0]:
+                return 0
+
+    elif order == "descending":
+        if side == "right":
+            if edge_value < spectral_axis[-1]:
+                return len(spectral_axis)
+        elif side == "left":
+            if edge_value > spectral_axis[0]:
+                return 0
+
+def _to_edge_pixels(subregion, spectrum):
     """
     Calculate and return the left and right indices defined
     by the lower and upper bounds and based on the input
@@ -29,25 +46,38 @@ def _to_edge_pixel(subregion, spectrum):
 
     """
     # TODO: spectral regions cannot handle strictly ascending spectral axis
-    #  values. Instead, convert to length space if axis given in a desceninding
+    #  values. Instead, convert to length space if axis given in a descending
     #  unit space (e.g. frequency). We should find a more elegant solution.
     spectral_axis = spectrum.spectral_axis
+    if spectral_axis[-1] > spectral_axis[0]:
+        order = "ascending"
+        left_func = min
+        right_func = max
+    else:
+        order = "descendng"
+        left_func = max
+        right_func = min
 
+    '''
     if spectrum.spectral_axis.unit.physical_type != 'length' and \
             spectrum.spectral_axis.unit.is_equivalent(
                 u.AA, equivalencies=u.spectral()):
         spectral_axis = spectrum.spectral_axis.to(
             u.AA, equivalencies=u.spectral())
+    '''
 
     #
     # Left/lower side of sub region
     #
-    if subregion[0].unit.is_equivalent(u.pix):
+    if subregion[0].unit.is_equivalent(u.pix) and not spectral_axis.unit.is_equivalent(u.pix):
         left_index = floor(subregion[0].value)
     else:
         # Convert lower value to spectrum spectral_axis units
-        left_reg_in_spec_unit = subregion[0].to(spectral_axis.unit,
+        left_reg_in_spec_unit = left_func(subregion).to(spectral_axis.unit,
                                                 u.spectral())
+
+        left_index = _edge_value_to_pixel(left_reg_in_spec_unit, spectral_axis,
+                                          order, "left")
 
         if left_reg_in_spec_unit < spectral_axis[0]:
             left_index = 0
@@ -73,8 +103,11 @@ def _to_edge_pixel(subregion, spectrum):
         right_index = ceil(subregion[1].value)
     else:
         # Convert upper value to spectrum spectral_axis units
-        right_reg_in_spec_unit = subregion[1].to(spectral_axis.unit,
+        right_reg_in_spec_unit = right_func(subregion).to(spectral_axis.unit,
                                                  u.spectral())
+
+        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectral_axis,
+                                           order, "left")
 
         if right_reg_in_spec_unit > spectral_axis[-1]:
             right_index = len(spectrum.spectral_axis)
@@ -144,7 +177,8 @@ def extract_region(spectrum, region, return_single_spectrum=False):
     """
     extracted_spectrum = []
     for subregion in region._subregions:
-        left_index, right_index = _to_edge_pixel(subregion, spectrum)
+        left_index, right_index = _to_edge_pixels(subregion, spectrum)
+        print(left_index, right_index)
 
         # If both indices are out of bounds then return an empty spectrum
         if left_index is None and right_index is None:
@@ -276,7 +310,7 @@ def extract_bounding_spectral_region(spectrum, region):
     max_right = -sys.maxsize - 1
 
     # Look for indices that bound the entire set of sub-regions.
-    index_list = [_to_edge_pixel(sr, spectrum) for sr in region._subregions]
+    index_list = [_to_edge_pixels(sr, spectrum) for sr in region._subregions]
 
     for left_index, right_index in index_list:
         if left_index is not None:
