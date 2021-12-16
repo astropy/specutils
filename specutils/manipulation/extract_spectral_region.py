@@ -10,13 +10,14 @@ from ..spectra import Spectrum1D, SpectralRegion
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
 
-def _edge_value_to_pixel(edge_value, spectral_axis, order, side):
+def _edge_value_to_pixel(edge_value, spectrum, order, side):
+    spectral_axis = spectrum.spectral_axis
     if order == "ascending":
         if side == "right":
             if edge_value > spectral_axis[-1]:
                 return len(spectral_axis)
         elif side == "left":
-            if edge_value <= spectral_axis[0]:
+            if edge_value < spectral_axis[0]:
                 return 0
 
     elif order == "descending":
@@ -27,7 +28,22 @@ def _edge_value_to_pixel(edge_value, spectral_axis, order, side):
             if edge_value > spectral_axis[0]:
                 return 0
 
-def _to_edge_pixels(subregion, spectrum):
+    try:
+        if hasattr(spectrum.wcs, "spectral"):
+            index = spectrum.wcs.spectral.world_to_pixel(edge_value)
+        else:
+            index = spectrum.wcs.world_to_pixel(edge_value)
+
+        if side == "left":
+            index = int(np.ceil(index))
+        elif side == "right":
+            index = int(np.floor(index)) + 1
+
+    except Exception as e:
+        raise ValueError(f"Bound {edge_value}, could not be converted to pixel index"
+                         "using spectrum's WCS {spectrum.wcs}. Exception: {e}".format)
+
+def _subregion_to_edge_pixels(subregion, spectrum):
     """
     Calculate and return the left and right indices defined
     by the lower and upper bounds and based on the input
@@ -58,73 +74,24 @@ def _to_edge_pixels(subregion, spectrum):
         left_func = max
         right_func = min
 
-    '''
-    if spectrum.spectral_axis.unit.physical_type != 'length' and \
-            spectrum.spectral_axis.unit.is_equivalent(
-                u.AA, equivalencies=u.spectral()):
-        spectral_axis = spectrum.spectral_axis.to(
-            u.AA, equivalencies=u.spectral())
-    '''
-
-    #
     # Left/lower side of sub region
-    #
     if subregion[0].unit.is_equivalent(u.pix) and not spectral_axis.unit.is_equivalent(u.pix):
         left_index = floor(subregion[0].value)
     else:
         # Convert lower value to spectrum spectral_axis units
         left_reg_in_spec_unit = left_func(subregion).to(spectral_axis.unit,
-                                                u.spectral())
+                                                        u.spectral())
+        left_index = _edge_value_to_pixel(left_reg_in_spec_unit, spectrum, order, "left")
 
-        left_index = _edge_value_to_pixel(left_reg_in_spec_unit, spectral_axis,
-                                          order, "left")
-
-        if left_reg_in_spec_unit < spectral_axis[0]:
-            left_index = 0
-        elif left_reg_in_spec_unit > spectral_axis[-1]:
-            left_index = len(spectrum.spectral_axis)
-        else:
-            try:
-                if hasattr(spectrum.wcs, "spectral"):
-                    left_index = spectrum.wcs.spectral.world_to_pixel(left_reg_in_spec_unit)
-                else:
-                    left_index = spectrum.wcs.world_to_pixel(left_reg_in_spec_unit)
-                left_index = int(np.ceil(left_index))
-            except Exception as e:
-                raise ValueError(
-                    "Lower value, {}, could not convert using spectrum's WCS "
-                    "{}. Exception: {}".format(
-                        left_reg_in_spec_unit, spectrum.wcs, e))
-
-    #
     # Right/upper side of sub region
-    #
-    if subregion[1].unit.is_equivalent(u.pix):
+    if subregion[1].unit.is_equivalent(u.pix) and not spectral_axis.unit.is_equivalent(u.pix):
         right_index = ceil(subregion[1].value)
     else:
         # Convert upper value to spectrum spectral_axis units
         right_reg_in_spec_unit = right_func(subregion).to(spectral_axis.unit,
                                                  u.spectral())
 
-        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectral_axis,
-                                           order, "left")
-
-        if right_reg_in_spec_unit > spectral_axis[-1]:
-            right_index = len(spectrum.spectral_axis)
-        elif right_reg_in_spec_unit < spectral_axis[0]:
-            right_index = 0
-        else:
-            try:
-                if hasattr(spectrum.wcs, "spectral"):
-                    right_index = spectrum.wcs.spectral.world_to_pixel(right_reg_in_spec_unit)
-                else:
-                    right_index = spectrum.wcs.world_to_pixel(right_reg_in_spec_unit)
-                right_index = int(np.floor(right_index)) + 1
-            except Exception as e:
-                raise ValueError(
-                    "Upper value, {}, could not convert using spectrum's WCS "
-                    "{}. Exception: {}".format(
-                        right_reg_in_spec_unit, spectrum.wcs, e))
+        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order, "left")
 
     return left_index, right_index
 
@@ -177,7 +144,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
     """
     extracted_spectrum = []
     for subregion in region._subregions:
-        left_index, right_index = _to_edge_pixels(subregion, spectrum)
+        left_index, right_index = _subregion_to_edge_pixels(subregion, spectrum)
         print(left_index, right_index)
 
         # If both indices are out of bounds then return an empty spectrum
@@ -310,7 +277,7 @@ def extract_bounding_spectral_region(spectrum, region):
     max_right = -sys.maxsize - 1
 
     # Look for indices that bound the entire set of sub-regions.
-    index_list = [_to_edge_pixels(sr, spectrum) for sr in region._subregions]
+    index_list = [_subregion_to_edge_pixels(sr, spectrum) for sr in region._subregions]
 
     for left_index, right_index in index_list:
         if left_index is not None:
