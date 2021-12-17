@@ -189,13 +189,6 @@ def gwcs_from_array(array):
     """
     orig_array = u.Quantity(array)
 
-    # TODO: Input arrays must be strictly ascending. This is not always the
-    #  case for a spectral axis (e.g. when in frequency space). Thus, we
-    #  convert to wavelength to create the wcs.
-    if orig_array.unit.physical_type != 'length' and \
-            orig_array.unit.is_equivalent(u.AA, equivalencies=u.spectral()):
-        array = orig_array.to(u.AA, equivalencies=u.spectral())
-
     coord_frame = cf.CoordinateFrame(naxes=1,
                                      axes_type=('SPECTRAL',),
                                      axes_order=(0,))
@@ -209,8 +202,15 @@ def gwcs_from_array(array):
 
     forward_transform = SpectralTabular1D(np.arange(len(array)),
                                           lookup_table=array)
-    forward_transform.inverse = SpectralTabular1D(
-        array, lookup_table=np.arange(len(array)))
+    # If our spectral axis is in descending order, we have to flip the lookup
+    # table to be ascending in order for world_to_pixel to work.
+    if len(array) == 0 or array[-1] > array[0]:
+        forward_transform.inverse = SpectralTabular1D(
+            array, lookup_table=np.arange(len(array)))
+    else:
+        forward_transform.inverse = SpectralTabular1D(
+                array[::-1], lookup_table=np.arange(len(array))[::-1])
+
 
     class SpectralGWCS(GWCS):
         def pixel_to_world(self, *args, **kwargs):

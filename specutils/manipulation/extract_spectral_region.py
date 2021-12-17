@@ -39,9 +39,11 @@ def _edge_value_to_pixel(edge_value, spectrum, order, side):
         elif side == "right":
             index = int(np.floor(index)) + 1
 
+        return index
+
     except Exception as e:
         raise ValueError(f"Bound {edge_value}, could not be converted to pixel index"
-                         "using spectrum's WCS {spectrum.wcs}. Exception: {e}".format)
+                         f" using spectrum's WCS. Exception: {e}")
 
 def _subregion_to_edge_pixels(subregion, spectrum):
     """
@@ -70,7 +72,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         left_func = min
         right_func = max
     else:
-        order = "descendng"
+        order = "descending"
         left_func = max
         right_func = min
 
@@ -145,7 +147,6 @@ def extract_region(spectrum, region, return_single_spectrum=False):
     extracted_spectrum = []
     for subregion in region._subregions:
         left_index, right_index = _subregion_to_edge_pixels(subregion, spectrum)
-        print(left_index, right_index)
 
         # If both indices are out of bounds then return an empty spectrum
         if left_index is None and right_index is None:
