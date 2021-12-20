@@ -13,20 +13,16 @@ __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab'
 def _edge_value_to_pixel(edge_value, spectrum, order, side):
     spectral_axis = spectrum.spectral_axis
     if order == "ascending":
-        if side == "right":
-            if edge_value > spectral_axis[-1]:
-                return len(spectral_axis)
-        elif side == "left":
-            if edge_value < spectral_axis[0]:
-                return 0
+        if edge_value > spectral_axis[-1]:
+            return len(spectral_axis)
+        if edge_value < spectral_axis[0]:
+            return 0
 
     elif order == "descending":
-        if side == "right":
-            if edge_value < spectral_axis[-1]:
-                return len(spectral_axis)
-        elif side == "left":
-            if edge_value > spectral_axis[0]:
-                return 0
+        if edge_value < spectral_axis[-1]:
+            return len(spectral_axis)
+        if edge_value > spectral_axis[0]:
+            return 0
 
     try:
         if hasattr(spectrum.wcs, "spectral"):
@@ -149,23 +145,11 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         left_index, right_index = _subregion_to_edge_pixels(subregion, spectrum)
 
         # If both indices are out of bounds then return an empty spectrum
-        if left_index is None and right_index is None:
+        if left_index == right_index:
             empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit,
                                         flux=[]*spectrum.flux.unit)
             extracted_spectrum.append(empty_spectrum)
         else:
-
-            # If only one index is out of bounds then set it to
-            # the lower or upper extent
-            if left_index is None:
-                left_index = 0
-
-            if right_index is None:
-                right_index = len(spectrum.spectral_axis)
-
-            if left_index > right_index:
-                left_index, right_index = right_index, left_index
-
             extracted_spectrum.append(spectrum[..., left_index:right_index])
 
     # If there is only one subregion in the region then we will
