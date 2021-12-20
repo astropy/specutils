@@ -17,7 +17,7 @@ from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
 from ..manipulation import snr_threshold, FluxConservingResampler
-from ..tests.spectral_examples import simulated_spectra
+from ..tests.spectral_examples import simulated_spectra  # noqa
 
 
 def test_line_flux():
@@ -55,6 +55,7 @@ def test_line_flux_uncertainty():
     assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544415, u.Jy * u.AA))
 
 
+@pytest.mark.filterwarnings('ignore:invalid value encountered in true_divide:RuntimeWarning')
 def test_line_flux_masked():
 
     np.random.seed(42)
@@ -65,7 +66,7 @@ def test_line_flux_masked():
 
     g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
     flux = g(wavelengths) + 1000 * u.mJy
-    noise = 400 * np.random.random(flux.shape)* u.mJy
+    noise = 400 * np.random.random(flux.shape) * u.mJy
     flux += noise
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
@@ -87,7 +88,7 @@ def test_line_flux_masked():
     assert quantity_allclose(result.value, 720.61116, atol=0.001)
 
 
-def test_line_flux_uncertainty():
+def test_line_flux_uncertainty_2():
     np.random.seed(42)
 
     spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
@@ -122,7 +123,7 @@ def test_equivalent_width():
     assert quantity_allclose(result, expected, atol=0.0025*u.GHz)
 
 
-def test_equivalent_width_masked ():
+def test_equivalent_width_masked():
 
     np.random.seed(42)
 
@@ -132,7 +133,7 @@ def test_equivalent_width_masked ():
 
     g = models.Gaussian1D(amplitude=2000*u.mJy, mean=0.56*u.um, stddev=0.01*u.um)
     flux = g(wavelengths) + 1000 * u.mJy
-    noise = 400 * np.random.random(flux.shape)* u.mJy
+    noise = 400 * np.random.random(flux.shape) * u.mJy
     flux += noise
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
@@ -313,8 +314,8 @@ def test_snr_no_uncertainty(simulated_spectra):
 
     spectrum = simulated_spectra.s1_um_mJy_e1
 
-    with pytest.raises(Exception) as e_info:
-        _ = snr(spectrum)
+    with pytest.raises(Exception):
+        snr(spectrum)
 
 
 def test_snr_multiple_flux(simulated_spectra):
@@ -363,8 +364,8 @@ def test_snr_single_region(simulated_spectra):
     flux = spectrum.flux
 
     # +1 because we want to include it in the calculation
-    l = np.nonzero(wavelengths>region.lower)[0][0]
-    r = np.nonzero(wavelengths<region.upper)[0][-1]+1
+    l = np.nonzero(wavelengths > region.lower)[0][0]
+    r = np.nonzero(wavelengths < region.upper)[0][-1]+1
 
     spec_snr_expected = np.mean(flux[l:r] / (uncertainty.array[l:r]*uncertainty.unit))
 
@@ -696,7 +697,7 @@ def test_gaussian_fwhm_masked():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
 
 
-@pytest.mark.parametrize('mean', range(3,8))
+@pytest.mark.parametrize('mean', range(3, 8))
 def test_gaussian_fwhm_uncentered(mean):
 
     np.random.seed(42)
@@ -755,19 +756,19 @@ def test_fwhm_masked():
 
     # Highest point at the last point
     wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = wavelengths.value*u.Jy # highest point last.
+    flux = wavelengths.value * u.Jy  # highest point last.
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
-    assert result == 5*u.um
+    assert result == 5 * u.um
 
     # Flat spectrum
     wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
+    flux = np.ones(wavelengths.shape) * u.Jy  # highest point last.
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
-    assert result == 9*u.um
+    assert result == 9 * u.um
 
 
 def test_fwhm():
@@ -810,7 +811,7 @@ def test_fwhm():
 
     # Highest point at the last point
     wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = wavelengths.value*u.Jy # highest point last.
+    flux = wavelengths.value * u.Jy  # highest point last.
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
@@ -818,7 +819,7 @@ def test_fwhm():
 
     # Flat spectrum
     wavelengths = np.linspace(1, 10, 100) * u.um
-    flux = np.ones(wavelengths.shape)*u.Jy # highest point last.
+    flux = np.ones(wavelengths.shape) * u.Jy  # highest point last.
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
@@ -918,7 +919,7 @@ def test_is_continuum_below_threshold():
     wavelengths = [300, 500, 1000] * u.nm
     data = [0.001, -0.003, 0.003] * u.Jy
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
-    assert True == is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy)
+    assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
 
 #    # No mask, no uncertainty, threshold is float
 #    wavelengths = [300, 500, 1000] * u.nm
@@ -933,7 +934,7 @@ def test_is_continuum_below_threshold():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty)
 
-    assert True == is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy)
+    assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
 
     # With mask, with uncertainty
     wavelengths = [300, 500, 1000] * u.nm
@@ -943,7 +944,7 @@ def test_is_continuum_below_threshold():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty, mask=mask)
 
-    assert True == is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy)
+    assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
 
     # With mask, with uncertainty -- should throw an exception
     wavelengths = [300, 500, 1000] * u.nm
@@ -953,10 +954,10 @@ def test_is_continuum_below_threshold():
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty, mask=mask)
 
-    print('spectrum has flux {}'.format(spectrum.flux))
-    with pytest.warns(AstropyUserWarning) as e_info:
+    with pytest.warns(AstropyUserWarning,
+                      match=r'.*If you want to suppress this warning.*') as e_info:
         find_lines_threshold(spectrum, noise_factor=1)
-        assert len(e_info)==1 and 'if you want to suppress this warning' in e_info[0].message.args[0].lower()
+    assert len(e_info) == 1
 
 
 def test_moment():
@@ -971,7 +972,7 @@ def test_moment():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
     moment_0 = moment(spectrum, order=0)
-    assert moment_0.unit.is_equivalent(u.Jy )
+    assert moment_0.unit.is_equivalent(u.Jy)
     assert quantity_allclose(moment_0, 252.96*u.Jy, atol=0.01*u.Jy)
 
     moment_1 = moment(spectrum, order=1)
@@ -996,16 +997,16 @@ def test_moment_cube():
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
 
-    # use identical arrays in each spaxel. The purpose here is not to
+    # do not use identical arrays in each spaxel. The purpose here is not to
     # check accuracy (already tested elsewhere), but dimensionality.
 
-    flux_multid = np.broadcast_to(flux, [10,10,flux.shape[0]]) * u.Jy
+    flux_multid = np.broadcast_to(flux, [9, 10, flux.shape[0]]) * u.Jy
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
 
     moment_1 = moment(spectrum, order=1)
 
-    assert moment_1.shape == (10,10)
+    assert moment_1.shape == (9, 10)
     assert moment_1.unit.is_equivalent(u.GHz)
     assert quantity_allclose(moment_1, 50.50*u.GHz, atol=0.01*u.GHz)
 
@@ -1020,26 +1021,16 @@ def test_moment_cube():
     # spatial 1st order - returns the dispersion
     moment_1 = moment(spectrum, order=1, axis=1)
 
-    assert moment_1.shape == (10,10000)
+    assert moment_1.shape == (9, 10000)
     assert moment_1.unit.is_equivalent(u.GHz)
     assert quantity_allclose(moment_1, frequencies, rtol=1.E-5)
 
     # higher order
     moment_2 = moment(spectrum, order=2)
 
-    assert moment_2.shape == (10,10)
+    assert moment_2.shape == (9, 10)
     assert moment_2.unit.is_equivalent(u.GHz**2)
     assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
-
-    # spatial higher order (what's the meaning of this?)
-    moment_2 = moment(spectrum, order=2, axis=1)
-
-    assert moment_2.shape == (10,10000)
-    assert moment_2.unit.is_equivalent(u.GHz**2)
-    # check assorted values.
-    assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)
 
 
 def test_moment_collection():

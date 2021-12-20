@@ -7,6 +7,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed cube transpose bug in moment analysis for non-square spatial arrays. [#912]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
