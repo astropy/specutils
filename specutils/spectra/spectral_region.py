@@ -186,6 +186,8 @@ class SpectralRegion:
         for x in self._subregions:
             if x[0].unit != bound_unit or x[1].unit != bound_unit:
                 raise ValueError("All SpectralRegion bounds must have the same unit.")
+            if x[0] == x[1]:
+                raise ValueError("Upper and lower bound must be different values.")
 
         return True
 

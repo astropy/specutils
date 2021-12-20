@@ -89,7 +89,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         right_reg_in_spec_unit = right_func(subregion).to(spectral_axis.unit,
                                                  u.spectral())
 
-        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order, "left")
+        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order, "right")
 
     return left_index, right_index
 
