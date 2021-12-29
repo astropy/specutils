@@ -3,20 +3,18 @@
 """
 This module tests SpecUtils io routines
 """
-
 from collections import Counter
-from specutils.io.parsing_utils import generic_spectrum_from_table # or something like that
-from astropy.io import registry
-from astropy.table import Table
-from astropy.utils.exceptions import AstropyUserWarning
-from astropy.tests.helper import catch_warnings
+
 import astropy.units as u
 import numpy as np
 import pytest
-import warnings
+from astropy.io import registry
+from astropy.table import Table
+from astropy.utils.exceptions import AstropyUserWarning
 
 from specutils import Spectrum1D, SpectrumList
-from specutils.io import data_loader, custom_writer
+from specutils.io import data_loader
+from specutils.io.parsing_utils import generic_spectrum_from_table  # or something like that
 from specutils.io.registers import _astropy_has_priorities
 
 
@@ -25,9 +23,9 @@ def test_generic_spectrum_from_table(recwarn):
     Read a simple table with wavelength, flux and uncertainty
     """
     # Create a small data set, first without uncertainties
-    wave = np.arange(1,1.1,0.01)*u.AA
+    wave = np.arange(1, 1.1, 0.01)*u.AA
     flux = np.ones(len(wave))*1.e-14*u.Jy
-    table = Table([wave,flux],names=["wave","flux"])
+    table = Table([wave, flux], names=["wave", "flux"])
 
     # Test that the units and values of the Spectrum1D object match those in the table
     spectrum = generic_spectrum_from_table(table)
@@ -39,7 +37,7 @@ def test_generic_spectrum_from_table(recwarn):
 
     # Add uncertainties and retest
     err = 0.01*flux
-    table = Table([wave,flux,err],names=["wave","flux","err"])
+    table = Table([wave, flux, err], names=["wave", "flux", "err"])
     spectrum = generic_spectrum_from_table(table)
     assert spectrum.spectral_axis.unit == table['wave'].unit
     assert spectrum.flux.unit == table['flux'].unit
@@ -51,7 +49,7 @@ def test_generic_spectrum_from_table(recwarn):
 
     # Test for warning if standard deviation is zero or negative
     err[0] = 0.
-    table = Table([wave,flux,err],names=["wave","flux","err"])
+    table = Table([wave, flux, err], names=["wave", "flux", "err"])
     spectrum = generic_spectrum_from_table(table)
     assert len(recwarn) == 1
     w = recwarn.pop(AstropyUserWarning)
@@ -59,12 +57,12 @@ def test_generic_spectrum_from_table(recwarn):
 
     # Test that exceptions are raised if there are no units
     flux = np.ones(len(wave))*1.e-14
-    table = Table([wave,flux],names=["wave","flux"])
+    table = Table([wave, flux], names=["wave", "flux"])
     with pytest.raises(IOError) as exc:
         spectrum = generic_spectrum_from_table(table)
         assert 'Could not identify column containing the flux' in exc
-    wave = np.arange(1,1.1,0.01)
-    table = Table([wave,flux,err],names=["wave","flux","err"])
+    wave = np.arange(1, 1.1, 0.01)
+    table = Table([wave, flux, err], names=["wave", "flux", "err"])
     with pytest.raises(IOError) as exc:
         spectrum = generic_spectrum_from_table(table)
         assert 'Could not identify column containing the wavelength, frequency or energy' in exc
@@ -179,7 +177,7 @@ def test_loader_uses_priority(tmpdir):
     @data_loader("test_counting_loader1", identifier=identifier, priority=1)
     def counting_loader1(*args, **kwargs):
         counter["test1"] += 1
-        wave = np.arange(1,1.1,0.01)*u.AA
+        wave = np.arange(1, 1.1, 0.01)*u.AA
         return Spectrum1D(
             spectral_axis=wave,
             flux=np.ones(len(wave))*1.e-14*u.Jy,
@@ -188,7 +186,7 @@ def test_loader_uses_priority(tmpdir):
     @data_loader("test_counting_loader2", identifier=identifier, priority=2)
     def counting_loader2(*args, **kwargs):
         counter["test2"] += 1
-        wave = np.arange(1,1.1,0.01)*u.AA
+        wave = np.arange(1, 1.1, 0.01)*u.AA
         return Spectrum1D(
             spectral_axis=wave,
             flux=np.ones(len(wave))*1.e-14*u.Jy,
