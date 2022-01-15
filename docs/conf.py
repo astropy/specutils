@@ -189,6 +189,7 @@ github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_pr
 linkcheck_retry = 5
 linkcheck_ignore = [
     r'https://github\.com/astropy/specutils/(?:issues|pull)/\d+',
+    r'https://www\.sdss\.org/'
 ]
 linkcheck_timeout = 180
 linkcheck_anchors = False
