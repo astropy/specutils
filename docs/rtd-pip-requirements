@@ -1,6 +1,0 @@
-numpy>=1.9
-numpydoc
-scipy
-gwcs
-astropy>=3.0
-matplotlib
