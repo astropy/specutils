@@ -59,9 +59,6 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         Left and right indices defined by the lower and upper bounds.
 
     """
-    # TODO: spectral regions cannot handle strictly ascending spectral axis
-    #  values. Instead, convert to length space if axis given in a descending
-    #  unit space (e.g. frequency). We should find a more elegant solution.
     spectral_axis = spectrum.spectral_axis
     if spectral_axis[-1] > spectral_axis[0]:
         order = "ascending"
