@@ -30,9 +30,13 @@ create it explicitly from arrays or `~astropy.units.Quantity` objects:
     >>> ax.set_ylabel("Flux")  # doctest: +SKIP
 
 .. note::
-    Note that the ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralAxis` object,
+    The ``spectral_axis`` can also be provided as a :class:`~specutils.SpectralAxis` object,
     and in fact will internally convert the spectral_axis to :class:`~specutils.SpectralAxis` if it
     is provided as an array or `~astropy.units.Quantity`.
+
+.. note::
+    The ``spectral_axis`` can be either ascending or descending, but must be monotonic
+    in either case. 
 
 Reading from a File
 -------------------
