@@ -127,6 +127,38 @@ def test_region_empty(simulated_spectra):
         region = SpectralRegion(3*u.um, 3*u.um)
 
 
+def test_region_descending(simulated_spectra):
+    np.random.seed(42)
+
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    region = SpectralRegion(0.8*u.um, 0.6*u.um)
+
+    sub_spectrum = extract_region(spectrum, region)
+
+    sub_spectrum_flux_expected = np.array(FLUX_ARRAY)
+
+    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+
+
+def test_descending_spectral_axis(simulated_spectra):
+    spectrum = simulated_spectra.s1_um_mJy_e1_desc
+
+    sub_spectrum_flux_expected = np.array(FLUX_ARRAY[::-1])
+
+    region = SpectralRegion(0.8*u.um, 0.6*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+
+    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+
+    region = SpectralRegion(0.6*u.um, 0.8*u.um)
+    sub_spectrum = extract_region(spectrum, region)
+
+    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+
+
 def test_region_two_sub(simulated_spectra):
     np.random.seed(42)
 

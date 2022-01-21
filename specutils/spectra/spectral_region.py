@@ -53,9 +53,7 @@ class SpectralRegion:
                             f'positional arguments but {len(args)} were given')
 
         #  Check validity of the input sub regions.
-        if not self._valid():
-            raise ValueError("SpectralRegion 2-tuple lower extent must be "
-                             "less than upper extent.")
+        self._valid()
 
         # The sub-regions are to always be ordered based on the lower bound.
         self._reorder()
@@ -184,14 +182,12 @@ class SpectralRegion:
 
     def _valid(self):
 
-        # Lower bound < Upper bound for all sub regions in length physical type
-        with u.set_enabled_equivalencies(u.spectral()):
-            sub_regions = [(x[0].to('m'), x[1].to('m'))
-                           if x[0].unit.is_equivalent(u.m) else x
-                           for x in self._subregions]
-
-        if any(x[0] >= x[1] for x in sub_regions):
-            raise ValueError('Lower bound must be strictly less than the upper bound')
+        bound_unit = self._subregions[0][0].unit
+        for x in self._subregions:
+            if x[0].unit != bound_unit or x[1].unit != bound_unit:
+                raise ValueError("All SpectralRegion bounds must have the same unit.")
+            if x[0] == x[1]:
+                raise ValueError("Upper and lower bound must be different values.")
 
         return True
 

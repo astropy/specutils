@@ -37,6 +37,9 @@ class SpectraExamples:
 
         5. s1_um_mJy_e1_masked - same as 1, but with a random set of pixels
                                  masked.
+
+        6. s1_um_mJy_e1_desc - same as 1, but with the spectral axis in
+                               descending rather than ascending order.
     """
 
     def __init__(self):
@@ -91,12 +94,15 @@ class SpectraExamples:
         self._s1_AA_nJy_e4 = Spectrum1D(spectral_axis=self.wavelengths_AA * u.AA,
                                         flux=self._flux_e4 * u.nJy)
 
-
         #
         # Create one spectrum like 1 but with a mask
         #
         self._s1_um_mJy_e1_masked = copy(self._s1_um_mJy_e1)  # SHALLOW copy - the data are shared with the above non-masked case
         self._s1_um_mJy_e1_masked.mask = (np.random.randn(*self.base_flux.shape) + 1) > 0
+
+        # Create a spectrum like 1, but with descending spectral axis
+        self._s1_um_mJy_e1_desc = Spectrum1D(spectral_axis=self.wavelengths_um[::-1] * u.um,
+                                             flux=self._flux_e1[::-1] * u.mJy)
 
 
     @property
@@ -135,6 +141,9 @@ class SpectraExamples:
     def s1_um_mJy_e1_masked(self):
         return self._s1_um_mJy_e1_masked
 
+    @property
+    def s1_um_mJy_e1_desc(self):
+        return self._s1_um_mJy_e1_desc
 
 
 @pytest.fixture
