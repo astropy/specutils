@@ -1,14 +1,13 @@
-1.6 (unreleased)
-----------------
+1.6.0 (2022-01-27)
+------------------
 
 New Features
 ^^^^^^^^^^^^
 
-Bug Fixes
-^^^^^^^^^
+- Add collapse methods to Spectrum1D. [#904, #906]
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- SpectralRegion and Spectrum1D now allow descending (in wavelength space) as
+  well as ascending spectral values. [#911]
 
 1.5.0
 -----
