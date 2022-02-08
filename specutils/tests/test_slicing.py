@@ -94,6 +94,7 @@ def test_slicing_multidim():
 
     spec1 = spec[0]
     spec2 = spec[1:3]
+    spec3 = spec[..., 4:7]
 
     assert spec1.flux[0] == spec.flux[0][0]
     assert quantity_allclose(spec1.spectral_axis, spec.spectral_axis)
@@ -104,3 +105,6 @@ def test_slicing_multidim():
 
     assert spec1.mask[0] == spec.mask[0][0]
     assert spec1.mask.shape == (10,)
+
+    assert quantity_allclose(spec3.spectral_axis, spec.spectral_axis[4:7])
+    assert quantity_allclose(spec3.wcs.pixel_to_world([0,1,2]), spec3.spectral_axis[0:3])
