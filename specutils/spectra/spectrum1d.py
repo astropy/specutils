@@ -369,11 +369,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 spectral_axis=self.spectral_axis[spec_item],
                 uncertainty=self.uncertainty[item]
                 if self.uncertainty is not None else None,
-                mask=self.mask[item] if self.mask is not None else None)
+                mask=self.mask[item] if self.mask is not None else None,
+                wcs=None)
 
         if not isinstance(item, slice):
             if isinstance(item, u.Quantity):
-                raise ValueError("Indexing on a single spectral axis values is not"
+                raise ValueError("Indexing on a single spectral axis value is not"
                                  " currently allowed, please use a slice.")
             # Handle tuple slice as input by NDCube crop method
             elif isinstance(item, tuple):
@@ -397,8 +398,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         #  we create a new ``Spectrum1D`` that includes the sliced spectral
         #  axis. This means that a new wcs object will be created with the
         #  appropriate unit translation handling.
-        return tmp_spec._copy(
-            spectral_axis=self.spectral_axis[item])
+        return tmp_spec._copy(spectral_axis=self.spectral_axis[item], wcs=None)
 
     def _copy(self, **kwargs):
         """
