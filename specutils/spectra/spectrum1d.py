@@ -364,13 +364,19 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     # Drop the spectral axis slice and perform only the spatial part
                     return temp_spec[item[:-1]]
 
+            if "original_wcs" not in self.meta:
+                new_meta = deepcopy(self.meta)
+                new_meta["original_wcs"] = deepcopy(self.wcs)
+            else:
+                new_meta = deepcopy(self.meta)
+
             return self._copy(
                 flux=self.flux[item],
                 spectral_axis=self.spectral_axis[spec_item],
                 uncertainty=self.uncertainty[item]
                 if self.uncertainty is not None else None,
                 mask=self.mask[item] if self.mask is not None else None,
-                wcs=None)
+                meta=new_meta, wcs=None)
 
         if not isinstance(item, slice):
             if isinstance(item, u.Quantity):
@@ -398,7 +404,14 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         #  we create a new ``Spectrum1D`` that includes the sliced spectral
         #  axis. This means that a new wcs object will be created with the
         #  appropriate unit translation handling.
-        return tmp_spec._copy(spectral_axis=self.spectral_axis[item], wcs=None)
+        if "original_wcs" not in self.meta:
+            new_meta = deepcopy(self.meta)
+            new_meta["original_wcs"] = deepcopy(self.wcs)
+        else:
+            new_meta = deepcopy(self.meta)
+
+        return tmp_spec._copy(spectral_axis=self.spectral_axis[item], wcs=None,
+                              meta=new_meta)
 
     def _copy(self, **kwargs):
         """
