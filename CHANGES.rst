@@ -12,6 +12,9 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Logger usage is removed. Warnings now issued using Python ``warnings`` module.
+  This enables more granular warning control for downstream packages. [#922]
+
 1.6.0 (2022-01-27)
 ------------------
 

@@ -5,16 +5,14 @@ import inspect
 import os
 import pathlib
 import sys
+import warnings
 from functools import wraps
-import logging
 
 from astropy.io import registry as io_registry
 
 from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
-
-log = logging.getLogger(__name__)
 
 
 def _astropy_has_priorities():
@@ -28,7 +26,7 @@ def _astropy_has_priorities():
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
-                priority=0, force=False):
+                priority=0, force=False, verbose=False):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
     file reading.
@@ -53,6 +51,8 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
     force : bool, optional
         Whether to override any existing function if already present.
         Default is ``False``. Passed down to astropy registry.
+    verbose : bool
+        Print extra info.
 
     """
     def identifier_wrapper(ident):
@@ -61,8 +61,8 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             try:
                 return ident(*args, **kwargs)
             except Exception as e:
-                log.debug("Tried to read this as {} file, but could not.".format(label))
-                log.debug(e, exc_info=True)
+                if verbose:
+                    print(f"Tried to read this as {label} file, but could not: {repr(e)}")
                 return False
         return wrapper
 
@@ -80,17 +80,17 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             # If the identifier is not defined, but the extensions are, create
             # a simple identifier based off file extension.
             if extensions is not None:
-                log.info("'{}' data loader provided for {} without "
-                             "explicit identifier. Creating identifier using "
-                             "list of compatible extensions".format(
-                                 label, dtype.__name__))
+                if verbose:
+                    print(f"'{label}' data loader provided for {dtype.__name__} without "
+                          "explicit identifier. Creating identifier using "
+                          "list of compatible extensions")
                 id_func = lambda *args, **kwargs: any([args[1].endswith(x)
-                                                          for x in extensions])
+                                                       for x in extensions])
             # Otherwise, create a dummy identifier
             else:
-                log.warning("'{}' data loader provided for {} without "
-                             "explicit identifier or list of compatible "
-                             "extensions".format(label, dtype.__name__))
+                warnings.warn(f"'{label}' data loader provided for {dtype.__name__} without "
+                              "explicit identifier or list of compatible "
+                              "extensions")
                 id_func = lambda *args, **kwargs: True
         else:
             id_func = identifier_wrapper(identifier)
@@ -102,7 +102,8 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         # Include the file extensions as attributes on the function object
         func.extensions = extensions
 
-        log.debug("Successfully loaded reader \"{}\".".format(label))
+        if verbose:
+            print(f"Successfully loaded reader \"{label}\".")
 
         # Automatically register a SpectrumList reader for any data_loader that
         # reads Spectrum1D objects. TODO: it's possible that this
@@ -127,7 +128,8 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             io_registry.register_identifier(
                 label, SpectrumList, id_func, force=force,
             )
-            log.debug("Created SpectrumList reader for \"{}\".".format(label))
+            if verbose:
+                print(f"Created SpectrumList reader for \"{label}\".")
 
         @wraps(func)
         def wrapper(*args, **kwargs):

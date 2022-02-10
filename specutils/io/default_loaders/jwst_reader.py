@@ -1,15 +1,12 @@
 import os
 import glob
-import logging
-from astropy.nddata.nduncertainty import VarianceUncertainty
+import warnings
 
 import astropy.units as u
 from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty, InverseVariance
-import logging
-import numpy as np
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 import asdf
 from gwcs.wcstools import grid_from_bounding_box
 
@@ -17,10 +14,7 @@ from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
-
 __all__ = ["jwst_x1d_single_loader", "jwst_x1d_multi_loader", "jwst_x1d_miri_mrs_loader"]
-
-log = logging.getLogger(__name__)
 
 
 def identify_jwst_miri_mrs(origin, *args, **kwargs):
@@ -271,10 +265,10 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     spectra = []
     for file_obj in file_list:
         try:
-            sp =  _jwst_spec1d_loader(file_obj, **kwargs)
+            sp = _jwst_spec1d_loader(file_obj, **kwargs)
         except FileNotFoundError as e:
             if missing.lower() == "warn":
-                log.warning(f'Failed to load {file_obj}: {repr(e)}')
+                warnings.warn(f'Failed to load {file_obj}: {repr(e)}')
                 continue
             elif missing.lower() == "silent":
                 continue
@@ -341,8 +335,8 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
 
             # checking if SRCTPYE is missing or UNKNOWN
             if not srctype or srctype == 'UNKNOWN':
-                log.warning('SRCTYPE is missing or UNKNOWN in JWST x1d loader. '
-                            'Defaulting to srctype="POINT".')
+                warnings.warn('SRCTYPE is missing or UNKNOWN in JWST x1d loader. '
+                              'Defaulting to srctype="POINT".')
                 srctype = 'POINT'
 
             if srctype == "POINT":
@@ -613,8 +607,8 @@ def _jwst_s3d_loader(filename, **kwargs):
             elif err_type == 'IVAR':
                 err = InverseVariance(err_array, unit=err_unit)
             elif err_type == 'IERR':
-                log.warning("Inverse Error is not yet a supported Astropy.nddata "
-                            "uncertainty. Setting err to None.")
+                warnings.warn("Inverse error is not yet a supported astropy.nddata "
+                              "uncertainty. Setting err to None.")
                 err = None
 
             # get mask information

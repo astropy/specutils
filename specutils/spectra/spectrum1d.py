@@ -1,5 +1,5 @@
+import warnings
 from copy import deepcopy
-import logging
 
 import numpy as np
 from astropy import units as u
@@ -10,12 +10,10 @@ from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
-from astropy.coordinates import SpectralCoord
+
 from ndcube import NDCube
 
 __all__ = ['Spectrum1D']
-
-log = logging.getLogger(__name__)
 
 
 class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
@@ -156,9 +154,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 rest_value = None
         else:
             if not isinstance(rest_value, u.Quantity):
-                log.info("No unit information provided with rest value. "
-                             "Assuming units of spectral axis ('%s').",
-                             spectral_axis.unit)
+                warnings.warn("No unit information provided with rest value. "
+                              f"Assuming units of spectral axis ('{spectral_axis.unit}').")
                 rest_value = u.Quantity(rest_value, spectral_axis.unit)
             elif not rest_value.unit.is_equivalent(u.AA, equivalencies=u.spectral()):
                 raise u.UnitsError("Rest value must be "
@@ -202,8 +199,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 # Due to FITS conventions, a WCS with spectral axis first corresponds
                 # to a flux array with spectral axis last.
                 if temp_axes[0] != 0:
-                    log.warning("Input WCS indicates that the spectral axis is not"
-                                " last. Reshaping arrays to put spectral axis last.")
+                    warnings.warn("Input WCS indicates that the spectral axis is not"
+                                  " last. Reshaping arrays to put spectral axis last.")
                     wcs = wcs.swapaxes(0, temp_axes[0])
                     if flux is not None:
                         flux = np.swapaxes(flux, len(flux.shape)-temp_axes[0]-1, -1)
@@ -225,7 +222,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                 kwargs["uncertainty"] = np.swapaxes(kwargs["uncertainty"],
                                                         len(kwargs["uncertainty"].shape) -
                                                         temp_axes[0]-1, -1)
-
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
@@ -532,7 +528,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def sum(self, **kwargs):
         return self.collapse("sum", **kwargs)
-
 
     @NDCube.mask.setter
     def mask(self, value):

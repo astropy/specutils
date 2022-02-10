@@ -4,18 +4,14 @@ import re
 import urllib
 import io
 import contextlib
-import logging
 
 from astropy.io import fits
-from astropy.table import Table
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
 
-from specutils.spectra import Spectrum1D, SpectrumCollection
-
-log = logging.getLogger(__name__)
+from specutils.spectra import Spectrum1D
 
 
 @contextlib.contextmanager
@@ -56,7 +52,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
                 hdulist.close()
 
 
-def spectrum_from_column_mapping(table, column_mapping, wcs=None):
+def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
     """
     Given a table and a mapping of the table column names to attributes
     on the Spectrum1D object, parse the information into a Spectrum1D.
@@ -65,6 +61,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
     ----------
     table : :class:`~astropy.table.Table`
         The table object (e.g. returned from ``Table.read('data_file')``).
+
     column_mapping : dict
         A dictionary describing the relation between the table columns
         and the arguments of the `Spectrum1D` class, along with unit
@@ -78,6 +75,9 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
+
+    verbose : bool
+        Print extra info.
 
     Returns
     -------
@@ -99,8 +99,9 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None):
             kwarg_val = u.Quantity(table[col_name], tab_unit)
 
             # Attempt to convert the table unit to the user-defined unit.
-            log.debug("Attempting auto-convert of table unit '%s' to "
-                      "user-provided unit '%s'.", tab_unit, cm_unit)
+            if verbose:
+                print(f"Attempting auto-convert of table unit '{tab_unit}' to "
+                      f"user-provided unit '{cm_unit}'.")
 
             if not isinstance(cm_unit, u.Unit):
                 cm_unit = u.Unit(cm_unit)

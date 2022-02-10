@@ -63,7 +63,7 @@ def test_spectrum1d_GMOSfits(remote_data_path):
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
-def test_spectrumlist_GMOSfits(remote_data_path, caplog):
+def test_spectrumlist_GMOSfits(remote_data_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
         spectrum_list = SpectrumList.read(remote_data_path,
@@ -73,8 +73,6 @@ def test_spectrumlist_GMOSfits(remote_data_path, caplog):
 
     spec = spectrum_list[0]
     assert len(spec.data) == 3020
-
-    assert len(caplog.record_tuples) == 0
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
