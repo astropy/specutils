@@ -136,7 +136,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # a single float, int, or array object, just go ahead and ignore wcs
         # requirements
         if (not isinstance(flux, u.Quantity) or isinstance(flux, float)
-            or isinstance(flux, int)) and np.ndim(flux) == 0:
+                or isinstance(flux, int)) and np.ndim(flux) == 0:
 
             super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
@@ -266,8 +266,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         super().__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
-            wcs=wcs, **kwargs
-            )
+            wcs=wcs, **kwargs)
 
         # If no spectral_axis was provided, create a SpectralCoord based on
         # the WCS

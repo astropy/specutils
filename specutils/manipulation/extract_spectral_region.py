@@ -41,6 +41,7 @@ def _edge_value_to_pixel(edge_value, spectrum, order, side):
         raise ValueError(f"Bound {edge_value}, could not be converted to pixel index"
                          f" using spectrum's WCS. Exception: {e}")
 
+
 def _subregion_to_edge_pixels(subregion, spectrum):
     """
     Calculate and return the left and right indices defined

@@ -1,13 +1,14 @@
 import numpy as np
+import pytest
 
 import astropy.units as u
 from astropy.modeling.polynomial import Chebyshev1D
+from astropy.utils.exceptions import AstropyUserWarning
 
 from ..spectra.spectrum1d import Spectrum1D
 from ..spectra import SpectralRegion
 from ..fitting.continuum import fit_generic_continuum, fit_continuum
 from ..manipulation.smoothing import median_smooth
-
 
 
 def single_peak_continuum(noise=0.2, constant_continuum=False):
@@ -33,7 +34,8 @@ def test_continuum_fit():
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
     s_single_continuum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
-    g1_fit = fit_generic_continuum(s_single_continuum)
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_generic_continuum(s_single_continuum)
 
     y_continuum_fitted = g1_fit(s_single_continuum.spectral_axis)
 
@@ -55,7 +57,8 @@ def test_continuum_calculation():
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
     spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
-    g1_fit = fit_generic_continuum(spectrum)
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_generic_continuum(spectrum)
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 
@@ -82,8 +85,10 @@ def test_continuum_full_window():
     spectrum_smoothed = median_smooth(spectrum, 3)
 
     # Check that a full width window recovers the original, non-windowed fit.
-    g1_fit = fit_continuum(spectrum_smoothed, window=(0.*u.um, 10.*u.um))
-    g1_fit_orig = fit_continuum(spectrum_smoothed)
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_continuum(spectrum_smoothed, window=(0.*u.um, 10.*u.um))
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit_orig = fit_continuum(spectrum_smoothed)
 
     sp_normalized = spectrum / g1_fit(spectrum.spectral_axis)
     sp_normalized_orig = spectrum / g1_fit_orig(spectrum.spectral_axis)
@@ -104,7 +109,8 @@ def test_continuum_spectral_region():
 
     # Check that a full width window recovers the original, non-windowed fit.
     region = SpectralRegion(0.*u.um, 10.*u.um)
-    g1_fit = fit_continuum(spectrum_smoothed, window=region)
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_continuum(spectrum_smoothed, window=region)
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 
@@ -131,7 +137,8 @@ def test_continuum_window_no_noise():
     spectrum_smoothed = median_smooth(spectrum, 3)
 
     # Window selects the first half of the spectrum.
-    g1_fit = fit_continuum(spectrum_smoothed, window=(0.*u.um, 5.*u.um))
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_continuum(spectrum_smoothed, window=(0.*u.um, 5.*u.um))
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 
@@ -143,7 +150,8 @@ def test_continuum_window_no_noise():
                        atol=5.5e-4)
 
     # Window selects the red end of the spectrum.
-    g1_fit = fit_continuum(spectrum_smoothed, window=(8.*u.um, 10.*u.um))
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_continuum(spectrum_smoothed, window=(8.*u.um, 10.*u.um))
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 
@@ -167,8 +175,9 @@ def test_double_continuum_window():
     # window as a SpectralRegion with sub-regions at the blue and red halves of the spectrum,
     # avoiding the Gaussian in between. The polynomial degree is high to accomodate the large
     # amplitude range of the expoinential continuum.
-    region = SpectralRegion([(0.*u.um, 5.*u.um), (8.* u.um, 10.* u.um)])
-    g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
+    region = SpectralRegion([(0. * u.um, 5. * u.um), (8. * u.um, 10. * u.um)])
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 
@@ -202,7 +211,8 @@ def test_double_continuum_window_alternate():
     # avoiding the Gaussian in between. The polynomial degree is high to accomodate the large
     # amplitude range of the expoinential continuum.
     region = [(0.*u.um, 5.*u.um), (8.* u.um, 10.* u.um)]
-    g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
+    with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
+        g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
 
     spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
 

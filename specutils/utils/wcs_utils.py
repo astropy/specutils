@@ -147,7 +147,6 @@ def air_to_vac(wavelength, scheme='inversion', method='Griesen2006', co2=None,
             diff = wavelength * refr - result
             if abs(diff.max().value) < precision:
                 break
-                #return wavelength * conv
             if counter > maxiter:
                 raise RuntimeError("Reached maximum number of iterations "
                                    "without reaching desired precision level.")
@@ -210,7 +209,6 @@ def gwcs_from_array(array):
     else:
         forward_transform.inverse = SpectralTabular1D(
                 array[::-1], lookup_table=np.arange(len(array))[::-1])
-
 
     class SpectralGWCS(GWCS):
         def pixel_to_world(self, *args, **kwargs):

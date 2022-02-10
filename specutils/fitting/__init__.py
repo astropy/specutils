@@ -1,2 +1,2 @@
-from .fitmodels import *
-from .continuum import *
+from .fitmodels import *  # noqa
+from .continuum import *  # noqa

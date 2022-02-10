@@ -1,6 +1,3 @@
-import os
-
-from astropy.io import fits
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
@@ -39,7 +36,6 @@ def cos_spectrum_loader(file_obj, **kwargs):
 
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
-        name = header.get('FILENAME')
         meta = {'header': header}
 
         unit = Unit("erg/cm**2 Angstrom s")

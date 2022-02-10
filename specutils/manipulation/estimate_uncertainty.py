@@ -2,7 +2,7 @@ import numpy as np
 
 from astropy import units as u
 
-from .. import Spectrum1D, SpectralRegion
+from .. import Spectrum1D
 from astropy.nddata.nduncertainty import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from .extract_spectral_region import extract_region
 

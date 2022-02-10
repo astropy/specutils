@@ -1,4 +1,3 @@
-import astropy.io.fits as fits
 from specutils import SpectrumList
 from specutils.io.registers import data_loader
 

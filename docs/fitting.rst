@@ -61,12 +61,15 @@ uncertainty, we will produce an estimate of the uncertainty by calling the
 
 .. code-block:: python
 
+   >>> import warnings
    >>> from specutils.manipulation import noise_region_uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
    >>> spectrum = noise_region_uncertainty(spectrum, noise_region)
 
    >>> from specutils.fitting import find_lines_threshold
-   >>> lines = find_lines_threshold(spectrum, noise_factor=3)
+   >>> with warnings.catch_warnings():  # Ignore warnings
+   ...     warnings.simplefilter('ignore')
+   ...     lines = find_lines_threshold(spectrum, noise_factor=3)
 
    >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
    <QTable length=4>
@@ -95,8 +98,11 @@ An example using the `~specutils.fitting.find_lines_derivative`:
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
 
    >>> # Derivative technique
+   >>> import warnings
    >>> from specutils.fitting import find_lines_derivative
-   >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)
+   >>> with warnings.catch_warnings():  # Ignore warnings
+   ...     warnings.simplefilter('ignore')
+   ...     lines = find_lines_derivative(spectrum, flux_threshold=0.75)
 
    >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
    <QTable length=2>
@@ -632,6 +638,7 @@ convenience functions to perform exactly this task.  An example is shown below.
     :align: center
     :context: close-figs
 
+    >>> import warnings
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> from astropy.modeling import models
@@ -649,7 +656,9 @@ convenience functions to perform exactly this task.  An example is shown below.
 
     >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
 
-    >>> g1_fit = fit_generic_continuum(spectrum)
+    >>> with warnings.catch_warnings():  # Ignore warnings
+    ...     warnings.simplefilter('ignore')
+    ...     g1_fit = fit_generic_continuum(spectrum)
 
     >>> y_continuum_fitted = g1_fit(x*u.um)
 
@@ -685,6 +694,7 @@ is specified by a sequence:
     :align: center
     :context: close-figs
 
+    >>> import warnings
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> import astropy.units as u
@@ -700,7 +710,9 @@ is specified by a sequence:
 
     >>> spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
     >>> region = [(1 * u.um, 5 * u.um), (7 * u.um, 10 * u.um)]
-    >>> fitted_continuum = fit_continuum(spectrum, window=region)
+    >>> with warnings.catch_warnings():  # Ignore warnings
+    ...     warnings.simplefilter('ignore')
+    ...     fitted_continuum = fit_continuum(spectrum, window=region)
     >>> y_fit = fitted_continuum(x*u.um)
 
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT

@@ -9,7 +9,7 @@ from asdf.extension import AsdfExtension
 
 from astropy.io.misc.asdf.extension import ASTROPY_SCHEMA_URI_BASE
 
-from .tags.spectra import *
+from .tags.spectra import *  # noqa
 from .types import _specutils_types
 
 
@@ -19,7 +19,7 @@ SPECUTILS_URL_MAPPING = [
     (urllib.parse.urljoin(ASTROPY_SCHEMA_URI_BASE, 'specutils/'),
      filepath_to_url(
          os.path.join(SCHEMA_PATH, 'astropy.org', 'specutils')) +
-         '/{url_suffix}.yaml')]
+     '/{url_suffix}.yaml')]
 
 
 class SpecutilsExtension(AsdfExtension):

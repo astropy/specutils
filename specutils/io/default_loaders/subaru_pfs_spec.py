@@ -6,7 +6,6 @@ https://github.com/Subaru-PFS/datamodel/blob/master/datamodel.txt
 import os
 import re
 
-from astropy.io import fits
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
@@ -16,7 +15,7 @@ from ...spectra import Spectrum1D
 from ..registers import data_loader
 from ..parsing_utils import _fits_identify_by_name, read_fileobj_or_hdulist
 
-__all__ = ['spec_identify', 'spec_loader']
+__all__ = ['identify_pfs_spec', 'pfs_spec_loader']
 
 # This RE matches the file name pattern defined in Subaru-PFS' datamodel.txt :
 # "pfsObject-%05d-%s-%3d-%08x-%02d-0x%08x.fits" % (tract, patch, catId, objId,

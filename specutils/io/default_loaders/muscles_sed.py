@@ -1,10 +1,7 @@
-import os
-
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
-from astropy.units import Unit, Quantity
-from astropy.wcs import WCS
+from astropy.units import Quantity
 
 from ...spectra import Spectrum1D
 from ..registers import data_loader

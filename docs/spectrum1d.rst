@@ -297,4 +297,3 @@ Reference/API
     :skip: test
     :skip: SpectrumCollection
     :skip: SpectralRegion
-    :skip: UnsupportedPythonError

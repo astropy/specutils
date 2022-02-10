@@ -5,11 +5,10 @@ spectral features.
 
 import numpy as np
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
-from astropy.modeling.models import Gaussian1D
 from ..manipulation import extract_region
 from . import centroid
 from .utils import computation_wrapper
-from scipy.signal import chirp, find_peaks, peak_widths
+from scipy.signal import find_peaks, peak_widths
 
 
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm', 'fwzi']

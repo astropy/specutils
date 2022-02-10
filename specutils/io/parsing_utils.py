@@ -220,7 +220,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
                     spec_ax = spectral_axis
                 else:
                     # Assume leading dimension corresponds to spectral_axis
-                    spec_shape = np.ones(table[c].ndim, dtype=np.int)
+                    spec_shape = np.ones(table[c].ndim, dtype=int)
                     spec_shape[0] = -1
                     spec_ax = spectral_axis.reshape(spec_shape)
                 table[c].to("Jy", equivalencies=u.spectral_density(spec_ax))

@@ -2,15 +2,11 @@
 Contains classes that serialize spectral data types into ASDF representations.
 """
 
-from astropy import __version__ as astropy_version
-
 from numpy.testing import assert_allclose
 from astropy.units import allclose
 import astropy.nddata
-from asdf.tags.core import NDArrayType
 from asdf.yamlutil import (custom_tree_to_tagged_tree,
                            tagged_tree_to_custom_tree)
-from astropy.io.misc.asdf.tags.unit.unit import UnitType
 
 from ....spectra import Spectrum1D, SpectrumList
 from ..types import SpecutilsType

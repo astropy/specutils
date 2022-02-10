@@ -17,7 +17,6 @@ from ..analysis import (line_flux, equivalent_width, snr, centroid,
                         snr_derived, fwzi, is_continuum_below_threshold)
 from ..fitting import find_lines_threshold
 from ..manipulation import snr_threshold, FluxConservingResampler
-from ..tests.spectral_examples import simulated_spectra  # noqa
 
 
 def test_line_flux():
@@ -86,19 +85,6 @@ def test_line_flux_masked():
     # With flux conserving resampler
     result = line_flux(spectrum_masked, mask_interpolation=FluxConservingResampler)
     assert quantity_allclose(result.value, 720.61116, atol=0.001)
-
-
-def test_line_flux_uncertainty_2():
-    np.random.seed(42)
-
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
-                      flux=np.random.sample(10) * u.Jy,
-                      uncertainty=StdDevUncertainty(np.random.sample(10) * 0.01))
-
-    lf = line_flux(spec)
-
-    assert quantity_allclose(lf, u.Quantity(5.20136736, u.Jy * u.AA))
-    assert quantity_allclose(lf.uncertainty, u.Quantity(0.01544415, u.Jy * u.AA))
 
 
 def test_equivalent_width():
@@ -919,6 +905,7 @@ def test_is_continuum_below_threshold():
     wavelengths = [300, 500, 1000] * u.nm
     data = [0.001, -0.003, 0.003] * u.Jy
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
+
     assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
 
 #    # No mask, no uncertainty, threshold is float
@@ -1061,6 +1048,8 @@ def test_moment_cube_order_2_axis_1():
     assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)
 
 
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated uncertainties of the same type')
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_moment_collection():
 
     np.random.seed(42)

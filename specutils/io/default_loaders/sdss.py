@@ -3,20 +3,18 @@ Loader for SDSS individual spectrum files: spec_ files.
 
 .. _spec: https://data.sdss.org/datamodel/files/BOSS_SPECTRO_REDUX/RUN2D/spectra/PLATE4/spec.html
 """
-import os
 import re
-import _io
 
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
-from astropy.units import Unit, def_unit
+from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty, InverseVariance
 
 import numpy as np
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader, custom_writer
+from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ['spec_identify', 'spSpec_identify',
@@ -120,7 +118,6 @@ def spec_loader(file_obj, **kwargs):
     """
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
-        name = header.get('NAME')
         meta = {'header': header}
 
         bunit = header.get('BUNIT', '1e-17 erg / (Angstrom cm2 s)')

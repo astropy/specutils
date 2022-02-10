@@ -1,10 +1,7 @@
 import os
 
-import astropy.units as u
-from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
 
-from ... import Spectrum1D
 from ..registers import data_loader
 from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping)

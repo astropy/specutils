@@ -2,11 +2,8 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy import time
-from astropy.constants import c
-from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, GCRS, Galactic,
-                                 CartesianDifferential, SpectralCoord,
-                                 get_body_barycentric_posvel,
-                                 FK5, CartesianRepresentation)
+from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, Galactic,
+                                 SpectralCoord, FK5)
 
 from ..spectra.spectral_axis import SpectralAxis
 from ..spectra.spectrum1d import Spectrum1D
@@ -22,6 +19,7 @@ def get_greenwich_earthlocation():
     site_registry = EarthLocation._get_site_registry(force_builtin=True)
     return site_registry.get('greenwich')
 
+
 def test_create_spectral_axis():
 
     site = get_greenwich_earthlocation()
@@ -35,6 +33,7 @@ def test_create_spectral_axis():
     assert isinstance(spectral_axis, u.Quantity)
     assert len(spectral_axis) == 1001
     assert spectral_axis.bin_edges[0] == 499*u.AA
+
 
 def test_create_with_bin_edges():
 
@@ -64,12 +63,10 @@ LSRD = Galactic(u=0 * u.km, v=0 * u.km, w=0 * u.km,
                 U=9 * u.km / u.s, V=12 * u.km / u.s, W=7 * u.km / u.s,
                 representation_type='cartesian', differential_type='cartesian')
 
-LSRD_EQUIV = [
-              LSRD,
+LSRD_EQUIV = [LSRD,
               SkyCoord(LSRD),  # as a SkyCoord
               LSRD.transform_to(ICRS()),  # different frame
-              LSRD.transform_to(ICRS()).transform_to(Galactic())  # different representation
-              ]
+              LSRD.transform_to(ICRS()).transform_to(Galactic())]  # different representation
 
 
 @pytest.fixture(params=[None] + LSRD_EQUIV)

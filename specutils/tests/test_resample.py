@@ -5,7 +5,6 @@ from astropy.nddata import InverseVariance, StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectrum1d import Spectrum1D
-from ..tests.spectral_examples import simulated_spectra
 from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
 
@@ -84,8 +83,7 @@ def delta_wl(saxis):
 
 @pytest.mark.parametrize("specflux,specwavebins,outwavebins", [
     ([1, 3, 2], [4000, 5000, 6000, 7000], np.linspace(4000, 7000, 5)),
-    ([1, 3, 2, 1], np.linspace(4000, 7000, 5), [4000, 5000, 6000, 7000])
-    ])
+    ([1, 3, 2, 1], np.linspace(4000, 7000, 5), [4000, 5000, 6000, 7000])])
 def test_flux_conservation(specflux, specwavebins, outwavebins):
     """
     A few simple cases to programatically ensure flux is conserved in the
@@ -190,7 +188,6 @@ def test_resample_different_units(all_resamplers):
     resampler = all_resamplers("nan_fill")
     if all_resamplers == FluxConservingResampler:
         pytest.xfail('flux conserving resampler cannot yet handle differing units')
-
 
     resamp_grid = [5500, 6500]*u.nm
     resampled = resampler(input_spectrum, resamp_grid)
