@@ -1033,6 +1033,34 @@ def test_moment_cube():
     assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
 
 
+def test_moment_cube_order_2_axis_1():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.GHz
+    g = models.Gaussian1D(amplitude=100*u.Jy, mean=50*u.GHz, stddev=1000*u.GHz)
+    noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
+    flux = g(frequencies) + noise
+
+    # NOTE: Does not work on non-square spatial-spatial slice.
+    # use identical arrays in each spaxel. The purpose here is not to
+    # check accuracy (already tested elsewhere), but dimensionality.
+
+    flux_multid = np.broadcast_to(flux, [10, 10, flux.shape[0]]) * u.Jy
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+
+    # spatial higher order (what's the meaning of this?)
+    moment_2 = moment(spectrum, order=2, axis=1)
+
+    assert moment_2.shape == (10, 10000)
+    assert moment_2.unit.is_equivalent(u.GHz**2)
+    # check assorted values.
+    assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)
+
+
 def test_moment_collection():
 
     np.random.seed(42)
