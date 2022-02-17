@@ -9,6 +9,13 @@ Bug Fixes
 
 - Fixed cube transpose bug in moment analysis for non-square spatial arrays. [#912]
 
+- Fixed ``spectral_slab`` crashing when ``spectral_axis`` has unit of pixels and
+  the bounds are also defined in the unit of pixels. [#926]
+
+- Fixed resulting ``spectral_axis`` containing NaN when a cube is passed into
+  ``Spectrum1D`` without WCS nor spectral axis and the spatial-spatial dimension
+  is smaller than spectral dimension. [#926]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

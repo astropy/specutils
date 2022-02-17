@@ -3,7 +3,7 @@ import pytest
 
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty
-from astropy.tests.helper import quantity_allclose
+from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra import Spectrum1D, SpectralRegion
 from ..manipulation import extract_region, extract_bounding_spectral_region, spectral_slab
@@ -34,7 +34,7 @@ def test_region_simple(simulated_spectra):
 
     sub_spectrum_flux_expected = np.array(FLUX_ARRAY)
 
-    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+    assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
 
 def test_slab_simple(simulated_spectra):
@@ -48,7 +48,17 @@ def test_slab_simple(simulated_spectra):
 
     sub_spectrum_flux_expected = np.array(FLUX_ARRAY)
 
-    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+    assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+
+
+def test_slab_pixels():
+    range_iter = range(5)
+    spectrum = Spectrum1D(flux=np.stack(
+        [np.zeros((2, 2)) + i for i in range_iter], axis=-1) * u.nJy)
+    for i in range_iter:
+        sub_spectrum = spectral_slab(spectrum, i * u.pix, (i + 0.5) * u.pix)
+        assert_quantity_allclose(sub_spectrum.flux, i * u.nJy)
+        assert_quantity_allclose(sub_spectrum.spectral_axis, i * u.pix)
 
 
 def test_region_ghz(simulated_spectra):
@@ -61,7 +71,7 @@ def test_region_ghz(simulated_spectra):
 
     sub_spectrum_flux_expected = FLUX_ARRAY * u.mJy
 
-    assert quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
+    assert_quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
 
 
 def test_region_simple_check_ends(simulated_spectra):
@@ -140,7 +150,7 @@ def test_region_descending(simulated_spectra):
 
     sub_spectrum_flux_expected = np.array(FLUX_ARRAY)
 
-    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+    assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
 
 def test_descending_spectral_axis(simulated_spectra):
@@ -151,12 +161,12 @@ def test_descending_spectral_axis(simulated_spectra):
     region = SpectralRegion(0.8*u.um, 0.6*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
-    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+    assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
     region = SpectralRegion(0.6*u.um, 0.8*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
-    assert quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
+    assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
 
 def test_region_two_sub(simulated_spectra):
@@ -171,10 +181,10 @@ def test_region_two_sub(simulated_spectra):
     sub_spectra = extract_region(spectrum, region)
 
     # Confirm the end points of the subspectra are correct
-    assert quantity_allclose(sub_spectra[0].spectral_axis[[0, -1]],
+    assert_quantity_allclose(sub_spectra[0].spectral_axis[[0, -1]],
                        [0.6035353535353536, 0.793939393939394]*u.um)
 
-    assert quantity_allclose(sub_spectra[1].spectral_axis[[0, -1]],
+    assert_quantity_allclose(sub_spectra[1].spectral_axis[[0, -1]],
                        [0.8661616161616162, 0.8858585858585859]*u.um)
 
     sub_spectrum_0_flux_expected = FLUX_ARRAY * u.mJy
@@ -182,15 +192,15 @@ def test_region_two_sub(simulated_spectra):
     sub_spectrum_1_flux_expected = [1337.65312465, 1263.48914109,
                                     1589.81797876, 1548.46068415]*u.mJy
 
-    assert quantity_allclose(sub_spectra[0].flux, sub_spectrum_0_flux_expected)
-    assert quantity_allclose(sub_spectra[1].flux, sub_spectrum_1_flux_expected)
+    assert_quantity_allclose(sub_spectra[0].flux, sub_spectrum_0_flux_expected)
+    assert_quantity_allclose(sub_spectra[1].flux, sub_spectrum_1_flux_expected)
 
     # also ensure this works if the multi-region is expressed as a single
     # Quantity
     region2 = SpectralRegion([(0.6, 0.8), (0.86, 0.89)]*u.um)
     sub_spectra2 = extract_region(spectrum, region2)
-    assert quantity_allclose(sub_spectra[0].flux, sub_spectra2[0].flux)
-    assert quantity_allclose(sub_spectra[1].flux, sub_spectra2[1].flux)
+    assert_quantity_allclose(sub_spectra[0].flux, sub_spectra2[0].flux)
+    assert_quantity_allclose(sub_spectra[1].flux, sub_spectra2[1].flux)
 
     # Check that the return_single_spectrum argument works properly
     concatenated_spectrum = extract_region(spectrum, region2, return_single_spectrum=True)
@@ -210,24 +220,24 @@ def test_bounding_region(simulated_spectra):
     extracted_spectrum = extract_bounding_spectral_region(spectrum, region)
 
     # Confirm the end points are correct
-    assert quantity_allclose(extracted_spectrum.spectral_axis[[0, -1]],
+    assert_quantity_allclose(extracted_spectrum.spectral_axis[[0, -1]],
                        [0.6035353535353536, 0.8858585858585859]*u.um)
 
-    flux_expected = [FLUX_ARRAY + [948.81864554, 1197.84859443, 1069.75268943,
+    flux_expected = (FLUX_ARRAY + [948.81864554, 1197.84859443, 1069.75268943,
                                    1118.27269184, 1301.7695563, 1206.62880648,
                                    1518.16549319, 1256.84259015, 1638.76791267,
                                    1562.05642302, 1337.65312465, 1263.48914109,
-                                   1589.81797876, 1548.46068415]]*u.mJy
+                                   1589.81797876, 1548.46068415])*u.mJy
 
-    assert quantity_allclose(extracted_spectrum.flux, flux_expected)
+    assert_quantity_allclose(extracted_spectrum.flux, flux_expected)
 
     # also ensure this works if the multi-region is expressed as a single
     # Quantity
     region2 = SpectralRegion([(0.6, 0.8), (0.86, 0.89)]*u.um)
     extracted_spectrum2 = extract_bounding_spectral_region(spectrum, region2)
-    assert quantity_allclose(extracted_spectrum2.spectral_axis[[0, -1]],
+    assert_quantity_allclose(extracted_spectrum2.spectral_axis[[0, -1]],
                        [0.6035353535353536, 0.8858585858585859]*u.um)
-    assert quantity_allclose(extracted_spectrum2.flux, flux_expected)
+    assert_quantity_allclose(extracted_spectrum2.flux, flux_expected)
 
 
 def test_extract_region_pixels():
@@ -237,7 +247,7 @@ def test_extract_region_pixels():
 
     extracted = extract_region(spectrum, region)
 
-    assert quantity_allclose(extracted.flux, [10, 11]*u.Jy)
+    assert_quantity_allclose(extracted.flux, [10, 11]*u.Jy)
 
 
 def test_extract_region_mismatched_units():
@@ -248,7 +258,7 @@ def test_extract_region_mismatched_units():
 
     extracted = extract_region(spectrum, region)
 
-    assert quantity_allclose(extracted.flux, [10, 11]*u.Jy)
+    assert_quantity_allclose(extracted.flux, [10, 11]*u.Jy)
 
 
 def test_linear_excise_invert_from_spectrum():
@@ -261,9 +271,9 @@ def test_linear_excise_invert_from_spectrum():
 
     excised_spec = linear_exciser(spec, exc_regs)
 
-    assert quantity_allclose(np.diff(excised_spec[50:60].flux),
+    assert_quantity_allclose(np.diff(excised_spec[50:60].flux),
                              np.diff(excised_spec[51:61].flux))
-    assert quantity_allclose(np.diff(excised_spec[80:90].flux),
+    assert_quantity_allclose(np.diff(excised_spec[80:90].flux),
                              np.diff(excised_spec[81:91].flux))
 
 
