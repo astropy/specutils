@@ -34,7 +34,7 @@ SNR
 ---
 
 The signal-to-noise ratio of a spectrum is often a valuable quantity for
-evaluating the quality of a spectrum.  The `specutils.analysis.snr` function
+evaluating the quality of a spectrum.  The `~specutils.analysis.snr` function
 performs this task, either on the spectrum as a whole, or sub-regions of a
 spectrum:
 
@@ -74,15 +74,15 @@ Line Flux Estimates
 While line-fitting (see :doc:`fitting`) is a more thorough way to measure
 spectral line fluxes, direct measures of line flux are very useful for either
 quick-look settings or for spectra not amedable to fitting.  The
-`specutils.analysis.line_flux` function addresses that use case. The closely
+`~specutils.analysis.line_flux` function addresses that use case. The closely
 related `specutils.analysis.equivalent_width` computes the equivalent width
 of a spectral feature, a flux measure that is normalized against the continuum
 of a spectrum.  Both are demonstrated below:
 
 .. note::
-    The `specutils.analysis.line_flux` function assumes the spectrum has
+    The `~specutils.analysis.line_flux` function assumes the spectrum has
     already been continuum-subtracted, while
-    `specutils.analysis.equivalent_width` assumes the continuum is at a fixed,
+    `~specutils.analysis.equivalent_width` assumes the continuum is at a fixed,
     known level (defaulting to 1, meaning continuum-normalized).
     :ref:`specutils-continuum-fitting` describes how continuua can be generated
     to prepare a spectrum for use with these functions.
@@ -121,7 +121,7 @@ For the equivalent width, note the need to add a continuum level:
 Centroid
 --------
 
-The `specutils.analysis.centroid` function provides a first-moment analysis to
+The `~specutils.analysis.centroid` function provides a first-moment analysis to
 estimate the center of a spectral feature:
 
 .. code-block:: python
@@ -138,7 +138,7 @@ below.
 Moment
 ------
 
-The `specutils.analysis.moment` function computes moments of any order:
+The `~specutils.analysis.moment` function computes moments of any order:
 
 .. code-block:: python
 
@@ -195,13 +195,13 @@ Each of the width analysis functions are applied to this spectrum below:
 Template comparison
 -------------------
 
-The ~`specutils.analysis.template_comparison.template_match` function takes an
+The `~specutils.analysis.template_match` function takes an
 observed spectrum and ``n`` template spectra and returns the best template that
 matches the observed spectrum via chi-square minimization.
 
 If the redshift is known, the user can set that for the ``redshift`` parameter
 and then run the
-~`specutils.analysis.template_comparison.template_match` function.
+`~specutils.analysis.template_match` function.
 This function will:
 
     1. Match the resolution and wavelength spacing of the observed spectrum.
@@ -218,7 +218,7 @@ values to use. As an example, a simple linear grid can be built with:
 
     >>> rs_values = np.arange(1., 3.25, 0.25)
 
-The ~`specutils.analysis.template_comparison.template_match` function will then:
+The `~specutils.analysis.template_match` function will then:
 
     1. Move each template to the first term in the redshift grid.
     2. Run steps 1 and 2 of the case with known redshift.
