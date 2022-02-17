@@ -195,13 +195,13 @@ Each of the width analysis functions are applied to this spectrum below:
 Template comparison
 -------------------
 
-The `~specutils.analysis.template_comparison.template_match` function takes an
+The `~specutils.analysis.template_match` function takes an
 observed spectrum and ``n`` template spectra and returns the best template that
 matches the observed spectrum via chi-square minimization.
 
 If the redshift is known, the user can set that for the ``redshift`` parameter
 and then run the
-`~specutils.analysis.template_comparison.template_match` function.
+`~specutils.analysis.template_match` function.
 This function will:
 
     1. Match the resolution and wavelength spacing of the observed spectrum.
@@ -218,7 +218,7 @@ values to use. As an example, a simple linear grid can be built with:
 
     >>> rs_values = np.arange(1., 3.25, 0.25)
 
-The `~specutils.analysis.template_comparison.template_match` function will then:
+The `~specutils.analysis.template_match` function will then:
 
     1. Move each template to the first term in the redshift grid.
     2. Run steps 1 and 2 of the case with known redshift.
