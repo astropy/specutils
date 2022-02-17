@@ -71,8 +71,11 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         right_func = min
 
     # Left/lower side of sub region
-    if subregion[0].unit.is_equivalent(u.pix) and not spectral_axis.unit.is_equivalent(u.pix):
-        left_index = floor(subregion[0].value)
+    if subregion[0].unit.is_equivalent(u.pix):
+        if not spectral_axis.unit.is_equivalent(u.pix):
+            left_index = floor(subregion[0].value)
+        else:
+            left_index = int(np.ceil(left_func(subregion).value))
     else:
         # Convert lower value to spectrum spectral_axis units
         left_reg_in_spec_unit = left_func(subregion).to(spectral_axis.unit,
@@ -80,8 +83,11 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         left_index = _edge_value_to_pixel(left_reg_in_spec_unit, spectrum, order, "left")
 
     # Right/upper side of sub region
-    if subregion[1].unit.is_equivalent(u.pix) and not spectral_axis.unit.is_equivalent(u.pix):
-        right_index = ceil(subregion[1].value)
+    if subregion[1].unit.is_equivalent(u.pix):
+        if not spectral_axis.unit.is_equivalent(u.pix):
+            right_index = ceil(subregion[1].value)
+        else:
+            right_index = int(np.floor(right_func(subregion).value)) + 1
     else:
         # Convert upper value to spectrum spectral_axis units
         right_reg_in_spec_unit = right_func(subregion).to(spectral_axis.unit,

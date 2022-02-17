@@ -261,7 +261,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
-            size = len(flux) if not flux.isscalar else 1
+            size = flux.shape[-1] if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
 
         super().__init__(
