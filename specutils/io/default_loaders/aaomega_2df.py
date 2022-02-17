@@ -2,7 +2,6 @@ from copy import deepcopy
 
 import numpy as np
 
-import astropy.io.fits as fits
 from astropy.nddata import VarianceUncertainty
 from astropy.table import Table
 import astropy.units as u

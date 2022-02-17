@@ -1,12 +1,13 @@
 import io
 from specutils import Spectrum1D
-import specutils.io.default_loaders
+import specutils.io.default_loaders  # noqa
 """
 The purpose of this file is to receive a list of loaders from
 specutils.spectrum1d.read.list_formats(), format that list
 into something that can be used by `automodapi`, and then
 set it as the __doc__.
 """
+
 
 def _list_of_loaders():
     # Receive list of loaders

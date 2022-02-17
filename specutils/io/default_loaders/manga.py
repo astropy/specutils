@@ -1,5 +1,4 @@
 import astropy.units as u
-from astropy.io import fits
 from astropy.nddata import InverseVariance
 from astropy.wcs import WCS
 

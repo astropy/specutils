@@ -8,10 +8,6 @@ from astropy.tests.helper import quantity_allclose
 from ..spectra import Spectrum1D, SpectralRegion
 from ..manipulation import extract_region, extract_bounding_spectral_region, spectral_slab
 from ..manipulation.utils import linear_exciser
-from .spectral_examples import simulated_spectra
-
-from astropy.tests.helper import quantity_allclose
-
 
 FLUX_ARRAY = [1605.71612173, 1651.41650744, 2057.65798618, 2066.73502361, 1955.75832537,
               1670.52711471, 1491.10034446, 1637.08084112, 1471.28982259, 1299.19484483,
@@ -123,7 +119,7 @@ def test_region_empty(simulated_spectra):
     assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region has lower and upper bound the same
-    with pytest.raises(Exception) as e_info:
+    with pytest.raises(Exception):
         region = SpectralRegion(3*u.um, 3*u.um)
 
 
@@ -198,6 +194,7 @@ def test_region_two_sub(simulated_spectra):
     assert np.all(concatenated_spectrum.flux[0:30] == sub_spectra2[0].flux)
     assert np.all(concatenated_spectrum.flux[30:34] == sub_spectra2[1].flux)
 
+
 def test_bounding_region(simulated_spectra):
     np.random.seed(42)
 
@@ -251,12 +248,13 @@ def test_extract_region_mismatched_units():
     assert quantity_allclose(extracted.flux, [10, 11]*u.Jy)
 
 
+@pytest.mark.filterwarnings('ignore:A SpectralRegion with multiple subregions was provided')
 def test_linear_excise_invert_from_spectrum():
     spec = Spectrum1D(flux=np.random.sample(100) * u.Jy,
                       spectral_axis=np.arange(100) * u.AA)
-    inc_regs = SpectralRegion(0 * u.AA, 50 * u.AA) + \
-               SpectralRegion(60 * u.AA, 80 * u.AA) + \
-               SpectralRegion(90 * u.AA, 110 * u.AA)
+    inc_regs = (SpectralRegion(0 * u.AA, 50 * u.AA) +
+                SpectralRegion(60 * u.AA, 80 * u.AA) +
+                SpectralRegion(90 * u.AA, 110 * u.AA))
     exc_regs = inc_regs.invert_from_spectrum(spec)
 
     excised_spec = linear_exciser(spec, exc_regs)

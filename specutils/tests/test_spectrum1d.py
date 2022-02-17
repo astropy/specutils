@@ -10,6 +10,7 @@ from astropy.wcs import WCS
 from .conftest import remote_access
 from ..spectra import Spectrum1D
 
+
 def test_empty_spectrum():
     spec = Spectrum1D(spectral_axis=[]*u.um,
                       flux=[]*u.Jy)
@@ -32,7 +33,7 @@ def test_create_from_arrays():
     assert spec.flux.size == 50
 
     # Test creating spectrum with unknown arguments
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         spec = Spectrum1D(wavelength=np.arange(1, 50) * u.nm,
                           flux=np.random.randn(48) * u.Jy)
 
@@ -55,8 +56,9 @@ def test_create_from_multidimensional_arrays():
     # than flux, in which case it's interpreted as bin edges)
     freqs = np.arange(50) * u.GHz
     flux = np.random.random((5, len(freqs)-10)) * u.Jy
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         spec = Spectrum1D(spectral_axis=freqs, flux=flux)
+
 
 def test_create_from_quantities():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
@@ -68,9 +70,9 @@ def test_create_from_quantities():
 
     # Mis-matched lengths should raise an exception (unless freqs is one longer
     # than flux, in which case it's interpreted as bin edges)
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
-                      flux=np.random.randn(47) * u.Jy)
+                          flux=np.random.randn(47) * u.Jy)
 
 
 def test_create_implicit_wcs():
@@ -101,7 +103,7 @@ def test_create_with_spectral_coord():
 
     spectral_coord = SpectralCoord(np.arange(5100, 5150)*u.AA, radial_velocity=u.Quantity(1000.0, "km/s"))
     flux = np.random.randn(50)*u.Jy
-    spec = Spectrum1D(spectral_axis = spectral_coord, flux=flux)
+    spec = Spectrum1D(spectral_axis=spectral_coord, flux=flux)
 
     assert spec.radial_velocity == u.Quantity(1000.0, "km/s")
     assert isinstance(spec.spectral_axis, SpectralCoord)
@@ -123,6 +125,7 @@ def test_create_from_cube():
     assert spec.flux[3,2,1] == 23*u.Jy
     assert np.all(spec.spectral_axis.value == np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1])*w.wcs.crval[-1])
 
+
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
     spec = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
@@ -141,13 +144,13 @@ def test_spectral_axis_conversions():
 
     assert spec.frequency.unit == u.GHz
 
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         spec.velocity
 
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    new_spec = spec.with_spectral_unit(u.GHz)
+    new_spec = spec.with_spectral_unit(u.GHz)  # noqa
 
 
 def test_spectral_slice():
@@ -204,7 +207,7 @@ def test_redshift():
     assert u.allclose(spec.velocity, [-71443.75318854, 28487.0661448, 128417.88547813]*u.km/u.s,
                       atol=0.5*u.km/u.s)
 
-    #-------------------------
+    # -------------------------
 
     spec = Spectrum1D(flux=np.array([26.0, 30.0, 44.5]) * u.Jy,
                       spectral_axis=np.array([10.5, 11.0, 11.5]) * u.GHz,
@@ -223,7 +226,7 @@ def test_redshift():
     assert u.allclose(spec.velocity, [42113.99605389, 28487.0661448 , 14860.13623571]*u.km/u.s,
                       atol=1*u.km/u.s)
 
-    #------------------------- radial velocity mode
+    # ------------------------- radial velocity mode
 
     spec = Spectrum1D(flux=np.array([26.0, 30., 44.5]) * u.Jy,
                       spectral_axis=np.array([4000, 6000, 8000]) * u.AA,
@@ -304,6 +307,7 @@ def test_wcs_transformations():
 
     assert np.allclose(spec.wcs.world_to_pixel(7000*u.AA), [461.2])
 
+
 def test_create_explicit_fitswcs():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
                                  'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
@@ -349,12 +353,11 @@ def test_create_with_uncertainty():
     flux=100*np.abs(np.random.randn(3, 4, 10))*u.Jy
     uncertainty = StdDevUncertainty(np.abs(np.random.randn(3, 2, 10))*u.Jy)
 
-    with pytest.raises(ValueError) as e_info:
-        s1d = Spectrum1D(spectral_axis=wavelengths*u.um,
-                         flux=flux,
-                         uncertainty=uncertainty)
+    with pytest.raises(ValueError):
+        Spectrum1D(spectral_axis=wavelengths*u.um, flux=flux, uncertainty=uncertainty)
 
 
+@pytest.mark.filterwarnings('ignore::astropy.io.fits.verify.VerifyWarning')
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_read_linear_solution(remote_data_path):
     spec = Spectrum1D.read(remote_data_path, format='wcs1d-fits')
@@ -383,7 +386,7 @@ def test_flux_nans_propagate_to_mask():
     flux[nan_idx] = np.nan
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                       flux=flux * u.Jy)
-    assert spec.mask[nan_idx].all() == True
+    assert spec.mask[nan_idx].all() == True  # noqa
 
 
 def test_repr():

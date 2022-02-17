@@ -1,8 +1,10 @@
 import astropy.units as u
 import numpy as np
+import pytest
 from astropy.modeling import models
 from astropy.nddata import StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
+from astropy.utils.exceptions import AstropyUserWarning
 
 from ..analysis import centroid, fwhm
 from ..fitting import (estimate_line_parameters, find_lines_derivative,
@@ -64,7 +66,9 @@ def test_find_lines_derivative():
     spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
 
     # Derivative method
-    lines = find_lines_derivative(spectrum, flux_threshold=0.75)
+    with pytest.warns(AstropyUserWarning,
+                      match='Spectrum is not below the threshold signal-to-noise'):
+        lines = find_lines_derivative(spectrum, flux_threshold=0.75)
 
     emission_lines = lines[lines['line_type'] == 'emission']
     absorption_lines = lines[lines['line_type'] == 'absorption']
@@ -82,7 +86,9 @@ def test_find_lines_threshold():
     # Derivative method
     noise_region = SpectralRegion(0*u.um, 3*u.um)
     spectrum = noise_region_uncertainty(spectrum, noise_region)
-    lines = find_lines_threshold(spectrum, noise_factor=3)
+    with pytest.warns(AstropyUserWarning,
+                      match='Spectrum is not below the threshold signal-to-noise'):
+        lines = find_lines_threshold(spectrum, noise_factor=3)
 
     emission_lines = lines[lines['line_type'] == 'emission']
     absorption_lines = lines[lines['line_type'] == 'absorption']
@@ -107,7 +113,6 @@ def test_single_peak_estimate():
     #
 
     g_init = estimate_line_parameters(s_single, models.Gaussian1D())
-
 
     assert np.isclose(g_init.amplitude.value, 3., rtol=.2)
     assert np.isclose(g_init.mean.value, 6.3, rtol=.1)
@@ -150,17 +155,10 @@ def test_single_peak_estimate():
     assert g_init.fwhm_L.unit == u.um
     assert g_init.fwhm_G.unit == u.um
 
-
     #
     # Estimate parameter RickerWavelet1D
     #
     mh = models.RickerWavelet1D
-    estimators = {
-        'amplitude': lambda s: max(s.flux),
-        'x_0': lambda s: centroid(s, region=None),
-        'sigma': lambda s: fwhm(s)
-    }
-    #mh._constraints['parameter_estimator'] = estimators
     mh.amplitude.estimator = lambda s: max(s.flux)
     mh.x_0.estimator = lambda s: centroid(s, region=None)
     mh.sigma.estimator = lambda s: fwhm(s)
@@ -417,7 +415,6 @@ def test_double_peak_fit_separate_window_tuple_window():
                                        1.03350951e-004, 1.02043415e-016, 2.11206194e-036, 9.16388177e-064,
                                        8.33495900e-099, 1.58920023e-141, 6.35191874e-192, 5.32209240e-250])
 
-
     assert np.allclose(y1_double_fit.value[::10], y1_double_fit_expected, atol=1e-5)
 
     # Comparing every 10th value.
@@ -609,11 +606,11 @@ def test_spectrum_from_model():
     chebyshev = models.Chebyshev1D(3, c0=0.1, c1=4, c2=5)
     spectrum_chebyshev = spectrum_from_model(chebyshev, spectrum)
 
-    flux_expected = np.array([-4.90000000e+00, -3.64760991e-01,  9.22085553e+00,  2.38568496e+01,
-                              4.35432211e+01,  6.82799702e+01,  9.80670968e+01,  1.32904601e+02,
-                              1.72792483e+02,  2.17730742e+02,  2.67719378e+02,  3.22758392e+02,
-                              3.82847784e+02,  4.47987553e+02,  5.18177700e+02,  5.93418224e+02,
-                              6.73709126e+02,  7.59050405e+02,  8.49442062e+02,  9.44884096e+02])
+    flux_expected = np.array([-4.90000000e+00, -3.64760991e-01, 9.22085553e+00, 2.38568496e+01,
+                              4.35432211e+01, 6.82799702e+01, 9.80670968e+01, 1.32904601e+02,
+                              1.72792483e+02, 2.17730742e+02, 2.67719378e+02, 3.22758392e+02,
+                              3.82847784e+02, 4.47987553e+02, 5.18177700e+02, 5.93418224e+02,
+                              6.73709126e+02, 7.59050405e+02, 8.49442062e+02, 9.44884096e+02])
 
     assert np.allclose(spectrum_chebyshev.flux.value[::10], flux_expected, atol=1e-5)
 
@@ -695,6 +692,7 @@ def test_fit_subspectrum():
 
     # Create model and git to spectrum
     g_init = models.Gaussian1D(amplitude=1*u.Jy, mean=6561.157*u.angstrom,
-                                stddev=4.0721*u.angstrom)
-    g_fit = fit_lines(sub_spectrum, g_init)
-    y_fit = g_fit(sub_spectrum.spectral_axis)
+                               stddev=4.0721*u.angstrom)
+    with pytest.warns(AstropyUserWarning, match='The fit may be unsuccessful'):
+        g_fit = fit_lines(sub_spectrum, g_init)
+    yfit = g_fit(sub_spectrum.spectral_axis)  # noqa

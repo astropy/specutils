@@ -1,4 +1,4 @@
-import logging
+import warnings
 
 import astropy.units as u
 import numpy as np
@@ -9,8 +9,6 @@ from .spectrum1d import Spectrum1D
 from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
-
-log = logging.getLogger(__name__)
 
 
 class SpectrumCollection(NDIOMixin):
@@ -83,8 +81,8 @@ class SpectrumCollection(NDIOMixin):
             # If the uncertainties are not provided a unit, raise a warning
             # and use the flux units
             if not isinstance(uncertainty, u.Quantity):
-                log.warning("No unit associated with uncertainty, assuming"
-                                "flux units of '{}'.".format(flux.unit))
+                warnings.warn("No unit associated with uncertainty, assuming"
+                              f"flux units of '{flux.unit}'.")
                 uncertainty = u.Quantity(uncertainty, unit=flux.unit)
 
             uncertainty = StdDevUncertainty(uncertainty)
@@ -140,14 +138,14 @@ class SpectrumCollection(NDIOMixin):
         # Check that the spectral parameters are the same for each input
         # spectral_axis and create the multi-dimensional SpectralCoord
         sa = [x.spectral_axis for x in spectra]
-        if not all(x.radial_velocity == sa[0].radial_velocity for x in sa) or \
-            not all(x.target == sa[0].target for x in sa) or \
-            not all(x.observer == sa[0].observer for x in sa) or \
-            not all(x.doppler_convention == sa[0].doppler_convention for
-                    x in sa) or \
-            not all(x.doppler_rest == sa[0].doppler_rest for x in sa):
-                raise ValueError("All input spectral_axis SpectralCoord "
-                                 "objects must have the same parameters.")
+        if (not all(x.radial_velocity == sa[0].radial_velocity for x in sa) or
+                not all(x.target == sa[0].target for x in sa) or
+                not all(x.observer == sa[0].observer for x in sa) or
+                not all(x.doppler_convention == sa[0].doppler_convention for
+                        x in sa) or
+                not all(x.doppler_rest == sa[0].doppler_rest for x in sa)):
+            raise ValueError("All input spectral_axis SpectralCoord "
+                             "objects must have the same parameters.")
         spectral_axis = SpectralCoord(sa,
                             radial_velocity=sa[0].radial_velocity,
                             doppler_rest=sa[0].doppler_rest,
@@ -158,30 +156,27 @@ class SpectrumCollection(NDIOMixin):
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
         # uncertainties.
-        if not all((x.uncertainty is None for x in spectra)) and \
-            any((x.uncertainty is not None for x in spectra)) and \
-            all((x.uncertainty.uncertainty_type ==
-                 spectra[0].uncertainty.uncertainty_type
-                 for x in spectra)):
-
+        if (not all((x.uncertainty is None for x in spectra)) and
+                any((x.uncertainty is not None for x in spectra)) and
+                all((x.uncertainty.uncertainty_type ==
+                     spectra[0].uncertainty.uncertainty_type
+                     for x in spectra))):
             quncs = u.Quantity([spec.uncertainty.quantity for spec in spectra])
             uncertainty = spectra[0].uncertainty.__class__(quncs)
         else:
             uncertainty = None
-
-            log.warning("Not all spectra have associated uncertainties of "
-                            "the same type, skipping uncertainties.")
+            warnings.warn("Not all spectra have associated uncertainties of "
+                          "the same type, skipping uncertainties.")
 
         # Check that either all spectra have associated masks, or that
         # none of them do. If only some do, log an error and ignore the masks.
-        if not all((x.mask is None for x in spectra)) and \
-            any((x.mask is not None for x in spectra)):
+        if (not all((x.mask is None for x in spectra)) and
+                any((x.mask is not None for x in spectra))):
             mask = np.array([spec.mask for spec in spectra])
         else:
             mask = None
-
-            log.warning("Not all spectra have associated masks, "
-                            "skipping masks.")
+            warnings.warn("Not all spectra have associated masks, "
+                          "skipping masks.")
 
         # Store the wcs and meta as lists
         wcs = [spec.wcs for spec in spectra]

@@ -72,11 +72,12 @@ def test_collection_without_optional_arguments():
         wcs=wcs, meta=meta)
 
     # Without meta
-    spec_coll = SpectrumCollection(
+    spec_coll = SpectrumCollection(  # noqa
         flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty,
         wcs=wcs, mask=mask)
 
 
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_spectrum1D():
     spec = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
                       redshift=0.1), flux=np.random.randn(50) * u.Jy,
@@ -97,6 +98,7 @@ def test_create_collection_from_spectrum1D():
     assert_allclose(spec_coll.spectral_axis.redshift.value, 0.1)
 
 
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_collections():
     spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
                       flux=np.random.randn(50) * u.Jy,
@@ -124,6 +126,8 @@ def test_create_collection_from_collections():
     assert spec.flux.unit == spec_coll.flux.unit
 
 
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated uncertainties of the same type')
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_spectra_without_uncertainties():
     spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
                       flux=np.random.randn(50) * u.Jy)
@@ -131,6 +135,7 @@ def test_create_collection_from_spectra_without_uncertainties():
                        flux=np.random.randn(50) * u.Jy)
 
     SpectrumCollection.from_spectra([spec, spec1])
+
 
 def test_mismatched_spectral_axes_parameters():
     spec = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
@@ -140,8 +145,9 @@ def test_mismatched_spectral_axes_parameters():
                        radial_velocity=u.Quantity(200.0, "km/s")),
                        flux=np.random.randn(50) * u.Jy)
 
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         SpectrumCollection.from_spectra([spec, spec1])
+
 
 @pytest.mark.parametrize('scshape,expected_len', [((5, 10), 5), ((4, 5, 10), 4)])
 def test_len(scshape, expected_len):

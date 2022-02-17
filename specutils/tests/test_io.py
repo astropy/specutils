@@ -74,6 +74,7 @@ def test_speclist_autoidentify():
     assert (formats['Auto-identify'] == 'Yes').all()
 
 
+@pytest.mark.filterwarnings(r'ignore:.*data loader provided for Spectrum1D without explicit identifier')
 def test_default_identifier(tmpdir):
 
     fname = str(tmpdir.join('empty.txt'))

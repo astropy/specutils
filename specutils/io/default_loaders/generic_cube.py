@@ -5,19 +5,12 @@
 #
 #  21-apr-2016  Peter Teuben    hackday at "SPECTROSCOPY TOOLS IN PYTHON WORKSHOP" STSCI
 
-import os
-import logging
-
 import numpy as np
-from astropy.io import fits
 from astropy.units import Unit
 from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
-
-log = logging.getLogger(__name__)
 
 
 # Define an optional identifier. If made specific enough, this circumvents the
@@ -30,7 +23,6 @@ def identify_generic_fits(origin, *args, **kwargs):
 # not yet ready because it's not generic enough and does not use column_mapping
 # @data_loader("Cube", identifier=identify_generic_fits, extensions=['fits'])
 def generic_fits(file_obj, **kwargs):
-    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
 
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
@@ -53,9 +45,9 @@ def generic_fits(file_obj, **kwargs):
             data = data3[:,:,iy,ix].squeeze()
             # make sure this is a 1D array
             # if len(data.shape) != 1:
-            #    raise Exception,"not a true cube"
+            #    raise Exception("not a true cube")
         else:
-            log.error("Unexpected shape %s.", shape)
+            raise ValueError(f"Unexpected shape {shape}.")
 
         # store some meta data
         meta = {'header': header}
@@ -65,7 +57,6 @@ def generic_fits(file_obj, **kwargs):
         # attach units (get it from header['BUNIT'] - what about 'JY/BEAM '
         #  NOTE:  astropy doesn't support beam, but see comments in radio_beam
         data = data * Unit("Jy")
-
 
         # now figure out the frequency axis....
         sp_axis = 3

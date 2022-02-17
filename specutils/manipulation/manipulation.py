@@ -4,7 +4,6 @@ spectra.
 """
 
 import copy
-import numpy as np
 import operator
 
 __all__ = ['snr_threshold']
@@ -52,7 +51,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
         raise Exception("S/N thresholding requires the uncertainty be defined.")
 
     if (op not in [operator.gt, operator.ge, operator.lt, operator.le] and
-        op not in operator_mapping.keys()):
+            op not in operator_mapping.keys()):
         raise ValueError('Threshold operator must be a string or operator that represents ' +
                          'greater-than, less-than, greater-than-or-equal or ' +
                          'less-than-or-equal')

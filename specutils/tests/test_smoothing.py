@@ -4,8 +4,6 @@ from astropy import convolution
 from scipy.signal import medfilt
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
-from ..spectra.spectrum1d import Spectrum1D
-from ..tests.spectral_examples import simulated_spectra
 
 from ..manipulation.smoothing import (convolution_smooth, box_smooth,
                                       gaussian_smooth, trapezoid_smooth,

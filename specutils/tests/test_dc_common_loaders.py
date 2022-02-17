@@ -1,12 +1,8 @@
-import pytest
-
-from astropy.nddata import (
-    VarianceUncertainty, StdDevUncertainty, InverseVariance,
-)
+from astropy.nddata import VarianceUncertainty, StdDevUncertainty
 import astropy.units as u
 
 from .conftest import remote_access
-from .. import Spectrum1D, SpectrumList
+from .. import SpectrumList
 from ..io.default_loaders import dc_common as loaders
 
 REMOTE_ID = "4059032"
@@ -64,7 +60,7 @@ GAMA_2SLAQ_QSO_CONFIG = {
     "valid_wcs": False,
 }
 GAMA_LT_CONFIG = {
-    "hdus": {"0": {"purpose": "science"},},
+    "hdus": {"0": {"purpose": "science"}, },
     "wcs": {
         "pixel_reference_point_keyword": "CRPIX",
         "pixel_reference_point_value_keyword": "CRVAL",
@@ -142,7 +138,6 @@ class TestSingleSplit:
         assert spectra[0].meta.get("label") is not None
         assert spectra[0].meta.get("header") is not None
 
-    @pytest.mark.xfail(reason="Format is ambiguous")
     @remote_access([{'id': "4460981", 'filename': WIGGLEZ_TEST_FILENAME}])
     def test_wigglez_guess(self, remote_data_path):
         spectra = SpectrumList.read(remote_data_path)
@@ -260,7 +255,6 @@ class TestSingleSplit:
         assert spectra[0].meta.get("header") is not None
 
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2QZ_TEST_FILENAME}])
-    @pytest.mark.xfail(reason="Format is ambiguous")
     def test_gama_2qz_guess(self, remote_data_path):
         spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 1
@@ -303,7 +297,6 @@ class TestSingleSplit:
         assert spectra[0].meta.get("header") is not None
 
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_2SLAQ_QSO_TEST_FILENAME}])
-    @pytest.mark.xfail(reason="Format is ambiguous")
     def test_2slaq_qso_normalised(self, remote_data_path):
         spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 1
@@ -347,7 +340,6 @@ class TestSingleSplit:
         assert spectra[0].meta.get("header") is not None
 
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_GAMA_LT_TEST_FILENAME}])
-    @pytest.mark.xfail(reason="Format is ambiguous")
     def test_gama_lt_guess(self, remote_data_path):
         spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 1
@@ -390,7 +382,6 @@ class TestSingleSplit:
         assert spectra[0].meta.get("header") is not None
 
     @remote_access([{'id': REMOTE_ID, 'filename': GAMA_WIGGLEZ_TEST_FILENAME}])
-    @pytest.mark.xfail(reason="Format is ambiguous")
     def test_gama_wigglez_guess(self, remote_data_path):
         spectra = SpectrumList.read(remote_data_path)
         assert len(spectra) == 1

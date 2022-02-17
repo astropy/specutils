@@ -353,6 +353,7 @@ def generate_s3d_wcs():
                 (world, None)]
     return WCS(pipeline)
 
+
 @pytest.fixture()
 def tmp_asdf(tmpdir):
     # Create some data
@@ -374,6 +375,7 @@ def tmp_asdf(tmpdir):
 
     yield tree
     tree = {}
+
 
 def create_image_hdu(name='SCI', data=None, shape=None, hdrs=[], ndim=3):
     """ Mock an Image HDU """

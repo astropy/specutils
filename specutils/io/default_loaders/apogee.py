@@ -5,10 +5,6 @@ Loader for APOGEE spectrum files: apVisit_, apStar_, aspcapStar_ files.
 .. _apStar: https://data.sdss.org/datamodel/files/APOGEE_REDUX/APRED_VERS/APSTAR_VERS/TELESCOPE/LOCATION_ID/apStar.html
 .. _aspcapStar: https://data.sdss.org/datamodel/files/APOGEE_REDUX/APRED_VERS/APSTAR_VERS/ASPCAP_VERS/RESULTS_VERS/LOCATION_ID/aspcapStar.html
 """
-import os
-
-from astropy.io import fits
-from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.units import Unit, def_unit
 from astropy.nddata import StdDevUncertainty

@@ -7,8 +7,6 @@ from astropy.modeling import models
 from astropy.nddata.nduncertainty import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from ..spectra import Spectrum1D, SpectralRegion
-
-
 from ..manipulation import noise_region_uncertainty
 
 
@@ -37,7 +35,7 @@ def test_noise_region_unc_multi():
 
     unc_spec = noise_region_uncertainty(nspec, multi_region)
 
-    assert quantity_allclose(unc_spec.uncertainty, 1*u.mJy, atol=.01) #this is a guess at the atol... need to finalize with real data
+    assert quantity_allclose(unc_spec.uncertainty, 1*u.mJy, atol=.01)  # this is a guess at the atol... need to finalize with real data
 
 
 def test_noise_estimate_uncertainty():
@@ -85,5 +83,5 @@ def test_noise_estimate_uncertainty():
     assert isinstance(spectrum_with_uncertainty.uncertainty, InverseVariance)
 
     # Now try with something that does not return Std, Var or IVar type of noise estimation
-    with pytest.raises(ValueError) as e_info:
-        spectrum_with_uncertainty = noise_region_uncertainty(spectrum, spectral_region, lambda x: np.std(x)**3)
+    with pytest.raises(ValueError):
+        noise_region_uncertainty(spectrum, spectral_region, lambda x: np.std(x)**3)

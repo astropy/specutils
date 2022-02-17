@@ -35,6 +35,7 @@ def _uncertainty_to_standard_deviation(uncertainty):
 
         return stddev
 
+
 def _normalize_for_template_matching(observed_spectrum, template_spectrum, stddev=None):
     """
     Calculate a scale factor to be applied to the template spectrum so the

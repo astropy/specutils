@@ -1,10 +1,7 @@
 from abc import ABC, abstractmethod
 
-from warnings import warn
-
 import numpy as np
-from astropy.nddata import StdDevUncertainty, VarianceUncertainty, \
-    InverseVariance
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from astropy.units import Quantity
 from scipy.interpolate import CubicSpline
 

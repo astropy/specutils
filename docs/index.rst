@@ -81,8 +81,11 @@ may have downloaded from some archive, or reduced from your own observations.
     Now maybe you want the equivalent width of a spectral line. That requires
     normalizing by a continuum estimate:
 
+    >>> import warnings
     >>> from specutils.fitting import fit_generic_continuum
-    >>> cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis) # doctest: +REMOTE_DATA
+    >>> with warnings.catch_warnings():  # Ignore warnings
+    ...     warnings.simplefilter('ignore')
+    ...     cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis) # doctest: +REMOTE_DATA
 
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.step(cont_norm_spec.wavelength, cont_norm_spec.flux)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA

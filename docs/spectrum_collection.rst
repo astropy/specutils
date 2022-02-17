@@ -49,17 +49,19 @@ a list of :class:`~specutils.Spectrum1D`:
 
 .. code:: python
 
-    >>> from specutils import Spectrum1D, SpectrumCollection
-    >>> import astropy.units as u
+    >>> import warnings
     >>> import numpy as np
+    >>> from astropy import units as u
+    >>> from specutils import Spectrum1D, SpectrumCollection
     >>> spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
     ...                   flux=np.random.randn(50) * u.Jy,
     ...                   uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-    >>> spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
-    ...                    flux=np.random.randn(50) * u.Jy,
-    ...                    uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-
-    >>> spec_coll = SpectrumCollection.from_spectra([spec, spec1])
+    >>> with warnings.catch_warnings():  # Ignore warnings
+    ...     warnings.simplefilter('ignore')
+    ...     spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+    ...                        flux=np.random.randn(50) * u.Jy,
+    ...                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+    ...     spec_coll = SpectrumCollection.from_spectra([spec, spec1])
 
     >>> spec_coll.shape
     (2,)
@@ -106,5 +108,4 @@ Reference/API
     :skip: test
     :skip: Spectrum1D
     :skip: SpectralRegion
-    :skip: UnsupportedPythonError
     :skip: SpectralAxis

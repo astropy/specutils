@@ -59,7 +59,7 @@ def test_slicing():
     assert np.allclose(sub_spec2.wavelength.value, np.array([10000., 20000., 30000., 40000.]))
 
     assert sub_spec2.frequency.unit == u.GHz
-    assert np.allclose(sub_spec2.frequency.value, np.array([299792.458, 149896.229,  99930.81933333,  74948.1145]))
+    assert np.allclose(sub_spec2.frequency.value, np.array([299792.458, 149896.229, 99930.81933333, 74948.1145]))
 
     # Going to repeat these to make sure the original spectrum was
     # not modified in some way

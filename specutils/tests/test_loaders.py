@@ -1,10 +1,8 @@
 import os
-import sys
 import shutil
 import tempfile
 import urllib
 import warnings
-import uuid
 import pytest
 
 import astropy.units as u
@@ -42,7 +40,6 @@ except ImportError:
 else:
     HAS_LZMA = True
 
-
 EBOSS_SPECTRUM_URL = 'https://data.sdss.org/sas/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/4055/spec-4055-55359-0596.fits'
 
 
@@ -63,7 +60,7 @@ def test_spectrum1d_GMOSfits(remote_data_path):
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
-def test_spectrumlist_GMOSfits(remote_data_path, caplog):
+def test_spectrumlist_GMOSfits(remote_data_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
         spectrum_list = SpectrumList.read(remote_data_path,
@@ -73,8 +70,6 @@ def test_spectrumlist_GMOSfits(remote_data_path, caplog):
 
     spec = spectrum_list[0]
     assert len(spec.data) == 3020
-
-    assert len(caplog.record_tuples) == 0
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
@@ -89,12 +84,10 @@ def test_specific_spec_axis_unit(remote_data_path):
 
 
 @remote_access([{'id': '2656720', 'filename': '_v1410ori_20181204_261_Forrest%20Sims.fit'}])
-def test_ctypye_not_compliant(remote_data_path, caplog):
-    optical_spec = Spectrum1D.read(remote_data_path,
+def test_ctypye_not_compliant(remote_data_path):
+    optical_spec = Spectrum1D.read(remote_data_path,  # noqa
                                    spectral_axis_unit="Angstrom",
                                    format='wcs1d-fits')
-
-    assert len(caplog.record_tuples) == 0
 
 
 def test_generic_ecsv_reader(tmpdir):
@@ -375,9 +368,11 @@ def test_no_reader_matches(name):
             fp.write('asdfadasdadvzxcv')
 
         with pytest.raises(IORegistryError):
-            spec = Spectrum1D.read(filename)
+            Spectrum1D.read(filename)
 
 
+@pytest.mark.filterwarnings('ignore:linear Solution')
+@pytest.mark.filterwarnings('ignore:Flux unit was not provided')
 @remote_access([{'id': '3359174', 'filename': 'linear_fits_solution.fits'}])
 def test_iraf_linear(remote_data_path):
 
@@ -391,6 +386,8 @@ def test_iraf_linear(remote_data_path):
                              u.Quantity(0.653432383823 * 100, unit='Angstrom'))
 
 
+@pytest.mark.filterwarnings('ignore:linear Solution')
+@pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
 @remote_access([{'id': '3359180', 'filename': 'log-linear_fits_solution.fits'}])
 def test_iraf_log_linear(remote_data_path):
 
@@ -398,6 +395,8 @@ def test_iraf_log_linear(remote_data_path):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
 
+@pytest.mark.filterwarnings('ignore:Flux unit was not provided')
+@pytest.mark.filterwarnings('ignore:Read spectral axis of shape')
 @remote_access([{'id': '3359190', 'filename': 'non-linear_fits_solution_cheb.fits'}])
 def test_iraf_non_linear_chebyshev(remote_data_path):
     chebyshev_model = models.Chebyshev1D(degree=2, domain=[1616, 3259])
@@ -419,6 +418,9 @@ def test_iraf_non_linear_chebyshev(remote_data_path):
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
 
+@pytest.mark.filterwarnings('ignore:Flux unit was not provided')
+@pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
+@pytest.mark.filterwarnings('ignore:Read spectral axis of shape')
 @remote_access([{'id': '3359194', 'filename': 'non-linear_fits_solution_legendre.fits'}])
 def test_iraf_non_linear_legendre(remote_data_path):
 
@@ -436,6 +438,7 @@ def test_iraf_non_linear_legendre(remote_data_path):
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
 
+@pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
 @remote_access([{'id': '3359196', 'filename': 'non-linear_fits_solution_linear-spline.fits'}])
 def test_iraf_non_linear_linear_spline(remote_data_path):
 
@@ -443,6 +446,7 @@ def test_iraf_non_linear_linear_spline(remote_data_path):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
 
+@pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
 @remote_access([{'id': '3359200', 'filename': 'non-linear_fits_solution_cubic-spline.fits'}])
 def test_iraf_non_linear_cubic_spline(remote_data_path):
 
@@ -450,6 +454,7 @@ def test_iraf_non_linear_cubic_spline(remote_data_path):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
 
+@pytest.mark.filterwarnings('ignore:Flux unit was not provided')
 @pytest.mark.remote_data
 def test_iraf_multispec_chebyshev():
     """Test loading of SpectrumCollection from IRAF MULTISPEC format FITS file -
@@ -469,6 +474,7 @@ def test_iraf_multispec_chebyshev():
     assert quantity_allclose(speccol[10].flux, spec10['flux'] * u.adu)
 
 
+@pytest.mark.filterwarnings('ignore:Flux unit was not provided')
 @pytest.mark.remote_data
 def test_iraf_multispec_legendre():
     """Test loading of SpectrumCollection from IRAF MULTISPEC format FITS file -
@@ -623,6 +629,7 @@ def test_tabular_fits_header(tmpdir):
     hdulist.close()
 
 
+@pytest.mark.filterwarnings("ignore:The unit 'Angstrom' has been deprecated")
 def test_tabular_fits_autowrite(tmpdir):
     """Test writing of Spectrum1D with automatic selection of BINTABLE format."""
     disp = np.linspace(1, 1.2, 21) * u.AA
@@ -735,6 +742,7 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     assert quantity_allclose(spec.flux, spectrum.flux)
 
 
+@pytest.mark.filterwarnings('ignore:Card is too long')
 @pytest.mark.parametrize("hdu", range(3))
 def test_wcs1d_fits_hdus(tmpdir, hdu):
     """Test writing of Spectrum1D in WCS1D format to different IMAGE_HDUs."""
@@ -920,6 +928,7 @@ def test_aspcapstar_loader():
     assert spec.uncertainty.array.min() >= 0.0
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @pytest.mark.remote_data
 def test_muscles_loader():
     """Test remote read and automatic recognition of muscles spec from URL.
@@ -935,9 +944,12 @@ def test_muscles_loader():
     assert spec.flux.unit == u.erg / (u.s * u.cm**2 * u.AA)
 
     # Read HDUList
-    hdulist = fits.open(url)
-    spec = Spectrum1D.read(hdulist, format="MUSCLES SED")
-    assert isinstance(spec, Spectrum1D)
+    try:
+        hdulist = fits.open(url)
+        spec = Spectrum1D.read(hdulist, format="MUSCLES SED")
+        assert isinstance(spec, Spectrum1D)
+    finally:
+        hdulist.close()
 
 
 @pytest.mark.remote_data
@@ -965,6 +977,7 @@ def test_subaru_pfs_loader(tmpdir):
     assert spec.flux.unit == u.nJy
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': '1D-c0022498-344732.fits'}])
 def test_spectrum1d_6dfgs_tabular(remote_data_path):
     spec = Spectrum1D.read(remote_data_path)
@@ -981,6 +994,7 @@ def test_spectrum1d_6dfgs_tabular(remote_data_path):
     hdulist.close()
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732v_spectrum0.fits'}])
 def test_spectrum1d_6dfgs_split_v(remote_data_path):
     spec = Spectrum1D.read(remote_data_path)
@@ -997,6 +1011,7 @@ def test_spectrum1d_6dfgs_split_v(remote_data_path):
     hdulist.close()
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732r_spectrum0.fits'}])
 def test_spectrum1d_6dfgs_split_r(remote_data_path):
     spec = Spectrum1D.read(remote_data_path)
@@ -1013,6 +1028,7 @@ def test_spectrum1d_6dfgs_split_r(remote_data_path):
     hdulist.close()
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732combined_spectrum0.fits'}])
 def test_spectrum1d_6dfgs_split_combined(remote_data_path):
     spec = Spectrum1D.read(remote_data_path)
@@ -1029,6 +1045,7 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
     hdulist.close()
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732.fits'}])
 def test_spectrum1d_6dfgs_combined(remote_data_path):
     specs = SpectrumList.read(remote_data_path)
@@ -1095,7 +1112,6 @@ def test_spectrum_list_2dfgrs_single(remote_data_path):
 
     for spec in specs:
         assert spec.spectral_axis.unit == u.Unit("Angstrom")
-
 
     # Read from HDUList object
     hdulist = fits.open(remote_data_path)
@@ -1190,8 +1206,8 @@ class TestAAOmega2dF:
 
 
 @remote_access([
-    {'id': "4460981", 'filename':"1812260046012353.fits"}, # 4 exts
-    {'id': "4460981", 'filename':"1311160005010021.fits"} # 5 exts
+    {'id': "4460981", 'filename':"1812260046012353.fits"},  # 4 exts
+    {'id': "4460981", 'filename':"1311160005010021.fits"}  # 5 exts
 ])
 def test_galah(remote_data_path):
     spectra = SpectrumList.read(remote_data_path, format="GALAH")
@@ -1205,7 +1221,7 @@ def test_galah(remote_data_path):
         assert False, "Unknown format"
     # normalised
     if nspec == 3:
-        assert spectra[0].flux.unit == u.Unit('') # dimensionless
+        assert spectra[0].flux.unit == u.Unit('')  # dimensionless
         assert spectra[0].spectral_axis.unit == u.Angstrom
         assert spectra[0].uncertainty is None
         assert spectra[0].meta.get("label") == "normalised spectra"
@@ -1229,10 +1245,9 @@ def test_galah(remote_data_path):
     assert spectra[1].meta.get("header") is not None
 
 
-@pytest.mark.xfail(reason="Format is ambiguous")
 @remote_access([
-    {'id': "4460981", 'filename':"1812260046012353.fits"}, # 4 exts
-    {'id': "4460981", 'filename':"1311160005010021.fits"} # 5 exts
+    {'id': "4460981", 'filename':"1812260046012353.fits"},  # 4 exts
+    {'id': "4460981", 'filename':"1311160005010021.fits"}  # 5 exts
 ])
 def test_galah_guess(remote_data_path):
     spectra = SpectrumList.read(remote_data_path)
@@ -1245,6 +1260,9 @@ def test_galah_guess(remote_data_path):
     else:
         assert False, "Unknown format"
 
+    if remote_data_path.endswith('1311160005010021.fits'):
+        pytest.xfail('Format is ambiguous')
+
     # main spectra
     assert spectra[0].flux.unit == u.count
     assert spectra[0].spectral_axis.unit == u.Angstrom
@@ -1254,7 +1272,7 @@ def test_galah_guess(remote_data_path):
 
     # normalised
     if nspec == 3:
-        assert spectra[1].flux.unit == u.Unit('') # dimensionless
+        assert spectra[1].flux.unit == u.Unit('')  # dimensionless
         assert spectra[1].spectral_axis.unit == u.Angstrom
         assert spectra[1].uncertainty is None
         assert spectra[1].meta.get("label") == "normalised spectra"
@@ -1275,6 +1293,9 @@ def test_galah_guess(remote_data_path):
         assert spectra[1].meta.get("header") is not None
 
 
+filename_list = ["bad_file.fits"]
+
+
 # We cannot use remote_access directly in the MIRI MRS tests, because
 # the test functions are called once for every file in the remote access
 # list, but we need to feed the entire set to the functions at once. We
@@ -1283,7 +1304,6 @@ def test_galah_guess(remote_data_path):
 #
 # MIRI MRS 1D data sets are comprised of 12 files.
 # We add one bad file to test the skip/warn on missing file functionality
-filename_list = ["bad_file.fits"]
 @remote_access([
     {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-long_x1d.fits'},
     {'id': '5082863', 'filename': 'combine_dithers_all_exposures_ch1-medium_x1d.fits'},
@@ -1303,8 +1323,9 @@ def test_loaddata_miri_mrs(remote_data_path):
 
 
 # loading from a list of file names
+@pytest.mark.filterwarnings(r'ignore:Failed to load bad_file\.fits')
 @pytest.mark.remote_data
-def test_spectrum_list_names_miri_mrs(caplog):
+def test_spectrum_list_names_miri_mrs():
 
     # Format is explicitly set
     with pytest.raises(FileNotFoundError):
@@ -1320,8 +1341,6 @@ def test_spectrum_list_names_miri_mrs(caplog):
 
     # Warn about missing file
     specs = SpectrumList.read(filename_list, format="JWST x1d MIRI MRS", missing='warn')
-
-    assert "Failed to load bad_file.fits: FileNotFoundError" in caplog.text
 
     assert len(specs) == 12
     for spec in specs:
@@ -1359,11 +1378,13 @@ def test_spectrum_list_directory_miri_mrs(tmpdir):
 
 # x1d and c1d assorted files
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
+@pytest.mark.filterwarnings('ignore:SRCTYPE is missing or UNKNOWN')
 @remote_access([
-    {'id': "5394931", 'filename':"jw00623-c1012_t002_miri_p750l_x1d.fits"},                  # pipeline 1.2.3
-    {'id': "5394931", 'filename':"jw00787-o014_s00002_niriss_f150w-gr150c-gr150r_c1d.fits"}, # pipeline 1.2.3
-    {'id': "5394931", 'filename':"jw00623-o057_t008_miri_ch1-long_x1d.fits"},                # pipeline 1.3.1
-    {'id': "5394931", 'filename':"jw00626-o064_t007_nirspec_g235h-f170lp_x1d.fits"},         # pipeline 1.3.1
+    {'id': "5394931", 'filename':"jw00623-c1012_t002_miri_p750l_x1d.fits"},                   # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00787-o014_s00002_niriss_f150w-gr150c-gr150r_c1d.fits"},  # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00623-o057_t008_miri_ch1-long_x1d.fits"},                 # pipeline 1.3.1
+    {'id': "5394931", 'filename':"jw00626-o064_t007_nirspec_g235h-f170lp_x1d.fits"},          # pipeline 1.3.1
 ])
 def test_jwst_x1d_c1d(remote_data_path):
 
@@ -1379,12 +1400,14 @@ def test_jwst_x1d_c1d(remote_data_path):
 def assert_multi_isinstance(a, b):
     assert isinstance(a, b)
 
+
 def assert_multi_equals(a, b):
     assert a == b
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([
-    {'id': "5394931", 'filename':"jw00624-o027_s00001_nircam_f356w-grismr_x1d.fits"}, # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00624-o027_s00001_nircam_f356w-grismr_x1d.fits"},  # pipeline 1.2.3
 ])
 def test_jwst_nircam_x1d_multi_v1_2_3(remote_data_path):
 
@@ -1398,8 +1421,9 @@ def test_jwst_nircam_x1d_multi_v1_2_3(remote_data_path):
     [assert_multi_equals(d.spectral_axis.unit, u.um) for d in data]
 
 
+@pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([
-    {'id': "5394931", 'filename':"jw00660-o016_s00002_nircam_f444w-grismr_x1d.fits"}, # pipeline 1.3.1
+    {'id': "5394931", 'filename':"jw00660-o016_s00002_nircam_f444w-grismr_x1d.fits"},  # pipeline 1.3.1
 ])
 def test_jwst_nircam_x1d_multi_v1_3_1(remote_data_path):
 
@@ -1414,7 +1438,7 @@ def test_jwst_nircam_x1d_multi_v1_3_1(remote_data_path):
 
 
 @remote_access([
-    {'id': "5394931", 'filename':"jw00776-o003_s00083_nircam_f322w2-grismr_c1d.fits"}, # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00776-o003_s00083_nircam_f322w2-grismr_c1d.fits"},  # pipeline 1.2.3
 ])
 def test_jwst_nircam_c1d_v1_2_3(remote_data_path):
 
@@ -1429,7 +1453,7 @@ def test_jwst_nircam_c1d_v1_2_3(remote_data_path):
 
 
 @remote_access([
-    {'id': "5394931", 'filename':"jw00625-o018_s00001_niriss_f090w-gr150c_c1d.fits"}, # pipeline 1.2.3
+    {'id': "5394931", 'filename':"jw00625-o018_s00001_niriss_f090w-gr150c_c1d.fits"},  # pipeline 1.2.3
 ])
 def test_jwst_niriss_c1d_v1_2_3(remote_data_path):
 

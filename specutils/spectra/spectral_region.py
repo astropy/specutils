@@ -1,7 +1,6 @@
 import itertools
 import sys
 
-import numpy as np
 import astropy.units as u
 
 

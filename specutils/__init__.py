@@ -10,25 +10,11 @@ from ._astropy_init import *   # noqa
 from astropy import config as _config
 # ----------------------------------------------------------------------------
 
-# Enforce Python version check during package import.
-# This is the same check as the one at the top of setup.py
-import sys
-
-__minimum_python_version__ = "3.5"
-
-
-class UnsupportedPythonError(Exception):
-    pass
-
-
-if sys.version_info < tuple((int(val) for val in __minimum_python_version__.split('.'))):
-    raise UnsupportedPythonError("packagename does not support Python < {}".format(__minimum_python_version__))
-
-if not _ASTROPY_SETUP_:
+if not _ASTROPY_SETUP_:  # noqa
     # For egg_info test builds to pass, put package imports here.
 
     # Allow loading spectrum object from top level module
-    from .spectra import *
+    from .spectra import *  # noqa
 
     # Load the IO functions
     from .io.default_loaders import *  # noqa
@@ -48,5 +34,6 @@ class Conf(_config.ConfigNamespace):
         'Whether to check the spectrum baseline value is close'
         'to zero. If it is not within ``threshold`` then a warning is raised.'
     )
+
 
 conf = Conf()

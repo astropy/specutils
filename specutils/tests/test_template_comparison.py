@@ -1,5 +1,6 @@
 import astropy.units as u
 import numpy as np
+import pytest
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
 from ..spectra.spectrum1d import Spectrum1D
@@ -29,13 +30,15 @@ def test_template_match_no_overlap():
 
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, spec1)
+    assert np.isnan(tm_result[3])
 
     # Create new spectrum for comparison
     spec_result = Spectrum1D(spectral_axis=spec_axis,
                              flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
-
-    # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    assert np.isnan(tm_result[3])
+    try:
+        assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
+    except AssertionError:
+        pytest.xfail('TODO: investigate why this is failing')
 
 
 def test_template_match_minimal_overlap():
@@ -62,14 +65,15 @@ def test_template_match_minimal_overlap():
 
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, spec1)
+    assert np.isnan(tm_result[3])
 
     # Create new spectrum for comparison
     spec_result = Spectrum1D(spectral_axis=spec_axis,
                              flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
-
-    # assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    # TODO: investigate why the all elements in tm_result[1] are NaN even with overlap
-    assert np.isnan(tm_result[3])
+    try:
+        assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
+    except AssertionError:
+        pytest.xfail('TODO: investigate why the all elements in tm_result[1] are NaN even with overlap')
 
 
 def test_template_match_spectrum():
@@ -161,6 +165,7 @@ def test_template_match_list():
     assert len(tm_result) == 5
 
 
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_template_match_spectrum_collection():
     """
     Test template_match when template spectra are in a SpectrumCollection object.
@@ -285,6 +290,7 @@ def test_template_redshift_with_one_template_spectrum_in_match():
     np.testing.assert_almost_equal(tm_result[3], 1.9062409482056814e-31)
 
 
+@pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_template_redshift_with_multiple_template_spectra_in_match():
     # Seed np.random so that results are consistent
     np.random.seed(42)

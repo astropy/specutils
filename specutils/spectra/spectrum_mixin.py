@@ -1,11 +1,9 @@
 from copy import deepcopy
-import logging
 
 import numpy as np
 import astropy.units.equivalencies as eq
 from astropy import units as u
-from astropy.utils.decorators import lazyproperty, deprecated
-from astropy.wcs.wcsapi import HighLevelWCSWrapper
+from astropy.utils.decorators import deprecated
 
 from specutils.utils.wcs_utils import gwcs_from_array
 
@@ -15,8 +13,6 @@ DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
 DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 __all__ = ['OneDSpectrumMixin']
-
-log = logging.getLogger(__name__)
 
 
 class OneDSpectrumMixin():
@@ -290,8 +286,7 @@ class OneDSpectrumMixin():
                 orig_unit, equivalencies=u.spectral()):
             return gwcs_from_array(self.spectral_axis), meta
 
-        log.error("WCS units incompatible: {} and {}.".format(
-            unit, orig_unit))
+        raise u.UnitConversionError(f"WCS units incompatible: {unit} and {orig_unit}.")
 
 
 class InplaceModificationMixin:

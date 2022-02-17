@@ -2,16 +2,16 @@ import pytest
 # Make sure these tests do not run if ASDF is not installed
 pytest.importorskip('asdf')
 
-import numpy as np
+import numpy as np  # noqa: E402
 
-import astropy.units as u
-from astropy.coordinates import FK5
-from astropy.nddata import StdDevUncertainty
+import astropy.units as u  # noqa: E402
+from astropy.coordinates import FK5  # noqa: E402
+from astropy.nddata import StdDevUncertainty  # noqa: E402
 
-from asdf.tests.helpers import assert_roundtrip_tree
-import asdf
+from asdf.tests.helpers import assert_roundtrip_tree  # noqa: E402
+import asdf  # noqa: E402
 
-from specutils import Spectrum1D, SpectrumList, SpectralAxis
+from specutils import Spectrum1D, SpectrumList, SpectralAxis  # noqa: E402
 
 
 def create_spectrum1d(xmin, xmax, uncertainty=None):
@@ -37,6 +37,7 @@ def test_asdf_spectrum1d_uncertainty(tmpdir):
     tree = dict(spectrum=spectrum)
     assert_roundtrip_tree(tree, tmpdir)
 
+
 @pytest.mark.xfail
 def test_asdf_spectralaxis(tmpdir):
 
@@ -44,6 +45,7 @@ def test_asdf_spectralaxis(tmpdir):
     spectral_axis = SpectralAxis(wavelengths, bin_specification="edges")
     tree = dict(spectral_axis=spectral_axis)
     assert_roundtrip_tree(tree, tmpdir)
+
 
 def test_asdf_spectrumlist(tmpdir):
 

@@ -315,5 +315,4 @@ Reference/API
     :skip: test
     :skip: Spectrum1D
     :skip: SpectrumCollection
-    :skip: UnsupportedPythonError
     :skip: SpectralAxis

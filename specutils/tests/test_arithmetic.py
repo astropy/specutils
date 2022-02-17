@@ -1,9 +1,7 @@
 import astropy.units as u
 import numpy as np
-import pytest
 
 from ..spectra.spectrum1d import Spectrum1D
-from .spectral_examples import simulated_spectra
 
 
 def test_spectral_axes():
@@ -91,7 +89,7 @@ def test_multiplication_basic_spectra(simulated_spectra):
 def test_add_diff_spectral_axis(simulated_spectra):
 
     # Calculate using the spectrum1d/nddata code
-    spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3
+    spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3  # noqa
 
 
 def test_masks(simulated_spectra):
@@ -116,4 +114,4 @@ def test_mask_nans():
 
     spec3 = spec1 + spec2
 
-    assert spec3.mask[nan_idx].all() == True
+    assert spec3.mask[nan_idx].all() == True  # noqa
