@@ -7,8 +7,6 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
-- Fixed cube transpose bug in moment analysis for non-square spatial arrays. [#912]
-
 - Fixed ``spectral_slab`` crashing when ``spectral_axis`` has unit of pixels and
   the bounds are also defined in the unit of pixels. [#926]
 
