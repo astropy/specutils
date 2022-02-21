@@ -1,4 +1,4 @@
-1.7.0 (unreleased)
+1.7.0 (2022-02-21)
 ------------------
 
 New Features
@@ -13,6 +13,9 @@ Bug Fixes
 - Fixed resulting ``spectral_axis`` containing NaN when a cube is passed into
   ``Spectrum1D`` without WCS nor spectral axis and the spatial-spatial dimension
   is smaller than spectral dimension. [#926]
+
+- Fixed WCS not accurately reflecting the updated spectral axis after slicing a 
+  ``Spectrum1D``. [#918]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
