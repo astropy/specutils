@@ -50,7 +50,7 @@ Regions can be sliced by indexing by an integer or by a range:
     ...      SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
     ...      SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
 
-    >>> # Get on spectral region (returns a SpectralRegion instance)
+    >>> # Get one spectral region (returns a SpectralRegion instance)
     >>> sone = sr1[0]
 
     >>> # Slice spectral region.
