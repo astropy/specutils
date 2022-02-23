@@ -96,7 +96,7 @@ of a spectrum.  Both are demonstrated below:
     <Quantity 4.97826284e-14 erg / (cm2 s)>
 
 These line_flux measurements also include uncertainties if the spectrum itself
-has uncertainties::
+has uncertainties:
 
 .. code-block:: python
 
