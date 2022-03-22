@@ -4,6 +4,7 @@ spectra.
 """
 
 import numpy as np
+from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
 
@@ -186,3 +187,26 @@ def _snr_derived(spectrum, region=None):
         return signal / noise
     else:
         return 0.0
+
+
+def _convert_uncertainty(uncertainty, to_class):
+    if isinstance(uncertainty, to_class):
+        return uncertainty.quantity
+
+    if isinstance(uncertainty, StdDevUncertainty):
+        variance = uncertainty.quantity ** 2
+    elif isinstance(uncertainty, VarianceUncertainty):
+        variance = uncertainty.quantity
+    elif isinstance(uncertainty, InverseVariance):
+        variance = 1/uncertainty.quantity
+    else:
+        raise ValueError("uncertainties only supported in StdDev, Variance, or InverseVariance")
+
+    if to_class == VarianceUncertainty:
+        return variance
+    elif to_class == InverseVariance:
+        return 1/variance
+    elif to_class == StdDevUncertainty:
+        return variance**0.5
+    else:
+        raise ValueError("to_class only supports StdDev, Variance, or InverseVariance")

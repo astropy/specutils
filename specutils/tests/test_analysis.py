@@ -467,6 +467,7 @@ def test_centroid(simulated_spectra):
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
+    assert hasattr(spec_centroid, 'uncertainty')
 
 
 def test_centroid_masked(simulated_spectra):

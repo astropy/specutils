@@ -6,11 +6,12 @@ import warnings
 from functools import wraps
 
 import numpy as np
-from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+from astropy.nddata import VarianceUncertainty
 
 from .. import conf
 from ..spectra import Spectrum1D
 from ..manipulation import extract_region, LinearInterpolatedResampler
+from .uncertainty import _convert_uncertainty
 from .utils import computation_wrapper
 import astropy.units as u
 from astropy.stats import mad_std
@@ -139,13 +140,9 @@ def _compute_line_flux(spectrum, regions=None,
     if calc_spectrum.uncertainty is not None:
         # Can't handle masks via interpolation here, since interpolators
         # only work with the flux array.
-        if isinstance(calc_spectrum.uncertainty, StdDevUncertainty):
-            variance_q = calc_spectrum.uncertainty.quantity ** 2
-        elif isinstance(calc_spectrum.uncertainty, VarianceUncertainty):
-            variance_q = calc_spectrum.uncertainty.quantity
-        elif isinstance(calc_spectrum.uncertainty, InverseVariance):
-            variance_q = 1/calc_spectrum.uncertainty.quantity
-        else:
+        try:
+            variance_q = _convert_uncertainty(calc_spectrum.uncertainty, VarianceUncertainty)
+        except ValueError:
             warnings.warn(f"Uncertainty type "
                           f"'{calc_spectrum.uncertainty.uncertainty_type}' "
                           f"was not recognized by line_flux. Proceeding "

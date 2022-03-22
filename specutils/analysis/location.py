@@ -4,9 +4,11 @@ spectral features.
 """
 
 import numpy as np
+from astropy.nddata import StdDevUncertainty
 
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
+from .uncertainty import _convert_uncertainty
 
 
 __all__ = ['centroid']
@@ -19,7 +21,9 @@ def centroid(spectrum, region):
     Parameters
     ----------
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
-        The spectrum object overwhich the centroid will be calculated.
+        The spectrum object overwhich the centroid will be calculated.  If the uncertainty
+        is populated, the returned quantity will include an uncertainty attribute with
+        the propagated uncertainty (in stddev).
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
@@ -53,8 +57,9 @@ def centroid(spectrum, region):
 
 def _centroid_single_region(spectrum, region=None):
     """
-    Calculate the centroid of the spectrum based on the flux and uncertainty
-    in the spectrum.
+    Calculate the centroid of the spectrum based on the flux in the spectrum.
+    The returned quantity object will have an uncertainty attribute which
+    will be populated if ``spectrum`` has uncertainties assigned.
 
     Parameters
     ----------
@@ -80,16 +85,49 @@ def _centroid_single_region(spectrum, region=None):
     else:
         calc_spectrum = spectrum
 
+    if spectrum.uncertainty is not None:
+        flux_uncert = _convert_uncertainty(calc_spectrum.uncertainty, StdDevUncertainty)
+    else:
+        # dummy value for uncertainties to avoid extra if-statements when applying mask
+        flux_uncert = np.zeros_like(spectrum.flux)
+
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         flux = calc_spectrum.flux[~calc_spectrum.mask]
         dispersion = calc_spectrum.spectral_axis[~calc_spectrum.mask].quantity
+        flux_uncert = flux_uncert[~calc_spectrum.mask]
     else:
         flux = calc_spectrum.flux
         dispersion = calc_spectrum.spectral_axis.quantity
 
-    if len(flux.shape) > 1:
+    if len(flux.shape) == 2:
         dispersion = np.tile(dispersion, [flux.shape[0], 1])
+    elif len(flux.shape) > 2:
+        raise ValueError("spectrum must be 1D or 2D")
+
+    # centroid is the flux-weighted mean of the dispersions, the uncertainties
+    # need to be scaled to the numerator/denominator, so we'll compute those in advance.
 
     # the axis=-1 will enable this to run on single-dispersion, single-flux
     # and single-dispersion, multiple-flux
-    return np.sum(flux * dispersion, axis=-1) / np.sum(flux, axis=-1)
+    numerator = np.sum(flux*dispersion, axis=-1)
+    denom = np.sum(flux, axis=-1)
+    centroid = numerator/denom
+
+    if spectrum.uncertainty is not None:
+        disp_uncert = 0.0 * dispersion.unit
+
+        # uncertainty for each flux*dispersion term, frationally added in quadrature
+        num_term_uncerts = flux*dispersion * np.sqrt((flux_uncert/flux)**2 +
+                                                     (disp_uncert/dispersion)**2)
+        # uncertainty for the numerator sum, added in quadrature
+        num_uncert = np.sqrt(np.sum(num_term_uncerts**2, axis=-1))
+        # uncertainty for the denom sum, added in quadrature
+        denom_uncert = np.sqrt(np.sum(flux_uncert**2, axis=-1))
+
+        # centroid uncertainty, fractional added in quadrature of numerator and denom
+        centroid.uncertainty = numerator/denom * np.sqrt((num_uncert/numerator)**2 +
+                                                         (denom_uncert/denom)**2)
+    else:
+        centroid.uncertainty = None
+
+    return centroid
