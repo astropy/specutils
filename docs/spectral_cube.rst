@@ -4,11 +4,11 @@ Working with Spectral Cubes
 
 Spectral cubes can be read directly with :class:`~specutils.Spectrum1D`.
 A specific example of this is demonstrated here. In addition to the functions
-demonstrated below, as a subclass of `NDCube <https://github.com/sunpy/ndcube>`_, 
-:class:`~specutils.Spectrum1D` also inherits useful methods for e.g. cropping 
-based on combinations of world and spectral coordinates. Most of the 
-functionality inherited from `~ndcube.NDCube` requires initializing the 
-``Spectrum1D`` object with a WCS describing the coordinates for all axes of 
+demonstrated below, as a subclass of `NDCube <https://github.com/sunpy/ndcube>`_,
+:class:`~specutils.Spectrum1D` also inherits useful methods for e.g. cropping
+based on combinations of world and spectral coordinates. Most of the
+functionality inherited from `~ndcube.NDCube` requires initializing the
+``Spectrum1D`` object with a WCS describing the coordinates for all axes of
 the data.
 
 Note that the workflow described here is for spectral cubes that are rectified
@@ -17,7 +17,7 @@ such that one of the axes is entirely spectral and all the spaxels have the same
 For less-rectified cubes, pre-processing steps (not addressed by specutils at the
 time of this writing) will be necessary to rectify the cubes into that form.
 Note, though, that such cubes can be stored in specutils data structures (cases
-3 and 4 in :ref:`specutils-representation-overview`), which support *some* of 
+3 and 4 in :ref:`specutils-representation-overview`), which support *some* of
 these behaviors, even though the fulkl set of tools do not yet apply.
 
 
@@ -194,8 +194,9 @@ cube, using `~specutils.manipulation.spectral_slab` and
     moment1_halpha = moment(subspec, order=1)
 
     # Convert moment1 from AA to velocity
-    # H-alpha is redshifted to 6750.5AA for this galaxy
-    vel_map = 3.0E5 * (moment1_halpha.value - 6750.5) / 6750.5
+    # H-alpha is redshifted to 6755 AA for this galaxy
+    print(moment1_halpha[40,40])
+    vel_map = 3.0E5 * (moment1_halpha.value - 6.755E-7) / 6.755E-7
 
     # Plot results in 3 panels (subspec_wide,  H-alpha line flux, H-alpha velocity map)
     f,(ax1,ax2,ax3) = plt.subplots(1, 3, figsize=(15, 5))
@@ -203,9 +204,9 @@ cube, using `~specutils.manipulation.spectral_slab` and
     ax1.set_xlabel('Angstrom', fontsize=14)
     ax1.set_ylabel('uJy', fontsize=14)
     ax1.tick_params(axis="both", which='major', labelsize=14, length=8, width=2, direction='in', top=True, right=True)
-    ax2.imshow(moment0_halpha.value)
+    ax2.imshow(moment0_halpha.value, origin='lower')
     ax2.set_title('moment = 0')
     ax2.set_xlabel('x pixels', fontsize=14)
-    ax3.imshow(vel_map, vmin=100., vmax=2000., cmap=plt.get_cmap('flag'))
+    ax3.imshow(vel_map, vmin=-100., vmax=100., cmap='rainbow', origin='lower')
     ax3.set_title('moment = 1')
     ax3.set_xlabel('x pixels', fontsize=14)
