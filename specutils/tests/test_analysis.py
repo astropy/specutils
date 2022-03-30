@@ -101,6 +101,7 @@ def test_equivalent_width():
     result = equivalent_width(spectrum)
 
     assert result.unit.is_equivalent(spectrum.wcs.unit, equivalencies=u.spectral())
+    assert hasattr(result, 'uncertainty')
 
     # Since this is an emission line, we expect the equivalent width value to
     # be negative
