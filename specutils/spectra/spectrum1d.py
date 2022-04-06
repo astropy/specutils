@@ -428,6 +428,34 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         return self.__class__(**alt_kwargs)
 
+    def with_spectral_unit(self, unit):
+        """
+        Returns a new spectrum with a different spectral axis unit.
+
+        Parameters
+        ----------
+        unit : `~astropy.units.Unit` or str
+            Any valid spectral unit: velocity, (wave)length, or frequency.
+            Only vacuum units are supported.
+
+        """
+        from .spectral_axis import new_spectral_wcs
+
+        newwcs, newmeta = new_spectral_wcs(self.wcs, unit, velocity_convention=self.velocity_convention,
+                                           rest_value=self.rest_value)
+        alt_kwargs = dict(
+            flux=deepcopy(self.flux),
+            spectral_axis=None,
+            uncertainty=deepcopy(self.uncertainty),
+            wcs=newwcs,
+            mask=deepcopy(self.mask),
+            meta=deepcopy(self.meta).update(newmeta),
+            unit=deepcopy(self.unit),
+            velocity_convention=deepcopy(self.velocity_convention),
+            rest_value=deepcopy(self.rest_value))
+
+        return self.__class__(**alt_kwargs)
+
     def _spectral_slice(self, item):
         """
         Perform a region extraction given a slice on the spectral axis.

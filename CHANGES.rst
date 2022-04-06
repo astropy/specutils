@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- New ``Spectrum1D.with_spectral_unit()`` to convert spectral axis unit
+  in a similar way as ``spectral-cube`` package. [#944]
+
 Bug Fixes
 ^^^^^^^^^
 

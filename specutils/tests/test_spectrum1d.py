@@ -6,6 +6,7 @@ import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 from astropy.wcs import WCS
+from astropy.tests.helper import assert_quantity_allclose
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
@@ -495,3 +496,23 @@ def test_collapse_flux():
     median_spec = spec.mean(axis = 0)
     assert isinstance(median_spec, Spectrum1D)
     assert np.all(median_spec.flux == [2, 8, 9] * u.Jy)
+
+
+def test_with_spectral_unit():
+    w = WCS({'WCSAXES': 3,
+             'CRPIX1': 21.299551407997, 'CRPIX2': 31.024649715622, 'CRPIX3': 1.0,
+             'CDELT1': -5.5555555555556e-05, 'CDELT2': 5.5555555555556e-05, 'CDELT3': 1.25,
+             'CUNIT1': 'deg', 'CUNIT2': 'deg', 'CUNIT3': 'Angstrom',
+             'CTYPE1': 'RA---TAN', 'CTYPE2': 'DEC--TAN', 'CTYPE3': 'AWAV',
+             'CRVAL1': 54.1925, 'CRVAL2': -35.99917, 'CRVAL3': 4749.931640624999,
+             'LONPOLE': 180.0, 'LATPOLE': -35.99917,
+             'CSYER1': 1.51033062781e-05, 'CSYER2': 5.76768648658e-06,
+             'MJDREF': 0.0, 'RADESYS': 'ICRS'})
+    with pytest.warns(UserWarning, match='Input WCS indicates that the spectral axis is not last'):
+        spec = Spectrum1D(flux=np.ones((10, 10, 10)) * u.nJy, wcs=w)
+    assert spec.spectral_axis.unit == u.m
+
+    with pytest.warns(UserWarning, match='Support for air wavelengths is experimental'):
+        newspec = spec.with_spectral_unit('Angstrom')
+    assert newspec.spectral_axis.unit == u.AA
+    assert_quantity_allclose(newspec.flux, spec.flux)
