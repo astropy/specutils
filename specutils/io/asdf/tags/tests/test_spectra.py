@@ -22,6 +22,7 @@ def create_spectrum1d(xmin, xmax, uncertainty=None):
                       uncertainty=uncertainty)
 
 
+@pytest.mark.filterwarnings('ignore:ASDF functionality for astropy is being moved out')
 def test_asdf_spectrum1d(tmpdir):
 
     spectrum = create_spectrum1d(5100, 5300)
@@ -30,6 +31,7 @@ def test_asdf_spectrum1d(tmpdir):
     assert_roundtrip_tree(tree, tmpdir)
 
 
+@pytest.mark.filterwarnings('ignore:ASDF functionality for astropy is being moved out')
 def test_asdf_spectrum1d_uncertainty(tmpdir):
 
     spectrum = create_spectrum1d(5100, 5300, uncertainty=True)
@@ -47,6 +49,7 @@ def test_asdf_spectralaxis(tmpdir):
     assert_roundtrip_tree(tree, tmpdir)
 
 
+@pytest.mark.filterwarnings('ignore:ASDF functionality for astropy is being moved out')
 def test_asdf_spectrumlist(tmpdir):
 
     spectra = SpectrumList([

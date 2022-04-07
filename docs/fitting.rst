@@ -191,7 +191,7 @@ attribute of the model's parameters:
    >>> ricker.x_0.estimator = lambda s: centroid(s, region=None)
    >>> ricker.sigma.estimator = lambda s: fwhm(s)
 
-   >>> print(estimate_line_parameters(spectrum, ricker))  # doctest:+FLOAT_CMP
+   >>> print(estimate_line_parameters(spectrum, ricker))  # doctest:+SKIP
    Model: RickerWavelet1D
    Inputs: ('x',)
    Outputs: ('y',)
