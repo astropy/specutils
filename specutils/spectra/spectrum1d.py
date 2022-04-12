@@ -595,12 +595,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         """
         return self.spectral_axis.redshift
 
-    @redshift.setter
-    def redshift(self, val):
-        new_spec_coord = self.spectral_axis.with_radial_velocity_shift(
-            -self.spectral_axis.radial_velocity).with_radial_velocity_shift(val)
-        self._spectral_axis = new_spec_coord
-
     @property
     def radial_velocity(self):
         """
@@ -613,15 +607,75 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         """
         return self.spectral_axis.radial_velocity
 
+    def set_redshift_to(self, redshift):
+        """
+        This sets the redshift of the spectrum to be `redshift` *without*
+        changing the values of the `spectral_axis`.
+
+        If you want to shift the `spectral_axis` based on this value, use
+        `shift_spectrum_to`.
+        """
+        new_spec_coord = self.spectral_axis.replicate(redshift=redshift)
+        self._spectral_axis = new_spec_coord
+
+    def set_radial_velocity_to(self, radial_velocity):
+        """
+        This sets the radial velocity of the spectrum to be `radial_velocity`
+        *without* changing the values of the `spectral_axis`.
+
+        If you want to shift the `spectral_axis` based on this value, use
+        `shift_spectrum_to`.
+        """
+        new_spec_coord = self.spectral_axis.replicate(
+            radial_velocity=radial_velocity
+        )
+        self._spectral_axis = new_spec_coord
+
+    def shift_spectrum_to(self, *, redshift=None, radial_velocity=None):
+        """
+        This shifts in-place the values of the `spectral_axis`, given either a
+        redshift or radial velocity.
+
+        If you do *not* want to change the `spectral_axis`, use
+        `set_redshift_to` or `set_radial_velocity_to`.
+        """
+        if redshift is not None and radial_velocity is not None:
+            raise ValueError(
+                "Only one of redshift or radial_velocity can be used."
+            )
+        if redshift is not None:
+            new_spec_coord = self.spectral_axis.with_radial_velocity_shift(
+                -self.spectral_axis.radial_velocity
+            ).with_radial_velocity_shift(redshift)
+            self._spectral_axis = new_spec_coord
+        elif radial_velocity is not None:
+            if radial_velocity is not None:
+                if not radial_velocity.unit.is_equivalent(u.km/u.s):
+                    raise u.UnitsError("Radial velocity must be a velocity.")
+
+            new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
+                -self.spectral_axis.radial_velocity
+            ).with_radial_velocity_shift(radial_velocity)
+            self._spectral_axis = new_spectral_axis
+        else:
+            raise ValueError("One of redshift or radial_velocity must be set.")
+
+    @redshift.setter
+    def redshift(self, val):
+        warnings.warn(
+            "Setting the redshift of a spectrum is ambiguous, use either "
+            "set_redshift_to or shift_spectrum_to to be explicit."
+        )
+        self.shift_spectrum_to(redshift=val)
+
     @radial_velocity.setter
     def radial_velocity(self, val):
-        if val is not None:
-            if not val.unit.is_equivalent(u.km/u.s):
-                raise u.UnitsError("Radial velocity must be a velocity.")
-
-        new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
-            -self.spectral_axis.radial_velocity).with_radial_velocity_shift(val)
-        self._spectral_axis = new_spectral_axis
+        warnings.warn(
+            "Setting the radial velocity of a spectrum is ambiguous, use "
+            "either set_radial_velocity_to or shift_spectrum_to to be "
+            "explicit."
+        )
+        self.shift_spectrum_to(radial_velocity=val)
 
     def __add__(self, other):
         if not isinstance(other, NDCube):
