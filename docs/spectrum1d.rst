@@ -133,6 +133,49 @@ however, specutils will recognize ``flux`` values input as ``NaN`` and set the
 mask to ``True`` for those values unless explicitly overridden.
 
 
+Including Redshift or Radial Velocity
+-------------------------------------
+
+The :class:`~specutils.Spectrum1D` class supports setting a redshift or radial
+velocity upon initialization of the object, as well as updating these values.
+The default value for redshift and radial velocity is zero - to create a
+:class:`~specutils.Spectrum1D` with a non-zero value, simply set the appropriate
+attribute on object creation:
+
+.. code-block:: python
+
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, redshift = 0.15)
+    >>> spec2 = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, radial_velocity = 1000*u.Unit("km/s"))
+
+By default, updating either the ``redshift`` or ``radial_velocity`` attributes
+of an existing :class:`~specutils.Spectrum1D` directly uses the
+:meth:`specutils.Spectrum1D.shift_spectrum_to` method, which also updates the
+values of the ``spectral_axis`` to match the new frame. To leave the
+``spectral_axis`` values unchanged while updating the ``redshift`` or
+``radial_velocity`` value, use the :meth:`specutils.Spectrum1D.set_redshift_to`
+or :meth:`specutils.Spectrum1D.set_radial_velocity_to` method as appropriate.
+An example of the different treatments of the ``spectral_axis`` is shown below.
+
+.. code-block:: python
+
+    >>> spec1.redshift = 0.5 #doctest:+IGNORE_WARNINGS
+    >>> spec1.spectral_axis
+    <SpectralAxis
+       (observer to target:
+          radial_velocity=115304.79153846155 km / s
+          redshift=0.5000000000000002)
+      [6521.73913043, 6523.04347826, 6524.34782609, 6525.65217391,
+       6526.95652174, 6528.26086957, 6529.56521739, 6530.86956522,
+       6532.17391304, 6533.47826087] Angstrom>
+    >>> spec2.set_radial_velocity_to(5000*u.Unit("km/s"))
+    >>> spec2.spectral_axis
+    <SpectralAxis
+       (observer to target:
+          radial_velocity=5000.0 km / s
+          redshift=0.016819635148755285)
+      [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
+
+
 Defining WCS
 ------------
 

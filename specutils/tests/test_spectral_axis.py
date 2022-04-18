@@ -130,7 +130,11 @@ def test_change_radial_velocity():
 
     assert spec.radial_velocity == 0 * u.km/u.s
 
-    spec.radial_velocity = 1 * u.km / u.s
+    with pytest.warns(
+        UserWarning,
+        match="Setting the radial velocity of a spectrum is ambiguous"
+    ):
+        spec.radial_velocity = 1 * u.km / u.s
 
     assert spec.radial_velocity == 1 * u.km/u.s
 
@@ -139,9 +143,25 @@ def test_change_radial_velocity():
 
     assert spec.radial_velocity == 10 * u.km / u.s
 
-    spec.radial_velocity = 5 * u.km / u.s
+    with pytest.warns(
+        UserWarning,
+        match="Setting the radial velocity of a spectrum is ambiguous"
+    ):
+        spec.radial_velocity = 5 * u.km / u.s
 
     assert spec.radial_velocity == 5 * u.km / u.s
+
+
+def test_no_change_radial_velocity():
+    wave = np.linspace(100, 200, 100) * u.AA
+    flux = np.ones(100) * u.one
+    spec = Spectrum1D(spectral_axis=wave, flux=flux,
+                      radial_velocity=0 * u.km / u.s)
+
+    assert spec.radial_velocity == 0 * u.km/u.s
+    spec.set_radial_velocity_to(10 * u.km/u.s)
+    assert spec.radial_velocity == 10 * u.km/u.s
+    assert_quantity_allclose(spec.wavelength, wave)
 
 
 def test_change_redshift():
@@ -153,7 +173,10 @@ def test_change_redshift():
     assert_quantity_allclose(spec.redshift, u.Quantity(0))
     assert type(spec.spectral_axis) == SpectralAxis
 
-    spec.redshift = 0.1
+    with pytest.warns(
+        UserWarning, match="Setting the redshift of a spectrum is ambiguous"
+    ):
+        spec.redshift = 0.1
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.1))
@@ -165,8 +188,29 @@ def test_change_redshift():
     assert_quantity_allclose(spec.redshift, u.Quantity(0.2))
     assert type(spec.spectral_axis) == SpectralAxis
 
-    spec.redshift = 0.4
+    with pytest.warns(
+        UserWarning, match="Setting the redshift of a spectrum is ambiguous"
+    ):
+        spec.redshift = 0.4
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.4))
     assert type(spec.spectral_axis) == SpectralAxis
+
+
+def test_no_change_redshift():
+    wave = np.linspace(100, 200, 100) * u.AA
+    flux = np.ones(100) * u.one
+    spec = Spectrum1D(spectral_axis=wave, flux=flux, redshift=0)
+
+    assert spec.redshift.unit.physical_type == 'dimensionless'
+    assert_quantity_allclose(spec.redshift, u.Quantity(0))
+    assert type(spec.spectral_axis) == SpectralAxis
+
+    spec.set_redshift_to(0.5)
+
+    assert spec.redshift.unit.physical_type == 'dimensionless'
+    assert_quantity_allclose(spec.redshift, u.Quantity(0.5))
+    assert type(spec.spectral_axis) == SpectralAxis
+
+    assert_quantity_allclose(spec.wavelength, wave)
