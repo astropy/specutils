@@ -21,9 +21,9 @@ def centroid(spectrum, region):
     Parameters
     ----------
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
-        The spectrum object overwhich the centroid will be calculated.  If the uncertainty
+        The spectrum object over which the centroid will be calculated.  If the uncertainty
         is populated, the returned quantity will include an uncertainty attribute with
-        the propagated uncertainty (in stddev).
+        the propagated uncertainty (as Standard Deviation-style uncertainties).
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
@@ -58,8 +58,8 @@ def centroid(spectrum, region):
 def _centroid_single_region(spectrum, region=None):
     """
     Calculate the centroid of the spectrum based on the flux in the spectrum.
-    The returned quantity object will have an uncertainty attribute which
-    will be populated if ``spectrum`` has uncertainties assigned.
+    The returned quantity object will have a ``.uncertainty`` attribute which
+    will be populated if ``spectrum`` has uncertainties assigned, or ``None`` if not.
 
     Parameters
     ----------
