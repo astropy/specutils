@@ -175,6 +175,7 @@ An example of the different treatments of the ``spectral_axis`` is shown below.
           redshift=0.016819635148755285)
       [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
 
+.. _spectrum1d-defining-wcs:
 
 Defining WCS
 ------------
