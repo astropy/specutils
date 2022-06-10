@@ -23,7 +23,8 @@ def centroid(spectrum, region):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object over which the centroid will be calculated.  If the uncertainty
         is populated, the returned quantity will include an uncertainty attribute with
-        the propagated uncertainty (as Standard Deviation-style uncertainties).
+        the propagated uncertainty (as Standard Deviation-style uncertainties).  This uncertainty
+        assumes the input uncertainties are uncorrelated.
 
     region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
@@ -116,17 +117,17 @@ def _centroid_single_region(spectrum, region=None):
     if spectrum.uncertainty is not None:
         disp_uncert = 0.0 * dispersion.unit
 
-        # uncertainty for each flux*dispersion term, frationally added in quadrature
+        # uncertainty for each flux*dispersion term, fractionally added in quadrature
         num_term_uncerts = flux*dispersion * np.sqrt((flux_uncert/flux)**2 +
                                                      (disp_uncert/dispersion)**2)
         # uncertainty for the numerator sum, added in quadrature
-        num_uncert = np.sqrt(np.sum(num_term_uncerts**2, axis=-1))
+        num_uncertsq = np.sum(num_term_uncerts**2, axis=-1)
         # uncertainty for the denom sum, added in quadrature
-        denom_uncert = np.sqrt(np.sum(flux_uncert**2, axis=-1))
+        denom_uncertsq = np.sum(flux_uncert**2, axis=-1)
 
-        # centroid uncertainty, fractional added in quadrature of numerator and denom
-        centroid.uncertainty = numerator/denom * np.sqrt((num_uncert/numerator)**2 +
-                                                         (denom_uncert/denom)**2)
+        # centroid uncertainty, fractionally added in quadrature of numerator and denom
+        centroid.uncertainty = numerator/denom * np.sqrt(num_uncertsq * numerator**-2 +
+                                                         denom_uncertsq * denom**-2)
     else:
         centroid.uncertainty = None
 
