@@ -193,7 +193,17 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     dx = np.abs(np.diff(spectrum.spectral_axis.bin_edges))
     ew = np.sum((1 - line_flux / cont_flux) * dx)
 
-    return ew.to(spectrum.spectral_axis.unit)
+    # NOTE: uncertainty gets lost during unit translation, so we have to convert first
+    ew = ew.to(spectrum.spectral_axis.unit)
+    if line_flux.uncertainty is not None:
+        # continuum has no uncertainty, here we assume no uncertainty on the bin edges (dx) as well
+        # we need to add the line_flux uncertainties in quadrature for the sum above (which was
+        # summed over the length of dx)
+        ew.uncertainty = np.sqrt((line_flux.uncertainty.value**2)*len(dx)) * dx.unit
+    else:
+        ew.uncertainty = None
+
+    return ew
 
 
 def is_continuum_below_threshold(spectrum, threshold=0.01):
