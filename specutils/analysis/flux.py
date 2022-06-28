@@ -136,6 +136,7 @@ def _compute_line_flux(spectrum, regions=None,
     line_flux = np.sum(flux * dx)
 
     line_flux.uncertainty = None
+    line_flux.uncertainty_type = 'stddev'
 
     if calc_spectrum.uncertainty is not None:
         # Can't handle masks via interpolation here, since interpolators
@@ -200,6 +201,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     else:
         ew.uncertainty = None
 
+    ew.uncertainty_type = 'stddev'
     return ew
 
 

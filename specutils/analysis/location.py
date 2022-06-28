@@ -131,4 +131,5 @@ def _centroid_single_region(spectrum, region=None):
     else:
         centroid.uncertainty = None
 
+    centroid.uncertainty_type = 'stddev'
     return centroid
