@@ -14,7 +14,7 @@ from .uncertainty import _convert_uncertainty
 __all__ = ['centroid']
 
 
-def centroid(spectrum, region):
+def centroid(spectrum, regions=None):
     """
     Calculate the centroid of a region, or regions, of the spectrum.
 
@@ -26,7 +26,7 @@ def centroid(spectrum, region):
         the propagated uncertainty (as Standard Deviation-style uncertainties).  This uncertainty
         assumes the input uncertainties are uncorrelated.
 
-    region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
 
     Returns
@@ -43,17 +43,17 @@ def centroid(spectrum, region):
     """
 
     # No region, therefore whole spectrum.
-    if region is None:
+    if regions is None:
         return _centroid_single_region(spectrum)
 
     # Single region
-    elif isinstance(region, SpectralRegion):
-        return _centroid_single_region(spectrum, region=region)
+    elif isinstance(regions, SpectralRegion):
+        return _centroid_single_region(spectrum, region=regions)
 
     # List of regions
-    elif isinstance(region, list):
+    elif isinstance(regions, list):
         return [_centroid_single_region(spectrum, region=reg)
-                for reg in region]
+                for reg in regions]
 
 
 def _centroid_single_region(spectrum, region=None):

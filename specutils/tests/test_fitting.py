@@ -160,8 +160,8 @@ def test_single_peak_estimate():
     #
     mh = models.RickerWavelet1D
     mh.amplitude.estimator = lambda s: max(s.flux)
-    mh.x_0.estimator = lambda s: centroid(s, region=None)
-    mh.sigma.estimator = lambda s: fwhm(s)
+    mh.x_0.estimator = lambda s, region: centroid(s, regions=region)
+    mh.sigma.estimator = lambda s, regions: fwhm(s, regions)
 
     g_init = estimate_line_parameters(s_single, mh)
 

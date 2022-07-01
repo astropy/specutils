@@ -27,19 +27,19 @@ __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
 _parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
-        'mean': lambda s: centroid(s, region=None),
-        'stddev': lambda s: gaussian_sigma_width(s)
+        'mean': lambda s, region: centroid(s, regions=region),
+        'stddev': lambda s, region: gaussian_sigma_width(s, regions=region)
     },
     'Lorentz1D': {
         'amplitude': lambda s: max(s.flux),
-        'x_0': lambda s: centroid(s, region=None),
-        'fwhm': lambda s: fwhm(s)
+        'x_0': lambda s, region: centroid(s, regions=region),
+        'fwhm': lambda s, region: fwhm(s, regions=region)
     },
     'Voigt1D': {
-        'x_0': lambda s: centroid(s, region=None),
+        'x_0': lambda s, region: centroid(s, regions=region),
         'amplitude_L': lambda s: max(s.flux),
-        'fwhm_L': lambda s: fwhm(s) / np.sqrt(2),
-        'fwhm_G': lambda s: fwhm(s) / np.sqrt(2)
+        'fwhm_L': lambda s, region: fwhm(s, regions=region) / np.sqrt(2),
+        'fwhm_G': lambda s, region: fwhm(s, regions=region) / np.sqrt(2)
     }
 }
 
@@ -57,7 +57,7 @@ def _set_parameter_estimators(model):
     return model
 
 
-def estimate_line_parameters(spectrum, model):
+def estimate_line_parameters(spectrum, model, region=None):
     """
     The input ``model`` parameters will be estimated from the input
     ``spectrum``. The ``model`` can be specified with default parameters, for
@@ -84,7 +84,13 @@ def estimate_line_parameters(spectrum, model):
         par = getattr(model, name)
         try:
             estimator = getattr(par, "estimator")
-            setattr(model, name, estimator(spectrum))
+            print(name, name[0:9])
+            if name[:9] == "amplitude":
+                print("Found an amplitude")
+                setattr(model, name, estimator(spectrum))
+            else:
+                print(estimator)
+                setattr(model, name, estimator(spectrum, region))
         except AttributeError:
             raise Exception('No method to estimate parameter {}'.format(name))
 
