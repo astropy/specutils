@@ -489,7 +489,11 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     fit_model = fitter(model, dispersion,
                        flux, weights=weights, **kwargs)
-    fit_model.meta['fit_info'] = fitter.fit_info
+    try:
+        fit_model.meta['fit_info'] = fitter.fit_info
+    except AttributeError:
+        # People may use non-default fitters that don't have fit_info
+        pass
 
     if not model._supports_unit_fitting:
         fit_model = QuantityModel(fit_model,
