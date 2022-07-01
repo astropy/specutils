@@ -84,12 +84,9 @@ def estimate_line_parameters(spectrum, model, region=None):
         par = getattr(model, name)
         try:
             estimator = getattr(par, "estimator")
-            print(name, name[0:9])
             if name[:9] == "amplitude":
-                print("Found an amplitude")
                 setattr(model, name, estimator(spectrum))
             else:
-                print(estimator)
                 setattr(model, name, estimator(spectrum, region))
         except AttributeError:
             raise Exception('No method to estimate parameter {}'.format(name))
@@ -492,6 +489,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     fit_model = fitter(model, dispersion,
                        flux, weights=weights, **kwargs)
+    fit_model.meta['fit_info'] = fitter.fit_info
 
     if not model._supports_unit_fitting:
         fit_model = QuantityModel(fit_model,
