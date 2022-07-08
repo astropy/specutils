@@ -360,7 +360,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     return fitted_models
 
 
-def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
+def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
                exclude_regions=None, weights=None, window=None,
                ignore_units=False, **kwargs):
     """
@@ -489,11 +489,12 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     fit_model = fitter(model, dispersion,
                        flux, weights=weights, **kwargs)
-    try:
+
+    if hasattr(fitter, 'fit_info'):
         fit_model.meta['fit_info'] = fitter.fit_info
-    except AttributeError:
-        # People may use non-default fitters that don't have fit_info
-        pass
+        if 'param_cov' in fitter.fit_info:
+            # For some reason this isn't getting triggered in the fitter superclass
+            fitter._add_fitting_uncertainties(fit_model, fitter.fit_info['param_cov'])
 
     if not model._supports_unit_fitting:
         fit_model = QuantityModel(fit_model,
