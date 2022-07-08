@@ -256,7 +256,7 @@ def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
     return qtable
 
 
-def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
+def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
               exclude_regions=None, weights=None, window=None,
               **kwargs):
     """
@@ -492,9 +492,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
 
     if hasattr(fitter, 'fit_info'):
         fit_model.meta['fit_info'] = fitter.fit_info
-        if 'param_cov' in fitter.fit_info:
-            # For some reason this isn't getting triggered in the fitter superclass
-            fitter._add_fitting_uncertainties(fit_model, fitter.fit_info['param_cov'])
 
     if not model._supports_unit_fitting:
         fit_model = QuantityModel(fit_model,
