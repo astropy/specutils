@@ -257,7 +257,7 @@ def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
-              exclude_regions=None, weights=None, window=None,
+              exclude_regions=None, weights=None, window=None, get_fit_info=False,
               **kwargs):
     """
     Fit the input models to the spectrum. The parameter values of the
@@ -348,7 +348,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
-                               ignore_units, **kwargs)
+                               ignore_units, get_fit_info, **kwargs)
         if model_guess.name is not None:
             fit_model.name = model_guess.name
 
@@ -361,7 +361,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
-               exclude_regions=None, weights=None, window=None,
+               exclude_regions=None, weights=None, window=None, get_fit_info=False,
                ignore_units=False, **kwargs):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
@@ -490,7 +490,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
     fit_model = fitter(model, dispersion,
                        flux, weights=weights, **kwargs)
 
-    if hasattr(fitter, 'fit_info'):
+    if hasattr(fitter, 'fit_info') and get_fit_info:
         fit_model.meta['fit_info'] = fitter.fit_info
 
     if not model._supports_unit_fitting:
