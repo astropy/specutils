@@ -281,7 +281,11 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
         itself.
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
-        whole spectrum will be used in the fitting.
+        whole spectrum will be used in the fitting.\
+    get_fit_info : bool, optional
+        Flag to return the ``fit_info`` from the underlying scipy optimizer used
+        in the fitting. If True, the returned model will have a ``fit_info``
+        key populated in its ``meta`` dictionary.
     Additional keyword arguments are passed directly into the call to the
     ``fitter``.
 
