@@ -196,6 +196,7 @@ def test_single_peak_fit():
                2.88900005e-01, 6.24602556e-02, 9.22061121e-03, 9.29427266e-04]) * u.Jy
 
     assert np.allclose(y_single_fit.value[::10], y_single_fit_expected.value, atol=1e-5)
+    assert np.allclose(list(g_fit.stds), [0.04627, 0.01427, 0.01427], rtol=0.05)
 
 
 def test_single_peak_fit_with_uncertainties():
