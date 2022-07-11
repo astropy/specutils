@@ -215,6 +215,19 @@ each parameter, but that is optional.
   A method to make plausible initial guesses will be provided in a future
   version, but user defined initial guesses are required at present.
 
+The `~specutils.fitting.fit_lines` function takes as input the spectrum to be fit
+and the set of models with initial guesses, and by default uses the
+`~astropy.modeling.fitting.LevMarLSQFitter` to perform the fit. You may override
+this by providing a different fitter to the ``fitter`` input parameter.  Note
+that the default fitter will populate the ``stds`` attribute of the returned
+models with estimates of the standard deviation uncertainty in the fit parameters,
+and that this may not be populated for user-defined non-default fitters. 
+
+You can also retrieve the covariance matrices and other fit information from
+which the uncertainties are calculated by setting ``get_fit_info=True`` in the
+the call to `~specutils.fitting.fit_lines`. This will populate ``fit_info``
+in the ``meta`` dictionary attached to the returned fitted model.
+
 Below are a series of examples of this sort of fitting.
 
 

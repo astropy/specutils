@@ -27,19 +27,19 @@ __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
 _parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
-        'mean': lambda s: centroid(s, region=None),
-        'stddev': lambda s: gaussian_sigma_width(s)
+        'mean': lambda s, region: centroid(s, regions=region),
+        'stddev': lambda s, region: gaussian_sigma_width(s, regions=region)
     },
     'Lorentz1D': {
         'amplitude': lambda s: max(s.flux),
-        'x_0': lambda s: centroid(s, region=None),
-        'fwhm': lambda s: fwhm(s)
+        'x_0': lambda s, region: centroid(s, regions=region),
+        'fwhm': lambda s, region: fwhm(s, regions=region)
     },
     'Voigt1D': {
-        'x_0': lambda s: centroid(s, region=None),
+        'x_0': lambda s, region: centroid(s, regions=region),
         'amplitude_L': lambda s: max(s.flux),
-        'fwhm_L': lambda s: fwhm(s) / np.sqrt(2),
-        'fwhm_G': lambda s: fwhm(s) / np.sqrt(2)
+        'fwhm_L': lambda s, region: fwhm(s, regions=region) / np.sqrt(2),
+        'fwhm_G': lambda s, region: fwhm(s, regions=region) / np.sqrt(2)
     }
 }
 
@@ -57,7 +57,7 @@ def _set_parameter_estimators(model):
     return model
 
 
-def estimate_line_parameters(spectrum, model):
+def estimate_line_parameters(spectrum, model, region=None):
     """
     The input ``model`` parameters will be estimated from the input
     ``spectrum``. The ``model`` can be specified with default parameters, for
@@ -84,7 +84,10 @@ def estimate_line_parameters(spectrum, model):
         par = getattr(model, name)
         try:
             estimator = getattr(par, "estimator")
-            setattr(model, name, estimator(spectrum))
+            if name[:9] == "amplitude":
+                setattr(model, name, estimator(spectrum))
+            else:
+                setattr(model, name, estimator(spectrum, region))
         except AttributeError:
             raise Exception('No method to estimate parameter {}'.format(name))
 
@@ -253,8 +256,8 @@ def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
     return qtable
 
 
-def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-              exclude_regions=None, weights=None, window=None,
+def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
+              exclude_regions=None, weights=None, window=None, get_fit_info=False,
               **kwargs):
     """
     Fit the input models to the spectrum. The parameter values of the
@@ -278,7 +281,11 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
         itself.
     window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Regions of the spectrum to use in the fitting. If None, then the
-        whole spectrum will be used in the fitting.
+        whole spectrum will be used in the fitting.\
+    get_fit_info : bool, optional
+        Flag to return the ``fit_info`` from the underlying scipy optimizer used
+        in the fitting. If True, the returned model will have a ``fit_info``
+        key populated in its ``meta`` dictionary.
     Additional keyword arguments are passed directly into the call to the
     ``fitter``.
 
@@ -345,7 +352,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
         fit_model = _fit_lines(spectrum, model_guess, fitter,
                                exclude_regions, weights, model_window,
-                               ignore_units, **kwargs)
+                               ignore_units, get_fit_info, **kwargs)
         if model_guess.name is not None:
             fit_model.name = model_guess.name
 
@@ -357,8 +364,8 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
     return fitted_models
 
 
-def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
-               exclude_regions=None, weights=None, window=None,
+def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
+               exclude_regions=None, weights=None, window=None, get_fit_info=False,
                ignore_units=False, **kwargs):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
@@ -486,6 +493,9 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(),
 
     fit_model = fitter(model, dispersion,
                        flux, weights=weights, **kwargs)
+
+    if hasattr(fitter, 'fit_info') and get_fit_info:
+        fit_model.meta['fit_info'] = fitter.fit_info
 
     if not model._supports_unit_fitting:
         fit_model = QuantityModel(fit_model,
