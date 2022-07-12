@@ -2,9 +2,11 @@
 A module for analysis tools focused on determining the location of
 spectral features.
 """
+import warnings
 
 import numpy as np
 from astropy.nddata import StdDevUncertainty
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
