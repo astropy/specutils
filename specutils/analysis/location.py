@@ -2,9 +2,11 @@
 A module for analysis tools focused on determining the location of
 spectral features.
 """
+import warnings
 
 import numpy as np
 from astropy.nddata import StdDevUncertainty
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
@@ -14,7 +16,7 @@ from .uncertainty import _convert_uncertainty
 __all__ = ['centroid']
 
 
-def centroid(spectrum, regions=None):
+def centroid(spectrum, regions=None, region=None):
     """
     Calculate the centroid of a region, or regions, of the spectrum.
 
@@ -41,6 +43,12 @@ def centroid(spectrum, regions=None):
     `analysis documentation <https://specutils.readthedocs.io/en/latest/analysis.html>`_ for more information.
 
     """
+
+    if region is not None:
+        regions = region
+        warnings.warn("The 'region' keyword has been deprecated in favor "
+                      "of 'regions' since specutils 1.8 and will be removed "
+                      "in a future release.", AstropyDeprecationWarning)
 
     # No region, therefore whole spectrum.
     if regions is None:
