@@ -469,6 +469,7 @@ def test_centroid(simulated_spectra):
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
     assert hasattr(spec_centroid, 'uncertainty')
+    # NOTE: value has not been scientifically validated
     assert quantity_allclose(spec_centroid.uncertainty, 3.91834165e-06*u.um, rtol=5e-5)
 
 
@@ -557,14 +558,19 @@ def test_gaussian_sigma_width():
 
     # Create a (centered) gaussian spectrum for testing
     mean = 5
-    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    frequencies = np.linspace(0, mean*2, 101)[1:] * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
 
     result = gaussian_sigma_width(spectrum)
 
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
+    assert hasattr(result, 'uncertainty')
+    # NOTE: value has not been scientifically validated!
+    assert quantity_allclose(result.uncertainty, 4.8190546890398186e-05*u.GHz, rtol=5e-5)
 
 
 def test_gaussian_sigma_width_masked():
@@ -573,7 +579,7 @@ def test_gaussian_sigma_width_masked():
 
     # Create a (centered) gaussian masked spectrum for testing
     mean = 5
-    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    frequencies = np.linspace(0, mean*2, 101)[1:] * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
 
@@ -585,13 +591,16 @@ def test_gaussian_sigma_width_masked():
     result = gaussian_sigma_width(spectrum)
 
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
+    assert hasattr(result, 'uncertainty')
+    # NOTE: value has not been scientifically validated!
+    assert quantity_allclose(result.uncertainty, 0.06852821940808544*u.GHz, rtol=5e-5)
 
 
 def test_gaussian_sigma_width_regions():
 
     np.random.seed(42)
 
-    frequencies = np.linspace(100, 0, 10000) * u.GHz
+    frequencies = np.linspace(100, 0, 10000)[:-1] * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
@@ -654,15 +663,20 @@ def test_gaussian_fwhm():
 
     # Create a (centered) gaussian spectrum for testing
     mean = 5
-    frequencies = np.linspace(0, mean*2, 100) * u.GHz
+    frequencies = np.linspace(0, mean*2, 101)[1:] * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
 
     result = gaussian_fwhm(spectrum)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+    assert hasattr(result, 'uncertainty')
+    # NOTE: value has not been scientifically validated!
+    assert quantity_allclose(result.uncertainty, 0.00011348006579851353*u.GHz, rtol=5e-5)
 
 
 def test_gaussian_fwhm_masked():
@@ -684,6 +698,9 @@ def test_gaussian_fwhm_masked():
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
+    assert hasattr(result, 'uncertainty')
+    # NOTE: value has not been scientifically validated!
+    assert quantity_allclose(result.uncertainty, 0.16688079501948674*u.GHz, rtol=5e-5)
 
 
 @pytest.mark.parametrize('mean', range(3, 8))
@@ -795,7 +812,6 @@ def test_fwhm():
 
     spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
-
     assert quantity_allclose(result, 1.01 * u.um)
 
     # Highest point at the last point
