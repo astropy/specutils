@@ -1016,12 +1016,10 @@ def test_moment_cube():
     assert quantity_allclose(moment_1, frequencies, rtol=1.E-5)
 
     # higher order
-    # FIXME: operands could not be broadcast together with shapes (9,10,10000) (10,9,10000)
-    with pytest.raises(ValueError, match='operands could not be broadcast together'):
-        moment_2 = moment(spectrum, order=2)
-        assert moment_2.shape == (9, 10)
-        assert moment_2.unit.is_equivalent(u.GHz**2)
-        assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
+    moment_2 = moment(spectrum, order=2)
+    assert moment_2.shape == (9, 10)
+    assert moment_2.unit.is_equivalent(u.GHz**2)
+    assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
 
 
 def test_moment_cube_order_2():
@@ -1048,6 +1046,10 @@ def test_moment_cube_order_2():
     assert moment_2.unit.is_equivalent(u.GHz**2)
     assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
 
+    # TODO: Remove test completely if it is agreed it is no longer needed
+    # Github issue https://github.com/astropy/specutils/issues/930
+    # mentions that removing ability to set axis makes this test invalid
+
     # spatial higher order (what's the meaning of this?)
     moment_2 = moment(spectrum, order=2, axis=1)
 
@@ -1056,7 +1058,7 @@ def test_moment_cube_order_2():
     # check assorted values.
     assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][3], 2.019e-28*u.GHz**2, rtol=0.01)
 
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated uncertainties of the same type')
