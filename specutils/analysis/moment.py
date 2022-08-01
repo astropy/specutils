@@ -80,5 +80,4 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
         m1 = (np.sum(flux * spectral_axis, axis=axis, keepdims=True)
               / np.sum(flux, axis=axis, keepdims=True))
 
-        mn = np.sum(flux * (dispersion - m1) ** order, axis=axis) / m0
-        return mn
+        return np.sum(flux * (dispersion - m1) ** order, axis=axis) / m0
