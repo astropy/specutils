@@ -122,8 +122,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         for i in range(wcs.naxis - 1, 0, -1):
             try:
                 wcs = wcs.dropaxis(i)
-            except(_wcs.NonseparableSubimageCoordinateSystemError) as e:
-                raise ValueError(f'WCS cannot be reduced to 1D: {e} {wcs}')
+            except _wcs.NonseparableSubimageCoordinateSystemError as e:
+                raise ValueError(f'WCS cannot be reduced to 1D: {e!r} {wcs}')
 
     return Spectrum1D(flux=data, wcs=wcs, meta=meta)
 
