@@ -73,10 +73,11 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
 
     if order > 1:
         m0 = np.sum(flux, axis=axis)
-        m1 = np.sum(flux * dispersion, axis=axis) / np.sum(flux, axis=axis)
 
-        if len(flux.shape) > 1 and (axis == len(flux.shape)-1 or axis == -1):
-            _shape = flux.shape[-1:] + tuple(np.ones(flux.ndim - 1, dtype='i'))
-            m1 = np.tile(m1, _shape).T
+        # By setting keepdims to True, the axes which are reduced are
+        # left in the result as dimensions with size one. This means
+        # that we can broadcast m1 correctly against dispersion.
+        m1 = (np.sum(flux * spectral_axis, axis=axis, keepdims=True)
+              / np.sum(flux, axis=axis, keepdims=True))
 
         return np.sum(flux * (dispersion - m1) ** order, axis=axis) / m0

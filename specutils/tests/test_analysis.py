@@ -1016,12 +1016,10 @@ def test_moment_cube():
     assert quantity_allclose(moment_1, frequencies, rtol=1.E-5)
 
     # higher order
-    # FIXME: operands could not be broadcast together with shapes (9,10,10000) (10,9,10000)
-    with pytest.raises(ValueError, match='operands could not be broadcast together'):
-        moment_2 = moment(spectrum, order=2)
-        assert moment_2.shape == (9, 10)
-        assert moment_2.unit.is_equivalent(u.GHz**2)
-        assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
+    moment_2 = moment(spectrum, order=2)
+    assert moment_2.shape == (9, 10)
+    assert moment_2.unit.is_equivalent(u.GHz**2)
+    assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
 
 
 def test_moment_cube_order_2():
@@ -1048,6 +1046,10 @@ def test_moment_cube_order_2():
     assert moment_2.unit.is_equivalent(u.GHz**2)
     assert quantity_allclose(moment_2, 816.648*u.GHz**2, atol=0.01*u.GHz**2)
 
+    # TODO: Remove test completely if it is agreed it is no longer needed
+    # Github issue https://github.com/astropy/specutils/issues/930
+    # mentions that removing ability to set axis makes this test invalid
+
     # spatial higher order (what's the meaning of this?)
     moment_2 = moment(spectrum, order=2, axis=1)
 
@@ -1056,7 +1058,54 @@ def test_moment_cube_order_2():
     # check assorted values.
     assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[0][3], 8.078e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][3], 2.019e-28*u.GHz**2, rtol=0.01)
+
+
+def test_moment_cube_order_1_to_6():
+
+    np.random.seed(42)
+
+    frequencies = np.linspace(100, 1, 10000) * u.Hz
+    sig = 5
+    mean = 50
+    amp = 1./(sig*np.sqrt(2*np.pi))
+    g = models.Gaussian1D(amplitude=amp, mean=mean*u.Hz, stddev=sig*u.Hz)
+    flux = g(frequencies)
+
+    flux_multid = np.broadcast_to(flux, [9, 10, flux.shape[0]]) * u.Jy
+
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+
+    moment_1 = moment(spectrum, order=1)
+
+    assert moment_1.shape == (9, 10)
+    assert moment_1.unit.is_equivalent(u.Hz)
+    assert quantity_allclose(moment_1, 50.0*u.Hz, atol=0.01*u.Hz)
+
+    moment_2 = moment(spectrum, order=2)
+    assert moment_2.shape == (9, 10)
+    assert moment_2.unit.is_equivalent(u.Hz**2)
+    assert quantity_allclose(moment_2, 25.0*u.Hz**2, atol=0.01*u.Hz**2)
+
+    moment_3 = moment(spectrum, order=3)
+    assert moment_3.shape == (9, 10)
+    assert moment_3.unit.is_equivalent(u.Hz**3)
+    assert quantity_allclose(moment_3, 0.0*u.Hz**3, atol=0.01*u.Hz**3)
+
+    moment_4 = moment(spectrum, order=4)
+    assert moment_4.shape == (9, 10)
+    assert moment_4.unit.is_equivalent(u.Hz**4)
+    assert quantity_allclose(moment_4, 1875.0*u.Hz**4, atol=0.01*u.Hz**4)
+
+    moment_5 = moment(spectrum, order=5)
+    assert moment_5.shape == (9, 10)
+    assert moment_5.unit.is_equivalent(u.Hz**5)
+    assert quantity_allclose(moment_5, 0.0*u.Hz**5, atol=0.01*u.Hz**5)
+
+    moment_6 = moment(spectrum, order=6)
+    assert moment_6.shape == (9, 10)
+    assert moment_6.unit.is_equivalent(u.Hz**6)
+    assert quantity_allclose(moment_6, 234375.0*u.Hz**6, atol=0.01*u.Hz**6)
 
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated uncertainties of the same type')

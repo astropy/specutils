@@ -7,6 +7,9 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed a bug with moment map orders greater than 1 not being able to handle
+  cubes with non-square spatial dimensions. [#970]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
