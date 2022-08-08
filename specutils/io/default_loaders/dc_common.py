@@ -140,6 +140,17 @@ GUESS_TO_PURPOSE = {
 }
 
 
+def refresh_units(wcs):
+    """
+    Reparse unit strings to ensure aliases have been applied.
+
+    This is needed to handle legacy spellings that are used by existing surveys.
+    """
+    new_units = [u.Unit(str(cu)) for cu in wcs.wcs.cunit]
+    wcs.wcs.cunit = new_units
+    return wcs
+
+
 def add_labels(spec_list, use_purpose=False):
     not_labeled = 0
     label_set = set()
@@ -256,6 +267,7 @@ def add_single_spectra_to_map(
     valid_wcs,
     index=None,
     drop_wcs_axes=None,
+    fallback_header=None,
 ):
     spec_wcs_info = {}
     spec_units_info = {}
@@ -271,13 +283,24 @@ def add_single_spectra_to_map(
     else:
         purpose = None
 
-    purpose = get_purpose(
-        header,
-        purpose=purpose,
-        purpose_prefix=purpose_prefix,
-        all_keywords=all_keywords,
-        index=index,
-    )
+    try:
+        purpose = get_purpose(
+            header,
+            purpose=purpose,
+            purpose_prefix=purpose_prefix,
+            all_keywords=all_keywords,
+            index=index,
+        )
+    except ValueError:
+        if fallback_header is None:
+            raise
+        purpose = get_purpose(
+            fallback_header,
+            purpose=purpose,
+            purpose_prefix=purpose_prefix,
+            all_keywords=all_keywords,
+            index=index,
+        )
 
     if purpose == Purpose.SKIP:
         return None
@@ -290,11 +313,29 @@ def add_single_spectra_to_map(
             else:
                 wcs = wcs.dropaxis(drop_wcs_axes)
     else:
-        wcs = compute_wcs_from_keys_and_values(header, **spec_wcs_info)
+        try:
+            wcs = compute_wcs_from_keys_and_values(header, **spec_wcs_info)
+        except ValueError:
+            if fallback_header is None:
+                raise
+            wcs = compute_wcs_from_keys_and_values(
+                fallback_header, **spec_wcs_info
+            )
+
+    wcs = refresh_units(wcs)
 
     if all_standard_units:
         spec_units_info = {}
-    flux_unit = get_flux_units_from_keys_and_values(header, **spec_units_info)
+    try:
+        flux_unit = get_flux_units_from_keys_and_values(
+            header, **spec_units_info
+        )
+    except ValueError:
+        if fallback_header is None:
+            raise
+        flux_unit = get_flux_units_from_keys_and_values(
+            fallback_header, **spec_units_info
+        )
     flux = data * flux_unit
 
     meta = {"header": header, "purpose": PURPOSE_SPECTRA_MAP[purpose]}
@@ -379,6 +420,7 @@ def load_single_split_file(
     valid_wcs,
     label=True,
     drop_wcs_axes=None,
+    fallback_header=None,
 ):
     spectra_map = {
         "sky": [],
@@ -389,6 +431,11 @@ def load_single_split_file(
     }
 
     with read_fileobj_or_hdulist(filename) as fits_file:
+        if fallback_header is not None:
+            if fallback_header is True:
+                fallback_header = 0
+            fallback_header = fits_file[fallback_header].header
+
         hdus = deepcopy(hdus)
         if hdus is not None:
             # extract hdu information and validate it
@@ -445,6 +492,7 @@ def load_single_split_file(
                 all_keywords=all_keywords,
                 valid_wcs=valid_wcs,
                 drop_wcs_axes=drop_wcs_axes,
+                fallback_header=fallback_header,
             )
 
     if label:
