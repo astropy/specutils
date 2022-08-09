@@ -7,6 +7,7 @@ from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+from astropy.wcs import WCS
 import asdf
 from gwcs.wcstools import grid_from_bounding_box
 
@@ -585,6 +586,24 @@ def _jwst_s3d_loader(filename, **kwargs):
 
             wavelength = Quantity(wavelength_array, unit=wavelength_unit)
 
+            # The GWCS is currently broken for some IFUs, here we work around that
+            wcs = None
+            if wavelength.shape[0] != flux.shape[-1]:
+                # Need MJD-OBS for this workaround
+                if 'MJD-OBS' not in hdu.header:
+                    for key in ('MJD-BEG', 'DATE-OBS'):  # Possible alternatives
+                        if key in hdu.header:
+                            if key.startswith('MJD'):
+                                hdu.header['MJD-OBS'] = hdu.header[key]
+                                break
+                            else:
+                                t = Time(hdu.header[key])
+                                hdu.header['MJD-OBS'] = t.mjd
+                                break
+                wcs = WCS(hdu.header)
+                # Swap to match the flux transpose
+                wcs = wcs.swapaxes(-1, 0)
+
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
             header = primary_header.copy()
@@ -615,8 +634,11 @@ def _jwst_s3d_loader(filename, **kwargs):
             mask_name = primary_header.get("MASKEXT", "DQ")
             mask = hdulist[mask_name].data.T
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta,
-                              uncertainty=err, mask=mask)
+            if wcs is not None:
+                spec = Spectrum1D(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask)
+            else:
+                spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta,
+                                  uncertainty=err, mask=mask)
             spectra.append(spec)
 
     return SpectrumList(spectra)
