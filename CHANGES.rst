@@ -10,6 +10,8 @@ Bug Fixes
 - Fixed a bug with moment map orders greater than 1 not being able to handle
   cubes with non-square spatial dimensions. [#970]
 
+- Added a workaround for reading JWST IFUs with incorrect GWCS. [#973]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
