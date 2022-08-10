@@ -4,9 +4,11 @@ spectral features.
 """
 
 import numpy as np
+from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from ..manipulation import extract_region
 from . import centroid
+from .uncertainty import _convert_uncertainty
 from .utils import computation_wrapper
 from scipy.signal import find_peaks, peak_widths
 
@@ -186,8 +188,15 @@ def _compute_gaussian_fwhm(spectrum, regions=None):
     This is a helper function for the above `gaussian_fwhm()` method.
     """
 
-    fwhm = _compute_gaussian_sigma_width(spectrum, regions) * gaussian_sigma_to_fwhm
+    sigma = _compute_gaussian_sigma_width(spectrum, regions)
 
+    fwhm = sigma * gaussian_sigma_to_fwhm
+    if sigma.uncertainty is not None:
+        fwhm.uncertainty = sigma.uncertainty * gaussian_sigma_to_fwhm
+    else:
+        fwhm.uncertainty = None
+
+    fwhm.uncertainty_type = 'std'
     return fwhm
 
 
@@ -201,9 +210,16 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
     else:
         calc_spectrum = spectrum
 
+    if spectrum.uncertainty is not None:
+        flux_uncert = _convert_uncertainty(calc_spectrum.uncertainty, StdDevUncertainty)
+    else:
+        # dummy value for uncertainties to avoid extra if-statements when applying mask
+        flux_uncert = np.zeros_like(calc_spectrum.flux)
+
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         flux = calc_spectrum.flux[~spectrum.mask]
         spectral_axis = calc_spectrum.spectral_axis[~spectrum.mask]
+        flux_uncert = flux_uncert[~calc_spectrum.mask]
     else:
         flux = calc_spectrum.flux
         spectral_axis = calc_spectrum.spectral_axis
@@ -212,11 +228,36 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
 
     if flux.ndim > 1:
         spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
+        centroid_result_uncert = centroid_result.uncertainty
         centroid_result = centroid_result[:, np.newaxis]
+        centroid_result.uncertainty = centroid_result_uncert[:, np.newaxis] if centroid_result_uncert is not None else None  # noqa
 
     dx = (spectral_axis - centroid_result)
-    sigma = np.sqrt(np.sum((dx * dx) * flux, axis=-1) / np.sum(flux, axis=-1))
+    numerator = np.sum((dx * dx) * flux, axis=-1)
+    denom = np.sum(flux, axis=-1)
+    sigma2 = numerator / denom
+    sigma = np.sqrt(sigma2)
+    if centroid_result.uncertainty is not None:
+        # NOTE: until/unless disp_uncert is supported, dx_uncert == centroid_result.uncertainty
+        disp_uncert = 0.0 * spectral_axis.unit
+        dx_uncert = np.sqrt(disp_uncert**2 + centroid_result.uncertainty**2)
+        # dx_uncert = centroid_result.uncertainty
 
+        # uncertainty for each term in the numerator sum
+        num_term_uncerts = dx * dx * flux * np.sqrt(2*(dx_uncert/dx)**2 + (flux_uncert/flux)**2)
+        # uncertainty (squared) for the numerator, added in quadrature
+        num_uncertsq = np.sum(num_term_uncerts**2, axis=-1)
+        # uncertainty (squared) for the denomenator
+        denom_uncertsq = np.sum(flux_uncert**2)
+
+        sigma2_uncert = numerator/denom * np.sqrt(num_uncertsq * numerator**-2 +
+                                                  denom_uncertsq * denom**-2)
+
+        sigma.uncertainty = 0.5 * sigma2_uncert / sigma2 * sigma.unit
+    else:
+        sigma.uncertainty = None
+
+    sigma.uncertainty_type = 'std'
     return sigma
 
 
