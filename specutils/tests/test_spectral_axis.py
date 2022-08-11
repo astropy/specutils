@@ -4,6 +4,7 @@ import pytest
 from astropy import time
 from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, Galactic,
                                  SpectralCoord, FK5)
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from ..spectra.spectral_axis import SpectralAxis
 from ..spectra.spectrum1d import Spectrum1D
@@ -131,8 +132,8 @@ def test_change_radial_velocity():
     assert spec.radial_velocity == 0 * u.km/u.s
 
     with pytest.warns(
-        UserWarning,
-        match="Setting the radial velocity of a spectrum is ambiguous"
+        AstropyDeprecationWarning,
+        match="Use set_radial_velocity_to or shift_spectrum_to instead"
     ):
         spec.radial_velocity = 1 * u.km / u.s
 
@@ -144,8 +145,8 @@ def test_change_radial_velocity():
     assert spec.radial_velocity == 10 * u.km / u.s
 
     with pytest.warns(
-        UserWarning,
-        match="Setting the radial velocity of a spectrum is ambiguous"
+        AstropyDeprecationWarning,
+        match="Use set_radial_velocity_to or shift_spectrum_to instead"
     ):
         spec.radial_velocity = 5 * u.km / u.s
 
@@ -174,7 +175,8 @@ def test_change_redshift():
     assert type(spec.spectral_axis) == SpectralAxis
 
     with pytest.warns(
-        UserWarning, match="Setting the redshift of a spectrum is ambiguous"
+        AstropyDeprecationWarning,
+        match="Use set_redshift_to or shift_spectrum_to instead"
     ):
         spec.redshift = 0.1
 
@@ -189,7 +191,8 @@ def test_change_redshift():
     assert type(spec.spectral_axis) == SpectralAxis
 
     with pytest.warns(
-        UserWarning, match="Setting the redshift of a spectrum is ambiguous"
+        AstropyDeprecationWarning,
+        match="Use set_redshift_to or shift_spectrum_to instead"
     ):
         spec.redshift = 0.4
 
