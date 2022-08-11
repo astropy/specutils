@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
-from astropy.utils.exceptions import AstropyDeprecationWarning
+from astropy.utils.decorators import deprecated
 from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
 
 from .spectral_axis import SpectralAxis
@@ -662,21 +662,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             raise ValueError("One of redshift or radial_velocity must be set.")
 
     @redshift.setter
+    @deprecated('1.8.0', alternative='set_redshift_to or shift_spectrum_to')
     def redshift(self, val):
-        warnings.warn(AstropyDeprecationWarning(
-            "Setting the redshift attribute of a spectrum directly is deprecated "
-            "as of version 1.8.0 and will be removed in a future release. Use "
-            "set_redshift_to or shift_spectrum_to instead."
-        ))
         self.shift_spectrum_to(redshift=val)
 
     @radial_velocity.setter
+    @deprecated('1.8.0', alternative='set_radial_velocity_to or shift_spectrum_to')
     def radial_velocity(self, val):
-        warnings.warn(AstropyDeprecationWarning(
-            "Setting the radial_velocity attribute of a spectrum directly is deprecated "
-            "as of version 1.8.0 and will be removed in a future release. Use "
-            "set_radial_velocity_to or shift_spectrum_to instead."
-        ))
         self.shift_spectrum_to(radial_velocity=val)
 
     def __add__(self, other):
