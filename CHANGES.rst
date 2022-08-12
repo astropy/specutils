@@ -15,6 +15,10 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- The Spectrum1D redshift and radial_velocity attribute setters were deprecated
+  in favor of the more explicit set_redshift_to, shift_spectrum_to, and
+  set_radial_velocity_to methods. [#946, #943]
+
 1.7.0 (2022-02-21)
 ------------------
 
