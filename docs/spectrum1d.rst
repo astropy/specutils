@@ -158,7 +158,7 @@ An example of the different treatments of the ``spectral_axis`` is shown below.
 
 .. code-block:: python
 
-    >>> spec1.redshift = 0.5 #doctest:+IGNORE_WARNINGS
+    >>> spec1.shift_spectrum_to(redshift=0.5)  # Equivalent: spec1.redshift = 0.5
     >>> spec1.spectral_axis
     <SpectralAxis
        (observer to target:
@@ -167,7 +167,7 @@ An example of the different treatments of the ``spectral_axis`` is shown below.
       [6521.73913043, 6523.04347826, 6524.34782609, 6525.65217391,
        6526.95652174, 6528.26086957, 6529.56521739, 6530.86956522,
        6532.17391304, 6533.47826087] Angstrom>
-    >>> spec2.set_radial_velocity_to(5000*u.Unit("km/s"))
+    >>> spec2.set_radial_velocity_to(5000 * u.Unit("km/s"))
     >>> spec2.spectral_axis
     <SpectralAxis
        (observer to target:
