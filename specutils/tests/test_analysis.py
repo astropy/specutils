@@ -497,6 +497,9 @@ def test_centroid_masked(simulated_spectra):
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
+    assert hasattr(spec_centroid, 'uncertainty')
+    # NOTE: value has not been scientifically validated
+    assert quantity_allclose(spec_centroid.uncertainty, 1.1052437538307923e-05*u.um, rtol=5e-5)
 
 
 def test_inverted_centroid(simulated_spectra):
@@ -543,13 +546,19 @@ def test_centroid_multiple_flux(simulated_spectra):
 
     np.random.seed(42)
 
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.um,
+    spec = Spectrum1D(spectral_axis=np.arange(1, 11) * u.um,
                       flux=np.random.sample((5, 10)) * u.Jy)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(spec.flux.shape)*u.mJy)
+    spec.uncertainty = uncertainty
 
     centroid_spec = centroid(spec, None)
 
-    assert np.allclose(centroid_spec.value, np.array([4.46190995, 4.17223565, 4.37778249, 4.51595259, 4.7429066]))
+    assert np.allclose(centroid_spec.value, np.array([5.46190995, 5.17223565, 5.37778249, 5.51595259, 5.7429066]))
     assert centroid_spec.unit == u.um
+    assert hasattr(centroid_spec, 'uncertainty')
+    assert len(centroid_spec.uncertainty) == 5
+    # NOTE: value has not been scientifically validated
+    assert np.allclose(centroid_spec.uncertainty.value, np.array([0.2812655, 0.39435469, 0.3286723, 0.31117068, 0.30481023]))
 
 
 def test_gaussian_sigma_width():
