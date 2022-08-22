@@ -1,8 +1,13 @@
-1.8.0 (unreleased)
+1.8.0 (2022-08-22)
 ------------------
 
 New Features
 ^^^^^^^^^^^^
+
+- Implemented uncertainty propagation for analysis functions. [#938, #939, #961, #968]
+
+- Model fitting with ``fit_lines`` now returns uncertainties from the underlying scipy
+  fitter by default. [#962]
 
 Bug Fixes
 ^^^^^^^^^
@@ -18,6 +23,9 @@ Other Changes and Additions
 - The Spectrum1D redshift and radial_velocity attribute setters were deprecated
   in favor of the more explicit set_redshift_to, shift_spectrum_to, and
   set_radial_velocity_to methods. [#946, #943]
+
+- ``estimate_line_parameters`` now calculates estimates based on the selected
+  region, rather than the entire spectrum. [#962]
 
 1.7.0 (2022-02-21)
 ------------------
