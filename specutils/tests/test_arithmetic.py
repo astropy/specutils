@@ -1,4 +1,5 @@
 import astropy.units as u
+from astropy.tests.helper import assert_quantity_allclose
 import numpy as np
 
 from ..spectra.spectrum1d import Spectrum1D
@@ -115,3 +116,13 @@ def test_mask_nans():
     spec3 = spec1 + spec2
 
     assert spec3.mask[nan_idx].all() == True  # noqa
+
+
+def test_constants(simulated_spectra):
+    spec = simulated_spectra.s1_um_mJy_e1
+
+    # Test that doing arithmetic with a constant to the right of the spectrum succeeds
+    assert_quantity_allclose((spec * 2).flux, spec.flux * 2)
+    assert_quantity_allclose((spec / 2).flux, spec.flux / 2)
+    assert_quantity_allclose((spec + 2*u.Jy).flux, spec.flux+2 * u.Jy)
+    assert_quantity_allclose((spec - 2*u.Jy).flux, spec.flux-2 * u.Jy)
