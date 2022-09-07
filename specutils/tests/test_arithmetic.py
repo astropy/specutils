@@ -118,11 +118,16 @@ def test_mask_nans():
     assert spec3.mask[nan_idx].all() == True  # noqa
 
 
-def test_constants(simulated_spectra):
+def test_with_constants(simulated_spectra):
     spec = simulated_spectra.s1_um_mJy_e1
 
     # Test that doing arithmetic with a constant to the right of the spectrum succeeds
-    assert_quantity_allclose((spec * 2).flux, spec.flux * 2)
-    assert_quantity_allclose((spec / 2).flux, spec.flux / 2)
-    assert_quantity_allclose((spec + 2*u.Jy).flux, spec.flux+2 * u.Jy)
-    assert_quantity_allclose((spec - 2*u.Jy).flux, spec.flux-2 * u.Jy)
+    assert_quantity_allclose((2 * spec).flux, spec.flux * 2)
+
+    r_add_result = 2 + spec
+    l_add_result = spec + 2
+    assert_quantity_allclose(r_add_result.flux, l_add_result.flux)
+
+    r_sub_result = 2 - spec
+    l_sub_result = -1 * (spec - 2)
+    assert_quantity_allclose(r_sub_result.flux, l_sub_result.flux)
