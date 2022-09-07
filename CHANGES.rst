@@ -4,6 +4,8 @@
 New Features
 ^^^^^^^^^^^^
 
+- Added handling for arithmetic with constants from the left to Spectrum1D. [#964]
+
 Bug Fixes
 ^^^^^^^^^
 
