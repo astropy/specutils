@@ -672,7 +672,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         self.shift_spectrum_to(radial_velocity=val)
 
     def __add__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, (NDCube, u.Quantity)):
             other = u.Quantity(other, unit=self.unit)
 
         return self.add(other)
@@ -700,6 +700,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             other = u.Quantity(other)
 
         return self.divide(other)
+
+    __radd__ = __add__
+
+    __rmul__ = __mul__
+
+    def __rsub__(self, other):
+        return -1 * (self - other)
 
     def _format_array_summary(self, label, array):
         if len(array) == 1:
