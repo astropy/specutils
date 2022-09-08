@@ -196,7 +196,7 @@ class FluxConservingResampler(ResamplerBase):
             pixel_uncer = pixel_uncer.reshape(new_flux_shape)
 
             out_variance = np.sum(pixel_uncer * resample_grid**2, axis=-1) / np.sum(
-                resample_grid**2, axis=-1)
+                resample_grid, axis=-1)**2
             out_uncertainty = InverseVariance(np.reciprocal(out_variance))
         else:
             out_uncertainty = None

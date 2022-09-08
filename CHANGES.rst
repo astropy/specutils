@@ -9,6 +9,8 @@ Bug Fixes
 
 - Arithmetic with constants and Spectrum1D now works in either order. [#964]
 
+- Fixed uncertainty propagation in FluxConservingResampler. [#976]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

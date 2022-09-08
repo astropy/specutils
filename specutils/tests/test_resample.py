@@ -64,7 +64,7 @@ def test_stddev_uncert_propogation():
     results = inst(input_spectra, [25, 35, 50, 55]*u.AA)
 
     assert np.allclose(results.uncertainty.array,
-                       np.array([27.5862069, 38.23529412, 17.46724891, 27.5862069]))
+                       np.array([55.17241379, 73.52941176, 27.94759825, 55.17241379]))
 
 
 def delta_wl(saxis):
@@ -127,9 +127,9 @@ def test_multi_dim_spectrum1D():
                                       [6., 6., 6., 6.],
                                       [7., 7., 7., 7.]]) * u.Jy)
     assert np.allclose(results.uncertainty.array,
-                       np.array([[4., 4., 4., 4.],
-                                 [2.77777778, 2.77777778, 2.77777778, 2.77777778],
-                                 [2.04081633, 2.04081633, 2.04081633, 2.04081633]] ))
+                       np.array([[10.66666667, 10.66666667, 10.66666667, 10.66666667],
+                                 [ 7.40740741, 7.40740741, 7.40740741, 7.40740741],
+                                 [ 5.44217687, 5.44217687, 5.44217687, 5.44217687]]))
 
 
 def test_expanded_grid_interp_linear():
