@@ -388,6 +388,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
             if uncerts is not None:
                 weights = uncerts.array ** -1
             else:
+                weights = None
                 warnings.warn("Uncertainty values are not defined, but are "
                               "trying to be used in model fitting.")
         else:
