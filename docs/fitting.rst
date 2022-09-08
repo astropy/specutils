@@ -221,7 +221,9 @@ and the set of models with initial guesses, and by default uses the
 this by providing a different fitter to the ``fitter`` input parameter.  Note
 that the default fitter will populate the ``stds`` attribute of the returned
 models with estimates of the standard deviation uncertainty in the fit parameters,
-and that this may not be populated for user-defined non-default fitters. 
+and that this may not be populated for user-defined non-default fitters. In general,
+you can set ``calc_uncertainties=True`` when initializing an Astropy fitter to
+return this information.
 
 You can also retrieve the covariance matrices and other fit information from
 which the uncertainties are calculated by setting ``get_fit_info=True`` in the
