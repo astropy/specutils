@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from astropy import units as u
+from astropy.nddata import StdDevUncertainty
 from astropy.modeling import fitting, Model, models
 from astropy.table import QTable
 from scipy.signal import convolve
@@ -11,7 +12,8 @@ from scipy.signal import convolve
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
 from ..utils import QuantityModel
-from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
+from ..analysis import (fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold,
+                        uncertainty)
 from ..manipulation import extract_region
 from ..manipulation.utils import excise_regions
 
@@ -382,7 +384,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
 
     if isinstance(weights, str):
         if weights == 'unc':
-            uncerts = spectrum.uncertainty
+            uncerts = uncertainty._convert_uncertainty(spectrum.uncertainty, StdDevUncertainty)
 
             # Astropy fitters expect weights in 1/sigma
             if uncerts is not None:
