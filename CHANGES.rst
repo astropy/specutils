@@ -1,8 +1,5 @@
-1.9.0 (unreleased)
+1.8.1 (2022-09-09)
 ------------------
-
-New Features
-^^^^^^^^^^^^
 
 Bug Fixes
 ^^^^^^^^^
@@ -10,9 +7,6 @@ Bug Fixes
 - Arithmetic with constants and Spectrum1D now works in either order. [#964]
 
 - Fixed uncertainty propagation in FluxConservingResampler. [#976]
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1.8.0 (2022-08-22)
 ------------------
