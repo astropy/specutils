@@ -199,7 +199,7 @@ def test_single_peak_fit():
     assert np.allclose(list(g_fit.stds), [0.04627, 0.01427, 0.01427], rtol=0.05)
 
 
-def test_single_peak_fit_with_uncertainties():
+def test_single_peak_fit_with_and_without_uncertainties():
     """
     Single peak fit
     """
@@ -214,16 +214,19 @@ def test_single_peak_fit_with_uncertainties():
                                  stddev=30*u.angstrom) + models.Const1D(8 * u.Jy)
     x = np.linspace(6400, 6700, 300) * u.AA
 
-    def calculate_rms(x, init_mod, implicit_weights):
+    def calculate_rms(x, init_mod, implicit_weights, valid_uncertainty):
         rms = []
 
         for _ in range(100):
             ymod = line_mod(x)
             y = np.random.poisson(ymod)
             unc = np.sqrt(ymod)
-
-            spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
-                              uncertainty=StdDevUncertainty(unc * u.Jy))
+            if valid_uncertainty:
+                spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
+                                  uncertainty=StdDevUncertainty(unc * u.Jy))
+            else:
+                spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
+                                  uncertainty=None)
 
             weights = 'unc' if implicit_weights else unc ** -1
 
@@ -233,10 +236,15 @@ def test_single_peak_fit_with_uncertainties():
 
         return np.median(rms)
 
-    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=True),
+    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=True, valid_uncertainty=True),
                        5.101611033799086)
-    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False),
+    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False, valid_uncertainty=True),
                        5.113697654869089)
+    with pytest.warns(UserWarning, match="Fitting is set to use uncertainties as weights,"
+                                         " but the input spectrum's uncertainty is None"):
+        calculate_rms(x, init_mod, implicit_weights=True, valid_uncertainty=False)
+    assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False, valid_uncertainty=False),
+                       5.098289708242831)
 
 
 def test_single_peak_fit_window():
