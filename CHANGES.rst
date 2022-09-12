@@ -7,7 +7,7 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
-- Fix bug in fitting with weights if 'unc'. [#979]
+- Fix bug in fitting with weights if weights argument is set to 'unc'. [#979]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
