@@ -240,8 +240,8 @@ def test_single_peak_fit_with_and_without_uncertainties():
                        5.101611033799086)
     assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False, valid_uncertainty=True),
                        5.113697654869089)
-    with pytest.warns(UserWarning, match='Fitting is set to use uncertainties as weights,'
-                                         ' but the input spectrum's uncertainty is None'):
+    with pytest.warns(UserWarning, match="Fitting is set to use uncertainties as weights,"
+                                         " but the input spectrum's uncertainty is None"):
         calculate_rms(x, init_mod, implicit_weights=True, valid_uncertainty=False)
     assert np.allclose(calculate_rms(x, init_mod, implicit_weights=False, valid_uncertainty=False),
                        5.098289708242831)
