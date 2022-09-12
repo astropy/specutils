@@ -384,12 +384,11 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
 
     if isinstance(weights, str):
         if weights == 'unc':
-            # Convert uncertainty to StdDev, then invert
-            uncerts = StdDevUncertainty(uncertainty._convert_uncertainty(spectrum.uncertainty,
-                                                                         StdDevUncertainty))
-
-            # Astropy fitters expect weights in 1/sigma
-            if uncerts is not None:
+            if spectrum.uncertainty is not None:
+                # Convert uncertainty to StdDev, then invert
+                uncerts = StdDevUncertainty(uncertainty._convert_uncertainty(spectrum.uncertainty,
+                                                                             StdDevUncertainty))
+                # Astropy fitters expect weights in 1/sigma
                 weights = uncerts.array ** -1
             else:
                 weights = None
