@@ -8,6 +8,8 @@ Bug Fixes
 ^^^^^^^^^
 
 - Fix bug in fitting with weights if weights argument is set to 'unc'. [#979]
+- Fix bug in reader which caused multi-extension files to load only the
+  primary HDU [#982]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
