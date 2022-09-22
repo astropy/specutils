@@ -1,6 +1,7 @@
 import os
 import glob
 import warnings
+from itertools import chain
 
 import astropy.units as u
 from astropy.units import Quantity
@@ -278,12 +279,11 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
                 raise FileNotFoundError(f"Failed to load {file_obj}: {repr(e)}. "
                                         "To suppress this error, set argument missing='warn'")
 
-        # note that the method above returns a single Spectrum1D instance
-        # packaged in a SpectrumList wrapper. We remove the wrapper so as
-        # to avoid ending up with a depth-2 SpectrumList.
-        spectra.append(sp[0])
+        spectra.append(sp)
 
-    return SpectrumList(spectra)
+    # the call to `chain.from_iterable` allows us to handle multiple HDUs
+    # stored within multiple FITS files, all unpacked into one `SpectrumList`
+    return SpectrumList(chain.from_iterable(spectra))
 
 
 def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
