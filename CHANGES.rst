@@ -10,6 +10,8 @@ Bug Fixes
 - Fix bug in fitting with weights if weights argument is set to 'unc'. [#979]
 - Fix bug in JWST reader which caused multi-extension files to load only the
   primary HDU [#982]
+- Implemented conversion to expected uncertainty type in a few functions that
+  were still just assuming the uncertainty was the correct type. [#984]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
