@@ -4,7 +4,7 @@ spectra.
 """
 
 import numpy as np
-from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+from astropy.nddata import StdDevUncertainty
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
 
@@ -34,7 +34,9 @@ def snr(spectrum, region=None):
     -----
     The spectrum will need to have the uncertainty defined in order for the SNR
     to be calculated. If the goal is instead signal to noise *per pixel*, this
-    should be computed directly as ``spectrum.flux / spectrum.uncertainty``.
+    should be computed directly as ``spectrum.flux / spectrum.uncertainty``. This
+    calculation converts the uncertainty to standard deviation internally if it
+    is defined as another type.
 
     """
 
@@ -86,10 +88,11 @@ def _snr_single_region(spectrum, region=None):
 
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         flux = calc_spectrum.flux[~spectrum.mask]
-        uncertainty = calc_spectrum.uncertainty.quantity[~spectrum.mask]
+        uncertainty = calc_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
+        uncertainty = uncertainty[~spectrum.mask]
     else:
         flux = calc_spectrum.flux
-        uncertainty = calc_spectrum.uncertainty.quantity
+        uncertainty = calc_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
 
     # the axis=-1 will enable this to run on single-dispersion, single-flux
     # and single-dispersion, multiple-flux
@@ -187,26 +190,3 @@ def _snr_derived(spectrum, region=None):
         return signal / noise
     else:
         return 0.0
-
-
-def _convert_uncertainty(uncertainty, to_class):
-    if isinstance(uncertainty, to_class):
-        return uncertainty.quantity
-
-    if isinstance(uncertainty, StdDevUncertainty):
-        variance = uncertainty.quantity ** 2
-    elif isinstance(uncertainty, VarianceUncertainty):
-        variance = uncertainty.quantity
-    elif isinstance(uncertainty, InverseVariance):
-        variance = 1/uncertainty.quantity
-    else:
-        raise ValueError("uncertainties only supported in StdDev, Variance, or InverseVariance")
-
-    if to_class == VarianceUncertainty:
-        return variance
-    elif to_class == InverseVariance:
-        return 1/variance
-    elif to_class == StdDevUncertainty:
-        return variance**0.5
-    else:
-        raise ValueError("to_class only supports StdDev, Variance, or InverseVariance")

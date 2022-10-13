@@ -1,5 +1,5 @@
 import numpy as np
-from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+from astropy.nddata import StdDevUncertainty
 
 from ..manipulation import (FluxConservingResampler,
                             LinearInterpolatedResampler,
@@ -7,33 +7,6 @@ from ..manipulation import (FluxConservingResampler,
 from ..spectra.spectrum1d import Spectrum1D
 
 __all__ = ['template_match', 'template_redshift']
-
-
-def _uncertainty_to_standard_deviation(uncertainty):
-    """
-    Convenience function to convert other uncertainty types to standard deviation,
-    for consistency in calculations elsewhere.
-
-    Parameters
-    ----------
-    uncertainty : :class:`~astropy.nddata.NDUncertainty`
-        The input uncertainty
-
-    Returns
-    -------
-    :class:`~numpy.ndarray`
-        The array of standard deviation values.
-
-    """
-    if uncertainty is not None:
-        if isinstance(uncertainty, StdDevUncertainty):
-            stddev = uncertainty.array
-        elif isinstance(uncertainty, VarianceUncertainty):
-            stddev = np.sqrt(uncertainty.array)
-        elif isinstance(uncertainty, InverseVariance):
-            stddev = 1 / np.sqrt(uncertainty.array)
-
-        return stddev
 
 
 def _normalize_for_template_matching(observed_spectrum, template_spectrum, stddev=None):
@@ -56,7 +29,7 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
         can be compared to the observed spectrum.
     """
     if stddev is None:
-        stddev = _uncertainty_to_standard_deviation(observed_spectrum.uncertainty)
+        stddev = observed_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
     num = np.sum((observed_spectrum.flux*template_spectrum.flux) / (stddev**2))
     denom = np.sum((template_spectrum.flux / stddev)**2)
 
@@ -118,7 +91,7 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
                                                 observed_spectrum.spectral_axis)
 
     # Convert the uncertainty to standard deviation if needed
-    stddev = _uncertainty_to_standard_deviation(observed_spectrum.uncertainty)
+    stddev = observed_spectrum.uncertainty.represent_as(StdDevUncertainty).array
 
     # Normalize spectra
     normalization = _normalize_for_template_matching(observed_spectrum,

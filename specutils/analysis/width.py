@@ -8,7 +8,6 @@ from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from ..manipulation import extract_region
 from . import centroid
-from .uncertainty import _convert_uncertainty
 from .utils import computation_wrapper
 from scipy.signal import find_peaks, peak_widths
 
@@ -211,7 +210,7 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
         calc_spectrum = spectrum
 
     if spectrum.uncertainty is not None:
-        flux_uncert = _convert_uncertainty(calc_spectrum.uncertainty, StdDevUncertainty)
+        flux_uncert = calc_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
     else:
         # dummy value for uncertainties to avoid extra if-statements when applying mask
         flux_uncert = np.zeros_like(calc_spectrum.flux)
