@@ -18,47 +18,47 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.7 with minimal dependencies
-            os: ubuntu-latest
-            python: 3.7
-            toxenv: py37-test
-
-          - name: Python 3.8 with all optional dependencies
+          - name: Python 3.8 with minimal dependencies
             os: ubuntu-latest
             python: 3.8
-            toxenv: py38-test-alldeps
+            toxenv: py38-test
+
+          - name: Python 3.9 with all optional dependencies
+            os: ubuntu-latest
+            python: 3.9
+            toxenv: py39-test-alldeps
             toxargs: -v --develop
             toxposargs: --open-files
 
           # NOTE: In the build below we also check that tests do not open and
           # leave open any files. This has a performance impact on running the
           # tests, hence why it is not enabled by default.
-          - name: Python 3.7 with oldest supported version of all dependencies
+          - name: Python 3.8 with oldest supported version of all dependencies
             os: ubuntu-18.04
-            python: 3.7
-            toxenv: py37-test-oldestdeps
+            python: 3.8
+            toxenv: py38-test-oldestdeps
 
-          - name: Python 3.7 with numpy 1.17 and full coverage
+          - name: Python 3.8 with numpy 1.17 and full coverage
             os: ubuntu-latest
-            python: 3.7
-            toxenv: py37-test-alldeps-numpy117-cov
+            python: 3.8
+            toxenv: py38-test-alldeps-numpy117-cov
             toxposargs: --remote-data=astropy
 
-          - name: Python 3.8 with all optional dependencies (Windows)
+          - name: Python 3.9 with all optional dependencies (Windows)
             os: windows-latest
+            python: 3.9
+            toxenv: py39-test-alldeps
+            toxposargs: --durations=50
+
+          - name: Python 3.8 with all optional dependencies (MacOS X)
+            os: macos-latest
             python: 3.8
             toxenv: py38-test-alldeps
             toxposargs: --durations=50
 
-          - name: Python 3.7 with all optional dependencies (MacOS X)
-            os: macos-latest
-            python: 3.7
-            toxenv: py37-test-alldeps
-            toxposargs: --durations=50
-
-          - name: Python 3.7 doc build
+          - name: Python 3.8 doc build
             os: ubuntu-latest
-            python: 3.7
+            python: 3.8
             toxenv: build_docs
 
     steps:
@@ -93,10 +93,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: (Allowed Failure) Python 3.8 with remote data and dev version of key dependencies
+          - name: (Allowed Failure) Python 3.9 with remote data and dev version of key dependencies
             os: ubuntu-latest
-            python: 3.8
-            toxenv: py38-test-devdeps
+            python: 3.9
+            toxenv: py39-test-devdeps
             toxposargs: --remote-data=any
 
     steps:
