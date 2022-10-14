@@ -56,9 +56,9 @@ jobs:
             toxenv: py38-test-alldeps
             toxposargs: --durations=50
 
-          - name: Python 3.8 doc build
+          - name: Python 3.9 doc build
             os: ubuntu-latest
-            python: 3.8
+            python: 3.9
             toxenv: build_docs
 
     steps:

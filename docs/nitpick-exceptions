@@ -50,10 +50,12 @@ py:obj n
 py:obj axis1
 py:obj axis2
 py:obj data_as
+py:obj ndarray.astype
 py:obj ndarray.setflags
 py:obj ndarray.reshape
 py:obj ndarray.flat
 py:obj ndarray.T
+py:obj ndarray.view
 py:obj a.size
 py:obj x
 py:obj order
