@@ -1,8 +1,5 @@
-1.9.0 (unreleased)
+1.9.0 (2022-10-18)
 ------------------
-
-New Features
-^^^^^^^^^^^^
 
 Bug Fixes
 ^^^^^^^^^
@@ -15,6 +12,8 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Bumped astropy minimum version to 5.1. [#984]
 
 1.8.1 (2022-09-09)
 ------------------
