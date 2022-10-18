@@ -10,7 +10,6 @@ from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
-from .uncertainty import _convert_uncertainty
 
 
 __all__ = ['centroid']
@@ -95,7 +94,7 @@ def _centroid_single_region(spectrum, region=None):
         calc_spectrum = spectrum
 
     if spectrum.uncertainty is not None:
-        flux_uncert = _convert_uncertainty(calc_spectrum.uncertainty, StdDevUncertainty)
+        flux_uncert = calc_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
     else:
         # dummy value for uncertainties to avoid extra if-statements when applying mask
         flux_uncert = np.zeros_like(spectrum.flux)

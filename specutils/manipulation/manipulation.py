@@ -6,6 +6,8 @@ spectra.
 import copy
 import operator
 
+from astropy.nddata import StdDevUncertainty
+
 __all__ = ['snr_threshold']
 
 
@@ -73,7 +75,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
 
     # NDData convention: Masks should follow the numpy convention that valid
     # data points are marked by False and invalid ones with True.
-    mask = ~op(data / (spectrum.uncertainty.quantity), value)
+    mask = ~op(data / (spectrum.uncertainty.represent_as(StdDevUncertainty).quantity), value)
 
     spectrum_out = copy.copy(spectrum)
     spectrum_out._mask = mask

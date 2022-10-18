@@ -1,6 +1,7 @@
 import astropy.units as u
 import numpy as np
 from astropy import constants as const
+from astropy.nddata import StdDevUncertainty
 from astropy.units import Quantity
 from scipy.signal.windows import tukey
 
@@ -241,9 +242,8 @@ def _normalize(observed_spectrum, template_spectrum):
         A float which will normalize the template spectrum's flux so that it
         can be compared to the observed spectrum.
     """
-    num = np.nansum((observed_spectrum.flux*template_spectrum.flux)/
-                 (observed_spectrum.uncertainty.array**2))
-    denom = np.nansum((template_spectrum.flux/
-                    observed_spectrum.uncertainty.array)**2)
+    unc = observed_spectrum.uncertainty.represent_as(StdDevUncertainty)
+    num = np.nansum((observed_spectrum.flux*template_spectrum.flux)/(unc.array**2))
+    denom = np.nansum((template_spectrum.flux/unc.array)**2)
 
     return num/denom

@@ -11,7 +11,6 @@ from astropy.nddata import VarianceUncertainty
 from .. import conf
 from ..spectra import Spectrum1D
 from ..manipulation import extract_region, LinearInterpolatedResampler
-from .uncertainty import _convert_uncertainty
 from .utils import computation_wrapper
 import astropy.units as u
 from astropy.stats import mad_std
@@ -142,7 +141,7 @@ def _compute_line_flux(spectrum, regions=None,
         # Can't handle masks via interpolation here, since interpolators
         # only work with the flux array.
         try:
-            variance_q = _convert_uncertainty(calc_spectrum.uncertainty, VarianceUncertainty)
+            variance_q = calc_spectrum.uncertainty.represent_as(VarianceUncertainty).quantity
         except ValueError:
             warnings.warn(f"Uncertainty type "
                           f"'{calc_spectrum.uncertainty.uncertainty_type}' "

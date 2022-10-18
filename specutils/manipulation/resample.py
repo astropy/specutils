@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
+from astropy.nddata import VarianceUncertainty, InverseVariance
 from astropy.units import Quantity
 from scipy.interpolate import CubicSpline
 
@@ -160,12 +160,7 @@ class FluxConservingResampler(ResamplerBase):
 
         # Get provided uncertainty into variance
         if orig_spectrum.uncertainty is not None:
-            if isinstance(orig_spectrum.uncertainty, StdDevUncertainty):
-                pixel_uncer = np.square(orig_spectrum.uncertainty.array)
-            elif isinstance(orig_spectrum.uncertainty, VarianceUncertainty):
-                pixel_uncer = orig_spectrum.uncertainty.array
-            elif isinstance(orig_spectrum.uncertainty, InverseVariance):
-                pixel_uncer = np.reciprocal(orig_spectrum.uncertainty.array)
+            pixel_uncer = orig_spectrum.uncertainty.represent_as(VarianceUncertainty).array
         else:
             pixel_uncer = None
 

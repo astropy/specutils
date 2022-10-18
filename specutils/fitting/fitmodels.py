@@ -12,8 +12,7 @@ from scipy.signal import convolve
 from ..spectra.spectral_region import SpectralRegion
 from ..spectra.spectrum1d import Spectrum1D
 from ..utils import QuantityModel
-from ..analysis import (fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold,
-                        uncertainty)
+from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
 from ..manipulation import extract_region
 from ..manipulation.utils import excise_regions
 
@@ -104,7 +103,8 @@ def _consecutive(data, stepsize=1):
 def find_lines_threshold(spectrum, noise_factor=1):
     """
     Find the emission and absorption lines in a spectrum. The method
-    here is based on deviations larger than the spectrum's uncertainty by the
+    here is based on deviations larger than the spectrum's uncertainty
+    (converted to standard deviation if in another representation) by the
     ``noise_factor``.
 
     This method only works with continuum-subtracted spectra and the
@@ -131,7 +131,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
 
     # Threshold based on noise estimate and factor.
     uncertainty = spectrum.uncertainty
-    uncert_val = 0 if uncertainty is None else uncertainty.array
+    uncert_val = 0 if uncertainty is None else uncertainty.represent_as(StdDevUncertainty).array
 
     inds = np.where(np.abs(spectrum.flux) > (noise_factor * uncert_val) *
                     spectrum.flux.unit)[0]
@@ -386,8 +386,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
         if weights == 'unc':
             if spectrum.uncertainty is not None:
                 # Convert uncertainty to StdDev, then invert
-                uncerts = StdDevUncertainty(uncertainty._convert_uncertainty(spectrum.uncertainty,
-                                                                             StdDevUncertainty))
+                uncerts = spectrum.uncertainty.represent_as(StdDevUncertainty)
                 # Astropy fitters expect weights in 1/sigma
                 weights = uncerts.array ** -1
             else:
