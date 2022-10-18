@@ -370,8 +370,8 @@ with the spline knots:
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> result = model_replace(input_spectrum, None, model=spline_knots)
     >>> result
-    <Spectrum1D(flux=<Quantity [ 2., 4., 6., 8., 10., 12., 14., 16., 18., 20.] mJy>,
-         spectral_axis=<SpectralAxis [ 1., 2., 3., 4., 5., 6., 7., 8., 9.,10.] Angstrom>)>
+    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>,
+        spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
 
 The default behavior is to keep the data outside the replaced region unchanged. 
 Alternatively, the spectrum outside the replaced region can be filled with zeros:
@@ -379,11 +379,10 @@ Alternatively, the spectrum outside the replaced region can be filled with zeros
 .. code-block:: python
 
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
-    >>> result = model_replace(input_spectrum, None, model=spline_knots,
-                               extrapolation_treatment='zero_fill')
+    >>> result = model_replace(input_spectrum, None, model=spline_knots, extrapolation_treatment='zero_fill')
     >>> result
-    <Spectrum1D(flux=<Quantity [ 0., 0., 0., 8., 10., 12., 14., 0., 0., 0.] mJy>,
-         spectral_axis=<SpectralAxis [ 1., 2., 3., 4., 5., 6., 7., 8., 9.,10.] Angstrom>)>
+    <Spectrum1D(flux=<Quantity [ 0.,  0.,  0.,  8., 10., 12., 14.,  0.,  0.,  0.] mJy>,
+        spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
 
 One can define the spline knots by providing an instance of `~specutils.SpectralRegion`,
 and the number of knots to be evenly spread along the region:
@@ -394,8 +393,8 @@ and the number of knots to be evenly spread along the region:
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=4)
     >>> result
-    <Spectrum1D(flux=<Quantity [ 2., 4., 6., 8., 10., 12., 14., 16., 18., 20.] mJy>,
-         spectral_axis=<SpectralAxis [ 1., 2., 3., 4., 5., 6., 7., 8., 9.,10.] Angstrom>)>
+    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>,
+        spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
 
 A model fitted over the region can also be used to replace the spectrum flux values:
 
@@ -409,7 +408,7 @@ A model fitted over the region can also be used to replace the spectrum flux val
     >>> fitted_model = fit_lines(input_spectrum, model)
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=fitted_model)
-    >>> result
+    >>> result # doctest: +IGNORE_OUTPUT
     <Spectrum1D(flux=<Quantity [1., 1.1, 0.9, 4.40801804, 9.58271877, 5.61238054,
          0.88556096, 1., 1.2, 1.1] mJy>, spectral_axis=<SpectralAxis [ 1., 2., 3.,
          4., 5., 6., 7., 8., 9.,10.] Angstrom>)>
