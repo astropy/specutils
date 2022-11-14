@@ -679,7 +679,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def __sub__(self, other):
         if not isinstance(other, NDCube):
-            other = u.Quantity(other, unit=self.unit)
+            try:
+                other = u.Quantity(other, unit=self.unit)
+            except TypeError:
+                return NotImplemented
 
         return self.subtract(other)
 
