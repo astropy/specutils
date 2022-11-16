@@ -673,7 +673,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def __add__(self, other):
         if not isinstance(other, (NDCube, u.Quantity)):
-            other = u.Quantity(other, unit=self.unit)
+            try:
+                other = u.Quantity(other, unit=self.unit)
+            except TypeError:
+                return NotImplemented
 
         return self.add(other)
 
@@ -688,19 +691,28 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def __mul__(self, other):
         if not isinstance(other, NDCube):
-            other = u.Quantity(other)
+            try:
+                other = u.Quantity(other, unit=self.unit)
+            except TypeError:
+                return NotImplemented
 
         return self.multiply(other)
 
     def __div__(self, other):
         if not isinstance(other, NDCube):
-            other = u.Quantity(other)
+            try:
+                other = u.Quantity(other, unit=self.unit)
+            except TypeError:
+                return NotImplemented
 
         return self.divide(other)
 
     def __truediv__(self, other):
         if not isinstance(other, NDCube):
-            other = u.Quantity(other)
+            try:
+                other = u.Quantity(other, unit=self.unit)
+            except TypeError:
+                return NotImplemented
 
         return self.divide(other)
 

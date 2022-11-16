@@ -36,7 +36,7 @@ create it explicitly from arrays or `~astropy.units.Quantity` objects:
 
 .. note::
     The ``spectral_axis`` can be either ascending or descending, but must be monotonic
-    in either case. 
+    in either case.
 
 Reading from a File
 -------------------
@@ -97,7 +97,7 @@ objects will propagate uncertainties.
 
 Uncertainties are a special subclass of :class:`~astropy.nddata.NDData`, and their
 propagation rules are implemented at the class level. Therefore, users must
-specify the uncertainty type at creation time
+specify the uncertainty type at creation time.
 
 .. code-block:: python
 
@@ -248,9 +248,9 @@ axis is always the last.
 Slicing
 -------
 
-As seen above, `~specutils.Spectrum1D` supports slicing in the same way as any 
-other array-like object. Additionally, a `~specutils.Spectrum1D` can be sliced 
-along the spectral axis using world coordinates. 
+As seen above, `~specutils.Spectrum1D` supports slicing in the same way as any
+other array-like object. Additionally, a `~specutils.Spectrum1D` can be sliced
+along the spectral axis using world coordinates.
 
 .. code-block:: python
 
@@ -261,7 +261,7 @@ along the spectral axis using world coordinates.
     >>> spec_slice.spectral_axis
     <SpectralAxis [5002., 5003., 5004., 5005.] Angstrom>
 
-It is also possible to slice on other axes using simple array indices at the 
+It is also possible to slice on other axes using simple array indices at the
 same time as slicing the spectral axis based on spectral values.
 
 .. code-block:: python
@@ -273,7 +273,7 @@ same time as slicing the spectral axis based on spectral values.
     >>> spec_slice.shape
     (2, 4)
 
-If the `specutils.Spectrum1D` was created with a WCS that included spatial 
+If the `specutils.Spectrum1D` was created with a WCS that included spatial
 information, for example in case of a spectral cube with two spatial dimensions,
 the `specutils.Spectrum1D.crop` method can be used to subset the data based on
 the world coordinates. The inputs required are two sets up `astropy.coordinates`
@@ -282,7 +282,7 @@ one of the coordinates is decreasing along an axis, the higher world coordinate
 value will apply to the lower bound input.
 
 .. code-block:: python
-    
+
     >>> from astropy.coordinates import SpectralCoord, SkyCoord
     >>> import astropy.units as u
 
@@ -293,9 +293,9 @@ value will apply to the lower bound input.
 Collapsing
 ----------
 
-`~specutils.Spectrum1D` has built-in convenience methods for collapsing the 
+`~specutils.Spectrum1D` has built-in convenience methods for collapsing the
 flux array of the spectrum via various statistics. The available statistics are
-mean, median, sum, max, and min, and may be called either on a specific axis 
+mean, median, sum, max, and min, and may be called either on a specific axis
 (or axes) or over the entire flux array. The collapse methods currently respect
 the ``mask`` attribute of the `~specutils.Spectrum1D`, but do not propagate
 any ``uncertainty`` attached to the spectrum.
@@ -307,18 +307,18 @@ any ``uncertainty`` attached to the spectrum.
     <Quantity 0.4572145 Jy>
 
 The 'axis' argument of the collapse methods may either be an integer axis, or a
-string specifying either 'spectral', which will collapse along only the 
+string specifying either 'spectral', which will collapse along only the
 spectral axis, or 'spatial', which will collapse along all non-spectral axes.
 
 .. code-block:: python
 
     >>> spec.mean(axis='spatial') # doctest: +IGNORE_OUTPUT
-    <Spectrum1D(flux=<Quantity [0.39985669, ... 0.38041483] Jy>, 
+    <Spectrum1D(flux=<Quantity [0.39985669, ... 0.38041483] Jy>,
                 spectral_axis=<SpectralAxis ... [5000., ... 5009.]>
 
-Note that in this case, the result of the collapse operation is a 
-`~specutils.Spectrum1D` rather than an `astropy.units.Quantity`, because the 
-collapse operation left the spectral axis intact. 
+Note that in this case, the result of the collapse operation is a
+`~specutils.Spectrum1D` rather than an `astropy.units.Quantity`, because the
+collapse operation left the spectral axis intact.
 
 It is also possible to supply your own function for the collapse operation by
 calling `~specutils.Spectrum1D.collapse()` and providing a callable function
