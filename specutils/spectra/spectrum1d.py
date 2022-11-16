@@ -691,28 +691,19 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def __mul__(self, other):
         if not isinstance(other, NDCube):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+            other = u.Quantity(other)
 
         return self.multiply(other)
 
     def __div__(self, other):
         if not isinstance(other, NDCube):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+            other = u.Quantity(other)
 
         return self.divide(other)
 
     def __truediv__(self, other):
         if not isinstance(other, NDCube):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+            other = u.Quantity(other)
 
         return self.divide(other)
 
