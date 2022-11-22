@@ -1,11 +1,11 @@
-1.10.0 (unreleased)
--------------------
-
-New Features
-^^^^^^^^^^^^
+1.9.1 (2022-11-22)
+------------------
 
 Bug Fixes
 ^^^^^^^^^
+
+- Add and subtract operations on Spectrum1D now allow for other operand's class
+  to handle the arithmetic if that class has special handling. [#988]
 
 1.9.0 (2022-10-18)
 ------------------
