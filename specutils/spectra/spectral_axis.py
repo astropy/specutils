@@ -74,7 +74,7 @@ class SpectralAxis(SpectralCoord):
                                              preserve_observer_frame=False):
         if self.unit is u.pixel:
             raise u.UnitsError("Cannot transform spectral coordinates in pixel units")
-        super().with_observer_stationary_relative_to(frame,
+        return super().with_observer_stationary_relative_to(frame,
                                                      velocity=velocity,
                                                      preserve_observer_frame=preserve_observer_frame)
 
