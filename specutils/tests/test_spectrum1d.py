@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
+from astropy.tests.helper import quantity_allclose
 from astropy.wcs import WCS
 
 from .conftest import remote_access
@@ -121,9 +122,11 @@ def test_create_from_cube():
 
     spec = Spectrum1D(flux=flux, wcs=w)
 
-    assert spec.flux.shape == (4,3,2)
-    assert spec.flux[3,2,1] == 23*u.Jy
-    assert np.all(spec.spectral_axis.value == np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1])*w.wcs.crval[-1])
+    assert spec.flux.shape == (2,3,4)
+    assert spec.flux[1,2,3] == 23*u.Jy
+    assert quantity_allclose(spec.spectral_axis,
+                             np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1]) *
+                             w.wcs.crval[-1]*spec.spectral_axis.unit)
 
 
 def test_spectral_axis_conversions():
@@ -170,7 +173,8 @@ def test_spectral_slice():
 
     # Test higher dimensional slicing
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                       flux=np.random.random((10, 10)) * u.Jy)
+                       flux=np.random.random((10, 10)) * u.Jy,
+                       spectral_axis_index=1)
     sliced_spec = spec[300*u.nm:600*u.nm]
     assert np.all(sliced_spec.spectral_axis == [300, 400, 500] * u.nm)
 
@@ -480,7 +484,7 @@ def test_collapse_flux():
     flux = [[2,4,6], [0, 8, 12]] * u.Jy
     sa = [100,200,300]*u.um
     mask = [[False, True, False], [True, False, False]]
-    spec = Spectrum1D(flux, sa, mask=mask)
+    spec = Spectrum1D(flux, sa, mask=mask, spectral_axis_index=1)
 
     assert spec.mean() == 7 * u.Jy
     assert spec.max() == 12 * u.Jy

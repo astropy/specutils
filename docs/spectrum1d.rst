@@ -236,14 +236,18 @@ Multi-dimensional Data Sets
 ---------------------------
 
 `~specutils.Spectrum1D` also supports the multidimensional case where you
-have, say, an ``(n_spectra, n_pix)``
+have, for example, an ``(n_spectra, n_pix)``
 shaped data set where each ``n_spectra`` element provides a different flux
-data array and so ``flux`` and ``uncertainty`` may be multidimensional as
-long as the last dimension matches the shape of spectral_axis This is meant
+data array. ``flux`` and ``uncertainty`` may be multidimensional as
+long as one dimension matches the shape of the spectral_axis. This is meant
 to allow fast operations on collections of spectra that share the same
 ``spectral_axis``. While it may seem to conflict with the “1D” in the class
 name, this name scheme is meant to communicate the presence of a single
-common spectral axis.
+common spectral axis. In cases where the flux axis corresponding to the spectral
+axis cannot be determined automatically (for example, if multiple flux axes
+have the same length as the spectral axis), the spectral axis must be specified
+with the ``spectral_axis_index`` argument when initializing the
+`~specutils.Spectrum1D`.
 
 .. note:: The case where each flux data array is related to a *different* spectral
           axis is encapsulated in the :class:`~specutils.SpectrumCollection`
@@ -263,8 +267,7 @@ common spectral axis.
                0.33281393, 0.59830875, 0.18673419, 0.67275604, 0.94180287] Jy>
 
 While the above example only shows two dimensions, this concept generalizes to
-any number of dimensions for `~specutils.Spectrum1D`, as long as the spectral
-axis is always the last.
+any number of dimensions for `~specutils.Spectrum1D`.
 
 
 Slicing
