@@ -205,7 +205,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                         if spectral_axis.shape[0] == flux.shape[i] + add_element:
                             matching_axes.append(i)
                 if len(matching_axes) == 1:
-                    self.spectral_axis_index = matching_axes[0]
+                    self._spectral_axis_index = matching_axes[0]
                 else:
                     raise ValueError("Unable to determine which flux axis corresponds to "
                                      "the spectral axis. Please specify spectral_axis_index")
@@ -226,7 +226,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 else:
                     # Due to FITS conventions, the WCS axes are listed in opposite
                     # order compared to the data array.
-                    self.spectral_axis_index = len(flux.shape)-temp_axes[0]-1
+                    self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
