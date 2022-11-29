@@ -74,9 +74,9 @@ class SpectralAxis(SpectralCoord):
                                              preserve_observer_frame=False):
         if self.unit is u.pixel:
             raise u.UnitsError("Cannot transform spectral coordinates in pixel units")
-        super().with_observer_stationary_relative_to(frame,
-                                                     velocity=velocity,
-                                                     preserve_observer_frame=preserve_observer_frame)
+        return super().with_observer_stationary_relative_to(frame,
+                                                            velocity=velocity,
+                                                            preserve_observer_frame=preserve_observer_frame)
 
     def with_radial_velocity_shift(self, target_shift=None, observer_shift=None):
         if self.unit is u.pixel:
