@@ -78,6 +78,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                  wcs=None, velocity_convention=None, rest_value=None,
                  redshift=None, radial_velocity=None, bin_specification=None,
                  **kwargs):
+
+        self._spectral_axis_index = spectral_axis_index
+
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
             {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy',
@@ -171,34 +174,40 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # match or are off by one (implying the spectral axis stores bin edges)
         if flux is not None and spectral_axis is not None:
             if spectral_axis_index is not None:
+                print("Got here 1")
                 if spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]:
+                    print("Got here 2")
                     if bin_specification == "edges":
                         raise ValueError("A spectral axis input as bin edges must "
                                          "have length one greater than the flux axis")
                     bin_specification = "centers"
                 elif spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]+1:
+                    print("Got here 3")
                     if bin_specification == "centers":
-                        raise ValueError("A spectral axis input as bin centers"
+                        raise ValueError("A spectral axis input as bin centers "
                             "must be the same length as the flux axis")
                     bin_specification = "edges"
                 else:
                     raise ValueError(
-                        f"Spectral axis length ({spectral_axis.shape[0]}) must be the"
-                        "same size or one greater (if specifying bin edges) than that"
+                        f"Spectral axis length ({spectral_axis.shape[0]}) must be the "
+                        "same size or one greater (if specifying bin edges) than that "
                         f"of the last flux axis ({flux.shape[self.spectral_axis_index]})")
             else:
                 matching_axes = []
                 if bin_specification == "centers":
-                    add_element = 0
+                    add_elements = [0,]
                 elif bin_specification == "edges":
-                    add_element = 1
+                    add_elements = [1,]
+                elif bin_specification is None:
+                    add_elements = [0,1]
                 for i in range(len(flux.shape)):
-                    if spectral_axis.shape[0] == flux.shape[i] + add_element:
-                        matching_axes.append(i)
+                    for add_element in add_elements:
+                        if spectral_axis.shape[0] == flux.shape[i] + add_element:
+                            matching_axes.append(i)
                 if len(matching_axes) == 1:
                     self.spectral_axis_index = matching_axes[0]
                 else:
-                    raise ValueError("Unable to determine which flux axis corresponds to"
+                    raise ValueError("Unable to determine which flux axis corresponds to "
                                      "the spectral axis. Please specify spectral_axis_index")
 
 

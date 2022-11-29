@@ -17,8 +17,8 @@ __all__ = ['OneDSpectrumMixin']
 
 class OneDSpectrumMixin():
     @property
-    def _spectral_axis_numpy_index(self):
-        return self.data.ndim - 1 - self.wcs.wcs.spec
+    def spectral_axis_index(self):
+        return self._spectral_axis_index
 
     @property
     def _spectral_axis_len(self):
