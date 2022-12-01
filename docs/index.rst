@@ -85,7 +85,9 @@ may have downloaded from some archive, or reduced from your own observations.
     >>> from specutils.fitting import fit_generic_continuum
     >>> with warnings.catch_warnings():  # Ignore warnings
     ...     warnings.simplefilter('ignore')
-    ...     cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis) # doctest: +REMOTE_DATA
+    ...     denom = Spectrum1D(flux=fit_generic_continuum(spec)(spec.spectral_axis),
+    ...                        spectral_axis=spec.spectral_axis)  # doctest: +REMOTE_DATA
+    >>> cont_norm_spec = spec / denom  # doctest: +REMOTE_DATA
 
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.step(cont_norm_spec.wavelength, cont_norm_spec.flux)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA

@@ -671,39 +671,55 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def radial_velocity(self, val):
         self.shift_spectrum_to(radial_velocity=val)
 
+    def _validate_op_other(self, other):
+        """Throw error if math with other is impossible."""
+        if isinstance(other, u.Quantity):
+            if other.size != 1:
+                raise ValueError('Quantity must be scalar.')
+
+        elif isinstance(other, Spectrum1D):
+            if not np.allclose(self.spectral_axis, other.spectral_axis):
+                raise ValueError('Mismatched spectral_axis, please resample spectrum.')
+
+        elif not isinstance(other, NDCube):
+            raise NotImplementedError(f'Cannot operate on {other.__class__.__name__} class.')
+
     def __add__(self, other):
-        if not isinstance(other, (NDCube, u.Quantity)):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+        if isinstance(other, (int, float)):
+            other = u.Quantity(other, unit=self.unit)  # I hope you know what you doing.
+        else:
+            self._validate_op_other(other)
 
         return self.add(other)
 
     def __sub__(self, other):
-        if not isinstance(other, NDCube):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+        # Enables specreduce background subtraction via __rsub__ in
+        # https://github.com/astropy/specreduce/blob/main/specreduce/background.py
+        if hasattr(other, 'image') and isinstance(other.image, Spectrum1D):
+            if not np.allclose(self.spectral_axis, other.image.spectral_axis):
+                raise ValueError('Mismatched spectral_axis, please resample spectrum.')
+            return NotImplemented
+
+        if isinstance(other, (int, float)):
+            other = u.Quantity(other, unit=self.unit)  # I hope you know what you doing.
+        else:
+            self._validate_op_other(other)
 
         return self.subtract(other)
 
     def __mul__(self, other):
-        if not isinstance(other, NDCube):
+        if isinstance(other, (int, float)):
             other = u.Quantity(other)
+        else:
+            self._validate_op_other(other)
 
         return self.multiply(other)
 
-    def __div__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
-
-        return self.divide(other)
-
     def __truediv__(self, other):
-        if not isinstance(other, NDCube):
+        if isinstance(other, (int, float)):
             other = u.Quantity(other)
+        else:
+            self._validate_op_other(other)
 
         return self.divide(other)
 

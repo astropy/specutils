@@ -116,8 +116,12 @@ def _apodize(spectrum, template, apodization_window):
         else:
             def window(wlen):
                 return tukey(wlen, alpha=apodization_window)
-        clean_spectrum = spectrum * window(len(spectrum.spectral_axis))
-        clean_template = template * window(len(template.spectral_axis))
+        clean_spectrum = spectrum * Spectrum1D(
+            flux=window(len(spectrum.spectral_axis)) * u.dimensionless_unscaled,
+            spectral_axis=spectrum.spectral_axis)
+        clean_template = template * Spectrum1D(
+            flux=window(len(template.spectral_axis)) * u.dimensionless_unscaled,
+            spectral_axis=template.spectral_axis)
 
     return clean_spectrum, clean_template
 

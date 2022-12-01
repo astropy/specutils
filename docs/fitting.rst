@@ -691,7 +691,8 @@ convenience functions to perform exactly this task.  An example is shown below.
     The normalized spectrum is simply the old spectrum devided by the
     fitted continuum, which returns a new object:
 
-    >>> spec_normalized = spectrum / y_continuum_fitted
+    >>> denom = Spectrum1D(flux=y_continuum_fitted, spectral_axis=spectrum.spectral_axis)
+    >>> spec_normalized = spectrum / denom
 
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
     >>> ax.plot(spec_normalized.spectral_axis, spec_normalized.flux)  # doctest: +IGNORE_OUTPUT

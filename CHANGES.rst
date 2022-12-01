@@ -7,6 +7,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Spectrum1D math operators no longer perform illogical math. [#998]
+
 1.9.1 (2022-11-22)
 ------------------
 
