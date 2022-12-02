@@ -37,11 +37,27 @@ class TestMathWithAllOnes:
         spec_subbed = self.spec - new_spec
         assert_quantity_allclose(spec_subbed.flux, 0 * u.nJy)
 
-        spec_mul = self.spec * self.spec
+        spec_mul = self.spec * new_spec
         assert_quantity_allclose(spec_mul.flux, 1 * (u.nJy * u.nJy))
 
-        spec_div = self.spec / self.spec
+        spec_div = self.spec / new_spec
         assert_quantity_allclose(spec_div.flux, 1)
+
+    def test_math_with_different_flux_unit(self):
+        new_flux = np.ones(self.spec.flux.shape) * (u.erg / (u.cm * u.cm * u.AA * u.s))
+        new_spec = Spectrum1D(spectral_axis=self.spec.spectral_axis, flux=new_flux)
+
+        with pytest.raises(u.UnitConversionError):
+            self.spec + new_spec
+
+        with pytest.raises(u.UnitConversionError):
+            self.spec - new_spec
+
+        spec_mul = self.spec * new_spec
+        assert_quantity_allclose(spec_mul.flux, 1 * (u.nJy * u.erg / (u.cm * u.cm * u.AA * u.s)))
+
+        spec_div = self.spec / new_spec
+        assert_quantity_allclose(spec_div.flux, 1 * (u.nJy * u.cm * u.cm * u.AA * u.s / u.erg))
 
     def test_math_with_spectral_axes_different(self):
         new_wave = self.spec.spectral_axis + (1 * u.um)
