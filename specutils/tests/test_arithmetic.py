@@ -76,17 +76,17 @@ class TestMathWithAllOnes:
             self.spec / new_spec
 
     def test_math_with_plain_number(self):
-        spec_added_fwd = self.spec + 1
-        assert_quantity_allclose(spec_added_fwd.flux, 2 * u.nJy)
+        with pytest.raises(NotImplementedError, match='Cannot operate on int class'):
+            self.spec + 1
 
-        spec_added_bak = 1 + self.spec
-        assert_quantity_allclose(spec_added_bak.flux, 2 * u.nJy)
+        with pytest.raises(NotImplementedError, match='Cannot operate on int class'):
+            1 + self.spec
 
-        spec_subbed_fwd = self.spec - 1
-        assert_quantity_allclose(spec_subbed_fwd.flux, 0 * u.nJy)
+        with pytest.raises(NotImplementedError, match='Cannot operate on int class'):
+            self.spec - 1
 
-        spec_subbed_bak = 2 - self.spec
-        assert_quantity_allclose(spec_subbed_bak.flux, 1 * u.nJy)
+        with pytest.raises(NotImplementedError, match='Cannot operate on int class'):
+            2 - self.spec
 
         spec_mul_fwd = self.spec * 2
         assert_quantity_allclose(spec_mul_fwd.flux, 2 * u.nJy)
@@ -103,7 +103,7 @@ class TestMathWithAllOnes:
         with pytest.raises(NotImplementedError, match='Cannot operate on ndarray class'):
             self.spec * np.ones(self.spec.flux.shape)
 
-    def test_math_with_quantity(self):
+    def test_math_with_quantity_matching_unit(self):
         q = 1 * u.uJy  # 1000 nJy
 
         spec_added_fwd = self.spec + q
@@ -136,6 +136,21 @@ class TestMathWithAllOnes:
 
         with pytest.raises(ValueError, match='Quantity must be scalar'):
             self.spec * (self.spec.flux)
+
+    def test_math_with_quantity_no_unit(self):
+        q = 1 * u.dimensionless_unscaled
+
+        with pytest.raises(u.UnitConversionError):
+            self.spec + q
+
+        with pytest.raises(u.UnitConversionError):
+            self.spec - q
+
+        spec_mul = self.spec * q
+        assert_quantity_allclose(spec_mul.flux, 1 * u.nJy)
+
+        spec_div = self.spec / q
+        assert_quantity_allclose(spec_div.flux, 1 * u.nJy)
 
     def test_math_with_ndcube(self):
         from astropy.wcs import WCS
@@ -274,11 +289,3 @@ def test_with_constants(simulated_spectra):
 
     # Test that doing arithmetic with a constant to the right of the spectrum succeeds
     assert_quantity_allclose((2 * spec).flux, spec.flux * 2)
-
-    r_add_result = 2 + spec
-    l_add_result = spec + 2
-    assert_quantity_allclose(r_add_result.flux, l_add_result.flux)
-
-    r_sub_result = 2 - spec
-    l_sub_result = -1 * (spec - 2)
-    assert_quantity_allclose(r_sub_result.flux, l_sub_result.flux)

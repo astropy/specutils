@@ -678,18 +678,14 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 raise ValueError('Quantity must be scalar.')
 
         elif isinstance(other, Spectrum1D):
-            if not np.allclose(self.spectral_axis, other.spectral_axis):
+            if not u.allclose(self.spectral_axis, other.spectral_axis):
                 raise ValueError('Mismatched spectral_axis, please resample spectrum.')
 
         elif not isinstance(other, NDCube):
             raise NotImplementedError(f'Cannot operate on {other.__class__.__name__} class.')
 
     def __add__(self, other):
-        if isinstance(other, (int, float)):
-            other = u.Quantity(other, unit=self.unit)  # I hope you know what you doing.
-        else:
-            self._validate_op_other(other)
-
+        self._validate_op_other(other)
         return self.add(other)
 
     def __sub__(self, other):
@@ -700,11 +696,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 raise ValueError('Mismatched spectral_axis, please resample spectrum.')
             return NotImplemented
 
-        if isinstance(other, (int, float)):
-            other = u.Quantity(other, unit=self.unit)  # I hope you know what you doing.
-        else:
-            self._validate_op_other(other)
-
+        self._validate_op_other(other)
         return self.subtract(other)
 
     def __mul__(self, other):
