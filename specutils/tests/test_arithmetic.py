@@ -205,6 +205,12 @@ class TestMathWithAllOnes:
         bg = _MockBackground(self.spec)
         assert (self.spec - bg) == 42
 
+        new_wave = self.spec.spectral_axis + (1 * u.um)
+        new_spec = Spectrum1D(spectral_axis=new_wave, flux=self.spec.flux)
+        bg_bad = _MockBackground(new_spec)
+        with pytest.raises(ValueError, match='Mismatched spectral_axis'):
+            self.spec - bg_bad
+
 
 def test_add_basic_spectra(simulated_spectra):
 
