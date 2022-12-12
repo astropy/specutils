@@ -112,7 +112,7 @@ def test_create_with_spectral_coord():
 
 def test_create_from_cube():
 
-    flux = np.arange(24).reshape([2,3,4])*u.Jy
+    flux = np.arange(24).reshape([4,3,2])*u.Jy
     wcs_dict = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE-LOG",
                 "CRVAL1": 205, "CRVAL2": 27, "CRVAL3": 3.622e-7,
                 "CDELT1": -0.0001, "CDELT2": 0.0001, "CDELT3": 8e-11,
@@ -170,7 +170,8 @@ def test_spectral_slice():
 
     # Test higher dimensional slicing
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
-                       flux=np.random.random((10, 10)) * u.Jy)
+                       flux=np.random.random((10, 10)) * u.Jy,
+                       spectral_axis_index=1)
     sliced_spec = spec[300*u.nm:600*u.nm]
     assert np.all(sliced_spec.spectral_axis == [300, 400, 500] * u.nm)
 
@@ -480,7 +481,7 @@ def test_collapse_flux():
     flux = [[2,4,6], [0, 8, 12]] * u.Jy
     sa = [100,200,300]*u.um
     mask = [[False, True, False], [True, False, False]]
-    spec = Spectrum1D(flux, sa, mask=mask)
+    spec = Spectrum1D(flux, sa, mask=mask, spectral_axis_index=1)
 
     assert spec.mean() == 7 * u.Jy
     assert spec.max() == 12 * u.Jy

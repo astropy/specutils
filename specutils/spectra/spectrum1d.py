@@ -171,49 +171,55 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                    "energy/wavelength/frequency equivalent.")
 
         # If flux and spectral axis are both specified, check that their lengths
-        # match or are off by one (implying the spectral axis stores bin edges)
+        # match or are off by one (implying the spectral axis stores bin edges).
+        # If we can't determine which flux axis corresponds to the spectral axis
+        # we raise an error. 
         if flux is not None and spectral_axis is not None:
-            if spectral_axis_index is not None:
-                print("Got here 1")
-                if spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]:
-                    print("Got here 2")
-                    if bin_specification == "edges":
-                        raise ValueError("A spectral axis input as bin edges must "
-                                         "have length one greater than the flux axis")
-                    bin_specification = "centers"
-                elif spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]+1:
-                    print("Got here 3")
+            if spectral_axis_index is None:
+                if len(flux.shape) == 1:
+                    self._spectral_axis_index = 0
+                else:
+                    matching_axes = []
                     if bin_specification == "centers":
-                        raise ValueError("A spectral axis input as bin centers "
-                            "must be the same length as the flux axis")
-                    bin_specification = "edges"
-                else:
-                    raise ValueError(
-                        f"Spectral axis length ({spectral_axis.shape[0]}) must be the "
-                        "same size or one greater (if specifying bin edges) than that "
-                        f"of the last flux axis ({flux.shape[self.spectral_axis_index]})")
-            else:
-                matching_axes = []
+                        add_elements = [0,]
+                    elif bin_specification == "edges":
+                        add_elements = [1,]
+                    elif bin_specification is None:
+                        add_elements = [0,1]
+                    for i in range(len(flux.shape)):
+                        for add_element in add_elements:
+                            if spectral_axis.shape[0] == flux.shape[i] + add_element:
+                                matching_axes.append(i)
+
+                    if len(matching_axes) == 1:
+                        self._spectral_axis_index = matching_axes[0]
+                    else:
+                        raise ValueError("Unable to determine which flux axis corresponds to "
+                                         "the spectral axis. Please specify spectral_axis_index"
+                                         " or provide a spectral_axis matching a flux axis.")
+
+            # Make sure the length of the spectral axis matches the appropriate flux axis
+            if spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]:
+                if bin_specification == "edges":
+                    raise ValueError("A spectral axis input as bin edges must "
+                                     "have length one greater than the flux axis")
+                bin_specification = "centers"
+            elif spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]+1:
                 if bin_specification == "centers":
-                    add_elements = [0,]
-                elif bin_specification == "edges":
-                    add_elements = [1,]
-                elif bin_specification is None:
-                    add_elements = [0,1]
-                for i in range(len(flux.shape)):
-                    for add_element in add_elements:
-                        if spectral_axis.shape[0] == flux.shape[i] + add_element:
-                            matching_axes.append(i)
-                if len(matching_axes) == 1:
-                    self._spectral_axis_index = matching_axes[0]
-                else:
-                    raise ValueError("Unable to determine which flux axis corresponds to "
-                                     "the spectral axis. Please specify spectral_axis_index")
+                    raise ValueError("A spectral axis input as bin centers "
+                        "must be the same length as the flux axis")
+                bin_specification = "edges"
+            else:
+                raise ValueError(
+                    f"Spectral axis length ({spectral_axis.shape[0]}) must be the "
+                    "same size or one greater (if specifying bin edges) than that "
+                    f"of the last flux axis ({flux.shape[self.spectral_axis_index]})")
 
 
         # If a WCS is provided, determine which axis is the spectral axis
         if wcs is not None and hasattr(wcs, "naxis"):
             if wcs.naxis > 1:
+                temp_axes = []
                 phys_axes = wcs.world_axis_physical_types
                 for i in range(len(phys_axes)):
                     if phys_axes[i] is None:
