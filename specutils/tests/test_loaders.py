@@ -149,7 +149,7 @@ def test_manga_cube():
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
     assert spec.meta['header']['INSTRUME'] == 'MaNGA'
-    assert spec.shape == (34, 34, 4563)
+    assert spec.shape == (4563, 34, 34)
 
 
 @pytest.mark.remote_data

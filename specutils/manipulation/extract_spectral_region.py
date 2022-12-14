@@ -176,7 +176,13 @@ def extract_region(spectrum, region, return_single_spectrum=False):
                                         flux=[]*spectrum.flux.unit)
             extracted_spectrum.append(empty_spectrum)
         else:
-            extracted_spectrum.append(spectrum[..., left_index:right_index])
+            slices = [slice(None),] * len(spectrum.shape)
+            slices[spectrum.spectral_axis_index] = slice(left_index, right_index)
+            if len(slices) == 1:
+                slices = slices[0]
+            else:
+                slices = tuple(slices)
+            extracted_spectrum.append(spectrum[slices])
 
     # If there is only one subregion in the region then we will
     # just return a spectrum.

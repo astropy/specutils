@@ -80,6 +80,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                  **kwargs):
 
         self._spectral_axis_index = spectral_axis_index
+        # Might as well handle this right away
+        if spectral_axis_index is None and flux is not None:
+            if flux.ndim == 1:
+                self._spectral_axis_index = 0
 
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
@@ -233,6 +237,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     # Due to FITS conventions, the WCS axes are listed in opposite
                     # order compared to the data array.
                     self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
+            else:
+                self._spectral_axis_index = 0
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
@@ -246,10 +252,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             # If spectral axis is provided as an astropy Quantity, convert it
             # to a specutils SpectralAxis object.
             if not isinstance(spectral_axis, SpectralAxis):
-                if spectral_axis.shape[0] == flux.shape[-1] + 1:
-                    bin_specification = "edges"
-                else:
-                    bin_specification = "centers"
                 self._spectral_axis = SpectralAxis(
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
@@ -272,7 +274,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
-            size = flux.shape[-1] if not flux.isscalar else 1
+            if self.spectral_axis_index is None:
+                if flux.ndim == 1:
+                    self._spectral_axis_index = 0
+                else:
+                    raise ValueError("Must specify spectral_axis_index if no WCS or spectral"
+                                     " axis is input.")
+            size = flux.shape[self.spectral_axis_index] if not flux.isscalar else 1
             wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
 
         super().__init__(
@@ -287,11 +295,14 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             if hasattr(self.wcs, "spectral"):
                 # Handle generated 1D WCS that aren't set to spectral
                 if not self.wcs.is_spectral and self.wcs.naxis == 1:
-                    spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+                    spec_axis = self.wcs.pixel_to_world(
+                                    np.arange(self.flux.shape[self.spectral_axis_index]))
                 else:
-                    spec_axis = self.wcs.spectral.pixel_to_world(np.arange(self.flux.shape[-1]))
+                    spec_axis = self.wcs.spectral.pixel_to_world(
+                                    np.arange(self.flux.shape[self.spectral_axis_index]))
             else:
-                spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+                spec_axis = self.wcs.pixel_to_world(
+                                np.arange(self.flux.shape[self.spectral_axis_index]))
 
             try:
                 if spec_axis.unit.is_equivalent(u.one):
@@ -327,6 +338,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         The first case is handled by the parent class, while the second is
         handled here.
         """
+        new_spectral_axis_index = self.spectral_axis_index
 
         if self.flux.ndim > 1 or (type(item) == tuple and item[0] == Ellipsis):
             if type(item) == tuple:
@@ -343,6 +355,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     # Slicing on less than the full number of axes means we want
                     # to keep the whole spectral axis
                     spec_item = slice(None, None, None)
+                    # If any slices are single integers, need to decrement the spectral axis index
+
             elif isinstance(item, slice) and (isinstance(item.start, u.Quantity) or
                     isinstance(item.stop, u.Quantity)):
                 # We only allow slicing with world coordinates along the spectral
@@ -358,7 +372,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 spec_item = item
             else:
                 # Slicing with a single integer or slice uses the leading axis,
-                # so we keep the whole spectral axis, which is last
+                # so we keep the whole spectral axis, which is last. Need to decrement
+                # the spectral axis index by one
+                if isinstance(item, int):
+                    new_spectral_axis_index -= 1
                 spec_item = slice(None, None, None)
 
             if (isinstance(spec_item.start, u.Quantity) or
@@ -382,7 +399,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 uncertainty=self.uncertainty[item]
                 if self.uncertainty is not None else None,
                 mask=self.mask[item] if self.mask is not None else None,
-                meta=new_meta, wcs=None)
+                meta=new_meta, wcs=None, spectral_axis_index=new_spectral_axis_index)
 
         if not isinstance(item, slice):
             if isinstance(item, u.Quantity):
@@ -433,7 +450,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             meta=deepcopy(self.meta),
             unit=deepcopy(self.unit),
             velocity_convention=deepcopy(self.velocity_convention),
-            rest_value=deepcopy(self.rest_value))
+            rest_value=deepcopy(self.rest_value),
+            spectral_axis_index=deepcopy(self.spectral_axis_index))
 
         alt_kwargs.update(kwargs)
 
@@ -497,10 +515,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         if isinstance(axis, str):
             if axis == 'spectral':
-                axis = -1
+                axis = self.spectral_axis_index
             elif axis == 'spatial':
                 # generate tuple if needed for multiple spatial axes
-                axis = tuple([x for x in range(len(self.flux.shape) - 1)])
+                axis = tuple([x for x in range(len(self.flux.shape)) if
+                              x != self.spectral_axis_index])
             else:
                 raise ValueError("String axis input must be 'spatial' or 'spectral'")
 
@@ -517,9 +536,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             collapsed_flux = collapse_funcs[method](flux_to_collapse, axis=axis)
 
         # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
-        if axis in (-1, None, len(self.flux.shape)-1):
+        if axis in (self.spectral_axis_index, None):
             return collapsed_flux
-        elif isinstance(axis, tuple) and -1 in axis:
+        elif isinstance(axis, tuple) and self.spectral_axis_index in axis:
             return collapsed_flux
         else:
             return Spectrum1D(collapsed_flux, wcs=self.wcs)
