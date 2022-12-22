@@ -33,6 +33,23 @@ def test_region_simple(simulated_spectra):
     assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
 
+def test_pixel_spectralaxis_extraction():
+    flux_unit = u.dimensionless_unscaled
+    spec_unit = u.pix
+
+    spec1d = Spectrum1D(spectral_axis=np.arange(5100, 5300)*spec_unit,
+                        flux=np.random.randn(200)*flux_unit)
+
+    region = SpectralRegion.from_center(center=5200.5*spec_unit, width=100*spec_unit)
+
+    extracted_spec1d = extract_region(spec1d, region)
+
+    assert len(extracted_spec1d.spectral_axis) == 101
+    assert_quantity_allclose(extracted_spec1d.spectral_axis, spec1d.spectral_axis[50:151])
+    assert len(extracted_spec1d.flux) == 101
+    assert_quantity_allclose(extracted_spec1d.flux, spec1d.flux[50:151])
+
+
 def test_slab_simple(simulated_spectra):
     np.random.seed(42)
 
