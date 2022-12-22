@@ -84,6 +84,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if spectral_axis_index is None and flux is not None:
             if flux.ndim == 1:
                 self._spectral_axis_index = 0
+        elif flux is None:
+            self._spectral_axis_index = 0
 
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
