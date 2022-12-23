@@ -5,12 +5,17 @@ Specutils
     :target: https://github.com/astropy/specutils/actions
     :alt: GitHub Actions CI Status
 
+.. image:: https://codecov.io/github/astropy/specutils/branch/master/graph/badge.svg
+    :target: https://codecov.io/github/astropy/specutils
+    :alt: Coverage Status
+
 .. image:: https://readthedocs.org/projects/specutils/badge/?version=latest
     :target: http://specutils.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org/
+    :alt: Powered by Astropy
 
 Specutils is an `Astropy affiliated package <http://affiliated.astropy.org/>`_
 with the goal of providing a shared set of Python representations of
