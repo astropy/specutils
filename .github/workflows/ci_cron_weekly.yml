@@ -27,10 +27,10 @@ jobs:
 
           # We do not use remote data here, since
           # that gives too many false positives due to URL timeouts.
-          - name: Python 3.11 with pre-release version of key dependencies and JWST
+          - name: Python 3.11 with pre-release version of key dependencies
             os: ubuntu-latest
             python: '3.11'
-            toxenv: py311-test-predeps-external
+            toxenv: py311-test-predeps
 
           - name: Documentation link check
             os: ubuntu-latest
