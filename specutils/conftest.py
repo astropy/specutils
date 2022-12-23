@@ -31,6 +31,7 @@ def pytest_configure(config):
         PYTEST_HEADER_MODULES['astropy'] = 'astropy'
         PYTEST_HEADER_MODULES['gwcs'] = 'gwcs'
         PYTEST_HEADER_MODULES['asdf'] = 'asdf'
+        PYTEST_HEADER_MODULES['asdf-astropy'] = 'asdf_astropy'
         PYTEST_HEADER_MODULES['ndcube'] = 'ndcube'
         PYTEST_HEADER_MODULES['spectral-cube'] = 'spectral_cube'
 
