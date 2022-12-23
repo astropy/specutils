@@ -75,7 +75,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         if not spectral_axis.unit.is_equivalent(u.pix):
             left_index = floor(subregion[0].value)
         else:
-            if order is not "ascending":
+            if order != "ascending":
                 raise ValueError("u.pix handling should always be ascending")
             # Get index of closest value
             # See https://stackoverflow.com/a/26026189 if performance becomes an issue
@@ -94,7 +94,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         if not spectral_axis.unit.is_equivalent(u.pix):
             right_index = ceil(subregion[1].value)
         else:
-            if order is not "ascending":
+            if order != "ascending":
                 raise ValueError("u.pix handling should always be ascending")
             # Get index of closest value
             # See https://stackoverflow.com/a/26026189 if performance becomes an issue
