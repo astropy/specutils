@@ -81,7 +81,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
             # See https://stackoverflow.com/a/26026189 if performance becomes an issue
             left_index = np.nanargmin((np.abs(spectral_axis - subregion[0])))
             # Ensure index is inclusive of region bounds
-            if (spectral_axis[left_index] > subregion[0]) and (left_index <= 1):
+            if (spectral_axis[left_index] > subregion[0]) and (left_index >= 1):
                 left_index -= 1
     else:
         # Convert lower value to spectrum spectral_axis units
