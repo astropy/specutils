@@ -11,6 +11,10 @@ on:
     # run every Monday at 6am UTC
     - cron: '0 6 * * 1'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     name: ${{ matrix.name }}
@@ -21,28 +25,25 @@ jobs:
       matrix:
         include:
 
-          # We check numpy-dev also in a job that only runs from cron, so that
-          # we can spot issues sooner. We do not use remote data here, since
-          # that gives too many false positives due to URL timeouts. We also
-          # install all dependencies via pip here so we pick up the latest
-          # releases.
-          - name: Python 3.10 with dev version of key dependencies
+          # We do not use remote data here, since
+          # that gives too many false positives due to URL timeouts.
+          - name: Python 3.11 with pre-release version of key dependencies and JWST
             os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test-devdeps
+            python: '3.11'
+            toxenv: py311-test-predeps-external
 
           - name: Documentation link check
             os: ubuntu-latest
-            python: 3.8
+            python: '3.10'
             toxenv: linkcheck
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: Install language-pack-de and tzdata

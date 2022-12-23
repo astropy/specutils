@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     name: ${{ matrix.name }}
@@ -18,56 +22,35 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.8 with minimal dependencies
+          - name: Python 3.10 with astropy data and coverage
             os: ubuntu-latest
-            python: 3.8
-            toxenv: py38-test
+            python: '3.10'
+            toxenv: py310-test-cov
+            toxargs: -v
+            toxposargs: --open-files --remote-data=astropy
 
-          - name: Python 3.9 with all optional dependencies
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-alldeps
-            toxargs: -v --develop
-            toxposargs: --open-files
-
-          # NOTE: In the build below we also check that tests do not open and
-          # leave open any files. This has a performance impact on running the
-          # tests, hence why it is not enabled by default.
-          - name: Python 3.8 with oldest supported version of all dependencies
+          - name: Python 3.8 with oldest supported version of key dependencies
             os: ubuntu-18.04
             python: 3.8
             toxenv: py38-test-oldestdeps
 
-          - name: Python 3.8 with numpy 1.17 and full coverage
-            os: ubuntu-latest
-            python: 3.8
-            toxenv: py38-test-alldeps-numpy117-cov
-            toxposargs: --remote-data=astropy
-
-          - name: Python 3.9 with all optional dependencies (Windows)
+          - name: Python 3.9 (Windows)
             os: windows-latest
             python: 3.9
-            toxenv: py39-test-alldeps
-            toxposargs: --durations=50
+            toxenv: py39-test
 
-          - name: Python 3.8 with all optional dependencies (MacOS X)
+          - name: Python 3.8 (MacOS X)
             os: macos-latest
             python: 3.8
-            toxenv: py38-test-alldeps
-            toxposargs: --durations=50
-
-          - name: Python 3.9 doc build
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: build_docs
+            toxenv: py38-test
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: Install language-pack-de and tzdata
@@ -82,7 +65,7 @@ jobs:
     # TODO: Do we need --gcov-glob "*cextern*" ?
     - name: Upload coverage to codecov
       if: ${{ contains(matrix.toxenv,'-cov') }}
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
 
@@ -93,19 +76,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: (Allowed Failure) Python 3.9 with remote data and dev version of key dependencies
+          - name: (Allowed Failure) Python 3.11 with remote data and dev version of key dependencies
             os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-devdeps
+            python: '3.11'
+            toxenv: py311-test-devdeps
             toxposargs: --remote-data=any
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: Install language-pack-de and tzdata
