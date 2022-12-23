@@ -44,9 +44,8 @@ def test_pixel_spectralaxis_extraction():
 
     extracted_spec1d = extract_region(spec1d, region)
 
-    assert len(extracted_spec1d.spectral_axis) == 101
+    assert extracted_spec1d.shape == (101,)
     assert_quantity_allclose(extracted_spec1d.spectral_axis, spec1d.spectral_axis[50:151])
-    assert len(extracted_spec1d.flux) == 101
     assert_quantity_allclose(extracted_spec1d.flux, spec1d.flux[50:151])
 
 
