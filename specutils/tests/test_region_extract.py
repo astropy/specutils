@@ -85,8 +85,17 @@ def test_pixel_spectralaxis_extraction():
     for original_case_spectra, compound_spectra in [(extracted_spec1d_2, extracted_spec1d_4[0]),
                                                     (extracted_spec1d_3, extracted_spec1d_4[1])]:
         assert original_case_spectra.shape == compound_spectra.shape
-        assert_quantity_allclose(original_case_spectra.spectral_axis, compound_spectra.spectral_axis)
-        assert_quantity_allclose(original_case_spectra.flux, compound_spectra.flux)
+
+    # Case 5: Region is entirely outside bounds of the spectra should return nothing
+    upper_bound = spec1d.spectral_axis[-1].quantity
+    region = SpectralRegion((upper_bound + 10*spec_unit), (upper_bound + 100*spec_unit))
+    extracted_spec1d = extract_region(spec1d, region)
+    assert extracted_spec1d.shape == (0,)
+
+    lower_bound = spec1d.spectral_axis[0].quantity
+    region = SpectralRegion((lower_bound - 100*spec_unit), (lower_bound - 10*spec_unit))
+    extracted_spec1d = extract_region(spec1d, region)
+    assert extracted_spec1d.shape == (0,)
 
 
 def test_slab_simple(simulated_spectra):

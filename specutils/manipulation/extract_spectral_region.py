@@ -77,12 +77,17 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         else:
             if order != "ascending":
                 raise ValueError("u.pix handling should always be ascending")
-            # Get index of closest value
-            # See https://stackoverflow.com/a/26026189 if performance becomes an issue
-            left_index = np.nanargmin((np.abs(spectral_axis - subregion[0])))
-            # Ensure index is inclusive of region bounds
-            if (spectral_axis[left_index] > subregion[0]) and (left_index >= 1):
-                left_index -= 1
+            # If the lower bound is larger than the largest value, immediately return nothing
+            # Assuming ascending, both bounds are "out of bounds"
+            if subregion[0] > spectral_axis[-1]:
+                return None, None
+            else:
+                # Get index of closest value
+                # See https://stackoverflow.com/a/26026189 if performance becomes an issue
+                left_index = np.nanargmin((np.abs(spectral_axis - subregion[0])))
+                # Ensure index is inclusive of region bounds
+                if (spectral_axis[left_index] > subregion[0]) and (left_index >= 1):
+                    left_index -= 1
     else:
         # Convert lower value to spectrum spectral_axis units
         left_reg_in_spec_unit = left_func(subregion).to(spectral_axis.unit,
@@ -96,12 +101,17 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         else:
             if order != "ascending":
                 raise ValueError("u.pix handling should always be ascending")
-            # Get index of closest value
-            # See https://stackoverflow.com/a/26026189 if performance becomes an issue
-            right_index = np.nanargmin((np.abs(spectral_axis - subregion[1])))
-            # Ensure index is inclusive of region bounds
-            if (spectral_axis[right_index] < subregion[1]) and (right_index < len(spectral_axis)):
-                right_index += 1
+            # If upper bound is smaller than smallest value, immediately return nothing
+            # Assuming ascending, both bounds are "out of bounds"
+            if subregion[1] < spectral_axis[0]:
+                return None, None
+            else:
+                # Get index of closest value
+                # See https://stackoverflow.com/a/26026189 if performance becomes an issue
+                right_index = np.nanargmin((np.abs(spectral_axis - subregion[1])))
+                # Ensure index is inclusive of region bounds
+                if (spectral_axis[right_index] < subregion[1]) and (right_index < len(spectral_axis)):
+                    right_index += 1
     else:
         # Convert upper value to spectrum spectral_axis units
         right_reg_in_spec_unit = right_func(subregion).to(spectral_axis.unit,
