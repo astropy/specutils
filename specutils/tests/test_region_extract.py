@@ -45,13 +45,16 @@ def test_pixel_spectralaxis_extraction():
 
     # Case 1: Region is safely within the bounds of a continuously-defined Spec1D
     # Region is intentionally defined "between values" to test for index rounding
-    region = SpectralRegion.from_center(center=5200.5*spec_unit, width=100*spec_unit)
+    region = SpectralRegion.from_center(center=5200.5*spec_unit,
+                                        width=100*spec_unit)
     extracted_spec1d = extract_region(spec1d, region)
 
     # Extraction is of the right shape and value
     assert extracted_spec1d.shape == (101,)
-    assert_quantity_allclose(extracted_spec1d.spectral_axis, spec1d.spectral_axis[50:151])
-    assert_quantity_allclose(extracted_spec1d.flux, spec1d.flux[50:151])
+    assert_quantity_allclose(extracted_spec1d.spectral_axis,
+                             spec1d.spectral_axis[50:151])
+    assert_quantity_allclose(extracted_spec1d.flux,
+                             spec1d.flux[50:151])
 
     # Follow Python slicing conventions:
     # Lower slice is inclusive
@@ -60,20 +63,26 @@ def test_pixel_spectralaxis_extraction():
     assert extracted_spec1d.spectral_axis[-1].quantity < region.upper
 
     # Case 2: Region is outside the lower bounds of the Spec1D
-    region2 = SpectralRegion.from_center(center=spec1d.spectral_axis[0].quantity, width=100*spec_unit)
+    region2 = SpectralRegion.from_center(center=spec1d.spectral_axis[0].quantity,
+                                         width=100*spec_unit)
     extracted_spec1d_2 = extract_region(spec1d, region2)
 
     assert extracted_spec1d_2.shape == (50,)  # Included upper bound is exclusive
-    assert_quantity_allclose(extracted_spec1d_2.spectral_axis, spec1d.spectral_axis[0:50])
-    assert_quantity_allclose(extracted_spec1d_2.flux, spec1d.flux[0:50])
+    assert_quantity_allclose(extracted_spec1d_2.spectral_axis,
+                             spec1d.spectral_axis[0:50])
+    assert_quantity_allclose(extracted_spec1d_2.flux,
+                             spec1d.flux[0:50])
 
     # Case 3: Region is outside the upper bounds of the Spec1D
-    region3 = SpectralRegion.from_center(center=spec1d.spectral_axis[-1].quantity, width=100*spec_unit)
+    region3 = SpectralRegion.from_center(center=spec1d.spectral_axis[-1].quantity,
+                                         width=100*spec_unit)
     extracted_spec1d_3 = extract_region(spec1d, region3)
 
     assert extracted_spec1d_3.shape == (51,)  # Included lower bound is inclusive (+1)
-    assert_quantity_allclose(extracted_spec1d_3.spectral_axis, spec1d.spectral_axis[149:])
-    assert_quantity_allclose(extracted_spec1d_3.flux, spec1d.flux[149:])
+    assert_quantity_allclose(extracted_spec1d_3.spectral_axis,
+                             spec1d.spectral_axis[149:])
+    assert_quantity_allclose(extracted_spec1d_3.flux,
+                             spec1d.flux[149:])
 
     # Case 4: Compound region with the two definitions above
     extracted_spec1d_4 = extract_region(spec1d, (region2+region3))
@@ -85,6 +94,10 @@ def test_pixel_spectralaxis_extraction():
     for original_case_spectra, compound_spectra in [(extracted_spec1d_2, extracted_spec1d_4[0]),
                                                     (extracted_spec1d_3, extracted_spec1d_4[1])]:
         assert original_case_spectra.shape == compound_spectra.shape
+        assert_quantity_allclose(original_case_spectra.spectral_axis,
+                                 compound_spectra.spectral_axis)
+        assert_quantity_allclose(original_case_spectra.flux,
+                                 compound_spectra.flux)
 
     # Case 5: Region is entirely outside bounds of the spectra should return nothing
     upper_bound = spec1d.spectral_axis[-1].quantity
