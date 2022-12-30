@@ -276,7 +276,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
     weights : array-like or 'unc', optional
-        If 'unc', the unceratinties from the spectrum object are used to
+        If 'unc', the uncertainties from the spectrum object are used to
         to calculate the weights. If array-like, represents the weights to
         use in the fitting.  Note that if a mask is present on the spectrum, it
         will be applied to the ``weights`` as it would be to the spectrum

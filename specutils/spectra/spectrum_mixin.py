@@ -217,6 +217,9 @@ class OneDSpectrumMixin():
 
         return spectrum
 
+    def _axis_length_validation(self):
+        pass
+
     def _new_wcs_argument_validation(self, unit, velocity_convention,
                                      rest_value):
         # Allow string specification of units, for example

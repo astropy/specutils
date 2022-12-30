@@ -79,6 +79,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                  redshift=None, radial_velocity=None, bin_specification=None,
                  **kwargs):
 
+        # If the flux (data) argument is already a Spectrum1D (as it would
+        # be for internal arithmetic operations), avoid setup entirely.
+        if isinstance(flux, Spectrum1D):
+            super().__init__(flux)
+            return
+
         self._spectral_axis_index = spectral_axis_index
         # Might as well handle this right away
         if spectral_axis_index is None and flux is not None:
@@ -95,12 +101,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if len(unknown_kwargs) > 0:
             raise ValueError("Initializer contains unknown arguments(s): {}."
                              "".format(', '.join(map(str, unknown_kwargs))))
-
-        # If the flux (data) argument is already a Spectrum1D (as it would
-        # be for internal arithmetic operations), avoid setup entirely.
-        if isinstance(flux, Spectrum1D):
-            super().__init__(flux)
-            return
 
         # Handle initializing from NDCube objects
         elif isinstance(flux, NDCube):
