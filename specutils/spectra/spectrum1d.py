@@ -5,7 +5,7 @@ import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
-from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
+from astropy.nddata import NDIOMixin, NDArithmeticMixin
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -179,7 +179,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # If flux and spectral axis are both specified, check that their lengths
         # match or are off by one (implying the spectral axis stores bin edges).
         # If we can't determine which flux axis corresponds to the spectral axis
-        # we raise an error. 
+        # we raise an error.
         if flux is not None and spectral_axis is not None:
             if spectral_axis_index is None:
                 if len(flux.shape) == 1:
@@ -220,7 +220,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     f"Spectral axis length ({spectral_axis.shape[0]}) must be the "
                     "same size or one greater (if specifying bin edges) than that "
                     f"of the last flux axis ({flux.shape[self.spectral_axis_index]})")
-
 
         # If a WCS is provided, determine which axis is the spectral axis
         if wcs is not None and hasattr(wcs, "naxis"):
