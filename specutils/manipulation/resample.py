@@ -214,7 +214,8 @@ class FluxConservingResampler(ResamplerBase):
         # geometry based, so won't work to just let quantity math handle it.
         resampled_spectrum = Spectrum1D(flux=out_flux,
                                         spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit,
-                                        uncertainty=out_uncertainty)
+                                        uncertainty=out_uncertainty,
+                                        spectral_axis_index = orig_spectrum.spectral_axis_index)
 
         return resampled_spectrum
 
@@ -290,7 +291,8 @@ class LinearInterpolatedResampler(ResamplerBase):
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux,
-                          uncertainty=new_unc)
+                          uncertainty=new_unc,
+                          spectral_axis_index = orig_spectrum.spectral_axis_index)
 
 
 class SplineInterpolatedResampler(ResamplerBase):
@@ -367,4 +369,5 @@ class SplineInterpolatedResampler(ResamplerBase):
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux_val*orig_spectrum.flux.unit,
-                          uncertainty=new_unc)
+                          uncertainty=new_unc,
+                          spectral_axis_index = orig_spectrum.spectral_axis_index)
