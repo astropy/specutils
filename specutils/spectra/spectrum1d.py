@@ -239,7 +239,12 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     # order compared to the data array.
                     self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
             else:
-                self._spectral_axis_index = 0
+                if flux is not None and flux.ndim == 1:
+                    self._spectral_axis_index = 0
+                else:
+                    if self.spectral_axis_index is None:
+                        raise ValueError("WCS is 1D but flux is multi-dimensional. Please"
+                                         " specify spectral_axis_index.")
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
