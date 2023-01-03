@@ -348,7 +348,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         if self.flux.ndim > 1 or (type(item) == tuple and item[0] == Ellipsis):
             if type(item) == tuple:
-                if len(item) == len(self.flux.shape) or item[0] == Ellipsis:
+                if len(item) == self.flux.ndim or item[0] == Ellipsis:
                     spec_item = item[-1]
                     if not isinstance(spec_item, slice):
                         if isinstance(item, u.Quantity):
@@ -362,6 +362,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     # to keep the whole spectral axis
                     spec_item = slice(None, None, None)
                     # If any slices are single integers, need to decrement the spectral axis index
+
+                for i in range(len(item)-1):
+                    # Decrement spectral_axis_index for each single element slice
+                    if isinstance(item[i], int):
+                        new_spectral_axis_index -= 1
 
             elif isinstance(item, slice) and (isinstance(item.start, u.Quantity) or
                     isinstance(item.stop, u.Quantity)):
