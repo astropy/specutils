@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
+from astropy.tests.helper import quantity_allclose
 from astropy.wcs import WCS
 
 from .conftest import remote_access
@@ -112,7 +113,7 @@ def test_create_with_spectral_coord():
 
 def test_create_from_cube():
 
-    flux = np.arange(24).reshape([4,3,2])*u.Jy
+    flux = np.arange(24).reshape([2,3,4])*u.Jy
     wcs_dict = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE-LOG",
                 "CRVAL1": 205, "CRVAL2": 27, "CRVAL3": 3.622e-7,
                 "CDELT1": -0.0001, "CDELT2": 0.0001, "CDELT3": 8e-11,
@@ -121,9 +122,11 @@ def test_create_from_cube():
 
     spec = Spectrum1D(flux=flux, wcs=w)
 
-    assert spec.flux.shape == (4,3,2)
-    assert spec.flux[3,2,1] == 23*u.Jy
-    assert np.all(spec.spectral_axis.value == np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1])*w.wcs.crval[-1])
+    assert spec.flux.shape == (2,3,4)
+    assert spec.flux[1,2,3] == 23*u.Jy
+    assert quantity_allclose(spec.spectral_axis,
+                             np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1]) * 
+                             w.wcs.crval[-1]* spec.spectral_axis.unit)
 
 
 def test_spectral_axis_conversions():
