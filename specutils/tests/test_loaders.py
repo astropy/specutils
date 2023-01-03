@@ -793,11 +793,11 @@ def test_wcs1d_fits_multid(tmpdir, spectral_axis):
     shape = [-1, 1]
     for i in range(2, 5):
         flux = flux * np.arange(i, i+5).reshape(*shape)
-        spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+        spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr), spectral_axis_index=-1)
         tmpfile = str(tmpdir.join(f'_{i}d.fits'))
         spectrum.write(tmpfile, format='wcs1d-fits')
 
-        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
+        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits', spectral_axis_index=-1)
         assert spec.flux.ndim == i
         assert quantity_allclose(spec.spectral_axis, disp)
         assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
@@ -806,7 +806,7 @@ def test_wcs1d_fits_multid(tmpdir, spectral_axis):
 
     # Test exception for NAXIS > 4
     flux = flux * np.arange(i+1, i+6).reshape(*shape)
-    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr), spectral_axis_index=-1)
     tmpfile = str(tmpdir.join(f'_{i+1}d.fits'))
     spectrum.write(tmpfile, format='wcs1d-fits')
 
@@ -826,7 +826,7 @@ def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
            'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
     # Create a small 2D data set
     flux = np.arange(1, 11)**2 * np.arange(4).reshape(-1, 1) * 1.e-14 * u.Jy
-    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr), spectral_axis_index=-1)
     tmpfile = str(tmpdir.join(f'_{2}d.fits'))
     spectrum.write(tmpfile, format='wcs1d-fits')
 

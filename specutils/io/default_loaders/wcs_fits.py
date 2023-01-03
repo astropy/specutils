@@ -85,6 +85,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if verbose:
         print("Spectrum file looks like wcs1d-fits")
 
+    spectral_axis_index = kwargs.get("spectral_axis_index")
+
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[hdu].header
         wcs = WCS(header)
@@ -125,7 +127,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
             except _wcs.NonseparableSubimageCoordinateSystemError as e:
                 raise ValueError(f'WCS cannot be reduced to 1D: {e!r} {wcs}')
 
-    return Spectrum1D(flux=data, wcs=wcs, meta=meta)
+    return Spectrum1D(flux=data, wcs=wcs, meta=meta, spectral_axis_index=spectral_axis_index)
 
 
 @custom_writer("wcs1d-fits")
