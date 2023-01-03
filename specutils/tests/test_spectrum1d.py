@@ -125,8 +125,8 @@ def test_create_from_cube():
     assert spec.flux.shape == (2,3,4)
     assert spec.flux[1,2,3] == 23*u.Jy
     assert quantity_allclose(spec.spectral_axis,
-                             np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1]) * 
-                             w.wcs.crval[-1]* spec.spectral_axis.unit)
+                             np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1]) *
+                             w.wcs.crval[-1]*spec.spectral_axis.unit)
 
 
 def test_spectral_axis_conversions():
