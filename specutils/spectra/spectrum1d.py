@@ -219,7 +219,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 raise ValueError(
                     f"Spectral axis length ({spectral_axis.shape[0]}) must be the "
                     "same size or one greater (if specifying bin edges) than that "
-                    f"of the last flux axis ({flux.shape[self.spectral_axis_index]})")
+                    f"of the corresponding flux axis ({flux.shape[self.spectral_axis_index]})")
 
         # If a WCS is provided, determine which axis is the spectral axis
         if wcs is not None and hasattr(wcs, "naxis"):
