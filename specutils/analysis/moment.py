@@ -54,7 +54,7 @@ def _compute_moment(spectrum, regions=None, order=0, axis=None):
             if not np.all([x==axes[0] for x in axes]):
                 raise ValueError("All spectra in SpectrumCollection must have the same "
                                  "spectral_axis_index for simultaneous moment calculation.")
-            axis = axes[0]
+            axis = axes[0] + 1
 
         else:
             axis = spectrum.spectral_axis_index
