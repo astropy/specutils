@@ -193,8 +193,8 @@ cube, using `~specutils.manipulation.spectral_slab` and
 
     # Convert flux density to microJy and correct negative flux offset for
     # this particular dataset
-    ha_flux = (np.sum(subspec.flux.value, axis=(0,1)) + 0.0093) * 1.0E-6*u.Jy
-    ha_flux_wide = (np.sum(subspec_wide.flux.value, axis=(0,1)) + 0.0093) * 1.0E-6*u.Jy
+    ha_flux = (np.sum(subspec.flux.value, axis=(1,2)) + 0.0093) * 1.0E-6*u.Jy
+    ha_flux_wide = (np.sum(subspec_wide.flux.value, axis=(1,2)) + 0.0093) * 1.0E-6*u.Jy
 
     # Compute moment maps for H-alpha line
     moment0_halpha = moment(subspec, order=0)
