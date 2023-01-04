@@ -349,7 +349,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if self.flux.ndim > 1 or (type(item) == tuple and item[0] == Ellipsis):
             if type(item) == tuple:
                 if len(item) == self.flux.ndim or item[0] == Ellipsis:
-                    spec_item = item[-1]
+                    spec_item = item[self.spectral_axis_index]
                     if not isinstance(spec_item, slice):
                         if isinstance(item, u.Quantity):
                             raise ValueError("Indexing on single spectral axis "
