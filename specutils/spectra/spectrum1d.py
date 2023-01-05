@@ -35,7 +35,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     Parameters
     ----------
-    flux : `~astropy.units.Quantity` or `~astropy.nddata.NDData`-like
+    flux : `~astropy.units.Quantity`
         The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
         or an existing `~Spectrum1D` or `~ndcube.NDCube` object.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
