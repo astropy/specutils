@@ -100,7 +100,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
             right_index = ceil(subregion[1].value)
         else:
             if order != "ascending":
-                raise ValueError("u.pix handling should always be ascending")
+                raise ValueError("u.pix spectral axes should always be ascending")
             # If upper bound is smaller than smallest value, immediately return nothing
             # Assuming ascending, both bounds are "out of bounds"
             if subregion[1] < spectral_axis[0]:
