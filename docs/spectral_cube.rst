@@ -144,9 +144,8 @@ Moments
 =======
 
 The `~specutils.analysis.moment` function can be used to compute moments of any order
-along one of the cube's axes. By default, ``axis=-1``, which computes moments
-along the spectral axis (remember that the spectral axis is always last in a
-:class:`~specutils.Spectrum1D`).
+along one of the cube's axes. By default, ``axis=None``, in which case the moment
+is computed along the spectral axis.
 
 .. code-block:: python
 
