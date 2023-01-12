@@ -217,3 +217,16 @@ def test_no_change_redshift():
     assert type(spec.spectral_axis) == SpectralAxis
 
     assert_quantity_allclose(spec.wavelength, wave)
+
+
+def test_pixel_descending_error():
+    '''
+    Spectral axes of pixel units must always be ascending.
+    This test checks that an error is thrown if one is provided descending
+    '''
+    flux_unit = u.dimensionless_unscaled
+    spec_unit = u.pix
+
+    with pytest.raises(ValueError, match="u.pix spectral axes should always be ascending"):
+        Spectrum1D(spectral_axis=(np.arange(5100, 5300)[::-1])*spec_unit,
+                flux=np.random.randn(200)*flux_unit)
