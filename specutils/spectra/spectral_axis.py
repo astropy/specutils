@@ -26,6 +26,10 @@ class SpectralAxis(SpectralCoord):
 
     def __new__(cls, value, *args, bin_specification="centers", **kwargs):
 
+        # Enforce pixel axes are ascending
+        if (value.unit is u.pix) and (value[-1] <= value[0]):
+            raise ValueError("u.pix spectral axes should always be ascending")
+
         # Convert to bin centers if bin edges were given, since SpectralCoord
         # only accepts centers
         if bin_specification == "edges":

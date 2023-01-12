@@ -72,11 +72,10 @@ def _subregion_to_edge_pixels(subregion, spectrum):
 
     # Left/lower side of sub region
     if subregion[0].unit.is_equivalent(u.pix):
+        # Pixel handling assumes always ascending
         if not spectral_axis.unit.is_equivalent(u.pix):
             left_index = floor(subregion[0].value)
         else:
-            if order != "ascending":
-                raise ValueError("u.pix handling should always be ascending")
             # If the lower bound is larger than the largest value, immediately return nothing
             # Assuming ascending, both bounds are "out of bounds"
             if subregion[0] > spectral_axis[-1]:
@@ -96,11 +95,10 @@ def _subregion_to_edge_pixels(subregion, spectrum):
 
     # Right/upper side of sub region
     if subregion[1].unit.is_equivalent(u.pix):
+        # Pixel handling assumes always ascending
         if not spectral_axis.unit.is_equivalent(u.pix):
             right_index = ceil(subregion[1].value)
         else:
-            if order != "ascending":
-                raise ValueError("u.pix spectral axes should always be ascending")
             # If upper bound is smaller than smallest value, immediately return nothing
             # Assuming ascending, both bounds are "out of bounds"
             if subregion[1] < spectral_axis[0]:
