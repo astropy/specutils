@@ -10,7 +10,7 @@ from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy.units import UnitsWarning
-from astropy.wcs import FITSFixedWarning, WCS
+from astropy.wcs import FITSFixedWarning, InconsistentAxisTypesError, WCS
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
@@ -738,6 +738,58 @@ def test_wcs1d_fits_writer(tmp_path, spectral_axis):
     assert isinstance(spec, Spectrum1D)
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
+
+
+@pytest.mark.parametrize("spectral_axis",
+                         ['WAVE', 'FREQ', 'ENER', 'WAVN'])
+def test_wcs1d_fits_cube(tmpdir, spectral_axis):
+    """Test write/read for Spectrum1D spectral cube with WCS spectral_axis."""
+    wlunits = {'WAVE': 'Angstrom', 'FREQ': 'GHz', 'ENER': 'eV', 'WAVN': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01,
+           'WCSAXES': 3, 'DISPAXIS': 0,
+           'CRPIX2': 38.0, 'CRPIX3': 38.0, 'CRVAL2': 205.4384, 'CRVAL3': 27.004754,
+           'CTYPE2': 'RA---TAN', 'CTYPE3': 'DEC--TAN', 'CUNIT2': 'deg', 'CUNIT3': 'deg',
+           'CDELT2': 3.61111097865634E-05, 'CDELT3': 3.61111097865634E-05,
+           'PC1_1': 1.0, 'PC12 ': 0, 'PC1_3': 0,
+           'PC2_1': 0, 'PC2_2': -1.0, 'PC2_3': 0,
+           'PC3_1': 0, 'PC3_2': 0, 'PC3_3': 1.0}
+    # Create a small data set
+    flux = np.arange(1, 121).reshape((10, 4, 3))**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + (flux.shape[0] - 0.5) * dwl, dwl) * wlu
+
+    spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
+    tmpfile = str(tmpdir.join('_tst.fits'))
+    spectrum.write(tmpfile, hdu=0)
+
+    # Broken reader!
+    with pytest.raises(InconsistentAxisTypesError, match='Unmatched celestial axes'):
+        # Read it in and check against the original
+        spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
+        assert spec.flux.unit == spectrum.flux.unit
+        assert spec.flux.shape == spectrum.flux.shape
+        assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
+        assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+        assert quantity_allclose(spec.spectral_axis, disp)
+        assert quantity_allclose(spec.flux, spectrum.flux)
+
+    # Read from HDUList
+    hdulist = fits.open(tmpfile)
+    w = WCS(hdulist[0].header)
+    assert w.naxis == 3
+    assert w.axis_type_names == [spectral_axis, 'RA', 'DEC']
+    assert w.array_shape == spectrum.flux.shape
+
+    with pytest.raises(InconsistentAxisTypesError, match='Unmatched celestial axes'):
+        spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+        assert isinstance(spec, Spectrum1D)
+        assert spec.flux.shape == spectrum.flux.shape
+        assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+        assert quantity_allclose(spec.flux, spectrum.flux)
 
 
 @pytest.mark.filterwarnings('ignore:Card is too long')

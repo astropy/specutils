@@ -158,7 +158,11 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
 
     # Verify spectral axis constructed from WCS
     wl = spectrum.spectral_axis
-    dwl = (wcs.all_pix2world(np.arange(len(wl)), 0) - wl.value) / wl.value
+    # Not sure why the extra check is necessary for FITS WCS
+    if hasattr(wcs, 'celestial') and wcs.celestial.naxis > 0:
+        dwl = (wcs.spectral.all_pix2world(np.arange(len(wl)), 0) - wl.value) / wl.value
+    else:
+        dwl = (wcs.all_pix2world(np.arange(len(wl)), 0) - wl.value) / wl.value
     if np.abs(dwl).max() > 1.e-10:
         m = np.abs(dwl).argmax()
         raise ValueError('Relative difference between WCS spectral axis and'
