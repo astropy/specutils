@@ -17,6 +17,9 @@ Specutils
     :target: http://www.astropy.org/
     :alt: Powered by Astropy
 
+
+THIS IS A TRIVIAL CHANGE TO TEST THE CI
+
 Specutils is an `Astropy affiliated package <http://affiliated.astropy.org/>`_
 with the goal of providing a shared set of Python representations of
 astronomical spectra and basic tools to operate on these spectra. The effort is
