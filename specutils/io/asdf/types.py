@@ -1,3 +1,6 @@
+import warnings
+
+from asdf.exceptions import AsdfDeprecationWarning
 from asdf.types import CustomType, ExtensionTypeMeta
 
 
@@ -17,9 +20,16 @@ class SpecutilsTypeMeta(ExtensionTypeMeta):
         return cls
 
 
-class SpecutilsType(CustomType, metaclass=SpecutilsTypeMeta):
-    """
-    Parent class of all specutils tag implementations used by ASDF
-    """
-    organization = 'astropy.org'
-    standard = 'specutils'
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=AsdfDeprecationWarning,
+        message=r"SpecutilsType from specutils.io.asdf.types subclasses the deprecated CustomType .*",
+    )
+
+    class SpecutilsType(CustomType, metaclass=SpecutilsTypeMeta):
+        """
+        Parent class of all specutils tag implementations used by ASDF
+        """
+        organization = 'astropy.org'
+        standard = 'specutils'
