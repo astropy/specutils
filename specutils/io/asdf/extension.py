@@ -3,14 +3,23 @@ Defines extension that is used by ASDF for recognizing specutils types
 """
 import os
 import urllib
+import warnings
 
 from asdf.util import filepath_to_url
 from asdf.extension import AsdfExtension
-
-from astropy.io.misc.asdf.extension import ASTROPY_SCHEMA_URI_BASE
+from asdf.exceptions import AsdfDeprecationWarning
 
 from .tags.spectra import *  # noqa
 from .types import _specutils_types
+
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=AsdfDeprecationWarning,
+        message=r".*from astropy.io.misc.asdf.* subclasses the deprecated CustomType .*",
+    )
+    from astropy.io.misc.asdf.extension import ASTROPY_SCHEMA_URI_BASE
 
 
 SCHEMA_PATH = os.path.abspath(
