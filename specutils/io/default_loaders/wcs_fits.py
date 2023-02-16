@@ -3,7 +3,7 @@ import _io
 
 from astropy import units as u
 from astropy.io import fits
-from astropy.wcs import WCS, _wcs
+from astropy.wcs import WCS
 from astropy.modeling import models
 from astropy.utils.exceptions import AstropyUserWarning
 
@@ -36,7 +36,8 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (hdulist[hdu].header.get('WCSDIM', 1) == 1 and
                 (hdulist[hdu].header['NAXIS'] == 1 or
-                 hdulist[hdu].header.get('WCSAXES', 0) == 1 )and not
+                hdulist[hdu].header.get('WCSAXES', 0) == 1 or
+                hdulist[hdu].header.get('DISPAXIS', -1) >= 0 ) and not
                 hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
                 # Check in CTYPE1 key for linear solution (single spectral axis)
                 hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
@@ -45,7 +46,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits', 'fit'], priority=5)
 def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
-                      hdu=0, verbose=False, **kwargs):
+                      hdu=None, verbose=False, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
     axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
@@ -67,9 +68,9 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         Units of the flux for this spectrum. If not given (or None), the unit
         will be inferred from the BUNIT keyword in the header. Note that this
         unit will attempt to convert from BUNIT if BUNIT is present.
-    hdu : int
-        The index of the HDU to load into this spectrum.
-    verbose : bool
+    hdu : int, str or None. optional
+        The index or name of the HDU to load into this spectrum (default: search 1st).
+    verbose : bool. optional
         Print extra info.
     **kwargs
         Extra keywords for :func:`~specutils.io.parsing_utils.read_fileobj_or_hdulist`.
@@ -86,6 +87,17 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         print("Spectrum file looks like wcs1d-fits")
 
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        if hdu is None:
+            for ext in ('FLUX', 'SCI', 'PRIMARY'):
+                # For now rely on extension containing spectral data.
+                if ext in hdulist and (
+                        isinstance(hdulist[ext], (fits.ImageHDU, fits.PrimaryHDU)) and
+                        hdulist[ext].data is not None):
+                    hdu = ext
+                    break
+            else:
+                raise ValueError('No HDU with spectral data found.')
+
         header = hdulist[hdu].header
         wcs = WCS(header)
 
@@ -95,6 +107,12 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
                 data = data.to(flux_unit)
         else:
             data = u.Quantity(hdulist[hdu].data, unit=flux_unit)
+
+        # TODO: add additional HDU data like 'IVAR'
+        if 'MASK' in hdulist:
+            mask = hdulist['MASK'].data
+        else:
+            mask = None
 
     if spectral_axis_unit is not None:
         wcs.wcs.cunit[0] = str(spectral_axis_unit)
@@ -119,11 +137,11 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if wcs.naxis > 4:
         raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
 
-    return Spectrum1D(flux=data, wcs=wcs, meta=meta)
+    return Spectrum1D(flux=data, wcs=wcs, mask=mask, meta=meta)
 
 
 @custom_writer("wcs1d-fits")
-def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs):
+def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, flux_name='FLUX', **kwargs):
     """
     Write spectrum with spectral axis defined by its WCS to (primary)
     IMAGE_HDU of a FITS file.
@@ -133,14 +151,16 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
     spectrum : :class:`~specutils.Spectrum1D`
     file_name : str
         The path to the FITS file
-    hdu : int
+    hdu : int, optional
         Header Data Unit in FITS file to write to (base 0; default primary HDU)
-    update_header : bool
+    update_header : bool, optional
         Update FITS header with all compatible entries in `spectrum.meta`
-    unit : str or :class:`~astropy.units.Unit`
-        Unit for the flux (and associated uncertainty)
-    dtype : str or :class:`~numpy.dtype`
-        Floating point type for storing flux array
+    flux_name : str, optional
+        HDU name to store flux spectrum under (default 'FLUX')
+    unit : str or :class:`~astropy.units.Unit`, optional
+        Unit for the flux (and associated uncertainty; defaults to `spectrum.flux.unit`)
+    dtype : str or :class:`~numpy.dtype`, optional
+        Floating point type for storing flux array (defaults to `spectrum.flux.dtype`)
     """
     # Create HDU list from WCS
     try:
@@ -160,7 +180,7 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
     if np.abs(dwl).max() > 1.e-10:
         m = np.abs(dwl).argmax()
         raise ValueError('Relative difference between WCS spectral axis and'
-                         f'spectral_axis at {m:}: dwl[m]')
+                         f'spectral_axis at {m:}: {dwl[m]}')
 
     if update_header:
         hdr_types = (str, int, float, complex, bool,
@@ -180,6 +200,15 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
     funit = u.Unit(kwargs.pop('unit', spectrum.flux.unit))
     flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(wl))
     hdulist[0].data = flux.value.astype(ftype)
+    if flux_name is not None:
+        hdulist[0].name = flux_name
+
+    # Append mask array (duplicate WCS for that extension)?
+    if spectrum.mask is not None:
+        hdulist.append(wcs.to_fits()[0])
+        hdulist[1].data = spectrum.mask
+        hdulist[1].name = 'MASK'
+        hdu += 1
 
     if hasattr(funit, 'long_names') and len(funit.long_names) > 0:
         comment = f'[{funit.long_names[0]}] {funit.physical_type}'
