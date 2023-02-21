@@ -131,7 +131,7 @@ disjoint sub-regions.
     >>> from specutils.manipulation import extract_bounding_spectral_region
     >>> composite_region = SpectralRegion([(5000*u.AA, 5002*u.AA), (5006*u.AA, 5008.*u.AA)])
     >>> sub_spectrum = extract_bounding_spectral_region(sc, composite_region) # doctest: +REMOTE_DATA
-    >>> sub_spectrum.spectral_axis # doctest: +REMOTE_DATA +FLOAT_CMP
+    >>> sub_spectrum.spectral_axis  # doctest: +REMOTE_DATA +FLOAT_CMP
     <SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
@@ -152,9 +152,9 @@ along the spectral axis (remember that the spectral axis is always last in a
 
     >>> from specutils.analysis import moment
     >>> m = moment(sc, order=1) # doctest: +REMOTE_DATA
-    >>> m.shape # doctest: +REMOTE_DATA
+    >>> m.shape  # doctest: +REMOTE_DATA
     (74, 74)
-    >>> m[30:33,30:33] # doctest: +REMOTE_DATA +FLOAT_CMP
+    >>> m[30:33,30:33]  # doctest: +REMOTE_DATA +FLOAT_CMP
     <Quantity [[6.45261317e-07, 6.46265069e-07, 6.48128166e-07],
                [6.46467930e-07, 6.47941283e-07, 6.51460998e-07],
                [6.48672775e-07, 6.52631872e-07, 6.56733087e-07]] m>

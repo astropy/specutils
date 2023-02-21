@@ -71,9 +71,9 @@ astroquery, if the user has that package installed:
 
 .. doctest-requires:: astroquery
 
-     >>> from astroquery.sdss import SDSS # doctest: +REMOTE_DATA
-     >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160, data_release=14) # doctest: +REMOTE_DATA
-     >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
+     >>> from astroquery.sdss import SDSS  # doctest: +REMOTE_DATA
+     >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160, data_release=14)  # doctest: +REMOTE_DATA
+     >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec")  # doctest: +REMOTE_DATA
      <Spectrum1D(flux=<Quantity [30.596626,...]...>
 
 

@@ -301,7 +301,7 @@ the line:
     >>> from specutils.manipulation import noise_region_uncertainty
     >>> noise_region = SpectralRegion([(10, 7), (3, 0)] * u.GHz)
     >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, noise_region)
-    >>> spec_w_unc.uncertainty[::20] # doctest: +ELLIPSIS +FLOAT_CMP
+    >>> spec_w_unc.uncertainty[::20] # doctest: +FLOAT_CMP
     StdDevUncertainty([0.17501999, 0.17501999, 0.17501999, 0.17501999,
                        0.17501999, 0.17501999, 0.17501999, 0.17501999,
                        0.17501999, 0.17501999])
@@ -312,7 +312,7 @@ Or similarly, expressed in pixels:
 
     >>> noise_region = SpectralRegion([(0, 25), (175, 200)]*u.pix)
     >>> spec_w_unc = noise_region_uncertainty(noisy_gaussian, noise_region)
-    >>> spec_w_unc.uncertainty[::20]  # doctest: +ELLIPSIS +FLOAT_CMP
+    >>> spec_w_unc.uncertainty[::20]  # doctest: +FLOAT_CMP
     StdDevUncertainty([0.17547552, 0.17547552, 0.17547552, 0.17547552,
                        0.17547552, 0.17547552, 0.17547552, 0.17547552,
                        0.17547552, 0.17547552])
@@ -368,14 +368,14 @@ the ``spectral_axis``. Therefore one can use a construct like this:
     >>> wavelengths = np.arange(0, 10) * u.um
     >>> flux = 100 * np.abs(np.random.default_rng(42).standard_normal(10)) * u.Jy
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
-    >>> spectrum  # doctest:+ELLIPSIS
+    >>> spectrum  # doctest: +FLOAT_CMP
     <Spectrum1D(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
                195.10351887, 130.21795069,  12.78404032,  31.62425923,
                  1.68011575,  85.30439276] Jy>, spectral_axis=<SpectralAxis [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] um>)>
 
     >>> shift = 12300 * u.AA
     >>> new_spec = Spectrum1D(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
-    >>> new_spec #doctest:+ELLIPSIS
+    >>> new_spec  # doctest: +FLOAT_CMP
     <Spectrum1D(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
                195.10351887, 130.21795069,  12.78404032,  31.62425923,
                  1.68011575,  85.30439276] Jy>, spectral_axis=<SpectralAxis [ 1.23,  2.23,  3.23,  4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
@@ -437,7 +437,7 @@ A model fitted over the region can also be used to replace the spectrum flux val
     >>> fitted_model = fit_lines(input_spectrum, model)
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=fitted_model)
-    >>> result # doctest: +FLOAT_CMP
+    >>> result  # doctest: +FLOAT_CMP
     <Spectrum1D(flux=<Quantity [1.        , 1.1       , 0.9       , 4.40801804, 9.58271877,
                5.61238054, 0.88556096, 1.        , 1.2       , 1.1       ] mJy>, spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
 
