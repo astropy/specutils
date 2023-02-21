@@ -51,10 +51,10 @@ may have downloaded from some archive, or reduced from your own observations.
 
     Now we load the dataset from its canonical source:
 
-    >>> f = fits.open('https://data.sdss.org/sas/dr16/sdss/spectro/redux/26/spectra/1323/spec-1323-52797-0012.fits')  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    >>> filename = 'https://data.sdss.org/sas/dr16/sdss/spectro/redux/26/spectra/1323/spec-1323-52797-0012.fits'
     >>> # The spectrum is in the second HDU of this file.
-    >>> specdata = f[1].data # doctest: +REMOTE_DATA
-    >>> f.close() # doctest: +REMOTE_DATA
+    >>> with fits.open(filename) as f:  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
+    ...     specdata = f[1].data  # doctest: +REMOTE_DATA
 
     Then we re-format this dataset into astropy quantities, and create a
     `~specutils.Spectrum1D` object:
@@ -66,7 +66,7 @@ may have downloaded from some archive, or reduced from your own observations.
 
     And we plot it:
 
-    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> ax.step(spec.spectral_axis, spec.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 
 .. testsetup::
@@ -87,7 +87,7 @@ may have downloaded from some archive, or reduced from your own observations.
     ...     warnings.simplefilter('ignore')
     ...     cont_norm_spec = spec / fit_generic_continuum(spec)(spec.spectral_axis) # doctest: +REMOTE_DATA
 
-    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT
+    >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> ax.step(cont_norm_spec.wavelength, cont_norm_spec.flux)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> ax.set_xlim(654 * u.nm, 660 * u.nm)  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
 

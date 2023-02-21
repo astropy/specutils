@@ -155,7 +155,7 @@ For example, based on the spectrum defined above we can first select a region:
 
 Then estimate the line  parameters it it for a Gaussian line profile::
 
-   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest:+FLOAT_CMP
+   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest: +FLOAT_CMP
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
@@ -188,10 +188,10 @@ attribute of the model's parameters:
 
    >>> ricker = models.RickerWavelet1D()
    >>> ricker.amplitude.estimator = lambda s: max(s.flux)
-   >>> ricker.x_0.estimator = lambda s: centroid(s, region=None)
-   >>> ricker.sigma.estimator = lambda s: fwhm(s)
+   >>> ricker.x_0.estimator = lambda *args: centroid(args[0], region=None)
+   >>> ricker.sigma.estimator = lambda *args: fwhm(args[0])
 
-   >>> print(estimate_line_parameters(spectrum, ricker))  # doctest:+SKIP
+   >>> print(estimate_line_parameters(spectrum, ricker))  # doctest: +FLOAT_CMP
    Model: RickerWavelet1D
    Inputs: ('x',)
    Outputs: ('y',)

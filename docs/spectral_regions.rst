@@ -67,23 +67,23 @@ maximum of the upper bounds:
     >>> from astropy import units as u
     >>> from specutils.spectra import SpectralRegion
 
-    >>> sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
-    ...      SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
-    ...      SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
+    >>> sr = (SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +
+    ...       SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +
+    ...       SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um))
 
     >>> # Bounds on the spectral region (most minimum and maximum bound)
-    >>> print(sr.bounds) #doctest:+SKIP
+    >>> sr.bounds
     (<Quantity 0.15 um>, <Quantity 1.5 um>)
 
     >>> # Lower bound on the spectral region (most minimum)
-    >>> sr.lower #doctest:+SKIP
+    >>> sr.lower
     <Quantity 0.15 um>
 
-    >>> sr.upper #doctest:+SKIP
+    >>> sr.upper
     <Quantity 1.5 um>
 
     >>> # Lower bound on one element of the spectral region.
-    >>> sr[3].lower #doctest:+SKIP
+    >>> sr[3].lower
     <Quantity 0.8 um>
 
 One can also delete a sub-region:
@@ -93,12 +93,12 @@ One can also delete a sub-region:
     >>> from astropy import units as u
     >>> from specutils.spectra import SpectralRegion
 
-    >>> sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
-    ...      SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
-    ...      SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
+    >>> sr = (SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +
+    ...       SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +
+    ...       SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um))
 
     >>> del sr[1]
-    >>> sr #doctest:+SKIP
+    >>> sr
     Spectral Region, 5 sub-regions:
     (0.15 um, 0.2 um)   (0.45 um, 0.6 um)   (0.8 um, 0.9 um)
     (1.0 um, 1.2 um)    (1.3 um, 1.5 um)
@@ -110,12 +110,12 @@ There is also the ability to iterate:
     >>> from astropy import units as u
     >>> from specutils.spectra import SpectralRegion
 
-    >>> sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
-    ...      SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
-    ...      SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
+    >>> sr = (SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +
+    ...       SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +
+    ...       SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um))
 
     >>> for s in sr:
-    ...     print(s.lower) #doctest:+SKIP
+    ...     print(s.lower)
     0.15 um
     0.3 um
     0.45 um
@@ -134,12 +134,12 @@ defines the baseline/noise regions:
     >>> from astropy import units as u
     >>> from specutils.spectra import SpectralRegion
 
-    >>> sr = SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +\
-    ...      SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +\
-    ...      SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um)
+    >>> sr = (SpectralRegion(0.15*u.um, 0.2*u.um) + SpectralRegion(0.3*u.um, 0.4*u.um) +
+    ...       SpectralRegion(0.45*u.um, 0.6*u.um) + SpectralRegion(0.8*u.um, 0.9*u.um) +
+    ...       SpectralRegion(1.0*u.um, 1.2*u.um) + SpectralRegion(1.3*u.um, 1.5*u.um))
 
     >>> sr_inverted = sr.invert(0.05*u.um, 3*u.um)
-    >>> sr_inverted #doctest:+SKIP
+    >>> sr_inverted
     Spectral Region, 7 sub-regions:
     (0.05 um, 0.15 um)   (0.2 um, 0.3 um)     (0.4 um, 0.45 um)
     (0.6 um, 0.8 um)     (0.9 um, 1.0 um)     (1.2 um, 1.3 um)
@@ -231,10 +231,11 @@ in between disjointed spectral regions, can be extracted with
     >>> from specutils import Spectrum1D, SpectralRegion
     >>> from specutils.manipulation import extract_bounding_spectral_region
 
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    ...                       flux=np.random.default_rng(12345).random(49)*u.Jy)
     >>> region = SpectralRegion([(8*u.nm, 12*u.nm), (24*u.nm, 30*u.nm)])
     >>> sub_spectrum = extract_bounding_spectral_region(spectrum, region)
-    >>> sub_spectrum.spectral_axis #doctest:+SKIP
+    >>> sub_spectrum.spectral_axis
     <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,
         22., 23., 24., 25., 26., 27., 28., 29., 30.] nm>
 
@@ -252,9 +253,10 @@ into ``specutils``:
     >>> from specutils import Spectrum1D, SpectralRegion
     >>> from specutils.manipulation import spectral_slab
 
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    ...                       flux=np.random.default_rng(12345).random(49)*u.Jy)
     >>> sub_spectrum = spectral_slab(spectrum, 8*u.nm, 20*u.nm)
-    >>> sub_spectrum.spectral_axis  #doctest:+SKIP
+    >>> sub_spectrum.spectral_axis
     <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20.] nm>
 
 
