@@ -61,16 +61,12 @@ uncertainty, we will produce an estimate of the uncertainty by calling the
 
 .. code-block:: python
 
-   >>> import warnings
    >>> from specutils.manipulation import noise_region_uncertainty
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
    >>> spectrum = noise_region_uncertainty(spectrum, noise_region)
 
    >>> from specutils.fitting import find_lines_threshold
-   >>> with warnings.catch_warnings():  # Ignore warnings
-   ...     warnings.simplefilter('ignore')
-   ...     lines = find_lines_threshold(spectrum, noise_factor=3)
-
+   >>> lines = find_lines_threshold(spectrum, noise_factor=3)  # doctest: +IGNORE_WARNINGS
    >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
    <QTable length=4>
       line_center    line_type line_center_index
@@ -98,12 +94,8 @@ An example using the `~specutils.fitting.find_lines_derivative`:
    >>> noise_region = SpectralRegion(0*u.um, 3*u.um)
 
    >>> # Derivative technique
-   >>> import warnings
    >>> from specutils.fitting import find_lines_derivative
-   >>> with warnings.catch_warnings():  # Ignore warnings
-   ...     warnings.simplefilter('ignore')
-   ...     lines = find_lines_derivative(spectrum, flux_threshold=0.75)
-
+   >>> lines = find_lines_derivative(spectrum, flux_threshold=0.75)  # doctest: +IGNORE_WARNINGS
    >>> lines[lines['line_type'] == 'emission']  # doctest:+FLOAT_CMP
    <QTable length=2>
       line_center    line_type line_center_index
@@ -155,7 +147,7 @@ For example, based on the spectrum defined above we can first select a region:
 
 Then estimate the line  parameters it it for a Gaussian line profile::
 
-   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest:+FLOAT_CMP
+   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest: +FLOAT_CMP
       Model: Gaussian1D
       Inputs: ('x',)
       Outputs: ('y',)
@@ -188,19 +180,11 @@ attribute of the model's parameters:
 
    >>> ricker = models.RickerWavelet1D()
    >>> ricker.amplitude.estimator = lambda s: max(s.flux)
-   >>> ricker.x_0.estimator = lambda s: centroid(s, region=None)
-   >>> ricker.sigma.estimator = lambda s: fwhm(s)
+   >>> ricker.x_0.estimator = lambda *args: centroid(args[0], region=None)
+   >>> ricker.sigma.estimator = lambda *args: fwhm(args[0])
 
-   >>> print(estimate_line_parameters(spectrum, ricker))  # doctest:+SKIP
-   Model: RickerWavelet1D
-   Inputs: ('x',)
-   Outputs: ('y',)
-   Model set size: 1
-   Parameters:
-           amplitude             x_0                sigma
-              Jy                 um                  um
-      ------------------ ------------------ -------------------
-      2.4220683957581444 3.6045476935889367 0.24416769183724707
+   >>> estimate_line_parameters(spectrum, ricker)  # doctest: +FLOAT_CMP +IGNORE_WARNINGS
+   <RickerWavelet1D(amplitude=2.4220684 Jy, x_0=3.60454769 um, sigma=0.24416769 um)>
 
 
 Model (Line) Fitting

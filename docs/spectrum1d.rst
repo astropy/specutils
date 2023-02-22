@@ -69,11 +69,11 @@ a loader.
 Note that the same spectrum could be more conveniently downloaded via
 astroquery, if the user has that package installed:
 
-.. code-block:: python
+.. doctest-requires:: astroquery
 
-     >>> from astroquery.sdss import SDSS # doctest: +SKIP
-     >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160) # doctest: +SKIP
-     >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec") # doctest: +SKIP
+     >>> from astroquery.sdss import SDSS  # doctest: +REMOTE_DATA
+     >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160, data_release=14)  # doctest: +REMOTE_DATA
+     >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec")  # doctest: +REMOTE_DATA
      <Spectrum1D(flux=<Quantity [30.596626,...]...>
 
 
@@ -203,12 +203,20 @@ Providing a FITS-style WCS
     >>> import astropy.wcs as fitswcs
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom', 'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
+    >>> my_wcs = fitswcs.WCS(header={
+    ...     'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom', 'CTYPE1': 'WAVE',
+    ...     'RESTFRQ': 1400000000, 'CRPIX1': 25})
     >>> spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
-    >>> spec.spectral_axis #doctest:+SKIP
-    <Quantity [ 6538.8, 6539.8, 6540.8] Angstrom>
-    >>> spec.wcs.pixel_to_world(np.arange(3)) #doctest:+SKIP
-    array([6.5388e-07, 6.5398e-07, 6.5408e-07])
+    >>> spec.spectral_axis  # doctest: +FLOAT_CMP
+    <SpectralAxis
+       (observer to target:
+          radial_velocity=0.0 km / s
+          redshift=0.0
+        doppler_rest=1400000000.0 Hz
+        doppler_convention=None)
+      [6.5388e-07, 6.5398e-07, 6.5408e-07] m>
+    >>> spec.wcs.pixel_to_world(np.arange(3))  # doctest: +FLOAT_CMP
+    <SpectralCoord [6.5388e-07, 6.5398e-07, 6.5408e-07] m>
 
 
 Multi-dimensional Data Sets
@@ -232,13 +240,14 @@ common spectral axis.
 
     >>> from specutils import Spectrum1D
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
     >>> spec_slice = spec[0]
     >>> spec_slice.spectral_axis
     <SpectralAxis [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
-    >>> spec_slice.flux #doctest:+SKIP
-    <Quantity [0.72722821, 0.32147784, 0.70256482, 0.04445197, 0.03390352,
-           0.50835299, 0.87581725, 0.50270413, 0.08556376, 0.53713355] Jy>
+    >>> spec_slice.flux
+    <Quantity [0.22733602, 0.31675834, 0.79736546, 0.67625467, 0.39110955,
+               0.33281393, 0.59830875, 0.18673419, 0.67275604, 0.94180287] Jy>
 
 While the above example only shows two dimensions, this concept generalizes to
 any number of dimensions for `~specutils.Spectrum1D`, as long as the spectral
@@ -256,7 +265,8 @@ along the spectral axis using world coordinates.
 
     >>> from specutils import Spectrum1D
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
     >>> spec_slice = spec[5002*u.AA:5006*u.AA]
     >>> spec_slice.spectral_axis
     <SpectralAxis [5002., 5003., 5004., 5005.] Angstrom>
@@ -268,7 +278,8 @@ same time as slicing the spectral axis based on spectral values.
 
     >>> from specutils import Spectrum1D
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
     >>> spec_slice = spec[2:4, 5002*u.AA:5006*u.AA]
     >>> spec_slice.shape
     (2, 4)
@@ -284,11 +295,87 @@ value will apply to the lower bound input.
 .. code-block:: python
 
     >>> from astropy.coordinates import SpectralCoord, SkyCoord
-    >>> import astropy.units as u
+    >>> from astropy import units as u
+    >>> from astropy.wcs import WCS
 
-    >>> lower = [SkyCoord(ra=201.1, dec=27.5, unit=u.deg), SpectralCoord(3000, unit=u.AA)]
-    >>> upper = [SkyCoord(ra=201.08, dec=27.52, unit=u.deg), SpectralCoord(3100, unit=u.AA)]
-    >>> cropped_spec = spec.crop(lower, upper) #doctest:+SKIP
+    >>> w = WCS({'WCSAXES': 3, 'CRPIX1': 38.0, 'CRPIX2': 38.0, 'CRPIX3': 1.0,
+    ...          'CRVAL1': 205.4384, 'CRVAL2': 27.004754, 'CRVAL3': 4.890499866509344,
+    ...          'CTYPE1': 'RA---TAN', 'CTYPE2': 'DEC--TAN', 'CTYPE3': 'WAVE',
+    ...          'CUNIT1': 'deg', 'CUNIT2': 'deg', 'CUNIT3': 'um',
+    ...          'CDELT1': 3.61111097865634E-05, 'CDELT2': 3.61111097865634E-05, 'CDELT3': 0.001000000047497451,
+    ...          'PC1_1 ': -1.0, 'PC1_2 ': 0.0, 'PC1_3 ': 0,
+    ...          'PC2_1 ': 0.0, 'PC2_2 ': 1.0, 'PC2_3 ': 0,
+    ...          'PC3_1 ': 0, 'PC3_2 ': 0, 'PC3_3 ': 1,
+    ...          'DISPAXIS': 2, 'VELOSYS': -2538.02,
+    ...          'SPECSYS': 'BARYCENT', 'RADESYS': 'ICRS', 'EQUINOX': 2000.0,
+    ...          'LONPOLE': 180.0, 'LATPOLE': 27.004754})
+    >>> spec = Spectrum1D(flux=np.random.default_rng(12345).random((20, 5, 10)) * u.Jy, wcs=w)  # doctest: +IGNORE_WARNINGS
+    >>> lower = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205, dec=26, unit=u.deg)]
+    >>> upper = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205.5, dec=27.5, unit=u.deg)]
+    >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
+    <Spectrum1D(flux=<Quantity [[[0.70861236],
+                [0.5663815 ],
+                [0.0606386 ],
+                [0.13811995],
+                [0.8974065 ]],
+    <BLANKLINE>
+               [[0.97618597],
+                [0.870499  ],
+                 [0.01522275],
+                 [0.59180312],
+                 [0.29160346]],
+    <BLANKLINE>
+               [[0.13274479],
+                [0.99381789],
+                [0.767089  ],
+                [0.73765335],
+                [0.36185756]],
+    <BLANKLINE>
+               [[0.09635759],
+                [0.38060021],
+                [0.63263223],
+                [0.60785285],
+                [0.4914904 ]],
+    <BLANKLINE>
+               [[0.83173506],
+                [0.1679683 ],
+                [0.39415721],
+                [0.25540459],
+                [0.39779061]],
+    <BLANKLINE>
+               [[0.27625437],
+                [0.90381118],
+                [0.65453332],
+                [0.64141404],
+                [0.36941242]],
+    <BLANKLINE>
+               [[0.90620901],
+                [0.41437874],
+                [0.71279457],
+                [0.41105785],
+                [0.7459662 ]],
+    <BLANKLINE>
+               [[0.57160214],
+                [0.45227951],
+                [0.29112881],
+                [0.44654224],
+                [0.65356417]],
+    <BLANKLINE>
+               [[0.60171961],
+                [0.46916617],
+                [0.3919754 ],
+                [0.01304226],
+                [0.32085301]],
+    <BLANKLINE>
+               [[0.00470581],
+                [0.54743546],
+                [0.24740782],
+                [0.77903598],
+                [0.63457146]]] Jy>, spectral_axis=<SpectralAxis
+       (observer to target:
+          radial_velocity=0.0 km / s
+          redshift=0.0)
+      [4.90049987e-06] m>)>
 
 Collapsing
 ----------
@@ -302,9 +389,10 @@ any ``uncertainty`` attached to the spectrum.
 
 .. code-block:: python
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample((5, 10))*u.Jy)
-    >>> spec.mean() # doctest: +IGNORE_OUTPUT
-    <Quantity 0.4572145 Jy>
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
+    >>> spec.mean()  # doctest: +FLOAT_CMP
+    <Quantity 0.49802844 Jy>
 
 The 'axis' argument of the collapse methods may either be an integer axis, or a
 string specifying either 'spectral', which will collapse along only the
@@ -312,9 +400,13 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
 
 .. code-block:: python
 
-    >>> spec.mean(axis='spatial') # doctest: +IGNORE_OUTPUT
-    <Spectrum1D(flux=<Quantity [0.39985669, ... 0.38041483] Jy>,
-                spectral_axis=<SpectralAxis ... [5000., ... 5009.]>
+    >>> spec.mean(axis='spatial')  # doctest: +FLOAT_CMP
+    <Spectrum1D(flux=<Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
+               0.66084728, 0.45881921, 0.38715911, 0.39967185, 0.53257671] Jy>, spectral_axis=<SpectralAxis
+       (observer to target:
+          radial_velocity=0.0 km / s
+          redshift=0.0)
+      [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>)>
 
 Note that in this case, the result of the collapse operation is a
 `~specutils.Spectrum1D` rather than an `astropy.units.Quantity`, because the
@@ -326,8 +418,8 @@ to the ``method`` argument.
 
 .. code-block:: python
 
-    >>> spec.collapse(method=np.nanmean, axis=1) # doctest: +IGNORE_OUTPUT
-    <Quantity [0.57646909, 0.37054038, 0.28779586, 0.58485113, 0.46641606] Jy>
+    >>> spec.collapse(method=np.nanmean, axis=1)  # doctest: +FLOAT_CMP
+    <Quantity [0.51412398, 0.52665713, 0.31419772, 0.71556421, 0.41959918] Jy>
 
 Reference/API
 -------------

@@ -72,7 +72,9 @@ class FluxConservingResampler(ResamplerBase):
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23]  *u.nm
     >>> fluxc_resample = FluxConservingResampler()
-    >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
+    >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
+    <Spectrum1D(flux=<Quantity [        nan,  3.        ,  6.13043478,  7.        ,  6.33333333,
+               10.        , 20.        ,         nan,         nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
 
     """
 
@@ -243,7 +245,9 @@ class LinearInterpolatedResampler(ResamplerBase):
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
     >>> fluxc_resample = LinearInterpolatedResampler()
-    >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
+    >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
+    <Spectrum1D(flux=<Quantity [ nan, 3.5 , 5.5 , 6.75, 6.5 , 9.5 ,  nan,  nan,  nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
+
     """
     def __init__(self, extrapolation_treatment='nan_fill'):
         super().__init__(extrapolation_treatment)
@@ -317,7 +321,9 @@ class SplineInterpolatedResampler(ResamplerBase):
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
     >>> fluxc_resample = SplineInterpolatedResampler()
-    >>> output_spectrum1D = fluxc_resample(input_spectra, resample_grid) # doctest: +IGNORE_OUTPUT
+    >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
+    <Spectrum1D(flux=<Quantity [       nan, 3.98808594, 6.94042969, 6.45869141, 5.89921875,
+               7.29736328,        nan,        nan,        nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
 
     """
     def __init__(self, bin_edges='nan_fill'):
