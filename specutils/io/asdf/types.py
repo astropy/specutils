@@ -1,7 +1,13 @@
 import warnings
 
 from asdf.exceptions import AsdfDeprecationWarning
-from asdf.types import CustomType, ExtensionTypeMeta
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=AsdfDeprecationWarning,
+        message=r"asdf.types is deprecated.*",
+    )
+    from asdf.types import CustomType, ExtensionTypeMeta
 
 
 _specutils_types = set()
