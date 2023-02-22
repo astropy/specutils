@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -9,7 +10,15 @@ from astropy import coordinates as coord
 import gwcs.coordinate_frames as cf
 from gwcs.wcs import WCS
 import pytest
-from asdf import fits_embed
+
+from asdf.exceptions import AsdfDeprecationWarning
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=AsdfDeprecationWarning,
+        message=r"AsdfInFits has been deprecated.*",
+    )
+    from asdf import fits_embed
 
 from specutils import Spectrum1D, SpectrumList
 
