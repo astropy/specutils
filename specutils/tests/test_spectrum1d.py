@@ -357,6 +357,18 @@ def test_create_with_uncertainty():
         Spectrum1D(spectral_axis=wavelengths*u.um, flux=flux, uncertainty=uncertainty)
 
 
+def test_flux_unit_io_roundtrip(tmpdir):
+    # regression test for https://github.com/astropy/specutils/pull/1018
+    fname = str(tmpdir.join('flux_unit_io_roundtrip.fits'))
+    for flux_unit in ('adu', 'ct/s', 'count'):
+        sp = Spectrum1D(flux=np.linspace(0,1,11)*u.Unit(flux_unit),
+                        spectral_axis=np.random.random(11)*u.Unit('Hz'))
+        sp.write(fname, overwrite=True)
+
+        sp_load = Spectrum1D.read(fname)
+        assert sp_load.flux.unit == sp.unit
+
+
 @pytest.mark.filterwarnings('ignore::astropy.io.fits.verify.VerifyWarning')
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
 def test_read_linear_solution(remote_data_path):
