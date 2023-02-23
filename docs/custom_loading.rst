@@ -143,6 +143,8 @@ many `~specutils.Spectrum1D` objects. This method is available since
 `astropy.io.registry.read`).
 
 
+.. _custom_writer:
+
 Creating a Custom Writer
 ------------------------
 

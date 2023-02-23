@@ -90,15 +90,14 @@ A full list of the supported formats is shown in the table below.
 Writing to a File
 -----------------
 
-Similarly, a `~specutils.Spectrum1D` object can be saved to any file format supported by
-:class:`~astropy.nddata.CCDData` via the :meth:`specutils.Spectrum1D.write` method.
+Similarly, a `~specutils.Spectrum1D` object can be saved to any of the supported formats using the
+:meth:`specutils.Spectrum1D.write` method.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
-    >>> spec1d = Spectrum1D.read("/path/to/input.fits")  # doctest: +SKIP
     >>> spec1d.write("/path/to/output.fits")  # doctest: +SKIP
 
+| More information on creating custom writers can be found in :ref:`custom_writer`.
 
 Including Uncertainties
 -----------------------
