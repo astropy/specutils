@@ -209,7 +209,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         u.spectral_density() equivalencies. If none meet that criterion,
         look for other likely length units such as 'adu' or 'cts/s'.
         """
-        additional_valid_units = [u.Unit('adu'), u.Unit('ct/s')]
+        additional_valid_units = [u.Unit('adu'), u.Unit('ct/s'), u.Unit('count')]
         found_column = None
 
         # First, search for a column with units compatible with Janskies
