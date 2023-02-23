@@ -357,16 +357,16 @@ def test_create_with_uncertainty():
         Spectrum1D(spectral_axis=wavelengths*u.um, flux=flux, uncertainty=uncertainty)
 
 
-def test_flux_unit_io_roundtrip(tmpdir):
+@pytest.mark.parametrize("flux_unit", ["adu", "ct/s", "count"])
+def test_flux_unit_io_roundtrip(tmp_path, flux_unit):
     # regression test for https://github.com/astropy/specutils/pull/1018
-    fname = str(tmpdir.join('flux_unit_io_roundtrip.fits'))
-    for flux_unit in ('adu', 'ct/s', 'count'):
-        sp = Spectrum1D(flux=np.linspace(0,1,11)*u.Unit(flux_unit),
-                        spectral_axis=np.random.random(11)*u.Unit('Hz'))
-        sp.write(fname, overwrite=True)
+    fname = str(tmp_path / 'flux_unit_io_roundtrip.fits')
+    sp = Spectrum1D(flux=np.ones(11) * u.Unit(flux_unit),
+                    spectral_axis=np.arange(1, 12) * u.Unit('Hz'))
+    sp.write(fname, overwrite=True)
 
-        sp_load = Spectrum1D.read(fname)
-        assert sp_load.flux.unit == sp.unit
+    sp_load = Spectrum1D.read(fname)
+    assert sp_load.flux.unit == sp.flux.unit
 
 
 @pytest.mark.filterwarnings('ignore::astropy.io.fits.verify.VerifyWarning')
