@@ -12,7 +12,7 @@ from asdf.testing.helpers import roundtrip_object  # noqa: E402
 import asdf  # noqa: E402
 
 from specutils import Spectrum1D, SpectrumList, SpectralAxis  # noqa: E402
-from specutils.io.asdf.tags.spectra import Spectrum1DType, SpectrumListType
+from specutils.io.asdf.tags.spectra import Spectrum1DType, SpectrumListType  # noqa: E402
 
 
 def create_spectrum1d(xmin, xmax, uncertainty=None):
@@ -30,13 +30,11 @@ def test_asdf_spectrum1d(tmpdir):
     Spectrum1DType.assert_equal(spectrum, roundtrip_object(spectrum))
 
 
-
 @pytest.mark.filterwarnings('ignore:ASDF functionality for astropy is being moved out')
 def test_asdf_spectrum1d_uncertainty(tmpdir):
 
     spectrum = create_spectrum1d(5100, 5300, uncertainty=True)
     Spectrum1DType.assert_equal(spectrum, roundtrip_object(spectrum))
-
 
 
 @pytest.mark.xfail
@@ -46,7 +44,7 @@ def test_asdf_spectralaxis(tmpdir):
     spectral_axis = SpectralAxis(wavelengths, bin_specification="edges")
     # there is no implemented asdf type for SpectralAxis and no defined
     # equality comparison (assert_equal)
-    assert roundtrip_object(spectral_axis) == spectrum_axis
+    assert roundtrip_object(spectral_axis) == spectral_axis
 
 
 @pytest.mark.filterwarnings('ignore:ASDF functionality for astropy is being moved out')
@@ -59,7 +57,6 @@ def test_asdf_spectrumlist(tmpdir):
         create_spectrum1d(1, 5)
     ])
     SpectrumListType.assert_equal(spectra, roundtrip_object(spectra))
-
 
 
 @pytest.mark.filterwarnings("error::UserWarning")
