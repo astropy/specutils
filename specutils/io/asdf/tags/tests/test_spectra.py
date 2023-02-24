@@ -44,7 +44,11 @@ def test_asdf_spectralaxis(tmpdir):
     spectral_axis = SpectralAxis(wavelengths, bin_specification="edges")
     # there is no implemented asdf type for SpectralAxis and no defined
     # equality comparison (assert_equal)
-    assert roundtrip_object(spectral_axis) == spectral_axis
+    # per the comment https://github.com/astropy/specutils/pull/645#issuecomment-614271632
+    # the issue is that SpectralAxis roundtrips as SpectralCoord
+    # so the types should differ
+    rt = roundtrip_object(spectral_axis)
+    assert type(rt) == type(spectral_axis)
 
 
 @pytest.mark.filterwarnings('ignore:ASDF functionality for astropy is being moved out')
