@@ -5,7 +5,7 @@ import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
-from astropy.nddata import NDIOMixin, NDArithmeticMixin
+from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -46,6 +46,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         If it is ambiguous which axis is the spectral axis (e.g., if there are multiple
         axes in the flux array with the same length as the input spectral_axis),
         this argument is used to specify which is the spectral axis.
+    move_spectral_axis : str, optional
+        Force the spectral axis to be either the last axis (the default behavior prior
+        to version 2.0) or the first axis by setting this argument to 'last' or 'first'.
+        This will do a simple ``swapaxis`` between the relevant axis and original
+        spectral axis.
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
         WCS information object that either has a spectral component or is
         only spectral.
@@ -77,7 +82,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def __init__(self, flux=None, spectral_axis=None, spectral_axis_index=None,
                  wcs=None, velocity_convention=None, rest_value=None,
                  redshift=None, radial_velocity=None, bin_specification=None,
-                 **kwargs):
+                 move_spectral_axis=None, **kwargs):
 
         # If the flux (data) argument is already a Spectrum1D (as it would
         # be for internal arithmetic operations), avoid setup entirely.
@@ -238,6 +243,38 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     # Due to FITS conventions, the WCS axes are listed in opposite
                     # order compared to the data array.
                     self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
+
+                if move_spectral_axis is not None:
+                    if move_spectral_axis.lower() == 'first':
+                        move_to_index = 0
+                    elif move_spectral_axis.lower() == 'last':
+                        move_to_index = wcs.naxis - 1
+                    else:
+                        raise ValueError("move_spectral_axis must be either 'first' or 'last'")
+
+                    if move_to_index != self._spectral_axis_index:
+                        wcs = wcs.swapaxes(self._spectral_axis_index, move_to_index)
+                        if flux is not None:
+                            flux = np.swapaxes(flux, self._spectral_axis_index, move_to_index)
+                        if "mask" in kwargs:
+                            if kwargs["mask"] is not None:
+                                kwargs["mask"] = np.swapaxes(kwargs["mask"],
+                                                    self._spectral_axis_index, move_to_index)
+                        if "uncertainty" in kwargs:
+                            if kwargs["uncertainty"] is not None:
+                                if isinstance(kwargs["uncertainty"], NDUncertainty):
+                                    # Account for Astropy uncertainty types
+                                    temp_unc = np.swapaxes(kwargs["uncertainty"].array,
+                                                           self._spectral_axis_index, move_to_index)
+                                    if kwargs["uncertainty"].unit is not None:
+                                        temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
+                                    kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
+                                else:
+                                    kwargs["uncertainty"] = np.swapaxes(kwargs["uncertainty"],
+                                                            self._spectral_axis_index, move_to_index)
+
+                        self._spectral_axis_index = move_to_index
+
             else:
                 if flux is not None and flux.ndim == 1:
                     self._spectral_axis_index = 0
@@ -245,6 +282,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     if self.spectral_axis_index is None:
                         raise ValueError("WCS is 1D but flux is multi-dimensional. Please"
                                          " specify spectral_axis_index.")
+
+        elif move_spectral_axis is not None:
+            raise ValueError("Unable to use `move_spectral_axis` without a multi-dimensional WCS")
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
