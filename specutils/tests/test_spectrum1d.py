@@ -121,12 +121,27 @@ def test_create_from_cube():
     w = WCS(wcs_dict)
 
     spec = Spectrum1D(flux=flux, wcs=w)
+    spec_axis_from_wcs = (np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1]) *
+                          w.wcs.crval[-1]*spec.spectral_axis.unit)
 
     assert spec.flux.shape == (2,3,4)
     assert spec.flux[1,2,3] == 23*u.Jy
-    assert quantity_allclose(spec.spectral_axis,
-                             np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1]) *
-                             w.wcs.crval[-1]*spec.spectral_axis.unit)
+    assert quantity_allclose(spec.spectral_axis, spec_axis_from_wcs)
+
+    with pytest.raises(ValueError):
+        spec2 = Spectrum1D(flux=flux, wcs=w, move_spectral_axis='Bad string')
+
+    # Test moving spectral axis from first to last
+    spec2 = Spectrum1D(flux=flux, wcs=w, move_spectral_axis='last')
+    assert spec2.flux.shape == (4,3,2)
+    assert spec2.flux[3,2,1] == 23*u.Jy
+    assert quantity_allclose(spec2.spectral_axis, spec_axis_from_wcs)
+
+    # Test moving spectral axis from last to first
+    spec3 = Spectrum1D(flux=spec2.flux, wcs=spec2.wcs, move_spectral_axis='first')
+    assert spec3.flux.shape == (2,3,4)
+    assert spec3.flux[1,2,3] == 23*u.Jy
+    assert quantity_allclose(spec3.spectral_axis, spec_axis_from_wcs)
 
 
 def test_spectral_axis_conversions():
