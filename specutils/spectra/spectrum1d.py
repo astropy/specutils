@@ -396,7 +396,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                              "values is not currently allowed, "
                                              "please use a slice.")
                         spec_item = slice(spec_item, spec_item+1, None)
-                        item = item[:-1] + (spec_item,)
+                        # We have to hack around updating this tuple entry
+                        item = list(item)
+                        item[self.spectral_axis_index] = spec_item
+                        item = tuple(item)
                 else:
                     # Slicing on less than the full number of axes means we want
                     # to keep the whole spectral axis
