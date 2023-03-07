@@ -324,8 +324,8 @@ value will apply to the lower bound input.
     ...          'SPECSYS': 'BARYCENT', 'RADESYS': 'ICRS', 'EQUINOX': 2000.0,
     ...          'LONPOLE': 180.0, 'LATPOLE': 27.004754})
     >>> spec = Spectrum1D(flux=np.random.default_rng(12345).random((20, 5, 10)) * u.Jy, wcs=w)  # doctest: +IGNORE_WARNINGS
-    >>> lower = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205, dec=26, unit=u.deg)]
-    >>> upper = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205.5, dec=27.5, unit=u.deg)]
+    >>> lower = [SkyCoord(ra=205, dec=26, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
+    >>> upper = [SkyCoord(ra=205.5, dec=27.5, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
     >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
     <Spectrum1D(flux=<Quantity [[[0.70861236],
                 [0.5663815 ],
