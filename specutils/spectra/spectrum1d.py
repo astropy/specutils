@@ -467,6 +467,20 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
             return self._spectral_slice(item)
 
+        # Work around error in SpectralCoord creation in super().__getitem__ for
+        # spectral axis in pixels.
+        if self.spectral_axis.unit == u.pix:
+            if "original_wcs" not in self.meta:
+                new_meta = deepcopy(self.meta)
+                new_meta["original_wcs"] = deepcopy(self.wcs)
+            return self._copy(
+                flux=self.flux[item],
+                spectral_axis=self.spectral_axis[item],
+                uncertainty=self.uncertainty[item]
+                if self.uncertainty is not None else None,
+                mask=self.mask[item] if self.mask is not None else None,
+                meta=new_meta, wcs=None, spectral_axis_index=new_spectral_axis_index)
+
         tmp_spec = super().__getitem__(item)
 
         # TODO: this is a workaround until we figure out how to deal with non-
