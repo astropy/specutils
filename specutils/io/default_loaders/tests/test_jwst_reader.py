@@ -1,4 +1,3 @@
-import warnings
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -10,15 +9,7 @@ from astropy import coordinates as coord
 import gwcs.coordinate_frames as cf
 from gwcs.wcs import WCS
 import pytest
-
-from asdf.exceptions import AsdfDeprecationWarning
-with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore",
-        category=AsdfDeprecationWarning,
-        message=r"AsdfInFits has been deprecated.*",
-    )
-    from asdf import fits_embed
+import stdatamodels.fits_support
 
 from specutils import Spectrum1D, SpectrumList
 
@@ -415,9 +406,9 @@ def cube(tmpdir, tmp_asdf):
 
     # Mock the ASDF extension
     hdulist.append(fits.BinTableHDU(name='ASDF'))
-    ff = fits_embed.AsdfInFits(hdulist, tmp_asdf)
+    stdatamodels.fits_support.to_fits(tmp_asdf, None, hdulist=hdulist)
     tmpfile = str(tmpdir.join('jwst_embedded_asdf.fits'))
-    ff.write_to(tmpfile)
+    hdulist.writeto(tmpfile)
 
     return hdulist
 
