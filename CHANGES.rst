@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- Add ``stdatamodels`` as a dependency and use it to support ASDF-in-FITS
+  files like those produced by JWST. [#1029]
+
 Bug Fixes
 ^^^^^^^^^
 
