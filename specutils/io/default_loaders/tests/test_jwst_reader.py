@@ -1,24 +1,15 @@
-import warnings
-import numpy as np
-from astropy.io import fits
-from astropy.table import Table
-import astropy.units as u
-from astropy.io.registry import IORegistryError
-from astropy.utils.exceptions import AstropyUserWarning
-from astropy.modeling import models
-from astropy import coordinates as coord
 import gwcs.coordinate_frames as cf
-from gwcs.wcs import WCS
+import numpy as np
 import pytest
-
-from asdf.exceptions import AsdfDeprecationWarning
-with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore",
-        category=AsdfDeprecationWarning,
-        message=r"AsdfInFits has been deprecated.*",
-    )
-    from asdf import fits_embed
+from astropy import coordinates as coord
+from astropy import units as u
+from astropy.io import fits
+from astropy.io.registry import IORegistryError
+from astropy.modeling import models
+from astropy.table import Table
+from astropy.utils.exceptions import AstropyUserWarning
+from gwcs.wcs import WCS
+from stdatamodels import asdf_in_fits
 
 from specutils import Spectrum1D, SpectrumList
 
@@ -398,16 +389,17 @@ def create_image_hdu(name='SCI', data=None, shape=None, hdrs=[], ndim=3):
 
 
 @pytest.fixture(scope='function')
-def cube(tmpdir, tmp_asdf):
+def cube(tmp_path, tmp_asdf):
     """ Mock a JWST s3d cube """
-    hdulist = fits.HDUList()
-    hdulist.append(fits.PrimaryHDU())
-    hdulist["PRIMARY"].header["TELESCOP"] = ("JWST", "comment")
-    hdulist["PRIMARY"].header["FLUXEXT"] = ("ERR", "comment")
-    hdulist["PRIMARY"].header["ERREXT"] = ("ERR", "comment")
-    hdulist["PRIMARY"].header["MASKEXT"] = ("DQ", "comment")
+    prihdu = fits.PrimaryHDU()
+    prihdu.header["TELESCOP"] = ("JWST", "comment")
+    prihdu.header["FLUXEXT"] = ("ERR", "comment")
+    prihdu.header["ERREXT"] = ("ERR", "comment")
+    prihdu.header["MASKEXT"] = ("DQ", "comment")
+    hdulist = fits.HDUList([prihdu])
+
     # Add ImageHDU for cubes
-    shape = [30, 10, 10]
+    shape = (30, 10, 10)
     hdulist.append(create_image_hdu(name='SCI', shape=shape, hdrs=[("BUNIT", 'MJy')]))
     hdulist.append(create_image_hdu(name='ERR', shape=shape,
                                     hdrs=[("BUNIT", 'MJy'), ('ERRTYPE', 'ERR')]))
@@ -415,9 +407,9 @@ def cube(tmpdir, tmp_asdf):
 
     # Mock the ASDF extension
     hdulist.append(fits.BinTableHDU(name='ASDF'))
-    ff = fits_embed.AsdfInFits(hdulist, tmp_asdf)
-    tmpfile = str(tmpdir.join('jwst_embedded_asdf.fits'))
-    ff.write_to(tmpfile)
+
+    tmpfile = str(tmp_path / 'jwst_embedded_asdf.fits')
+    asdf_in_fits.write(tmpfile, tmp_asdf, hdulist=hdulist, overwrite=True)
 
     return hdulist
 
