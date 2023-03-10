@@ -32,8 +32,8 @@ def test_generic_spectrum_from_table(recwarn):
     assert spectrum.spectral_axis.unit == table['wave'].unit
     assert spectrum.flux.unit == table['flux'].unit
     assert spectrum.spectral_axis.unit == table['wave'].unit
-    assert np.alltrue(spectrum.spectral_axis == table['wave'])
-    assert np.alltrue(spectrum.flux == table['flux'])
+    assert np.all(spectrum.spectral_axis == table['wave'])
+    assert np.all(spectrum.flux == table['flux'])
 
     # Add uncertainties and retest
     err = 0.01*flux
@@ -43,9 +43,9 @@ def test_generic_spectrum_from_table(recwarn):
     assert spectrum.flux.unit == table['flux'].unit
     assert spectrum.uncertainty.unit == table['err'].unit
     assert spectrum.spectral_axis.unit == table['wave'].unit
-    assert np.alltrue(spectrum.spectral_axis == table['wave'])
-    assert np.alltrue(spectrum.flux == table['flux'])
-    assert np.alltrue(spectrum.uncertainty.array == table['err'])
+    assert np.all(spectrum.spectral_axis == table['wave'])
+    assert np.all(spectrum.flux == table['flux'])
+    assert np.all(spectrum.uncertainty.array == table['err'])
 
     # Test for warning if standard deviation is zero or negative
     err[0] = 0.

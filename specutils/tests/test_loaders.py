@@ -105,9 +105,9 @@ def test_generic_ecsv_reader(tmpdir):
     assert spectrum.flux.unit == table['flux'].unit
     assert spectrum.uncertainty.unit == table['uncertainty'].unit
     assert spectrum.spectral_axis.unit == table['wave'].unit
-    assert np.alltrue(spectrum.spectral_axis == table['wave'])
-    assert np.alltrue(spectrum.flux == table['flux'])
-    assert np.alltrue(spectrum.uncertainty.array == table['uncertainty'])
+    assert np.all(spectrum.spectral_axis == table['wave'])
+    assert np.all(spectrum.flux == table['flux'])
+    assert np.all(spectrum.uncertainty.array == table['uncertainty'])
 
 
 @remote_access([{'id': '1481119', 'filename': 'COS_FUV.fits'},
