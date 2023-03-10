@@ -9,9 +9,16 @@ from astropy.modeling import models
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs.wcs import WCS
-from stdatamodels import asdf_in_fits
 
 from specutils import Spectrum1D, SpectrumList
+
+# ASDF_LT_2_14_1
+try:
+    from stdatamodels import asdf_in_fits
+except ImportError:
+    HAS_STDATAMODELS = False
+else:
+    HAS_STDATAMODELS = True
 
 
 # The c1d/x1d reader tests --------------------------
@@ -408,15 +415,17 @@ def cube(tmp_path, tmp_asdf):
     # Mock the ASDF extension
     hdulist.append(fits.BinTableHDU(name='ASDF'))
 
-    tmpfile = str(tmp_path / 'jwst_embedded_asdf.fits')
-    asdf_in_fits.write(tmpfile, tmp_asdf, hdulist=hdulist, overwrite=True)
+    if HAS_STDATAMODELS:
+        tmpfile = str(tmp_path / 'jwst_embedded_asdf.fits')
+        asdf_in_fits.write(tmpfile, tmp_asdf, hdulist=hdulist, overwrite=True)
 
     return hdulist
 
 
-def test_jwst_s3d_single(tmpdir, cube):
+@pytest.mark.skipif(not HAS_STDATAMODELS, reason="requires stdatamodels")
+def test_jwst_s3d_single(tmp_path, cube):
     """Test Spectrum1D.read for JWST x1d data"""
-    tmpfile = str(tmpdir.join('jwst_s3d.fits'))
+    tmpfile = str(tmp_path / 'jwst_s3d.fits')
     cube.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile, format='JWST s3d')
