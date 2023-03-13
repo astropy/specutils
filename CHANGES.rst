@@ -7,6 +7,9 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fix bug in ``fit_lines`` which gave unexpected outputs from the ``get_fit_info``
+  and ``ignore_units`` keyword arguments [#1030]
+
 1.9.1 (2022-11-22)
 ------------------
 
