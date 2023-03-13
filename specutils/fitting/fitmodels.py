@@ -352,9 +352,18 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
         ignore_units = getattr(model_guess, model_guess.param_names[0]).unit is None
 
-        fit_model = _fit_lines(spectrum, model_guess, fitter,
-                               exclude_regions, weights, model_window,
-                               get_fit_info, ignore_units, **kwargs)
+        fit_model = _fit_lines(
+            spectrum=spectrum,
+            model=model_guess,
+            fitter=fitter,
+            exclude_regions=exclude_regions,
+            weights=weights,
+            window=model_window,
+            get_fit_info=get_fit_info,
+            ignore_units=ignore_units,
+            **kwargs
+        )
+
         if model_guess.name is not None:
             fit_model.name = model_guess.name
 
