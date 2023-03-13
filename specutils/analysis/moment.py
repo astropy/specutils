@@ -12,7 +12,7 @@ from .utils import computation_wrapper
 __all__ = ['moment']
 
 
-def moment(spectrum, regions=None, order=0, axis=None):
+def moment(spectrum, regions=None, order=0, axis='spectral'):
     """
     Estimate the moment of the spectrum.
 
@@ -29,9 +29,9 @@ def moment(spectrum, regions=None, order=0, axis=None):
     order : int
         The order of the moment to be calculated. Default=0
 
-    axis : int
-        Axis along which a moment is calculated. Default=-1, computes along
-        the last axis (spectral axis).
+    axis : int, str
+        Axis along which a moment is calculated. Default='spectral', which computes
+        along the spectral axis.
 
 
     Returns
@@ -44,17 +44,18 @@ def moment(spectrum, regions=None, order=0, axis=None):
                                order=order, axis=axis)
 
 
-def _compute_moment(spectrum, regions=None, order=0, axis=None):
+def _compute_moment(spectrum, regions=None, order=0, axis='spectral'):
     """
     This is a helper function for the above `moment()` method.
     """
-    if axis is None:
+    if axis == "spectral":
         if isinstance(spectrum, SpectrumCollection):
             axes = [spec.spectral_axis_index for spec in spectrum]
             if not np.all([x==axes[0] for x in axes]):
                 raise ValueError("All spectra in SpectrumCollection must have the same "
                                  "spectral_axis_index for simultaneous moment calculation.")
-            axis = axes[0] + 1
+            # SpectumCollection adds a leading axis when it stacks the spectra.
+            axis = axes[0]+1
 
         else:
             axis = spectrum.spectral_axis_index
@@ -78,7 +79,7 @@ def _compute_moment(spectrum, regions=None, order=0, axis=None):
     dispersion = spectral_axis
     # We now have to account for the spectral axis being anywhere, not always last
     if len(flux.shape) > len(spectral_axis.shape):
-        for i in range(len(flux.shape)):
+        for i in range(flux.ndim):
             if i != calc_spectrum.spectral_axis_index:
                 dispersion = np.expand_dims(dispersion, i)
                 dispersion = np.repeat(dispersion, flux.shape[i], i)

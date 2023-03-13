@@ -187,7 +187,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # we raise an error.
         if flux is not None and spectral_axis is not None:
             if spectral_axis_index is None:
-                if len(flux.shape) == 1:
+                if flux.ndim == 1:
                     self._spectral_axis_index = 0
                 else:
                     matching_axes = []
@@ -197,7 +197,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                         add_elements = [1,]
                     elif bin_specification is None:
                         add_elements = [0,1]
-                    for i in range(len(flux.shape)):
+                    for i in range(flux.ndim):
                         for add_element in add_elements:
                             if spectral_axis.shape[0] == flux.shape[i] + add_element:
                                 matching_axes.append(i)

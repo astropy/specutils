@@ -41,14 +41,14 @@ The cube has  74x74 spaxels with 4563 spectral axis points in each one:
 .. code-block:: python
 
     >>> sc.shape # doctest: +REMOTE_DATA
-    (74, 74, 4563)
+    (4563, 74, 74)
 
 
 Print the contents of 3 spectral axis points in a 3x3 spaxel array:
 
 .. code-block:: python
 
-    >>> sc[30:33,30:33,2000:2003] # doctest: +REMOTE_DATA
+    >>> sc[2000:2003,30:33,30:33] # doctest: +REMOTE_DATA
     <Spectrum1D(flux=<Quantity [[[0.48920232, 0.4987253 , 0.5098349 ],
                 [0.493365  , 0.4964812 , 0.5223962 ],
                 [0.49446177, 0.4909543 , 0.5304416 ]],
@@ -144,7 +144,7 @@ Moments
 =======
 
 The `~specutils.analysis.moment` function can be used to compute moments of any order
-along one of the cube's axes. By default, ``axis=None``, in which case the moment
+along one of the cube's axes. By default, ``axis='spectral'``, in which case the moment
 is computed along the spectral axis.
 
 .. code-block:: python

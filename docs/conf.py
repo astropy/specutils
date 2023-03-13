@@ -59,6 +59,7 @@ highlight_language = 'python3'
 # Include other packages to link against
 intersphinx_mapping['astropy'] = ('https://docs.astropy.org/en/latest/', None)
 intersphinx_mapping['gwcs'] = ('https://gwcs.readthedocs.io/en/latest/', None)
+intersphinx_mapping['reproject'] = ("https://reproject.readthedocs.io/en/stable/", None)
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
