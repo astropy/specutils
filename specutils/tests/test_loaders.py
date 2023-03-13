@@ -735,8 +735,8 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     assert quantity_allclose(spec.flux, spectrum.flux)
 
     # Read from HDUList
-    hdulist = fits.open(tmpfile)
-    spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+    with fits.open(tmpfile) as hdulist:
+        spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
     assert isinstance(spec, Spectrum1D)
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
