@@ -27,7 +27,7 @@ jobs:
             python: '3.10'
             toxenv: py310-test-cov
             toxargs: -v
-            toxposargs: --open-files --remote-data=astropy
+            toxposargs: --remote-data=astropy
 
           - name: Python 3.8 with oldest supported version of key dependencies
             os: ubuntu-20.04
