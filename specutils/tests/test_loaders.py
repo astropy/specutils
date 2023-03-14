@@ -1,10 +1,9 @@
 import os
 import shutil
-import tempfile
 import urllib
 import warnings
-import pytest
 
+import pytest
 import astropy.units as u
 import numpy as np
 from astropy.io import fits
@@ -16,7 +15,6 @@ from astropy.io.registry import IORegistryError
 from astropy.modeling import models
 from astropy.tests.helper import quantity_allclose
 from astropy.nddata import StdDevUncertainty
-
 from numpy.testing import assert_allclose
 
 from .conftest import remote_access
@@ -90,13 +88,13 @@ def test_ctypye_not_compliant(remote_data_path):
                                    format='wcs1d-fits')
 
 
-def test_generic_ecsv_reader(tmpdir):
+def test_generic_ecsv_reader(tmp_path):
     # Create a small data set
     wave = np.arange(1, 1.1, 0.01)*u.AA
     flux = np.ones(len(wave))*1.e-14*u.Jy
     uncertainty = 0.01*flux
     table = Table([wave, flux, uncertainty], names=["wave", "flux", "uncertainty"])
-    tmpfile = str(tmpdir.join('_tst.ecsv'))
+    tmpfile = str(tmp_path / '_tst.ecsv')
     table.write(tmpfile, format='ascii.ecsv')
 
     # Read it in and check against the original
@@ -119,8 +117,8 @@ def test_hst_cos(remote_data_path):
     assert spec.flux.size > 0
 
     # HDUList case
-    hdulist = fits.open(remote_data_path)
-    spec = Spectrum1D.read(hdulist, format="HST/COS")
+    with fits.open(remote_data_path) as hdulist:
+        spec = Spectrum1D.read(hdulist, format="HST/COS")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
 
@@ -135,8 +133,8 @@ def test_hst_stis(remote_data_path):
     assert spec.flux.size > 0
 
     # HDUList case
-    hdulist = fits.open(remote_data_path)
-    spec = Spectrum1D.read(hdulist, format="HST/STIS")
+    with fits.open(remote_data_path) as hdulist:
+        spec = Spectrum1D.read(hdulist, format="HST/STIS")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.size > 0
 
@@ -164,7 +162,7 @@ def test_manga_rss():
 
 
 @pytest.mark.remote_data
-def test_sdss_spec():
+def test_sdss_spec(tmp_path):
     sp_pattern = 'spec-4055-55359-0596.fits'
     with urllib.request.urlopen(EBOSS_SPECTRUM_URL) as response:
         # Read from open file object
@@ -172,71 +170,66 @@ def test_sdss_spec():
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.size > 0
 
+    file_path = str(tmp_path / sp_pattern)
     with urllib.request.urlopen(EBOSS_SPECTRUM_URL) as response:
-        # On Windows, NamedTemporaryFile cannot be opened a second time while
-        #  already being open, so we avoid using that method.
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            file_path = os.path.join(tmp_dir, sp_pattern)
+        with open(file_path, 'wb') as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
 
-            with open(file_path, 'wb') as tmp_file:
-                shutil.copyfileobj(response, tmp_file)
+            # Read from local disk via filename
+            spec = Spectrum1D.read(tmp_file.name)
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
 
-                # Read from local disk via filename
-                print(tmp_file.name)
-                spec = Spectrum1D.read(tmp_file.name)
-
-                assert isinstance(spec, Spectrum1D)
-                assert spec.flux.size > 0
-
-                # Read from HDUList object
-                hdulist = fits.open(tmp_file.name)
+            # Read from HDUList object
+            with fits.open(tmp_file.name) as hdulist:
                 spec = Spectrum1D.read(hdulist)
-                assert isinstance(spec, Spectrum1D)
-                assert spec.flux.size > 0
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
 
-                # Read from file handle
-                fileio = open(tmp_file.name, mode='rb')
+            # Read from file handle
+            with open(tmp_file.name, mode='rb') as fileio:
                 spec = Spectrum1D.read(fileio)
-                assert isinstance(spec, Spectrum1D)
-                assert spec.flux.size > 0
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
 
 
 @pytest.mark.remote_data
-def test_sdss_spspec():
+def test_sdss_spspec(tmp_path):
     sp_pattern = 'spSpec-51957-0273-016.fit'
-    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+    url = f'http://das.sdss.org/spectro/1d_26/0273/1d/{sp_pattern}'
+    with urllib.request.urlopen(url) as response:
         # Read from open file object
         spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.size > 0
 
-    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
-        # On Windows, NamedTemporaryFile cannot be opened a second time while
-        #  already being open, so we avoid using that method.
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            file_path = os.path.join(tmp_dir, sp_pattern)
+    file_path = str(tmp_path / sp_pattern)
+    with urllib.request.urlopen(url) as response:
+        with open(file_path, 'wb') as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
 
-            with open(file_path, 'wb') as tmp_file:
-                shutil.copyfileobj(response, tmp_file)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                spec = Spectrum1D.read(tmp_file.name)
 
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore', FITSFixedWarning)
-                    spec = Spectrum1D.read(tmp_file.name)
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
 
-                assert isinstance(spec, Spectrum1D)
-                assert spec.flux.size > 0
+            # Read from HDUList object
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                with fits.open(tmp_file.name) as hdulist:
+                    spec = Spectrum1D.read(hdulist)
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
 
-                # Read from HDUList object
-                hdulist = fits.open(tmp_file.name)
-                spec = Spectrum1D.read(hdulist)
-                assert isinstance(spec, Spectrum1D)
-                assert spec.flux.size > 0
-
-                # Read from file handle
-                fileio = open(tmp_file.name, mode='rb')
-                spec = Spectrum1D.read(fileio)
-                assert isinstance(spec, Spectrum1D)
-                assert spec.flux.size > 0
+            # Read from file handle
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                with open(tmp_file.name, mode='rb') as fileio:
+                    spec = Spectrum1D.read(fileio)
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.size > 0
 
 
 @pytest.mark.remote_data
@@ -304,27 +297,32 @@ def test_sdss_compressed(compress, tmp_path):
 
 
 @pytest.mark.remote_data
-def test_sdss_spplate():
+def test_sdss_spplate(tmp_path):
     """Test loading of multi-object spectrum from SDSS `spPlate` format FITS file.
     """
     with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
         # Read reference spectrum from open file object
-        spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FITSFixedWarning)
+            spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.size > 0
         specid = spec.meta['header']['FIBERID']
 
     with urllib.request.urlopen('https://data.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
         # Read "plate" spectrum with 2D flux array from open file object
-        plate = Spectrum1D.read(response, format="SDSS spPlate")
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FITSFixedWarning)
+            plate = Spectrum1D.read(response, format="SDSS spPlate")
         assert isinstance(plate, Spectrum1D)
         assert plate.flux.ndim == 2
         assert plate.flux.shape[0] == 640
         assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
         assert quantity_allclose(spec.flux, plate.flux[specid-1])
 
+    file_path = str(tmp_path / 'spPlate-0273-51957.fits')
     with urllib.request.urlopen('https://data.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with open(file_path , 'wb') as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
             # Read from local disk via file signature
@@ -339,22 +337,26 @@ def test_sdss_spplate():
             assert quantity_allclose(spec.flux, plate.flux[specid-1])
 
             # Read from HDUList object
-            hdulist = fits.open(tmp_file.name)
-            plate = Spectrum1D.read(hdulist, limit=32)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                with fits.open(tmp_file.name) as hdulist:
+                    plate = Spectrum1D.read(hdulist, limit=32)
             assert plate.flux.shape[0] == 32
             assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
             assert quantity_allclose(spec.flux, plate.flux[specid-1])
 
             # Read from file handle
-            fileio = open(tmp_file.name, mode='rb')
-            plate = Spectrum1D.read(fileio, limit=32)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                with open(tmp_file.name, mode='rb') as fileio:
+                    plate = Spectrum1D.read(fileio, limit=32)
             assert plate.flux.shape[0] == 32
             assert quantity_allclose(spec.spectral_axis, plate.spectral_axis)
             assert quantity_allclose(spec.flux, plate.flux[specid-1])
 
 
 @pytest.mark.parametrize("name", ['file.fit', 'file.fits', 'file.dat'])
-def test_no_reader_matches(name):
+def test_no_reader_matches(name, tmp_path):
     """If no reader matches a file, check that the correct error is raised.
     This test serves a second purpose: A badly written identifier
     function might raise an error as supposed to returning False when
@@ -362,13 +364,12 @@ def test_no_reader_matches(name):
     that at the very least all identifier functions that have been
     tried for that file ending did not fail with an error.
     """
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        filename = os.path.join(tmpdirname, name)
-        with open(filename, 'w') as fp:
-            fp.write('asdfadasdadvzxcv')
+    filename = str(tmp_path / name)
+    with open(filename, 'w') as fp:
+        fp.write('asdfadasdadvzxcv')
 
-        with pytest.raises(IORegistryError):
-            Spectrum1D.read(filename)
+    with pytest.raises(IORegistryError):
+        Spectrum1D.read(filename)
 
 
 @pytest.mark.filterwarnings('ignore:linear Solution')
@@ -412,8 +413,8 @@ def test_iraf_non_linear_chebyshev(remote_data_path):
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
     # Read from HDUList
-    hdulist = fits.open(remote_data_path)
-    spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
+    with fits.open(remote_data_path) as hdulist:
+        spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
     assert isinstance(spectrum_1d, Spectrum1D)
     assert_allclose(wavelength_axis, spectrum_1d.wavelength)
 
@@ -495,7 +496,7 @@ def test_iraf_multispec_legendre():
 
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
-def test_tabular_fits_writer(tmpdir, spectral_axis):
+def test_tabular_fits_writer(tmp_path, spectral_axis):
     wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
            'wavenumber': u.cm**-1}
     # Create a small data set
@@ -506,7 +507,7 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
         disp = np.flip(disp)
 
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, format='tabular-fits')
 
     # Read it in and check against the original
@@ -546,7 +547,7 @@ def test_tabular_fits_writer(tmpdir, spectral_axis):
 @pytest.mark.parametrize("ndim", range(1, 4))
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
-def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
+def test_tabular_fits_multid(tmp_path, ndim, spectral_axis):
     wlu = {'wavelength': u.AA, 'frequency': u.GHz, 'energy': u.eV,
            'wavenumber': u.cm**-1}
     # Create a small data set with ndim-D flux + uncertainty
@@ -558,7 +559,7 @@ def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
         disp = np.flip(disp)
 
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, format='tabular-fits')
 
     # Read it in and check against the original
@@ -586,7 +587,7 @@ def test_tabular_fits_multid(tmpdir, ndim, spectral_axis):
                              spectrum.uncertainty.quantity)
 
 
-def test_tabular_fits_header(tmpdir):
+def test_tabular_fits_header(tmp_path):
     # Create a small data set + header with reserved FITS keywords
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.Jy
@@ -594,43 +595,40 @@ def test_tabular_fits_header(tmpdir):
                               'OBSERVER': 'Parsons', 'NAXIS': 1, 'NAXIS1': 8})
 
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, format='tabular-fits')
 
     # Read it in and check against the original
-    hdulist = fits.open(tmpfile)
-    assert hdulist[0].header['NAXIS'] == 0
-    assert hdulist[1].header['NAXIS'] == 2
-    assert hdulist[1].header['NAXIS2'] == disp.shape[0]
-    assert hdulist[1].header['OBSERVER'] == 'Parsons'
-    hdulist.close()
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[0].header['NAXIS'] == 0
+        assert hdulist[1].header['NAXIS'] == 2
+        assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+        assert hdulist[1].header['OBSERVER'] == 'Parsons'
 
     # Now write with updated header information from spectrum.meta
     spectrum.meta.update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1, 'NAXIS2': 12})
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
                    update_header=True)
 
-    hdulist = fits.open(tmpfile)
-    assert hdulist[1].header['NAXIS2'] == disp.shape[0]
-    assert hdulist[1].header['OBSERVER'] == 'Rosse'
-    assert_allclose(hdulist[1].header['EXPTIME'], 3.21e1)
-    hdulist.close()
+    with fits.open(tmpfile) as hdulist:
+        assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+        assert hdulist[1].header['OBSERVER'] == 'Rosse'
+        assert_allclose(hdulist[1].header['EXPTIME'], 3.21e1)
 
     # Test that unsupported types (dict) are not added to written header
     spectrum.meta['MYHEADER'] = {'OBSDATE': '1848-02-26', 'TARGET': 'M51'}
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
                    update_header=True)
 
-    hdulist = fits.open(tmpfile)
-    assert 'MYHEADER' not in hdulist[0].header
-    assert 'MYHEADER' not in hdulist[1].header
-    assert 'OBSDATE' not in hdulist[0].header
-    assert 'OBSDATE' not in hdulist[1].header
-    hdulist.close()
+    with fits.open(tmpfile) as hdulist:
+        assert 'MYHEADER' not in hdulist[0].header
+        assert 'MYHEADER' not in hdulist[1].header
+        assert 'OBSDATE' not in hdulist[0].header
+        assert 'OBSDATE' not in hdulist[1].header
 
 
 @pytest.mark.filterwarnings("ignore:The unit 'Angstrom' has been deprecated")
-def test_tabular_fits_autowrite(tmpdir):
+def test_tabular_fits_autowrite(tmp_path):
     """Test writing of Spectrum1D with automatic selection of BINTABLE format."""
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.W / (u.m**2 * u.AA)
@@ -638,7 +636,7 @@ def test_tabular_fits_autowrite(tmpdir):
                               'OBSERVER': 'Parsons', 'NAXIS': 1, 'NAXIS1': 8})
 
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile)
 
     # Read it in and check against the original
@@ -655,7 +653,7 @@ def test_tabular_fits_autowrite(tmpdir):
     with pytest.raises(ValueError, match=r'Only Spectrum1D objects with valid WCS'):
         spectrum.write(tmpfile, overwrite=True, hdu=0)
 
-    tmpfile = str(tmpdir.join('_wcs.fits'))
+    tmpfile = str(tmp_path / '_wcs.fits')
     with pytest.raises(ValueError, match=r'Only Spectrum1D objects with valid WCS'):
         spectrum.write(tmpfile, overwrite=True)
 
@@ -663,7 +661,7 @@ def test_tabular_fits_autowrite(tmpdir):
 @pytest.mark.skipif('sys.platform.startswith("win")',
                     reason='Uncertain availability of compression utilities')
 @pytest.mark.parametrize('compress', ['gzip', 'bzip2', 'xz'])
-def test_tabular_fits_compressed(compress, tmpdir):
+def test_tabular_fits_compressed(compress, tmp_path):
     """Test automatic recognition of supported compression formats for BINTABLE.
     """
     ext = {'gzip': '.gz', 'bzip2': '.bz2', 'xz': '.xz'}
@@ -678,7 +676,7 @@ def test_tabular_fits_compressed(compress, tmpdir):
     unc = StdDevUncertainty(0.01 * np.abs(flux))
 
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, uncertainty=unc)
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, format='tabular-fits')
 
     # Deliberately not using standard filename pattern to test header info.
@@ -708,7 +706,7 @@ def test_tabular_fits_compressed(compress, tmpdir):
 
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
-def test_wcs1d_fits_writer(tmpdir, spectral_axis):
+def test_wcs1d_fits_writer(tmp_path, spectral_axis):
     """Test write/read for Spectrum1D with WCS-constructed spectral_axis."""
     wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
                'wavenumber': 'cm**-1'}
@@ -723,7 +721,7 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
 
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, hdu=0)
 
     # Read it in and check against the original
@@ -735,8 +733,8 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
     assert quantity_allclose(spec.flux, spectrum.flux)
 
     # Read from HDUList
-    hdulist = fits.open(tmpfile)
-    spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+    with fits.open(tmpfile) as hdulist:
+        spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
     assert isinstance(spec, Spectrum1D)
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
@@ -744,7 +742,7 @@ def test_wcs1d_fits_writer(tmpdir, spectral_axis):
 
 @pytest.mark.filterwarnings('ignore:Card is too long')
 @pytest.mark.parametrize("hdu", range(3))
-def test_wcs1d_fits_hdus(tmpdir, hdu):
+def test_wcs1d_fits_hdus(tmp_path, hdu):
     """Test writing of Spectrum1D in WCS1D format to different IMAGE_HDUs."""
     # Header dictionary for constructing WCS
     hdr = {'CTYPE1': 'wavelength', 'CUNIT1': 'um',
@@ -754,7 +752,7 @@ def test_wcs1d_fits_hdus(tmpdir, hdu):
     flux = np.arange(1, 11)**2 * 1.e-14 * flu
 
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, hdu=hdu, format='wcs1d-fits')
 
     # Read it in and check against the original
@@ -766,7 +764,7 @@ def test_wcs1d_fits_hdus(tmpdir, hdu):
         assert quantity_allclose(hdulist[hdu].data * flu, flux)
 
     # Test again with automatic format selection by filename pattern
-    tmpfile = str(tmpdir.join('_wcs.fits'))
+    tmpfile = str(tmp_path / '_wcs.fits')
     spectrum.write(tmpfile, hdu=hdu)
     with fits.open(tmpfile) as hdulist:
         assert hdulist[hdu].is_image
@@ -775,7 +773,7 @@ def test_wcs1d_fits_hdus(tmpdir, hdu):
 
 @pytest.mark.parametrize("spectral_axis",
                          ['wavelength', 'frequency', 'energy', 'wavenumber'])
-def test_wcs1d_fits_multid(tmpdir, spectral_axis):
+def test_wcs1d_fits_multid(tmp_path, spectral_axis):
     """Test spectrum with WCS-1D spectral_axis and higher dimension in flux."""
     wlunits = {'wavelength': 'Angstrom', 'frequency': 'GHz', 'energy': 'eV',
                'wavenumber': 'cm**-1'}
@@ -794,7 +792,7 @@ def test_wcs1d_fits_multid(tmpdir, spectral_axis):
     for i in range(2, 5):
         flux = flux * np.arange(i, i+5).reshape(*shape)
         spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-        tmpfile = str(tmpdir.join(f'_{i}d.fits'))
+        tmpfile = str(tmp_path / f'_{i}d.fits')
         spectrum.write(tmpfile, format='wcs1d-fits')
 
         spec = Spectrum1D.read(tmpfile, format='wcs1d-fits')
@@ -807,7 +805,7 @@ def test_wcs1d_fits_multid(tmpdir, spectral_axis):
     # Test exception for NAXIS > 4
     flux = flux * np.arange(i+1, i+6).reshape(*shape)
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-    tmpfile = str(tmpdir.join(f'_{i+1}d.fits'))
+    tmpfile = str(tmp_path / f'_{i+1}d.fits')
     spectrum.write(tmpfile, format='wcs1d-fits')
 
     with pytest.raises(ValueError, match='input to wcs1d_fits_loader is > 4D'):
@@ -815,7 +813,7 @@ def test_wcs1d_fits_multid(tmpdir, spectral_axis):
 
 
 @pytest.mark.parametrize("spectral_axis", ['wavelength', 'frequency'])
-def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
+def test_wcs1d_fits_non1d(tmp_path, spectral_axis):
     """Test exception on trying to load FITS with 2D flux and irreducible WCS
     spectral_axis.
     """
@@ -827,13 +825,12 @@ def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
     # Create a small 2D data set
     flux = np.arange(1, 11)**2 * np.arange(4).reshape(-1, 1) * 1.e-14 * u.Jy
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-    tmpfile = str(tmpdir.join(f'_{2}d.fits'))
+    tmpfile = str(tmp_path / f'_{2}d.fits')
     spectrum.write(tmpfile, format='wcs1d-fits')
 
     # Reopen file and update header with off-diagonal element
-    hdulist = fits.open(tmpfile, mode='update')
-    hdulist[0].header.update([('PC1_2', 0.2)])
-    hdulist.close()
+    with fits.open(tmpfile, mode='update') as hdulist:
+        hdulist[0].header.update([('PC1_2', 0.2)])
 
     with pytest.raises(ValueError, match='WCS cannot be reduced to 1D'):
         Spectrum1D.read(tmpfile, format='wcs1d-fits')
@@ -842,7 +839,7 @@ def test_wcs1d_fits_non1d(tmpdir, spectral_axis):
 @pytest.mark.skipif('sys.platform.startswith("win")',
                     reason='Uncertain availability of compression utilities')
 @pytest.mark.parametrize('compress', ['gzip', 'bzip2', 'xz'])
-def test_wcs1d_fits_compressed(compress, tmpdir):
+def test_wcs1d_fits_compressed(compress, tmp_path):
     """Test automatic recognition of supported compression formats for IMAGE/WCS.
     """
     ext = {'gzip': '.gz', 'bzip2': '.bz2', 'xz': '.xz'}
@@ -862,7 +859,7 @@ def test_wcs1d_fits_compressed(compress, tmpdir):
     disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
 
     spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr))
-    tmpfile = str(tmpdir.join('_tst.fits'))
+    tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, hdu=0)
 
     # Deliberately not using standard filename pattern to test header info.
@@ -944,16 +941,13 @@ def test_muscles_loader():
     assert spec.flux.unit == u.erg / (u.s * u.cm**2 * u.AA)
 
     # Read HDUList
-    try:
-        hdulist = fits.open(url)
+    with fits.open(url) as hdulist:
         spec = Spectrum1D.read(hdulist, format="MUSCLES SED")
         assert isinstance(spec, Spectrum1D)
-    finally:
-        hdulist.close()
 
 
 @pytest.mark.remote_data
-def test_subaru_pfs_loader(tmpdir):
+def test_subaru_pfs_loader(tmp_path):
     """Test remote read and automatic recognition of Subaru PFS spec from URL.
     """
     pfs = "pfsObject-00000-0,0-000-00000001-01-0x395428ab.fits"
@@ -962,9 +956,10 @@ def test_subaru_pfs_loader(tmpdir):
     assert subaru_pfs_spec.identify_pfs_spec(url, url)
 
     # PFS loader parses metadata from filename, cannot read directly from url
-    tmpfile = str(tmpdir.join(pfs))
+    tmpfile = str(tmp_path / pfs)
     with urllib.request.urlopen(url) as response:
-        shutil.copyfileobj(response, open(tmpfile, mode='wb'))
+        with open(tmpfile, mode='wb') as fout:
+            shutil.copyfileobj(response, fout)
 
     assert subaru_pfs_spec.identify_pfs_spec(pfs, open(tmpfile, mode='rb'))
     spec = Spectrum1D.read(tmpfile, format='Subaru-pfsObject')
@@ -986,12 +981,11 @@ def test_spectrum1d_6dfgs_tabular(remote_data_path):
     assert spec.flux.unit == u.Unit("count/s")
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    spec = Spectrum1D.read(hdulist, format="6dFGS-tabular")
+    with fits.open(remote_data_path) as hdulist:
+        spec = Spectrum1D.read(hdulist, format="6dFGS-tabular")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.unit == u.Unit("count/s")
     assert spec.flux.size > 0
-    hdulist.close()
 
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
@@ -1003,12 +997,11 @@ def test_spectrum1d_6dfgs_split_v(remote_data_path):
     assert spec.flux.unit == u.Unit("count/Angstrom")
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    spec = Spectrum1D.read(hdulist, format="6dFGS-split")
+    with fits.open(remote_data_path) as hdulist:
+        spec = Spectrum1D.read(hdulist, format="6dFGS-split")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.unit == u.Unit("count/Angstrom")
     assert spec.flux.size > 0
-    hdulist.close()
 
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
@@ -1020,12 +1013,11 @@ def test_spectrum1d_6dfgs_split_r(remote_data_path):
     assert spec.flux.unit == u.Unit("count/Angstrom")
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    spec = Spectrum1D.read(hdulist, format="6dFGS-split")
+    with fits.open(remote_data_path) as hdulist:
+        spec = Spectrum1D.read(hdulist, format="6dFGS-split")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.unit == u.Unit("count/Angstrom")
     assert spec.flux.size > 0
-    hdulist.close()
 
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
@@ -1037,12 +1029,11 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
     assert spec.flux.unit == u.Unit("count/Angstrom")
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    spec = Spectrum1D.read(hdulist, format="6dFGS-split")
+    with fits.open(remote_data_path) as hdulist:
+        spec = Spectrum1D.read(hdulist, format="6dFGS-split")
     assert isinstance(spec, Spectrum1D)
     assert spec.flux.unit == u.Unit("count/Angstrom")
     assert spec.flux.size > 0
-    hdulist.close()
 
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
@@ -1057,18 +1048,16 @@ def test_spectrum1d_6dfgs_combined(remote_data_path):
     assert len(specs) == 3
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    specs = SpectrumList.read(hdulist, format="6dFGS-combined")
-    for spec in specs:
-        assert isinstance(spec, Spectrum1D)
-        assert spec.flux.unit == u.Unit("count/Angstrom")
-        assert spec.flux.size > 0
-        assert spec.meta["sky"].flux.unit == u.Unit("count/Angstrom")
-        assert spec.meta["sky"].flux.size > 0
+    with fits.open(remote_data_path) as hdulist:
+        specs = SpectrumList.read(hdulist, format="6dFGS-combined")
+        for spec in specs:
+            assert isinstance(spec, Spectrum1D)
+            assert spec.flux.unit == u.Unit("count/Angstrom")
+            assert spec.flux.size > 0
+            assert spec.meta["sky"].flux.unit == u.Unit("count/Angstrom")
+            assert spec.meta["sky"].flux.size > 0
 
-    assert len(specs) == 3
-
-    hdulist.close()
+        assert len(specs) == 3
 
 
 # Commented out until science only is discussed
@@ -1114,15 +1103,13 @@ def test_spectrum_list_2dfgrs_single(remote_data_path):
         assert spec.spectral_axis.unit == u.Unit("Angstrom")
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    specs = SpectrumList.read(hdulist, format="2dFGRS")
-    for spec in specs:
-        assert isinstance(spec, Spectrum1D)
-        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+    with fits.open(remote_data_path) as hdulist:
+        specs = SpectrumList.read(hdulist, format="2dFGRS")
+        for spec in specs:
+            assert isinstance(spec, Spectrum1D)
+            assert spec.spectral_axis.unit == u.Unit("Angstrom")
 
-    assert len(specs) == 1
-
-    hdulist.close()
+        assert len(specs) == 1
 
 
 @remote_access([{'id': '3895436', 'filename': '000001.fits'}])
@@ -1135,15 +1122,13 @@ def test_spectrum_list_2dfgrs_multiple(remote_data_path):
         assert spec.spectral_axis.unit == u.Unit("Angstrom")
 
     # Read from HDUList object
-    hdulist = fits.open(remote_data_path)
-    specs = SpectrumList.read(hdulist, format="2dFGRS")
-    for spec in specs:
-        assert isinstance(spec, Spectrum1D)
-        assert spec.spectral_axis.unit == u.Unit("Angstrom")
+    with fits.open(remote_data_path) as hdulist:
+        specs = SpectrumList.read(hdulist, format="2dFGRS")
+        for spec in specs:
+            assert isinstance(spec, Spectrum1D)
+            assert spec.spectral_axis.unit == u.Unit("Angstrom")
 
-    assert len(specs) == 2
-
-    hdulist.close()
+        assert len(specs) == 2
 
 
 def test_sdss_wcs_handler():
@@ -1358,13 +1343,13 @@ def test_spectrum_list_names_miri_mrs():
 
 # loading from a directory via glob
 @pytest.mark.remote_data
-def test_spectrum_list_directory_miri_mrs(tmpdir):
+def test_spectrum_list_directory_miri_mrs(tmp_path):
 
     # copy files to temp dir. We cannot use the directory generated by
     # remote_access, because it may have variable structure from run to
     # run. And also because temp directories created in previous runs
     # may still be hanging around. This precludes the use of commonpath()
-    tmp_dir = tmpdir.strpath
+    tmp_dir = str(tmp_path)
     for file_path in filename_list[1:]:
         shutil.copy(file_path, tmp_dir)
 
