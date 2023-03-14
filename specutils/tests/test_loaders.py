@@ -170,6 +170,9 @@ def test_sdss_spec(tmp_path):
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.size > 0
 
+        # Make sure we can write the spectrum back out
+        spec.write(tmp_path / '_tst.fits')
+
     file_path = str(tmp_path / sp_pattern)
     with urllib.request.urlopen(EBOSS_SPECTRUM_URL) as response:
         with open(file_path, 'wb') as tmp_file:
