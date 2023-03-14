@@ -10,7 +10,6 @@ from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from astropy.time import Time
 from astropy.wcs import WCS
-import asdf
 from gwcs.wcstools import grid_from_bounding_box
 
 from ...spectra import Spectrum1D, SpectrumList
@@ -433,11 +432,13 @@ def _jwst_s2d_loader(filename, **kwargs):
     SpectrumList
         The spectra contained in the file.
     """
+    from stdatamodels import asdf_in_fits
+
     spectra = []
     slits = None
 
     # Get a list of GWCS objects from the slits
-    with asdf.open(filename) as af:
+    with asdf_in_fits.open(filename) as af:
         # Slits can be listed under "slits", "products" or "exposures"
         if "products" in af.tree:
             slits = "products"
@@ -554,10 +555,12 @@ def _jwst_s3d_loader(filename, **kwargs):
     SpectrumList
         The spectra contained in the file.
     """
+    from stdatamodels import asdf_in_fits
+
     spectra = []
 
     # Get a list of GWCS objects from the slits
-    with asdf.open(filename) as af:
+    with asdf_in_fits.open(filename) as af:
         wcslist = [af.tree["meta"]["wcs"]]
 
     with fits.open(filename, memmap=False) as hdulist:
