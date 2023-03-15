@@ -81,7 +81,9 @@ List of Loaders
 ~~~~~~~~~~~~~~~
 
 The `~specutils.Spectrum1D` class has built-in support for various input and output formats.
-A full list of the supported formats is shown in the table below.
+A full list of the supported formats is shown in the table below. Note that the JWST readers
+require the ``stdatamodels`` package to be installed, which is an optional dependency for
+``specutils``.
 
 .. automodule:: specutils.io._list_of_loaders
 
