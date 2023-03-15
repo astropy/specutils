@@ -10,11 +10,13 @@ from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy.units import UnitsWarning
-from astropy.wcs import FITSFixedWarning, InconsistentAxisTypesError, WCS
+from astropy.wcs import FITSFixedWarning, WCS
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
+from astropy.nddata import StdDevUncertainty, InverseVariance, VarianceUncertainty
 from astropy.tests.helper import quantity_allclose
-from astropy.nddata import StdDevUncertainty
+from astropy.utils.exceptions import AstropyUserWarning
+
 from numpy.testing import assert_allclose
 
 from .conftest import remote_access
@@ -751,8 +753,9 @@ def test_wcs1d_fits_writer(tmp_path, spectral_axis, with_mask, uncertainty):
         assert quantity_allclose(spec.uncertainty.quantity, spectrum.uncertainty.quantity)
 
     # Read from HDUList
-    hdulist = fits.open(tmpfile)
-    spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+    with fits.open(tmpfile) as hdulist:
+        spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+
     assert isinstance(spec, Spectrum1D)
     assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
     assert quantity_allclose(spec.flux, spectrum.flux)
@@ -845,22 +848,17 @@ def test_wcs1d_fits_uncertainty(tmp_path, uncertainty_rsv):
     ensure it raises on illegal (reserved) names.
     """
     # Header dictionary for constructing WCS
-    hdr = {'CTYPE1': 'WAVE', 'CUNIT1':  'Angstrom',
-           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    hdr = {'CTYPE1': 'WAVE', 'CUNIT1': 'um', 'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.001}
     # Reserved EXTNAMEs for uncertainty types
     UNCERT_REF = {'STD': StdDevUncertainty, 'ERR': StdDevUncertainty, 'UNCERT': StdDevUncertainty,
                   'VAR': VarianceUncertainty, 'IVAR': InverseVariance}
     # Alternative EXTNAMEs for uncertainty types
     UNCERT_ALT = {'std': 'StdErr', 'var': 'VARIAN', 'ivar': 'InvVar'}
 
-    # Create a small data set
-    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
-    wlu = u.Unit(hdr['CUNIT1'])
-    wl0 = hdr['CRVAL1']
-    dwl = hdr['CDELT1']
-    disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
     tmpfile = tmp_path / 'wcs_tst.fits'
 
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
     mask = np.array([0, 0, 0, 0, 1, 0, 0, 0, 1, 0], dtype=np.uint16)
 
     # Set uncertainty to mismatched type
@@ -872,6 +870,7 @@ def test_wcs1d_fits_uncertainty(tmp_path, uncertainty_rsv):
                        f"is reserved for {UNCERT_REF[uncertainty_rsv]}, not {uncertainty}."):
         spectrum.write(tmpfile, format='wcs1d-fits', uncertainty_name=uncertainty_rsv)
 
+    # Set permitted custom name
     uncertainty_type = spectrum.uncertainty.uncertainty_type
     uncertainty_alt = UNCERT_ALT[uncertainty_type]
     spectrum.write(tmpfile, format='wcs1d-fits', uncertainty_name=uncertainty_alt)
