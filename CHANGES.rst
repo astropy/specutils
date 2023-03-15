@@ -10,6 +10,12 @@ Bug Fixes
 - Fix bug in ``fit_lines`` which gave unexpected outputs from the ``get_fit_info``
   and ``ignore_units`` keyword arguments [#1030]
 
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- JWST s2d and s3d readers now requires the optional dependency, ``stdatamodels``,
+  which user has to install separately. [#1038]
+
 1.9.1 (2022-11-22)
 ------------------
 
