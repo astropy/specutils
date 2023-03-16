@@ -1,59 +1,40 @@
-"""
-Defines extension that is used by ASDF for recognizing specutils types
-"""
-import os
-import urllib
-import warnings
+"""Defines extension that is used by ASDF for recognizing specutils types."""
 
-from asdf.util import filepath_to_url
-from asdf.exceptions import AsdfDeprecationWarning
-
-from .tags.spectra import *  # noqa
-from .types import _specutils_types
+__all__ = []
 
 
-with warnings.catch_warnings():
-    msg = r"[.* is deprecated.*, .*from astropy.io.misc.asdf.* subclasses the deprecated CustomType .*]"
-    warnings.filterwarnings(
-        "ignore",
-        category=AsdfDeprecationWarning,
-        message=msg,
-    )
-    from asdf.extension import AsdfExtension
-    from astropy.io.misc.asdf.extension import ASTROPY_SCHEMA_URI_BASE
+def get_extensions():
+    from asdf.extension import ManifestExtension
+    from specutils.io.asdf.tags.spectra import Spectrum1DType, SpectrumListType
+
+    SPECUTILS_TRANSFORM_CONVERTERS = [Spectrum1DType(), SpectrumListType()]
+
+    # The order here is important; asdf will prefer to use extensions
+    # that occur earlier in the list.
+    TRANSFORM_MANIFEST_URIS = [
+        "asdf://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0",
+        "asdf://astropy.org/schemas/specutils/spectra/spectrum_list-1.0.0"]
+
+    return [
+        ManifestExtension.from_uri(
+            uri,
+            legacy_class_names=["specutils.io.asdf.extension.SpecutilsExtension"],
+            converters=SPECUTILS_TRANSFORM_CONVERTERS)
+        for uri in TRANSFORM_MANIFEST_URIS]
 
 
-SCHEMA_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), 'schemas'))
-SPECUTILS_URL_MAPPING = [
-    (urllib.parse.urljoin(ASTROPY_SCHEMA_URI_BASE, 'specutils/'),
-     filepath_to_url(
-         os.path.join(SCHEMA_PATH, 'astropy.org', 'specutils')) +
-     '/{url_suffix}.yaml')]
+def get_resource_mappings():
+    from pathlib import Path
+    from asdf.resource import DirectoryResourceMapping
 
+    resources_root = Path(__file__).resolve().parent
+    if not resources_root.is_dir():
+        raise RuntimeError(f"Missing resources directory: {resources_root}")
 
-class SpecutilsExtension(AsdfExtension):
-    """
-    Defines specutils types and schema locations to be used by ASDF
-    """
-    @property
-    def types(self):
-        """
-        Collection of tag types that are used by ASDF for serialization
-        """
-        return _specutils_types
-
-    @property
-    def tag_mapping(self):
-        """
-        Defines mapping of specutils tag URIs to URLs
-        """
-        return [('tag:astropy.org:specutils',
-                ASTROPY_SCHEMA_URI_BASE + 'specutils{tag_suffix}')]
-
-    @property
-    def url_mapping(self):
-        """
-        Defines mapping of specutils schema URLs into real locations on disk
-        """
-        return SPECUTILS_URL_MAPPING
+    return [
+        DirectoryResourceMapping(
+            resources_root / "schemas" / "astropy.org" / "specutils" / "spectra",
+            "http://astropy.org/schemas/specutils/spectra/"),
+        DirectoryResourceMapping(
+            resources_root / "manifests",
+            "asdf://astropy.org/specutils/manifests/")]

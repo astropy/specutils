@@ -12,7 +12,6 @@ from gwcs.wcs import WCS
 
 from specutils import Spectrum1D, SpectrumList
 
-# ASDF_LT_2_14_1
 try:
     from stdatamodels import asdf_in_fits
 except ImportError:

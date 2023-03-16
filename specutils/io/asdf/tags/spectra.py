@@ -1,110 +1,63 @@
 """
 Contains classes that serialize spectral data types into ASDF representations.
 """
+from asdf.extension import Converter
+from asdf.yamlutil import custom_tree_to_tagged_tree, tagged_tree_to_custom_tree
+from astropy.nddata import (StdDevUncertainty, VarianceUncertainty,
+                            InverseVariance, UnknownUncertainty)
 
-from numpy.testing import assert_allclose
-from astropy.units import allclose
-import astropy.nddata
-from asdf.yamlutil import (custom_tree_to_tagged_tree,
-                           tagged_tree_to_custom_tree)
-
-from ....spectra import Spectrum1D, SpectrumList
-from ..types import SpecutilsType
+from specutils.spectra import Spectrum1D, SpectrumList
 
 __all__ = ['Spectrum1DType', 'SpectrumListType']
 
 UNCERTAINTY_TYPE_MAPPING = {
-    'std': astropy.nddata.StdDevUncertainty,
-    'var': astropy.nddata.VarianceUncertainty,
-    'ivar': astropy.nddata.InverseVariance,
-    'unknown': astropy.nddata.UnknownUncertainty,
-}
+    'std': StdDevUncertainty,
+    'var': VarianceUncertainty,
+    'ivar': InverseVariance,
+    'unknown': UnknownUncertainty}
 
 
-class Spectrum1DType(SpecutilsType):
-    """
-    ASDF tag implementation used to serialize/deserialize Spectrum1D objects
-    """
-    name = 'spectra/spectrum1d'
-    types = [Spectrum1D]
-    version = '1.0.0'
+class Spectrum1DType(Converter):
+    """ASDF tag implementation used to serialize/deserialize Spectrum1D objects."""
+    tags = ["tag:astropy.org:astropy/spectra/spectrum1d-*"]
+    types = ["specutils.spectra.spectrum1d.Spectrum1D"]
 
-    @classmethod
-    def to_tree(cls, obj, ctx):
-        """
-        Converts Spectrum1D object into tree used for YAML representation
-        """
+    def to_yaml_tree(self, obj, tag, ctx):
+        """Converts Spectrum1D object into tree used for YAML representation."""
         node = {}
         node['flux'] = custom_tree_to_tagged_tree(obj.flux, ctx)
-        node['spectral_axis'] = custom_tree_to_tagged_tree(obj.spectral_axis,
-                                                           ctx)
+        node['spectral_axis'] = custom_tree_to_tagged_tree(obj.spectral_axis, ctx)
+
         if obj.uncertainty is not None:
             node['uncertainty'] = {}
-            node['uncertainty'][
-                'uncertainty_type'] = obj.uncertainty.uncertainty_type
+            node['uncertainty']['uncertainty_type'] = obj.uncertainty.uncertainty_type
             data = custom_tree_to_tagged_tree(obj.uncertainty.array, ctx)
             node['uncertainty']['data'] = data
 
         return node
 
-    @classmethod
-    def from_tree(cls, tree, ctx):
-        """
-        Converts tree representation back into Spectrum1D object
-        """
-        flux = tagged_tree_to_custom_tree(tree['flux'], ctx)
-        spectral_axis = tagged_tree_to_custom_tree(tree['spectral_axis'], ctx)
-        uncertainty = tree.get('uncertainty', None)
+    def from_yaml_tree(cls, node, tag, ctx):
+        """Converts tree representation back into Spectrum1D object."""
+        flux = tagged_tree_to_custom_tree(node['flux'], ctx)
+        spectral_axis = tagged_tree_to_custom_tree(node['spectral_axis'], ctx)
+        uncertainty = node.get('uncertainty', None)
         if uncertainty is not None:
             klass = UNCERTAINTY_TYPE_MAPPING[uncertainty['uncertainty_type']]
             data = tagged_tree_to_custom_tree(uncertainty['data'], ctx)
             uncertainty = klass(data)
 
-        return Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                          uncertainty=uncertainty)
-
-    @classmethod
-    def assert_equal(cls, old, new):
-        """
-        Equality method for use in ASDF unit tests
-        """
-        assert allclose(old.flux, new.flux)
-        assert allclose(old.spectral_axis, new.spectral_axis)
-        if old.uncertainty is None:
-            assert new.uncertainty is None
-        else:
-            assert old.uncertainty.uncertainty_type == new.uncertainty.uncertainty_type
-            assert_allclose(old.uncertainty.array, new.uncertainty.array)
+        return Spectrum1D(flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty)
 
 
-class SpectrumListType(SpecutilsType):
-    """
-    ASDF tag implementation used to serialize/deserialize SpectrumList objects
-    """
-    name = 'spectra/spectrum_list'
-    types = [SpectrumList]
-    version = '1.0.0'
+class SpectrumListType(Converter):
+    """ASDF tag implementation used to serialize/deserialize SpectrumList objects."""
+    tags = ["tag:astropy.org:astropy/spectra/spectrum_list-*"]
+    types = ["specutils.spectra.spectrum_list.SpectrumList"]
 
-    @classmethod
-    def to_tree(cls, obj, ctx):
-        """
-        Converts SpectrumList object into tree used for YAML representation
-        """
+    def to_yaml_tree(self, obj, tag, ctx):
+        """Converts SpectrumList object into tree used for YAML representation."""
         return [custom_tree_to_tagged_tree(spectrum, ctx) for spectrum in obj]
 
-    @classmethod
-    def from_tree(cls, tree, ctx):
-        """
-        Converts tree representation back into SpectrumList object
-        """
-        spectra = [tagged_tree_to_custom_tree(node, ctx) for node in tree]
-        return SpectrumList(spectra)
-
-    @classmethod
-    def assert_equal(cls, old, new):
-        """
-        Equality test used in ASDF unit tests
-        """
-        assert len(old) == len(new)
-        for x, y in zip(old, new):
-            Spectrum1DType.assert_equal(x, y)
+    def from_yaml_tree(cls, node, tag, ctx):
+        """Converts tree representation back into SpectrumList object."""
+        return SpectrumList(tagged_tree_to_custom_tree(tree, ctx) for tree in node)
