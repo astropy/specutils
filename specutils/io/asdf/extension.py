@@ -12,8 +12,7 @@ def get_extensions():
     # The order here is important; asdf will prefer to use extensions
     # that occur earlier in the list.
     TRANSFORM_MANIFEST_URIS = [
-        "asdf://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0",
-        "asdf://astropy.org/schemas/specutils/spectra/spectrum_list-1.0.0"]
+        "asdf://astropy.org/specutils/manifests/specutils-1.0.0"]
 
     return [
         ManifestExtension.from_uri(
@@ -33,7 +32,7 @@ def get_resource_mappings():
 
     return [
         DirectoryResourceMapping(
-            resources_root / "schemas" / "astropy.org" / "specutils" / "spectra",
+            resources_root / "schemas",
             "http://astropy.org/schemas/specutils/spectra/"),
         DirectoryResourceMapping(
             resources_root / "manifests",
