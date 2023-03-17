@@ -11,9 +11,9 @@ from specutils.io.asdf.tests.helpers import (
 
 
 def create_spectrum1d(xmin, xmax, uncertainty=None):
-    flux = np.ones(xmax - xmin) * u.Jy
-    wavelength = np.arange(xmin, xmax) * u.nm
-    uncertainty = StdDevUncertainty(np.ones(xmax - xmin) * u.Jy) if uncertainty is not None else None
+    flux = np.ones(10) * u.Jy
+    wavelength = np.linspace(xmin, xmax, 10) * u.nm
+    uncertainty = StdDevUncertainty(flux * 0.1) if uncertainty is not None else None
     return Spectrum1D(spectral_axis=wavelength, flux=flux, uncertainty=uncertainty)
 
 
