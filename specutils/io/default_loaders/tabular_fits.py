@@ -1,6 +1,7 @@
 import numpy as np
 
 from astropy.io import fits
+from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
 import astropy.units as u
 from astropy.wcs import WCS
@@ -148,9 +149,19 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
 
     # Include uncertainty - units to be inferred from spectrum.flux
     if spectrum.uncertainty is not None:
-        unc = spectrum.uncertainty.quantity.to(funit, equivalencies=u.spectral_density(disp))
-        columns.append(unc.astype(ftype))
-        colnames.append("uncertainty")
+        try:
+            unc = (
+                spectrum
+                .uncertainty
+                .represent_as(StdDevUncertainty)
+                .quantity
+                .to(funit, equivalencies=u.spectral_density(disp))
+            )
+            columns.append(unc.astype(ftype))
+            colnames.append("uncertainty")
+        except RuntimeWarning:
+            raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
+                             " to divide-by-zero error.")
 
     # For > 1D data transpose from row-major format
     for c in range(1, len(columns)):
