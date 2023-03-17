@@ -978,9 +978,8 @@ def test_wcs1d_fits_non1d(tmp_path, spectral_axis):
     spectrum.write(tmpfile, format='wcs1d-fits')
 
     # Reopen file and update header with off-diagonal element
-    hdulist = fits.open(tmpfile, mode='update')
-    hdulist[0].header.update([('PC1_2', 0.2)])
-    hdulist.close()
+    with fits.open(tmpfile, mode='update') as hdulist:
+        hdulist[0].header.update([('PC1_2', 0.2)])
 
     with pytest.raises(ValueError,
                        match='Non-zero off-diagonal matrix elements excluded from the subimage.'):

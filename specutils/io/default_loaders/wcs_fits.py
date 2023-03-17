@@ -117,8 +117,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
                         continue
                     else:
                         warnings.warn(f"Found multiple data HDUs '{hdu}' and '{ext}', "
-                                      f"will read '{hdu}'! Please use `hdu=<flux_hdu>` "
-                                      "to select a specific one.", AstropyUserWarning)
+                                      f"will read '{hdu}'. Please use `hdu=<flux_hdu>` "
+                                      "to select a specific extension.", AstropyUserWarning)
                         break
 
         if hdu is None:
@@ -483,7 +483,7 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
 
     Returns
     -------
-    Tuple of data to pass to `SpectrumCollection`() or `Spectrum1D`():
+    Tuple of data to pass to `~specutils.SpectrumCollection` or `~specutils.Spectrum1D`:
 
     spectral_axis : :class:`~astropy.units.Quantity`
         The spectral axis or axes as constructed from WCS(hdulist[0].header).
