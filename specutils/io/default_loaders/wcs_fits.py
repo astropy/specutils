@@ -3,8 +3,9 @@ import _io
 
 from astropy import units as u
 from astropy.io import fits
-from astropy.wcs import WCS, _wcs
+from astropy.wcs import WCS
 from astropy.modeling import models
+from astropy.nddata import StdDevUncertainty, InverseVariance, VarianceUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
 
 import numpy as np
@@ -15,6 +16,14 @@ from ..registers import data_loader, custom_writer
 from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = ['wcs1d_fits_loader', 'non_linear_wcs1d_fits', 'non_linear_multispec_fits']
+
+UNCERT_REF = {'STD': StdDevUncertainty,
+              'ERR': StdDevUncertainty,
+              'UNCERT': StdDevUncertainty,
+              'VAR': VarianceUncertainty,
+              'IVAR': InverseVariance}
+
+UNCERT_EXP = {'std': 1, 'var': 2, 'ivar': -2}
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
@@ -27,16 +36,16 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
     # Default FITS format is BINTABLE in 1st extension HDU, unless IMAGE is
     # indicated via naming pattern or (explicitly) selecting primary HDU.
     if origin == 'write':
-        return ((args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) or
-                 (args[0].endswith(('.fits', '.fit')) and whdu == 0)) and not
-                hasattr(args[2], 'uncertainty'))
+        return (args[0].endswith(('wcs.fits', 'wcs1d.fits', 'wcs.fit')) or
+                (args[0].endswith(('.fits', '.fit')) and whdu == 0))
 
     hdu = kwargs.get('hdu', 0)
     # Check if number of axes is one and dimension of WCS is one
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (hdulist[hdu].header.get('WCSDIM', 1) == 1 and
                 (hdulist[hdu].header['NAXIS'] == 1 or
-                 hdulist[hdu].header.get('WCSAXES', 0) == 1 )and not
+                 hdulist[hdu].header.get('WCSAXES', 0) == 1 or
+                 hdulist[hdu].header.get('DISPAXIS', -1) >= 0 ) and not
                 hdulist[hdu].header.get('MSTITLE', 'n').startswith('2dF-SDSS LRG') and not
                 # Check in CTYPE1 key for linear solution (single spectral axis)
                 hdulist[hdu].header.get('CTYPE1', 'w').upper().startswith('MULTISPE'))
@@ -45,7 +54,8 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
              dtype=Spectrum1D, extensions=['fits', 'fit'], priority=5)
 def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
-                      hdu=0, verbose=False, **kwargs):
+                      hdu=None, verbose=False, mask_hdu=True,
+                      uncertainty_hdu=True, uncertainty_type=None, **kwargs):
     """
     Loader for single spectrum-per-HDU spectra in FITS files, with the spectral
     axis stored in the header as FITS-WCS.  The flux unit of the spectrum is
@@ -67,10 +77,20 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         Units of the flux for this spectrum. If not given (or None), the unit
         will be inferred from the BUNIT keyword in the header. Note that this
         unit will attempt to convert from BUNIT if BUNIT is present.
-    hdu : int
-        The index of the HDU to load into this spectrum.
-    verbose : bool
+    hdu : int, str or None, optional
+        The index or name of the HDU to load into this spectrum
+        (default: find 1st applicable `ImageHDU`).
+    verbose : bool. optional
         Print extra info.
+    mask_hdu : int, str, bool or None, optional
+        The index or name of the HDU to read mask from
+        (default: try to autodetect; `False`|`None`: do not read in).
+    uncertainty_hdu : int, str, bool or None, optional
+        The index or name of the HDU to read uncertainy from
+        (default: try to autodetect; `False`|`None`: do not read in).
+    uncertainty_type : str or None, optional
+        The ``uncertainty_type`` of `~astropy.nddata.NDUncertainty`
+        (one of 'std', 'var', 'ivar'; default: try to infer from HDU EXTNAME).
     **kwargs
         Extra keywords for :func:`~specutils.io.parsing_utils.read_fileobj_or_hdulist`.
 
@@ -86,6 +106,24 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         print("Spectrum file looks like wcs1d-fits")
 
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        if hdu is None:
+            for ext in ('FLUX', 'SCI', 'DATA', 'PRIMARY'):
+                # For now rely on extension containing spectral data.
+                if ext in hdulist and (
+                        isinstance(hdulist[ext], (fits.ImageHDU, fits.PrimaryHDU)) and
+                        hdulist[ext].data is not None):
+                    if hdu is None or hdulist[ext] == hdulist[hdu]:
+                        hdu = ext
+                        continue
+                    else:
+                        warnings.warn(f"Found multiple data HDUs '{hdu}' and '{ext}', "
+                                      f"will read '{hdu}'. Please use `hdu=<flux_hdu>` "
+                                      "to select a specific extension.", AstropyUserWarning)
+                        break
+
+        if hdu is None:
+            raise ValueError('No HDU with spectral data found.')
+
         header = hdulist[hdu].header
         wcs = WCS(header)
 
@@ -95,6 +133,55 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
                 data = data.to(flux_unit)
         else:
             data = u.Quantity(hdulist[hdu].data, unit=flux_unit)
+
+        # Read mask from specified HDU or try to auto-detect it.
+        mask = None
+        if mask_hdu is True:
+            for ext in ('MASK', 'DQ', 'QUALITY'):
+                if ext in hdulist and (isinstance(hdulist[ext], fits.ImageHDU) and
+                        hdulist[ext].data is not None):
+                    mask = hdulist[ext].data
+                    break
+        elif isinstance(mask_hdu, (int, str)):
+            if mask_hdu in hdulist:
+                mask = hdulist[mask_hdu].data
+            else:
+                warnings.warn(f"No HDU '{mask_hdu}' for mask found in file.",
+                              AstropyUserWarning)
+
+        uncertainty = None
+        if uncertainty_hdu is True:
+            for ext in UNCERT_REF:
+                if ext in hdulist and (isinstance(hdulist[ext], fits.ImageHDU) and
+                        hdulist[ext].data is not None):
+                    uncertainty = hdulist[ext].data
+                    break
+        elif isinstance(uncertainty_hdu, (int, str)):
+            if uncertainty_hdu in hdulist:
+                ext = uncertainty_hdu
+                uncertainty = hdulist[ext].data
+            else:
+                warnings.warn(f"No HDU '{uncertainty_hdu}' for uncertainty found in file.",
+                              AstropyUserWarning)
+
+        if uncertainty is not None:
+            if uncertainty_type is None:
+                if hdulist[ext].name in UNCERT_REF:
+                    unc_type = hdulist[ext].name
+                else:
+                    warnings.warn(f"Could not determine uncertainty type for HDU '{ext}' "
+                                  f"('{hdulist[ext].name}'), assuming 'StdDev'.",
+                                  AstropyUserWarning)
+                    unc_type = 'STD'
+            elif str.upper(uncertainty_type) in UNCERT_REF:
+                unc_type = str.upper(uncertainty_type)
+            else:
+                raise ValueError(f"Invalid uncertainty type: '{uncertainty_type}'; "
+                                 "should be one of 'std', 'var', 'ivar'.")
+            uunit = u.Unit(header.get('BUNIT', flux_unit))
+            if unc_type != 'STD':
+                uunit = uunit**UNCERT_EXP[unc_type.lower()]
+            uncertainty = UNCERT_REF[unc_type](u.Quantity(uncertainty, unit=uunit))
 
     if spectral_axis_unit is not None:
         wcs.wcs.cunit[0] = str(spectral_axis_unit)
@@ -116,20 +203,16 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     meta = {'header': header}
 
+    # Is this restriction still appropriate?
     if wcs.naxis > 4:
         raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
-    elif wcs.naxis > 1:
-        for i in range(wcs.naxis - 1, 0, -1):
-            try:
-                wcs = wcs.dropaxis(i)
-            except _wcs.NonseparableSubimageCoordinateSystemError as e:
-                raise ValueError(f'WCS cannot be reduced to 1D: {e!r} {wcs}')
 
-    return Spectrum1D(flux=data, wcs=wcs, meta=meta)
+    return Spectrum1D(flux=data, wcs=wcs, mask=mask, uncertainty=uncertainty, meta=meta)
 
 
 @custom_writer("wcs1d-fits")
-def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs):
+def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
+                      flux_name='FLUX', mask_name='', uncertainty_name='', **kwargs):
     """
     Write spectrum with spectral axis defined by its WCS to (primary)
     IMAGE_HDU of a FITS file.
@@ -139,14 +222,20 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
     spectrum : :class:`~specutils.Spectrum1D`
     file_name : str
         The path to the FITS file
-    hdu : int
+    hdu : int, optional
         Header Data Unit in FITS file to write to (base 0; default primary HDU)
-    update_header : bool
+    update_header : bool, optional
         Update FITS header with all compatible entries in `spectrum.meta`
-    unit : str or :class:`~astropy.units.Unit`
-        Unit for the flux (and associated uncertainty)
-    dtype : str or :class:`~numpy.dtype`
-        Floating point type for storing flux array
+    flux_name : str, optional
+        HDU name to store flux spectrum under (default 'FLUX')
+    mask_name : str or `None`, optional
+        HDU name to store mask under (default 'MASK'; `None`: do not save)
+    uncertainty_name : str or `None`, optional
+        HDU name to store uncertainty under (default set from type; `None`: do not save)
+    unit : str or :class:`~astropy.units.Unit`, optional
+        Unit for the flux (and associated uncertainty; defaults to ``spectrum.flux.unit``)
+    dtype : str or :class:`~numpy.dtype`, optional
+        Floating point type for storing flux array (defaults to ``spectrum.flux.dtype``)
     """
     # Create HDU list from WCS
     try:
@@ -157,12 +246,16 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
         raise ValueError(f'Only Spectrum1D objects with valid WCS can be written as wcs1d: {err}')
 
     # Verify spectral axis constructed from WCS
-    wl = spectrum.spectral_axis
-    dwl = (wcs.all_pix2world(np.arange(len(wl)), 0) - wl.value) / wl.value
-    if np.abs(dwl).max() > 1.e-10:
-        m = np.abs(dwl).argmax()
+    disp = spectrum.spectral_axis
+    # Not sure why the extra check is necessary for FITS WCS
+    if hasattr(wcs, 'celestial') and wcs.celestial.naxis > 0:
+        ddisp = (wcs.spectral.all_pix2world(np.arange(len(disp)), 0) - disp.value) / disp.value
+    else:
+        ddisp = (wcs.all_pix2world(np.arange(len(disp)), 0) - disp.value) / disp.value
+    if np.abs(ddisp).max() > 1.e-10:
+        m = np.abs(ddisp).argmax()
         raise ValueError('Relative difference between WCS spectral axis and'
-                         f'spectral_axis at {m:}: dwl[m]')
+                         f'spectral_axis at {m:}: {ddisp[m]}')
 
     if update_header:
         hdr_types = (str, int, float, complex, bool,
@@ -171,17 +264,51 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False, **kwargs)
                        (isinstance(keyword[1], hdr_types) and
                         keyword[0] not in ('NAXIS', 'NAXIS1', 'NAXIS2'))])
 
-    # Cannot include uncertainty in IMAGE_HDU - maybe provide option to
-    # separately write this to BINARY_TBL extension later.
-    if spectrum.uncertainty is not None:
-        warnings.warn("Saving uncertainties in wcs1d format is not yet supported!",
-                      AstropyUserWarning)
-
     # Add flux array and unit
     ftype = kwargs.pop('dtype', spectrum.flux.dtype)
     funit = u.Unit(kwargs.pop('unit', spectrum.flux.unit))
-    flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(wl))
+    flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(disp))
     hdulist[0].data = flux.value.astype(ftype)
+    if flux_name is not None:
+        hdulist[0].name = flux_name
+
+    # Append mask array
+    if spectrum.mask is not None and mask_name is not None:
+        hdulist.append(fits.ImageHDU())
+        hdulist[-1].data = spectrum.mask
+        if mask_name == '':
+            hdulist[-1].name = 'MASK'
+        else:
+            hdulist[-1].name = mask_name
+        hdu += 1
+    # Warn if saving was requested (per explicitly choosing extension name).
+    elif mask_name is not None and mask_name != '':
+        warnings.warn("No mask found in this Spectrum1D, none saved.", AstropyUserWarning)
+
+    # Append uncertainty array
+    if spectrum.uncertainty is not None and uncertainty_name is not None:
+        hdulist.append(fits.ImageHDU())
+        uncertainty_name = str.upper(uncertainty_name)
+        uncertainty_type = type(spectrum.uncertainty)
+        # uncertainty - units to be inferred from and consistent with spectrum.flux.
+        if uncertainty_name in UNCERT_REF and uncertainty_type != UNCERT_REF[uncertainty_name]:
+            raise ValueError(f"Illegal label for uncertainty: '{uncertainty_name}' is reserved "
+                             f"for {UNCERT_REF[uncertainty_name]}, not {uncertainty_type}.")
+
+        if spectrum.uncertainty.uncertainty_type in ('var', 'ivar'):
+            uunit = funit**UNCERT_EXP[spectrum.uncertainty.uncertainty_type]
+        else:
+            uunit = funit
+        if uncertainty_name == '':
+            uncertainty_name = spectrum.uncertainty.uncertainty_type.upper()
+        sig = spectrum.uncertainty.quantity.to_value(uunit, equivalencies=u.spectral_density(disp))
+        hdulist[-1].data = sig.astype(ftype)
+        hdulist[-1].name = uncertainty_name
+        hdu += 1
+    # Warn if saving was requested (per explicitly choosing extension name).
+    elif uncertainty_name is not None and uncertainty_name != '':
+        warnings.warn("No uncertainty array found in this Spectrum1D, none saved.",
+                      AstropyUserWarning)
 
     if hasattr(funit, 'long_names') and len(funit.long_names) > 0:
         comment = f'[{funit.long_names[0]}] {funit.physical_type}'
@@ -356,7 +483,7 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
 
     Returns
     -------
-    Tuple of data to pass to SpectrumCollection() or Spectrum1D():
+    Tuple of data to pass to `~specutils.SpectrumCollection` or `~specutils.Spectrum1D`:
 
     spectral_axis : :class:`~astropy.units.Quantity`
         The spectral axis or axes as constructed from WCS(hdulist[0].header).
