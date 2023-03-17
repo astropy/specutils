@@ -1,11 +1,11 @@
 """Helpers for testing specutils objects in ASDF files.
 These are similar to those in ``asdf_astropy.testing.helpers``.
 """
-from astropy.tests.helper import assert_quantity_allclose
 from asdf_astropy.testing.helpers import assert_spectral_coord_equal
+from astropy.tests.helper import assert_quantity_allclose
 from numpy.testing import assert_allclose
 
-__all__ = ["assert_spectrum1d_equal", "assert_spectrumlist_equal"]
+__all__ = ["assert_spectral_axis_equal", "assert_spectrum1d_equal", "assert_spectrumlist_equal"]
 
 
 def assert_spectral_axis_equal(a, b):

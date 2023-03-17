@@ -1,6 +1,4 @@
-"""
-Contains classes that serialize spectral data types into ASDF representations.
-"""
+"""Contains classes that serialize spectral data types into ASDF representations."""
 from asdf.extension import Converter
 from asdf_astropy.converters import SpectralCoordConverter
 from astropy.nddata import (StdDevUncertainty, VarianceUncertainty,
