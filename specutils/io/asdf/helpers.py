@@ -2,9 +2,17 @@
 These are similar to those in ``asdf_astropy.testing.helpers``.
 """
 from astropy.tests.helper import assert_quantity_allclose
+from asdf_astropy.testing.helpers import assert_spectral_coord_equal
 from numpy.testing import assert_allclose
 
 __all__ = ["assert_spectrum1d_equal", "assert_spectrumlist_equal"]
+
+
+def assert_spectral_axis_equal(a, b):
+    """Equality test for use in ASDF unit tests for SpectralAxis."""
+    __tracebackhide__ = True
+
+    assert_spectral_coord_equal(a, b)
 
 
 def assert_spectrum1d_equal(a, b):
@@ -12,7 +20,7 @@ def assert_spectrum1d_equal(a, b):
     __tracebackhide__ = True
 
     assert_quantity_allclose(a.flux, b.flux)
-    assert_quantity_allclose(a.spectral_axis, b.spectral_axis)
+    assert_spectral_axis_equal(a.spectral_axis, b.spectral_axis)
     if a.uncertainty is None:
         assert b.uncertainty is None
     else:

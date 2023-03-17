@@ -6,8 +6,8 @@ from astropy.coordinates import FK5
 from astropy.nddata import StdDevUncertainty
 
 from specutils import Spectrum1D, SpectrumList, SpectralAxis
-from specutils.io.asdf.tags.tests.helpers import (
-    assert_spectrum1d_equal, assert_spectrumlist_equal)
+from specutils.io.asdf.helpers import (
+    assert_spectrum1d_equal, assert_spectrumlist_equal, assert_spectral_axis_equal)
 
 
 def create_spectrum1d(xmin, xmax, uncertainty=None):
@@ -18,6 +18,7 @@ def create_spectrum1d(xmin, xmax, uncertainty=None):
 
 
 @pytest.mark.parametrize('uncertainty', [False, True])
+@pytest.mark.filterwarnings("ignore:.*The unit 'Angstrom' has been deprecated.*")
 def test_asdf_spectrum1d(tmp_path, uncertainty):
     file_path = tmp_path / "test.asdf"
     spectrum = create_spectrum1d(5100, 5300, uncertainty=uncertainty)
@@ -29,24 +30,21 @@ def test_asdf_spectrum1d(tmp_path, uncertainty):
         assert_spectrum1d_equal(af["spectrum"], spectrum)
 
 
-@pytest.mark.xfail
+@pytest.mark.filterwarnings("ignore:.*The unit 'Angstrom' has been deprecated.*")
 def test_asdf_spectralaxis(tmp_path):
     file_path = tmp_path / "test.asdf"
     wavelengths  = np.arange(5100, 5300) * u.AA
     spectral_axis = SpectralAxis(wavelengths, bin_specification="edges")
-    # There is no implemented asdf type for SpectralAxis and no defined
-    # equality comparison (assert_spectralaxis_equal)
-    # per the comment https://github.com/astropy/specutils/pull/645#issuecomment-614271632 ;
-    # the issue is that SpectralAxis roundtrips as SpectralCoord
-    # so the types differ.
+
     with asdf.AsdfFile() as af:
         af["spectral_axis"] = spectral_axis
         af.write_to(file_path)
 
     with asdf.open(file_path) as af:
-        assert type(af["spectral_axis"]) == type(spectral_axis)
+        assert_spectral_axis_equal(af["spectral_axis"], spectral_axis)
 
 
+@pytest.mark.filterwarnings("ignore:.*The unit 'Angstrom' has been deprecated.*")
 def test_asdf_spectrumlist(tmp_path):
     file_path = tmp_path / "test.asdf"
     spectra = SpectrumList([

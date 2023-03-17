@@ -18,7 +18,7 @@ properties:
     description: |
       SpectralCoord that represents the spectral axis of the spectrum
     anyOf:
-      - $ref: "spectral_coord-1.0.0"
+      - tag: tag:astropy.org:specutils/spectra/spectral_axis-1.0.0
       - $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
       - $ref: "http://astropy.org/schemas/astropy/coordinates/spectralcoord-1.0.0"
   uncertainty:

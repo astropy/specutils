@@ -2,13 +2,13 @@
 Contains classes that serialize spectral data types into ASDF representations.
 """
 from asdf.extension import Converter
-from asdf.yamlutil import custom_tree_to_tagged_tree, tagged_tree_to_custom_tree
+from asdf_astropy.converters import SpectralCoordConverter
 from astropy.nddata import (StdDevUncertainty, VarianceUncertainty,
                             InverseVariance, UnknownUncertainty)
 
 from specutils.spectra import Spectrum1D, SpectrumList
 
-__all__ = ['Spectrum1DType', 'SpectrumListType']
+__all__ = ['Spectrum1DConverter', 'SpectrumListConverter']
 
 UNCERTAINTY_TYPE_MAPPING = {
     'std': StdDevUncertainty,
@@ -17,47 +17,58 @@ UNCERTAINTY_TYPE_MAPPING = {
     'unknown': UnknownUncertainty}
 
 
-class Spectrum1DType(Converter):
-    """ASDF tag implementation used to serialize/deserialize Spectrum1D objects."""
-    tags = ["tag:astropy.org:astropy/spectra/spectrum1d-*"]
+class SpectralAxisConverter(SpectralCoordConverter):
+    """ASDF converter to serialize/deserialize SpectralAxis objects."""
+    tags = ["tag:astropy.org:specutils/spectra/spectral_axis-*"]
+    types = ["specutils.spectra.spectral_axis.SpectralAxis"]
+
+    def from_yaml_tree(self, node, tag, ctx):
+        from specutils.spectra.spectral_axis import SpectralAxis
+
+        return SpectralAxis(super().from_yaml_tree(node, tag, ctx))
+
+
+class Spectrum1DConverter(Converter):
+    """ASDF converter to serialize/deserialize Spectrum1D objects."""
+    tags = ["tag:astropy.org:specutils/spectra/spectrum1d-*"]
     types = ["specutils.spectra.spectrum1d.Spectrum1D"]
 
     def to_yaml_tree(self, obj, tag, ctx):
         """Converts Spectrum1D object into tree used for YAML representation."""
         node = {}
-        node['flux'] = custom_tree_to_tagged_tree(obj.flux, ctx)
-        node['spectral_axis'] = custom_tree_to_tagged_tree(obj.spectral_axis, ctx)
+        node['flux'] = obj.flux
+        node['spectral_axis'] = obj.spectral_axis
 
         if obj.uncertainty is not None:
             node['uncertainty'] = {}
             node['uncertainty']['uncertainty_type'] = obj.uncertainty.uncertainty_type
-            data = custom_tree_to_tagged_tree(obj.uncertainty.array, ctx)
+            data = obj.uncertainty.array
             node['uncertainty']['data'] = data
 
         return node
 
     def from_yaml_tree(cls, node, tag, ctx):
         """Converts tree representation back into Spectrum1D object."""
-        flux = tagged_tree_to_custom_tree(node['flux'], ctx)
-        spectral_axis = tagged_tree_to_custom_tree(node['spectral_axis'], ctx)
+        flux = node['flux']
+        spectral_axis = node['spectral_axis']
         uncertainty = node.get('uncertainty', None)
         if uncertainty is not None:
-            klass = UNCERTAINTY_TYPE_MAPPING[uncertainty['uncertainty_type']]
-            data = tagged_tree_to_custom_tree(uncertainty['data'], ctx)
-            uncertainty = klass(data)
+            class_ = UNCERTAINTY_TYPE_MAPPING[uncertainty['uncertainty_type']]
+            data = uncertainty['data']
+            uncertainty = class_(data)
 
         return Spectrum1D(flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty)
 
 
-class SpectrumListType(Converter):
-    """ASDF tag implementation used to serialize/deserialize SpectrumList objects."""
-    tags = ["tag:astropy.org:astropy/spectra/spectrum_list-*"]
+class SpectrumListConverter(Converter):
+    """ASDF converter used to serialize/deserialize SpectrumList objects."""
+    tags = ["tag:astropy.org:specutils/spectra/spectrum_list-*"]
     types = ["specutils.spectra.spectrum_list.SpectrumList"]
 
     def to_yaml_tree(self, obj, tag, ctx):
         """Converts SpectrumList object into tree used for YAML representation."""
-        return [custom_tree_to_tagged_tree(spectrum, ctx) for spectrum in obj]
+        return [spectrum for spectrum in obj]
 
     def from_yaml_tree(cls, node, tag, ctx):
         """Converts tree representation back into SpectrumList object."""
-        return SpectrumList(tagged_tree_to_custom_tree(tree, ctx) for tree in node)
+        return SpectrumList(tree for tree in node)
