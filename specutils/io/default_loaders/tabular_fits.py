@@ -159,7 +159,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
             )
             columns.append(unc.astype(ftype))
             colnames.append("uncertainty")
-        except RuntimeError:
+        except RuntimeWarning:
             raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
                              " to divide-by-zero error.")
 
