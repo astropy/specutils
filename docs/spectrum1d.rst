@@ -231,6 +231,15 @@ Providing a FITS-style WCS
     >>> spec.wcs.pixel_to_world(np.arange(3))  # doctest: +FLOAT_CMP
     <SpectralCoord [6.5388e-07, 6.5398e-07, 6.5408e-07] m>
 
+When creating a `~specutils.Spectrum1D` using a WCS, you can also use the
+``move_spectral_axis`` argument to force the spectral axis to a certain dimension
+of a multi-dimenasional flux array. Prior to ``specutils`` version 2.0, the flux
+array was always reordered such that the spectral axis corresponded to the last
+flux axis - this behavior can be reproduced by setting ``move_spectral_axis=-1``
+or ``move_spectral_axis='last'``. Note that the relevant axes in the flux, mask,
+and uncertainty arrays are simply swapped, and the swap is also reflected in the
+resulting WCS. No check is currently done to ensure that the resulting array has
+the spatial axes (most often RA and Dec) in any particular order.
 
 Multi-dimensional Data Sets
 ---------------------------

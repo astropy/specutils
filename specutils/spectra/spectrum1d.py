@@ -46,9 +46,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         If it is ambiguous which axis is the spectral axis (e.g., if there are multiple
         axes in the flux array with the same length as the input spectral_axis),
         this argument is used to specify which is the spectral axis.
-    move_spectral_axis : str, optional
+    move_spectral_axis : int, str, optional
         Force the spectral axis to be either the last axis (the default behavior prior
-        to version 2.0) or the first axis by setting this argument to 'last' or 'first'.
+        to version 2.0) by setting this argument to 'last' or -1, or the first axis by
+        setting this argument to 'first' or 0.
         This will do a simple ``swapaxis`` between the relevant axis and original
         spectral axis.
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
@@ -245,12 +246,17 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
 
                 if move_spectral_axis is not None:
-                    if move_spectral_axis.lower() == 'first':
-                        move_to_index = 0
-                    elif move_spectral_axis.lower() == 'last':
-                        move_to_index = wcs.naxis - 1
+                    if isinstance(move_spectral_axis, str):
+                        if move_spectral_axis.lower() == 'first':
+                            move_to_index = 0
+                        elif move_spectral_axis.lower() == 'last':
+                            move_to_index = wcs.naxis - 1
+                        else:
+                            raise ValueError("move_spectral_axis must be either 'first' or 'last'")
+                    elif isinstance(move_spectral_axis, int):
+                        move_to_index = move_spectral_axis
                     else:
-                        raise ValueError("move_spectral_axis must be either 'first' or 'last'")
+                        raise ValueError("move_spectral_axis must be an integer or 'first'/'last'")
 
                     if move_to_index != self._spectral_axis_index:
                         wcs = wcs.swapaxes(self._spectral_axis_index, move_to_index)
