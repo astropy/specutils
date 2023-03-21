@@ -51,7 +51,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         to version 2.0) by setting this argument to 'last' or -1, or the first axis by
         setting this argument to 'first' or 0.
         This will do a simple ``swapaxis`` between the relevant axis and original
-        spectral axis.
+        spectral axis. If None, the spectral axis is left wherever it is in the input.
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
         WCS information object that either has a spectral component or is
         only spectral.
