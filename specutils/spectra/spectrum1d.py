@@ -764,6 +764,14 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             raise ValueError("One of redshift or radial_velocity must be set.")
 
+    def with_spectral_axis_last(self):
+        """
+        Convenience method to return a new copy of theSpectrum1D with the spectral axis last.
+        """
+        return Spectrum1D(flux=self.flux, wcs=self.wcs,
+                          mask=self.mask, uncertainty=self.uncertainty,
+                          redshift=self.redshift, move_spectral_axis="last")
+
     @redshift.setter
     @deprecated('1.8.0', alternative='set_redshift_to or shift_spectrum_to')
     def redshift(self, val):
