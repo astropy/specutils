@@ -406,6 +406,32 @@ def test_snr_two_regions(simulated_spectra):
     assert np.allclose(spec_snr, spec_snr_expected)
 
 
+def test_snr_masked_with_region(simulated_spectra):
+    """
+    Test the simple version of the spectral SNR over a region of the masked spectrum.
+    """
+
+    np.random.seed(42)
+
+    spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1 * np.random.random(len(spectrum.flux)) * u.mJy)
+    spectrum.uncertainty = uncertainty
+
+    wavelengths = spectrum.spectral_axis[~spectrum.mask]
+    flux = spectrum.flux[~spectrum.mask]
+    uncertainty_array = uncertainty.array[~spectrum.mask]
+
+    region = SpectralRegion(0.52 * u.um, 0.59 * u.um)
+    l = np.nonzero(wavelengths >= region.lower)[0][0]
+    r = np.nonzero(wavelengths <= region.upper)[0][-1] + 1
+
+    spec_snr_expected = np.mean(flux[l:r] / (uncertainty_array[l:r] * uncertainty.unit))
+
+    spec_snr = snr(spectrum, region)
+
+    assert np.allclose(spec_snr.value, spec_snr_expected.value)
+
+
 def test_snr_derived():
     np.random.seed(42)
 
