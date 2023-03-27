@@ -1,0 +1,23 @@
+id: asdf://astropy.org/specutils/manifests/specutils-1.0.0
+extension_uri: asdf://astropy.org/specutils/extensions/specutils-1.0.0
+title: Specutils extension 1.0.0
+description: |-
+  A set of tags for serializing specutils objects.
+asdf_standard_requirement:
+  gte: 1.1.0
+tags:
+- tag_uri: tag:astropy.org:specutils/spectra/spectral_axis-1.0.0
+  schema_uri: http://astropy.org/schemas/astropy/coordinates/spectralcoord-1.0.0
+  title: Represents a spectral axis
+  description: |-
+    This schema represents a SpectralAxis object
+- tag_uri: tag:astropy.org:specutils/spectra/spectrum1d-1.0.0
+  schema_uri: http://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0
+  title: Represents a one-dimensional spectrum
+  description: |-
+    This schema represents a Spectrum1D object from specutils.
+- tag_uri: tag:astropy.org:specutils/spectra/spectrum_list-1.0.0
+  schema_uri: http://astropy.org/schemas/specutils/spectra/spectrum_list-1.0.0
+  title: Represents a list of one-dimensional spectra
+  description: |-
+    This schema represents a SpectrumList object from specutils
