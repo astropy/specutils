@@ -23,10 +23,22 @@ details about the underlying principles, see
 `APE13 <https://github.com/astropy/astropy-APEs/blob/main/APE13.rst>`_, the
 guiding document for spectroscopic development in the Astropy Project.
 
-.. note::
-    While specutils is available for general use, the API is in an early enough
-    development stage that some interfaces may change if user feedback and
-    experience warrants it.
+
+Changes in version 2
+====================
+
+Specutils version 2 implemented a major change in that `~specutils.Spectrum1D`
+no longer forces the spectral axis to be last for multi-dimensional data. This
+was motivated by the desire for greater flexibility to allow for interoperability
+with other packages that may wish to use ``specutils`` classes as the basis for
+their own, and by the desire for consistency with the axis order that results
+from a simple ``astropy.io.fits.read`` of a file. The legacy behavior can be
+replicated by setting ``move_spectral_axis='last'`` when creating a new
+`~specutils.Spectrum1D` object.
+
+For a summary of other changes in version 2, please see the
+`release notes <https://github.com/astropy/specutils/releases>`_.
+
 
 Changes coming in version 2.0
 =============================
