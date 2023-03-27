@@ -62,6 +62,7 @@ intersphinx_mapping['gwcs'] = ('https://gwcs.readthedocs.io/en/latest/', None)
 intersphinx_mapping['reproject'] = ('https://reproject.readthedocs.io/en/stable/', None)
 intersphinx_mapping['mpl_animators'] = ('https://docs.sunpy.org/projects/mpl-animators/en/stable/', None)
 
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns.append('_templates')
