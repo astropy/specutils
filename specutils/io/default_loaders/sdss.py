@@ -239,4 +239,5 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
         meta['plugmap'] = Table.read(hdulist[5])[0:limit]
 
     return Spectrum1D(flux=flux, wcs=fixed_wcs,
-                      uncertainty=uncertainty, meta=meta, mask=mask)
+                      uncertainty=uncertainty, meta=meta, mask=mask,
+                      spectral_axis_index=-1)
