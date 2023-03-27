@@ -41,7 +41,7 @@ The cube has  74x74 spaxels with 4563 spectral axis points in each one:
 .. code-block:: python
 
     >>> sc.shape # doctest: +REMOTE_DATA
-    (74, 74, 4563)
+    (4563, 74, 74)
 
 
 Print the contents of 3 spectral axis points in a 3x3 spaxel array:
@@ -104,9 +104,8 @@ Moments
 =======
 
 The `~specutils.analysis.moment` function can be used to compute moments of any order
-along one of the cube's axes. By default, ``axis=-1``, which computes moments
-along the spectral axis (remember that the spectral axis is always last in a
-:class:`~specutils.Spectrum1D`).
+along one of the cube's axes. By default, ``axis='spectral'``, in which case the moment
+is computed along the spectral axis.
 
 .. code-block:: python
 
@@ -153,8 +152,8 @@ cube, using `~specutils.manipulation.spectral_slab` and
 
     # Convert flux density to microJy and correct negative flux offset for
     # this particular dataset
-    ha_flux = (np.sum(subspec.flux.value, axis=(0,1)) + 0.0093) * 1.0E-6*u.Jy
-    ha_flux_wide = (np.sum(subspec_wide.flux.value, axis=(0,1)) + 0.0093) * 1.0E-6*u.Jy
+    ha_flux = (np.sum(subspec.flux.value, axis=(1,2)) + 0.0093) * 1.0E-6*u.Jy
+    ha_flux_wide = (np.sum(subspec_wide.flux.value, axis=(1,2)) + 0.0093) * 1.0E-6*u.Jy
 
     # Compute moment maps for H-alpha line
     moment0_halpha = moment(subspec, order=0)
