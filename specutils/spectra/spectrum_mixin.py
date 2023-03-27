@@ -15,8 +15,8 @@ __all__ = ['OneDSpectrumMixin']
 
 class OneDSpectrumMixin():
     @property
-    def _spectral_axis_numpy_index(self):
-        return self.data.ndim - 1 - self.wcs.wcs.spec
+    def spectral_axis_index(self):
+        return self._spectral_axis_index
 
     @property
     def _spectral_axis_len(self):
@@ -241,6 +241,9 @@ class OneDSpectrumMixin():
 
         return self.__class__(flux=self.flux, spectral_axis=new_spectral_axis, meta=meta,
                               uncertainty=self.uncertainty, mask=self.mask)
+
+    def _axis_length_validation(self):
+        pass
 
     def _new_wcs_argument_validation(self, unit, velocity_convention,
                                      rest_value):

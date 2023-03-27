@@ -263,4 +263,5 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
                       wcs=fixed_wcs,
                       uncertainty=uncertainty,
                       meta=meta,
-                      mask=mask)
+                      mask=mask,
+                      spectral_axis_index=-1)

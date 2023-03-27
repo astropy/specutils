@@ -105,6 +105,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if verbose:
         print("Spectrum file looks like wcs1d-fits")
 
+    spectral_axis_index = kwargs.get("spectral_axis_index")
+
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         if hdu is None:
             for ext in ('FLUX', 'SCI', 'DATA', 'PRIMARY'):
@@ -212,7 +214,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if wcs.naxis > 4:
         raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
 
-    return Spectrum1D(flux=data, wcs=wcs, mask=mask, uncertainty=uncertainty, meta=meta)
+    return Spectrum1D(flux=data, wcs=wcs, mask=mask, uncertainty=uncertainty,
+                      meta=meta, spectral_axis_index=spectral_axis_index)
 
 
 @custom_writer("wcs1d-fits")
