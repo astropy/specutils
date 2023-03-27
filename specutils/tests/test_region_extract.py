@@ -125,7 +125,8 @@ def test_slab_simple(simulated_spectra):
 def test_slab_pixels():
     range_iter = range(5)
     spectrum = Spectrum1D(flux=np.stack(
-        [np.zeros((2, 2)) + i for i in range_iter], axis=-1) * u.nJy)
+                          [np.zeros((2, 2)) + i for i in range_iter], axis=-1) * u.nJy,
+                          spectral_axis_index=2)
     for i in range_iter:
         sub_spectrum = spectral_slab(spectrum, i * u.pix, (i + 0.5) * u.pix)
         assert_quantity_allclose(sub_spectrum.flux, i * u.nJy)

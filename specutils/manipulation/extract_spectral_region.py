@@ -1,5 +1,3 @@
-import sys
-
 from math import floor, ceil  # faster than int(np.floor/ceil(float))
 
 import numpy as np
@@ -166,7 +164,13 @@ def extract_region(spectrum, region, return_single_spectrum=False):
                                         flux=[]*spectrum.flux.unit)
             extracted_spectrum.append(empty_spectrum)
         else:
-            extracted_spectrum.append(spectrum[..., left_index:right_index])
+            slices = [slice(None),] * len(spectrum.shape)
+            slices[spectrum.spectral_axis_index] = slice(left_index, right_index)
+            if len(slices) == 1:
+                slices = slices[0]
+            else:
+                slices = tuple(slices)
+            extracted_spectrum.append(spectrum[slices])
 
     # If there is only one subregion in the region then we will
     # just return a spectrum.
@@ -274,33 +278,10 @@ def extract_bounding_spectral_region(spectrum, region):
     if len(region) == 1:
         return extract_region(spectrum, region)
 
-    min_left = sys.maxsize
-    max_right = -sys.maxsize - 1
-
     # Look for indices that bound the entire set of sub-regions.
-    index_list = [_subregion_to_edge_pixels(sr, spectrum) for sr in region._subregions]
+    min_list = [min(sr) for sr in region._subregions]
+    max_list = [max(sr) for sr in region._subregions]
 
-    for left_index, right_index in index_list:
-        if left_index is not None:
-            min_left = min(left_index, min_left)
-        if right_index is not None:
-            max_right = max(right_index, max_right)
+    single_region = SpectralRegion(min(min_list), max(max_list))
 
-    # If both indices are out of bounds then return an empty spectrum
-    if min_left is None and max_right is None:
-        empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit,
-                                    flux=[]*spectrum.flux.unit)
-        return empty_spectrum
-    else:
-        # If only one index is out of bounds then set it to
-        # the lower or upper extent
-        if min_left is None:
-            min_left = 0
-
-        if max_right is None:
-            max_right = len(spectrum.spectral_axis)
-
-        if min_left > max_right:
-            min_left, max_right = max_right, min_left
-
-        return spectrum[..., min_left:max_right]
+    return extract_region(spectrum, single_region)

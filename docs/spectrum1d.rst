@@ -267,19 +267,32 @@ Providing a FITS-style WCS
     >>> spec.wcs.pixel_to_world(np.arange(3))  # doctest: +FLOAT_CMP
     <SpectralCoord [6.5388e-07, 6.5398e-07, 6.5408e-07] m>
 
+When creating a `~specutils.Spectrum1D` using a WCS, you can also use the
+``move_spectral_axis`` argument to force the spectral axis to a certain dimension
+of a multi-dimenasional flux array. Prior to ``specutils`` version 2.0, the flux
+array was always reordered such that the spectral axis corresponded to the last
+flux axis - this behavior can be reproduced by setting ``move_spectral_axis=-1``
+or ``move_spectral_axis='last'``. Note that the relevant axes in the flux, mask,
+and uncertainty arrays are simply swapped, and the swap is also reflected in the
+resulting WCS. No check is currently done to ensure that the resulting array has
+the spatial axes (most often RA and Dec) in any particular order.
 
 Multi-dimensional Data Sets
 ---------------------------
 
 `~specutils.Spectrum1D` also supports the multidimensional case where you
-have, say, an ``(n_spectra, n_pix)``
+have, for example, an ``(n_spectra, n_pix)``
 shaped data set where each ``n_spectra`` element provides a different flux
-data array and so ``flux`` and ``uncertainty`` may be multidimensional as
-long as the last dimension matches the shape of spectral_axis This is meant
+data array. ``flux`` and ``uncertainty`` may be multidimensional as
+long as one dimension matches the shape of the spectral_axis. This is meant
 to allow fast operations on collections of spectra that share the same
 ``spectral_axis``. While it may seem to conflict with the “1D” in the class
 name, this name scheme is meant to communicate the presence of a single
-common spectral axis.
+common spectral axis. In cases where the flux axis corresponding to the spectral
+axis cannot be determined automatically (for example, if multiple flux axes
+have the same length as the spectral axis), the spectral axis must be specified
+with the ``spectral_axis_index`` argument when initializing the
+`~specutils.Spectrum1D`.
 
 .. note:: The case where each flux data array is related to a *different* spectral
           axis is encapsulated in the :class:`~specutils.SpectrumCollection`
@@ -299,8 +312,7 @@ common spectral axis.
                0.33281393, 0.59830875, 0.18673419, 0.67275604, 0.94180287] Jy>
 
 While the above example only shows two dimensions, this concept generalizes to
-any number of dimensions for `~specutils.Spectrum1D`, as long as the spectral
-axis is always the last.
+any number of dimensions for `~specutils.Spectrum1D`.
 
 
 Slicing
@@ -359,8 +371,8 @@ value will apply to the lower bound input.
     ...          'SPECSYS': 'BARYCENT', 'RADESYS': 'ICRS', 'EQUINOX': 2000.0,
     ...          'LONPOLE': 180.0, 'LATPOLE': 27.004754})
     >>> spec = Spectrum1D(flux=np.random.default_rng(12345).random((20, 5, 10)) * u.Jy, wcs=w)  # doctest: +IGNORE_WARNINGS
-    >>> lower = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205, dec=26, unit=u.deg)]
-    >>> upper = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205.5, dec=27.5, unit=u.deg)]
+    >>> lower = [SkyCoord(ra=205, dec=26, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
+    >>> upper = [SkyCoord(ra=205.5, dec=27.5, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
     >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
     <Spectrum1D(flux=[[[0.708612359963129 ... 0.6345714580773677]]] Jy (shape=(10, 5, 1), mean=0.49653 Jy); spectral_axis=<SpectralAxis
         (observer to target:
