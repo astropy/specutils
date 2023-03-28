@@ -20,6 +20,9 @@ Other Changes and Additions
   As a result, minversion of ``asdf`` has been bumped to 2.14.
   Redundant ASDF schema for ``SpectralCoord`` is removed. [#1042]
 
+- JWST X1D reader will no longer raise a ``UnitWarning`` for surface brightness
+  error. [#1050]
+
 1.9.1 (2022-11-22)
 ------------------
 

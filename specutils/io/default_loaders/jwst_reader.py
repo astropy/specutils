@@ -254,6 +254,7 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     SpectrumList
         A list of the spectra that are contained in all the files.
     """
+
     # If input is a list, go read each file. If directory, glob-expand
     # list of file names.
     if not isinstance(input, (list, tuple)):
@@ -316,6 +317,12 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
             if hdu.name != extname:
                 continue
 
+            # Correct some known bad unit strings before reading the table
+            bad_units = {"(MJy/sr)^2": "MJy2 sr-2"}
+            for c in hdu.columns:
+                if c.unit in bad_units:
+                    c.unit = bad_units[c.unit]
+
             data = Table.read(hdu)
 
             wavelength = Quantity(data["WAVELENGTH"])
@@ -350,7 +357,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
                     uncertainty = None
             elif srctype == "EXTENDED":
                 flux = Quantity(data["SURF_BRIGHT"])
-                uncertainty = StdDevUncertainty(hdu.data["SB_ERROR"])
+                uncertainty = StdDevUncertainty(data["SB_ERROR"])
             else:
                 raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
                                    "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
