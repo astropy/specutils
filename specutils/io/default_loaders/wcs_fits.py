@@ -137,14 +137,19 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         # Read mask from specified HDU or try to auto-detect it.
         mask = None
         if mask_hdu is True:
+            mask_hdu = None
             for ext in ('MASK', 'DQ', 'QUALITY'):
                 if ext in hdulist and (isinstance(hdulist[ext], fits.ImageHDU) and
                         hdulist[ext].data is not None):
-                    mask = hdulist[ext].data
+                    mask_hdu = ext
                     break
-        elif isinstance(mask_hdu, (int, str)):
+        if isinstance(mask_hdu, (int, str)):
             if mask_hdu in hdulist:
                 mask = hdulist[mask_hdu].data
+                # Do we have a mask originally converted from bool/bit?
+                if hdulist[mask_hdu].header.get('BFORM', 'B') in ('L', 'X'):
+                    # ToDo: check for overflow and warn on values != (0, 1)
+                    mask = mask.astype(bool)
             else:
                 warnings.warn(f"No HDU '{mask_hdu}' for mask found in file.",
                               AstropyUserWarning)
@@ -275,7 +280,13 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
     # Append mask array
     if spectrum.mask is not None and mask_name is not None:
         hdulist.append(fits.ImageHDU())
-        hdulist[-1].data = spectrum.mask
+        # No standard representation of bool in FITS;
+        # introducing 'BFORM' here in analogy to BINTABLE 'TFORMn'.
+        if spectrum.mask.dtype == bool:
+            hdulist[-1].data = spectrum.mask.astype(np.uint8)
+            hdulist[-1].header['BFORM'] = 'L'
+        else:
+            hdulist[-1].data = spectrum.mask
         if mask_name == '':
             hdulist[-1].name = 'MASK'
         else:
@@ -451,8 +462,8 @@ def non_linear_multispec_fits(file_obj, **kwargs):
     return SpectrumCollection(flux=flux, spectral_axis=spectral_axis, meta=meta)
 
 
-def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None, verbose=False,
-                               **kwargs):
+def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None,
+                               verbose=False, **kwargs):
     """Read spectrum data with WCS spectral axis from FITS files written by IRAF
 
     IRAF does not strictly follow the fits standard especially for non-linear
@@ -483,7 +494,8 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
 
     Returns
     -------
-    Tuple of data to pass to `~specutils.SpectrumCollection` or `~specutils.Spectrum1D`:
+    Tuple of data to pass to :class:`~specutils.SpectrumCollection` or
+        `:class:`~specutils.Spectrum1D` on initialization:
 
     spectral_axis : :class:`~astropy.units.Quantity`
         The spectral axis or axes as constructed from WCS(hdulist[0].header).

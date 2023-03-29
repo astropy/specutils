@@ -710,12 +710,10 @@ def test_tabular_fits_compressed(compress, tmp_path):
     assert quantity_allclose(spec.flux, spectrum.flux)
 
 
-@pytest.mark.parametrize("spectral_axis",
-                         ['WAVE', 'FREQ', 'ENER', 'WAVN'])
-@pytest.mark.parametrize("with_mask", [False, True])
+@pytest.mark.parametrize("spectral_axis", ['WAVE', 'FREQ', 'ENER', 'WAVN'])
 @pytest.mark.parametrize("uncertainty",
                          [None, StdDevUncertainty, VarianceUncertainty, InverseVariance])
-def test_wcs1d_fits_writer(tmp_path, spectral_axis, with_mask, uncertainty):
+def test_wcs1d_fits_writer(tmp_path, spectral_axis, uncertainty):
     """Test write/read for Spectrum1D with WCS-constructed spectral_axis."""
     wlunits = {'WAVE': 'Angstrom', 'FREQ': 'GHz', 'ENER': 'eV', 'WAVN': 'cm**-1'}
     # Header dictionary for constructing WCS
@@ -729,10 +727,7 @@ def test_wcs1d_fits_writer(tmp_path, spectral_axis, with_mask, uncertainty):
     disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
     tmpfile = tmp_path / 'wcs_tst.fits'
 
-    if with_mask:
-        mask = np.array([0, 0, 0, 0, 1, 0, 0, 0, 1, 0], dtype=np.uint16)
-    else:
-        mask = None
+    mask = np.array([0, 0, 0, 0, 1, 0, 0, 0, 1, 0], dtype=np.uint8)
 
     # ToDo: test with explicit (and different from flux) units.
     if uncertainty is None:
@@ -768,6 +763,65 @@ def test_wcs1d_fits_writer(tmp_path, spectral_axis, with_mask, uncertainty):
         assert spec.uncertainty is None
     else:
         assert quantity_allclose(spec.uncertainty.quantity, spectrum.uncertainty.quantity)
+
+
+@pytest.mark.parametrize("spectral_axis", ['WAVE', 'FREQ'])
+@pytest.mark.parametrize("mask_type", [None, bool, np.uint8, np.int8, np.uint16, np.int16, '>i2'])
+@pytest.mark.parametrize("uncertainty", [StdDevUncertainty, InverseVariance])
+def test_wcs1d_fits_masks(tmp_path, spectral_axis, mask_type, uncertainty):
+    """Test write/read for Spectrum1D with WCS-constructed spectral_axis."""
+    wlunits = {'WAVE': 'nm', 'FREQ': 'GHz', 'ENER': 'eV', 'WAVN': 'cm**-1'}
+    # Header dictionary for constructing WCS
+    hdr = {'CTYPE1': spectral_axis, 'CUNIT1': wlunits[spectral_axis],
+           'CRPIX1': 1, 'CRVAL1': 1, 'CDELT1': 0.01}
+    # Create a small data set
+    flux = np.arange(1, 11)**2 * 1.e-14 * u.Jy
+    wlu = u.Unit(hdr['CUNIT1'])
+    wl0 = hdr['CRVAL1']
+    dwl = hdr['CDELT1']
+    disp = np.arange(wl0, wl0 + (len(flux) - 0.5) * dwl, dwl) * wlu
+    unc = uncertainty(0.1 * np.sqrt(np.abs(flux.value)))
+    tmpfile = tmp_path / 'wcs_tst.fits'
+
+    if mask_type is None:
+        mask = None
+        spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr), uncertainty=unc)
+        assert spectrum.mask is None
+    else:
+        mask = np.array([0, 0, 1, 0, 3, 0, 0, -99, -199, 0]).astype(mask_type)
+        spectrum = Spectrum1D(flux=flux, wcs=WCS(hdr), mask=mask, uncertainty=unc)
+        assert spectrum.mask.dtype == mask.dtype
+
+    spectrum.write(tmpfile, hdu=0)
+
+    # Read it in and check against the original
+    spec = Spectrum1D.read(tmpfile)
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.spectral_axis, disp)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity, spectrum.uncertainty.quantity)
+    assert np.all(spec.mask == spectrum.mask)
+    # int16 is returned as FITS-native '>i2'
+    if mask_type == np.int16:
+        assert spec.mask.dtype.kind == spectrum.mask.dtype.kind
+        assert spec.mask.dtype.itemsize == spectrum.mask.dtype.itemsize
+    else:
+        assert np.array(spec.mask).dtype == np.array(spectrum.mask).dtype
+
+    # Read from HDUList
+    with fits.open(tmpfile) as hdulist:
+        spec = Spectrum1D.read(hdulist, format='wcs1d-fits')
+
+    assert isinstance(spec, Spectrum1D)
+    assert quantity_allclose(spec.spectral_axis, spectrum.spectral_axis)
+    assert quantity_allclose(spec.flux, spectrum.flux)
+    assert quantity_allclose(spec.uncertainty.quantity, spectrum.uncertainty.quantity)
+    assert np.all(spec.mask == spectrum.mask)
+    if mask_type == np.int16:
+        assert spec.mask.dtype.kind == spectrum.mask.dtype.kind
+        assert spec.mask.dtype.itemsize == spectrum.mask.dtype.itemsize
+    else:
+        assert np.array(spec.mask).dtype == np.array(spectrum.mask).dtype
 
 
 @pytest.mark.parametrize("spectral_axis",
