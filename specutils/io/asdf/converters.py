@@ -43,6 +43,9 @@ class Spectrum1DConverter(Converter):
             data = obj.uncertainty.array
             node['uncertainty']['data'] = data
 
+        if obj.mask is not None:
+            node['mask'] = obj.mask
+
         return node
 
     def from_yaml_tree(cls, node, tag, ctx):
@@ -50,12 +53,14 @@ class Spectrum1DConverter(Converter):
         flux = node['flux']
         spectral_axis = node['spectral_axis']
         uncertainty = node.get('uncertainty', None)
+        mask = node.get('mask', None)
+
         if uncertainty is not None:
             class_ = UNCERTAINTY_TYPE_MAPPING[uncertainty['uncertainty_type']]
             data = uncertainty['data']
             uncertainty = class_(data)
 
-        return Spectrum1D(flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty)
+        return Spectrum1D(flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, mask=mask)
 
 
 class SpectrumListConverter(Converter):

@@ -10,17 +10,19 @@ from specutils.io.asdf.tests.helpers import (
     assert_spectrum1d_equal, assert_spectrumlist_equal, assert_spectral_axis_equal)
 
 
-def create_spectrum1d(xmin, xmax, uncertainty=None):
+def create_spectrum1d(xmin, xmax, uncertainty=False, mask=False):
     flux = np.ones(10) * u.Jy
     wavelength = np.linspace(xmin, xmax, 10) * u.nm
-    uncertainty = StdDevUncertainty(flux * 0.1) if uncertainty is not None else None
-    return Spectrum1D(spectral_axis=wavelength, flux=flux, uncertainty=uncertainty)
+    unc = StdDevUncertainty(flux * 0.1) if uncertainty else None
+    msk = np.array([0, 1, 1, 0, 1, 0, 1, 1, 0, 1], dtype=np.uint8) if mask else None
+    return Spectrum1D(spectral_axis=wavelength, flux=flux, uncertainty=unc, mask=msk)
 
 
 @pytest.mark.parametrize('uncertainty', [False, True])
-def test_asdf_spectrum1d(tmp_path, uncertainty):
+@pytest.mark.parametrize('mask', [False, True])
+def test_asdf_spectrum1d(tmp_path, uncertainty, mask):
     file_path = tmp_path / "test.asdf"
-    spectrum = create_spectrum1d(510, 530, uncertainty=uncertainty)
+    spectrum = create_spectrum1d(510, 530, uncertainty=uncertainty, mask=mask)
     with asdf.AsdfFile() as af:
         af["spectrum"] = spectrum
         af.write_to(file_path)
