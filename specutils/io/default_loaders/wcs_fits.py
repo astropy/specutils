@@ -277,25 +277,6 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
     if flux_name is not None:
         hdulist[0].name = flux_name
 
-    # Append mask array
-    if spectrum.mask is not None and mask_name is not None:
-        hdulist.append(fits.ImageHDU())
-        # No standard representation of bool in FITS;
-        # introducing 'BFORM' here in analogy to BINTABLE 'TFORMn'.
-        if spectrum.mask.dtype == bool:
-            hdulist[-1].data = spectrum.mask.astype(np.uint8)
-            hdulist[-1].header['BFORM'] = 'L'
-        else:
-            hdulist[-1].data = spectrum.mask
-        if mask_name == '':
-            hdulist[-1].name = 'MASK'
-        else:
-            hdulist[-1].name = mask_name
-        hdu += 1
-    # Warn if saving was requested (per explicitly choosing extension name).
-    elif mask_name is not None and mask_name != '':
-        warnings.warn("No mask found in this Spectrum1D, none saved.", AstropyUserWarning)
-
     # Append uncertainty array
     if spectrum.uncertainty is not None and uncertainty_name is not None:
         hdulist.append(fits.ImageHDU())
@@ -320,6 +301,25 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
     elif uncertainty_name is not None and uncertainty_name != '':
         warnings.warn("No uncertainty array found in this Spectrum1D, none saved.",
                       AstropyUserWarning)
+
+    # Append mask array
+    if spectrum.mask is not None and mask_name is not None:
+        hdulist.append(fits.ImageHDU())
+        # No standard representation of bool in FITS;
+        # introducing 'BFORM' here in analogy to BINTABLE 'TFORMn'.
+        if spectrum.mask.dtype == bool:
+            hdulist[-1].data = spectrum.mask.astype(np.uint8)
+            hdulist[-1].header['BFORM'] = 'L'
+        else:
+            hdulist[-1].data = spectrum.mask
+        if mask_name == '':
+            hdulist[-1].name = 'MASK'
+        else:
+            hdulist[-1].name = mask_name
+        hdu += 1
+    # Warn if saving was requested (per explicitly choosing extension name).
+    elif mask_name is not None and mask_name != '':
+        warnings.warn("No mask found in this Spectrum1D, none saved.", AstropyUserWarning)
 
     if hasattr(funit, 'long_names') and len(funit.long_names) > 0:
         comment = f'[{funit.long_names[0]}] {funit.physical_type}'

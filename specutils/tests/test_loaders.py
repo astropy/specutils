@@ -900,7 +900,8 @@ def test_wcs1d_fits_cube(tmp_path, spectral_axis, with_mask, uncertainty):
 
 
 @pytest.mark.parametrize("uncertainty_rsv", ['STD', 'ERR', 'UNCERT', 'VAR', 'IVAR'])
-def test_wcs1d_fits_uncertainty(tmp_path, uncertainty_rsv):
+@pytest.mark.parametrize("hdu", [None, 0, 1])
+def test_wcs1d_fits_uncertainty(tmp_path, uncertainty_rsv, hdu):
     """
     Test Spectrum1D.write with custom `uncertainty` names,
     ensure it raises on illegal (reserved) names.
@@ -931,28 +932,38 @@ def test_wcs1d_fits_uncertainty(tmp_path, uncertainty_rsv):
     # Set permitted custom name
     uncertainty_type = spectrum.uncertainty.uncertainty_type
     uncertainty_alt = UNCERT_ALT[uncertainty_type]
-    spectrum.write(tmpfile, format='wcs1d-fits', uncertainty_name=uncertainty_alt)
+    if hdu is None:
+        spectrum.write(tmpfile, format='wcs1d-fits', uncertainty_name=uncertainty_alt)
+        hdu = 0
+    else:
+        spectrum.write(tmpfile, format='wcs1d-fits', uncertainty_name=uncertainty_alt, hdu=hdu)
 
-    # Check EXTNAME (uncertainty is in last HDU)
+    # Auto-detect only works with flux in default (primary) HDU.
+    if hdu == 0:
+        kwargs = {'uncertainty_hdu': hdu+1}
+    else:
+        kwargs = {'uncertainty_hdu': hdu+1, 'format': 'wcs1d-fits'}
+
+    # Check EXTNAME (uncertainty is in first HDU following flux spectrum)
     with fits.open(tmpfile) as hdulist:
-        assert hdulist[-1].name == uncertainty_alt.upper()
+        assert hdulist[hdu+1].name == uncertainty_alt.upper()
 
     # Read it in and check against the original
     with pytest.raises(ValueError, match=f"Invalid uncertainty type: '{uncertainty_alt}'; should"):
-        spec = Spectrum1D.read(tmpfile, uncertainty_hdu=2, uncertainty_type=uncertainty_alt)
+        spec = Spectrum1D.read(tmpfile, uncertainty_type=uncertainty_alt, **kwargs)
     # Need to specify type if not default
     with pytest.warns(AstropyUserWarning, match="Could not determine uncertainty type for HDU "
-                      rf"'2' .'{uncertainty_alt.upper()}'., assuming 'StdDev'"):
-        spec = Spectrum1D.read(tmpfile, uncertainty_hdu=2)
+                      rf"'{hdu+1}' .'{uncertainty_alt.upper()}'., assuming 'StdDev'"):
+        spec = Spectrum1D.read(tmpfile, **kwargs)
     if uncertainty_type != 'std':
         assert spec.uncertainty.uncertainty_type != uncertainty_type
-        spec = Spectrum1D.read(tmpfile, uncertainty_hdu=2, uncertainty_type=uncertainty_type)
+        spec = Spectrum1D.read(tmpfile, uncertainty_type=uncertainty_type, **kwargs)
 
     assert spec.flux.unit == spectrum.flux.unit
     assert spec.spectral_axis.unit == spectrum.spectral_axis.unit
     assert quantity_allclose(spec.uncertainty.quantity, spectrum.uncertainty.quantity)
-    spec = Spectrum1D.read(tmpfile, uncertainty_hdu=uncertainty_alt,
-                           uncertainty_type=uncertainty_type)
+    kwargs['uncertainty_hdu'] = uncertainty_alt
+    spec = Spectrum1D.read(tmpfile, uncertainty_type=uncertainty_type, **kwargs)
     assert quantity_allclose(spec.uncertainty.quantity, spectrum.uncertainty.quantity)
 
 
