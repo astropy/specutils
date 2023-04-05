@@ -1,3 +1,15 @@
+1.11.0 (Unreleased)
+-------------------
+
+New Features
+^^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1.10.0 (2023-04-05)
 -------------------
 
@@ -28,6 +40,7 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 - Added some basic documentation for ``Spectrum1D.write``. [#1017]
 
 - JWST s2d and s3d readers now requires the optional dependency, ``stdatamodels``,
