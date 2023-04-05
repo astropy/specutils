@@ -10,7 +10,7 @@ New Features
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.11.0 (unreleased)
+1.12.0 (unreleased)
 -------------------
 
 New Features
