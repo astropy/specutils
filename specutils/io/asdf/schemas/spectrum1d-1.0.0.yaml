@@ -35,5 +35,9 @@ properties:
         description: |
           Array representing the uncertainty data
         $ref: "http://stsci.edu/schemas/asdf/core/ndarray-1.0.0"
+  mask:
+    description: |
+      Mask information about the spectrum
+    $ref: "http://stsci.edu/schemas/asdf/core/ndarray-1.0.0"
 required: [flux, spectral_axis]
 ...
