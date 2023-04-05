@@ -1,17 +1,34 @@
-1.10.0 (unreleased)
+1.10.0 (2023-04-05)
 -------------------
 
 New Features
 ^^^^^^^^^^^^
 
+- ``wcs1d-fits`` loader now reads and writes celestial components of
+  of multi-dimensional WCS, and handles ``mask`` and ``uncertainty``
+  attributes. [#1009] 
+
+- Added support for reading from files with flux in counts. [#1018]
+
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed ``SpectralAxis.with_observer_stationary_relative_to`` to actually
+  return the updated spectral axis. [#992]
+
+- Fixed region extraction for axes/regions in units of ``u.pix``. [#1001]
+
+- ``tabular-fits`` writer now properly converts uncertainties to ``StdDevUncertainty``
+  if needed. [#1027]
+
 - Fix bug in ``fit_lines`` which gave unexpected outputs from the ``get_fit_info``
-  and ``ignore_units`` keyword arguments [#1030]
+  and ``ignore_units`` keyword arguments. [#1030]
+
+- Fix SNR calculations with both masks and regions. [#1044]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Added some basic documentation for ``Spectrum1D.write``. [#1017]
 
 - JWST s2d and s3d readers now requires the optional dependency, ``stdatamodels``,
   which user has to install separately. [#1038]
