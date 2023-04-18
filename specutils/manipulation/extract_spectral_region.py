@@ -12,34 +12,20 @@ __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab'
 
 def _edge_value_to_pixel(edge_value, spectrum, order, side):
     spectral_axis = spectrum.spectral_axis
-    if order == "ascending":
-        if edge_value > spectral_axis[-1]:
-            return len(spectral_axis)
-        if edge_value < spectral_axis[0]:
-            return 0
 
-    elif order == "descending":
-        if edge_value < spectral_axis[-1]:
-            return len(spectral_axis)
-        if edge_value > spectral_axis[0]:
-            return 0
-
-    try:
-        if hasattr(spectrum.wcs, "spectral"):
-            index = spectrum.wcs.spectral.world_to_pixel(edge_value)
-        else:
-            index = spectrum.wcs.world_to_pixel(edge_value)
-
-        if side == "left":
-            index = int(np.ceil(index))
-        elif side == "right":
-            index = int(np.floor(index)) + 1
-
+    if order == 'ascending':
+        index = np.searchsorted(spectral_axis, edge_value, side=side)
         return index
 
-    except Exception as e:
-        raise ValueError(f"Bound {edge_value}, could not be converted to pixel index"
-                         f" using spectrum's WCS. Exception: {e}")
+    elif order == 'descending':
+
+        if side == 'left':
+            opposite_side = 'right'
+        else:
+            opposite_side = 'left'
+
+        index = len(spectral_axis) - np.searchsorted(spectral_axis[::-1], edge_value, side=opposite_side)
+        return index
 
 
 def _subregion_to_edge_pixels(subregion, spectrum):
