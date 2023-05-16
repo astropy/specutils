@@ -94,7 +94,6 @@ def _centroid_single_region(spectrum, region=None, analytic_uncertainty=False):
     This is a helper function for the above `centroid()` method.
 
     """
-    print(analytic_uncertainty)
     if region is not None:
         calc_spectrum = extract_region(spectrum, region)
     else:
@@ -115,7 +114,6 @@ def _centroid_single_region(spectrum, region=None, analytic_uncertainty=False):
         dispersion = calc_spectrum.spectral_axis.quantity
 
     if analytic_uncertainty:
-        print("Analytic")
         centroid = np.sum(flux*dispersion, axis=-1) / np.sum(flux, axis=-1)
         if spectrum.uncertainty is None:
             centroid.uncertainty = None
@@ -127,7 +125,6 @@ def _centroid_single_region(spectrum, region=None, analytic_uncertainty=False):
             centroid.uncertainty = np.sqrt(s2)
             centroid.uncertainty_type = 'stddev'
     else:
-        print("Distribution")
         # Convert flux to an astropy.uncertainties normal distribution
         flux = unc.normal(flux, std=flux_uncert, n_samples=1000)
 
