@@ -77,19 +77,6 @@ class FluxConservingResampler(ResamplerBase):
     <Spectrum1D(flux=<Quantity [  nan,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
     """
 
-    @staticmethod
-    def _get_overlap_area(a1, a2, b1, b2):
-        # get intersection area of 2 bins bounded by
-        # ``bin1_bounds``=(a1, b1) and ``bin2_bounds``=(a2, b2)
-        # assuming its already known they overlap
-        if b1 >= a1:
-            if b2 > a2:
-                return a2 - b1
-            return b2 - b1
-        if b2 > a2:
-            return min(b2, a2) - max(b1, a1)
-        return b2 - a1
-
     def _fluxc_resample(self, input_bin_centers, output_bin_centers,
                         input_bin_fluxes, errs):
         """
