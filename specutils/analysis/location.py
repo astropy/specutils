@@ -16,7 +16,7 @@ from ..manipulation import extract_region
 __all__ = ['centroid']
 
 
-def centroid(spectrum, regions=None, region=None, analytic_uncertainty=False):
+def centroid(spectrum, regions=None, region=None, analytic=False):
     """
     Calculate the centroid of a region, or regions, of the spectrum.
 
@@ -28,12 +28,12 @@ def centroid(spectrum, regions=None, region=None, analytic_uncertainty=False):
         the propagated uncertainty (as Standard Deviation-style uncertainties).  This uncertainty
         assumes the input uncertainties are uncorrelated.
 
-    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions : `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
 
-    analytic_uncertainty: bool, optional
-        Set this flag to ``True`` to use the analytic derivation for the centroid's uncertainty
-        instead of the default `~astropy.uncertainty` distribution-based uncertainty.
+    analytic : bool, optional
+        Set this flag to ``True`` to use the analytic derivation for the centroid and its
+        uncertainty instead of the default `~astropy.uncertainty` distribution-based method.
 
     Returns
     -------
@@ -56,21 +56,21 @@ def centroid(spectrum, regions=None, region=None, analytic_uncertainty=False):
 
     # No region, therefore whole spectrum.
     if regions is None:
-        return _centroid_single_region(spectrum, analytic_uncertainty=analytic_uncertainty)
+        return _centroid_single_region(spectrum, analytic=analytic)
 
     # Single region
     elif isinstance(regions, SpectralRegion):
         return _centroid_single_region(spectrum, region=regions,
-                                       analytic_uncertainty=analytic_uncertainty)
+                                       analytic=analytic)
 
     # List of regions
     elif isinstance(regions, list):
         return [_centroid_single_region(spectrum, region=reg,
-                                        analytic_uncertainty=analytic_uncertainty)
+                                        analytic=analytic)
                 for reg in regions]
 
 
-def _centroid_single_region(spectrum, region=None, analytic_uncertainty=False):
+def _centroid_single_region(spectrum, region=None, analytic=False):
     """
     Calculate the centroid of the spectrum based on the flux in the spectrum.
     The returned quantity object will have a ``.uncertainty`` attribute which
@@ -81,8 +81,12 @@ def _centroid_single_region(spectrum, region=None, analytic_uncertainty=False):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the centroid will be calculated.
 
-    region: `~specutils.utils.SpectralRegion`
+    region : `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
+
+    analytic : bool, optional
+        Set this flag to ``True`` to use the analytic derivation for the centroid and its
+        uncertainty instead of the default `~astropy.uncertainty` distribution-based method.
 
     Returns
     -------
@@ -113,7 +117,7 @@ def _centroid_single_region(spectrum, region=None, analytic_uncertainty=False):
         flux = calc_spectrum.flux
         dispersion = calc_spectrum.spectral_axis.quantity
 
-    if analytic_uncertainty:
+    if analytic:
         centroid = np.sum(flux*dispersion, axis=-1) / np.sum(flux, axis=-1)
         if spectrum.uncertainty is None:
             centroid.uncertainty = None

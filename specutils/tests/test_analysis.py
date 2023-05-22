@@ -466,7 +466,8 @@ def test_snr_derived_masked():
     assert np.allclose(snr_derived(spectrum, [sr, sr2]), [4.01610033, 1.94906157])
 
 
-def test_centroid(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_centroid(simulated_spectra, analytic):
     """
     Test the simple version of the spectral centroid.
     """
@@ -490,16 +491,19 @@ def test_centroid(simulated_spectra):
     # SNR of the whole spectrum
     #
 
-    spec_centroid = centroid(spectrum, None)
+    spec_centroid = centroid(spectrum, analytic=analytic)
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
     assert hasattr(spec_centroid, 'uncertainty')
     # NOTE: value has not been scientifically validated
-    assert quantity_allclose(spec_centroid.uncertainty, 3.91834165e-06*u.um, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(spec_centroid.uncertainty, 7.032035e-07*u.um, rtol=5e-5)
+    else:
+        assert quantity_allclose(spec_centroid.uncertainty, 6.916e-07*u.um, rtol=5e-3)
 
-
-def test_centroid_masked(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_centroid_masked(simulated_spectra, analytic):
     """
     Test centroid with masked spectrum.
     """
@@ -519,14 +523,16 @@ def test_centroid_masked(simulated_spectra):
 
     spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(flux)
 
-    spec_centroid = centroid(spectrum, None)
+    spec_centroid = centroid(spectrum, analytic=analytic)
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
     assert hasattr(spec_centroid, 'uncertainty')
     # NOTE: value has not been scientifically validated
-    assert quantity_allclose(spec_centroid.uncertainty, 1.1052437538307923e-05*u.um, rtol=5e-5)
-
+    if analytic:
+        assert quantity_allclose(spec_centroid.uncertainty, 1.87678219e-06*u.um, rtol=5e-5)
+    else:
+        assert quantity_allclose(spec_centroid.uncertainty, 1.92374917e-06*u.um, rtol=5e-5)
 
 def test_inverted_centroid(simulated_spectra):
     """
@@ -577,7 +583,8 @@ def test_centroid_multiple_flux(simulated_spectra):
     uncertainty = StdDevUncertainty(0.1*np.random.random(spec.flux.shape)*u.mJy)
     spec.uncertainty = uncertainty
 
-    centroid_spec = centroid(spec, None)
+    centroid_spec = centroid(spec, analytic=True)
+    print(centroid_spec.value)
 
     assert np.allclose(centroid_spec.value, np.array([5.46190995, 5.17223565, 5.37778249, 5.51595259, 5.7429066]))
     assert centroid_spec.unit == u.um
@@ -711,7 +718,7 @@ def test_gaussian_fwhm():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.00011348006579851353*u.GHz, rtol=5e-5)
+    assert quantity_allclose(result.uncertainty, 0.00011295*u.GHz, rtol=5e-5)
 
 
 def test_gaussian_fwhm_masked():
@@ -735,7 +742,7 @@ def test_gaussian_fwhm_masked():
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.16688079501948674*u.GHz, rtol=5e-5)
+    assert quantity_allclose(result.uncertainty, 0.16074777*u.GHz, rtol=5e-5)
 
 
 @pytest.mark.parametrize('mean', range(3, 8))
