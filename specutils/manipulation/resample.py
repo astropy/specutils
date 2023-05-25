@@ -257,20 +257,31 @@ class FluxConservingResampler(ResamplerBase):
         # convert unit
         orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
 
-        # handle 2d flux inputs
-        if orig_spectrum.flux.ndim == 2:
-            # make output matrix
-            output_fluxes = np.zeros(shape=(orig_spectrum.flux.shape[0],
-                                            fin_spec_axis.shape[0]))
-            output_errs = np.zeros(shape=(orig_spectrum.flux.shape[0],
-                                          fin_spec_axis.shape[0]))
-            for r, row in enumerate(orig_spectrum.flux):
+        # handle multi dimensional flux inputs
+        if orig_spectrum.flux.ndim >= 2:
+
+            # the output fluxes and errs should have the same shape as the input
+            # except for the last axis, which should be the size of the new
+            # spectral axis
+            new_shape = tuple(list(orig_spectrum.shape[0:-1]) +
+                              [len(fin_spec_axis)])
+
+            # make output matricies
+            output_fluxes = np.zeros(shape=new_shape)
+            output_errs = np.zeros(shape=new_shape)
+
+
+            for index, row in np.ndenumerate(orig_spectrum.flux[..., 0]):
+
+                orig_fluxes = orig_spectrum.flux[index]
+                orig_uncer = pixel_uncer[index]
+
                 new_f, new_e = self._fluxc_resample(input_bin_centers=orig_axis_in_fin,
                                                     output_bin_centers=fin_spec_axis,
-                                                    input_bin_fluxes=row,
-                                                    errs=pixel_uncer[r])
-                output_fluxes[r] = new_f
-                output_errs[r] = new_e.array
+                                                    input_bin_fluxes=orig_fluxes,
+                                                    errs=orig_uncer)
+                output_fluxes[index] = new_f
+                output_errs[index] = new_e.array
 
             new_errs = InverseVariance(output_errs)
 
