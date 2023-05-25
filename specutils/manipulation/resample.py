@@ -270,7 +270,6 @@ class FluxConservingResampler(ResamplerBase):
             output_fluxes = np.zeros(shape=new_shape)
             output_errs = np.zeros(shape=new_shape)
 
-
             for index, row in np.ndenumerate(orig_spectrum.flux[..., 0]):
 
                 orig_fluxes = orig_spectrum.flux[index]
