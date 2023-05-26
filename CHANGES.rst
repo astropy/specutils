@@ -6,8 +6,7 @@ New Features
 
 Bug Fixes
 ^^^^^^^^^
-- Reimplementation of FluxConservingResampler to fix incorrect flux and
-  uncertainties and increase speed. [#1060]
+- Reimplementation of FluxConservingResampler. It is now faster and yields more accurate results. [#1060]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
