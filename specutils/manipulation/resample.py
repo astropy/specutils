@@ -110,13 +110,8 @@ class FluxConservingResampler(ResamplerBase):
         input_bin_edges = input_bin_centers.bin_edges.value
         output_bin_edges = output_bin_centers.bin_edges.value
 
-        # convert to regular arrays
-        input_bin_centers = input_bin_centers.value
-        output_bin_centers = output_bin_centers.value
-        input_bin_fluxes = input_bin_fluxes.value
-
         # create array of output fluxes and errors to be returned
-        output_fluxes = np.zeros(shape=len(output_bin_centers))
+        output_fluxes = np.zeros(shape=len(output_bin_centers)) * input_bin_fluxes.unit
         output_errs = None
         if errs is not None:
             output_errs = np.zeros(shape=len(output_bin_centers))
