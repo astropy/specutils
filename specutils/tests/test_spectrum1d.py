@@ -507,3 +507,31 @@ def test_collapse_flux():
     median_spec = spec.mean(axis = 0)
     assert isinstance(median_spec, Spectrum1D)
     assert np.all(median_spec.flux == [2, 8, 9] * u.Jy)
+
+
+def test_unsorted_spectral_axis_fails():
+    """
+    Test that creating a Spectrum1D fails if spectral axis isn't strictly
+    ascending or descending.
+    """
+    wave = [2, 1, 3] * u.nm
+    flux = [5, 5, 5] * u.Jy
+
+    with pytest.raises(ValueError, match='Spectral axis must be strictly increasing or decreasing.'):
+        Spectrum1D(spectral_axis=wave, flux=flux)
+
+
+def test_spectral_axis_direction():
+    """
+    Test that the spec1d.spectral_axis_direction attribute correctly reflects
+    if the spectral axis in Spectrum1D is increasing or decreasing.
+    """
+    flux = [5, 5, 5] * u.Jy
+
+    wave = [1, 2, 3] * u.nm
+    spec1d = Spectrum1D(spectral_axis=wave, flux=flux)
+    assert spec1d.spectral_axis_direction == 'increasing'
+
+    wave = [3, 2, 1] * u.nm
+    spec1d = Spectrum1D(spectral_axis=wave, flux=flux)
+    assert spec1d.spectral_axis_direction == 'decreasing'

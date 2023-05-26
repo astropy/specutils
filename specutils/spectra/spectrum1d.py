@@ -296,6 +296,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 doppler_rest=rest_value,
                 doppler_convention=velocity_convention)
 
+        # make sure that spectral axis is strictly increasing or decreasing,
+        # raise an error if not.
+        if not self._check_strictly_increasing_decreasing():
+            raise ValueError('Spectral axis must be strictly increasing or decreasing.')
+
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
             if not flux.shape == self.uncertainty.array.shape:
                 raise ValueError(
@@ -583,6 +588,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     @property
     def shape(self):
         return self.flux.shape
+
+    @property
+    def spectral_axis_direction(self):
+        return self._spectral_axis_direction
 
     @property
     def redshift(self):
