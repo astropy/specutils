@@ -15,28 +15,22 @@ py:obj SpectralQuantity
 py:obj SkyCoord
 
 # Super class for Spectrum1D for which we don't control the API links.
-py:class ndcube.ndcube.NDCube
-py:class ndcube.ndcube.NDCubeBase
-py:class ndcube.ndcube.NDCubeABC
-py:class ndcube.mixins.plotting.NDCubePlotMixin
 py:class ndcube.mixins.ndslicing.NDCubeSlicingMixin
-py:obj ndcube.NDCube
-py:obj NDCube
-py:obj NDCube.plotter
+py:class ndcube.ndcube.NDCube
+py:class ndcube.ndcube.NDCubeABC
+py:class ndcube.ndcube.NDCubeBase
+py:meth ndcube.NDCube.axis_world_coords
+py:meth ndcube.NDCube.crop
+py:meth ndcube.NDCube.rebin
 py:obj MatplotlibPlotter
-py:obj ExtraCoords
-py:obj GlobalCoords
-py:obj ndcube.NDCube.world_axis_physical_types
-py:obj specutils.Spectrum1D.crop
-py:obj pixel_edges
-py:obj pixel_values
-py:obj ndcube.NDCube.wcs.world_axis_physical_types
+py:obj ndcube.NDCube
+py:obj ndcube.NDCube.crop
+py:obj ndcube.ndcube.NDCubeABC
+py:obj ndcube.ndcube.NDCubeBase
+py:obj ndcube.NDCube.plotter
+py:obj ndcube.NDCubeABC
 py:obj ndcube.NDCubeSequence
-py:obj sunpy.visualization.animator.ArrayAnimatorWCS
-py:obj ndcube.mixins.plotting.NDCubePlotMixin.plot
-py:obj astropy.wcs.wcsapi.BaseHighLevelWCS.world_to_array_index_values
-py:obj matplotllib.pyplot.imshow
-py:obj matplotllib.pyplot.plot
+py:obj ndcube.utils.cube.propagate_rebin_uncertainties
 
 # SpectralAxis inherits methods which have warnings we can't fix here.
 # FIXME: https://github.com/astropy/sphinx-automodapi/issues/101

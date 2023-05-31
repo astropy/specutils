@@ -35,6 +35,7 @@ docs/_build
 
 # Visual Studio Code project files
 .vscode
+.history
 
 # Packages/installer info
 *.egg
