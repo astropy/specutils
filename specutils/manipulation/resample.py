@@ -44,6 +44,7 @@ class ResamplerBase(ABC):
 
 
 class FluxConservingResampler(ResamplerBase):
+
     """
     This resampling algorithm conserves overall integrated flux (as opposed to
     flux density).
@@ -73,59 +74,146 @@ class FluxConservingResampler(ResamplerBase):
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23]  *u.nm
     >>> fluxc_resample = FluxConservingResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [        nan,  3.        ,  6.13043478,  7.        ,  6.33333333,
-               10.        , 20.        ,         nan,         nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
-
+    <Spectrum1D(flux=<Quantity [  nan,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
     """
 
-    def _resample_matrix(self, orig_spec_axis, fin_spec_axis):
+    def _fluxc_resample(self, input_bin_centers, output_bin_centers,
+                        input_bin_fluxes, errs):
         """
-        Create a re-sampling matrix to be used in re-sampling spectra in a way
-        that conserves flux. This code was heavily influenced by Nick Earl's
-        resample rough draft: nmearl@0ff6ef1.
+        Resample ``input_bin_fluxes`` and (optionally) ``errs`` from
+        ``input_bin_centers`` to ``output_bin_centers``.
 
         Parameters
         ----------
-        orig_spec_axis : SpectralAxis
-            The original spectral axis array.
-        fin_spec_axis : SpectralAxis
-            The desired spectral axis array.
+        input_bin_centers : `~specutils.SpectralAxis`
+            `~specutils.SpectralAxis` object, with input bin centers.
+        output_bin_centers : `~specutils.SpectralAxis`
+            `~specutils.SpectralAxis` object, with input bin centers.
+        input_bin_fluxes : Quantity
+            Quantity array of flux values.
+        errs : `~astropy.nddata.Variance` object, or None
+            Variance array of errors corresponding to input bin fluxes. If None,
+            error resampling is not performed.
 
         Returns
         -------
-        resample_mat : ndarray
-            An [[N_{fin_spec_axis}, M_{orig_spec_axis}]] matrix.
+       (output_fluxes, output_errs)
+            A tuple containing plain numpy arrays of the resampled fluxes and
+            errors (if available).
         """
-        # Lower bin and upper bin edges
-        orig_edges = orig_spec_axis.bin_edges
-        fin_edges = fin_spec_axis.bin_edges
 
-        # I could get rid of these alias variables,
-        # but it does add readability
-        orig_low = orig_edges[:-1]
-        fin_low = fin_edges[:-1]
-        orig_upp = orig_edges[1:]
-        fin_upp = fin_edges[1:]
+        fill_val = np.nan  # bin_edges=nan_fill case
+        if self.extrapolation_treatment == 'zero_fill':
+            fill_val = 0
 
-        # Here's the real work in figuring out the bin overlaps
-        # i.e., contribution of each original bin to the resampled bin
-        l_inf = np.where(orig_low > fin_low[:, np.newaxis],
-                         orig_low, fin_low[:, np.newaxis])
-        l_sup = np.where(orig_upp < fin_upp[:, np.newaxis],
-                         orig_upp, fin_upp[:, np.newaxis])
+        # get bin edges from centers
+        input_bin_edges = input_bin_centers.bin_edges.value
+        output_bin_edges = output_bin_centers.bin_edges.value
 
-        resamp_mat = (l_sup - l_inf).clip(0)
-        resamp_mat = resamp_mat * (orig_upp - orig_low)
+        # create array of output fluxes and errors to be returned
+        output_fluxes = np.zeros(shape=len(output_bin_centers)) * input_bin_fluxes.unit
+        output_errs = None
+        if errs is not None:
+            output_errs = np.zeros(shape=len(output_bin_centers))
 
-        # set bins that don't overlap 100% with original bins
-        # to zero by checking edges, and applying generated mask
-        left_clip = np.where(fin_edges[:-1] - orig_edges[0] < 0, 0, 1)
-        right_clip = np.where(orig_edges[-1] - fin_edges[1:] < 0, 0, 1)
-        keep_overlapping_matrix = left_clip * right_clip
+        # first, figure out what output bins cover wavelengths outside the span of
+        # input bins. these bins should have fluxes set to nan (or whatever the
+        # fill val is.) and can be skipped
+        min_idx = 0
+        max_idx = None
 
-        resamp_mat *= keep_overlapping_matrix[:, np.newaxis]
+        low_out_of_range = np.where(output_bin_edges < input_bin_edges[0])[0]
+        if len(low_out_of_range) > 0:  # if any bins below wavelength range
+            min_idx = low_out_of_range[-1] + 1
+            output_fluxes[:min_idx] = fill_val
+            if errs is not None:
+                output_errs[:min_idx] = fill_val
 
-        return resamp_mat.value
+        high_out_of_range = np.where(output_bin_edges > input_bin_edges[-1])[0]
+        if len(high_out_of_range) > 0:
+            max_idx = high_out_of_range[0] - 1
+            output_fluxes[max_idx:] = fill_val
+            if errs is not None:
+                output_errs[max_idx:] = fill_val
+
+        clipped_output_centers = output_bin_centers[min_idx:max_idx]
+
+        # find the index of the first input bin that intersects the first
+        # in-range output bin.
+        first_output_edge = output_bin_edges[min_idx]
+
+        idx_last_overlapping_bin = np.where(input_bin_edges[1:] > first_output_edge)[0][0]
+
+        # iterate over each output bin in wavelength range of input bins
+        for i, output_bin in enumerate(clipped_output_centers):
+
+            i = i + min_idx  # index in orig, unclipped array
+
+            bin_start, bin_stop = output_bin_edges[i], output_bin_edges[i+1]
+
+            # the first at least partially overlapping bin was determined in the
+            # last iteration (or by the initial clipping, if i=0)
+            first_bin = idx_last_overlapping_bin
+
+            # keep checking bins, starting at the one after we know overlaps first,
+            # and stop when the back edge of an input bin overlaps the front
+            # edge of this output bin.
+            while input_bin_edges[idx_last_overlapping_bin + 1] < bin_stop:
+                idx_last_overlapping_bin += 1
+
+            # if the front edge of the last overlapping bin terminates in this
+            # output bin, don't check it next time
+            final_bin = idx_last_overlapping_bin
+
+            if input_bin_edges[idx_last_overlapping_bin + 1] <= bin_stop:
+                idx_last_overlapping_bin = idx_last_overlapping_bin + 1
+
+            # now, calculate fluxes and errors
+
+            # if only one input bin covers this output bin
+            # flux_j=p_ij*w_i*f_i/p_ij*w_i = f_i - f_j=f_i, err_j=err_i
+            if final_bin == first_bin:
+                output_fluxes[i] = input_bin_fluxes[first_bin]
+                if errs is not None:
+                    output_errs[i] = errs[first_bin]
+
+            # otherwise, figure out the contribution from each overlapping
+            # input bin to calculate the final flux in the output bin.
+            else:
+                # the first edges of each overlapping input bin
+                first_edges = input_bin_edges[first_bin:final_bin+1]
+                # the final edges of each overlapping input bin
+                second_edges = input_bin_edges[first_bin+1:final_bin+2]
+
+                # to calculate the overlap area, of input on output, we
+                # want to only deal with input bin's leading edges if they are
+                # inside the output bin. otherwise, they are bounded by the
+                # output bin edges. temporarily set the last edges to the output
+                # bin bounds and then reset them at the end
+                first_edges_orig_first = first_edges[0]
+                first_edges[0] = bin_start
+                second_edges_orig_last = second_edges[-1]
+                second_edges[-1] = bin_stop
+
+                p_ij = second_edges - first_edges
+
+                # reset back
+                first_edges[0] = first_edges_orig_first
+                second_edges[-1] = second_edges_orig_last
+
+                sum_pij = np.sum(p_ij)
+
+                final_flux = (np.sum(input_bin_fluxes[first_bin:final_bin+1] * p_ij)) / sum_pij
+                output_fluxes[i] = final_flux
+
+                if errs is not None:
+                    final_err = np.sum((errs[first_bin:final_bin+1] * p_ij) ** 2) / (sum_pij * sum_pij)
+                    output_errs[i] = np.sqrt(final_err)
+
+        if errs is not None:
+            output_errs = InverseVariance(np.reciprocal(output_errs))
+
+        return (output_fluxes, output_errs)
 
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
@@ -143,12 +231,10 @@ class FluxConservingResampler(ResamplerBase):
 
         Returns
         -------
-        resample_spectrum : `~specutils.Spectrum1D`
+        resampled_spectrum : `~specutils.Spectrum1D`
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
 
-        # Check if units on original spectrum and new wavelength (if defined)
-        # match
         if isinstance(fin_spec_axis, Quantity):
             if orig_spectrum.spectral_axis.unit != fin_spec_axis.unit:
                 raise ValueError("Original spectrum spectral axis grid and new"
@@ -157,64 +243,55 @@ class FluxConservingResampler(ResamplerBase):
         if not isinstance(fin_spec_axis, SpectralAxis):
             fin_spec_axis = SpectralAxis(fin_spec_axis)
 
-        # todo: Would be good to return uncertainty in type it was provided?
-        # todo: add in weighting options
-
         # Get provided uncertainty into variance
         if orig_spectrum.uncertainty is not None:
             pixel_uncer = orig_spectrum.uncertainty.represent_as(VarianceUncertainty).array
         else:
             pixel_uncer = None
 
+        # convert unit
         orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
-        resample_grid = self._resample_matrix(orig_axis_in_fin, fin_spec_axis)
 
-        # Now for some broadcasting magic to handle multi dimensional flux inputs
-        # Essentially this part is inserting length one dimensions as fillers
-        # For example, if we have a (5,6,10) input flux, and an output grid
-        # of 3, flux will be broadcast to (5,6,1,10) and resample_grid will
-        # Be broadcast to (1,1,3,10).  The sum then reduces down the 10, the
-        # original dispersion grid, leaving 3, the new dispersion grid, as
-        # the last index.
-        new_flux_shape = list(orig_spectrum.flux.shape)
-        new_flux_shape.insert(-1, 1)
-        in_flux = orig_spectrum.flux.reshape(new_flux_shape)
+        # handle multi dimensional flux inputs
+        if orig_spectrum.flux.ndim >= 2:
 
-        ones = [1] * len(orig_spectrum.flux.shape[:-1])
-        new_shape_resample_grid = ones + list(resample_grid.shape)
-        resample_grid = resample_grid.reshape(new_shape_resample_grid)
+            # the output fluxes and errs should have the same shape as the input
+            # except for the last axis, which should be the size of the new
+            # spectral axis
+            new_shape = tuple(list(orig_spectrum.shape[0:-1]) +
+                              [len(fin_spec_axis)])
 
-        # Calculate final flux
-        out_flux = np.sum(in_flux * resample_grid, axis=-1) / np.sum(
-            resample_grid, axis=-1)
+            # make output matricies
+            output_fluxes = np.zeros(shape=new_shape)
+            output_errs = np.zeros(shape=new_shape)
 
-        # Calculate output uncertainty
-        if pixel_uncer is not None:
-            pixel_uncer = pixel_uncer.reshape(new_flux_shape)
+            for index, row in np.ndenumerate(orig_spectrum.flux[..., 0]):
 
-            out_variance = np.sum(pixel_uncer * resample_grid**2, axis=-1) / np.sum(
-                resample_grid, axis=-1)**2
-            out_uncertainty = InverseVariance(np.reciprocal(out_variance))
+                orig_fluxes = orig_spectrum.flux[index]
+                orig_uncer = pixel_uncer[index]
+
+                new_f, new_e = self._fluxc_resample(input_bin_centers=orig_axis_in_fin,
+                                                    output_bin_centers=fin_spec_axis,
+                                                    input_bin_fluxes=orig_fluxes,
+                                                    errs=orig_uncer)
+                output_fluxes[index] = new_f
+                output_errs[index] = new_e.array
+
+            new_errs = InverseVariance(output_errs)
+
         else:
-            out_uncertainty = None
+            # calculate new fluxes and errors
+            output_fluxes, new_errs = self._fluxc_resample(input_bin_centers=orig_axis_in_fin,
+                                                           output_bin_centers=fin_spec_axis,
+                                                           input_bin_fluxes=orig_spectrum.flux,
+                                                           errs=pixel_uncer)
 
-        # nan-filling happens by default - replace with zeros if requested:
-        if self.extrapolation_treatment == 'zero_fill':
-            origedges = orig_spectrum.spectral_axis.bin_edges
-            off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
-            out_flux[off_edges] = 0
-            if out_uncertainty is not None:
-                out_uncertainty.array[off_edges] = 0
+        output_fluxes = output_fluxes << orig_spectrum.flux.unit
+        fin_spec_axis = np.array(fin_spec_axis) << orig_spectrum.spectral_axis.unit
 
-        # todo: for now, use the units from the pre-resampled
-        # spectra, although if a unit is defined for fin_spec_axis and it doesn't
-        # match the input spectrum it won't work right, will have to think
-        # more about how to handle that... could convert before and after
-        # calculation, which is probably easiest. Matrix math algorithm is
-        # geometry based, so won't work to just let quantity math handle it.
-        resampled_spectrum = Spectrum1D(flux=out_flux,
-                                        spectral_axis=np.array(fin_spec_axis) * orig_spectrum.spectral_axis.unit,
-                                        uncertainty=out_uncertainty)
+        resampled_spectrum = Spectrum1D(flux=output_fluxes,
+                                        spectral_axis=fin_spec_axis,
+                                        uncertainty=new_errs)
 
         return resampled_spectrum
 
@@ -348,13 +425,13 @@ class SplineInterpolatedResampler(ResamplerBase):
         """
         orig_axis_in_new = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
         flux_spline = CubicSpline(orig_axis_in_new.value, orig_spectrum.flux.value,
-                                   extrapolate=self.extrapolation_treatment != 'nan_fill')
+                                  extrapolate=self.extrapolation_treatment != 'nan_fill')
         out_flux_val = flux_spline(fin_spec_axis.value)
 
         new_unc = None
         if orig_spectrum.uncertainty is not None:
             unc_spline = CubicSpline(orig_axis_in_new.value, orig_spectrum.uncertainty.array,
-                                       extrapolate=self.extrapolation_treatment != 'nan_fill')
+                                     extrapolate=self.extrapolation_treatment != 'nan_fill')
             out_unc_val = unc_spline(fin_spec_axis.value)
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_val, unit=orig_spectrum.unit)
 

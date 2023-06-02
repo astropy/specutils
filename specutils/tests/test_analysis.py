@@ -84,7 +84,7 @@ def test_line_flux_masked():
 
     # With flux conserving resampler
     result = line_flux(spectrum_masked, mask_interpolation=FluxConservingResampler)
-    assert quantity_allclose(result.value, 720.61116, atol=0.001)
+    assert quantity_allclose(result.value, 720.52992, atol=0.001)
 
 
 def test_equivalent_width():

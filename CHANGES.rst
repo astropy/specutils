@@ -6,6 +6,7 @@ New Features
 
 Bug Fixes
 ^^^^^^^^^
+- Reimplementation of FluxConservingResampler. It is now faster and yields more accurate results. [#1060]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -38,6 +39,7 @@ Bug Fixes
 
 - Fix SNR calculations with both masks and regions. [#1044]
 
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -53,6 +55,7 @@ Other Changes and Additions
 
 - JWST X1D reader will no longer raise a ``UnitWarning`` for surface brightness
   error. [#1050]
+
 
 1.9.1 (2022-11-22)
 ------------------
