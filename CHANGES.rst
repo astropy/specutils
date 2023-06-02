@@ -11,6 +11,9 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- When creating a Spectrum1D object, it is not enforced that the spectral axis is sorted and either
+  strictly increasing or decreasing. [#1061]
+
 1.10.0 (2023-04-05)
 -------------------
 
