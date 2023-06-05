@@ -175,7 +175,7 @@ def test_expanded_grid_interp_spline():
 def test_resample_edges(edgetype, lastvalue, all_resamplers):
     input_spectrum = Spectrum1D(spectral_axis=[2, 4, 12, 16, 20] * u.micron,
                                 flux=[1, 3, 7, 6, 20] * u.mJy)
-    resamp_grid = [1, 3, 7, 6, 20, 100] * u.micron
+    resamp_grid = [1, 3, 7, 16, 20, 100] * u.micron
 
     resampler = all_resamplers(edgetype)
     resampled = resampler(input_spectrum, resamp_grid)

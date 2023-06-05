@@ -288,6 +288,25 @@ class OneDSpectrumMixin():
 
         raise u.UnitConversionError(f"WCS units incompatible: {unit} and {orig_unit}.")
 
+    def _check_strictly_increasing_decreasing(self):
+        """
+        Check that the self._spectral_axis is strictly increasing or decreasing
+        and raise an error if its not.
+
+        """
+
+        spec_axis = self._spectral_axis
+
+        sorted_increasing = np.all(spec_axis[1:] >= spec_axis[:-1])
+        if sorted_increasing:  # check increasing first, probably most common case
+            self._spectral_axis_direction = 'increasing'
+            return True
+        sorted_decreasing = np.all(spec_axis[1:] <= spec_axis[:-1])
+        if sorted_decreasing:
+            self._spectral_axis_direction = 'decreasing'
+            return True
+        return False
+
 
 class InplaceModificationMixin:
     # Example methods follow to demonstrate how methods can be written to be

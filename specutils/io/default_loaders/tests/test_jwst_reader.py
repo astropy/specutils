@@ -24,7 +24,12 @@ else:
 
 def create_spectrum_hdu(data_len, srctype=None, ver=1, name='EXTRACT1D'):
     """Mock a JWST x1d BinTableHDU"""
+    np.random.seed(20)
     data = np.random.random((data_len, 5))
+
+    # make sure spectral axis is sorted
+    data = data[data[:, 0].argsort()]
+
     table = Table(data=data, names=['WAVELENGTH', 'FLUX', 'ERROR', 'SURF_BRIGHT',
         'SB_ERROR'])
 
