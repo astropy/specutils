@@ -4,10 +4,10 @@ spectral features.
 """
 import warnings
 
-import numpy as np
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyDeprecationWarning
 import astropy.uncertainty as unc
+import numpy as np
 
 from ..spectra import SpectralRegion
 from ..manipulation import extract_region
@@ -122,11 +122,13 @@ def _centroid_single_region(spectrum, region=None, analytic=False):
         if spectrum.uncertainty is None:
             centroid.uncertainty = None
         else:
-            N = np.sum(flux)
-            s2 = np.sum(flux_uncert**2*(dispersion-centroid)**2)*N**-2
+            N = np.sum(flux, axis=-1)
+            # Looks overcomplicated, but gives us the right shape to match flux_uncert
+            diff = np.subtract.outer(dispersion, centroid.transpose()).transpose()
+            s2 = np.sum(flux_uncert**2 * diff**2, axis=-1)*N**-2
 
             # centroid uncertainty, fractionally added in quadrature of numerator and denom
-            centroid.uncertainty = np.sqrt(s2)
+            centroid.uncertainty = np.sqrt(s2).to(spectrum.spectral_axis.unit)
             centroid.uncertainty_type = 'stddev'
     else:
         # Convert flux to an astropy.uncertainties normal distribution
