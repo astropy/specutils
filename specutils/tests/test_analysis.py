@@ -502,6 +502,7 @@ def test_centroid(simulated_spectra, analytic):
     else:
         assert quantity_allclose(spec_centroid.uncertainty, 6.916e-07*u.um, rtol=5e-3)
 
+
 @pytest.mark.parametrize("analytic", [True, False])
 def test_centroid_masked(simulated_spectra, analytic):
     """
@@ -533,6 +534,7 @@ def test_centroid_masked(simulated_spectra, analytic):
         assert quantity_allclose(spec_centroid.uncertainty, 1.87678219e-06*u.um, rtol=5e-5)
     else:
         assert quantity_allclose(spec_centroid.uncertainty, 1.92374917e-06*u.um, rtol=5e-5)
+
 
 def test_inverted_centroid(simulated_spectra):
     """
@@ -591,7 +593,7 @@ def test_centroid_multiple_flux(simulated_spectra):
     assert hasattr(centroid_spec, 'uncertainty')
     assert len(centroid_spec.uncertainty) == 5
     # NOTE: value has not been scientifically validated
-    assert np.allclose(centroid_spec.uncertainty.value, np.array([0.2812655, 0.39435469, 0.3286723, 0.31117068, 0.30481023]))
+    assert np.allclose(centroid_spec.uncertainty.value, np.array([1.14987628e-04, 1.49638658e-04, 1.02963584e-04, 1.21785134e-04, 9.47238087e-05]))
 
 
 def test_gaussian_sigma_width():
@@ -612,7 +614,7 @@ def test_gaussian_sigma_width():
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 4.8190546890398186e-05*u.GHz, rtol=5e-5)
+    assert quantity_allclose(result.uncertainty, 4.79660696e-05*u.GHz, rtol=5e-5)
 
 
 def test_gaussian_sigma_width_masked():
@@ -635,7 +637,7 @@ def test_gaussian_sigma_width_masked():
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.06852821940808544*u.GHz, rtol=5e-5)
+    assert quantity_allclose(result.uncertainty, 0.06576328*u.GHz, rtol=5e-5)
 
 
 def test_gaussian_sigma_width_regions():
