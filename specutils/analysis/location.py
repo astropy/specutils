@@ -125,7 +125,7 @@ def _centroid_single_region(spectrum, region=None, analytic=False):
             N = np.sum(flux, axis=-1)
             # Looks overcomplicated, but gives us the right shape to match flux_uncert
             diff = np.subtract.outer(dispersion, centroid.transpose()).transpose()
-            s2 = np.sum(flux_uncert**2 * diff**2, axis=-1)*N**-2
+            s2 = np.sum(flux_uncert*flux_uncert * diff*diff, axis=-1)/(N*N)
 
             # centroid uncertainty, fractionally added in quadrature of numerator and denom
             centroid.uncertainty = np.sqrt(s2).to(spectrum.spectral_axis.unit)
@@ -134,18 +134,17 @@ def _centroid_single_region(spectrum, region=None, analytic=False):
         # Convert flux to an astropy.uncertainties normal distribution
         flux = unc.normal(flux, std=flux_uncert, n_samples=1000)
 
-        if len(flux.shape) == 2:
-            dispersion = np.tile(dispersion, [flux.shape[0], 1])
-        elif len(flux.shape) > 2:
-            raise ValueError("spectrum must be 1D or 2D")
+        if len(flux.shape) > 1:
+            dispersion = np.tile(dispersion, list(flux.shape[:-1]) + [1,])
 
         # centroid is the flux-weighted mean of the dispersions, the uncertainties
         # need to be scaled to the numerator/denominator, so we'll compute those in advance.
 
-        # the axis=-1 will enable this to run on single-dispersion, single-flux
-        # and single-dispersion, multiple-flux
-        numerator = (flux*dispersion).sum()
-        denom = flux.sum()
+        # the axis=-2 will enable this to run on single-dispersion, single-flux
+        # and single-dispersion, multiple-flux. Not -1 because of the distribution
+        # n_samples axis
+        numerator = (flux*dispersion).sum(axis=-2)
+        denom = flux.sum(axis=-2)
         centroid_dist = numerator/denom
         centroid = centroid_dist.pdf_mean()
         if spectrum.uncertainty is None:

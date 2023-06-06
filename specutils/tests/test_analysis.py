@@ -569,7 +569,8 @@ def test_inverted_centroid_masked(simulated_spectra):
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
 
-def test_centroid_multiple_flux(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_centroid_multiple_flux(simulated_spectra, analytic):
     """
     Test the simple version of the spectral SNR, with multiple flux per single dispersion.
     """
@@ -585,7 +586,7 @@ def test_centroid_multiple_flux(simulated_spectra):
     uncertainty = StdDevUncertainty(0.1*np.random.random(spec.flux.shape)*u.mJy)
     spec.uncertainty = uncertainty
 
-    centroid_spec = centroid(spec, analytic=True)
+    centroid_spec = centroid(spec, analytic=analytic)
     print(centroid_spec.value)
 
     assert np.allclose(centroid_spec.value, np.array([5.46190995, 5.17223565, 5.37778249, 5.51595259, 5.7429066]))
@@ -593,7 +594,10 @@ def test_centroid_multiple_flux(simulated_spectra):
     assert hasattr(centroid_spec, 'uncertainty')
     assert len(centroid_spec.uncertainty) == 5
     # NOTE: value has not been scientifically validated
-    assert np.allclose(centroid_spec.uncertainty.value, np.array([1.14987628e-04, 1.49638658e-04, 1.02963584e-04, 1.21785134e-04, 9.47238087e-05]))
+    if analytic:
+        assert np.allclose(centroid_spec.uncertainty.value, np.array([1.14987628e-04, 1.49638658e-04, 1.02963584e-04, 1.21785134e-04, 9.47238087e-05]))
+    else:
+        assert np.allclose(centroid_spec.uncertainty.value, np.array([1.11040262e-04, 1.49617388e-04, 1.02730951e-04, 1.21124734e-04, 9.62905679e-05]))
 
 
 def test_gaussian_sigma_width():
