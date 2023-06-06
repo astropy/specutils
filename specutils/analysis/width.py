@@ -14,7 +14,6 @@ from . import centroid
 from .utils import computation_wrapper
 
 
-
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm', 'fwzi']
 
 
@@ -235,7 +234,7 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
         spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
         centroid_result = centroid_result[:, np.newaxis]
         centroid_result.uncertainty = centroid_result_uncert[:, np.newaxis] if centroid_result_uncert is not None else None  # noqa
-    
+
     if not analytic:
         centroid_result = unc.normal(centroid_result, std=centroid_result.uncertainty,
                                      n_samples=1000)

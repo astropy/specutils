@@ -651,6 +651,7 @@ def test_gaussian_sigma_width_masked(analytic):
     else:
         assert quantity_allclose(result.uncertainty, 0.05004314*u.GHz, rtol=5e-5)
 
+
 def test_gaussian_sigma_width_regions():
 
     np.random.seed(42)
@@ -737,6 +738,7 @@ def test_gaussian_fwhm(analytic):
     else:
         assert quantity_allclose(result.uncertainty, 8.45467409e-05*u.GHz, rtol=5e-5)
 
+
 @pytest.mark.parametrize("analytic", [True, False])
 def test_gaussian_fwhm_masked(analytic):
 
@@ -763,6 +765,7 @@ def test_gaussian_fwhm_masked(analytic):
         assert quantity_allclose(result.uncertainty, 0.16079604*u.GHz, rtol=5e-5)
     else:
         assert quantity_allclose(result.uncertainty, 0.12264682*u.GHz, rtol=5e-5)
+
 
 @pytest.mark.parametrize('mean', range(3, 8))
 def test_gaussian_fwhm_uncentered(mean):
