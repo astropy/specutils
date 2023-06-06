@@ -3,19 +3,22 @@ A module for analysis tools focused on determining the width of
 spectral features.
 """
 
-import numpy as np
 from astropy.nddata import StdDevUncertainty
 from astropy.stats.funcs import gaussian_sigma_to_fwhm
+import astropy.uncertainty as unc
+import numpy as np
+from scipy.signal import find_peaks, peak_widths
+
 from ..manipulation import extract_region
 from . import centroid
 from .utils import computation_wrapper
-from scipy.signal import find_peaks, peak_widths
+
 
 
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm', 'fwzi']
 
 
-def gaussian_sigma_width(spectrum, regions=None):
+def gaussian_sigma_width(spectrum, regions=None, analytic=False):
     """
     Estimate the width of the spectrum using a second-moment analysis.
 
@@ -42,10 +45,11 @@ def gaussian_sigma_width(spectrum, regions=None):
     The spectrum should be continuum subtracted before being passed to this
     function.
     """
-    return computation_wrapper(_compute_gaussian_sigma_width, spectrum, regions)
+    return computation_wrapper(_compute_gaussian_sigma_width, spectrum, regions,
+                               analytic=analytic)
 
 
-def gaussian_fwhm(spectrum, regions=None):
+def gaussian_fwhm(spectrum, regions=None, analytic=False):
     """
     Estimate the width of the spectrum using a second-moment analysis.
 
@@ -58,7 +62,7 @@ def gaussian_fwhm(spectrum, regions=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the width will be calculated.
 
-    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions : `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
         Region within the spectrum to calculate the FWHM value. If regions is
         `None`, computation is performed over entire spectrum.
 
@@ -72,7 +76,8 @@ def gaussian_fwhm(spectrum, regions=None):
     The spectrum should be continuum subtracted before being passed to this
     function.
     """
-    return computation_wrapper(_compute_gaussian_fwhm, spectrum, regions)
+    return computation_wrapper(_compute_gaussian_fwhm, spectrum, regions,
+                               analytic=analytic)
 
 
 def fwhm(spectrum, regions=None):
@@ -182,12 +187,12 @@ def _compute_fwzi(spectrum, regions=None):
     return find_width(flux)
 
 
-def _compute_gaussian_fwhm(spectrum, regions=None):
+def _compute_gaussian_fwhm(spectrum, regions=None, analytic=False):
     """
     This is a helper function for the above `gaussian_fwhm()` method.
     """
 
-    sigma = _compute_gaussian_sigma_width(spectrum, regions)
+    sigma = _compute_gaussian_sigma_width(spectrum, regions, analytic=analytic)
 
     fwhm = sigma * gaussian_sigma_to_fwhm
     if sigma.uncertainty is not None:
@@ -199,7 +204,7 @@ def _compute_gaussian_fwhm(spectrum, regions=None):
     return fwhm
 
 
-def _compute_gaussian_sigma_width(spectrum, regions=None):
+def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
     """
     This is a helper function for the above `gaussian_sigma_width()` method.
     """
@@ -217,26 +222,38 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
 
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         flux = calc_spectrum.flux[~spectrum.mask]
-        spectral_axis = calc_spectrum.spectral_axis[~spectrum.mask]
+        spectral_axis = calc_spectrum.spectral_axis[~spectrum.mask].quantity
         flux_uncert = flux_uncert[~calc_spectrum.mask]
     else:
         flux = calc_spectrum.flux
-        spectral_axis = calc_spectrum.spectral_axis
+        spectral_axis = calc_spectrum.spectral_axis.quantity
 
-    centroid_result = centroid(spectrum, regions)
+    centroid_result = centroid(spectrum, regions=regions, analytic=analytic)
+    centroid_result_uncert = centroid_result.uncertainty
 
     if flux.ndim > 1:
         spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
-        centroid_result_uncert = centroid_result.uncertainty
         centroid_result = centroid_result[:, np.newaxis]
         centroid_result.uncertainty = centroid_result_uncert[:, np.newaxis] if centroid_result_uncert is not None else None  # noqa
+    
+    if not analytic:
+        centroid_result = unc.normal(centroid_result, std=centroid_result.uncertainty,
+                                     n_samples=1000)
+        flux = unc.normal(flux, std=flux_uncert, n_samples=1000)
 
     dx = (spectral_axis - centroid_result)
-    numerator = np.sum((dx * dx) * flux, axis=-1)
-    denom = np.sum(flux, axis=-1)
+    if analytic:
+        numerator = np.sum((dx * dx) * flux, axis=-1)
+        denom = np.sum(flux, axis=-1)
+    else:
+        # Account for trailing n_samples axis
+        numerator = np.sum((dx * dx) * flux, axis=-2)
+        denom = np.sum(flux, axis=-2)
+
     sigma2 = numerator / denom
     sigma = np.sqrt(sigma2)
-    if centroid_result.uncertainty is not None:
+
+    if analytic and centroid_result.uncertainty is not None:
         # NOTE: until/unless disp_uncert is supported, dx_uncert == centroid_result.uncertainty
         disp_uncert = 0.0 * spectral_axis.unit
         dx_uncert = np.sqrt(disp_uncert**2 + centroid_result.uncertainty**2)
@@ -253,10 +270,18 @@ def _compute_gaussian_sigma_width(spectrum, regions=None):
                                                   denom_uncertsq * denom**-2)
 
         sigma.uncertainty = 0.5 * sigma2_uncert / sigma2 * sigma.unit
+
+    elif not analytic:
+        if centroid_result_uncert is None:
+            sigma_uncertainty = None
+        else:
+            sigma_uncertainty = sigma.pdf_std()
+        sigma = sigma.pdf_mean()
+        sigma.uncertainty = sigma_uncertainty
     else:
         sigma.uncertainty = None
 
-    sigma.uncertainty_type = 'std'
+    sigma.uncertainty_type = 'stddev'
     return sigma
 
 

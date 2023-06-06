@@ -600,7 +600,8 @@ def test_centroid_multiple_flux(simulated_spectra, analytic):
         assert np.allclose(centroid_spec.uncertainty.value, np.array([1.11040262e-04, 1.49617388e-04, 1.02730951e-04, 1.21124734e-04, 9.62905679e-05]))
 
 
-def test_gaussian_sigma_width():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width(analytic):
 
     np.random.seed(42)
 
@@ -613,15 +614,19 @@ def test_gaussian_sigma_width():
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    result = gaussian_sigma_width(spectrum)
+    result = gaussian_sigma_width(spectrum, analytic=analytic)
 
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 4.79660696e-05*u.GHz, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 4.79660696e-05*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 3.59036951e-05*u.GHz, rtol=5e-5)
 
 
-def test_gaussian_sigma_width_masked():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width_masked(analytic):
 
     np.random.seed(42)
 
@@ -636,13 +641,15 @@ def test_gaussian_sigma_width_masked():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty, mask=mask)
 
-    result = gaussian_sigma_width(spectrum)
+    result = gaussian_sigma_width(spectrum, analytic=analytic)
 
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.06576328*u.GHz, rtol=5e-5)
-
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 0.06578261*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 0.05004314*u.GHz, rtol=5e-5)
 
 def test_gaussian_sigma_width_regions():
 
@@ -705,7 +712,8 @@ def test_gaussian_sigma_width_multi_spectrum():
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-def test_gaussian_fwhm():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_fwhm(analytic):
 
     np.random.seed(42)
 
@@ -718,16 +726,19 @@ def test_gaussian_fwhm():
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    result = gaussian_fwhm(spectrum)
+    result = gaussian_fwhm(spectrum, analytic=analytic)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.00011295*u.GHz, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 0.00011295*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 8.45467409e-05*u.GHz, rtol=5e-5)
 
-
-def test_gaussian_fwhm_masked():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_fwhm_masked(analytic):
 
     np.random.seed(42)
 
@@ -742,14 +753,16 @@ def test_gaussian_fwhm_masked():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty, mask=mask)
 
-    result = gaussian_fwhm(spectrum)
+    result = gaussian_fwhm(spectrum, analytic=analytic)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.16074777*u.GHz, rtol=5e-5)
-
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 0.16079604*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 0.12264682*u.GHz, rtol=5e-5)
 
 @pytest.mark.parametrize('mean', range(3, 8))
 def test_gaussian_fwhm_uncentered(mean):
