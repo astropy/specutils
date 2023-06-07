@@ -232,19 +232,15 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
         spectral_axis = calc_spectrum.spectral_axis.quantity
 
     centroid_result = centroid(spectrum, regions=regions, analytic=analytic)
-    if centroid_result.uncertainty is None:
-        centroid_result_uncert = np.zeros_like(centroid_result)
-    else:
-        centroid_result_uncert = centroid_result.uncertainty
 
     if flux.ndim > 1:
         spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
         centroid_result = centroid_result[:, np.newaxis]
-        centroid_result_uncert = centroid_result_uncert[:, np.newaxis] if centroid_result_uncert is not None else None  # noqa
+        centroid_result.uncertainty = centroid_result.uncertainty[:, np.newaxis] # noqa
 
     if not analytic:
         # Convert the centroid and flux values to astropy uncertainty distributions
-        centroid_result = unc.normal(centroid_result, std=centroid_result_uncert,
+        centroid_result = unc.normal(centroid_result, std=centroid_result.uncertainty,
                                      n_samples=1000)
         flux = unc.normal(flux, std=flux_uncert, n_samples=1000)
 
@@ -279,10 +275,7 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
         sigma.uncertainty = 0.5 * sigma2_uncert / sigma2 * sigma.unit
 
     elif not analytic:
-        if centroid_result_uncert is None:
-            sigma_uncertainty = None
-        else:
-            sigma_uncertainty = sigma.pdf_std()
+        sigma_uncertainty = sigma.pdf_std()
         sigma = sigma.pdf_mean()
         sigma.uncertainty = sigma_uncertainty
     else:
