@@ -652,7 +652,8 @@ def test_gaussian_sigma_width_masked(analytic):
         assert quantity_allclose(result.uncertainty, 0.05004314*u.GHz, rtol=5e-5)
 
 
-def test_gaussian_sigma_width_regions():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width_regions(analytic):
 
     np.random.seed(42)
 
@@ -665,25 +666,26 @@ def test_gaussian_sigma_width_regions():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
 
     region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
-    result1 = gaussian_sigma_width(spectrum, regions=region1)
+    result1 = gaussian_sigma_width(spectrum, regions=region1, analytic=analytic)
 
     exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(3*u.GHz, 1*u.GHz)
-    result2 = gaussian_sigma_width(spectrum, regions=region2)
+    result2 = gaussian_sigma_width(spectrum, regions=region2, analytic=analytic)
 
     exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(100*u.GHz, 40*u.GHz)
-    result3 = gaussian_sigma_width(spectrum, regions=region3)
+    result3 = gaussian_sigma_width(spectrum, regions=region3, analytic=analytic)
 
     exp3 = g3.stddev
     assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
-    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3])
+    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3],
+                                       analytic=analytic)
     for model, result in zip((g1, g2, g3), result_list):
         exp = model.stddev
         assert quantity_allclose(result, exp, atol=0.25*exp)
