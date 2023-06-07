@@ -107,9 +107,9 @@ def _centroid_single_region(spectrum, region=None, analytic=False):
         flux_uncert = calc_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
     else:
         # dummy value for uncertainties to avoid extra if-statements when applying mask
-        flux_uncert = np.zeros_like(spectrum.flux)
+        flux_uncert = np.zeros_like(calc_spectrum.flux)
 
-    if hasattr(spectrum, 'mask') and spectrum.mask is not None:
+    if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
         flux = calc_spectrum.flux[~calc_spectrum.mask]
         dispersion = calc_spectrum.spectral_axis[~calc_spectrum.mask].quantity
         flux_uncert = flux_uncert[~calc_spectrum.mask]
