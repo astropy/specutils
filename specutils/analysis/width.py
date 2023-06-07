@@ -208,6 +208,10 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
     This is a helper function for the above `gaussian_sigma_width()` method.
     """
 
+    if not analytic and spectrum.uncertainty is None:
+        raise ValueError("Distribution-based calculation can only be used if"
+                         " spectrum.uncertainty is not None")
+
     if regions is not None:
         calc_spectrum = extract_region(spectrum, regions)
     else:
@@ -228,15 +232,19 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
         spectral_axis = calc_spectrum.spectral_axis.quantity
 
     centroid_result = centroid(spectrum, regions=regions, analytic=analytic)
-    centroid_result_uncert = centroid_result.uncertainty
+    if centroid_result.uncertainty is None:
+        centroid_result_uncert = np.zeros_like(centroid_result)
+    else:
+        centroid_result_uncert = centroid_result.uncertainty
 
     if flux.ndim > 1:
         spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
         centroid_result = centroid_result[:, np.newaxis]
-        centroid_result.uncertainty = centroid_result_uncert[:, np.newaxis] if centroid_result_uncert is not None else None  # noqa
+        centroid_result_uncert = centroid_result_uncert[:, np.newaxis] if centroid_result_uncert is not None else None  # noqa
 
     if not analytic:
-        centroid_result = unc.normal(centroid_result, std=centroid_result.uncertainty,
+        # Convert the centroid and flux values to astropy uncertainty distributions
+        centroid_result = unc.normal(centroid_result, std=centroid_result_uncert,
                                      n_samples=1000)
         flux = unc.normal(flux, std=flux_uncert, n_samples=1000)
 

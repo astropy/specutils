@@ -536,36 +536,45 @@ def test_centroid_masked(simulated_spectra, analytic):
         assert quantity_allclose(spec_centroid.uncertainty, 1.92374917e-06*u.um, rtol=5e-5)
 
 
-def test_inverted_centroid(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_inverted_centroid(simulated_spectra, analytic):
     """
     Ensures the centroid calculation also works for *inverted* spectra - i.e.
     continuum-subtracted absorption lines.
     """
     spectrum = simulated_spectra.s1_um_mJy_e1
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
     spec_centroid_expected = (np.sum(spectrum.flux * spectrum.spectral_axis) /
                               np.sum(spectrum.flux))
 
     spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
-                                   flux=-spectrum.flux)
-    spec_centroid_inverted = centroid(spectrum_inverted, None)
+                                   flux=-spectrum.flux, uncertainty=uncertainty)
+    spec_centroid_inverted = centroid(spectrum_inverted, analytic=analytic)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
 
-def test_inverted_centroid_masked(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_inverted_centroid_masked(simulated_spectra, analytic):
     """
     Ensures the centroid calculation also works for *inverted* spectra with
     masked data - i.e. continuum-subtracted absorption lines.
     """
     spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
     spec_centroid_expected = (np.sum(spectrum.flux[~spectrum.mask] *
                                      spectrum.spectral_axis[~spectrum.mask]) /
                               np.sum(spectrum.flux[~spectrum.mask]))
 
     spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
                                    flux=-spectrum.flux,
-                                   mask=spectrum.mask)
+                                   mask=spectrum.mask,
+                                   uncertainty=uncertainty)
 
-    spec_centroid_inverted = centroid(spectrum_inverted, None)
+    spec_centroid_inverted = centroid(spectrum_inverted, analytic=analytic)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
 
@@ -661,9 +670,11 @@ def test_gaussian_sigma_width_regions(analytic):
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
 
     compound = g1 + g2 + g3
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies),
+                          uncertainty=uncertainty)
 
     region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
     result1 = gaussian_sigma_width(spectrum, regions=region1, analytic=analytic)
@@ -691,7 +702,8 @@ def test_gaussian_sigma_width_regions(analytic):
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-def test_gaussian_sigma_width_multi_spectrum():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width_multi_spectrum(analytic):
 
     np.random.seed(42)
 
@@ -708,7 +720,7 @@ def test_gaussian_sigma_width_multi_spectrum():
 
     spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
-    results = gaussian_sigma_width(spectra)
+    results = gaussian_sigma_width(spectra, analytic=analytic)
 
     expected = (g1.stddev, g2.stddev, g3.stddev)
     for result, exp in zip(results, expected):
@@ -776,9 +788,11 @@ def test_gaussian_fwhm_uncentered(mean):
 
     # Create an uncentered gaussian spectrum for testing
     frequencies = np.linspace(0, 10, 1000) * u.GHz
+    uncertainty=StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          uncertainty=uncertainty)
 
     result = gaussian_fwhm(spectrum)
 

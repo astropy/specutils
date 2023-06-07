@@ -98,6 +98,10 @@ def _centroid_single_region(spectrum, region=None, analytic=False):
     This is a helper function for the above `centroid()` method.
 
     """
+    if not analytic and spectrum.uncertainty is None:
+        raise ValueError("Distribution-based calculation can only be used if"
+                         " spectrum.uncertainty is not None")
+
     if region is not None:
         calc_spectrum = extract_region(spectrum, region)
     else:
