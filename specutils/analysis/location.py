@@ -28,12 +28,12 @@ def centroid(spectrum, regions=None, region=None, analytic=True):
         the propagated uncertainty (as Standard Deviation-style uncertainties).  This uncertainty
         assumes the input uncertainties are uncorrelated.
 
-    regions : `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
 
     analytic : bool, optional
-        Set this flag to ``True`` to use the analytic derivation for the centroid and its
-        uncertainty instead of the default `~astropy.uncertainty` distribution-based method.
+        Set this flag to ``False`` to use the `~astropy.uncertainty` distribution-based
+        calculation for the centroid and its uncertainty instead of the default analytic solution.
 
     Returns
     -------
@@ -81,12 +81,12 @@ def _centroid_single_region(spectrum, region=None, analytic=True):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the centroid will be calculated.
 
-    region : `~specutils.utils.SpectralRegion`
+    region : `~specutils.SpectralRegion`
         Region within the spectrum to calculate the centroid.
 
     analytic : bool, optional
-        Set this flag to ``True`` to use the analytic derivation for the centroid and its
-        uncertainty instead of the default `~astropy.uncertainty` distribution-based method.
+        Set this flag to ``False`` to use the `~astropy.uncertainty` distribution-based
+        calculation for the centroid and its uncertainty instead of the default analytic solution.
 
     Returns
     -------

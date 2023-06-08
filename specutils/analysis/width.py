@@ -30,9 +30,13 @@ def gaussian_sigma_width(spectrum, regions=None, analytic=True):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object over which the width will be calculated.
 
-    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
+
+    analytic : bool, optional
+        Set this flag to ``False`` to use the `~astropy.uncertainty` distribution-based
+        calculation for the width and its uncertainty instead of the default analytic solution.
 
     Returns
     -------
@@ -61,9 +65,13 @@ def gaussian_fwhm(spectrum, regions=None, analytic=True):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the width will be calculated.
 
-    regions : `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the FWHM value. If regions is
         `None`, computation is performed over entire spectrum.
+
+    analytic : bool, optional
+        Set this flag to ``False`` to use the `~astropy.uncertainty` distribution-based
+        calculation for the fwhm and its uncertainty instead of the default analytic solution.
 
     Returns
     -------
@@ -94,7 +102,7 @@ def fwhm(spectrum, regions=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object over which the width will be calculated.
 
-    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the FWHM value. If regions is
         `None`, computation is performed over entire spectrum.
 
@@ -125,7 +133,7 @@ def fwzi(spectrum, regions=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object over which the width will be calculated.
 
-    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the FWZI value. If regions is
         `None`, computation is performed over entire spectrum.
 
