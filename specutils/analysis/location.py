@@ -16,7 +16,7 @@ from ..manipulation import extract_region
 __all__ = ['centroid']
 
 
-def centroid(spectrum, regions=None, region=None, analytic=False):
+def centroid(spectrum, regions=None, region=None, analytic=True):
     """
     Calculate the centroid of a region, or regions, of the spectrum.
 
@@ -70,7 +70,7 @@ def centroid(spectrum, regions=None, region=None, analytic=False):
                 for reg in regions]
 
 
-def _centroid_single_region(spectrum, region=None, analytic=False):
+def _centroid_single_region(spectrum, region=None, analytic=True):
     """
     Calculate the centroid of the spectrum based on the flux in the spectrum.
     The returned quantity object will have a ``.uncertainty`` attribute which

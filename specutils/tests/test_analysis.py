@@ -629,7 +629,7 @@ def test_gaussian_sigma_width(analytic):
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
     if analytic:
-        assert quantity_allclose(result.uncertainty, 4.79660696e-05*u.GHz, rtol=5e-5)
+        assert quantity_allclose(result.uncertainty, 3.83737901e-05*u.GHz, rtol=5e-5)
     else:
         assert quantity_allclose(result.uncertainty, 3.59036951e-05*u.GHz, rtol=5e-5)
 
@@ -656,9 +656,9 @@ def test_gaussian_sigma_width_masked(analytic):
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
     if analytic:
-        assert quantity_allclose(result.uncertainty, 0.06578261*u.GHz, rtol=5e-5)
+        assert quantity_allclose(result.uncertainty, 0.05245744*u.GHz, rtol=5e-5)
     else:
-        assert quantity_allclose(result.uncertainty, 0.05004314*u.GHz, rtol=5e-5)
+        assert quantity_allclose(result.uncertainty, 0.04954785*u.GHz, rtol=5e-5)
 
 
 @pytest.mark.parametrize("analytic", [True, False])
@@ -718,7 +718,14 @@ def test_gaussian_sigma_width_multi_spectrum(analytic):
     flux[1] = g2(frequencies)
     flux[2] = g3(frequencies)
 
-    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    # Add some noise so we don't have flux exactly = 0
+    flux += 0.001*np.random.random(flux.shape)*u.Jy - 0.0005*u.Jy
+
+    if analytic:
+        spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    else:
+        uncertainty = StdDevUncertainty(0.1*np.random.random(flux.shape)*u.Jy)
+        spectra = Spectrum1D(spectral_axis=frequencies, flux=flux, uncertainty=uncertainty)
 
     results = gaussian_sigma_width(spectra, analytic=analytic)
 
@@ -748,7 +755,7 @@ def test_gaussian_fwhm(analytic):
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
     if analytic:
-        assert quantity_allclose(result.uncertainty, 0.00011295*u.GHz, rtol=5e-5)
+        assert quantity_allclose(result.uncertainty, 9.03633701e-05*u.GHz, rtol=5e-5)
     else:
         assert quantity_allclose(result.uncertainty, 8.45467409e-05*u.GHz, rtol=5e-5)
 
@@ -776,9 +783,9 @@ def test_gaussian_fwhm_masked(analytic):
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
     if analytic:
-        assert quantity_allclose(result.uncertainty, 0.16079604*u.GHz, rtol=5e-5)
+        assert quantity_allclose(result.uncertainty, 0.12811291*u.GHz, rtol=5e-5)
     else:
-        assert quantity_allclose(result.uncertainty, 0.12264682*u.GHz, rtol=5e-5)
+        assert quantity_allclose(result.uncertainty, 0.12131201*u.GHz, rtol=5e-5)
 
 
 @pytest.mark.parametrize('mean', range(3, 8))

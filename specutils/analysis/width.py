@@ -17,7 +17,7 @@ from .utils import computation_wrapper
 __all__ = ['gaussian_sigma_width', 'gaussian_fwhm', 'fwhm', 'fwzi']
 
 
-def gaussian_sigma_width(spectrum, regions=None, analytic=False):
+def gaussian_sigma_width(spectrum, regions=None, analytic=True):
     """
     Estimate the width of the spectrum using a second-moment analysis.
 
@@ -48,7 +48,7 @@ def gaussian_sigma_width(spectrum, regions=None, analytic=False):
                                analytic=analytic)
 
 
-def gaussian_fwhm(spectrum, regions=None, analytic=False):
+def gaussian_fwhm(spectrum, regions=None, analytic=True):
     """
     Estimate the width of the spectrum using a second-moment analysis.
 
@@ -203,7 +203,7 @@ def _compute_gaussian_fwhm(spectrum, regions=None, analytic=False):
     return fwhm
 
 
-def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
+def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=True):
     """
     This is a helper function for the above `gaussian_sigma_width()` method.
     """
@@ -235,8 +235,12 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
 
     if flux.ndim > 1:
         spectral_axis = np.broadcast_to(spectral_axis, flux.shape, subok=True)
+        if centroid_result.uncertainty is None:
+            temp_uncertainty = None
+        else:
+            temp_uncertainty = centroid_result.uncertainty[:, np.newaxis]
         centroid_result = centroid_result[:, np.newaxis]
-        centroid_result.uncertainty = centroid_result.uncertainty[:, np.newaxis] # noqa
+        centroid_result.uncertainty = temp_uncertainty
 
     if not analytic:
         # Convert the centroid and flux values to astropy uncertainty distributions
@@ -254,32 +258,33 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=False):
         denom = np.sum(flux, axis=-2)
 
     sigma2 = numerator / denom
-    sigma = np.sqrt(sigma2)
 
-    if analytic and centroid_result.uncertainty is not None:
-        # NOTE: until/unless disp_uncert is supported, dx_uncert == centroid_result.uncertainty
-        disp_uncert = 0.0 * spectral_axis.unit
-        dx_uncert = np.sqrt(disp_uncert**2 + centroid_result.uncertainty**2)
-        # dx_uncert = centroid_result.uncertainty
+    if analytic:
+        sigma = np.sqrt(sigma2)
+        if centroid_result.uncertainty is not None:
+            # NOTE: until/unless disp_uncert is supported, dx_uncert == centroid_result.uncertainty
+            disp_uncert = 0.0 * spectral_axis.unit
+            dx_uncert = np.sqrt(disp_uncert**2 + centroid_result.uncertainty**2)
 
-        # uncertainty for each term in the numerator sum
-        num_term_uncerts = dx * dx * flux * np.sqrt(2*(dx_uncert/dx)**2 + (flux_uncert/flux)**2)
-        # uncertainty (squared) for the numerator, added in quadrature
-        num_uncertsq = np.sum(num_term_uncerts**2, axis=-1)
-        # uncertainty (squared) for the denomenator
-        denom_uncertsq = np.sum(flux_uncert**2)
+            # Uncertainty for each term in the numerator sum
+            num_term_uncerts = dx * dx * flux * np.sqrt(2*(dx_uncert/dx)**2 + (flux_uncert/flux)**2)
+            # uncertainty (squared) for the numerator, added in quadrature
+            num_uncertsq = np.sum(num_term_uncerts**2, axis=-1)
+            # uncertainty (squared) for the denomenator
+            denom_uncertsq = np.sum(flux_uncert**2)
 
-        sigma2_uncert = numerator/denom * np.sqrt(num_uncertsq * numerator**-2 +
-                                                  denom_uncertsq * denom**-2)
+            sigma2_uncert = numerator/denom * np.sqrt(num_uncertsq * numerator**-2 +
+                                                      denom_uncertsq * denom**-2)
 
-        sigma.uncertainty = 0.5 * sigma2_uncert / sigma2 * sigma.unit
-
-    elif not analytic:
-        sigma_uncertainty = sigma.pdf_std()
-        sigma = sigma.pdf_mean()
-        sigma.uncertainty = sigma_uncertainty
+            sigma.uncertainty = 0.5 * sigma2_uncert / sigma2 * sigma
+        else:
+            sigma.uncertainty = None
     else:
-        sigma.uncertainty = None
+        # Need to do pdf_mean and pdf_std here to avoid negatives in sqrt
+        sigma2_uncertainty = sigma2.pdf_std()
+        sigma2 = sigma2.pdf_mean()
+        sigma = np.sqrt(sigma2)
+        sigma.uncertainty = 0.5 * sigma * sigma2_uncertainty / sigma2
 
     sigma.uncertainty_type = 'stddev'
     return sigma
