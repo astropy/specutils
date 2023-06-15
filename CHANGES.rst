@@ -60,6 +60,8 @@ Other Changes and Additions
   error. [#1050]
 
 
+- Spectrum1D math operators no longer perform illogical math. [#998]
+
 1.9.1 (2022-11-22)
 ------------------
 

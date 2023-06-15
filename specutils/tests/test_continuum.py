@@ -60,7 +60,8 @@ def test_continuum_calculation():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_generic_continuum(spectrum)
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    spectrum_normalized = spectrum / denom
 
     y_continuum_fitted_expected = np.array([1.15139925, 0.98509363, 0.73700614, 1.00911864, 0.913129,
                                             0.93145533, 0.94904202, 1.04162879, 0.90851397, 0.9494352,
@@ -90,8 +91,11 @@ def test_continuum_full_window():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit_orig = fit_continuum(spectrum_smoothed)
 
-    sp_normalized = spectrum / g1_fit(spectrum.spectral_axis)
-    sp_normalized_orig = spectrum / g1_fit_orig(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    sp_normalized = spectrum / denom
+
+    denom_orig = Spectrum1D(flux=g1_fit_orig(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    sp_normalized_orig = spectrum / denom_orig
 
     assert np.allclose(sp_normalized.flux.value, sp_normalized_orig.flux.value, atol=1e-5)
 
@@ -112,7 +116,8 @@ def test_continuum_spectral_region():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_continuum(spectrum_smoothed, window=region)
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    spectrum_normalized = spectrum / denom
 
     y_continuum_fitted_expected = np.array([1.15139925, 0.98509363, 0.73700614, 1.00911864, 0.913129,
                                             0.93145533, 0.94904202, 1.04162879, 0.90851397, 0.9494352,
@@ -140,7 +145,8 @@ def test_continuum_window_no_noise():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_continuum(spectrum_smoothed, window=(0.*u.um, 5.*u.um))
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    spectrum_normalized = spectrum / denom
 
     y_continuum_fitted_expected = np.ones(shape=(spectrum_normalized.spectral_axis.shape))
 
@@ -153,7 +159,8 @@ def test_continuum_window_no_noise():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_continuum(spectrum_smoothed, window=(8.*u.um, 10.*u.um))
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    spectrum_normalized = spectrum / denom
 
     # Check fit over the red end.
     assert np.allclose(spectrum_normalized.flux.value[160:], y_continuum_fitted_expected[160:],
@@ -179,7 +186,8 @@ def test_double_continuum_window():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    spectrum_normalized = spectrum / denom
 
     y_continuum_fitted_expected = np.ones(shape=(spectrum_normalized.spectral_axis.shape))
 
@@ -214,7 +222,8 @@ def test_double_continuum_window_alternate():
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_continuum(spectrum_smoothed, model=Chebyshev1D(7), window=region)
 
-    spectrum_normalized = spectrum / g1_fit(spectrum.spectral_axis)
+    denom = Spectrum1D(flux=g1_fit(spectrum.spectral_axis), spectral_axis=spectrum.spectral_axis)
+    spectrum_normalized = spectrum / denom
 
     y_continuum_fitted_expected = np.ones(shape=(spectrum_normalized.spectral_axis.shape))
 
