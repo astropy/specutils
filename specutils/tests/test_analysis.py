@@ -466,7 +466,8 @@ def test_snr_derived_masked():
     assert np.allclose(snr_derived(spectrum, [sr, sr2]), [4.01610033, 1.94906157])
 
 
-def test_centroid(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_centroid(simulated_spectra, analytic):
     """
     Test the simple version of the spectral centroid.
     """
@@ -490,16 +491,20 @@ def test_centroid(simulated_spectra):
     # SNR of the whole spectrum
     #
 
-    spec_centroid = centroid(spectrum, None)
+    spec_centroid = centroid(spectrum, analytic=analytic)
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
     assert hasattr(spec_centroid, 'uncertainty')
     # NOTE: value has not been scientifically validated
-    assert quantity_allclose(spec_centroid.uncertainty, 3.91834165e-06*u.um, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(spec_centroid.uncertainty, 7.032035e-07*u.um, rtol=5e-5)
+    else:
+        assert quantity_allclose(spec_centroid.uncertainty, 6.916e-07*u.um, rtol=5e-3)
 
 
-def test_centroid_masked(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_centroid_masked(simulated_spectra, analytic):
     """
     Test centroid with masked spectrum.
     """
@@ -519,49 +524,62 @@ def test_centroid_masked(simulated_spectra):
 
     spec_centroid_expected = np.sum(flux * wavelengths) / np.sum(flux)
 
-    spec_centroid = centroid(spectrum, None)
+    spec_centroid = centroid(spectrum, analytic=analytic)
 
     assert isinstance(spec_centroid, u.Quantity)
     assert np.allclose(spec_centroid.value, spec_centroid_expected.value)
     assert hasattr(spec_centroid, 'uncertainty')
     # NOTE: value has not been scientifically validated
-    assert quantity_allclose(spec_centroid.uncertainty, 1.1052437538307923e-05*u.um, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(spec_centroid.uncertainty, 1.87678219e-06*u.um, rtol=5e-5)
+    else:
+        assert quantity_allclose(spec_centroid.uncertainty, 1.92374917e-06*u.um, rtol=5e-5)
 
 
-def test_inverted_centroid(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_inverted_centroid(simulated_spectra, analytic):
     """
     Ensures the centroid calculation also works for *inverted* spectra - i.e.
     continuum-subtracted absorption lines.
     """
     spectrum = simulated_spectra.s1_um_mJy_e1
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
     spec_centroid_expected = (np.sum(spectrum.flux * spectrum.spectral_axis) /
                               np.sum(spectrum.flux))
 
     spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
-                                   flux=-spectrum.flux)
-    spec_centroid_inverted = centroid(spectrum_inverted, None)
+                                   flux=-spectrum.flux, uncertainty=uncertainty)
+    spec_centroid_inverted = centroid(spectrum_inverted, analytic=analytic)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
 
-def test_inverted_centroid_masked(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_inverted_centroid_masked(simulated_spectra, analytic):
     """
     Ensures the centroid calculation also works for *inverted* spectra with
     masked data - i.e. continuum-subtracted absorption lines.
     """
     spectrum = simulated_spectra.s1_um_mJy_e1_masked
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    spectrum.uncertainty = uncertainty
+
     spec_centroid_expected = (np.sum(spectrum.flux[~spectrum.mask] *
                                      spectrum.spectral_axis[~spectrum.mask]) /
                               np.sum(spectrum.flux[~spectrum.mask]))
 
     spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
                                    flux=-spectrum.flux,
-                                   mask=spectrum.mask)
+                                   mask=spectrum.mask,
+                                   uncertainty=uncertainty)
 
-    spec_centroid_inverted = centroid(spectrum_inverted, None)
+    spec_centroid_inverted = centroid(spectrum_inverted, analytic=analytic)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
 
 
-def test_centroid_multiple_flux(simulated_spectra):
+@pytest.mark.parametrize("analytic", [True, False])
+def test_centroid_multiple_flux(simulated_spectra, analytic):
     """
     Test the simple version of the spectral SNR, with multiple flux per single dispersion.
     """
@@ -577,17 +595,22 @@ def test_centroid_multiple_flux(simulated_spectra):
     uncertainty = StdDevUncertainty(0.1*np.random.random(spec.flux.shape)*u.mJy)
     spec.uncertainty = uncertainty
 
-    centroid_spec = centroid(spec, None)
+    centroid_spec = centroid(spec, analytic=analytic)
+    print(centroid_spec.value)
 
     assert np.allclose(centroid_spec.value, np.array([5.46190995, 5.17223565, 5.37778249, 5.51595259, 5.7429066]))
     assert centroid_spec.unit == u.um
     assert hasattr(centroid_spec, 'uncertainty')
     assert len(centroid_spec.uncertainty) == 5
     # NOTE: value has not been scientifically validated
-    assert np.allclose(centroid_spec.uncertainty.value, np.array([0.2812655, 0.39435469, 0.3286723, 0.31117068, 0.30481023]))
+    if analytic:
+        assert np.allclose(centroid_spec.uncertainty.value, np.array([1.14987628e-04, 1.49638658e-04, 1.02963584e-04, 1.21785134e-04, 9.47238087e-05]))
+    else:
+        assert np.allclose(centroid_spec.uncertainty.value, np.array([1.11040262e-04, 1.49617388e-04, 1.02730951e-04, 1.21124734e-04, 9.62905679e-05]))
 
 
-def test_gaussian_sigma_width():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width(analytic):
 
     np.random.seed(42)
 
@@ -600,15 +623,19 @@ def test_gaussian_sigma_width():
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    result = gaussian_sigma_width(spectrum)
+    result = gaussian_sigma_width(spectrum, analytic=analytic)
 
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 4.8190546890398186e-05*u.GHz, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 3.83737901e-05*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 3.59036951e-05*u.GHz, rtol=5e-5)
 
 
-def test_gaussian_sigma_width_masked():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width_masked(analytic):
 
     np.random.seed(42)
 
@@ -623,15 +650,19 @@ def test_gaussian_sigma_width_masked():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty, mask=mask)
 
-    result = gaussian_sigma_width(spectrum)
+    result = gaussian_sigma_width(spectrum, analytic=analytic)
 
     assert quantity_allclose(result, g1.stddev, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.06852821940808544*u.GHz, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 0.05245744*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 0.04954785*u.GHz, rtol=5e-5)
 
 
-def test_gaussian_sigma_width_regions():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width_regions(analytic):
 
     np.random.seed(42)
 
@@ -639,36 +670,40 @@ def test_gaussian_sigma_width_regions():
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=10*u.GHz, stddev=0.8*u.GHz)
     g2 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=0.3*u.GHz)
     g3 = models.Gaussian1D(amplitude=5*u.Jy, mean=70*u.GHz, stddev=10*u.GHz)
+    uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
 
     compound = g1 + g2 + g3
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies))
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies),
+                          uncertainty=uncertainty)
 
     region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
-    result1 = gaussian_sigma_width(spectrum, regions=region1)
+    result1 = gaussian_sigma_width(spectrum, regions=region1, analytic=analytic)
 
     exp1 = g1.stddev
     assert quantity_allclose(result1, exp1, atol=0.25*exp1)
 
     region2 = SpectralRegion(3*u.GHz, 1*u.GHz)
-    result2 = gaussian_sigma_width(spectrum, regions=region2)
+    result2 = gaussian_sigma_width(spectrum, regions=region2, analytic=analytic)
 
     exp2 = g2.stddev
     assert quantity_allclose(result2, exp2, atol=0.25*exp2)
 
     region3 = SpectralRegion(100*u.GHz, 40*u.GHz)
-    result3 = gaussian_sigma_width(spectrum, regions=region3)
+    result3 = gaussian_sigma_width(spectrum, regions=region3, analytic=analytic)
 
     exp3 = g3.stddev
     assert quantity_allclose(result3, exp3, atol=0.25*exp3)
 
     # Test using a list of regions
-    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3])
+    result_list = gaussian_sigma_width(spectrum, regions=[region1, region2, region3],
+                                       analytic=analytic)
     for model, result in zip((g1, g2, g3), result_list):
         exp = model.stddev
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-def test_gaussian_sigma_width_multi_spectrum():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_sigma_width_multi_spectrum(analytic):
 
     np.random.seed(42)
 
@@ -683,16 +718,24 @@ def test_gaussian_sigma_width_multi_spectrum():
     flux[1] = g2(frequencies)
     flux[2] = g3(frequencies)
 
-    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    # Add some noise so we don't have flux exactly = 0
+    flux += 0.001*np.random.random(flux.shape)*u.Jy - 0.0005*u.Jy
 
-    results = gaussian_sigma_width(spectra)
+    if analytic:
+        spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    else:
+        uncertainty = StdDevUncertainty(0.1*np.random.random(flux.shape)*u.Jy)
+        spectra = Spectrum1D(spectral_axis=frequencies, flux=flux, uncertainty=uncertainty)
+
+    results = gaussian_sigma_width(spectra, analytic=analytic)
 
     expected = (g1.stddev, g2.stddev, g3.stddev)
     for result, exp in zip(results, expected):
         assert quantity_allclose(result, exp, atol=0.25*exp)
 
 
-def test_gaussian_fwhm():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_fwhm(analytic):
 
     np.random.seed(42)
 
@@ -705,16 +748,20 @@ def test_gaussian_fwhm():
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
-    result = gaussian_fwhm(spectrum)
+    result = gaussian_fwhm(spectrum, analytic=analytic)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.00011348006579851353*u.GHz, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 9.03633701e-05*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 8.45467409e-05*u.GHz, rtol=5e-5)
 
 
-def test_gaussian_fwhm_masked():
+@pytest.mark.parametrize("analytic", [True, False])
+def test_gaussian_fwhm_masked(analytic):
 
     np.random.seed(42)
 
@@ -729,13 +776,16 @@ def test_gaussian_fwhm_masked():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty, mask=mask)
 
-    result = gaussian_fwhm(spectrum)
+    result = gaussian_fwhm(spectrum, analytic=analytic)
 
     expected = g1.stddev * gaussian_sigma_to_fwhm
     assert quantity_allclose(result, expected, atol=0.01*u.GHz)
     assert hasattr(result, 'uncertainty')
     # NOTE: value has not been scientifically validated!
-    assert quantity_allclose(result.uncertainty, 0.16688079501948674*u.GHz, rtol=5e-5)
+    if analytic:
+        assert quantity_allclose(result.uncertainty, 0.12811291*u.GHz, rtol=5e-5)
+    else:
+        assert quantity_allclose(result.uncertainty, 0.12131201*u.GHz, rtol=5e-5)
 
 
 @pytest.mark.parametrize('mean', range(3, 8))
@@ -745,9 +795,11 @@ def test_gaussian_fwhm_uncentered(mean):
 
     # Create an uncentered gaussian spectrum for testing
     frequencies = np.linspace(0, 10, 1000) * u.GHz
+    uncertainty=StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+                          uncertainty=uncertainty)
 
     result = gaussian_fwhm(spectrum)
 

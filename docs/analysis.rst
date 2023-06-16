@@ -132,7 +132,13 @@ estimate the center of a spectral feature:
 
 While this example is "pre-subtracted", this function only performs well if the
 contiuum has already been subtracted, as for the other functions above and
-below.
+below. If the input spectrum has an ``uncertainty``, the result returned by
+`~specutils.analysis.centroid` will also have attached ``uncertainty`` and
+``uncertainty_type`` attributes. By default, the centroid and uncertainty results
+given are the analytical solution, but specifying ``analytic=False`` in the input
+to the function will instead return the mean and standard deviation of an
+`~astropy.uncertainty` Monte Carlo distribution generated using the ``uncertainty``
+values of the input spectrum's flux.
 
 
 Moment
@@ -163,7 +169,10 @@ computing a second-moment-based approximation of the standard deviation.
 The `~gaussian_fwhm` function estimates the width of the spectrum at half max,
 again by computing an approximation of the standard deviation.
 
-Both of these functions assume that the spectrum is approximately gaussian.
+Both of these functions assume that the spectrum is approximately gaussian, and
+also have an ``analytic`` input argument that can be set to ``False`` to use
+an `~astropy.uncertainty` Monte Carlo distribution in the same was as
+`specutils.analysis.centroid`.
 
 The function `~fwhm` provides an estimate of the full width of the spectrum at
 half max that does not assume the spectrum is gaussian. It locates the maximum,
