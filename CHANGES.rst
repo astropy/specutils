@@ -4,6 +4,18 @@
 
 - Spectral axis can now be any axis, rather than being forced to be last. See docs
   for more details. [#1033]
+  
+1.12.0 (unreleased)
+-------------------
+
+New Features
+^^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1.11.0 (2023-06-16)
 -------------------
