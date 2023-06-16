@@ -1,15 +1,22 @@
-1.11.0 (Unreleased)
+1.11.0 (2023-06-16)
 -------------------
 
 New Features
 ^^^^^^^^^^^^
 
+- ``wcs1d-fits`` loader now reads and writes boolean masks. [#1051]
+
 Bug Fixes
 ^^^^^^^^^
 - Reimplementation of FluxConservingResampler. It is now faster and yields more accurate results. [#1060]
 
+- Fixed uncertainty calculations in centroid and gaussian width functions, also added an option
+  to use an ``astropy.uncertainty`` distribution instead of the analytic solution. [#1057]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Drastically improved performance of region extraction. [#1048]
 
 - When creating a Spectrum1D object, it is enforced that the spectral axis is sorted and either
   strictly increasing or decreasing. [#1061]
