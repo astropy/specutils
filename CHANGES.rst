@@ -1,33 +1,9 @@
+
 2.0.0 (unreleased)
 ------------------
 
 - Spectral axis can now be any axis, rather than being forced to be last. See docs
   for more details. [#1033]
-
-1.11.0 (Unreleased)
--------------------
-
-New Features
-^^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-- Reimplementation of FluxConservingResampler. It is now faster and yields more accurate results. [#1060]
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-1.12.0 (unreleased)
--------------------
-
-New Features
-^^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1.11.0 (2023-06-16)
 -------------------
