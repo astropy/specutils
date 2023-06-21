@@ -208,6 +208,7 @@ def test_sdss_spspec(tmp_path):
         spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
         assert isinstance(spec, Spectrum1D)
         assert spec.flux.size > 0
+        assert (spec.wavelength[0] / u.AA).value == pytest.approx(3799.268615)
 
     file_path = str(tmp_path / sp_pattern)
     with urllib.request.urlopen(url) as response:
