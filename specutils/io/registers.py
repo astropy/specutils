@@ -26,7 +26,7 @@ def _astropy_has_priorities():
 
 
 def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
-                priority=0, force=False, opt_in_spectrumlist=True, verbose=False):
+                priority=0, force=False, autogenerate_spectrumlist=True, verbose=False):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
     file reading.
@@ -51,9 +51,9 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
     force : bool, optional
         Whether to override any existing function if already present.
         Default is ``False``. Passed down to astropy registry.
-    opt_in_spectrumlist : bool, optional
-        Whether to register a SpectrumList reader for any data_loader that
-        reads Spectrum1D objects.  Default is ``True``.
+    autogenerate_spectrumlist : bool, optional
+        Whether to automatically register a SpectrumList reader for any
+        data_loader that reads Spectrum1D objects.  Default is ``True``.
     verbose : bool
         Print extra info.
 
@@ -110,7 +110,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
 
         # Optionally register a SpectrumList reader for any data_loader that
         # reads Spectrum1D objects.
-        if dtype is Spectrum1D and opt_in_spectrumlist:
+        if dtype is Spectrum1D and autogenerate_spectrumlist:
             def load_spectrum_list(*args, **kwargs):
                 return SpectrumList([ func(*args, **kwargs) ])
 
