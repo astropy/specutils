@@ -323,9 +323,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         handled here.
         """
 
-        if self.flux.ndim > 1 or (type(item) == tuple and item[0] == Ellipsis):
-            if type(item) == tuple:
-                if len(item) == len(self.flux.shape) or item[0] == Ellipsis:
+        if self.flux.ndim > 1 or (isinstance(item, tuple) and item[0] is Ellipsis):
+            if isinstance(item, tuple):
+                if len(item) == len(self.flux.shape) or item[0] is Ellipsis:
                     spec_item = item[-1]
                     if not isinstance(spec_item, slice):
                         if isinstance(item, u.Quantity):
