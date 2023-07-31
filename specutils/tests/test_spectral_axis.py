@@ -172,7 +172,7 @@ def test_change_redshift():
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0))
-    assert type(spec.spectral_axis) == SpectralAxis
+    assert isinstance(spec.spectral_axis, SpectralAxis)
 
     with pytest.warns(
         AstropyDeprecationWarning,
@@ -182,13 +182,13 @@ def test_change_redshift():
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.1))
-    assert type(spec.spectral_axis) == SpectralAxis
+    assert isinstance(spec.spectral_axis, SpectralAxis)
 
     spec = Spectrum1D(spectral_axis=wave, flux=flux, redshift=0.2)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.2))
-    assert type(spec.spectral_axis) == SpectralAxis
+    assert isinstance(spec.spectral_axis, SpectralAxis)
 
     with pytest.warns(
         AstropyDeprecationWarning,
@@ -198,7 +198,7 @@ def test_change_redshift():
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.4))
-    assert type(spec.spectral_axis) == SpectralAxis
+    assert isinstance(spec.spectral_axis, SpectralAxis)
 
 
 def test_no_change_redshift():
@@ -208,13 +208,13 @@ def test_no_change_redshift():
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0))
-    assert type(spec.spectral_axis) == SpectralAxis
+    assert isinstance(spec.spectral_axis, SpectralAxis)
 
     spec.set_redshift_to(0.5)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.5))
-    assert type(spec.spectral_axis) == SpectralAxis
+    assert isinstance(spec.spectral_axis, SpectralAxis)
 
     assert_quantity_allclose(spec.wavelength, wave)
 
