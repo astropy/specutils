@@ -30,7 +30,10 @@ def _sdss_wcs_to_log_wcs(old_wcs):
     claims to be linear, but is logarithmic in base-10.
     The wavelength is given by:
     λ = 10^(w0 + w1 * i)
-    with i being the pixel index starting from 0.
+    with i being the pixel index starting from 0. This formula is documented at
+    https://classic.sdss.org/dr7/products/spectra/read_spSpec.php and appears to
+    be the same across all SDSS-I and SDSS-II data releases (replace dr7 with
+    dr<x> in the above URL).
 
     The FITS standard uses a natural log with a sightly different formulation,
     see WCS Paper 3 (which discusses spectral WCS).
@@ -41,7 +44,7 @@ def _sdss_wcs_to_log_wcs(old_wcs):
     w1 = old_wcs.wcs.cd[0,0]
     crval = 10 ** w0
     cdelt = crval * w1 * np.log(10)
-    cunit = old_wcs.wcs.cunit[0] or Unit('Angstrom')
+    cunit = Unit('Angstrom')
     ctype = "WAVE-LOG"
 
     w = WCS(naxis=1)
@@ -146,6 +149,11 @@ def spec_loader(file_obj, **kwargs):
 def spSpec_loader(file_obj, **kwargs):
     """
     Loader for SDSS-I/II spSpec files.
+
+    The content of these files is documented at
+    https://classic.sdss.org/dr7/dm/flatFiles/spSpec.php, with instructions for
+    reading them at
+    https://classic.sdss.org/dr7/products/spectra/read_spSpec.php.
 
     Parameters
     ----------
