@@ -1,11 +1,17 @@
 2.0.0 (unreleased)
 ------------------
 
+- Spectral axis can now be any axis, rather than being forced to be last. See docs
+  for more details. [#1033]
+
+1.11.0 (Unreleased)
+-------------------
+
 New Features
 ^^^^^^^^^^^^
 
-- Spectral axis can now be any axis, rather than being forced to be last. See docs
-  for more details. [#1033]
+Bug Fixes
+^^^^^^^^^
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
