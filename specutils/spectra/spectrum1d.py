@@ -6,6 +6,7 @@ from astropy import units as u
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
 from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
+from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -228,24 +229,34 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     f"of the corresponding flux axis ({flux.shape[self.spectral_axis_index]})")
 
         # If a WCS is provided, determine which axis is the spectral axis
-        if wcs is not None and hasattr(wcs, "naxis"):
-            if wcs.naxis > 1:
+        if wcs is not None:
+            naxis = None
+            if hasattr(wcs, "naxis"):
+                naxis = wcs.naxis
+            # GWCS doesn't have naxis
+            elif hasattr(wcs, "world_n_dim"):
+                naxis = wcs.world_n_dim
+
+            if naxis is not None and naxis > 1:
                 temp_axes = []
                 phys_axes = wcs.world_axis_physical_types
-                for i in range(len(phys_axes)):
-                    if phys_axes[i] is None:
-                        continue
-                    if phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect":
-                        temp_axes.append(i)
-                if len(temp_axes) != 1:
-                    raise ValueError("Input WCS must have exactly one axis with "
-                                     "spectral units, found {}".format(len(temp_axes)))
-                else:
-                    # Due to FITS conventions, the WCS axes are listed in opposite
-                    # order compared to the data array.
-                    self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
+                if self._spectral_axis_index is None:
+                    for i in range(len(phys_axes)):
+                        if phys_axes[i] is None:
+                            continue
+                        if phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect":
+                            temp_axes.append(i)
+                    if len(temp_axes) != 1:
+                        raise ValueError("Input WCS must have exactly one axis with "
+                                        "spectral units, found {}".format(len(temp_axes)))
+                    else:
+                        # Due to FITS conventions, the WCS axes are listed in opposite
+                        # order compared to the data array.
+                        self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
 
                 if move_spectral_axis is not None:
+                    if isinstance(wcs, GWCS):
+                        raise ValueError("move_spectral_axis cannot be used with GWCS")
                     if isinstance(move_spectral_axis, str):
                         if move_spectral_axis.lower() == 'first':
                             move_to_index = 0
@@ -280,6 +291,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                                             self._spectral_axis_index, move_to_index)
 
                         self._spectral_axis_index = move_to_index
+                print(f"Spectral axis index is {self._spectral_axis_index}")
 
             else:
                 if flux is not None and flux.ndim == 1:

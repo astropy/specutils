@@ -583,9 +583,11 @@ def _jwst_s3d_loader(filename, **kwargs):
             except (ValueError, KeyError):
                 flux_unit = None
 
-            # The spectral axis is first.  We need it last
-            flux_array = hdu.data.T
+            flux_array = hdu.data
             flux = Quantity(flux_array, unit=flux_unit)
+
+            '''
+            # I think this can all be removed now, will test
 
             # Get the wavelength array from the GWCS object which returns a
             # tuple of (RA, Dec, lambda).
@@ -614,6 +616,7 @@ def _jwst_s3d_loader(filename, **kwargs):
                 wcs = WCS(hdu.header)
                 # Swap to match the flux transpose
                 wcs = wcs.swapaxes(-1, 0)
+            '''
 
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
@@ -625,7 +628,7 @@ def _jwst_s3d_loader(filename, **kwargs):
             ext_name = primary_header.get("ERREXT", "ERR")
             err_type = hdulist[ext_name].header.get("ERRTYPE", 'ERR')
             err_unit = hdulist[ext_name].header.get("BUNIT", None)
-            err_array = hdulist[ext_name].data.T
+            err_array = hdulist[ext_name].data
 
             # ERRTYPE can be one of "ERR", "IERR", "VAR", "IVAR"
             # but mostly ERR for JWST cubes
@@ -643,13 +646,10 @@ def _jwst_s3d_loader(filename, **kwargs):
 
             # get mask information
             mask_name = primary_header.get("MASKEXT", "DQ")
-            mask = hdulist[mask_name].data.T
+            mask = hdulist[mask_name].data
 
-            if wcs is not None:
-                spec = Spectrum1D(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask)
-            else:
-                spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta,
-                                  uncertainty=err, mask=mask)
+            spec = Spectrum1D(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask, spectral_axis_index=0)
+
             spectra.append(spec)
 
     return SpectrumList(spectra)
