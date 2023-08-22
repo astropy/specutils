@@ -8,8 +8,6 @@ from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
-from astropy.time import Time
-from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
 
 from ...spectra import Spectrum1D, SpectrumList

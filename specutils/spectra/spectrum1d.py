@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
+from astropy.coordinates import SpectralCoord
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
 from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
@@ -291,7 +292,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                                             self._spectral_axis_index, move_to_index)
 
                         self._spectral_axis_index = move_to_index
-                print(f"Spectral axis index is {self._spectral_axis_index}")
 
             else:
                 if flux is not None and flux.ndim == 1:
@@ -365,8 +365,23 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     spec_axis = self.wcs.spectral.pixel_to_world(
                                     np.arange(self.flux.shape[self.spectral_axis_index]))
             else:
-                spec_axis = self.wcs.pixel_to_world(
-                                np.arange(self.flux.shape[self.spectral_axis_index]))
+                # We now keep the entire GWCS, including spatial information, so we need to include
+                # all axes in the pixel_to_world call. Note that this assumes/requires that the
+                # dispersion is the same at all spatial locations.
+                wcs_args = []
+                for i in range(len(self.flux.shape)):
+                    wcs_args.append(np.zeros(self.flux.shape[self.spectral_axis_index]))
+                # Replace with arange for the spectral axis
+                wcs_args[self.spectral_axis_index] = np.arange(self.flux.shape[self.spectral_axis_index])
+                wcs_args.reverse()
+                temp_coords = self.wcs.pixel_to_world(*wcs_args)
+                # If there are spatial axes, temp_coords will have a SkyCoord and a SpectralCoord
+                if isinstance(temp_coords, list):
+                    for coords in temp_coords:
+                        if isinstance(coords, SpectralCoord):
+                            spec_axis = coords
+                else:
+                    spec_axis = temp_coords
 
             try:
                 if spec_axis.unit.is_equivalent(u.one):

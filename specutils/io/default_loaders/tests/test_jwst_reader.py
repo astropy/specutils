@@ -434,7 +434,7 @@ def test_jwst_s3d_single(tmp_path, cube):
 
     data = Spectrum1D.read(tmpfile, format='JWST s3d')
     assert type(data) is Spectrum1D
-    assert data.shape == (10, 10, 30)
+    assert data.shape == (30, 10, 10)
     assert data.uncertainty is not None
     assert data.mask is not None
     assert data.uncertainty.unit == 'MJy'
