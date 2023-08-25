@@ -584,38 +584,6 @@ def _jwst_s3d_loader(filename, **kwargs):
             flux_array = hdu.data
             flux = Quantity(flux_array, unit=flux_unit)
 
-            '''
-            # I think this can all be removed now, will test
-
-            # Get the wavelength array from the GWCS object which returns a
-            # tuple of (RA, Dec, lambda).
-            # Since the spatial and spectral axes are orthogonal in s3d data,
-            # it is much faster to compute a slice down the spectral axis.
-            grid = grid_from_bounding_box(wcs.bounding_box)[:, :, 0, 0]
-            _, _, wavelength_array = wcs(*grid)
-            _, _, wavelength_unit = wcs.output_frame.unit
-
-            wavelength = Quantity(wavelength_array, unit=wavelength_unit)
-
-            # The GWCS is currently broken for some IFUs, here we work around that
-            wcs = None
-            if wavelength.shape[0] != flux.shape[-1]:
-                # Need MJD-OBS for this workaround
-                if 'MJD-OBS' not in hdu.header:
-                    for key in ('MJD-BEG', 'DATE-OBS'):  # Possible alternatives
-                        if key in hdu.header:
-                            if key.startswith('MJD'):
-                                hdu.header['MJD-OBS'] = hdu.header[key]
-                                break
-                            else:
-                                t = Time(hdu.header[key])
-                                hdu.header['MJD-OBS'] = t.mjd
-                                break
-                wcs = WCS(hdu.header)
-                # Swap to match the flux transpose
-                wcs = wcs.swapaxes(-1, 0)
-            '''
-
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
             header = primary_header.copy()
