@@ -7,13 +7,13 @@ New Features
 - Spectral axis can now be any axis, rather than being forced to be last. See docs
   for more details. [#1033]
 
-- Spectrum1D now keeps the entire input GWCS instead of extracting only the spectral
-  information. [#1074]
+- Spectrum1D now properly handles GWCS input for wcs attribute. [#1074]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- JWST reader no longer transposes the input data cube for 3D data. [#1074]
+- JWST reader no longer transposes the input data cube for 3D data and retains
+  full GWCS information (including spatial). [#1074]
 
 1.12.0 (unreleased)
 -------------------
