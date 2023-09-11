@@ -515,10 +515,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
             warnings.warn('`filter_non_finite` can only be True when fitter is LevMarLSQFitter. Setting to False.')
             filter_non_finite = False
 
-    print('FILTER NON FINITE', filter_non_finite)
-    print(flux)
-    print(weights)
-
     fit_model = fitter(model, dispersion,
                        flux, weights=weights, filter_non_finite=filter_non_finite, **kwargs)
 
