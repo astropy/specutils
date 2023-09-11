@@ -259,7 +259,8 @@ def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
-              exclude_regions=None, weights=None, window=None, get_fit_info=False,
+              exclude_regions=None, weights=None, window=None, filter_non_finite=False,
+              get_fit_info=False,
               **kwargs):
     """
     Fit the input models to the spectrum. The parameter values of the
@@ -288,6 +289,9 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
         Flag to return the ``fit_info`` from the underlying scipy optimizer used
         in the fitting. If True, the returned model will have a ``fit_info``
         key populated in its ``meta`` dictionary.
+    filter_non_finite : bool, optional
+        Flag to filter non-finite value in flux or weight arrrays. Can
+        only be used if fitter is a `LevMarLSQFitter`.
     Additional keyword arguments are passed directly into the call to the
     ``fitter``.
 
@@ -361,6 +365,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
             window=model_window,
             get_fit_info=get_fit_info,
             ignore_units=ignore_units,
+            filter_non_finite=filter_non_finite,
             **kwargs
         )
 
@@ -377,7 +382,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
                exclude_regions=None, weights=None, window=None, get_fit_info=False,
-               ignore_units=False, **kwargs):
+               ignore_units=False, filter_non_finite=False, **kwargs):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
@@ -503,8 +508,19 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
         if weights is not None:
             weights = weights[nmask]
 
+    if filter_non_finite is True:
+        if isinstance(fitter, fitting.LevMarLSQFitter):  # fine, just checking for clarity
+            pass 
+        else:
+            warnings.warn('`filter_non_finite` can only be True when fitter is LevMarLSQFitter. Setting to False.')
+            filter_non_finite = False
+
+    print('FILTER NON FINITE', filter_non_finite)
+    print(flux)
+    print(weights)
+
     fit_model = fitter(model, dispersion,
-                       flux, weights=weights, **kwargs)
+                       flux, weights=weights, filter_non_finite=filter_non_finite, **kwargs)
 
     if hasattr(fitter, 'fit_info') and get_fit_info:
         fit_model.meta['fit_info'] = fitter.fit_info
