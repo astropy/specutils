@@ -6,6 +6,7 @@ import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 from astropy.wcs import WCS
+from numpy.testing import assert_allclose
 
 from .conftest import remote_access
 from ..spectra import Spectrum1D
@@ -123,7 +124,9 @@ def test_create_from_cube():
 
     assert spec.flux.shape == (4,3,2)
     assert spec.flux[3,2,1] == 23*u.Jy
-    assert np.all(spec.spectral_axis.value == np.exp(np.array([1,2])*w.wcs.cdelt[-1]/w.wcs.crval[-1])*w.wcs.crval[-1])
+    assert_allclose(
+        spec.spectral_axis.value,
+        np.exp(np.array([1, 2]) * w.wcs.cdelt[-1] / w.wcs.crval[-1]) * w.wcs.crval[-1])
 
 
 def test_spectral_axis_conversions():
