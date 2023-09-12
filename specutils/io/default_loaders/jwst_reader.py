@@ -445,7 +445,7 @@ def _jwst_s2d_loader(filename, **kwargs):
     slits = None
 
     # Get a list of GWCS objects from the slits
-    with asdf_in_fits.open(filename) as af:
+    with fits.open(filename, memmap=False) as hdulist, asdf_in_fits.open(hdulist) as af:
         # Slits can be listed under "slits", "products" or "exposures"
         if "products" in af.tree:
             slits = "products"
@@ -460,8 +460,6 @@ def _jwst_s2d_loader(filename, **kwargs):
         # Create list of the GWCS objects, one for each slit
         if slits is not None:
             wcslist = [slit["meta"]["wcs"] for slit in af.tree[slits]]
-
-    with fits.open(filename, memmap=False) as hdulist:
 
         primary_header = hdulist["PRIMARY"].header
 
@@ -567,10 +565,8 @@ def _jwst_s3d_loader(filename, **kwargs):
     spectra = []
 
     # Get a list of GWCS objects from the slits
-    with asdf_in_fits.open(filename) as af:
+    with fits.open(filename, memmap=False) as hdulist, asdf_in_fits.open(hdulist) as af:
         wcslist = [af.tree["meta"]["wcs"]]
-
-    with fits.open(filename, memmap=False) as hdulist:
 
         primary_header = hdulist["PRIMARY"].header
 
