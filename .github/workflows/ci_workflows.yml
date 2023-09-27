@@ -38,14 +38,14 @@ jobs:
             toxenv: py311-test
 
           - name: Python 3.11 (MacOS X)
-             os: macos-latest
-             python: 3.11
-             toxenv: py311-test
+            os: macos-latest
+            python: 3.11
+            toxenv: py311-test
 
           - name: Python 3.10
-             os: ubuntu-latest
-             python: 3.10
-             toxenv: py310-test
+            os: ubuntu-latest
+            python: 3.10
+            toxenv: py310-test
 
           - name: Python 3.9
             os: ubuntu-latest
@@ -53,9 +53,9 @@ jobs:
             toxenv: py39-test
 
           - name: Python 3.8 with oldest supported version of key dependencies
-             os: ubuntu-20.04
-             python: 3.8
-             toxenv: py38-test-oldestdeps
+            os: ubuntu-20.04
+            python: 3.8
+            toxenv: py38-test-oldestdeps
 
     steps:
     - name: Checkout code
