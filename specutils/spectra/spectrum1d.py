@@ -45,7 +45,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
         WCS information object that either has a spectral component or is
         only spectral.
-    velocity_convention : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
+    velocity_convention : {"relativistic", "optical", "radio"}
         Convention used for velocity conversions.
     rest_value : `~astropy.units.Quantity`
         Any quantity supported by the standard spectral equivalencies
