@@ -25,27 +25,37 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.10 with astropy data and coverage
+          - name: Python 3.11 with astropy data and coverage
             os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test-cov
+            python: '3.11'
+            toxenv: py311-test-cov
             toxargs: -v
             toxposargs: --remote-data=astropy
+
+          - name: Python 3.11 (Windows)
+            os: windows-latest
+            python: 3.11
+            toxenv: py311-test
+
+          - name: Python 3.11 (MacOS X)
+            os: macos-latest
+            python: 3.11
+            toxenv: py311-test
+
+          - name: Python 3.10
+            os: ubuntu-latest
+            python: '3.10'
+            toxenv: py310-test
+
+          - name: Python 3.9
+            os: ubuntu-latest
+            python: 3.9
+            toxenv: py39-test
 
           - name: Python 3.8 with oldest supported version of key dependencies
             os: ubuntu-20.04
             python: 3.8
             toxenv: py38-test-oldestdeps
-
-          - name: Python 3.9 (Windows)
-            os: windows-latest
-            python: 3.9
-            toxenv: py39-test
-
-          - name: Python 3.8 (MacOS X)
-            os: macos-latest
-            python: 3.8
-            toxenv: py38-test
 
     steps:
     - name: Checkout code
@@ -79,10 +89,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: (Allowed Failure) Python 3.11 with remote data and dev version of key dependencies
+          - name: (Allowed Failure) Python 3.12 with remote data and dev version of key dependencies
             os: ubuntu-latest
-            python: '3.11'
-            toxenv: py311-test-devdeps
+            python: '3.12-dev'
+            toxenv: py312-test-devdeps
             toxposargs: --remote-data=any
 
     steps:
