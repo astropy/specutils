@@ -1,14 +1,22 @@
-1.12.0 (unreleased)
+1.12.0 (2023-10-17)
 -------------------
 
 New Features
 ^^^^^^^^^^^^
 
+- Registering a ``SpectrumList`` reader for a data loader is now optional. [#1068]
+
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed SDSS-I/II spSpec units. [#1066]
+
+- Addressed compatibility with ASDF 3.0 for JWST data. [#1079]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Corrected ``velocity_convention`` options in Spectrum1D docstring. [#1088]
 
 1.11.0 (2023-06-16)
 -------------------
