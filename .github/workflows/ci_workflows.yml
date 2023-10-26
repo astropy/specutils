@@ -27,24 +27,24 @@ jobs:
 
           - name: Python 3.12 with astropy data and coverage
             os: ubuntu-latest
-            python: 3.12
+            python: '3.12'
             toxenv: py312-test-cov
             toxargs: -v
             toxposargs: --remote-data=astropy
 
           - name: Python 3.12 (Windows)
             os: windows-latest
-            python: 3.12
+            python: '3.12'
             toxenv: py312-test
 
           - name: Python 3.12 (MacOS X)
             os: macos-latest
-            python: 3.12
+            python: '3.12'
             toxenv: py312-test
 
           - name: Python 3.11
             os: ubuntu-laters
-            python: 3.11
+            python: '3.11'
             toxenv: py311-test
 
           - name: Python 3.10
