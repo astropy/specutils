@@ -159,19 +159,24 @@ def load_sdss_apStar_list(path, **kwargs):
     return SpectrumList([load_sdss_apStar(path, **kwargs)])
 
 
-@data_loader(
-    "apVisit",
-    identifier=is_filetype("apVisit"),
-    dtype=Spectrum1D,
-    priority=10,
-    extensions=["fits"],
-)
+# @data_loader(
+#    "apVisit",
+#    identifier=is_filetype("apVisit"),
+#    dtype=Spectrum1D,
+#    priority=10,
+#    extensions=["fits"],
+# )
 def load_sdss_apVisit(path, **kwargs):
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")  # TODO
+    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)"
+                       )  # TODO: Andy what are we doing. Is this the unit?
 
-    ordered = lambda d: d[::-1].flatten()
+    # apVisit is already sorted, no longer need to rearrange
+    # ordered method stays to be flattening
+    ordered = lambda d: d.flatten()  # d[::-1].flatten()
 
     with fits.open(path) as image:
+        # create sorted data array
+        t = image
         spectral_axis = u.Quantity(ordered(image[4].data), unit=u.Angstrom)
         print(spectral_axis)
 
@@ -260,6 +265,3 @@ def load_sdss_apVisit_multi(path, **kwargs):
                 ))
 
     return spectra
-
-
-# vim:foldmethod=expr:foldexpr=nvim_treesitter#foldexpr()

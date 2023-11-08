@@ -1,44 +1,47 @@
 r"""°°°
 Hello!
 °°°"""
-#|%%--%%| <EudVIMyXP8|4kasgaDERv>
+#|%%--%%| <EudVIMyXP8|T3cto1hBOd>
 
 %load_ext autoreload
 %autoreload 2
 %matplotlib inline
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import scienceplots
 import astropy.visualization as viz
+from astropy.io import fits
 import numpy as np
 
-#|%%--%%| <4kasgaDERv|HUnn0AELlP>
+import sdss_v
+
+import matplotlib as mpl
+mpl.use("module://matplotlib-backend-kitty")
+
+#|%%--%%| <T3cto1hBOd|HUnn0AELlP>
 r"""°°°
 ApStar.fits -> Spectrum1D
 °°°"""
 # |%%--%%| <HUnn0AELlP|HOCivwpkH2>
-from sdss_v import data_loader, load_sdss_apStar
 
-spectra = load_sdss_apStar(
+spectrum = sdss_v.load_sdss_apStar(
     "/home/riley/Downloads/apStar-1.2-apo25m-2M05560393-0133549.fits")
-print(spectra)
-print(type(spectra))
+print(spectrum)
+print(type(spectrum))
 #|%%--%%| <HOCivwpkH2|FFfDu7vYi7>
 
-mpl.use('module://matplotlib-backend-kitty')
-plt.plot(spectra.spectral_axis,np.transpose(spectra.flux))
+with viz.quantity_support():
+    plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
 plt.show()
 
 #|%%--%%| <FFfDu7vYi7|7EKchx373x>
 r"""°°°
-ApStar -> SpectrumCollection
+ApStar -> SpectrumList 
 
-For some reason, this file doesn't seem to have visit spectra.
+For some reason, this test file doesn't seem to have visit spectra.
 °°°"""
 #|%%--%%| <7EKchx373x|Fru1CCLRFU>
-from sdss_v import load_sdss_apStar_list
 
-spectra = load_sdss_apStar_list(
+spectra = sdss_v.load_sdss_apStar_list(
     "/home/riley/Downloads/apStar-1.2-apo25m-2M05560393-0133549.fits")
 print(spectra)
 print(type(spectra))
@@ -46,24 +49,51 @@ print(type(spectra[0]))
 #|%%--%%| <Fru1CCLRFU|POT0OZmbyH>
 
 spectrum = spectra[0]
-plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
+with viz.quantity_support():
+    plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
 plt.show()
 
 #|%%--%%| <POT0OZmbyH|UyWl2KZ4CB>
 r"""°°°
-apVisit -> Spectrum1D or SpectrumList
+apVisit -> SpectrumList
 °°°"""
 #|%%--%%| <UyWl2KZ4CB|R4cE41Xkjd>
 
-from sdss_v import load_sdss_apVisit
+spectra= sdss_v.load_sdss_apVisit_multi(
+    "/home/riley/Downloads/apVisit-1.2-apo25m-3786-59637-275.fits")
+print(spectra)
+print(type(spectra))
 
-spectrum= load_sdss_apVisit(
+#|%%--%%| <R4cE41Xkjd|45zqQFCHg3>
+
+with viz.quantity_support():
+    for spectrum in spectra:
+        plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
+plt.show()
+#|%%--%%| <45zqQFCHg3|TOEIEGGL9M>
+r"""°°°
+apVisit -> Spectrum1D
+
+compiles all chips into a single spectra by concatenating the 3 chips. Not sure if this is what we're after?
+°°°"""
+#|%%--%%| <TOEIEGGL9M|ApSShh1BtL>
+
+spectrum= sdss_v.load_sdss_apVisit(
     "/home/riley/Downloads/apVisit-1.2-apo25m-3786-59637-275.fits")
 print(spectrum)
 print(type(spectrum))
 
-#|%%--%%| <R4cE41Xkjd|P9bX4Azf27>
+#|%%--%%| <ApSShh1BtL|PkHUQw0tM3>
 
-plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
+with viz.quantity_support():
+    plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
 plt.show()
+
+#|%%--%%| <PkHUQw0tM3|lkl6AQvnpl>
+r"""°°°
+Other testing -- ignore
+°°°"""
+#|%%--%%| <lkl6AQvnpl|ybE9h22peP>
+
+image = fits.open("/home/riley/Downloads/apVisit-1.2-apo25m-3786-59637-275.fits")
 
