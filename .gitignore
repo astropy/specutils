@@ -67,3 +67,4 @@ pip-wheel-metadata/
 .DS_Store
 .vscode
 .pytest_cache
+.jukit
