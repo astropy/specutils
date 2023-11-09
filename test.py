@@ -1,7 +1,7 @@
 r"""°°°
 Hello!
 °°°"""
-#|%%--%%| <EudVIMyXP8|T3cto1hBOd>
+#|%%--%%| <EudVIMyXP8|CSGfqztTds>
 
 %load_ext autoreload
 %autoreload 2
@@ -9,7 +9,7 @@ Hello!
 import matplotlib.pyplot as plt
 import scienceplots
 import astropy.visualization as viz
-from astropy.io import fits
+import astropy.units as u
 import numpy as np
 
 import sdss_v
@@ -17,17 +17,17 @@ import sdss_v
 import matplotlib as mpl
 mpl.use("module://matplotlib-backend-kitty")
 
-#|%%--%%| <T3cto1hBOd|HUnn0AELlP>
+#|%%--%%| <CSGfqztTds|HUnn0AELlP>
 r"""°°°
 ApStar.fits -> Spectrum1D
 °°°"""
-# |%%--%%| <HUnn0AELlP|HOCivwpkH2>
+#|%%--%%| <HUnn0AELlP|1VXcbmCQDE>
 
 spectrum = sdss_v.load_sdss_apStar(
-    "/home/riley/Downloads/apStar-1.2-apo25m-2M05560393-0133549.fits")
+    "/home/riley/uni/rproj/data/apStar-1.2-apo25m-2M05560393-0133549.fits")
 print(spectrum)
 print(type(spectrum))
-#|%%--%%| <HOCivwpkH2|FFfDu7vYi7>
+#|%%--%%| <1VXcbmCQDE|FFfDu7vYi7>
 
 with viz.quantity_support():
     plt.plot(spectrum.spectral_axis,np.transpose(spectrum.flux))
@@ -42,7 +42,7 @@ For some reason, this test file doesn't seem to have visit spectra.
 #|%%--%%| <7EKchx373x|Fru1CCLRFU>
 
 spectra = sdss_v.load_sdss_apStar_list(
-    "/home/riley/Downloads/apStar-1.2-apo25m-2M05560393-0133549.fits")
+    "/home/riley/uni/rproj/data/apStar-1.2-apo25m-2M05560393-0133549.fits")
 print(spectra)
 print(type(spectra))
 print(type(spectra[0]))
@@ -60,7 +60,7 @@ apVisit -> SpectrumList
 #|%%--%%| <UyWl2KZ4CB|R4cE41Xkjd>
 
 spectra= sdss_v.load_sdss_apVisit_multi(
-    "/home/riley/Downloads/apVisit-1.2-apo25m-3786-59637-275.fits")
+    "/home/riley/uni/rproj/data/apVisit-1.2-apo25m-3786-59637-275.fits")
 print(spectra)
 print(type(spectra))
 
@@ -79,7 +79,7 @@ compiles all chips into a single spectra by concatenating the 3 chips. Not sure 
 #|%%--%%| <TOEIEGGL9M|ApSShh1BtL>
 
 spectrum= sdss_v.load_sdss_apVisit(
-    "/home/riley/Downloads/apVisit-1.2-apo25m-3786-59637-275.fits")
+    "/home/riley/uni/rproj/data/apVisit-1.2-apo25m-3786-59637-275.fits")
 print(spectrum)
 print(type(spectrum))
 
@@ -95,5 +95,5 @@ Other testing -- ignore
 °°°"""
 #|%%--%%| <lkl6AQvnpl|ybE9h22peP>
 
-image = fits.open("/home/riley/Downloads/apVisit-1.2-apo25m-3786-59637-275.fits")
+image = fits.open("/home/riley/uni/rproj/data/apVisit-1.2-apo25m-3786-59637-275.fits")
 

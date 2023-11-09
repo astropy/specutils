@@ -73,8 +73,8 @@ def data_loader(label,
 ## HELPERS
 
 # TODO: rewrite into actual function
-is_filetype = (lambda filetype: lambda f, o, *args, **kwargs: o.split("/")[-1].
-               startswith(filetype))
+is_filetype = lambda filetype: lambda f, o, *args, **kwargs: o.split("/")[
+    -1].startswith(filetype)
 
 
 def _wcs_log_linear(naxis, cdelt, crval):
@@ -86,7 +86,8 @@ def _wcs_log_linear(naxis, cdelt, crval):
     return 10**(np.arange(naxis) * cdelt + crval)
 
 
-## APOGEE Vists + Stars
+## APOGEE files
+# TODO: add LSF and wavelength coefficients to metadata?
 @data_loader(
     "apStar",
     identifier=is_filetype(("apStar", "asStar")),
@@ -95,11 +96,11 @@ def _wcs_log_linear(naxis, cdelt, crval):
     extensions=["fits"],
 )
 def load_sdss_apStar(path, data_slice=None, **kwargs):
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")  # TODO
-
+    # intialize slicer
     slicer = slice(*data_slice) if data_slice is not None else slice(None)
 
     with fits.open(path) as image:
+        # Obtain spectral axis from header (HDU[1])
         wavelength = _wcs_log_linear(
             image[1].header["NAXIS1"],
             image[1].header["CDELT1"],
@@ -107,6 +108,8 @@ def load_sdss_apStar(path, data_slice=None, **kwargs):
         )
         spectral_axis = u.Quantity(wavelength, unit=u.Angstrom)
 
+        # Obtain flux and e_flux from header (HDU[1] & HDU[2])
+        flux_unit = _fetch_flux_unit(image[1])
         flux = u.Quantity(image[1].data[slicer], unit=flux_unit)
         e_flux = StdDevUncertainty(image[2].data[slicer])
 
@@ -119,25 +122,7 @@ def load_sdss_apStar(path, data_slice=None, **kwargs):
                 image[0].header[f"SNRVIS{i}"] for i in range(1, 1 + n_visits)
             ])
 
-        # TODO: Consider more explicit key retrieval? Or make this common functionality somewhere
-        meta = OrderedDict([])
-        for key in image[0].header.keys():
-            if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                    "",
-                    "COMMENT",
-                    "CHECKSUM",
-                    "DATASUM",
-                    "NAXIS",
-                    "NAXIS1",
-                    "NAXIS2",
-                    "XTENSION",
-                    "BITPIX",
-                    "PCOUNT",
-                    "GCOUNT",
-                    "TFIELDS",
-            ):
-                continue
-            meta[key.lower()] = image[0].header[key]
+        meta = _fetch_metadata(image)
 
         meta["SNR"] = np.array(snr)[slicer]
         meta["BITMASK"] = image[3].data[slicer]
@@ -167,44 +152,22 @@ def load_sdss_apStar_list(path, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_apVisit(path, **kwargs):
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)"
-                       )  # TODO: Andy what are we doing. Is this the unit?
-
-    # apVisit is already sorted, no longer need to rearrange
-    # ordered method stays to be flattening
-    ordered = lambda d: d.flatten()  # d[::-1].flatten()
+    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
 
     with fits.open(path) as image:
+        flux_unit = _fetch_flux_unit(image[1])
         # create sorted data array
-        t = image
-        spectral_axis = u.Quantity(ordered(image[4].data), unit=u.Angstrom)
+        spectral_axis = u.Quantity(image[4].data.flatten(), unit=u.Angstrom)
         print(spectral_axis)
 
         # Handle chips
-        flux = u.Quantity(ordered(image[1].data), unit=flux_unit)
-        e_flux = StdDevUncertainty(ordered(image[2].data))
+        flux = u.Quantity(image[1].data.flatten(), unit=flux_unit)
+        e_flux = StdDevUncertainty(image[2].data.flatten())
 
-        # TODO: Consider more explicit key retrieval? Or make this common functionality somewhere
-        meta = OrderedDict([])
-        for key in image[0].header.keys():
-            if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                    "",
-                    "COMMENT",
-                    "CHECKSUM",
-                    "DATASUM",
-                    "NAXIS",
-                    "NAXIS1",
-                    "NAXIS2",
-                    "XTENSION",
-                    "BITPIX",
-                    "PCOUNT",
-                    "GCOUNT",
-                    "TFIELDS",
-            ):
-                continue
-            meta[key.lower()] = image[0].header[key]
+        # Get metadata
+        meta = _fetch_metadata(image)
 
-        meta["bitmask"] = ordered(image[3].data)
+        meta["bitmask"] = image[3].data.flatten()
         # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
         #       wavelength coefficients? lsf coefficients?
 
@@ -222,28 +185,11 @@ def load_sdss_apVisit(path, **kwargs):
     extensions=["fits"],
 )
 def load_sdss_apVisit_multi(path, **kwargs):
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")  # TODO
     spectra = SpectrumList()
     with fits.open(path) as image:
-        # TODO: Consider more explicit key retrieval? Or make this common functionality somewhere
-        common_meta = OrderedDict([])
-        for key in image[0].header.keys():
-            if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                    "",
-                    "COMMENT",
-                    "CHECKSUM",
-                    "DATASUM",
-                    "NAXIS",
-                    "NAXIS1",
-                    "NAXIS2",
-                    "XTENSION",
-                    "BITPIX",
-                    "PCOUNT",
-                    "GCOUNT",
-                    "TFIELDS",
-            ):
-                continue
-            common_meta[key.lower()] = image[0].header[key]
+        # Get metadata
+        flux_unit = _fetch_flux_unit(image[1])
+        common_meta = _fetch_metadata(image)
 
         for chip in range(image[1].data.shape[0]):
             spectral_axis = u.Quantity(image[4].data[chip], unit=u.Angstrom)
@@ -265,3 +211,71 @@ def load_sdss_apVisit_multi(path, **kwargs):
                 ))
 
     return spectra
+
+
+def _fetch_metadata(image: fits.hdu.hdulist.HDUList):
+    """
+    Fetch the relevant metadata.
+
+    Global function used in all SDSS-V metadata handling.
+
+    Parameters
+    ----------
+    image
+
+    Returns
+    -------
+    meta
+
+    """
+    # Orderly with an OrderedDict
+    common_meta = OrderedDict([])
+
+    # Loop over all keys to get relevant metadata
+    for key in image[0].header.keys():
+        # exclude these keys
+        if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
+                "",
+                "COMMENT",
+                "CHECKSUM",
+                "DATASUM",
+                "NAXIS",
+                "NAXIS1",
+                "NAXIS2",
+                "XTENSION",
+                "BITPIX",
+                "PCOUNT",
+                "GCOUNT",
+                "TFIELDS",
+        ):
+            continue
+
+        common_meta[key.lower()] = image[0].header[key]  # add key to dict
+
+    return common_meta
+
+
+def _fetch_flux_unit(hdu: fits.hdu.image.ImageHDU):
+    """
+    Fetch the flux unit by accessing the BUNIT key of the given HDU.
+
+    Parameters
+    ----------
+    hdu : flux or e_flux hdu
+
+    Returns
+    -------
+    flux_unit : astropy Units object of flux unit
+
+    """
+    flux_unit = (hdu.header["BUNIT"].replace("Ang", "Angstrom").replace(
+        "(", "").replace(")", "").split(" ")[-2:])
+
+    # TODO: make it so the stupid warning is surpressed
+    """
+
+    """
+    return u.Unit("".join(flux_unit))
+
+
+## BOSS files (specLite, specFull)
