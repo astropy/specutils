@@ -86,133 +86,6 @@ def _wcs_log_linear(naxis, cdelt, crval):
     return 10**(np.arange(naxis) * cdelt + crval)
 
 
-## APOGEE files
-# TODO: add LSF and wavelength coefficients to metadata?
-@data_loader(
-    "apStar",
-    identifier=is_filetype(("apStar", "asStar")),
-    dtype=Spectrum1D,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_apStar(path, data_slice=None, **kwargs):
-    # intialize slicer
-    slicer = slice(*data_slice) if data_slice is not None else slice(None)
-
-    with fits.open(path) as image:
-        # Obtain spectral axis from header (HDU[1])
-        wavelength = _wcs_log_linear(
-            image[1].header["NAXIS1"],
-            image[1].header["CDELT1"],
-            image[1].header["CRVAL1"],
-        )
-        spectral_axis = u.Quantity(wavelength, unit=u.Angstrom)
-
-        # Obtain flux and e_flux from header (HDU[1] & HDU[2])
-        flux_unit = _fetch_flux_unit(image[1])
-        flux = u.Quantity(image[1].data[slicer], unit=flux_unit)
-        e_flux = StdDevUncertainty(image[2].data[slicer])
-
-        snr = [image[0].header["SNR"]]
-        n_visits = image[0].header["NVISITS"]
-        if n_visits > 1:
-            snr.append(
-                snr[0])  # duplicate S/N value for second stacking method
-            snr.extend([
-                image[0].header[f"SNRVIS{i}"] for i in range(1, 1 + n_visits)
-            ])
-
-        meta = _fetch_metadata(image)
-
-        meta["SNR"] = np.array(snr)[slicer]
-        meta["BITMASK"] = image[3].data[slicer]
-
-    return Spectrum1D(spectral_axis=spectral_axis,
-                      flux=flux,
-                      uncertainty=e_flux,
-                      meta=meta)
-
-
-@data_loader(
-    "apStar",
-    identifier=is_filetype(("apStar", "asStar")),
-    dtype=SpectrumList,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_apStar_list(path, **kwargs):
-    return SpectrumList([load_sdss_apStar(path, **kwargs)])
-
-
-# @data_loader(
-#    "apVisit",
-#    identifier=is_filetype("apVisit"),
-#    dtype=Spectrum1D,
-#    priority=10,
-#    extensions=["fits"],
-# )
-def load_sdss_apVisit(path, **kwargs):
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
-
-    with fits.open(path) as image:
-        flux_unit = _fetch_flux_unit(image[1])
-        # create sorted data array
-        spectral_axis = u.Quantity(image[4].data.flatten(), unit=u.Angstrom)
-        print(spectral_axis)
-
-        # Handle chips
-        flux = u.Quantity(image[1].data.flatten(), unit=flux_unit)
-        e_flux = StdDevUncertainty(image[2].data.flatten())
-
-        # Get metadata
-        meta = _fetch_metadata(image)
-
-        meta["bitmask"] = image[3].data.flatten()
-        # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
-        #       wavelength coefficients? lsf coefficients?
-
-    return Spectrum1D(spectral_axis=spectral_axis,
-                      flux=flux,
-                      uncertainty=e_flux,
-                      meta=meta)
-
-
-@data_loader(
-    "apVisit",
-    identifier=is_filetype("apVisit"),
-    dtype=SpectrumList,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_apVisit_multi(path, **kwargs):
-    spectra = SpectrumList()
-    with fits.open(path) as image:
-        # Get metadata
-        flux_unit = _fetch_flux_unit(image[1])
-        common_meta = _fetch_metadata(image)
-
-        for chip in range(image[1].data.shape[0]):
-            spectral_axis = u.Quantity(image[4].data[chip], unit=u.Angstrom)
-            flux = u.Quantity(image[1].data[chip], unit=flux_unit)
-            e_flux = StdDevUncertainty(image[2].data[chip])
-
-            meta = common_meta.copy()
-            meta["BITMASK"] = image[3].data[chip]
-
-            # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
-            #       wavelength coefficients? lsf coefficients?
-
-            spectra.append(
-                Spectrum1D(
-                    spectral_axis=spectral_axis,
-                    flux=flux,
-                    uncertainty=e_flux,
-                    meta=meta,
-                ))
-
-    return spectra
-
-
 def _fetch_metadata(image: fits.hdu.hdulist.HDUList):
     """
     Fetch the relevant metadata.
@@ -278,4 +151,208 @@ def _fetch_flux_unit(hdu: fits.hdu.image.ImageHDU):
     return u.Unit("".join(flux_unit))
 
 
+## APOGEE files
+# TODO: add LSF and wavelength coefficients to metadata?
+# @data_loader(
+#    "apStar",
+#    identifier=is_filetype(("apStar", "asStar")),
+#    dtype=Spectrum1D,
+#    priority=10,
+#    extensions=["fits"],
+# )
+def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
+    # intialize slicer
+    slicer = slice(*data_slice) if data_slice is not None else slice(None)
+
+    with fits.open(path) as image:
+        # Obtain spectral axis from header (HDU[1])
+        wavelength = _wcs_log_linear(
+            image[1].header["NAXIS1"],
+            image[1].header["CDELT1"],
+            image[1].header["CRVAL1"],
+        )
+        spectral_axis = u.Quantity(wavelength, unit=u.Angstrom)
+
+        # Obtain flux and e_flux from header (HDU[1] & HDU[2])
+        flux_unit = _fetch_flux_unit(image[1])
+        flux = u.Quantity(image[1].data[slicer], unit=flux_unit)
+        e_flux = StdDevUncertainty(image[2].data[slicer])
+
+        snr = [image[0].header["SNR"]]
+        n_visits = image[0].header["NVISITS"]
+        if n_visits > 1:
+            snr.append(
+                snr[0])  # duplicate S/N value for second stacking method
+            snr.extend([
+                image[0].header[f"SNRVIS{i}"] for i in range(1, 1 + n_visits)
+            ])
+
+        meta = _fetch_metadata(image)
+
+        meta["SNR"] = np.array(snr)[slicer]
+        meta["BITMASK"] = image[3].data[slicer]
+
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=e_flux,
+                      meta=meta)
+
+    # @data_loader(
+    #    "apStar",
+    #    identifier=is_filetype(("apStar", "asStar")),
+    #    dtype=SpectrumList,
+    #    priority=10,
+    #    extensions=["fits"],
+    # )
+
+
+def load_sdss_apStar_list(path, **kwargs):
+    return SpectrumList([load_sdss_apStar(path, **kwargs)])
+
+
+# @data_loader(
+#    "apVisit",
+#    identifier=is_filetype("apVisit"),
+#    dtype=Spectrum1D,
+#    priority=10,
+#    extensions=["fits"],
+# )
+def load_sdss_apVisit_1D(path, **kwargs):
+    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
+
+    with fits.open(path) as image:
+        flux_unit = _fetch_flux_unit(image[1])
+        # create sorted data array
+        spectral_axis = u.Quantity(image[4].data.flatten(), unit=u.Angstrom)
+        print(spectral_axis)
+
+        # Handle chips
+        flux = u.Quantity(image[1].data.flatten(), unit=flux_unit)
+        e_flux = StdDevUncertainty(image[2].data.flatten())
+
+        # Get metadata
+        meta = _fetch_metadata(image)
+
+        meta["bitmask"] = image[3].data.flatten()
+        # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
+        #       wavelength coefficients? lsf coefficients?
+
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=e_flux,
+                      meta=meta)
+
+    # @data_loader(
+    #    "apVisit",
+    #    identifier=is_filetype("apVisit"),
+    #    dtype=SpectrumList,
+    #    priority=10,
+    #    extensions=["fits"],
+    # )
+
+
+def load_sdss_apVisit_multi(path, **kwargs):
+    spectra = SpectrumList()
+    with fits.open(path) as image:
+        # Get metadata
+        flux_unit = _fetch_flux_unit(image[1])
+        common_meta = _fetch_metadata(image)
+
+        for chip in range(image[1].data.shape[0]):
+            spectral_axis = u.Quantity(image[4].data[chip], unit=u.Angstrom)
+            flux = u.Quantity(image[1].data[chip], unit=flux_unit)
+            e_flux = StdDevUncertainty(image[2].data[chip])
+
+            meta = common_meta.copy()
+            meta["BITMASK"] = image[3].data[chip]
+
+            # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
+            #       wavelength coefficients? lsf coefficients?
+
+            spectra.append(
+                Spectrum1D(
+                    spectral_axis=spectral_axis,
+                    flux=flux,
+                    uncertainty=e_flux,
+                    meta=meta,
+                ))
+
+    return spectra
+
+
 ## BOSS files (specLite, specFull)
+
+
+# @data_loader(
+#    "specFull",
+#    # Note the path definition here is not the same as other SDSS-V data models.
+#    identifier=is_filetype("spec"),
+#    dtype=Spectrum1D,
+#    priority=10,
+#    extensions=["fits"],
+# )
+def load_sdss_specFull_1D(path, **kwargs):
+    with fits.open(path) as image:
+        # Fetch flux, e_flux, spectral axis, and units
+        # TODO: check with data team about loc of BUNIT in specFull/Lite files
+        flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
+        spectral_axis = u.Quantity(10**image[1].data["LOGLAM"],
+                                   unit=u.Angstrom)
+
+        flux = u.Quantity(image[1].data["FLUX"], unit=flux_unit)
+        # no e_flux, so we use inverse of variance
+        ivar = InverseVariance(image[1].data["IVAR"])
+
+        # Fetch metadata
+        # Note: specFull file does not include S/N value, but this gets calculated
+        #       for mwmVisit/mwmStar files when they are created
+        meta = _fetch_metadata(image)
+
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=ivar,
+                      meta=meta)
+
+    # @data_loader(
+    #    "specFull",
+    #    # Note the path definition here is not the same as other SDSS-V data models.
+    #    identifier=is_filetype("spec"),
+    #    dtype=SpectrumList,
+    #    priority=10,
+    #    extensions=["fits"],
+    # )
+
+
+def load_sdss_specFull_list(path, **kwargs):
+    with fits.open(path) as image:
+        spectra = SpectrumList()
+        for i in range(len(image) - 1):
+            # skip non-exposures
+            # TODO: I have no idea about these formats, need to check what's up with them
+            if image[i + 1].name in ("SPALL", "ZALL", "ZLINE"):
+                continue
+
+            # Fetch flux, e_flux, spectral axis, and units
+            # TODO: check with data team about loc of BUNIT in specFull/Lite files
+
+            flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
+            spectral_axis = u.Quantity(10**image[i + 1].data["LOGLAM"],
+                                       unit=u.Angstrom)
+
+            flux = u.Quantity(image[i + 1].data["FLUX"], unit=flux_unit)
+            # no e_flux, so we use inverse of variance
+            ivar = InverseVariance(image[i + 1].data["IVAR"])
+
+            # Fetch metadata
+            # Note: specFull file does not include S/N value, but this gets calculated
+            #       for mwmVisit/mwmStar files when they are created
+            meta = _fetch_metadata(image)
+            meta["name"] = image[i + 1].name
+
+            spectra.append(
+                Spectrum1D(spectral_axis=spectral_axis,
+                           flux=flux,
+                           uncertainty=ivar,
+                           meta=meta))
+
+    return spectra

@@ -7,7 +7,6 @@ from astropy import units as u
 from astropy.nddata import StdDevUncertainty, InverseVariance
 from specutils import SpectralAxis, Spectrum1D, SpectrumList
 from specutils.io.registers import get_loaders_by_extension, io_registry
-
 """
 From the specutils documentation:
 - For spectra that have different sahapes, use SpectrumList.
@@ -27,17 +26,23 @@ def clear_fits_registry_for_spectrum_objects(extension, dtypes):
 
 
 # The registry is full of junk, and many of them don't even work out of the box.
-clear_fits_registry_for_spectrum_objects(
-    extension="fits", dtypes=(Spectrum1D, SpectrumList)
-)
+clear_fits_registry_for_spectrum_objects(extension="fits",
+                                         dtypes=(Spectrum1D, SpectrumList))
 
 # The `specutils.io.registers.data_loader` doesn't respect the `priority` keyword,
 # and does some funky incompatible shit by double-registering things as SpectrumList objects
 from astra import log
 
 
-def data_loader(label, identifier, dtype, extensions=None, priority=0, force=False):
+def data_loader(label,
+                identifier,
+                dtype,
+                extensions=None,
+                priority=0,
+                force=False):
+
     def identifier_wrapper(ident):
+
         def wrapper(*args, **kwargs):
             try:
                 return ident(*args, **kwargs)
@@ -47,10 +52,15 @@ def data_loader(label, identifier, dtype, extensions=None, priority=0, force=Fal
         return wrapper
 
     def decorator(func):
-        io_registry.register_reader(label, dtype, func, priority=priority, force=force)
-        io_registry.register_identifier(
-            label, dtype, identifier_wrapper(identifier), force=force
-        )
+        io_registry.register_reader(label,
+                                    dtype,
+                                    func,
+                                    priority=priority,
+                                    force=force)
+        io_registry.register_identifier(label,
+                                        dtype,
+                                        identifier_wrapper(identifier),
+                                        force=force)
         func.extensions = extensions
 
         @wraps(func)
@@ -63,8 +73,7 @@ def data_loader(label, identifier, dtype, extensions=None, priority=0, force=Fal
 
 
 is_filetype = lambda filetype: lambda f, o, *args, **kwargs: o.split("/")[
-    -1
-].startswith(filetype)
+    -1].startswith(filetype)
 
 
 @data_loader(
@@ -139,25 +148,28 @@ def load_sdss_apStar(path, data_slice=None, **kwargs):
         snr = [image[0].header["SNR"]]
         n_visits = image[0].header["NVISITS"]
         if n_visits > 1:
-            snr.append(snr[0])  # duplicate S/N value for second stacking method
-            snr.extend([image[0].header[f"SNRVIS{i}"] for i in range(1, 1 + n_visits)])
+            snr.append(
+                snr[0])  # duplicate S/N value for second stacking method
+            snr.extend([
+                image[0].header[f"SNRVIS{i}"] for i in range(1, 1 + n_visits)
+            ])
 
         # TODO: Consider more explicit key retrieval? Or make this common functionality somewhere
         meta = OrderedDict([])
         for key in image[0].header.keys():
             if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                "",
-                "COMMENT",
-                "CHECKSUM",
-                "DATASUM",
-                "NAXIS",
-                "NAXIS1",
-                "NAXIS2",
-                "XTENSION",
-                "BITPIX",
-                "PCOUNT",
-                "GCOUNT",
-                "TFIELDS",
+                    "",
+                    "COMMENT",
+                    "CHECKSUM",
+                    "DATASUM",
+                    "NAXIS",
+                    "NAXIS1",
+                    "NAXIS2",
+                    "XTENSION",
+                    "BITPIX",
+                    "PCOUNT",
+                    "GCOUNT",
+                    "TFIELDS",
             ):
                 continue
             meta[key.lower()] = image[0].header[key]
@@ -165,9 +177,10 @@ def load_sdss_apStar(path, data_slice=None, **kwargs):
         meta["SNR"] = np.array(snr)[slicer]
         meta["BITMASK"] = image[3].data[slicer]
 
-    return Spectrum1D(
-        spectral_axis=spectral_axis, flux=flux, uncertainty=e_flux, meta=meta
-    )
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=e_flux,
+                      meta=meta)
 
 
 @data_loader(
@@ -178,7 +191,7 @@ def load_sdss_apStar(path, data_slice=None, **kwargs):
     extensions=["fits"],
 )
 def load_sdss_apStar_list(path, **kwargs):
-    return SpectrumList([load_sdss_apStar(path, **kwargs)])
+    return SpectrumList([load_sdss_apStar_1D(path, **kwargs)])
 
 
 @data_loader(
@@ -204,18 +217,18 @@ def load_sdss_apVisit(path, **kwargs):
         meta = OrderedDict([])
         for key in image[0].header.keys():
             if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                "",
-                "COMMENT",
-                "CHECKSUM",
-                "DATASUM",
-                "NAXIS",
-                "NAXIS1",
-                "NAXIS2",
-                "XTENSION",
-                "BITPIX",
-                "PCOUNT",
-                "GCOUNT",
-                "TFIELDS",
+                    "",
+                    "COMMENT",
+                    "CHECKSUM",
+                    "DATASUM",
+                    "NAXIS",
+                    "NAXIS1",
+                    "NAXIS2",
+                    "XTENSION",
+                    "BITPIX",
+                    "PCOUNT",
+                    "GCOUNT",
+                    "TFIELDS",
             ):
                 continue
             meta[key.lower()] = image[0].header[key]
@@ -224,9 +237,10 @@ def load_sdss_apVisit(path, **kwargs):
         # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
         #       wavelength coefficients? lsf coefficients?
 
-    return Spectrum1D(
-        spectral_axis=spectral_axis, flux=flux, uncertainty=e_flux, meta=meta
-    )
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=e_flux,
+                      meta=meta)
 
 
 @data_loader(
@@ -244,18 +258,18 @@ def load_sdss_apVisit_multi(path, **kwargs):
         common_meta = OrderedDict([])
         for key in image[0].header.keys():
             if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                "",
-                "COMMENT",
-                "CHECKSUM",
-                "DATASUM",
-                "NAXIS",
-                "NAXIS1",
-                "NAXIS2",
-                "XTENSION",
-                "BITPIX",
-                "PCOUNT",
-                "GCOUNT",
-                "TFIELDS",
+                    "",
+                    "COMMENT",
+                    "CHECKSUM",
+                    "DATASUM",
+                    "NAXIS",
+                    "NAXIS1",
+                    "NAXIS2",
+                    "XTENSION",
+                    "BITPIX",
+                    "PCOUNT",
+                    "GCOUNT",
+                    "TFIELDS",
             ):
                 continue
             common_meta[key.lower()] = image[0].header[key]
@@ -277,8 +291,7 @@ def load_sdss_apVisit_multi(path, **kwargs):
                     flux=flux,
                     uncertainty=e_flux,
                     meta=meta,
-                )
-            )
+                ))
 
     return spectra
 
@@ -296,7 +309,8 @@ def load_sdss_specFull(path, **kwargs):
         # The flux unit is stored in the `BUNIT` keyword, but not in a form that astropy
         # will accept.
         flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")  # TODO
-        spectral_axis = u.Quantity(10 ** image[1].data["LOGLAM"], unit=u.Angstrom)
+        spectral_axis = u.Quantity(10**image[1].data["LOGLAM"],
+                                   unit=u.Angstrom)
 
         flux = u.Quantity(image[1].data["FLUX"], unit=flux_unit)
         ivar = InverseVariance(image[1].data["IVAR"])
@@ -304,18 +318,18 @@ def load_sdss_specFull(path, **kwargs):
         meta = OrderedDict([])
         for key in image[0].header.keys():
             if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                "",
-                "COMMENT",
-                "CHECKSUM",
-                "DATASUM",
-                "NAXIS",
-                "NAXIS1",
-                "NAXIS2",
-                "XTENSION",
-                "BITPIX",
-                "PCOUNT",
-                "GCOUNT",
-                "TFIELDS",
+                    "",
+                    "COMMENT",
+                    "CHECKSUM",
+                    "DATASUM",
+                    "NAXIS",
+                    "NAXIS1",
+                    "NAXIS2",
+                    "XTENSION",
+                    "BITPIX",
+                    "PCOUNT",
+                    "GCOUNT",
+                    "TFIELDS",
             ):
                 continue
             meta[key] = image[0].header[key]
@@ -323,9 +337,10 @@ def load_sdss_specFull(path, **kwargs):
         # Note: specFull file does not include S/N value, but this gets calculated
         #       for mwmVisit/mwmStar files when they are created
 
-    return Spectrum1D(
-        spectral_axis=spectral_axis, flux=flux, uncertainty=ivar, meta=meta
-    )
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=ivar,
+                      meta=meta)
 
 
 @data_loader(
@@ -340,7 +355,7 @@ def load_sdss_specFull_multi(path, **kwargs):
 
 
 def _wcs_log_linear(naxis, cdelt, crval):
-    return 10 ** (np.arange(naxis) * cdelt + crval)
+    return 10**(np.arange(naxis) * cdelt + crval)
 
 
 def _load_mwmVisit_or_mwmStar(path, **kwargs):
@@ -379,18 +394,18 @@ def _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs):
     for hdu_idx in (0, hdu):
         for key in image[hdu_idx].header.keys():
             if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                "",
-                "COMMENT",
-                "CHECKSUM",
-                "DATASUM",
-                "NAXIS",
-                "NAXIS1",
-                "NAXIS2",
-                "XTENSION",
-                "BITPIX",
-                "PCOUNT",
-                "GCOUNT",
-                "TFIELDS",
+                    "",
+                    "COMMENT",
+                    "CHECKSUM",
+                    "DATASUM",
+                    "NAXIS",
+                    "NAXIS1",
+                    "NAXIS2",
+                    "XTENSION",
+                    "BITPIX",
+                    "PCOUNT",
+                    "GCOUNT",
+                    "TFIELDS",
             ):
                 continue
             meta[key] = image[hdu_idx].header[key]
@@ -404,6 +419,7 @@ def _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs):
         # TODO: Remove this later on.
         meta["SNR"] = np.array([image[hdu_idx].header["SNR"]])
 
-    return Spectrum1D(
-        spectral_axis=spectral_axis, flux=flux, uncertainty=e_flux, meta=meta
-    )
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=e_flux,
+                      meta=meta)
