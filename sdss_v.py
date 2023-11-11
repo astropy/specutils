@@ -5,7 +5,7 @@ import numpy as np
 from astropy.io import fits
 from astropy import units as u
 from astropy.nddata import StdDevUncertainty, InverseVariance
-from specutils import SpectralAxis, Spectrum1D, SpectrumList
+from specutils import SpectralAxis, Spectrum1D, SpectrumCollection, SpectrumList
 from specutils.io.registers import get_loaders_by_extension, io_registry
 """
 From the specutils documentation:
@@ -141,14 +141,15 @@ def _fetch_flux_unit(hdu: fits.hdu.image.ImageHDU):
     flux_unit : astropy Units object of flux unit
 
     """
-    flux_unit = (hdu.header["BUNIT"].replace("Ang", "Angstrom").replace(
-        "(", "").replace(")", "").split(" ")[-2:])
+    flux_unit = hdu.header["BUNIT"].replace("(",
+                                            "").replace(")",
+                                                        "").split(" ")[-2:]
+    flux_unit = "".join(flux_unit)
+    if "Ang" in flux_unit and "strom" not in flux_unit:
+        flux_unit = flux_unit.replace("Ang", "Angstrom")
 
     # TODO: make it so the stupid warning is surpressed
-    """
-
-    """
-    return u.Unit("".join(flux_unit))
+    return u.Unit(flux_unit)
 
 
 ## APOGEE files
@@ -207,7 +208,7 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
 
 
 def load_sdss_apStar_list(path, **kwargs):
-    return SpectrumList([load_sdss_apStar(path, **kwargs)])
+    return SpectrumList([load_sdss_apStar_1D(path, **kwargs)])
 
 
 # @data_loader(
@@ -232,6 +233,8 @@ def load_sdss_apVisit_1D(path, **kwargs):
 
         # Get metadata
         meta = _fetch_metadata(image)
+        meta["mjd"] = image[0].header["MJD5"]
+        meta["date"] = image[0].header["DATE-OBS"]
 
         meta["bitmask"] = image[3].data.flatten()
         # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
@@ -264,7 +267,9 @@ def load_sdss_apVisit_multi(path, **kwargs):
             e_flux = StdDevUncertainty(image[2].data[chip])
 
             meta = common_meta.copy()
-            meta["BITMASK"] = image[3].data[chip]
+            meta["bitmask"] = image[3].data[chip]
+            meta["mjd"] = image[0].header["MJD5"]
+            meta["date"] = image[0].header["DATE-OBS"]
 
             # TODO: Include things like sky flux, sky error, telluric flux, telluric error?
             #       wavelength coefficients? lsf coefficients?
@@ -356,3 +361,127 @@ def load_sdss_specFull_list(path, **kwargs):
                            meta=meta))
 
     return spectra
+
+
+## MWM LOADERS
+
+
+# @data_loader(
+#    "mwmVisit",
+#    identifier=is_filetype("mwmVisit"),
+#    dtype=["SpectrumCollection", "Spectrum1D"],
+#    priority=1,
+#    extensions=["fits"],
+# )
+def load_sdss_mwmVisit_1d(path, hdu, **kwargs):
+    with fits.open(path) as image:
+        return _load_mwmVisit_or_mwmStar_hdu(image, hdu)
+
+
+# @data_loader(
+#    "mwmStar",
+#    identifier=is_filetype("mwmStar"),
+#    dtype=Spectrum1D,
+#    priority=20,
+#    extensions=["fits"],
+# )
+def load_sdss_mwmStar_1d(path, hdu, **kwargs):
+    with fits.open(path) as image:
+        return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
+
+
+# @data_loader(
+#    "mwmVisit",
+#    identifier=is_filetype("mwmVisit"),
+#    dtype=SpectrumList,
+#    priority=1,
+#    extensions=["fits"],
+# )
+def load_sdss_mwmVisit_list(path, **kwargs):
+    return _load_mwmVisit_or_mwmStar_list(path, **kwargs)
+
+
+# @data_loader(
+#    "mwmStar",
+#    identifier=is_filetype("mwmStar"),
+#    dtype=SpectrumList,
+#    priority=20,
+#    extensions=["fits"],
+# )
+def load_sdss_mwmStar_list(path, **kwargs):
+    return _load_mwmVisit_or_mwmStar_list(path, **kwargs)
+
+
+def _load_mwmVisit_or_mwmStar_list(path, **kwargs):
+    """
+    List loader subfunction for MWM files.
+    """
+    spectra = SpectrumList()
+    with fits.open(path) as image:
+        for hdu in range(1, len(image)):
+            if image[hdu].header["DATASUM"] == "0":
+                # TODO: What should we return? (empty file case)
+                spectra.append(None)
+                continue
+            spectra.append(_load_mwmVisit_or_mwmStar_hdu(image, hdu))
+    return spectra
+
+
+def _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs):
+    """
+    HDU loader subfunction for MWM files
+    """
+    if image[hdu].header["DATASUM"] == "0":
+        # TODO: What should we return? (empty file case)
+        raise ValueError("Empty HDU specified at {}".format(hdu))
+
+    # Fetch wavelength
+    # encoded as WCS for visit, and LAMBDA for star
+    try:
+        wavelength = np.array(image[hdu].data["LAMBDA"])[0]
+    except:
+        wavelength = _wcs_log_linear(
+            image[hdu].header["NPIXELS"],
+            image[hdu].header["CDELT"],
+            image[hdu].header["CRVAL"],
+        )
+    finally:
+        spectral_axis = u.Quantity(wavelength, unit=u.Angstrom)
+
+    # Fetch flux, e_flux
+    # TODO: check with data team about loc of BUNIT in mwm files
+    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
+
+    flux = u.Quantity(image[hdu].data["FLUX"], unit=flux_unit)
+    e_flux = StdDevUncertainty(array=image[hdu].data["E_FLUX"])
+
+    # TODO: Read in other quantities from the binary table....
+    meta = _fetch_metadata(image)
+
+    # Add bitmask and SNR
+    # Access method for visit files
+    meta["bitmask"] = np.array(image[hdu].data["BITMASK"])
+    try:
+        meta["snr"] = np.array(image[hdu].data["SNR"])
+    except KeyError:
+        # Early versions of mwmStar had this differently
+        # TODO: Remove this later on -- don't know current state of SNR storage...
+        # this was meant to be removed, but may be present in earlier data files.
+        meta["snr"] = np.array([image[hdu].header["SNR"]])
+
+    # Add identifiers
+    # TODO: need to see what we actually want an identifier as
+    try:
+        # Access method for visit files
+        meta["telescope"] = image[hdu].data["TELESCOPE"]
+        meta["date"] = image[hdu].data["DATE-OBS"]
+        meta["datatype"] = "visit"
+    except KeyError:
+        meta["datatype"] = "coadd"
+    finally:
+        meta["type"] = image[hdu].name
+
+    return Spectrum1D(spectral_axis=spectral_axis,
+                      flux=flux,
+                      uncertainty=e_flux,
+                      meta=meta)
