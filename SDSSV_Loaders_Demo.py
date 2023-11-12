@@ -103,9 +103,9 @@ r"""°°°
 °°°"""
 #|%%--%%| <KBnAScSlkw|oRfGYVh8ED>
 r"""°°°
-### specFull -> Spectrum1D 
+### specFull -> Spectrum1D
 
-This only loads coadd at HDU1. Can likely be made to work for specLite too.
+This only loads coadd at HDU1.
 °°°"""
 #|%%--%%| <oRfGYVh8ED|l20TC18Pgi>
 
@@ -123,12 +123,10 @@ r"""°°°
 
 Loads coadd + all exposures as Spectrum1D objects.
 °°°"""
-#|%%--%%| <IZ16ccvyCG|g9HndzCSN5>
+#|%%--%%| <IZ16ccvyCG|ytyxfeis77>
 
 spectra = sdss_v.load_sdss_specFull_list("/home/riley/uni/rproj/data/spec-015252-59278-4593082715.fits")
 print(type(spectra), ":", spectra)
-
-#|%%--%%| <g9HndzCSN5|u8gNxVShP0>
 
 for i,spectrum in enumerate(spectra):
     with viz.quantity_support():
@@ -138,7 +136,75 @@ for i,spectrum in enumerate(spectra):
     plt.yscale('log')
 plt.show()
 
-#|%%--%%| <u8gNxVShP0|MdP1J8W9oG>
+#|%%--%%| <ytyxfeis77|HDZ0IOUeN7>
+r"""°°°
+### specLite -> Spectrum1D 
+
+This only loads coadd at HDU1.
+°°°"""
+#|%%--%%| <HDZ0IOUeN7|s6hoXAakRi>
+
+spectrum = sdss_v.load_sdss_specLite_1D("/home/riley/uni/rproj/data/spec-015252-59278-4593082715.fits")
+print(type(spectrum), ":", spectrum)
+with viz.quantity_support():
+    flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
+    plt.plot(spectrum.spectral_axis,np.transpose(flux))
+    plt.yscale('log')
+plt.show()
+
+
+#|%%--%%| <s6hoXAakRi|as2OmK8Ksf>
+r"""°°°
+### specLite -> SpectrumList 
+
+Loads coadd + all exposures as Spectrum1D objects. The DSI says it can have exposures, but most likely it won't/shouldn't, so this is a low priority case.
+°°°"""
+#|%%--%%| <as2OmK8Ksf|KySoNu77pr>
+
+spectra = sdss_v.load_sdss_specLite_list("/home/riley/uni/rproj/data/spec-015252-59278-4593082715.fits")
+print(type(spectra), ":", spectra)
+
+for i,spectrum in enumerate(spectra):
+    with viz.quantity_support():
+        flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
+        plt.plot(spectrum.spectral_axis,np.transpose(flux), label=spectrum.meta['name'],alpha=0.5,zorder=3-i)
+    plt.legend(loc='best')
+    plt.yscale('log')
+plt.show()
+
+#|%%--%%| <KySoNu77pr|MyuQK6fz8Q>
+r"""°°°
+### Custom Coadds (allEpoch, etc) -> specFull cases
+
+I like this BOSS team's organization. Everything is formatted the same (very happy).
+°°°"""
+#|%%--%%| <MyuQK6fz8Q|MlmlHgCOYQ>
+
+spectra = sdss_v.load_sdss_specFull_list("/home/riley/uni/rproj/data/spec-allepoch-60130-27021597775058535.fits")
+print(type(spectra), ":", spectra)
+
+for i,spectrum in enumerate(spectra):
+    with viz.quantity_support():
+        flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
+        plt.plot(spectrum.spectral_axis,np.transpose(flux), label=spectrum.meta['name'],alpha=0.5,zorder=3-i)
+    plt.legend(loc='best')
+    plt.yscale('log')
+plt.show()
+
+#|%%--%%| <MlmlHgCOYQ|IFjhstzMoW>
+
+spectra = sdss_v.load_sdss_specFull_list("/home/riley/uni/rproj/data/spec-112359-60118-7612895412.fits")
+print(type(spectra), ":", spectra)
+
+for i,spectrum in enumerate(spectra):
+    with viz.quantity_support():
+        flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
+        plt.plot(spectrum.spectral_axis,np.transpose(flux), label=spectrum.meta['name'],alpha=0.5,zorder=3-i)
+    plt.legend(loc='best')
+    plt.yscale('log')
+plt.show()
+
+#|%%--%%| <IFjhstzMoW|MdP1J8W9oG>
 r"""°°°
 ## ASTRA files (MWM)
 °°°"""
@@ -152,14 +218,14 @@ Within the meta, there are arrays of size n, where n is the number of visits.
 °°°"""
 #|%%--%%| <XX2R7Sy1CQ|XptfhNXZsC>
 
-spectrum = sdss_v.load_sdss_mwmVisit_1d("/home/riley/uni/rproj/data/mwmVisit-0.3.0-375150303.fits", 3)
+spectrum = sdss_v.load_sdss_mwmVisit_1d("/home/riley/uni/rproj/data/mwmVisit-0.5.0-70350000.fits",3)
 print(type(spectrum), ":", spectrum)
 spectral_axis = spectrum.spectral_axis
 flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
 for i in range(len(flux)):
     with viz.quantity_support():
         plt.plot(spectral_axis,np.transpose(flux[i]),label=spectrum.meta["date"][i])
-plt.title(spectrum.meta['type'])
+plt.title(spectrum.meta['name'])
 plt.legend(loc='best')
 plt.show()
 
@@ -171,7 +237,7 @@ A list of spectra, where each Spectrum1D object contains all the flux and meta f
 °°°"""
 #|%%--%%| <bIMJg22G3T|zt0s14z7ro>
 
-spectra = sdss_v.load_sdss_mwmVisit_list("/home/riley/uni/rproj/data/mwmVisit-0.3.0-375150303.fits")
+spectra = sdss_v.load_sdss_mwmVisit_list("/home/riley/uni/rproj/data/mwmVisit-0.5.0-70350000.fits")
 
 fig, axes = plt.subplots(nrows=2,ncols=2,layout='constrained')
 axes = axes.flatten()
@@ -197,17 +263,15 @@ Spectrum1D, only loading 1 of the specified HDU's
 °°°"""
 #|%%--%%| <rEGLOBO3Q9|fdJCv1YhzM>
 
-spectrum = sdss_v.load_sdss_mwmStar_1d("/home/riley/uni/rproj/data/mwmStar-0.3.0-27021597838600303.fits",1)
+spectrum = sdss_v.load_sdss_mwmStar_1d("/home/riley/uni/rproj/data/mwmStar-0.5.0-103020000.fits",4)
 print(type(spectrum), ":", spectrum)
 spectral_axis = spectrum.spectral_axis
 flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
 with viz.quantity_support():
-    plt.plot(spectral_axis,np.transpose(flux),label=spectrum.meta["datatype"],color='black')
+    plt.plot(spectral_axis,np.transpose(flux),label=spectrum.meta["mjd"],color='black')
 plt.legend(loc='best')
-plt.title(spectrum.meta['type'])
-plt.xlim(3000,9000)
+plt.title(spectrum.meta['data'])
 
-plt.yscale('log')
 plt.show()
 
 
@@ -219,7 +283,7 @@ SpectrumList of Spectrum1D, like mwmVisit. Lists all valid HDU's.
 °°°"""
 #|%%--%%| <Q64T9opCSO|yMudsqYfdk>
 
-spectra = sdss_v.load_sdss_mwmStar_list("/home/riley/uni/rproj/data/mwmStar-0.3.0-27021597838600303.fits")
+spectra = sdss_v.load_sdss_mwmStar_list("/home/riley/uni/rproj/data/mwmStar-0.5.0-103020000.fits")
 
 fig, axes = plt.subplots(nrows=2,ncols=2,layout='constrained')
 axes = axes.flatten()
@@ -232,7 +296,7 @@ for q, spectrum in enumerate(spectra):
     spectral_axis = spectrum.spectral_axis
     flux = spectrum.flux.to("erg / (Angstrom cm2 s)")
     with viz.quantity_support():
-        axes[q].plot(spectral_axis,np.transpose(flux),label=spectrum.meta["datatype"],color='black')
+        axes[q].plot(spectral_axis,np.transpose(flux),label=spectrum.meta["mjd"],color='black')
         axes[q].legend(loc='best')
     axes[q].set_title(spectra[q].meta['type'])
 fig.show()
