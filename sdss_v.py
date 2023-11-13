@@ -16,24 +16,15 @@ From the specutils documentation:
 
 
 ## IDENTIFIER
-def sdssv_identify(origin, filetype, *args, **kwargs):
-    """
-    Identify the filetype of an SDSS-V file.
-    """
-    if isinstance(args[1], str):
-        return args[1].split("/")[-1].startswith(args[0])
-    else:
-        return
+def identifier_lambda_filetype(filetype):
+    """Generic identifier function creator for a given filetype based on filepath."""
+    return lambda f, o, *args, **kwargs: o.split("/")[-1].startswith(filetype)
 
 
 ## HELPERS
-
-
 def _wcs_log_linear(naxis, cdelt, crval):
     """
     Convert WCS from log to linear.
-
-    Note: WCS used is SDSS format, not standard FITS format.
     """
     return 10**(np.arange(naxis) * cdelt + crval)
 
@@ -116,6 +107,20 @@ def _fetch_flux_unit(hdu: fits.hdu.image.ImageHDU):
 #    extensions=["fits"],
 # )
 def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
+    """
+    Load an apStar file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+
+    """
     # intialize slicer
     slicer = slice(*data_slice) if data_slice is not None else slice(None)
 
@@ -162,6 +167,19 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_apStar_list(path, **kwargs):
+    """
+    Load an apStar file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
     # TODO: this case isn't clear to me -- apStar CAN contain resampled
     # visit spectra, but where in the HDUList?
     raise NotImplementedError
@@ -176,6 +194,19 @@ def load_sdss_apStar_list(path, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_apVisit_1D(path, **kwargs):
+    """
+    Load an apVisit file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+    """
     flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
 
     with fits.open(path) as image:
@@ -204,7 +235,20 @@ def load_sdss_apVisit_1D(path, **kwargs):
 #    priority=10,
 #    extensions=["fits"],
 # )
-def load_sdss_apVisit_multi(path, **kwargs):
+def load_sdss_apVisit_list(path, **kwargs):
+    """
+    Load an apVisit file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra from each chip contained in the file
+    """
     spectra = SpectrumList()
     with fits.open(path) as image:
         # Get metadata
@@ -245,6 +289,19 @@ def load_sdss_apVisit_multi(path, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_specFull_1D(path, **kwargs):
+    """
+    Load the coadd spectrum in a specFull file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+    """
     return _load_BOSS_spec_1D(path, **kwargs)
 
 
@@ -256,6 +313,19 @@ def load_sdss_specFull_1D(path, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_specLite_1D(path, **kwargs):
+    """
+    Load the coadd spectrum in a specLite file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+    """
     return _load_BOSS_spec_1D(path, **kwargs)
 
 
@@ -267,46 +337,97 @@ def load_sdss_specLite_1D(path, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_specFull_list(path, **kwargs):
+    """
+    Load an specFull file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
     return _load_BOSS_spec_list(path, **kwargs)
 
 
 # @data_loader(
-#    "specLite",
+#    "SDSS-V specLite",
 #    identifier=is_filetype("spec"),
 #    dtype=SpectrumList,
 #    priority=10,
 #    extensions=["fits"],
 # )
 def load_sdss_specLite_list(path, **kwargs):
+    """
+    Load an specLite file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
     return _load_BOSS_spec_list(path, **kwargs)
 
 
 # @data_loader(
-#    "",
+#    "SDSS-V unknown",
 #    identifier=is_filetype("spec"),
 #    dtype=SpectrumList,
 #    priority=50,
 #    extensions=["fits"],
 # )
 def load_sdss_specOther_1D(path, **kwargs):
+    """
+    Load an unspecified spec file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+    """
     return _load_BOSS_spec_1D(path, **kwargs)
 
 
 # @data_loader(
-#    "",
+#    "SDSS-V unknown",
 #    identifier=is_filetype("spec"),
 #    dtype=SpectrumList,
 #    priority=50,
 #    extensions=["fits"],
 # )
 def load_sdss_specOther_list(path, **kwargs):
+    """
+    Load an unspecified spec file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
     return _load_BOSS_spec_list(path, **kwargs)
 
 
 def _load_BOSS_spec_1D(path, **kwargs):
     """
-    Load a given BOSS spec coadd file (specLite,specFull, other custom) as a Spectrum1D object.
-
+    Load a given BOSS spec coadd file as a Spectrum1D object.
     """
     with fits.open(path) as image:
         # directly load the coadd at HDU1
@@ -315,7 +436,7 @@ def _load_BOSS_spec_1D(path, **kwargs):
 
 def _load_BOSS_spec_list(path, **kwargs):
     """
-    Load a given BOSS spec file (specLite,specFull, other custom) as a SpectrumList object.
+    Load a given BOSS spec file as a SpectrumList object.
 
     """
     with fits.open(path) as image:
@@ -363,6 +484,19 @@ def _load_BOSS_HDU(image, hdu: int, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_mwmVisit_1d(path, hdu: int, **kwargs):
+    """
+    Load an unspecified spec file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+    """
     with fits.open(path) as image:
         return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
 
@@ -375,6 +509,19 @@ def load_sdss_mwmVisit_1d(path, hdu: int, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_mwmStar_1d(path, hdu: int, **kwargs):
+    """
+    Load an unspecified spec file as a Spectrum1D.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+    """
     with fits.open(path) as image:
         return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
 
@@ -387,6 +534,19 @@ def load_sdss_mwmStar_1d(path, hdu: int, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_mwmVisit_list(path, **kwargs):
+    """
+    Load an mwmVisit spec file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
     return _load_mwmVisit_or_mwmStar_list(path, **kwargs)
 
 
@@ -398,6 +558,19 @@ def load_sdss_mwmVisit_list(path, **kwargs):
 #    extensions=["fits"],
 # )
 def load_sdss_mwmStar_list(path, **kwargs):
+    """
+    Load an mwmStar spec file as a SpectrumList.
+
+    Parameters
+    ----------
+    path: str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
     return _load_mwmVisit_or_mwmStar_list(path, **kwargs)
 
 
