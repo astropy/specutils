@@ -1,12 +1,15 @@
 """Register reader functions for various spectral formats."""
 from collections import OrderedDict
-from functools import wraps
+
 import numpy as np
-from astropy.io import fits
-from astropy import units as u
+from astropy.units import Unit, Quantity, Angstrom
 from astropy.nddata import StdDevUncertainty, InverseVariance
-from specutils import SpectralAxis, Spectrum1D, SpectrumCollection, SpectrumList
-from specutils.io.registers import get_loaders_by_extension, io_registry
+
+from ...spectra import Spectrum1D, SpectrumList
+from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
+
+__all__ = ["load_sdss_mwmStar_1d", "load_sdss_mwmVisit_1d"]
 """
 From the specutils documentation:
 - For spectra that have different shapes, use SpectrumList.
@@ -29,7 +32,7 @@ def _wcs_log_linear(naxis, cdelt, crval):
     return 10**(np.arange(naxis) * cdelt + crval)
 
 
-def _fetch_metadata(image: fits.hdu.hdulist.HDUList):
+def _fetch_metadata(image):
     """
     Fetch the relevant common metadata.
 
@@ -73,7 +76,7 @@ def _fetch_metadata(image: fits.hdu.hdulist.HDUList):
     return common_meta
 
 
-def _fetch_flux_unit(hdu: fits.hdu.image.ImageHDU):
+def _fetch_flux_unit(hdu):
     """
     Fetch the flux unit by accessing the BUNIT key of the given HDU.
 
@@ -94,7 +97,7 @@ def _fetch_flux_unit(hdu: fits.hdu.image.ImageHDU):
         flux_unit = flux_unit.replace("Ang", "Angstrom")
 
     # TODO: make it so the string is nice, so the stupid warning is supressed
-    return u.Unit(flux_unit)
+    return Unit(flux_unit)
 
 
 ## APOGEE files
@@ -124,18 +127,18 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
     # intialize slicer
     slicer = slice(*data_slice) if data_slice is not None else slice(None)
 
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         # Obtain spectral axis from header (HDU[1])
         wavelength = _wcs_log_linear(
             image[1].header["NAXIS1"],
             image[1].header["CDELT1"],
             image[1].header["CRVAL1"],
         )
-        spectral_axis = u.Quantity(wavelength, unit=u.Angstrom)
+        spectral_axis = Quantity(wavelength, unit=Angstrom)
 
         # Obtain flux and e_flux from data (HDU[1] & HDU[2])
         flux_unit = _fetch_flux_unit(image[1])
-        flux = u.Quantity(image[1].data[slicer], unit=flux_unit)
+        flux = Quantity(image[1].data[slicer], unit=flux_unit)
         e_flux = StdDevUncertainty(image[2].data[slicer])
 
         # Obtain stacked SNR from primary HDU based on no. of visits
@@ -159,31 +162,31 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
                       meta=meta)
 
 
-@data_loader(
-    "SDSS-V apStar",
-    identifier=identify_filetype(("apStar", "asStar")),
-    dtype=SpectrumList,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_apStar_list(path, **kwargs):
-    """
-    Load an apStar file as a SpectrumList.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    SpectrumList
-        The spectra contained in the file
-    """
-    # TODO: this case isn't clear to me -- apStar CAN contain resampled
-    # visit spectra, but where in the HDUList?
-    raise NotImplementedError
-    return SpectrumList([load_sdss_apStar_1D(path, **kwargs)])
+# @data_loader(
+#    "SDSS-V apStar multi",
+#    identifier=identify_filetype(("apStar", "asStar")),
+#    dtype=SpectrumList,
+#    priority=10,
+#    extensions=["fits"],
+# )
+# def load_sdss_apStar_list(path, **kwargs):
+#    """
+#    Load an apStar file as a SpectrumList.
+#
+#    Parameters
+#    ----------
+#    path: str
+#        The path to the FITS file
+#
+#    Returns
+#    -------
+#    SpectrumList
+#        The spectra contained in the file
+#    """
+#    # TODO: this case isn't clear to me -- apStar CAN contain resampled
+#    # visit spectra, but where in the HDUList?
+#    raise NotImplementedError
+#    return SpectrumList([load_sdss_apStar_1D(path, **kwargs)])
 
 
 @data_loader(
@@ -207,13 +210,13 @@ def load_sdss_apVisit_1D(path, **kwargs):
     Spectrum1D
         The spectrum contained in the file
     """
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
 
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         # Fetch and flatten spectrum parameters
-        spectral_axis = u.Quantity(image[4].data.flatten(), unit=u.Angstrom)
+        spectral_axis = Quantity(image[4].data.flatten(), unit=Angstrom)
         flux_unit = _fetch_flux_unit(image[1])
-        flux = u.Quantity(image[1].data.flatten(), unit=flux_unit)
+        flux = Quantity(image[1].data.flatten(), unit=flux_unit)
         e_flux = StdDevUncertainty(image[2].data.flatten())
 
         # Get metadata and attach bitmask and MJD
@@ -229,7 +232,7 @@ def load_sdss_apVisit_1D(path, **kwargs):
 
 
 @data_loader(
-    "SDSS-V apVisit",
+    "SDSS-V apVisit multi",
     identifier=identify_filetype("apVisit"),
     dtype=SpectrumList,
     priority=10,
@@ -250,15 +253,15 @@ def load_sdss_apVisit_list(path, **kwargs):
         The spectra from each chip contained in the file
     """
     spectra = SpectrumList()
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         # Get metadata
         flux_unit = _fetch_flux_unit(image[1])
         common_meta = _fetch_metadata(image)
 
         for chip in range(image[1].data.shape[0]):
             # Fetch spectral axis and flux, and E_flux
-            spectral_axis = u.Quantity(image[4].data[chip], unit=u.Angstrom)
-            flux = u.Quantity(image[1].data[chip], unit=flux_unit)
+            spectral_axis = Quantity(image[4].data[chip], unit=Angstrom)
+            flux = Quantity(image[1].data[chip], unit=flux_unit)
             e_flux = StdDevUncertainty(image[2].data[chip])
 
             # Copy metadata for each, adding chip bitmask and MJD to each
@@ -330,7 +333,7 @@ def load_sdss_specLite_1D(path, **kwargs):
 
 
 @data_loader(
-    "SDSS-V specFull",
+    "SDSS-V specFull multi",
     identifier=identify_filetype("specFull"),
     dtype=SpectrumList,
     priority=10,
@@ -354,7 +357,7 @@ def load_sdss_specFull_list(path, **kwargs):
 
 
 @data_loader(
-    "SDSS-V specLite",
+    "SDSS-V specLite multi",
     identifier=identify_filetype("specLite"),
     dtype=SpectrumList,
     priority=10,
@@ -402,7 +405,7 @@ def load_sdss_specOther_1D(path, **kwargs):
 
 
 @data_loader(
-    "SDSS-V specGeneric",
+    "SDSS-V specGeneric multi",
     identifier=identify_filetype("spec"),
     dtype=SpectrumList,
     priority=50,
@@ -429,7 +432,7 @@ def _load_BOSS_spec_1D(path, **kwargs):
     """
     Load a given BOSS spec coadd file as a Spectrum1D object.
     """
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         # directly load the coadd at HDU1
         return _load_BOSS_HDU(image, 1, **kwargs)
 
@@ -439,7 +442,7 @@ def _load_BOSS_spec_list(path, **kwargs):
     Load a given BOSS spec file as a SpectrumList object.
 
     """
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         spectra = list()
         for hdu in range(1, len(image)):
             if image[hdu].name in ["SPALL", "ZALL", "ZLINE"]:
@@ -454,10 +457,10 @@ def _load_BOSS_HDU(image, hdu: int, **kwargs):
     """
     # Fetch flux, e_flux, spectral axis, and units
     # TODO: check with data team about loc of BUNIT in specFull/Lite files
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
-    spectral_axis = u.Quantity(10**image[hdu].data["LOGLAM"], unit=u.Angstrom)
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
+    spectral_axis = Quantity(10**image[hdu].data["LOGLAM"], unit=Angstrom)
 
-    flux = u.Quantity(image[hdu].data["FLUX"], unit=flux_unit)
+    flux = Quantity(image[hdu].data["FLUX"], unit=flux_unit)
     # no e_flux, so we use inverse of variance
     ivar = InverseVariance(image[hdu].data["IVAR"])
 
@@ -479,7 +482,7 @@ def _load_BOSS_HDU(image, hdu: int, **kwargs):
 @data_loader(
     "SDSS-V mwmVisit",
     identifier=identify_filetype("mwmVisit"),
-    dtype="Spectrum1D",
+    dtype=Spectrum1D,
     priority=1,
     extensions=["fits"],
 )
@@ -497,7 +500,7 @@ def load_sdss_mwmVisit_1d(path, hdu: int, **kwargs):
     Spectrum1D
         The spectrum contained in the file
     """
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
 
 
@@ -522,12 +525,12 @@ def load_sdss_mwmStar_1d(path, hdu: int, **kwargs):
     Spectrum1D
         The spectrum contained in the file
     """
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
 
 
 @data_loader(
-    "SDSS-V mwmVisit",
+    "SDSS-V mwmVisit multi",
     identifier=identify_filetype("mwmVisit"),
     dtype=SpectrumList,
     priority=1,
@@ -551,7 +554,7 @@ def load_sdss_mwmVisit_list(path, **kwargs):
 
 
 @data_loader(
-    "SDSS-V mwmStar",
+    "SDSS-V mwmStar multi",
     identifier=identify_filetype("mwmStar"),
     dtype=SpectrumList,
     priority=20,
@@ -579,7 +582,7 @@ def _load_mwmVisit_or_mwmStar_list(path, **kwargs):
     List loader subfunction for MWM files.
     """
     spectra = SpectrumList()
-    with fits.open(path) as image:
+    with read_fileobj_or_hdulist(path) as image:
         for hdu in range(1, len(image)):
             if image[hdu].header["DATASUM"] == "0":
                 # TODO: What should we return? (empty file case)
@@ -611,12 +614,12 @@ def _load_mwmVisit_or_mwmStar_hdu(image, hdu: int, **kwargs):
         if wavelength is None:
             raise ValueError(
                 "Couldn't find wavelength data in HDU{}.".format(hdu))
-        spectral_axis = u.Quantity(wavelength, unit=u.Angstrom)
+        spectral_axis = Quantity(wavelength, unit=Angstrom)
 
     # Fetch flux, e_flux
     # TODO: check with data team about key for BUNIT in mwm files
-    flux_unit = u.Unit("1e-17 erg / (Angstrom cm2 s)")
-    flux = u.Quantity(image[hdu].data["flux"], unit=flux_unit)
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
+    flux = Quantity(image[hdu].data["flux"], unit=flux_unit)
     e_flux = InverseVariance(array=image[hdu].data["ivar"])
 
     # Access metadata
