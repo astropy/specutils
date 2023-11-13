@@ -1,26 +1,32 @@
 """Register reader functions for various spectral formats."""
 from collections import OrderedDict
+from typing import Optional
 
 import numpy as np
 from astropy.units import Unit, Quantity, Angstrom
 from astropy.nddata import StdDevUncertainty, InverseVariance
+from astropy.io.fits import HDUList
 
 from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
-__all__ = ["load_sdss_mwmStar_1d", "load_sdss_mwmVisit_1d"]
-"""
-From the specutils documentation:
-- For spectra that have different shapes, use SpectrumList.
-- For spectra that have the same shape but different spectral axes, see SpectrumCollection. 
-- For a spectrum or spectra that all share the same spectral axis, use Spectrum1D. 
-"""
+__all__ = [
+    "load_sdss_apVisit_1D",
+    "load_sdss_apVisit_list",
+    "load_sdss_apStar_1D",
+    # "load_sdss_apStar_list",
+    # not yet implemented properly
+    "load_sdss_spec_1D",
+    "load_sdss_spec_list",
+    "load_sdss_mwm_1d",
+    "load_sdss_mwm_list",
+]
 
 
 ## IDENTIFIER
 def identify_filetype(filetype):
-    """Generic identifier function creator for a given filetype based on filepath."""
+    """Generic function generator to verify if a file_obj string specificies this filetype."""
     return lambda f, o, *args, **kwargs: o.split("/")[-1].startswith(filetype)
 
 
@@ -32,7 +38,7 @@ def _wcs_log_linear(naxis, cdelt, crval):
     return 10**(np.arange(naxis) * cdelt + crval)
 
 
-def _fetch_metadata(image):
+def _fetch_metadata(hdulist):
     """
     Fetch the relevant common metadata.
 
@@ -40,8 +46,8 @@ def _fetch_metadata(image):
 
     Parameters
     ----------
-    image: HDUList
-        The image imported from fits.open().
+    hdulist: HDUList
+        The hdulist imported from fits.open().
 
     Returns
     -------
@@ -53,7 +59,7 @@ def _fetch_metadata(image):
     common_meta = OrderedDict([])
 
     # Loop over all keys to get relevant metadata
-    for key in image[0].header.keys():
+    for key in hdulist[0].header.keys():
         # exclude these keys
         if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
                 "",
@@ -71,7 +77,7 @@ def _fetch_metadata(image):
         ):
             continue
 
-        common_meta[key.lower()] = image[0].header[key]  # add key to dict
+        common_meta[key.lower()] = hdulist[0].header[key]  # add key to dict
 
     return common_meta
 
@@ -82,11 +88,13 @@ def _fetch_flux_unit(hdu):
 
     Parameters
     ----------
-    hdu : flux or e_flux hdu
+    hdu : HDUImage
+        Flux or e_flux HDUImage object.
 
     Returns
     -------
-    flux_unit : astropy Units object of flux unit
+    flux_unit : Unit
+        Flux unit as Astropy Unit object.
 
     """
     flux_unit = hdu.header["BUNIT"].replace("(",
@@ -96,12 +104,11 @@ def _fetch_flux_unit(hdu):
     if "Ang" in flux_unit and "strom" not in flux_unit:
         flux_unit = flux_unit.replace("Ang", "Angstrom")
 
-    # TODO: make it so the string is nice, so the stupid warning is supressed
+    # TODO: process the string so the FITS standard is met and UnitsWarning is surpressed.
     return Unit(flux_unit)
 
 
 ## APOGEE files
-# TODO: add LSF and wavelength coefficients to metadata?
 @data_loader(
     "SDSS-V apStar",
     identifier=identify_filetype(("apStar", "asStar")),
@@ -109,14 +116,16 @@ def _fetch_flux_unit(hdu):
     priority=10,
     extensions=["fits"],
 )
-def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
+def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
     """
     Load an apStar file as a Spectrum1D.
 
     Parameters
     ----------
-    path: str
+    file_obj : str
         The path to the FITS file
+    hdu : int
+        The specified HDU to load. Defaults to coadd (HDU1).
 
     Returns
     -------
@@ -127,34 +136,35 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
     # intialize slicer
     slicer = slice(*data_slice) if data_slice is not None else slice(None)
 
-    with read_fileobj_or_hdulist(path) as image:
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Obtain spectral axis from header (HDU[1])
         wavelength = _wcs_log_linear(
-            image[1].header["NAXIS1"],
-            image[1].header["CDELT1"],
-            image[1].header["CRVAL1"],
+            hdulist[1].header["NAXIS1"],
+            hdulist[1].header["CDELT1"],
+            hdulist[1].header["CRVAL1"],
         )
         spectral_axis = Quantity(wavelength, unit=Angstrom)
 
         # Obtain flux and e_flux from data (HDU[1] & HDU[2])
-        flux_unit = _fetch_flux_unit(image[1])
-        flux = Quantity(image[1].data[slicer], unit=flux_unit)
-        e_flux = StdDevUncertainty(image[2].data[slicer])
+        flux_unit = _fetch_flux_unit(hdulist[1])
+        flux = Quantity(hdulist[1].data[slicer], unit=flux_unit)
+        e_flux = StdDevUncertainty(hdulist[2].data[slicer])
 
         # Obtain stacked SNR from primary HDU based on no. of visits
-        snr = [image[0].header["SNR"]]
-        n_visits = image[0].header["NVISITS"]
+        snr = [hdulist[0].header["SNR"]]
+        n_visits = hdulist[0].header["NVISITS"]
         if n_visits > 1:
             snr.append(
                 snr[0])  # duplicate S/N value for second stacking method
             snr.extend([
-                image[0].header[f"SNRVIS{i}"] for i in range(1, 1 + n_visits)
+                hdulist[0].header[f"SNRVIS{i}"]
+                for i in range(1, 1 + n_visits)
             ])
 
-        meta = _fetch_metadata(image)
+        meta = _fetch_metadata(hdulist)
 
         meta["SNR"] = np.array(snr)[slicer]
-        meta["BITMASK"] = image[3].data[slicer]
+        meta["BITMASK"] = hdulist[3].data[slicer]
 
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
@@ -162,31 +172,38 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
                       meta=meta)
 
 
-# @data_loader(
-#    "SDSS-V apStar multi",
-#    identifier=identify_filetype(("apStar", "asStar")),
-#    dtype=SpectrumList,
-#    priority=10,
-#    extensions=["fits"],
-# )
-# def load_sdss_apStar_list(path, **kwargs):
-#    """
-#    Load an apStar file as a SpectrumList.
-#
-#    Parameters
-#    ----------
-#    path: str
-#        The path to the FITS file
-#
-#    Returns
-#    -------
-#    SpectrumList
-#        The spectra contained in the file
-#    """
-#    # TODO: this case isn't clear to me -- apStar CAN contain resampled
-#    # visit spectra, but where in the HDUList?
-#    raise NotImplementedError
-#    return SpectrumList([load_sdss_apStar_1D(path, **kwargs)])
+@data_loader(
+    "SDSS-V apStar multi",
+    identifier=identify_filetype(("apStar", "asStar")),
+    dtype=SpectrumList,
+    priority=10,
+    extensions=["fits"],
+)
+def load_sdss_apStar_list(file_obj, **kwargs):
+    """
+    Load an apStar file as a SpectrumList.
+
+    Parameters
+    ----------
+    file_obj : str
+        The path to the FITS file
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file
+    """
+    # NOTE: by the SDSS5 documentation, apStar HDU8 & HDU9 are not spectrum HDUs.
+    # I will assume, however, that apStar will not have these stellar parameters HDU's or the empty HDU8.
+
+    # TODO: The test file I have confuses me so I haven't done this yet.
+    return None
+
+    with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        return SpectrumList([
+            load_sdss_apStar_1D(file_obj, hdu=i, **kwargs)
+            for i in range(1, len(hdulist))
+        ])
 
 
 @data_loader(
@@ -196,13 +213,13 @@ def load_sdss_apStar_1D(path, data_slice=None, **kwargs):
     priority=10,
     extensions=["fits"],
 )
-def load_sdss_apVisit_1D(path, **kwargs):
+def load_sdss_apVisit_1D(file_obj, **kwargs):
     """
     Load an apVisit file as a Spectrum1D.
 
     Parameters
     ----------
-    path: str
+    file_obj : str
         The path to the FITS file
 
     Returns
@@ -212,18 +229,18 @@ def load_sdss_apVisit_1D(path, **kwargs):
     """
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
 
-    with read_fileobj_or_hdulist(path) as image:
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Fetch and flatten spectrum parameters
-        spectral_axis = Quantity(image[4].data.flatten(), unit=Angstrom)
-        flux_unit = _fetch_flux_unit(image[1])
-        flux = Quantity(image[1].data.flatten(), unit=flux_unit)
-        e_flux = StdDevUncertainty(image[2].data.flatten())
+        spectral_axis = Quantity(hdulist[4].data.flatten(), unit=Angstrom)
+        flux_unit = _fetch_flux_unit(hdulist[1])
+        flux = Quantity(hdulist[1].data.flatten(), unit=flux_unit)
+        e_flux = StdDevUncertainty(hdulist[2].data.flatten())
 
         # Get metadata and attach bitmask and MJD
-        meta = _fetch_metadata(image)
-        meta["mjd"] = image[0].header["MJD5"]
-        meta["date"] = image[0].header["DATE-OBS"]
-        meta["bitmask"] = image[3].data.flatten()
+        meta = _fetch_metadata(hdulist)
+        meta["mjd"] = hdulist[0].header["MJD5"]
+        meta["date"] = hdulist[0].header["DATE-OBS"]
+        meta["bitmask"] = hdulist[3].data.flatten()
 
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
@@ -238,13 +255,13 @@ def load_sdss_apVisit_1D(path, **kwargs):
     priority=10,
     extensions=["fits"],
 )
-def load_sdss_apVisit_list(path, **kwargs):
+def load_sdss_apVisit_list(file_obj, **kwargs):
     """
     Load an apVisit file as a SpectrumList.
 
     Parameters
     ----------
-    path: str
+    file_obj : str
         The path to the FITS file
 
     Returns
@@ -253,22 +270,22 @@ def load_sdss_apVisit_list(path, **kwargs):
         The spectra from each chip contained in the file
     """
     spectra = SpectrumList()
-    with read_fileobj_or_hdulist(path) as image:
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Get metadata
-        flux_unit = _fetch_flux_unit(image[1])
-        common_meta = _fetch_metadata(image)
+        flux_unit = _fetch_flux_unit(hdulist[1])
+        common_meta = _fetch_metadata(hdulist)
 
-        for chip in range(image[1].data.shape[0]):
+        for chip in range(hdulist[1].data.shape[0]):
             # Fetch spectral axis and flux, and E_flux
-            spectral_axis = Quantity(image[4].data[chip], unit=Angstrom)
-            flux = Quantity(image[1].data[chip], unit=flux_unit)
-            e_flux = StdDevUncertainty(image[2].data[chip])
+            spectral_axis = Quantity(hdulist[4].data[chip], unit=Angstrom)
+            flux = Quantity(hdulist[1].data[chip], unit=flux_unit)
+            e_flux = StdDevUncertainty(hdulist[2].data[chip])
 
             # Copy metadata for each, adding chip bitmask and MJD to each
             meta = common_meta.copy()
-            meta["bitmask"] = image[3].data[chip]
-            meta["mjd"] = image[0].header["MJD5"]
-            meta["date"] = image[0].header["DATE-OBS"]
+            meta["bitmask"] = hdulist[3].data[chip]
+            meta["mjd"] = hdulist[0].header["MJD5"]
+            meta["date"] = hdulist[0].header["DATE-OBS"]
 
             spectra.append(
                 Spectrum1D(
@@ -285,190 +302,98 @@ def load_sdss_apVisit_list(path, **kwargs):
 
 
 @data_loader(
-    "SDSS-V specFull",
-    identifier=identify_filetype("specFull"),
+    "SDSS-V spec",
+    identifier=identify_filetype("spec"),
     dtype=Spectrum1D,
     priority=10,
     extensions=["fits"],
 )
-def load_sdss_specFull_1D(path, **kwargs):
+def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     """
-    Load the coadd spectrum in a specFull file as a Spectrum1D.
+    Load a given BOSS spec file as a Spectrum1D object.
 
     Parameters
     ----------
-    path: str
-        The path to the FITS file
+    file_obj : str
+        The path to the FITS file.
+    hdu : int
+        The specified HDU to load a given spectra from.
 
     Returns
     -------
     Spectrum1D
-        The spectrum contained in the file
+        The spectrum contained in the file at the specified HDU.
     """
-    return _load_BOSS_spec_1D(path, **kwargs)
-
-
-@data_loader(
-    "SDSS-V specLite",
-    identifier=identify_filetype("specLite"),
-    dtype=Spectrum1D,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_specLite_1D(path, **kwargs):
-    """
-    Load the coadd spectrum in a specLite file as a Spectrum1D.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    Spectrum1D
-        The spectrum contained in the file
-    """
-    return _load_BOSS_spec_1D(path, **kwargs)
-
-
-@data_loader(
-    "SDSS-V specFull multi",
-    identifier=identify_filetype("specFull"),
-    dtype=SpectrumList,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_specFull_list(path, **kwargs):
-    """
-    Load an specFull file as a SpectrumList.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    SpectrumList
-        The spectra contained in the file
-    """
-    return _load_BOSS_spec_list(path, **kwargs)
-
-
-@data_loader(
-    "SDSS-V specLite multi",
-    identifier=identify_filetype("specLite"),
-    dtype=SpectrumList,
-    priority=10,
-    extensions=["fits"],
-)
-def load_sdss_specLite_list(path, **kwargs):
-    """
-    Load an specLite file as a SpectrumList.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    SpectrumList
-        The spectra contained in the file
-    """
-    return _load_BOSS_spec_list(path, **kwargs)
-
-
-@data_loader(
-    "SDSS-V specGeneric",
-    identifier=identify_filetype("spec"),
-    dtype=SpectrumList,
-    priority=50,
-    extensions=["fits"],
-)
-def load_sdss_specOther_1D(path, **kwargs):
-    """
-    Load an unspecified spec file as a Spectrum1D.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    Spectrum1D
-        The spectrum contained in the file
-    """
-    return _load_BOSS_spec_1D(path, **kwargs)
-
-
-@data_loader(
-    "SDSS-V specGeneric multi",
-    identifier=identify_filetype("spec"),
-    dtype=SpectrumList,
-    priority=50,
-    extensions=["fits"],
-)
-def load_sdss_specOther_list(path, **kwargs):
-    """
-    Load an unspecified spec file as a SpectrumList.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    SpectrumList
-        The spectra contained in the file
-    """
-    return _load_BOSS_spec_list(path, **kwargs)
-
-
-def _load_BOSS_spec_1D(path, **kwargs):
-    """
-    Load a given BOSS spec coadd file as a Spectrum1D object.
-    """
-    with read_fileobj_or_hdulist(path) as image:
+    if hdu is None:
+        raise ValueError("HDU not specified! Please specify a HDU to load.")
+    elif hdu in [2, 3, 4]:
+        raise ValueError("Invalid HDU! HDU{} is not spectra.".format(hdu))
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # directly load the coadd at HDU1
-        return _load_BOSS_HDU(image, 1, **kwargs)
+        return _load_BOSS_HDU(hdulist, hdu, **kwargs)
 
 
-def _load_BOSS_spec_list(path, **kwargs):
+@data_loader(
+    "SDSS-V spec multi",
+    identifier=identify_filetype("spec"),
+    dtype=SpectrumList,
+    priority=20,
+    extensions=["fits"],
+)
+def load_sdss_spec_list(file_obj, **kwargs):
     """
     Load a given BOSS spec file as a SpectrumList object.
 
+    Parameters
+    ----------
+    file_obj : str
+        The path to the FITS file.
+
+    Returns
+    -------
+    SpectrumList
+        The spectra contained in the file.
     """
-    with read_fileobj_or_hdulist(path) as image:
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         spectra = list()
-        for hdu in range(1, len(image)):
-            if image[hdu].name in ["SPALL", "ZALL", "ZLINE"]:
+        for hdu in range(1, len(hdulist)):
+            if hdulist[hdu].name in ["SPALL", "ZALL", "ZLINE"]:
                 continue
-            spectra.append(_load_BOSS_HDU(image, hdu, **kwargs))
+            spectra.append(_load_BOSS_HDU(hdulist, hdu, **kwargs))
         return SpectrumList(spectra)
 
 
-def _load_BOSS_HDU(image, hdu: int, **kwargs):
+def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     """
-    Sub-loader for BOSS spectra redux HDU's
+    HDU processor for BOSS spectra redux HDU's
+
+    Parameters
+    ----------
+    hdulist: HDUList
+        HDUList generated from imported file.
+    hdu : int
+        Specified HDU to load.
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file
+
     """
     # Fetch flux, e_flux, spectral axis, and units
     # TODO: check with data team about loc of BUNIT in specFull/Lite files
-    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
-    spectral_axis = Quantity(10**image[hdu].data["LOGLAM"], unit=Angstrom)
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
+    spectral_axis = Quantity(10**hdulist[hdu].data["LOGLAM"], unit=Angstrom)
 
-    flux = Quantity(image[hdu].data["FLUX"], unit=flux_unit)
+    flux = Quantity(hdulist[hdu].data["FLUX"], unit=flux_unit)
     # no e_flux, so we use inverse of variance
-    ivar = InverseVariance(image[hdu].data["IVAR"])
+    ivar = InverseVariance(hdulist[hdu].data["IVAR"])
 
     # Fetch metadata
     # NOTE: specFull file does not include S/N value, but this gets calculated
-    #       for mwmVisit/mwmStar files when they are created
-    meta = _fetch_metadata(image)
-    meta["name"] = image[hdu].name
+    #       for mwmVisit/mwmStar files when they are created.
+    meta = _fetch_metadata(hdulist)
+    meta["name"] = hdulist[hdu].name
 
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
@@ -477,138 +402,104 @@ def _load_BOSS_HDU(image, hdu: int, **kwargs):
 
 
 ## MWM LOADERS
-
-
 @data_loader(
-    "SDSS-V mwmVisit",
-    identifier=identify_filetype("mwmVisit"),
+    "SDSS-V mwm",
+    identifier=identify_filetype("mwm"),
     dtype=Spectrum1D,
-    priority=1,
+    priority=20,
     extensions=["fits"],
 )
-def load_sdss_mwmVisit_1d(path, hdu: int, **kwargs):
+def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
     """
     Load an unspecified spec file as a Spectrum1D.
 
     Parameters
     ----------
-    path: str
-        The path to the FITS file
+    file_obj : str
+        The path to the FITS file.
+    hdu : int
+        Specified HDU to load.
 
     Returns
     -------
     Spectrum1D
         The spectrum contained in the file
     """
-    with read_fileobj_or_hdulist(path) as image:
-        return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
+    if hdu is None:
+        raise ValueError("HDU not specified! Please specify a HDU to load.")
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu, **kwargs)
 
 
 @data_loader(
-    "SDSS-V mwmStar",
-    identifier=identify_filetype("mwmStar"),
-    dtype=Spectrum1D,
-    priority=20,
-    extensions=["fits"],
-)
-def load_sdss_mwmStar_1d(path, hdu: int, **kwargs):
-    """
-    Load an unspecified spec file as a Spectrum1D.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    Spectrum1D
-        The spectrum contained in the file
-    """
-    with read_fileobj_or_hdulist(path) as image:
-        return _load_mwmVisit_or_mwmStar_hdu(image, hdu, **kwargs)
-
-
-@data_loader(
-    "SDSS-V mwmVisit multi",
-    identifier=identify_filetype("mwmVisit"),
-    dtype=SpectrumList,
-    priority=1,
-    extensions=["fits"],
-)
-def load_sdss_mwmVisit_list(path, **kwargs):
-    """
-    Load an mwmVisit spec file as a SpectrumList.
-
-    Parameters
-    ----------
-    path: str
-        The path to the FITS file
-
-    Returns
-    -------
-    SpectrumList
-        The spectra contained in the file
-    """
-    return _load_mwmVisit_or_mwmStar_list(path, **kwargs)
-
-
-@data_loader(
-    "SDSS-V mwmStar multi",
-    identifier=identify_filetype("mwmStar"),
+    "SDSS-V mwm multi",
+    identifier=identify_filetype("mwm"),
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],
 )
-def load_sdss_mwmStar_list(path, **kwargs):
+def load_sdss_mwm_list(file_obj, **kwargs):
     """
     Load an mwmStar spec file as a SpectrumList.
 
     Parameters
     ----------
-    path: str
+    file_obj : str
         The path to the FITS file
 
     Returns
     -------
     SpectrumList
-        The spectra contained in the file
-    """
-    return _load_mwmVisit_or_mwmStar_list(path, **kwargs)
-
-
-def _load_mwmVisit_or_mwmStar_list(path, **kwargs):
-    """
-    List loader subfunction for MWM files.
+        The spectra contained in the file, where:
+            Spectrum1D
+                A given spectra of nD flux
+            None
+                If there are no spectra for that spectrograph/observatory
     """
     spectra = SpectrumList()
-    with read_fileobj_or_hdulist(path) as image:
-        for hdu in range(1, len(image)):
-            if image[hdu].header["DATASUM"] == "0":
-                # TODO: What should we return? (empty file case)
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        for hdu in range(1, len(hdulist)):
+            if hdulist[hdu].header["DATASUM"] == "0":
+                # Append None if no data. Subject to change
+                # TODO: validate if we want this alert or not. it might get annoying & fill logs with useless alerts.
+                print("Alert: HDU{} ({}) is empty.".format(
+                    hdu, hdulist[hdu].name))
                 spectra.append(None)
                 continue
-            spectra.append(_load_mwmVisit_or_mwmStar_hdu(image, hdu))
+            spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
     return spectra
 
 
-def _load_mwmVisit_or_mwmStar_hdu(image, hdu: int, **kwargs):
+def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     """
     HDU loader subfunction for MWM files
+
+    Parameters
+    ----------
+    hdulist: HDUList
+        HDUList generated from imported file.
+    hdu: int
+        Specified HDU to load.
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum with nD flux contained in the HDU.
+
     """
-    if image[hdu].header["DATASUM"] == "0":
+    if hdulist[hdu].header["DATASUM"] == "0":
         raise ValueError(
-            "Attemped to load an empty HDU specified as HDU{}".format(hdu))
+            "Attemped to load an empty HDU specified at HDU{}".format(hdu))
 
     # Fetch wavelength
     # encoded as WCS for visit, and 'wavelength' for star
     try:
-        wavelength = np.array(image[hdu].data["wavelength"])[0]
+        wavelength = np.array(hdulist[hdu].data["wavelength"])[0]
     except KeyError:
         wavelength = _wcs_log_linear(
-            image[hdu].header["NPIXELS"],
-            image[hdu].header["CDELT"],
-            image[hdu].header["CRVAL"],
+            hdulist[hdu].header["NPIXELS"],
+            hdulist[hdu].header["CDELT"],
+            hdulist[hdu].header["CRVAL"],
         )
     finally:
         if wavelength is None:
@@ -618,32 +509,30 @@ def _load_mwmVisit_or_mwmStar_hdu(image, hdu: int, **kwargs):
 
     # Fetch flux, e_flux
     # TODO: check with data team about key for BUNIT in mwm files
-    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
-    flux = Quantity(image[hdu].data["flux"], unit=flux_unit)
-    e_flux = InverseVariance(array=image[hdu].data["ivar"])
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
+    flux = Quantity(hdulist[hdu].data["flux"], unit=flux_unit)
+    e_flux = InverseVariance(array=hdulist[hdu].data["ivar"])
 
     # Access metadata
-    meta = _fetch_metadata(image)
+    meta = _fetch_metadata(hdulist)
 
     # Add SNR to metadata
-    meta["snr"] = np.array(image[hdu].data["snr"])
+    meta["snr"] = np.array(hdulist[hdu].data["snr"])
 
     # Add identifiers (obj, telescope, mjd, datatype)
     # TODO: need to see what we actually want an identifier as
-    meta["telescope"] = image[hdu].data["telescope"]
-    meta["obj"] = image[hdu].data["obj"]
+    meta["telescope"] = hdulist[hdu].data["telescope"]
+    meta["obj"] = hdulist[hdu].data["obj"]
     try:
-        meta["date"] = image[hdu].data["date_obs"]
-        print(meta["date"])
-        meta["mjd"] = image[hdu].data["mjd"]
-        print(meta["mjd"])
+        meta["date"] = hdulist[hdu].data["date_obs"]
+        meta["mjd"] = hdulist[hdu].data["mjd"]
         meta["datatype"] = "mwmVisit"
     except KeyError:
-        meta["mjd"] = (str(image[hdu].data["min_mjd"][0]) + "->" +
-                       str(image[hdu].data["max_mjd"][0]))
+        meta["mjd"] = (str(hdulist[hdu].data["min_mjd"][0]) + "->" +
+                       str(hdulist[hdu].data["max_mjd"][0]))
         meta["datatype"] = "mwmStar"
     finally:
-        meta["name"] = image[hdu].name
+        meta["name"] = hdulist[hdu].name
 
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
