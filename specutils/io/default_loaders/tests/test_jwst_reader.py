@@ -94,9 +94,9 @@ def spec_multi(request):
 @pytest.mark.parametrize('spec_multi, format',
                          [('EXTRACT1D', 'JWST x1d multi'),
                           ('COMBINE1D', 'JWST c1d multi')], indirect=['spec_multi'])
-def test_jwst_1d_multi_reader(tmpdir, spec_multi, format):
+def test_jwst_1d_multi_reader(tmp_path, spec_multi, format):
     """Test SpectrumList.read for JWST c1d/x1d multi data"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
     data = SpectrumList.read(tmpfile, format=format)
@@ -114,9 +114,9 @@ def test_jwst_1d_multi_reader(tmpdir, spec_multi, format):
 @pytest.mark.parametrize('spec_single, format',
                          [('EXTRACT1D', 'JWST x1d'),
                           ('COMBINE1D', 'JWST c1d')], indirect=['spec_single'])
-def test_jwst_1d_single_reader(tmpdir, spec_single, format):
+def test_jwst_1d_single_reader(tmp_path, spec_single, format):
     """Test Spectrum1D.read for JWST x1d data"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_single.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile, format=format)
@@ -125,9 +125,9 @@ def test_jwst_1d_single_reader(tmpdir, spec_single, format):
 
 
 @pytest.mark.parametrize("srctype", [None, "UNKNOWN"])
-def test_jwst_srctpye_defaults(tmpdir, x1d_single, srctype):
+def test_jwst_srctpye_defaults(tmp_path, x1d_single, srctype):
     """ Test """
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
 
     # Add a spectrum with missing or UNKNOWN SRCTYPE (mutate the fixture)
     x1d_single['EXTRACT1D'].header['SRCTYPE'] == srctype
@@ -140,9 +140,9 @@ def test_jwst_srctpye_defaults(tmpdir, x1d_single, srctype):
 
 
 @pytest.mark.parametrize('spec_single', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_single'])
-def test_jwst_1d_single_reader_no_format(tmpdir, spec_single):
+def test_jwst_1d_single_reader_no_format(tmp_path, spec_single):
     """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_single.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile)
@@ -153,9 +153,9 @@ def test_jwst_1d_single_reader_no_format(tmpdir, spec_single):
 
 
 @pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
-def test_jwst_1d_multi_reader_no_format(tmpdir, spec_multi):
+def test_jwst_1d_multi_reader_no_format(tmp_path, spec_multi):
     """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
     data = SpectrumList.read(tmpfile)
@@ -167,9 +167,9 @@ def test_jwst_1d_multi_reader_no_format(tmpdir, spec_multi):
 
 
 @pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
-def test_jwst_1d_multi_reader_check_units(tmpdir, spec_multi):
+def test_jwst_1d_multi_reader_check_units(tmp_path, spec_multi):
     """Test units for Spectrum1D.read for JWST c1d/x1d data"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
     data = SpectrumList.read(tmpfile)
@@ -179,9 +179,9 @@ def test_jwst_1d_multi_reader_check_units(tmpdir, spec_multi):
 
 
 @pytest.mark.parametrize('spec_single', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_single'])
-def test_jwst_1d_reader_meta(tmpdir, spec_single):
+def test_jwst_1d_reader_meta(tmp_path, spec_single):
     """Test that the Primary and COMBINE1D/EXTRACT1D extension headers are merged in meta"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_single.writeto(tmpfile)
 
     data = Spectrum1D.read(tmpfile)
@@ -190,9 +190,9 @@ def test_jwst_1d_reader_meta(tmpdir, spec_single):
 
 
 @pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
-def test_jwst_1d_single_reader_fail_on_multi(tmpdir, spec_multi):
+def test_jwst_1d_single_reader_fail_on_multi(tmp_path, spec_multi):
     """Make sure Spectrum1D.read on JWST c1d/x1d with many spectra errors out"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
     with pytest.raises(IORegistryError):
@@ -200,9 +200,9 @@ def test_jwst_1d_single_reader_fail_on_multi(tmpdir, spec_multi):
 
 
 @pytest.mark.parametrize("srctype", ["BADVAL"])
-def test_jwst_reader_fail(tmpdir, x1d_single, srctype):
+def test_jwst_reader_fail(tmp_path, x1d_single, srctype):
     """Check that the reader fails when SRCTYPE is a BADVAL"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     hdulist = x1d_single
     # Add a spectrum with bad SRCTYPE (mutate the fixture)
     hdulist.append(create_spectrum_hdu(100, srctype, ver=2))
@@ -213,9 +213,9 @@ def test_jwst_reader_fail(tmpdir, x1d_single, srctype):
 
 
 @pytest.mark.xfail(reason="JWST loader no longer attempts to auto-find flux column.")
-def test_jwst_reader_warning_stddev(tmpdir, x1d_single):
+def test_jwst_reader_warning_stddev(tmp_path, x1d_single):
     """Check that the reader raises warning when stddev is zeros"""
-    tmpfile = str(tmpdir.join('jwst.fits'))
+    tmpfile = str(tmp_path / 'jwst.fits')
     hdulist = x1d_single
     # Put zeros in ERROR column
     hdulist["EXTRACT1D"].data["ERROR"] = 0
@@ -308,8 +308,8 @@ def s2d_multi(generate_wcs_transform, request):
 
 
 @pytest.mark.xfail(reason="Needs investigation! See #717")
-def test_jwst_s2d_reader(tmpdir, s2d_single):
-    path = str(tmpdir.join("test.fits"))
+def test_jwst_s2d_reader(tmp_path, s2d_single):
+    path = str(tmp_path / "test.fits")
     model = s2d_single
     model.save(path)
 
@@ -318,8 +318,8 @@ def test_jwst_s2d_reader(tmpdir, s2d_single):
     assert spec.unit == u.dimensionless_unscaled
 
 
-def test_jwst_s2d_multi_reader(tmpdir, s2d_multi):
-    path = str(tmpdir.join("test.fits"))
+def test_jwst_s2d_multi_reader(tmp_path, s2d_multi):
+    path = str(tmp_path / "test.fits")
     model = s2d_multi
     model.save(path)
 
@@ -366,7 +366,7 @@ def generate_s3d_wcs():
 
 
 @pytest.fixture()
-def tmp_asdf(tmpdir):
+def tmp_asdf():
     # Create some data
     sequence = np.arange(100)
     squares  = sequence**2
