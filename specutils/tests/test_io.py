@@ -77,7 +77,7 @@ def test_speclist_autoidentify():
 @pytest.mark.filterwarnings(r'ignore:.*data loader provided for Spectrum1D without explicit identifier')
 def test_default_identifier(tmp_path):
 
-    fname = str(tmp_path.join('empty.txt'))
+    fname = str(tmp_path / 'empty.txt')
     with open(fname, 'w') as ff:
         ff.write('\n')
 
@@ -99,8 +99,8 @@ def test_default_identifier(tmp_path):
 
 def test_default_identifier_extension(tmp_path):
 
-    good_fname = str(tmp_path.join('empty.fits'))
-    bad_fname = str(tmp_path.join('empty.txt'))
+    good_fname = str(tmp_path / 'empty.fits')
+    bad_fname = str(tmp_path / 'empty.txt')
 
     # Create test data files.
     for name in [good_fname, bad_fname]:
@@ -128,8 +128,8 @@ def test_default_identifier_extension(tmp_path):
 
 def test_custom_identifier(tmp_path):
 
-    good_fname = str(tmp_path.join('good.txt'))
-    bad_fname = str(tmp_path.join('bad.txt'))
+    good_fname = str(tmp_path / 'good.txt')
+    bad_fname = str(tmp_path / 'bad.txt')
 
     # Create test data files.
     for name in [good_fname, bad_fname]:
@@ -166,7 +166,7 @@ def test_custom_identifier(tmp_path):
 )
 def test_loader_uses_priority(tmp_path):
     counter = Counter()
-    fname = str(tmp_path.join('good.txt'))
+    fname = str(tmp_path / 'good.txt')
 
     with open(fname, 'w') as ff:
         ff.write('\n')
