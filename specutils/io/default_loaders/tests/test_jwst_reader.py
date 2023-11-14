@@ -366,7 +366,7 @@ def generate_s3d_wcs():
 
 
 @pytest.fixture()
-def tmp_asdf(tmp_path):
+def tmp_asdf():
     # Create some data
     sequence = np.arange(100)
     squares  = sequence**2
