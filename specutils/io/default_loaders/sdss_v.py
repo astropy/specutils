@@ -104,6 +104,8 @@ def _fetch_flux_unit(hdu):
     if "Ang" in flux_unit and "strom" not in flux_unit:
         flux_unit = flux_unit.replace("Ang", "Angstrom")
 
+    flux_unit = flux_unit.replace("s/cm^2/Angstrom", "(s cm2 Angstrom)")
+
     # TODO: process the string so the FITS standard is met and UnitsWarning is surpressed.
     return Unit(flux_unit)
 
@@ -473,8 +475,10 @@ def load_sdss_mwm_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header["DATASUM"] == "0":
                 # Skip zero data HDU's
-                # TODO: validate if we want this warning or not. it might get annoying & fill logs with useless alerts.
-                warn("HDU{} ({}) is empty.".format(hdu, hdulist[hdu].name))
+                # TODO: validate if we want this printed warning or not.
+                # it might get annoying & fill logs with useless alerts.
+                print("WARNING: HDU{} ({}) is empty.".format(
+                    hdu, hdulist[hdu].name))
                 continue
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
     return spectra
