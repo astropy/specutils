@@ -1,7 +1,6 @@
 """Register reader functions for various spectral formats."""
 from collections import OrderedDict
 from typing import Optional
-from warnings import warn
 
 import numpy as np
 from astropy.units import Unit, Quantity, Angstrom
