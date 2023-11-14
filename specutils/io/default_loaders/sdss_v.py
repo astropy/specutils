@@ -16,8 +16,7 @@ __all__ = [
     "load_sdss_apVisit_1D",
     "load_sdss_apVisit_list",
     "load_sdss_apStar_1D",
-    # "load_sdss_apStar_list",
-    # not yet implemented properly
+    "load_sdss_apStar_list",
     "load_sdss_spec_1D",
     "load_sdss_spec_list",
     "load_sdss_mwm_1d",
@@ -117,7 +116,7 @@ def _fetch_flux_unit(hdu):
     priority=10,
     extensions=["fits"],
 )
-def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
+def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
     """
     Load an apStar file as a Spectrum1D.
 
@@ -125,8 +124,8 @@ def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
     ----------
     file_obj : str
         The path to the FITS file
-    hdu : int
-        The specified HDU to load. Defaults to coadd (HDU1).
+    idx : int
+        The specified visit to load. Defaults to coadd (index 0).
 
     Returns
     -------
@@ -135,7 +134,6 @@ def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
 
     """
     # intialize slicer
-    slicer = slice(*data_slice) if data_slice is not None else slice(None)
 
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Obtain spectral axis from header (HDU[1])
@@ -148,14 +146,17 @@ def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
 
         # Obtain flux and e_flux from data (HDU[1] & HDU[2])
         flux_unit = _fetch_flux_unit(hdulist[1])
-        flux = Quantity(hdulist[1].data[slicer], unit=flux_unit)
-        e_flux = StdDevUncertainty(hdulist[2].data[slicer])
+        flux = Quantity(hdulist[1].data[idx], unit=flux_unit)
+        e_flux = StdDevUncertainty(hdulist[2].data[idx])
 
         # drop if flux == 0
         # TODO: fixes jdaviz line lists redshift slider limits bug,
         #       can be removed if outputs are fixed!
-        spectral_axis = spectral_axis[np.logical_or.reduce(~np.isnan(flux),
-                                                           axis=0)]
+        if len(flux.shape) == 2:
+            spectral_axis = spectral_axis[np.logical_or.reduce(~np.isnan(flux),
+                                                               axis=0)]
+        else:
+            spectral_axis = spectral_axis[~np.isnan(flux)]
         e_flux = e_flux[~np.isnan(flux)]
         mask = np.isnan(flux)
         flux = flux[~np.isnan(flux)]
@@ -173,8 +174,8 @@ def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
 
         meta = _fetch_metadata(hdulist)
 
-        meta["SNR"] = np.array(snr)[slicer]
-        meta["BITMASK"] = hdulist[3].data[slicer]
+        meta["SNR"] = np.array(snr)[idx]
+        meta["BITMASK"] = hdulist[3].data[idx]
 
     return Spectrum1D(
         spectral_axis=spectral_axis,
@@ -206,16 +207,14 @@ def load_sdss_apStar_list(file_obj, **kwargs):
     SpectrumList
         The spectra contained in the file
     """
-    # NOTE: by the SDSS5 documentation, apStar HDU8 & HDU9 are not spectrum HDUs.
-    # I will assume, however, that apStar will not have these stellar parameters HDU's or the empty HDU8.
-
-    # TODO: The test file I have confuses me so I haven't done this yet.
-    return None
-
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
+        nvisits = hdulist[0].header["NVISITS"]
+        if nvisits <= 1:
+            raise ValueError(
+                "Only 1 visit in this file. Use Spectrum1D.read() instead.")
         return SpectrumList([
-            load_sdss_apStar_1D(file_obj, hdu=i, **kwargs)
-            for i in range(1, len(hdulist))
+            load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
+            for i in range(1, nvisits + 1)
         ])
 
 
@@ -473,10 +472,9 @@ def load_sdss_mwm_list(file_obj, **kwargs):
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header["DATASUM"] == "0":
-                # Append None if no data. Subject to change
+                # Skip zero data HDU's
                 # TODO: validate if we want this warning or not. it might get annoying & fill logs with useless alerts.
                 warn("HDU{} ({}) is empty.".format(hdu, hdulist[hdu].name))
-                spectra.append(None)
                 continue
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
     return spectra
