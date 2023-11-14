@@ -1,6 +1,7 @@
 """Register reader functions for various spectral formats."""
 from collections import OrderedDict
 from typing import Optional
+from warnings import warn
 
 import numpy as np
 from astropy.units import Unit, Quantity, Angstrom
@@ -150,6 +151,15 @@ def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
         flux = Quantity(hdulist[1].data[slicer], unit=flux_unit)
         e_flux = StdDevUncertainty(hdulist[2].data[slicer])
 
+        # drop if flux == 0
+        # TODO: fixes jdaviz line lists redshift slider limits bug,
+        #       can be removed if outputs are fixed!
+        spectral_axis = spectral_axis[np.logical_or.reduce(~np.isnan(flux),
+                                                           axis=0)]
+        e_flux = e_flux[~np.isnan(flux)]
+        mask = np.isnan(flux)
+        flux = flux[~np.isnan(flux)]
+
         # Obtain stacked SNR from primary HDU based on no. of visits
         snr = [hdulist[0].header["SNR"]]
         n_visits = hdulist[0].header["NVISITS"]
@@ -166,10 +176,13 @@ def load_sdss_apStar_1D(file_obj, hdu: int = 1, data_slice=None, **kwargs):
         meta["SNR"] = np.array(snr)[slicer]
         meta["BITMASK"] = hdulist[3].data[slicer]
 
-    return Spectrum1D(spectral_axis=spectral_axis,
-                      flux=flux,
-                      uncertainty=e_flux,
-                      meta=meta)
+    return Spectrum1D(
+        spectral_axis=spectral_axis,
+        flux=flux,
+        uncertainty=e_flux,
+        # mask=mask,
+        meta=meta,
+    )
 
 
 @data_loader(
@@ -381,7 +394,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
 
     """
     # Fetch flux, e_flux, spectral axis, and units
-    # TODO: check with data team about loc of BUNIT in specFull/Lite files
+    # NOTE: flux unit info is not in BOSS spec files.
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
     spectral_axis = Quantity(10**hdulist[hdu].data["LOGLAM"], unit=Angstrom)
 
@@ -461,9 +474,8 @@ def load_sdss_mwm_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header["DATASUM"] == "0":
                 # Append None if no data. Subject to change
-                # TODO: validate if we want this alert or not. it might get annoying & fill logs with useless alerts.
-                print("Alert: HDU{} ({}) is empty.".format(
-                    hdu, hdulist[hdu].name))
+                # TODO: validate if we want this warning or not. it might get annoying & fill logs with useless alerts.
+                warn("HDU{} ({}) is empty.".format(hdu, hdulist[hdu].name))
                 spectra.append(None)
                 continue
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
@@ -508,10 +520,18 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         spectral_axis = Quantity(wavelength, unit=Angstrom)
 
     # Fetch flux, e_flux
-    # TODO: check with data team about key for BUNIT in mwm files
+    # NOTE:: flux info is not written into mwm files
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
     flux = Quantity(hdulist[hdu].data["flux"], unit=flux_unit)
     e_flux = InverseVariance(array=hdulist[hdu].data["ivar"])
+
+    # add mask where flux == 0 or nan
+    # TODO: fixes jdaviz line lists redshift slider limits bug,
+    #       can be removed if outputs are fixed!
+    spectral_axis = spectral_axis[np.logical_or.reduce(flux != 0, axis=0)]
+    e_flux = e_flux[flux != 0]
+    mask = flux == 0
+    flux = flux[flux != 0]
 
     # Access metadata
     meta = _fetch_metadata(hdulist)
@@ -534,7 +554,11 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     finally:
         meta["name"] = hdulist[hdu].name
 
-    return Spectrum1D(spectral_axis=spectral_axis,
-                      flux=flux,
-                      uncertainty=e_flux,
-                      meta=meta)
+    return Spectrum1D(
+        spectral_axis=spectral_axis,
+        flux=flux,
+        uncertainty=e_flux,
+        # mask=mask,
+        meta=meta,
+        radial_velocity=Quantity(0, unit=Unit("km s^-1")),
+    )

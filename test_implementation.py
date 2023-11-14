@@ -36,8 +36,10 @@ specs_1D.append(
 specs_1D.append(
     Spectrum1D.read(f"{dir}spec-allepoch-60130-27021597775058535.fits", hdu=1))
 
-for i in range(7):
-    specviz.load_data(specs_1D[i], data_label=names[i])
+# for i in range(7):
+#    specviz.load_data(specs_1D[i], data_label=names[i])
+
+specviz.load_data(specs_1D[3], data_label="test")
 
 specviz.show()
 
