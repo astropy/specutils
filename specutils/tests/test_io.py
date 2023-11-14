@@ -75,9 +75,9 @@ def test_speclist_autoidentify():
 
 
 @pytest.mark.filterwarnings(r'ignore:.*data loader provided for Spectrum1D without explicit identifier')
-def test_default_identifier(tmpdir):
+def test_default_identifier(tmp_path):
 
-    fname = str(tmpdir.join('empty.txt'))
+    fname = str(tmp_path.join('empty.txt'))
     with open(fname, 'w') as ff:
         ff.write('\n')
 
@@ -97,10 +97,10 @@ def test_default_identifier(tmpdir):
         registry.unregister_identifier(format_name, datatype)
 
 
-def test_default_identifier_extension(tmpdir):
+def test_default_identifier_extension(tmp_path):
 
-    good_fname = str(tmpdir.join('empty.fits'))
-    bad_fname = str(tmpdir.join('empty.txt'))
+    good_fname = str(tmp_path.join('empty.fits'))
+    bad_fname = str(tmp_path.join('empty.txt'))
 
     # Create test data files.
     for name in [good_fname, bad_fname]:
@@ -126,10 +126,10 @@ def test_default_identifier_extension(tmpdir):
         registry.unregister_identifier(format_name, datatype)
 
 
-def test_custom_identifier(tmpdir):
+def test_custom_identifier(tmp_path):
 
-    good_fname = str(tmpdir.join('good.txt'))
-    bad_fname = str(tmpdir.join('bad.txt'))
+    good_fname = str(tmp_path.join('good.txt'))
+    bad_fname = str(tmp_path.join('bad.txt'))
 
     # Create test data files.
     for name in [good_fname, bad_fname]:
@@ -164,9 +164,9 @@ def test_custom_identifier(tmpdir):
     reason="Test requires priorities to be implemented in astropy",
     raises=registry.IORegistryError,
 )
-def test_loader_uses_priority(tmpdir):
+def test_loader_uses_priority(tmp_path):
     counter = Counter()
-    fname = str(tmpdir.join('good.txt'))
+    fname = str(tmp_path.join('good.txt'))
 
     with open(fname, 'w') as ff:
         ff.write('\n')
