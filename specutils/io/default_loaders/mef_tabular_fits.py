@@ -30,67 +30,68 @@ def mef_tabular_fits_writer(spectrum, file_name='my_func_output.fits', hdu=0, up
         else:
             raise ValueError('`Spectrum1d.meta.header must be `fits.header.Header` or dictionary.')
 
-        if update_header:
-            hdr_types = (str, int, float, complex, bool,
-                         np.floating, np.integer, np.complexfloating, np.bool_)
-            header.update([keyword for keyword in spectrum.meta.items() if
-                           isinstance(keyword[1], hdr_types)])
+    if update_header:
+        hdr_types = (str, int, float, complex, bool,
+                     np.floating, np.integer, np.complexfloating, np.bool_)
+        header.update([keyword for keyword in spectrum.meta.items() if
+                       isinstance(keyword[1], hdr_types)])
 
-        # Strip header of FITS reserved keywords
-        for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
-            header.remove(keyword, ignore_missing=True)
+    # Strip header of FITS reserved keywords
+    for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
+        header.remove(keyword, ignore_missing=True)
 
-        # Add dispersion array and unit
-        wtype = kwargs.pop('wtype', spectrum.spectral_axis.dtype)
-        wunit = u.Unit(kwargs.pop('wunit', spectrum.spectral_axis.unit))
+    # Add dispersion array and unit
+    wtype = kwargs.pop('wtype', spectrum.spectral_axis.dtype)
+    wunit = u.Unit(kwargs.pop('wunit', spectrum.spectral_axis.unit))
 
-        disp = spectrum.spectral_axis.to(wunit, equivalencies=u.spectral())
+    disp = spectrum.spectral_axis.to(wunit, equivalencies=u.spectral())
 
-        # Mapping of spectral_axis types to header TTYPE1 (no "torque/work" types!)
-        dispname = str(wunit.physical_type)
-        if dispname == "length":
-            dispname = "wavelength"
-        elif "energy" in dispname:
-            dispname = "energy"
+    # Mapping of spectral_axis types to header TTYPE1 (no "torque/work" types!)
+    dispname = str(wunit.physical_type)
+    if dispname == "length":
+        dispname = "wavelength"
+    elif "energy" in dispname:
+        dispname = "energy"
 
-        # Add flux array and unit
-        ftype = kwargs.pop('ftype', spectrum.flux.dtype)
-        funit = u.Unit(kwargs.pop('funit', spectrum.flux.unit))
-        flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(disp))
+    # Add flux array and unit
+    ftype = kwargs.pop('ftype', spectrum.flux.dtype)
+    funit = u.Unit(kwargs.pop('funit', spectrum.flux.unit))
+    flux = spectrum.flux.to(funit, equivalencies=u.spectral_density(disp))
 
-        columns = [disp.astype(wtype), flux.astype(ftype)]
-        colnames = [dispname, "flux"]
+    columns = [disp.astype(wtype), flux.astype(ftype)]
+    colnames = [dispname, "flux"]
 
-        # Include uncertainty - units to be inferred from spectrum.flux
-        if spectrum.uncertainty is not None:
-            try:
-                unc = (
-                    spectrum
-                    .uncertainty
-                    .represent_as(StdDevUncertainty)
-                    .quantity
-                    .to(funit, equivalencies=u.spectral_density(disp))
-                )
-                columns.append(unc.astype(ftype))
-                colnames.append("uncertainty")
-            except RuntimeWarning:
-                raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
-                                 " to divide-by-zero error.")
+    # Include uncertainty - units to be inferred from spectrum.flux
+    if spectrum.uncertainty is not None:
+        try:
+            unc = (
+                spectrum
+                .uncertainty
+                .represent_as(StdDevUncertainty)
+                .quantity
+                .to(funit, equivalencies=u.spectral_density(disp))
+            )
+            columns.append(unc.astype(ftype))
+            colnames.append("uncertainty")
+        except RuntimeWarning:
+            raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
+                             " to divide-by-zero error.")
 
-        # For > 1D data transpose from row-major format
-        for c in range(1, len(columns)):
-            if columns[c].ndim > 1:
-                columns[c] = columns[c].T
+    # For > 1D data transpose from row-major format
+    for c in range(1, len(columns)):
+        if columns[c].ndim > 1:
+            columns[c] = columns[c].T
 
-        tab = Table(columns, names=colnames, meta=header)
-        hdulist[1] = fits.BinTableHDU(tab)
+    tab = Table(columns, names=colnames)
+    hdulist[1] = fits.BinTableHDU(tab)
 
-        # now figure out where meta.header (and if specified, addl meta keys) should go
-        if hdu==0:
-            hdulist[0].header = header
-        else:  # must otherwise be 1, we already checked this
-            hdulist[1].header = header
+    # now figure out where meta.header (and if specified, addl meta keys) should go
+    if hdu==0:
+        print('here')
+        hdulist[0].header.update(header)
+    else:  # must otherwise be 1, we already checked this
+        hdulist[1].header.update(header)
 
-        hdulist = fits.HDUList(hdulist)
+    hdulist = fits.HDUList(hdulist)
 
-        hdulist.writeto(file_name)
+    hdulist.writeto(file_name, overwrite=True)
