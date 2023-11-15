@@ -770,7 +770,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return result
 
     def plot(self, ax=None, x_name='spectral axis', y_name='flux',
-                         **kwargs):
+                   set_quantity_support=True, **kwargs):
         """
         Visualize this spectrum using matplotlib in "histogram style".
 
@@ -785,6 +785,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         y_name : str or None
             The name to use for the y axis (units will be automatically added)
             or None to not set the y axis label.
+        set_quantity_support : bool
+            If True, call `astropy.visualization.quantity_support` to ensure
+            that the quantities in the plot are properly settable.
 
         kwargs are passed into `~matplotlib.axes.Axes.plot`, except for
         ``drawstyle`` or ``ds``.
@@ -798,6 +801,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # import is intentionally inside the method to make matplotlib an
         # "optional" dependency
         from matplotlib import pyplot as plt
+        from astropy.visualization import quantity_support
+
+        if set_quantity_support:
+            quantity_support()
 
         if 'drawstyle' in kwargs or 'ds' in kwargs:
             raise TypeError("cannot set draw style in a spectrum's plot_quick")
