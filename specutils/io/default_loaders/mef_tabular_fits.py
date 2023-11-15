@@ -87,3 +87,5 @@ def mef_tabular_fits_writer(spectrum, file_name, hdu=0, update_header=False, **k
 		    hdulist[1].header = header
 
 		hdulist = fits.HDUList(hdulist)
+
+		hdulist.writeto(file_name)

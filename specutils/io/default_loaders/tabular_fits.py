@@ -116,7 +116,6 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
         raise ValueError(f'FITS does not support BINTABLE extension in HDU {hdu}.')
 
     header = spectrum.meta.get('header', fits.header.Header()).copy()
-    print('header', header)
 
     if update_header:
         hdr_types = (str, int, float, complex, bool,
