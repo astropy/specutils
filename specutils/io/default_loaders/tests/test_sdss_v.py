@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from astropy.io import fits
-from astropy.table import Table
+from astropy.units import Unit, Quantity, Angstrom
 
 from specutils import Spectrum1D, SpectrumList
 
@@ -12,7 +12,7 @@ def mwm_HDUList(n_spectra, format="visit"):
     """Mock a MWM HDUList"""
     np.random.seed(20)
 
-    # i gave up on making this one.
+    # TODO: i gave up on making this one.
     if format == "visit":
         hdulist = fits.open("./mwmVisit-0.5.0-70350000.fits")
     elif format == "star":
@@ -131,10 +131,32 @@ def spec_HDUList(n_spectra):
     ],
 )
 def test_mwm_1d(file_obj, hdu, format):
+    """Test mwm Spectrum1D loader"""
+    # TODO make work with dummy file
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList(0, format).writeto(tmpfile, overwrite=True)
 
     data = Spectrum1D.read(tmpfile, hdu=hdu)
+    assert isinstance(data, Spectrum1D)
+
+
+@pytest.mark.parametrize(
+    "file_obj, format",
+    [
+        ("mwmVisit-temp", "visit"),
+        ("mwmStar-temp", "star"),
+    ],
+)
+def test_mwm_list(file_obj, format):
+    """Test mwm SpectrumList loader"""
+    # TODO make work with dummy file
+    tmpfile = str(file_obj) + ".fits"
+    mwm_HDUList(0, format).writeto(tmpfile, overwrite=True)
+
+    data = SpectrumList.read(tmpfile, format="SDSS-V mwm multi")
+    assert isinstance(data, SpectrumList)
+    for i in range(len(data)):
+        assert isinstance(data[i], Spectrum1D)
 
 
 @pytest.mark.parametrize(
@@ -153,12 +175,20 @@ def test_spec_1d(file_obj, n_spectra):
 
     for i in idxs:
         data = Spectrum1D.read(tmpfile, hdu=i)
+        assert isinstance(data, Spectrum1D)
+        assert len(data.flux.value) == 10
+        assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+
+        assert len(data.spectral_axis.value) == 10
+        assert data.spectral_axis.unit == Angstrom
+
+        assert data.meta["foobar"] == "barfoo"
 
 
 @pytest.mark.parametrize(
     "file_obj,n_spectra",
     [
-        ("spec-temp", 1),
+        ("spec-temp", 0),
         ("spec-temp", 5),
     ],
 )
@@ -168,6 +198,14 @@ def test_spec_list(file_obj, n_spectra):
     spec_HDUList(n_spectra).writeto(tmpfile, overwrite=True)
 
     data = SpectrumList.read(tmpfile, format="SDSS-V spec multi")
+    assert isinstance(data, SpectrumList)
+    assert len(data) == n_spectra + 1
+    for i in range(n_spectra):
+        assert len(data[i].flux.value) == 10
+        assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+        assert len(data[i].spectral_axis.value) == 10
+        assert data[i].spectral_axis.unit == Angstrom
+        assert data[i].meta["foobar"] == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -200,6 +238,14 @@ def test_apStar_1D(file_obj, idx):
     apStar_HDUList(6).writeto(tmpfile, overwrite=True)
 
     data = Spectrum1D.read(tmpfile, idx=idx)
+    assert isinstance(data, Spectrum1D)
+    assert len(data.flux.value) == 10
+    assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+
+    assert len(data.spectral_axis.value) == 10
+    assert data.spectral_axis.unit == Angstrom
+
+    assert data.meta["foobar"] == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -214,7 +260,14 @@ def test_apStar_list(file_obj, n_spectra):
     apStar_HDUList(n_spectra).writeto(tmpfile, overwrite=True)
 
     data = SpectrumList.read(tmpfile, format="SDSS-V apStar multi")
+    assert isinstance(data, SpectrumList)
     assert len(data) == n_spectra
+    for i in range(len(data)):
+        assert isinstance(data[i], Spectrum1D)
+        assert len(data[i].flux.value) == 10
+        assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+        assert len(data[i].spectral_axis.value) == 10
+        assert data[i].meta["foobar"] == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -242,7 +295,11 @@ def test_apVisit_1D(file_obj):
     tmpfile = str(file_obj) + ".fits"
     apVisit_HDUList().writeto(tmpfile, overwrite=True)
 
-    Spectrum1D.read(tmpfile)
+    data = Spectrum1D.read(tmpfile)
+    assert isinstance(data, Spectrum1D)
+    assert np.array_equal(data.spectral_axis.value, np.arange(1, 31, 1))
+    assert len(data.flux.value) == 30
+    assert data.meta["foobar"] == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -255,4 +312,6 @@ def test_apVisit_list(file_obj):
     tmpfile = str(file_obj) + ".fits"
     apVisit_HDUList().writeto(tmpfile, overwrite=True)
 
-    SpectrumList.read(tmpfile, format="SDSS-V apVisit multi")
+    data = SpectrumList.read(tmpfile, format="SDSS-V apVisit multi")
+    assert isinstance(data, SpectrumList)
+    assert len(data) == 3
