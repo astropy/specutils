@@ -105,7 +105,6 @@ def _fetch_flux_unit(hdu):
 
     flux_unit = flux_unit.replace("s/cm^2/Angstrom", "(s cm2 Angstrom)")
 
-    # TODO: process the string so the FITS standard is met and UnitsWarning is surpressed.
     return Unit(flux_unit)
 
 
@@ -150,17 +149,11 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
         flux = Quantity(hdulist[1].data[idx], unit=flux_unit)
         e_flux = StdDevUncertainty(hdulist[2].data[idx])
 
-        # drop if flux == 0
-        # TODO: fixes jdaviz line lists redshift slider limits bug,
-        #       can be removed if outputs are fixed!
-        if len(flux.shape) == 2:
-            spectral_axis = spectral_axis[np.logical_or.reduce(~np.isnan(flux),
-                                                               axis=0)]
-        else:
-            spectral_axis = spectral_axis[~np.isnan(flux)]
-        e_flux = e_flux[~np.isnan(flux)]
-        mask = np.isnan(flux)
-        flux = flux[~np.isnan(flux)]
+        # reduce flux array if 1D in 2D np array
+        # NOTE: fixes jdaviz bug, but could be the expected input for specviz...
+        if flux.shape[0] == 1:
+            flux = flux[0]
+            e_flux = e_flux[0]
 
         # Obtain stacked SNR from primary HDU based on no. of visits
         snr = [hdulist[0].header["SNR"]]
@@ -526,13 +519,12 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     flux = Quantity(hdulist[hdu].data["flux"], unit=flux_unit)
     e_flux = InverseVariance(array=hdulist[hdu].data["ivar"])
 
-    # add mask where flux == 0 or nan
-    # TODO: fixes jdaviz line lists redshift slider limits bug,
-    #       can be removed if outputs are fixed!
-    spectral_axis = spectral_axis[np.logical_or.reduce(flux != 0, axis=0)]
-    e_flux = e_flux[flux != 0]
-    mask = flux == 0
-    flux = flux[flux != 0]
+    # collapse shape if 1D spectra in 2D array
+    # NOTE: this fixes a jdaviz handling bug for 2D of shape 1,
+    #       it could be that it's expected to be parsed this way.
+    if flux.shape[0] == 1:
+        flux = flux[0]
+        e_flux = e_flux[0]
 
     # Access metadata
     meta = _fetch_metadata(hdulist)
@@ -541,7 +533,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     meta["snr"] = np.array(hdulist[hdu].data["snr"])
 
     # Add identifiers (obj, telescope, mjd, datatype)
-    # TODO: need to see what we actually want an identifier as
+    # TODO: need to see what metadata we're interested in for the MWM files.
     meta["telescope"] = hdulist[hdu].data["telescope"]
     meta["obj"] = hdulist[hdu].data["obj"]
     try:
@@ -559,7 +551,5 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         spectral_axis=spectral_axis,
         flux=flux,
         uncertainty=e_flux,
-        # mask=mask,
         meta=meta,
-        radial_velocity=Quantity(0, unit=Unit("km s^-1")),
     )
