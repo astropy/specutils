@@ -76,7 +76,8 @@ def _fetch_metadata(hdulist):
         ):
             continue
 
-        common_meta[key.lower()] = hdulist[0].header[key]  # add key to dict
+        common_meta[key.lower()] = hdulist[0].header.get(
+            key)  # add key to dict
 
     return common_meta
 
@@ -96,9 +97,8 @@ def _fetch_flux_unit(hdu):
         Flux unit as Astropy Unit object.
 
     """
-    flux_unit = hdu.header["BUNIT"].replace("(",
-                                            "").replace(")",
-                                                        "").split(" ")[-2:]
+    flux_unit = (hdu.header.get("BUNIT").replace("(", "").replace(
+        ")", "").split(" ")[-2:])
     flux_unit = "".join(flux_unit)
     if "Ang" in flux_unit and "strom" not in flux_unit:
         flux_unit = flux_unit.replace("Ang", "Angstrom")
@@ -138,9 +138,9 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Obtain spectral axis from header (HDU[1])
         wavelength = _wcs_log_linear(
-            hdulist[1].header["NAXIS1"],
-            hdulist[1].header["CDELT1"],
-            hdulist[1].header["CRVAL1"],
+            hdulist[1].header.get("NAXIS1"),
+            hdulist[1].header.get("CDELT1"),
+            hdulist[1].header.get("CRVAL1"),
         )
         spectral_axis = Quantity(wavelength, unit=Angstrom)
 
@@ -156,13 +156,13 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
             e_flux = e_flux[0]
 
         # Obtain stacked SNR from primary HDU based on no. of visits
-        snr = [hdulist[0].header["SNR"]]
-        n_visits = hdulist[0].header["NVISITS"]
+        snr = [hdulist[0].header.get("SNR")]
+        n_visits = hdulist[0].header.get("NVISITS")
         if n_visits > 1:
             snr.append(
                 snr[0])  # duplicate S/N value for second stacking method
             snr.extend([
-                hdulist[0].header[f"SNRVIS{i}"]
+                hdulist[0].header.get(f"SNRVIS{i}")
                 for i in range(1, 1 + n_visits)
             ])
 
@@ -202,13 +202,13 @@ def load_sdss_apStar_list(file_obj, **kwargs):
         The spectra contained in the file
     """
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
-        nvisits = hdulist[0].header["NVISITS"]
+        nvisits = hdulist[0].header.get("NVISITS")
         if nvisits <= 1:
             raise ValueError(
                 "Only 1 visit in this file. Use Spectrum1D.read() instead.")
         return SpectrumList([
             load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
-            for i in range(1, nvisits + 1)
+            for i in range(nvisits)
         ])
 
 
@@ -244,8 +244,8 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
 
         # Get metadata and attach bitmask and MJD
         meta = _fetch_metadata(hdulist)
-        meta["mjd"] = hdulist[0].header["MJD5"]
-        meta["date"] = hdulist[0].header["DATE-OBS"]
+        meta["mjd"] = hdulist[0].header.get("MJD5")
+        meta["date"] = hdulist[0].header.get("DATE-OBS")
         meta["bitmask"] = hdulist[3].data.flatten()
 
     return Spectrum1D(spectral_axis=spectral_axis,
@@ -290,8 +290,8 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
             # Copy metadata for each, adding chip bitmask and MJD to each
             meta = common_meta.copy()
             meta["bitmask"] = hdulist[3].data[chip]
-            meta["mjd"] = hdulist[0].header["MJD5"]
-            meta["date"] = hdulist[0].header["DATE-OBS"]
+            meta["mjd"] = hdulist[0].header.get("MJD5")
+            meta["date"] = hdulist[0].header.get("DATE-OBS")
 
             spectra.append(
                 Spectrum1D(
@@ -465,7 +465,7 @@ def load_sdss_mwm_list(file_obj, **kwargs):
     spectra = SpectrumList()
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         for hdu in range(1, len(hdulist)):
-            if hdulist[hdu].header["DATASUM"] == "0":
+            if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
                 # TODO: validate if we want this printed warning or not.
                 # it might get annoying & fill logs with useless alerts.
@@ -493,7 +493,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         The spectrum with nD flux contained in the HDU.
 
     """
-    if hdulist[hdu].header["DATASUM"] == "0":
+    if hdulist[hdu].header.get("DATASUM") == "0":
         raise ValueError(
             "Attemped to load an empty HDU specified at HDU{}".format(hdu))
 
@@ -503,9 +503,9 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         wavelength = np.array(hdulist[hdu].data["wavelength"])[0]
     except KeyError:
         wavelength = _wcs_log_linear(
-            hdulist[hdu].header["NPIXELS"],
-            hdulist[hdu].header["CDELT"],
-            hdulist[hdu].header["CRVAL"],
+            hdulist[hdu].header.get("NPIXELS"),
+            hdulist[hdu].header.get("CDELT"),
+            hdulist[hdu].header.get("CRVAL"),
         )
     finally:
         if wavelength is None:
