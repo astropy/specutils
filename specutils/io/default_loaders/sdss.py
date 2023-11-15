@@ -1,7 +1,9 @@
 """
-Loader for SDSS individual spectrum files: spec_ files.
+Loader for SDSS spectrum files: spec_, spSpec_, and spPlate_.
 
 .. _spec: https://data.sdss.org/datamodel/files/BOSS_SPECTRO_REDUX/RUN2D/spectra/PLATE4/spec.html
+.. _spSpec: http://classic.sdss.org/dr7/dm/flatFiles/spSpec.php
+.. _spPlate: https://data.sdss.org/datamodel/files/BOSS_SPECTRO_REDUX/RUN2D/PLATE4/spPlate.html
 """
 import re
 
@@ -17,11 +19,15 @@ from ...spectra import Spectrum1D
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
-__all__ = ['spec_identify', 'spSpec_identify',
-           'spec_loader', 'spSpec_loader']
+__all__ = ['spec_identify', 'spSpec_identify', 'spPlate_identify',
+           'spec_loader', 'spSpec_loader', 'spPlate_loader']
 
+#
+# These are reserved for future use.
+#
 _spSpec_pattern = re.compile(r'spSpec-\d{5}-\d{4}-\d{3}\.fit')
 _spec_pattern = re.compile(r'spec-\d{4,5}-\d{5}-\d{4}\.fits')
+_spPlate_pattern = re.compile(r'spPlate-\d{4,5}-\d{5}\.fits')
 
 
 def _sdss_wcs_to_log_wcs(old_wcs):
