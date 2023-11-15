@@ -593,8 +593,69 @@ def test_tabular_fits_multid(tmp_path, ndim, spectral_axis):
     assert quantity_allclose(spec.uncertainty.quantity,
                              spectrum.uncertainty.quantity)
 
+@pytest.mark.parametrize("mask_type", [bool, np.uint8, np.int8, np.uint16, np.int16, '>i2'])
+def test_tabular_fits_mask(tmp_path, mask_type):
+    # test mask I/O with tabular fits format
+    wave = np.arange(3600, 3700) * u.AA
+    nwave = len(wave)
 
-def test_tabular_fits_header(tmp_path):
+    #- 1D Case
+    flux = np.random.uniform(0,1,size=nwave) * u.Jy
+    mask = np.zeros(flux.shape, dtype=mask_type)
+    mask[0] = 1
+
+    sp1 = Spectrum1D(spectral_axis=wave, flux=flux, mask=mask)
+    assert sp1.mask.dtype == mask.dtype
+
+    tmpfile = str(tmp_path / '_mask_tst.fits')
+    sp1.write(tmpfile, format='tabular-fits', overwrite=True)
+
+    sp2 = Spectrum1D.read(tmpfile)
+    assert np.all(sp1.spectral_axis == sp2.spectral_axis)
+    assert np.all(sp1.flux == sp2.flux)
+    assert sp2.mask is not None
+    assert np.all(sp1.mask == sp2.mask)
+
+    # int16 is returned as FITS-native '>i2'
+    if mask_type == np.int16:
+        assert sp1.mask.dtype.kind == sp2.mask.dtype.kind
+        assert sp1.mask.dtype.itemsize == sp2.mask.dtype.itemsize
+    elif mask_type == np.int8:
+        # due to https://github.com/astropy/astropy/issues/11963,
+        # int8 is upcast to int16 which is returned as >i2...
+        assert sp2.mask.dtype == np.dtype('>i2')
+    else:
+        assert sp1.mask.dtype == sp2.mask.dtype
+
+    #- 2D Case
+    nspec = 3
+    flux = np.random.uniform(0,1,size=(nspec,nwave)) * u.Jy
+    mask = np.zeros(flux.shape, dtype=mask_type)
+    mask[0,0] = 1
+
+    sp1 = Spectrum1D(spectral_axis=wave, flux=flux, mask=mask)
+
+    tmpfile = str(tmp_path / '_mask_tst.fits')
+    sp1.write(tmpfile, format='tabular-fits', overwrite=True)
+
+    sp2 = Spectrum1D.read(tmpfile)
+    assert np.all(sp1.spectral_axis == sp2.spectral_axis)
+    assert np.all(sp1.flux == sp2.flux)
+    assert sp2.mask is not None
+    assert np.all(sp1.mask == sp2.mask)
+
+    # int16 is returned as FITS-native '>i2'
+    if mask_type == np.int16:
+        assert sp1.mask.dtype.kind == sp2.mask.dtype.kind
+        assert sp1.mask.dtype.itemsize == sp2.mask.dtype.itemsize
+    elif mask_type == np.int8:
+        # due to https://github.com/astropy/astropy/issues/11963,
+        # int8 is upcast to int16 which is returned as >i2...
+        assert sp2.mask.dtype == np.dtype('>i2')
+    else:
+        assert sp1.mask.dtype == sp2.mask.dtype
+
+def test_tabular_fits_maskheader(tmp_path):
     # Create a small data set + header with reserved FITS keywords
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.Jy

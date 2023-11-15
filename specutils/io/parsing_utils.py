@@ -282,11 +282,20 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     else:
         err = None
 
+    # Check for mask
+    if 'mask' in table.colnames:
+        mask = table['mask']
+        if mask.ndim > 1:
+            mask = mask.T
+    else:
+        mask = None
+
     # Create the Spectrum1D object and return it
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
         # For > 1D spectral axis transpose to row-major format and return SpectrumCollection
         spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
-                              uncertainty=err, meta={'header': table.meta}, wcs=wcs)
+                              uncertainty=err, meta={'header': table.meta}, wcs=wcs,
+                              mask=mask)
 
     return spectrum
 

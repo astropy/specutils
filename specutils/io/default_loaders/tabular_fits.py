@@ -163,6 +163,19 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
             raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
                              " to divide-by-zero error.")
 
+    # Add mask column if present
+    if spectrum.mask is not None:
+        # work around https://github.com/astropy/astropy/issues/11963
+        # where int8 columns are written as bool, loosing information.
+        # upcast to int16 instead.
+        if spectrum.mask.dtype == np.int8:
+            mask = spectrum.mask.astype(np.int16)
+        else:
+            mask = spectrum.mask
+
+        columns.append(mask)
+        colnames.append('mask')
+
     # For > 1D data transpose from row-major format
     for c in range(1, len(columns)):
         if columns[c].ndim > 1:
