@@ -769,7 +769,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         return result
 
-    def plot_quick(self, ax=None, x_name='spectral axis', y_name='flux',
+    def plot(self, ax=None, x_name='spectral axis', y_name='flux',
                          **kwargs):
         """
         Visualize this spectrum using matplotlib in "histogram style".

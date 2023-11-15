@@ -549,5 +549,5 @@ def test_spectral_axis_direction():
 @pytest.mark.skipif('not HAS_MATPLOTLIB')
 def test_plot():
     spec_single_flux = Spectrum1D([1, 2] * u.Jy, [3, 4] * u.nm)
-    ax = spec_single_flux.plot_quick()
+    ax = spec_single_flux.plot()
     assert isinstance(ax, matplotlib.axes.Axes)
