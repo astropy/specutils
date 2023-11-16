@@ -122,8 +122,8 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
     idx : int
         The specified visit to load. Defaults to coadd (index 0).
 
@@ -193,8 +193,8 @@ def load_sdss_apStar_list(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
 
     Returns
     -------
@@ -225,8 +225,8 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
 
     Returns
     -------
@@ -267,8 +267,8 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
 
     Returns
     -------
@@ -320,8 +320,8 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file.
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList..
     hdu : int
         The specified HDU to load a given spectra from.
 
@@ -352,8 +352,8 @@ def load_sdss_spec_list(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file.
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList..
 
     Returns
     -------
@@ -421,8 +421,8 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file.
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList..
     hdu : int
         Specified HDU to load.
 
@@ -450,8 +450,8 @@ def load_sdss_mwm_list(file_obj, **kwargs):
 
     Parameters
     ----------
-    file_obj : str
-        The path to the FITS file
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
 
     Returns
     -------

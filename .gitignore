@@ -74,3 +74,4 @@ venv
 test_implementation.ipynb
 SDSSV_Loaders_Demo.py
 test_implementation.py
+.venv
