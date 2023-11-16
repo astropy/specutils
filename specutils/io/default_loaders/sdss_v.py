@@ -37,51 +37,6 @@ def _wcs_log_linear(naxis, cdelt, crval):
     return 10**(np.arange(naxis) * cdelt + crval)
 
 
-def _fetch_metadata(hdulist):
-    """
-    Fetch the relevant common metadata.
-
-    Global function used in all SDSS-V metadata handling.
-
-    Parameters
-    ----------
-    hdulist: HDUList
-        The hdulist imported from fits.open().
-
-    Returns
-    -------
-    meta: OrderedDict
-        Dictionary of relevant metadata from primary HDU.
-
-    """
-    # Orderly with an OrderedDict
-    common_meta = OrderedDict([])
-
-    # Loop over all keys to get relevant metadata
-    for key in hdulist[0].header.keys():
-        # exclude these keys
-        if key.startswith(("TTYPE", "TFORM", "TDIM")) or key in (
-                "",
-                "COMMENT",
-                "CHECKSUM",
-                "DATASUM",
-                "NAXIS",
-                "NAXIS1",
-                "NAXIS2",
-                "XTENSION",
-                "BITPIX",
-                "PCOUNT",
-                "GCOUNT",
-                "TFIELDS",
-        ):
-            continue
-
-        common_meta[key.lower()] = hdulist[0].header.get(
-            key)  # add key to dict
-
-    return common_meta
-
-
 def _fetch_flux_unit(hdu):
     """
     Fetch the flux unit by accessing the BUNIT key of the given HDU.
@@ -155,20 +110,9 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
             flux = flux[0]
             e_flux = e_flux[0]
 
-        # Obtain stacked SNR from primary HDU based on no. of visits
-        snr = [hdulist[0].header.get("SNR")]
-        n_visits = hdulist[0].header.get("NVISITS")
-        if n_visits > 1:
-            snr.append(
-                snr[0])  # duplicate S/N value for second stacking method
-            snr.extend([
-                hdulist[0].header.get(f"SNRVIS{i}")
-                for i in range(1, 1 + n_visits)
-            ])
-
-        meta = _fetch_metadata(hdulist)
-
-        meta["SNR"] = np.array(snr)[idx]
+        # Add header + bitmask
+        meta = dict()
+        meta["header"] = hdulist[0].header
         meta["BITMASK"] = hdulist[3].data[idx]
 
     return Spectrum1D(
@@ -243,9 +187,8 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
         e_flux = StdDevUncertainty(hdulist[2].data.flatten())
 
         # Get metadata and attach bitmask and MJD
-        meta = _fetch_metadata(hdulist)
-        meta["mjd"] = hdulist[0].header.get("MJD5")
-        meta["date"] = hdulist[0].header.get("DATE-OBS")
+        meta = dict()
+        meta["header"] = hdulist[0].header
         meta["bitmask"] = hdulist[3].data.flatten()
 
     return Spectrum1D(spectral_axis=spectral_axis,
@@ -279,7 +222,8 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Get metadata
         flux_unit = _fetch_flux_unit(hdulist[1])
-        common_meta = _fetch_metadata(hdulist)
+        common_meta = dict()
+        common_meta["header"] = hdulist[0].header
 
         for chip in range(hdulist[1].data.shape[0]):
             # Fetch spectral axis and flux, and E_flux
@@ -290,8 +234,6 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
             # Copy metadata for each, adding chip bitmask and MJD to each
             meta = common_meta.copy()
             meta["bitmask"] = hdulist[3].data[chip]
-            meta["mjd"] = hdulist[0].header.get("MJD5")
-            meta["date"] = hdulist[0].header.get("DATE-OBS")
 
             spectra.append(
                 Spectrum1D(
@@ -398,7 +340,8 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     # Fetch metadata
     # NOTE: specFull file does not include S/N value, but this gets calculated
     #       for mwmVisit/mwmStar files when they are created.
-    meta = _fetch_metadata(hdulist)
+    meta = dict()
+    meta["header"] = hdulist[0].header
     meta["name"] = hdulist[hdu].name
 
     return Spectrum1D(spectral_axis=spectral_axis,
@@ -526,8 +469,9 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         flux = flux[0]
         e_flux = e_flux[0]
 
-    # Access metadata
-    meta = _fetch_metadata(hdulist)
+    # Create metadata
+    meta = dict()
+    meta["header"] = hdulist[0].header
 
     # Add SNR to metadata
     meta["snr"] = np.array(hdulist[hdu].data["snr"])
