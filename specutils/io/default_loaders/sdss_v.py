@@ -30,7 +30,6 @@ def apVisit_identify(origin, *args, **kwargs):
     Check whether given file is FITS. This is used for Astropy I/O
     Registry.
 
-
     Updated for SDSS-V outputs.
     """
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
@@ -171,13 +170,14 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
         # Add header + bitmask
         meta = dict()
         meta["header"] = hdulist[0].header
-        meta["BITMASK"] = hdulist[3].data[idx]
+        # SDSS masks are arrays of bit values storing multiple bool conds
+        mask = hdulist[3].data[idx]
 
     return Spectrum1D(
         spectral_axis=spectral_axis,
         flux=flux,
         uncertainty=e_flux,
-        # mask=mask,
+        mask=mask,
         meta=meta,
     )
 
@@ -247,10 +247,11 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
         # Get metadata and attach bitmask and MJD
         meta = dict()
         meta["header"] = hdulist[0].header
-        meta["bitmask"] = hdulist[3].data.flatten()
+        mask = hdulist[3].data.flatten()
 
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
+                      mask=mask,
                       uncertainty=e_flux,
                       meta=meta)
 
@@ -291,12 +292,13 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
             # Copy metadata for each, adding chip bitmask and MJD to each
             meta = common_meta.copy()
-            meta["bitmask"] = hdulist[3].data[chip]
+            mask = hdulist[3].data[chip]
 
             spectra.append(
                 Spectrum1D(
                     spectral_axis=spectral_axis,
                     flux=flux,
+                    mask=mask,
                     uncertainty=e_flux,
                     meta=meta,
                 ))
@@ -395,6 +397,14 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     # no e_flux, so we use inverse of variance
     ivar = InverseVariance(hdulist[hdu].data["IVAR"])
 
+    # Fetch mask -- stored in two ways
+    try:
+        mask = hdulist[hdu].data["MASK"]
+    except KeyError:
+        # TODO: find out which or AND_MASK or OR_MASK is wanted
+        #       i'm assuming AND_MASK is more stringent, so AND it is
+        mask = hdulist[hdu].data["AND_MASK"]
+
     # Fetch metadata
     # NOTE: specFull file does not include S/N value, but this gets calculated
     #       for mwmVisit/mwmStar files when they are created.
@@ -405,6 +415,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
                       uncertainty=ivar,
+                      mask=mask,
                       meta=meta)
 
 
@@ -520,12 +531,16 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     flux = Quantity(hdulist[hdu].data["flux"], unit=flux_unit)
     e_flux = InverseVariance(array=hdulist[hdu].data["ivar"])
 
+    # Collect bitmask
+    mask = hdulist[hdu].data["pixel_flags"]
+
     # collapse shape if 1D spectra in 2D array
     # NOTE: this fixes a jdaviz handling bug for 2D of shape 1,
     #       it could be that it's expected to be parsed this way.
     if flux.shape[0] == 1:
         flux = flux[0]
         e_flux = e_flux[0]
+        mask = mask[0]
 
     # Create metadata
     meta = dict()
@@ -553,5 +568,6 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         spectral_axis=spectral_axis,
         flux=flux,
         uncertainty=e_flux,
+        mask=mask,
         meta=meta,
     )
