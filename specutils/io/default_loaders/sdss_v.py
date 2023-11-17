@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 from astropy.units import Unit, Quantity, Angstrom
 from astropy.nddata import StdDevUncertainty, InverseVariance
-from astropy.io.fits import HDUList
+from astropy.io.fits import HDUList, BinTableHDU, ImageHDU
 
 from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
@@ -22,11 +22,69 @@ __all__ = [
     "load_sdss_mwm_list",
 ]
 
-
 ## IDENTIFIER
-def identify_filetype(filetype):
-    """Generic function generator to verify if a file_obj string specificies this filetype."""
-    return lambda f, o, *args, **kwargs: o.split("/")[-1].startswith(filetype)
+
+
+def apVisit_identify(origin, *args, **kwargs):
+    """
+    Check whether given file is FITS. This is used for Astropy I/O
+    Registry.
+
+
+    Updated for SDSS-V outputs.
+    """
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        # Test if fits has extension of type BinTable and check for
+        # apVisit-specific keys
+        return (hdulist[0].header.get("SURVEY").lower() == "sdss-v"
+                and len(hdulist) > 4
+                and hdulist[1].header.get("BUNIT", "none").startswith("Flux")
+                and hdulist[2].header.get("BUNIT", "none").startswith("Flux")
+                and hdulist[4].header.get("BUNIT", "none").startswith("Wave"))
+
+
+def apStar_identify(origin, *args, **kwargs):
+    """
+    Check whether given file is FITS. This is used for Astropy I/O
+    Registry.
+
+    Updated for SDSS-V outputs.
+    """
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        # Test if fits has extension of type BinTable and check for
+        # apogee-specific keys + keys for individual apVisits
+        return ("APRED" in hdulist[0].header.keys() and len(hdulist) > 9
+                and "NVISITS" in hdulist[0].header.keys()
+                and isinstance(hdulist[1], ImageHDU)
+                and hdulist[1].header.get("BUNIT", "none").startswith("Flux")
+                and hdulist[2].header.get("BUNIT", "none").startswith("Err"))
+
+
+def spec_sdss5_identify(origin, *args, **kwargs):
+    """
+    Check whether given input is FITS and has SDSS-V spec type
+    BINTABLE in first extension. This is used for Astropy I/O Registry.
+
+    Derived from SDSS-III/IV method in sdss.py. Single change (FIBERID key).
+    """
+    # Test if fits has extension of type BinTable and check for spec-specific keys
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (hdulist[0].header.get("TELESCOP") == "SDSS 2.5-M" and
+                hdulist[0].header.get("OBSERVAT").lower() in ["apo", "lco"]
+                and (hdulist[1].header.get("TTYPE1").lower() == "flux")
+                and len(hdulist) > 1 and (isinstance(hdulist[1], BinTableHDU))
+                and (hdulist[1].header.get("TTYPE3").lower() == "ivar"))
+
+
+def mwm_identify(origin, *args, **kwargs):
+    """
+    Check whether given input is FITS and has SDSS-V mwm type
+    BINTABLE in all 4 extensions. This is used for Astropy I/O Registry.
+    """
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (("V_ASTRA" in hdulist[0].header.keys()) and len(hdulist) > 0
+                and ("SDSS_ID" in hdulist[0].header.keys())
+                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5)))
 
 
 ## HELPERS
@@ -66,7 +124,7 @@ def _fetch_flux_unit(hdu):
 ## APOGEE files
 @data_loader(
     "SDSS-V apStar",
-    identifier=identify_filetype(("apStar", "asStar")),
+    identifier=apStar_identify,
     dtype=Spectrum1D,
     priority=10,
     extensions=["fits"],
@@ -105,7 +163,7 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
         e_flux = StdDevUncertainty(hdulist[2].data[idx])
 
         # reduce flux array if 1D in 2D np array
-        # NOTE: fixes jdaviz bug, but could be the expected input for specviz...
+        # NOTE: bypasses jdaviz specviz NotImplementedError, but could be the expected output for specutils
         if flux.shape[0] == 1:
             flux = flux[0]
             e_flux = e_flux[0]
@@ -126,7 +184,7 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
 
 @data_loader(
     "SDSS-V apStar multi",
-    identifier=identify_filetype(("apStar", "asStar")),
+    identifier=apStar_identify,
     dtype=SpectrumList,
     priority=10,
     extensions=["fits"],
@@ -158,7 +216,7 @@ def load_sdss_apStar_list(file_obj, **kwargs):
 
 @data_loader(
     "SDSS-V apVisit",
-    identifier=identify_filetype("apVisit"),
+    identifier=apVisit_identify,
     dtype=Spectrum1D,
     priority=10,
     extensions=["fits"],
@@ -199,7 +257,7 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
 
 @data_loader(
     "SDSS-V apVisit multi",
-    identifier=identify_filetype("apVisit"),
+    identifier=apVisit_identify,
     dtype=SpectrumList,
     priority=10,
     extensions=["fits"],
@@ -251,9 +309,9 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 @data_loader(
     "SDSS-V spec",
-    identifier=identify_filetype("spec"),
+    identifier=spec_sdss5_identify,
     dtype=Spectrum1D,
-    priority=10,
+    priority=5,
     extensions=["fits"],
 )
 def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
@@ -283,9 +341,9 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
 
 @data_loader(
     "SDSS-V spec multi",
-    identifier=identify_filetype("spec"),
+    identifier=spec_sdss5_identify,
     dtype=SpectrumList,
-    priority=20,
+    priority=5,
     extensions=["fits"],
 )
 def load_sdss_spec_list(file_obj, **kwargs):
@@ -353,7 +411,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
 ## MWM LOADERS
 @data_loader(
     "SDSS-V mwm",
-    identifier=identify_filetype("mwm"),
+    identifier=mwm_identify,
     dtype=Spectrum1D,
     priority=20,
     extensions=["fits"],
@@ -382,7 +440,7 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
 
 @data_loader(
     "SDSS-V mwm multi",
-    identifier=identify_filetype("mwm"),
+    identifier=mwm_identify,
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],

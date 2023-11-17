@@ -28,6 +28,8 @@ def apStar_HDUList(n_spectra):
     # init primary hdu header
     hdr = fits.Header()
     hdr["FOOBAR"] = "barfoo"
+    hdr["V_APRED"] = "q"
+    hdr["APRED"] = 1.3
     hdr["SNR"] = 40
     hdr["NVISITS"] = n_spectra
 
@@ -37,14 +39,17 @@ def apStar_HDUList(n_spectra):
 
     # Init the key HDU's (flux, error, bitmask)
     # names
-    for i in range(3):
+    units = [
+        "Flux (10^-17 erg/s/cm^2/Ang)", "Err (10^-17 erg/s/cm^2/Ang)", "Mask"
+    ] + (["test"] * 7)
+    for i in range(10):
         hdu = fits.ImageHDU(data=np.random.random((n_spectra, 10)))
         hdu.header["NAXIS"] = 2
         hdu.header["NAXIS1"] = 10
         hdu.header["NAXIS2"] = n_spectra
         hdu.header["CDELT1"] = 6e-06
         hdu.header["CRVAL1"] = 4.179
-        hdu.header["BUNIT"] = "Flux (10^-17 erg/s/cm^2/Ang)"
+        hdu.header["BUNIT"] = units[i]
         hdu.name = f"apstar{i}"
         hdulist.append(hdu)
 
@@ -58,6 +63,7 @@ def apVisit_HDUList():
     # init primary hdu header
     hdr = fits.Header()
     hdr["FOOBAR"] = "barfoo"
+    hdr["SURVEY"] = "SDSS-V"
     hdr["MJD5"] = 99999
     hdr["DATE-OBS"] = "1970-01-01"
 
@@ -73,10 +79,11 @@ def apVisit_HDUList():
                 np.arange(11, 21, 1),
                 np.arange(21, 31, 1)
             ]))
+            hdu.header["BUNIT"] = "Wavelength (Ang)"
 
         else:
             hdu = fits.ImageHDU(data=np.random.random((3, 10)))
-        hdu.header["BUNIT"] = "Flux (10^-17 erg/s/cm^2/Ang)"
+            hdu.header["BUNIT"] = "Flux (10^-17 erg/s/cm^2/Ang)"
         hdulist.append(hdu)
 
     return hdulist
@@ -88,6 +95,8 @@ def spec_HDUList(n_spectra):
 
     # init primary hdu header
     hdr = fits.Header()
+    hdr["OBSERVAT"] = "APO"
+    hdr["TELESCOP"] = "SDSS 2.5-M"
     hdr["FOOBAR"] = "barfoo"
     hdr["MJD5"] = 99999
     hdr["DATE-OBS"] = "1970-01-01"
@@ -100,10 +109,10 @@ def spec_HDUList(n_spectra):
     names = ["COADD", "SPALL", "ZALL", "ZLINE"]
     for i in range(4):
         hdu = fits.BinTableHDU.from_columns([
+            fits.Column(name="FLUX", format="E", array=np.random.random(10)),
             fits.Column(name="LOGLAM",
                         format="E",
                         array=np.random.random(10).sort()),
-            fits.Column(name="FLUX", format="E", array=np.random.random(10)),
             fits.Column(name="IVAR", format="E", array=np.random.random(10)),
         ])
         hdu.name = names[i]
@@ -182,7 +191,7 @@ def test_spec_1d(file_obj, n_spectra):
         assert len(data.spectral_axis.value) == 10
         assert data.spectral_axis.unit == Angstrom
 
-        assert data.meta["foobar"] == "barfoo"
+        assert data[i].meta["header"].get("foobar") == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -205,7 +214,7 @@ def test_spec_list(file_obj, n_spectra):
         assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         assert len(data[i].spectral_axis.value) == 10
         assert data[i].spectral_axis.unit == Angstrom
-        assert data[i].meta["foobar"] == "barfoo"
+        assert data[i].meta["header"].get("foobar") == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -245,7 +254,7 @@ def test_apStar_1D(file_obj, idx):
     assert len(data.spectral_axis.value) == 10
     assert data.spectral_axis.unit == Angstrom
 
-    assert data.meta["foobar"] == "barfoo"
+    assert data.meta["header"].get("foobar") == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -267,7 +276,7 @@ def test_apStar_list(file_obj, n_spectra):
         assert len(data[i].flux.value) == 10
         assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         assert len(data[i].spectral_axis.value) == 10
-        assert data[i].meta["foobar"] == "barfoo"
+        assert data[i].meta["header"].get("foobar") == "barfoo"
 
 
 @pytest.mark.parametrize(
@@ -299,7 +308,7 @@ def test_apVisit_1D(file_obj):
     assert isinstance(data, Spectrum1D)
     assert np.array_equal(data.spectral_axis.value, np.arange(1, 31, 1))
     assert len(data.flux.value) == 30
-    assert data.meta["foobar"] == "barfoo"
+    assert data.meta["header"].get("foobar") == "barfoo"
 
 
 @pytest.mark.parametrize(
