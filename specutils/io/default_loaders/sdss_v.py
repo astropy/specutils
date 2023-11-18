@@ -401,9 +401,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     try:
         mask = hdulist[hdu].data["MASK"]
     except KeyError:
-        # TODO: find out which or AND_MASK or OR_MASK is wanted
-        #       i'm assuming AND_MASK is more stringent, so AND it is
-        mask = hdulist[hdu].data["AND_MASK"]
+        mask = hdulist[hdu].data["OR_MASK"]
 
     # Fetch metadata
     # NOTE: specFull file does not include S/N value, but this gets calculated
