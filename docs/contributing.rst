@@ -78,11 +78,17 @@ Ready to contribute? Here's how to set up :ref:`specutils <specutils>` for local
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass flake8 and the tests::
 
     $ tox -e codestyle
     $ pytest
+
+  The tests will run on other Python versions automatically on opening a pull request,
+  but if you want to attempt to run the full test suite locally before doing so you can
+  run ``tox``::
+
     $ tox
+
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -108,12 +114,13 @@ Before you submit a pull request, check that it meets these guidelines:
 Tips
 ----
 
-To run a subset of tests, you can call ``pytest`` with a specific file
+To run a subset of the tests, you can call ``pytest`` with a specific file
 provided as input. For example. from the base directory of a cloned
-``specutils`` repository, you can run::
+``specutils`` repository, you could run::
 
-  pytest specutils/tests/test_regions.py
+  $ pytest specutils/tests/test_regions.py
 
-You can also run a specific test defined within a file, for example::
+You can also run a specific test defined within a file using the ``-k`` flag,
+for example::
 
-  pytest specutisl/tests/test_regions.py -k test_invert
+  $ pytest specutils/tests/test_regions.py -k test_invert
