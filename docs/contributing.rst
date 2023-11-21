@@ -64,11 +64,13 @@ Ready to contribute? Here's how to set up :ref:`specutils <specutils>` for local
 
     $ git clone git@github.com:your_name_here/specutils.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy, preferably into some sort of virtual environment using your
+   preferred environment manager. For example, using conda::
 
-    $ mkvirtualenv specutils
+    $ conda create --name specutils-dev python pip
+    $ conda activate specutils-dev
     $ cd specutils/
-    $ python setup.py develop
+    $ pip install -e .[test]
 
 4. Create a branch for local development::
 
@@ -76,13 +78,17 @@ Ready to contribute? Here's how to set up :ref:`specutils <specutils>` for local
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass flake8 and the tests::
 
-    $ flake8 specutils tests
-    $ python setup.py test or py.test
+    $ tox -e codestyle
+    $ pytest
+
+  The tests will run on other Python versions automatically on opening a pull request,
+  but if you want to attempt to run the full test suite locally before doing so you can
+  run ``tox``::
+
     $ tox
 
-   To get flake8 and tox, just pip install them into your virtualenv.
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -101,14 +107,20 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.4, 3.5, and 3.6, and for PyPy. Check
-   https://travis-ci.org/astropy/specutils/pull_requests
-   and make sure that the tests pass for all supported Python versions.
+3. The pull request should work for Python 3.9 - 3.11, and for PyPy. Check
+   that all required tests passed in the Github Actions CI section at the
+   bottom of your pull request.
 
 Tips
 ----
 
-To run a subset of tests::
+To run a subset of the tests, you can call ``pytest`` with a specific file
+provided as input. For example. from the base directory of a cloned
+``specutils`` repository, you could run::
 
-$ py.test tests.test_specutils
+  $ pytest specutils/tests/test_regions.py
 
+You can also run a specific test defined within a file using the ``-k`` flag,
+for example::
+
+  $ pytest specutils/tests/test_regions.py -k test_invert
