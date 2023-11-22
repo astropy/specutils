@@ -93,7 +93,7 @@ of a spectrum.  Both are demonstrated below:
     >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
     <Quantity 4.93784874 GHz Jy>
     >>> line_flux(noisy_gaussian).to(u.erg * u.cm**-2 * u.s**-1)  # doctest:+FLOAT_CMP
-    <Quantity 4.97826284e-14 erg / (cm2 s)>
+    <Quantity 4.97951087e-14 erg / (s cm2)>
 
 These line_flux measurements also include uncertainties if the spectrum itself
 has uncertainties:
@@ -102,7 +102,7 @@ has uncertainties:
 
     >>> flux = line_flux(noisy_gaussian)
     >>> flux.uncertainty.to(u.erg * u.cm**-2 * u.s**-1) # doctest:+FLOAT_CMP
-    <Quantity 1.42132016e-15 erg / (cm2 s)>
+    <Quantity 1.42132016e-15 erg / (s cm2)>
     >>> line_flux(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz))  # doctest:+FLOAT_CMP
     <Quantity 4.93784874 GHz Jy>
 
