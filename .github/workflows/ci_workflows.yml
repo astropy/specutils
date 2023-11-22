@@ -32,15 +32,15 @@ jobs:
             toxargs: -v
             toxposargs: --remote-data=astropy
 
-          - name: Python 3.11 (Windows)
+          - name: Python 3.12 (Windows)
             os: windows-latest
-            python: 3.11
-            toxenv: py311-test
+            python: '3.12'
+            toxenv: py312-test
 
-          - name: Python 3.11 (MacOS X)
+          - name: Python 3.12 (MacOS X)
             os: macos-latest
-            python: 3.11
-            toxenv: py311-test
+            python: '3.12'
+            toxenv: py312-test
 
           - name: Python 3.10
             os: ubuntu-latest
@@ -59,20 +59,15 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
-    - name: Install language-pack-de and tzdata
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-          sudo apt-get update
-          sudo apt-get install language-pack-de tzdata graphviz
     - name: Install Python dependencies
-      run: python -m pip install --upgrade tox codecov
+      run: python -m pip install --upgrade tox
     - name: Run tests
       run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
     # TODO: Do we need --gcov-glob "*cextern*" ?
@@ -91,25 +86,20 @@ jobs:
         include:
           - name: (Allowed Failure) Python 3.12 with remote data and dev version of key dependencies
             os: ubuntu-latest
-            python: '3.12-dev'
+            python: '3.12'
             toxenv: py312-test-devdeps
             toxposargs: --remote-data=any
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
-    - name: Install language-pack-de and tzdata
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-          sudo apt-get update
-          sudo apt-get install language-pack-de tzdata
     - name: Install Python dependencies
-      run: python -m pip install --upgrade tox codecov
+      run: python -m pip install --upgrade tox
     - name: Run tests
       run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
