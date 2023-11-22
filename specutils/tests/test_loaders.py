@@ -679,10 +679,13 @@ def test_tabular_fits_maskheader(tmp_path):
         # Test HDU0 header
         assert hdulist[0].header['OBSERVER'] == 'Parsons'
 <<<<<<< HEAD
+<<<<<<< HEAD
 
         # keys relevant to datashape are in HDU 1
 =======
     
+=======
+>>>>>>> 8bef29ce (codestyle fix)
         # keys relevant to datashape are in HDU1 header
 >>>>>>> 34257f44 (restore old legacy tests.)
         assert hdulist[1].header['NAXIS'] == 2
