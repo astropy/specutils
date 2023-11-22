@@ -615,7 +615,6 @@ def test_tabular_fits_header(tmp_path):
 
         # Test HDU0 header
         assert hdulist[0].header['OBSERVER'] == 'Parsons'
-    
         # keys relevant to datashape are in HDU1 header
         assert hdulist[1].header['NAXIS'] == 2
         assert hdulist[1].header['NAXIS2'] == disp.shape[0]
