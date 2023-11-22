@@ -86,7 +86,6 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
 
     # If no column mapping is given, attempt to parse the file using
     # unit information
-    print(f"column_mapping:{column_mapping}")
     if column_mapping is None:
         return generic_spectrum_from_table(tab, wcs=wcs, **kwargs)
 
@@ -119,10 +118,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
     if hdu < 1:
         raise ValueError(f'FITS does not support BINTABLE extension in HDU {hdu}.')
 
-    print(f"spectrum meta header:\n{repr(spectrum.meta['header'])}")
     header = spectrum.meta.get('header', fits.header.Header()).copy()
-    print(f"header:\n{repr(header)}")
-    print(f"header type:{type(header)}")
 
     if update_header:
         hdr_types = (str, int, float, complex, bool,

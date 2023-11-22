@@ -705,7 +705,7 @@ def test_tabular_fits_update_header(tmp_path):
     spectrum = Spectrum1D.read(tmpfile, format='tabular-fits')
 
     # Now write with updated header information from spectrum.meta
-    spectrum.meta.update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1, 'NAXIS2': 12})
+    spectrum.meta['header'].update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1})
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
                    update_header=True)
 
