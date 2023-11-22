@@ -59,7 +59,7 @@ Print the contents of 3 spectral axis points in a 3x3 spaxel array:
     <BLANKLINE>
                [[0.5599331 , 0.554316  , 0.5618426 ],
                 [0.5763055 , 0.5668046 , 0.5774939 ],
-                [0.59571505, 0.60118765, 0.59942234]]] 1e-17 erg / (Angstrom cm2 s spaxel)>, spectral_axis=<SpectralAxis
+                [0.59571505, 0.60118765, 0.59942234]]] 1e-17 erg / (Angstrom s spaxel cm2)>, spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
           redshift=0.0)
@@ -100,7 +100,7 @@ spectral regions from the cube.
     <BLANKLINE>
                [[0.65954393, 0.9084677 , 0.9965009 ],
                 [0.6255246 , 0.84401435, 0.9930112 ],
-                [0.59066033, 0.762025  , 0.9361185 ]]] 1e-17 erg / (Angstrom cm2 s spaxel)>, spectral_axis=<SpectralAxis
+                [0.59066033, 0.762025  , 0.9361185 ]]] 1e-17 erg / (Angstrom s spaxel cm2)>, spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
           redshift=0.0)
