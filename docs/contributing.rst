@@ -67,7 +67,7 @@ Ready to contribute? Here's how to set up :ref:`specutils <specutils>` for local
 3. Install your local copy, preferably into some sort of virtual environment using your
    preferred environment manager. For example, using conda::
 
-    $ conda create --name specutils-dev python pip
+    $ conda create --name specutils-dev python=3.11 pip
     $ conda activate specutils-dev
     $ cd specutils/
     $ pip install -e .'[test]'
