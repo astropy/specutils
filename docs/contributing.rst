@@ -70,7 +70,7 @@ Ready to contribute? Here's how to set up :ref:`specutils <specutils>` for local
     $ conda create --name specutils-dev python pip
     $ conda activate specutils-dev
     $ cd specutils/
-    $ pip install -e .[test]
+    $ pip install -e .'[test]'
 
 4. Create a branch for local development::
 
