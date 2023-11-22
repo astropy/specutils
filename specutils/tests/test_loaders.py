@@ -608,16 +608,20 @@ def test_tabular_fits_header(tmp_path):
     print(f"spetrum meta: \n {repr(spectrum.meta['header'])}")
     # Read it in and check against the original
     with fits.open(tmpfile) as hdulist:
-        print(f'\nhdu info:\n')
-        hdulist.info()
-        print(f'\nhdu0 header:\n{repr(hdulist[0].header)}')
-        print(f'\nhdu1 header:\n{repr(hdulist[1].header)}')
+        # print(f'\nhdu info:\n')
+        # hdulist.info()
+        # print(f'\nhdu0 header:\n{repr(hdulist[0].header)}')
+        # print(f'\nhdu1 header:\n{repr(hdulist[1].header)}')
 
+        # Test HDU0 header
         assert hdulist[0].header['OBSERVER'] == 'Parsons'
     
-        # keys relevant to datashape are in HDU 1
+        # keys relevant to datashape are in HDU1 header
         assert hdulist[1].header['NAXIS'] == 2
         assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+
+        # Test legacy behaviour of metadata is HDU1 header
+        assert hdulist[1].header['OBSERVER'] == 'Parsons'
 
 
 def test_tabular_fits_update_header(tmp_path):
@@ -636,7 +640,7 @@ def test_tabular_fits_update_header(tmp_path):
 
     with fits.open(tmpfile) as hdulist:
         assert hdulist[0].header['OBSERVER'] == 'Rosse'
-        #  assert hdulist[1].header['NAXIS2'] == disp.shape[0]
+        assert hdulist[1].header['NAXIS2'] == disp.shape[0]
         assert_allclose(hdulist[1].header['EXPTIME'], 3.21e1)
 
     # Test that unsupported types (dict) are not added to written header
