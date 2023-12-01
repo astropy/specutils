@@ -14,7 +14,6 @@ individual objects in a file-based form.
 .. _spectrographs: https://data.desi.lbl.gov/doc/glossary/#spectrograph
 .. _tile: https://data.desi.lbl.gov/doc/glossary/#tile
 """
-import re
 import warnings
 
 from astropy.table import Table
