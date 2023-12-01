@@ -1,13 +1,18 @@
 """
 Loader for DESI spectrum files: spectra_ and coadd_.
 
-* spectra_ files contain all observations of an object in a given region.
-* coadd_ files contain one, co-added spectrum of an object in a given region.
-  The coaddition is performed across observations, but *not* across different
-  cameras.
+* spectra_ files contain all observations of the objects in a given region.
+* coadd_ files contain one, co-added spectrum of each object in a given region.
+  The coaddition is performed across observations, but *not* across the
+  three spectrographs_.
+
+The "region" can be a HEALPixel or a tile_.  DESI does not provide spectra for
+individual objects in a file-based form.
 
 .. _spectra: https://desidatamodel.readthedocs.io/en/latest/DESI_SPECTRO_REDUX/SPECPROD/healpix/SURVEY/PROGRAM/PIXGROUP/PIXNUM/spectra-SURVEY-PROGRAM-PIXNUM.html
 .. _coadd: https://desidatamodel.readthedocs.io/en/latest/DESI_SPECTRO_REDUX/SPECPROD/healpix/SURVEY/PROGRAM/PIXGROUP/PIXNUM/coadd-SURVEY-PROGRAM-PIXNUM.html
+.. _spectrographs: https://data.desi.lbl.gov/doc/glossary/#spectrograph
+.. _tile: https://data.desi.lbl.gov/doc/glossary/#tile
 """
 import re
 import warnings
@@ -21,46 +26,50 @@ import numpy as np
 
 from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
-from ..parsing_utils import read_fileobj_or_hdulist
+from ..parsing_utils import _fits_identify_by_name, read_fileobj_or_hdulist
 
-__all__ = ['spectra_identify', 'coadd_identify'
+__all__ = ['spectra_identify', 'coadd_identify',
            'spectra_loader', 'coadd_loader']
 
-#
-# These are reserved for future use.
-#
-_spectra_healpix_pattern = re.compile(r'spectra-(cmx|main|special|sv1|sv2|sv3)-(backup|bright|dark|other)-[0-9]+\.fits')
-_coadd_healpix_pattern = re.compile(r'coadd-(cmx|main|special|sv1|sv2|sv3)-(backup|bright|dark|other)-[0-9]+\.fits')
+_desi_patterns = {'spectra': {'healpix': r'spectra-(cmx|main|special|sv1|sv2|sv3)-(backup|bright|dark|other)-[0-9]+\.fits',
+                              'tile': r'spectra-[0-9]-[0-9]+-([14]xsubset[1-6]|lowspeedsubset[1-6]|exp[0-9]{8}|thru[0-9]{8}|[0-9]{8})\.fits'},
+                  'coadd': {'healpix': r'coadd-(cmx|main|special|sv1|sv2|sv3)-(backup|bright|dark|other)-[0-9]+\.fits',
+                            'tile': r'coadd-[0-9]-[0-9]+-([14]xsubset[1-6]|lowspeedsubset[1-6]|exp[0-9]{8}|thru[0-9]{8}|[0-9]{8})\.fits'}}
 
 
 def spectra_identify(origin, *args, **kwargs):
     """
-    Check whether given input is FITS and has DESI stuff.
+    Check whether given input is FITS and appears to be a DESI spectra file.
     This is used for Astropy I/O Registry.
     """
-    # Test if fits has extension of type BinTable and check for spec-specific keys
-    # with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
-    #     return (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
-    #             hdulist[0].header.get('FIBERID', 0) > 0 and
-    #             len(hdulist) > 1 and
-    #             (isinstance(hdulist[1], fits.BinTableHDU) and
-    #              hdulist[1].header.get('TTYPE3').lower() == 'ivar'))
-    return True
+    return _desi_identify('spectra', origin, *args, **kwargs)
 
 
 def coadd_identify(origin, *args, **kwargs):
     """
-    Check whether given input is FITS and has DESI stuff.
+    Check whether given input is FITS and appears to be a DESI coadd file.
     This is used for Astropy I/O Registry.
     """
-    # Test if fits has extension of type BinTable and check for spec-specific keys
-    # with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
-    #     return (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
-    #             hdulist[0].header.get('FIBERID', 0) > 0 and
-    #             len(hdulist) > 1 and
-    #             (isinstance(hdulist[1], fits.BinTableHDU) and
-    #              hdulist[1].header.get('TTYPE3').lower() == 'ivar'))
-    return True
+    return _desi_identify('coadd', origin, *args, **kwargs)
+
+
+def _desi_identify(desitype, origin, *args, **kwargs):
+    """This contains the common, low-level code for identifying spectra and coadd files.
+    """
+    check_healpix = _fits_identify_by_name(origin, *args, pattern=_desi_patterns[desitype]['healpix'])
+    check_tile = _fits_identify_by_name(origin, *args, pattern=_desi_patterns[desitype]['tile'])
+    if check_healpix or check_tile:
+        return True
+    else:
+        # If the input was a file-like object:
+        with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+            check0 = ('FIBERMAP' in hdulist and
+                      'EXP_FIBERMAP' in hdulist)
+            if desitype == 'spectra':
+                check1 = 'INFIL000' not in hdulist[0].header
+            else:
+                check1 = 'INFIL000' in hdulist[0].header
+        return check0 and check1
 
 
 @data_loader(
@@ -166,11 +175,11 @@ def _read_desi(file_obj, **kwargs):
             elif extname in tables:
                 meta_zero[extname.lower()] = Table(hdu.data, copy=True)
             else:
-                foo = extname.split('_')[0]
+                foo = extname.split('_')
                 band = foo[0].lower()
                 datatype = foo[1]
                 if band not in band_data:
-                    band_data[band] = {'band': band}
+                    band_data[band] = {'meta': {'band': band}}
                 if datatype == 'WAVELENGTH':
                     band_data[band]['spectral_axis'] = hdu.data.copy() * Unit(hdu.header['BUNIT'])
                 if datatype == 'FLUX':
@@ -179,10 +188,10 @@ def _read_desi(file_obj, **kwargs):
                 if datatype == 'IVAR':
                     band_data[band]['uncertainty'] = InverseVariance(hdu.data.copy() * Unit(hdu.header['BUNIT']))
                 if datatype == 'MASK':
-                    band_data[band]['meta'] = {'int_mask': hdu.data.copy()}
+                    band_data[band]['meta']['int_mask'] = hdu.data.copy()
                     band_data[band]['mask'] = band_data[band]['meta']['int_mask'] != 0
                 if datatype == 'RESOLUTION':
-                    pass
+                    band_data[band]['meta']['resolution_data'] = hdu.data.copy()
     meta_zero['bands'] = sorted(band_data.keys())
     for i, band in enumerate(meta_zero['bands']):
         if i == 0:
