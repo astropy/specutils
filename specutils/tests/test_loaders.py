@@ -593,13 +593,14 @@ def test_tabular_fits_multid(tmp_path, ndim, spectral_axis):
     assert quantity_allclose(spec.uncertainty.quantity,
                              spectrum.uncertainty.quantity)
 
+
 @pytest.mark.parametrize("mask_type", [bool, np.uint8, np.int8, np.uint16, np.int16, '>i2'])
 def test_tabular_fits_mask(tmp_path, mask_type):
     # test mask I/O with tabular fits format
     wave = np.arange(3600, 3700) * u.AA
     nwave = len(wave)
 
-    #- 1D Case
+    # 1D Case
     flux = np.random.uniform(0,1,size=nwave) * u.Jy
     mask = np.zeros(flux.shape, dtype=mask_type)
     mask[0] = 1
@@ -627,7 +628,7 @@ def test_tabular_fits_mask(tmp_path, mask_type):
     else:
         assert sp1.mask.dtype == sp2.mask.dtype
 
-    #- 2D Case
+    # 2D Case
     nspec = 3
     flux = np.random.uniform(0,1,size=(nspec,nwave)) * u.Jy
     mask = np.zeros(flux.shape, dtype=mask_type)
@@ -654,6 +655,7 @@ def test_tabular_fits_mask(tmp_path, mask_type):
         assert sp2.mask.dtype == np.dtype('>i2')
     else:
         assert sp1.mask.dtype == sp2.mask.dtype
+
 
 def test_tabular_fits_maskheader(tmp_path):
     # Create a small data set + header with reserved FITS keywords
