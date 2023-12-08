@@ -50,11 +50,11 @@ def template_correlate(observed_spectrum, template_spectrum, lag_units=_KMS,
         ``template_logwl_resample(spectrum, template, delta_log_wavelength=.1)``.
         If False, *no* resampling is performed (and the user is responsible for
         a sensible resampling).
-    mode: str
-        If you choose FFT method, the correlation will be done through the use
+    method: str
+        If you choose "FFT", the correlation will be done through the use
         of convolution and will be calculated faster (for small spectral 
-        resolutions it is often correct). In other cases, the direct method
-        from the numpy will be used.
+        resolutions it is often correct), otherwise the correlation is determined
+        directly from sums (the "direct" method in `~scipy.signal.correlate`).
 
     Returns
     -------
@@ -90,7 +90,7 @@ def template_correlate(observed_spectrum, template_spectrum, lag_units=_KMS,
         normalization = 1.
 
     # Correlate
-    if method == "fft":
+    if method.lower() == "fft":
         corr = correlate(observed_log_spectrum.flux.value, 
                          (template_log_spectrum.flux.value * normalization),
                          method="fft")
