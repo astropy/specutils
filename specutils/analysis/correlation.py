@@ -52,7 +52,7 @@ def template_correlate(observed_spectrum, template_spectrum, lag_units=_KMS,
         a sensible resampling).
     method: str
         If you choose "FFT", the correlation will be done through the use
-        of convolution and will be calculated faster (for small spectral 
+        of convolution and will be calculated faster (for small spectral
         resolutions it is often correct), otherwise the correlation is determined
         directly from sums (the "direct" method in `~scipy.signal.correlate`).
 
@@ -91,11 +91,11 @@ def template_correlate(observed_spectrum, template_spectrum, lag_units=_KMS,
 
     # Correlate
     if method.lower() == "fft":
-        corr = correlate(observed_log_spectrum.flux.value, 
+        corr = correlate(observed_log_spectrum.flux.value,
                          (template_log_spectrum.flux.value * normalization),
                          method="fft")
     else:
-        corr = correlate(observed_log_spectrum.flux.value, 
+        corr = correlate(observed_log_spectrum.flux.value,
                          (template_log_spectrum.flux.value * normalization),
                          method="direct")
 
