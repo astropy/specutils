@@ -68,11 +68,13 @@ def spec_sdss5_identify(origin, *args, **kwargs):
     """
     # Test if fits has extension of type BinTable and check for spec-specific keys
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
-        return (hdulist[0].header.get("TELESCOP") == "SDSS 2.5-M" and
-                hdulist[0].header.get("OBSERVAT").lower() in ["apo", "lco"]
-                and (hdulist[1].header.get("TTYPE1").lower() == "flux")
-                and len(hdulist) > 1 and (isinstance(hdulist[1], BinTableHDU))
-                and (hdulist[1].header.get("TTYPE3").lower() == "ivar"))
+        return (
+            (hdulist[0].header.get("TELESCOP").lower() == "sdss 2.5-m")  # and
+            # hdulist[0].header.get("OBSERVAT").lower() in ["apo", "lco"]
+            and (hdulist[1].header.get("TTYPE1").lower() == "flux") and
+            (hdulist[1].header.get("TTYPE2").lower() == "loglam") and
+            (len(hdulist) > 1) and (isinstance(hdulist[1], BinTableHDU)) and
+            (hdulist[1].header.get("TTYPE3").lower() == "ivar"))
 
 
 def mwm_identify(origin, *args, **kwargs):
