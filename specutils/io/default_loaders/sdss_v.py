@@ -335,7 +335,9 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
         The spectrum contained in the file at the specified HDU.
     """
     if hdu is None:
-        raise ValueError("HDU not specified! Please specify a HDU to load.")
+        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
+        hdu = 1  # defaulting to coadd
+        # raise ValueError("HDU not specified! Please specify a HDU to load.")
     elif hdu in [2, 3, 4]:
         raise ValueError("Invalid HDU! HDU{} is not spectra.".format(hdu))
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
@@ -444,7 +446,15 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
         The spectrum contained in the file
     """
     if hdu is None:
-        raise ValueError("HDU not specified! Please specify a HDU to load.")
+        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
+        with read_fileobj_or_hdulist(file_obj, memmap=False,
+                                     **kwargs) as hdulist:
+            for i in range(len(hdulist)):
+                if hdulist[i].header.get("DATASUM") != "0":
+                    hdu = i
+                    break
+
+        # raise ValueError("HDU not specified! Please specify a HDU to load.")
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu, **kwargs)
 
