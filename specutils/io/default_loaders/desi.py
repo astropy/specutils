@@ -63,7 +63,7 @@ def _desi_identify(desitype, origin, *args, **kwargs):
         # If the input was a file-like object:
         with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
             check0 = ('FIBERMAP' in hdulist and
-                      'EXP_FIBERMAP' in hdulist)
+                      'SCORES' in hdulist)
             if desitype == 'spectra':
                 check1 = 'INFIL000' not in hdulist[0].header
             else:
