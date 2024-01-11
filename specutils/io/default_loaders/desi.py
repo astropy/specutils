@@ -72,7 +72,7 @@ def _desi_identify(desitype, origin, *args, **kwargs):
 
 
 @data_loader(
-    label="DESI spectra", identifier=spectra_identify, extensions=['fits'],
+    label="DESI spectra", identifier=spectra_identify, dtype=SpectrumList, extensions=['fits'],
     priority=10,
 )
 def spectra_loader(file_obj, **kwargs):
@@ -99,7 +99,7 @@ def spectra_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    label="DESI coadd", identifier=coadd_identify, extensions=['fits'],
+    label="DESI coadd", identifier=coadd_identify, dtype=SpectrumList, extensions=['fits'],
     priority=10,
 )
 def coadd_loader(file_obj, **kwargs):
