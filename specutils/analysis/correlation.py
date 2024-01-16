@@ -253,8 +253,12 @@ def _normalize(observed_spectrum, template_spectrum):
         A float which will normalize the template spectrum's flux so that it
         can be compared to the observed spectrum.
     """
-    unc = observed_spectrum.uncertainty.represent_as(StdDevUncertainty)
-    num = np.nansum((observed_spectrum.flux*template_spectrum.flux)/(unc.array**2))
-    denom = np.nansum((template_spectrum.flux/unc.array)**2)
+    if hasattr(observed_spectrum, "uncertainty") and observed_spectrum.uncertainty is not None:
+        unc = observed_spectrum.uncertainty.represent_as(StdDevUncertainty)
+        num = np.nansum((observed_spectrum.flux*template_spectrum.flux)/(unc.array**2))
+        denom = np.nansum((template_spectrum.flux/unc.array)**2)
+    else:
+        num = np.nansum(observed_spectrum.flux*template_spectrum.flux)
+        denom = np.nansum(template_spectrum.flux**2)
 
     return num/denom

@@ -7,6 +7,9 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- ``template_correlate`` no longer errors when used on a ``Spectrum1D`` that lacks an
+  ``uncertainty`` array. [#1118]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

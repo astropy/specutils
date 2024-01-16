@@ -50,6 +50,17 @@ def test_autocorrelation():
     maximum = np.argmax(corr)
     assert maximum == midpoint
 
+    # Test that this works without uncertainty
+    spec1 = Spectrum1D(spectral_axis=spec_axis,
+                       flux=flux1,
+                       velocity_convention='optical',
+                       rest_value=5020.*u.AA)
+
+    corr, lag = correlation.template_correlate(spec1, spec2)
+
+    assert corr.unit == u.dimensionless_unscaled
+    assert lag.unit == u.km / u.s
+
 
 def test_correlation():
     """
