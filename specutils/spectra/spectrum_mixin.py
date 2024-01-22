@@ -184,7 +184,13 @@ class OneDSpectrumMixin():
 
         return new_data
 
+    @deprecated('v1.13', alternative="with_spectral_axis_unit")
     def with_spectral_unit(self, unit, velocity_convention=None,
+                           rest_value=None):
+        self.with_spectral_axis_unit(unit, velocity_convention=velocity_convention,
+                                     rest_value=rest_value)
+
+    def with_spectral_axis_unit(self, unit, velocity_convention=None,
                            rest_value=None):
         """
         Returns a new spectrum with a different spectral axis unit.

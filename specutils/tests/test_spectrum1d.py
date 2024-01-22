@@ -153,7 +153,7 @@ def test_spectral_axis_conversions():
     spec = Spectrum1D(spectral_axis=np.arange(100, 150) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    new_spec = spec.with_spectral_unit(u.km/u.s, rest_value=125*u.um,
+    new_spec = spec.with_spectral_axis_unit(u.km/u.s, rest_value=125*u.um,
                                        velocity_convention="relativistic")
 
     assert new_spec.spectral_axis.unit == u.km/u.s
