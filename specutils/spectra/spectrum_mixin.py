@@ -5,7 +5,7 @@ import astropy.units.equivalencies as eq
 from astropy import units as u
 from astropy.utils.decorators import deprecated
 
-from specutils.utils.wcs_utils import gwcs_from_array
+from specutils.utils.wcs_utils import gwcs_from_array, SpectralGWCS
 
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
@@ -208,12 +208,31 @@ class OneDSpectrumMixin():
                      even if your spectrum has air wavelength units
 
         """
-        new_wcs, new_meta = self._new_spectral_wcs(
-            unit=unit,
-            velocity_convention=velocity_convention or self.velocity_convention,
-            rest_value=rest_value or self.rest_value)
+        velocity_convention = velocity_convention if velocity_convention is not None else self.velocity_convention # noqa
+        rest_value = rest_value if rest_value is not None else self.rest_value
 
-        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=new_meta)
+        # Store the original unit information for posterity
+        meta = self._meta.copy()
+        orig_unit = self.wcs.unit[0] if hasattr(self.wcs, 'unit') else self.spectral_axis.unit
+        if 'original_unit' not in self._meta:
+            meta['original_unit'] = orig_unit
+
+        # In this case the original Spectrum1D was instantiated with a spectral_axis and no wcs
+        if isinstance(self.wcs, SpectralGWCS):
+            new_spectral_axis = self.spectral_axis.to(unit,
+                                                      doppler_convention=velocity_convention,
+                                                      doppler_rest=rest_value)
+
+            return self.__class__(flux=self.flux, spectral_axis=new_spectral_axis, meta=meta,
+                                  uncertainty=self.uncertainty, mask=self.mask)
+
+        # Otherwise we handle the original wcs properly
+        new_wcs = self._new_spectral_wcs(unit=unit, orig_unit=orig_unit,
+                                         velocity_convention=velocity_convention,
+                                         rest_value=rest_value)
+
+        spectrum = self.__class__(flux=self.flux, wcs=new_wcs, meta=meta,
+                                  uncertainty=self.uncertainty, mask=self.mask)
 
         return spectrum
 
@@ -242,7 +261,7 @@ class OneDSpectrumMixin():
 
         return unit
 
-    def _new_spectral_wcs(self, unit, velocity_convention=None,
+    def _new_spectral_wcs(self, unit, orig_unit, velocity_convention=None,
                           rest_value=None):
         """
         Returns a new WCS with a different Spectral Axis unit.
@@ -273,18 +292,10 @@ class OneDSpectrumMixin():
             equiv = getattr(u, 'doppler_{0}'.format(velocity_convention))
             rest_value.to(unit, equivalencies=equiv)
 
-        # Store the original unit information for posterity
-        meta = self._meta.copy()
-
-        orig_unit = self.wcs.unit[0] if hasattr(self.wcs, 'unit') else self.spectral_axis.unit
-
-        if 'original_unit' not in self._meta:
-            meta['original_unit'] = orig_unit
-
         # Create the new wcs object
         if isinstance(unit, u.UnitBase) and unit.is_equivalent(
                 orig_unit, equivalencies=u.spectral()):
-            return gwcs_from_array(self.spectral_axis), meta
+            return gwcs_from_array(self.spectral_axis)
 
         raise u.UnitConversionError(f"WCS units incompatible: {unit} and {orig_unit}.")
 

@@ -150,10 +150,13 @@ def test_spectral_axis_conversions():
     with pytest.raises(ValueError):
         spec.velocity
 
-    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec = Spectrum1D(spectral_axis=np.arange(100, 150) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    new_spec = spec.with_spectral_unit(u.GHz)  # noqa
+    new_spec = spec.with_spectral_unit(u.km/u.s, rest_value=125*u.um,
+                                       velocity_convention="relativistic")
+
+    assert new_spec.spectral_axis.unit == u.km/u.s
 
 
 def test_spectral_slice():
