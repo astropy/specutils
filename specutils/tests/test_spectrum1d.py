@@ -160,6 +160,7 @@ def test_spectral_axis_conversions():
     assert new_spec.wcs.world_axis_units[0] == "km.s**-1"
     # Make sure meta stored the old WCS correctly
     assert new_spec.meta["original_wcs"].world_axis_units[0] == "nm"
+    assert new_spec.meta["original_spectral_axis_unit"] == "nm"
 
 
 def test_spectral_slice():

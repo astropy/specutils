@@ -224,9 +224,9 @@ class OneDSpectrumMixin():
         # Store the original unit information and WCS for posterity
         meta = self._meta.copy()
 
-        if 'original_unit' not in self._meta:
+        if 'original_spectral_axis_unit' not in self._meta:
             orig_unit = self.wcs.unit[0] if hasattr(self.wcs, 'unit') else self.spectral_axis.unit
-            meta['original_unit'] = orig_unit
+            meta['original_spectral_axis_unit'] = orig_unit
 
         if 'original_wcs' not in self.meta:
             meta['original_wcs'] = self.wcs.deepcopy()
