@@ -1,7 +1,7 @@
 """
 Generate small test versions of DESI files::
 
-    python -m specutils.io.default_loaders.tests.generate_desi
+    python -m specutils.io.default_loaders.tests.generate_desi_test_data
 
 The resulting files try to be self-consistent, *i.e.*, as close as possible
 to a genuine DESI file with N spectra, where N is of order 10.

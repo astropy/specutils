@@ -30,9 +30,9 @@ except ImportError:
 @pytest.fixture(scope="function")
 def local_filename(request):
     if has_importlib:
-        return files('specutils.io.default_loaders.tests') / 't' / request.param
+        return files('specutils.io.default_loaders.tests') / 'desi_test_data' / request.param
     else:
-        return files('specutils.io.default_loaders.tests', f't/{request.param}')
+        return files('specutils.io.default_loaders.tests', f'desi_test_data/{request.param}')
 
 
 @pytest.mark.parametrize('local_filename, loader', [('coadd-sv3-dark-26065.fits', coadd_loader),
