@@ -157,6 +157,9 @@ def test_spectral_axis_conversions():
                                        velocity_convention="relativistic")
 
     assert new_spec.spectral_axis.unit == u.km/u.s
+    assert new_spec.wcs.world_axis_units[0] == "km.s**-1"
+    # Make sure meta stored the old WCS correctly
+    assert new_spec.meta["original_wcs"].world_axis_units[0] == "nm"
 
 
 def test_spectral_slice():
