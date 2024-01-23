@@ -5,8 +5,6 @@ import astropy.units.equivalencies as eq
 from astropy import units as u
 from astropy.utils.decorators import deprecated
 
-from specutils.utils.wcs_utils import gwcs_from_array, SpectralGWCS
-
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
 DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
