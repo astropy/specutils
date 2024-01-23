@@ -13,6 +13,28 @@ class SpectralGWCS(GWCS):
         self.original_unit = kwargs.pop("original_unit", "")
         super().__init__(*args, **kwargs)
 
+    def copy(self):
+        """
+        Return a shallow copy of the object.
+
+        Convenience method so user doesn't have to import the
+        :mod:`copy` stdlib module.
+
+        .. warning::
+            Use `deepcopy` instead of `copy` unless you know why you need a
+            shallow copy.
+        """
+        return copy.copy(self)
+
+    def deepcopy(self):
+        """
+        Return a deep copy of the object.
+
+        Convenience method so user doesn't have to import the
+        :mod:`copy` stdlib module.
+        """
+        return copy.deepcopy(self)
+
     def pixel_to_world(self, *args, **kwargs):
         if self.original_unit == '':
             return u.Quantity(super().pixel_to_world_values(*args, **kwargs))
