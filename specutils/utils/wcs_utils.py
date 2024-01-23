@@ -10,7 +10,7 @@ from gwcs import coordinate_frames as cf
 
 class SpectralGWCS(GWCS):
     def __init__(self, *args, **kwargs):
-        self.original_unit = kwargs.pop("original_unit")
+        self.original_unit = kwargs.pop("original_unit", "")
         super().__init__(*args, **kwargs)
 
     def pixel_to_world(self, *args, **kwargs):
