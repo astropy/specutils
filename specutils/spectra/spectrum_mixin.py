@@ -229,7 +229,7 @@ class OneDSpectrumMixin():
             meta['original_unit'] = orig_unit
 
         if 'original_wcs' not in self.meta:
-            meta['original_wcs'] = self.wcs.copy()
+            meta['original_wcs'] = self.wcs.deepcopy()
 
         new_spectral_axis = self.spectral_axis.to(unit, doppler_convention=velocity_convention,
                                                   doppler_rest=rest_value)
