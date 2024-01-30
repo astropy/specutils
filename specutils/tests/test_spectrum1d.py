@@ -162,6 +162,19 @@ def test_spectral_axis_conversions():
     assert new_spec.meta["original_wcs"].world_axis_units[0] == "nm"
     assert new_spec.meta["original_spectral_axis_unit"] == "nm"
 
+    wcs_dict = {"CTYPE1": "WAVE", "CRVAL1": 3.622e3, "CDELT1": 8e-2,
+                "CRPIX1": 0, "CUNIT1": "Angstrom"}
+    wcs_spec = Spectrum1D(flux=np.random.randn(49) * u.Jy, wcs=WCS(wcs_dict),
+                          meta={'header': wcs_dict.copy()})
+    new_spec = wcs_spec.with_spectral_axis_unit(u.km/u.s, rest_value=125*u.um,
+                                       velocity_convention="relativistic")
+    new_spec.meta['original_wcs'].wcs.crval = [3.777e-7]
+    new_spec.meta['header']['CRVAL1'] = 3777.0
+
+    assert wcs_spec.wcs.wcs.crval[0] == 3.622e-7
+    assert wcs_spec.meta['header']['CRVAL1'] == 3622.
+
+
 
 def test_spectral_slice():
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
