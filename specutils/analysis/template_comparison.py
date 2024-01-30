@@ -31,7 +31,10 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
     if stddev is None:
         stddev = observed_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
     num = np.nansum((observed_spectrum.flux*template_spectrum.flux) / (stddev**2))
-    denom = np.nansum((template_spectrum.flux / stddev)**2)
+    # We need to limit this sum to where observed_spectrum is not NaN as well.
+    template_filtered = ((template_spectrum.flux / stddev)**2)
+    template_filtered = template_filtered[np.where(~np.isnan(observed_spectrum.flux))]
+    denom = np.nansum(template_filtered)
 
     return num/denom
 

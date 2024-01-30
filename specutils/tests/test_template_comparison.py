@@ -30,7 +30,7 @@ def test_template_match_no_overlap():
 
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, spec1)
-    assert np.isnan(tm_result[3])
+    assert tm_result[3] == 0.0
 
     # Create new spectrum for comparison
     spec_result = Spectrum1D(spectral_axis=spec_axis,
@@ -65,7 +65,7 @@ def test_template_match_minimal_overlap():
 
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, spec1)
-    assert np.isnan(tm_result[3])
+    assert tm_result[3] == 0.0
 
     # Create new spectrum for comparison
     spec_result = Spectrum1D(spectral_axis=spec_axis,
@@ -73,7 +73,7 @@ def test_template_match_minimal_overlap():
     try:
         assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
     except AssertionError:
-        pytest.xfail('TODO: investigate why the all elements in tm_result[1] are NaN even with overlap')
+        pytest.xfail('TODO: investigate why all elements in tm_result[0] are NaN even with overlap')
 
 
 def test_template_match_spectrum():
@@ -332,7 +332,7 @@ def test_template_redshift_with_multiple_template_spectra_in_match():
     # TODO: Determine cause of and fix failing assert
     # np.testing.assert_almost_equal(tm_result[1], redshift)
 
-    np.testing.assert_almost_equal(tm_result[3], 6803.922741644725)
+    np.testing.assert_almost_equal(tm_result[3], 1172.135458895792)
 
     # When a spectrum collection is matched with a redshift
     # grid, a list-of-lists is returned with the trial chi2
