@@ -175,7 +175,6 @@ def test_spectral_axis_conversions():
     assert wcs_spec.meta['header']['CRVAL1'] == 3622.
 
 
-
 def test_spectral_slice():
     spec = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                       flux=np.random.random(10) * u.Jy)
