@@ -30,8 +30,11 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
     """
     if stddev is None:
         stddev = observed_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
-    num = np.sum((observed_spectrum.flux*template_spectrum.flux) / (stddev**2))
-    denom = np.sum((template_spectrum.flux / stddev)**2)
+    num = np.nansum((observed_spectrum.flux*template_spectrum.flux) / (stddev**2))
+    # We need to limit this sum to where observed_spectrum is not NaN as well.
+    template_filtered = ((template_spectrum.flux / stddev)**2)
+    template_filtered = template_filtered[np.where(~np.isnan(observed_spectrum.flux))]
+    denom = np.nansum(template_filtered)
 
     return num/denom
 
@@ -107,7 +110,7 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
     # Get chi square
     result = (num/denom)**2
-    chi2 = np.sum(result.value)
+    chi2 = np.nansum(result.value)
 
     # Create normalized template spectrum, which will be returned with
     # corresponding chi2
@@ -262,5 +265,6 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         if not np.isnan(chi2) and (chi2_min is None or chi2 < chi2_min):
             chi2_min = chi2
             final_redshift = rs
+            final_spectrum = redshifted_spectrum
 
-    return redshifted_spectrum, final_redshift, normalized_spectral_template, chi2_min, chi2_list
+    return final_spectrum, final_redshift, normalized_spectral_template, chi2_min, chi2_list
