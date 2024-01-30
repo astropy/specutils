@@ -2,6 +2,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.modeling import models
+from astropy.modeling.fitting import NonFiniteValueError
 from astropy.nddata import StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 from astropy.utils.exceptions import AstropyUserWarning
@@ -705,3 +706,30 @@ def test_fit_subspectrum():
     with pytest.warns(AstropyUserWarning, match='The fit may be unsuccessful'):
         g_fit = fit_lines(sub_spectrum, g_init)
     yfit = g_fit(sub_spectrum.spectral_axis)  # noqa
+
+def test_fitting_filter_nonfinite():
+
+    # Test that by default, fit_lines has filter_non_finite=False
+    # and a spectrum with nonfinite values in weights will fail
+    # fit. Then test that if filter_non_finite=False, the fit will
+    # work.
+
+    # Create a simple spectrum with a Gaussian.
+    np.random.seed(0)
+    x = np.linspace(0., 10., 20)
+    y = 3 * np.exp(-0.5 * (x - 6.3) ** 2 / 0.8 ** 2)
+
+    uncerts = np.ones_like(x)
+    uncerts[0:5] = np.nan
+    uncerts = StdDevUncertainty(uncerts)
+
+    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um, uncertainty=uncerts)
+
+    with pytest.raises(NonFiniteValueError):  # test that it fails first
+        g_fit = fit_lines(spectrum, models.Gaussian1D(), weights='unc')
+        y_fit = g_fit(x*u.um)
+
+    # now test that the fit works when filter_non_finite=True
+    with pytest.warns(AstropyUserWarning, match='Non-Finite input data has been removed by the fitter.'):
+        g_fit = fit_lines(spectrum, models.Gaussian1D(), weights='unc', filter_non_finite=True)
+    y_fit = g_fit(x*u.um)
