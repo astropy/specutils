@@ -20,11 +20,12 @@ class ResamplerBase(ABC):
     ----------
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
-        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
-        ``'zero_fill'`` to be set to zero.
+        ``'nan_fill'`` to have points beyond the edges by set to NaN,
+        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        truncate any non-overlapping bins of the spectrum.
     """
     def __init__(self, extrapolation_treatment='nan_fill'):
-        if extrapolation_treatment not in ('nan_fill', 'zero_fill'):
+        if extrapolation_treatment not in ('nan_fill', 'zero_fill', 'truncate'):
             raise ValueError('invalid extrapolation_treatment value: ' + str(extrapolation_treatment))
         self.extrapolation_treatment = extrapolation_treatment
 
@@ -55,8 +56,9 @@ class FluxConservingResampler(ResamplerBase):
     ----------
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
-        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
-        ``'zero_fill'`` to be set to zero.
+        ``'nan_fill'`` to have points beyond the edges by set to NaN,
+        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        truncate any non-overlapping bins of the spectrum.
 
     Examples
     --------
@@ -102,9 +104,12 @@ class FluxConservingResampler(ResamplerBase):
             errors (if available).
         """
 
-        fill_val = np.nan  # bin_edges=nan_fill case
-        if self.extrapolation_treatment == 'zero_fill':
+        if self.extrapolation_treatment == 'nan_fill':
+            fill_val = np.nan  # bin_edges=nan_fill case
+        elif self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
+        else:
+            fill_val = None
 
         # get bin edges from centers
         input_bin_edges = input_bin_centers.bin_edges.value
@@ -289,6 +294,11 @@ class FluxConservingResampler(ResamplerBase):
         output_fluxes = output_fluxes << orig_spectrum.flux.unit
         fin_spec_axis = np.array(fin_spec_axis) << orig_spectrum.spectral_axis.unit
 
+        if self.extrapolation_treatment == 'truncate':
+            fin_spec_axis = fin_spec_axis[np.where(output_fluxes != None)]
+            new_errs = new_errs[np.where(output_fluxes != None)]
+            output_fluxes = output_fluxes[np.where(output_fluxes != None)]
+
         resampled_spectrum = Spectrum1D(flux=output_fluxes,
                                         spectral_axis=fin_spec_axis,
                                         uncertainty=new_errs)
@@ -304,8 +314,9 @@ class LinearInterpolatedResampler(ResamplerBase):
     ----------
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
-        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
-        ``'zero_fill'`` to be set to zero.
+        ``'nan_fill'`` to have points beyond the edges by set to NaN,
+        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        truncate any non-overlapping bins of the spectrum.
 
     Examples
     --------
@@ -347,9 +358,12 @@ class LinearInterpolatedResampler(ResamplerBase):
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
 
-        fill_val = np.nan  # bin_edges=nan_fill case
-        if self.extrapolation_treatment == 'zero_fill':
+        if self.extrapolation_treatment == 'nan_fill':
+            fill_val = np.nan  # bin_edges=nan_fill case
+        elif self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
+        else:
+            fill_val = None
 
         orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
 
@@ -364,6 +378,11 @@ class LinearInterpolatedResampler(ResamplerBase):
                                     left=fill_val, right=fill_val)
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_arr,
                                                           unit=orig_spectrum.unit)
+
+        if self.extrapolation_treatment == 'truncate':
+            fin_spec_axis = fin_spec_axis[np.where(out_flux != None)]
+            new_unc = new_unc[np.where(out_flux != None)]
+            out_flux = out_flux[np.where(out_flux != None)]
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux,
@@ -380,8 +399,9 @@ class SplineInterpolatedResampler(ResamplerBase):
     ----------
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
-        ``'nan_fill'`` to have points beyond the edges by set to NaN, or
-        ``'zero_fill'`` to be set to zero.
+        ``'nan_fill'`` to have points beyond the edges by set to NaN,
+        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        truncate any non-overlapping bins of the spectrum.
 
     Examples
     --------
@@ -403,8 +423,8 @@ class SplineInterpolatedResampler(ResamplerBase):
                7.29736328,        nan,        nan,        nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
 
     """
-    def __init__(self, bin_edges='nan_fill'):
-        super().__init__(bin_edges)
+    def __init__(self, extrapolation_treatment='nan_fill'):
+        super().__init__(extrapolation_treatment)
 
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
@@ -435,12 +455,22 @@ class SplineInterpolatedResampler(ResamplerBase):
             out_unc_val = unc_spline(fin_spec_axis.value)
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_val, unit=orig_spectrum.unit)
 
-        if self.extrapolation_treatment == 'zero_fill':
+        if self.extrapolation_treatment != 'nan_fill':
+            if self.extrapolation_treatment == 'zero_fill':
+                fill_val = 0
+            else:
+                fill_val = None
+
             origedges = orig_spectrum.spectral_axis.bin_edges
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
-            out_flux_val[off_edges] = 0
+            out_flux_val[off_edges] = fill_val
             if new_unc is not None:
-                new_unc.array[off_edges] = 0
+                new_unc.array[off_edges] = fill_val
+
+        if self.extrapolation_treatment == 'truncate':
+            fin_spec_axis = fin_spec_axis[np.where(out_flux_val != None)]
+            new_unc = new_unc[np.where(out_flux_val != None)]
+            out_flux_val = out_flux_val[np.where(out_flux_val != None)]
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux_val*orig_spectrum.flux.unit,

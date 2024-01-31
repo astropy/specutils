@@ -39,7 +39,7 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
     return num/denom
 
 
-def _resample(resample_method):
+def _resample(resample_method, extrapolation_treatment):
     """
     Find the user preferred method of resampling the template spectrum to fit
     the observed spectrum.
@@ -55,18 +55,18 @@ def _resample(resample_method):
         This is the actual class that will handle the resampling.
     """
     if resample_method == "flux_conserving":
-        return FluxConservingResampler()
+        return FluxConservingResampler(extrapolation_treatment=extrapolation_treatment)
 
     if resample_method == "linear_interpolated":
-        return LinearInterpolatedResampler()
+        return LinearInterpolatedResampler(extrapolation_treatment=extrapolation_treatment)
 
     if resample_method == "spline_interpolated":
-        return SplineInterpolatedResampler()
+        return SplineInterpolatedResampler(extrapolation_treatment=extrapolation_treatment)
 
     return None
 
 
-def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_method):
+def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_method, extrapolation_treatment):
     """
     Resample the template spectrum to match the wavelength of the observed
     spectrum. Then, calculate chi2 on the flux of the two spectra.
@@ -88,8 +88,8 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
         normalized template spectrum.
     """
     # Resample template
-    if _resample(resample_method) != 0:
-        fluxc_resample = _resample(resample_method)
+    if _resample(resample_method, extrapolation_treatment) != 0:
+        fluxc_resample = _resample(resample_method, extrapolation_treatment)
         template_obswavelength = fluxc_resample(template_spectrum,
                                                 observed_spectrum.spectral_axis)
 
@@ -121,9 +121,8 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
     return normalized_template_spectrum, chi2
 
 
-def template_match(observed_spectrum, spectral_templates,
-                   resample_method="flux_conserving",
-                   redshift=None):
+def template_match(observed_spectrum, spectral_templates, redshift=None,
+                   resample_method="flux_conserving", extrapolation_treatment="truncate"):
     """
     Find which spectral templates is the best fit to an observed spectrum by
     computing the chi-squared. If two template_spectra have the same chi2, the
@@ -138,15 +137,16 @@ def template_match(observed_spectrum, spectral_templates,
         over. The template spectra, which will be resampled, normalized, and
         compared to the observed spectrum, where the smallest chi2 and
         normalized template spectrum will be returned.
-    resample_method : `string`
-        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
-        Anything else does not resample the spectrum.
     redshift : 'float', `int`, `list`, `tuple`, 'numpy.array`
         If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
         then this float or int value redshift can be applied to each template before attempting the match.
         Or, alternatively, an iterable with redshift values to be applied to each template, before computation
         of the corresponding chi2 value, can be passed via this same parameter. For each template, the redshift
         value that results in the smallest chi2 is used.
+    resample_method : `string`
+        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
+        Anything else does not resample the spectrum.
+
 
     Returns
     -------
@@ -174,7 +174,7 @@ def template_match(observed_spectrum, spectral_templates,
 
         else:
             normalized_spectral_template, chi2 = _chi_square_for_templates(
-                observed_spectrum, spectral_templates, resample_method)
+                observed_spectrum, spectral_templates, resample_method, extrapolation_treatment)
 
         chi2_list.append(chi2)
 
@@ -202,7 +202,7 @@ def template_match(observed_spectrum, spectral_templates,
 
         else:
             normalized_spectral_template, chi2 = _chi_square_for_templates(
-                observed_spectrum, spectrum, resample_method)
+                observed_spectrum, spectrum, resample_method, extrapolation_treatment)
 
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
@@ -214,7 +214,8 @@ def template_match(observed_spectrum, spectral_templates,
     return smallest_chi_spec, final_redshift, smallest_chi_index, chi2_min, chi2_list
 
 
-def template_redshift(observed_spectrum, template_spectrum, redshift):
+def template_redshift(observed_spectrum, template_spectrum, redshift,
+                      resample_method="flux_conserving", extrapolation_treatment="truncate"):
     """
     Find the best-fit redshift for template_spectrum to match observed_spectrum using chi2.
 
@@ -226,6 +227,11 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         The template spectrum, which will have it's redshift calculated.
     redshift : `float`, `int`, `list`, `tuple`, 'numpy.array`
         A scalar or iterable with the redshift values to test.
+    resample_method : `string`
+        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
+        Anything else does not resample the spectrum.
+    extrapolation_treatment : `string`
+
 
     Returns
     -------
@@ -257,7 +263,7 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
                                          meta=template_spectrum.meta)
 
         normalized_spectral_template, chi2 = _chi_square_for_templates(
-            observed_spectrum, redshifted_spectrum, "flux_conserving")
+            observed_spectrum, redshifted_spectrum, resample_method, extrapolation_treatment)
 
         chi2_list.append(chi2)
 
