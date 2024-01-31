@@ -104,12 +104,9 @@ class FluxConservingResampler(ResamplerBase):
             errors (if available).
         """
 
-        if self.extrapolation_treatment == 'nan_fill':
-            fill_val = np.nan  # bin_edges=nan_fill case
-        elif self.extrapolation_treatment == 'zero_fill':
+        fill_val = np.nan  # bin_edges=nan_fill case
+        if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
-        else:
-            fill_val = None
 
         # get bin edges from centers
         input_bin_edges = input_bin_centers.bin_edges.value
@@ -295,9 +292,9 @@ class FluxConservingResampler(ResamplerBase):
         fin_spec_axis = np.array(fin_spec_axis) << orig_spectrum.spectral_axis.unit
 
         if self.extrapolation_treatment == 'truncate':
-            fin_spec_axis = fin_spec_axis[np.where(output_fluxes != None)]
-            new_errs = new_errs[np.where(output_fluxes != None)]
-            output_fluxes = output_fluxes[np.where(output_fluxes != None)]
+            fin_spec_axis = fin_spec_axis[np.where(~np.isnan(output_fluxes))]
+            new_errs = new_errs[np.where(~np.isnan(output_fluxes))]
+            output_fluxes = output_fluxes[np.where(~np.isnan(output_fluxes))]
 
         resampled_spectrum = Spectrum1D(flux=output_fluxes,
                                         spectral_axis=fin_spec_axis,
@@ -358,12 +355,9 @@ class LinearInterpolatedResampler(ResamplerBase):
             An output spectrum containing the resampled `~specutils.Spectrum1D`
         """
 
-        if self.extrapolation_treatment == 'nan_fill':
-            fill_val = np.nan  # bin_edges=nan_fill case
-        elif self.extrapolation_treatment == 'zero_fill':
+        fill_val = np.nan  # bin_edges=nan_fill case
+        if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
-        else:
-            fill_val = None
 
         orig_axis_in_fin = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
 
@@ -380,9 +374,9 @@ class LinearInterpolatedResampler(ResamplerBase):
                                                           unit=orig_spectrum.unit)
 
         if self.extrapolation_treatment == 'truncate':
-            fin_spec_axis = fin_spec_axis[np.where(out_flux != None)]
-            new_unc = new_unc[np.where(out_flux != None)]
-            out_flux = out_flux[np.where(out_flux != None)]
+            fin_spec_axis = fin_spec_axis[np.where(v)]
+            new_unc = new_unc[np.where(~np.isnan(out_flux))]
+            out_flux = out_flux[np.where(~np.isnan(out_flux))]
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux,
@@ -455,11 +449,9 @@ class SplineInterpolatedResampler(ResamplerBase):
             out_unc_val = unc_spline(fin_spec_axis.value)
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_val, unit=orig_spectrum.unit)
 
-        if self.extrapolation_treatment != 'nan_fill':
-            if self.extrapolation_treatment == 'zero_fill':
-                fill_val = 0
-            else:
-                fill_val = None
+        fill_val = np.nan
+        if self.extrapolation_treatment == 'zero_fill':
+            fill_val = 0
 
             origedges = orig_spectrum.spectral_axis.bin_edges
             off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
@@ -468,9 +460,9 @@ class SplineInterpolatedResampler(ResamplerBase):
                 new_unc.array[off_edges] = fill_val
 
         if self.extrapolation_treatment == 'truncate':
-            fin_spec_axis = fin_spec_axis[np.where(out_flux_val != None)]
-            new_unc = new_unc[np.where(out_flux_val != None)]
-            out_flux_val = out_flux_val[np.where(out_flux_val != None)]
+            fin_spec_axis = fin_spec_axis[np.where(~np.isnan(out_flux_val))]
+            new_unc = new_unc[np.where(~np.isnan(out_flux_val))]
+            out_flux_val = out_flux_val[np.where(~np.isnan(out_flux_val))]
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
                           flux=out_flux_val*orig_spectrum.flux.unit,
