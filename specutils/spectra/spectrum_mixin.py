@@ -192,9 +192,9 @@ class OneDSpectrumMixin():
                            rest_value=None):
         """
         Returns a new spectrum with a different spectral axis unit. Note that this creates a new
-        object using the converted spectral axis and thus drops the original WCS, if it existed.
-        The original WCS will be stored in the ``original_wcs`` entry of the new object's ``meta``
-        dictionary.
+        object using the converted spectral axis and thus drops the original WCS, if it existed,
+        replacing it with a :class:`~specutils.utils.wcs_utils.SpectralGWCS`. The original WCS
+        will be stored in the ``original_wcs`` entry of the new object's ``meta`` dictionary.
 
         Parameters
         ----------
