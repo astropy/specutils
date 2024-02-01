@@ -9,6 +9,10 @@ from gwcs import coordinate_frames as cf
 
 
 class SpectralGWCS(GWCS):
+    """
+    This is a placeholder lookup-table GWCS created when a :class:`~specutils.Spectrum1D` is
+    instantiated with a ``spectral_axis`` and no WCS.
+    """
     def __init__(self, *args, **kwargs):
         self.original_unit = kwargs.pop("original_unit", "")
         super().__init__(*args, **kwargs)
