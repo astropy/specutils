@@ -29,16 +29,11 @@ def test_template_match_no_overlap():
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     # Get result from template_match
-    tm_result = template_comparison.template_match(spec, spec1)
-    assert tm_result[3] == 0.0
+    with pytest.warns(UserWarning, match="Template spectrum has no overlap with observed spectrum"):
+        tm_result = template_comparison.template_match(spec, spec1)
+    assert np.isnan(tm_result[3])
 
-    # Create new spectrum for comparison
-    spec_result = Spectrum1D(spectral_axis=spec_axis,
-                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
-    try:
-        assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    except AssertionError:
-        pytest.xfail('TODO: investigate why this is failing')
+    assert tm_result[0] is None
 
 
 def test_template_match_minimal_overlap():
