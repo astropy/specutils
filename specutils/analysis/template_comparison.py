@@ -268,6 +268,7 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
     """
     chi2_min = None
     final_redshift = None
+    final_spectrum = None
     chi2_list = []
 
     redshift = np.array(redshift).reshape((np.array(redshift).size,))
@@ -294,5 +295,9 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
             chi2_min = chi2
             final_redshift = rs
             final_spectrum = redshifted_spectrum
+
+    if final_spectrum is None:
+        warnings.warn("Template spectrum and observed spectrum have no overlap after"
+                      "applying specified redshift(s) to template.")
 
     return final_spectrum, final_redshift, normalized_spectral_template, chi2_min, chi2_list
