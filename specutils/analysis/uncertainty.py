@@ -22,7 +22,7 @@ def snr(spectrum, region=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the equivalent width will be calculated.
 
-    region: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    region: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the SNR.
 
     Returns
@@ -67,7 +67,7 @@ def _snr_single_region(spectrum, region=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the equivalent width will be calculated.
 
-    region: `~specutils.utils.SpectralRegion`
+    region: `~specutils.SpectralRegion`
         Region within the spectrum to calculate the SNR.
 
     Returns
@@ -109,7 +109,7 @@ def snr_derived(spectrum, region=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the equivalent width will be calculated.
 
-    region: `~specutils.utils.SpectralRegion`
+    region: `~specutils.SpectralRegion`
         Region within the spectrum to calculate the SNR.
 
     Returns
@@ -155,7 +155,7 @@ def _snr_derived(spectrum, region=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object overwhich the equivalent width will be calculated.
 
-    region: `~specutils.utils.SpectralRegion`
+    region: `~specutils.SpectralRegion`
         Region within the spectrum to calculate the SNR.
 
     Returns

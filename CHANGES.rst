@@ -10,6 +10,9 @@ Bug Fixes
 - ``template_correlate`` no longer errors when used on a ``Spectrum1D`` that lacks an
   ``uncertainty`` array. [#1118]
 
+- ``with_spectral_unit`` has been changed to ``with_spectral_axis_unit`` and actually works
+  now. [#1119]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -64,7 +67,7 @@ New Features
 
 - ``wcs1d-fits`` loader now reads and writes celestial components of
   of multi-dimensional WCS, and handles ``mask`` and ``uncertainty``
-  attributes. [#1009] 
+  attributes. [#1009]
 
 - Added support for reading from files with flux in counts. [#1018]
 
@@ -183,7 +186,7 @@ Bug Fixes
   ``Spectrum1D`` without WCS nor spectral axis and the spatial-spatial dimension
   is smaller than spectral dimension. [#926]
 
-- Fixed WCS not accurately reflecting the updated spectral axis after slicing a 
+- Fixed WCS not accurately reflecting the updated spectral axis after slicing a
   ``Spectrum1D``. [#918]
 
 Other Changes and Additions
@@ -212,8 +215,8 @@ New Features
 - Convolution-based smoothing will now apply a 1D kernel to multi-dimensional fluxes
   by convolving along the spectral axis only, rather than raising an error. [#885]
 
-- ``template_comparison`` now handles ``astropy.nddata.Variance`` and 
-  ``astropy.nddata.InverseVariance`` uncertainties instead of assuming 
+- ``template_comparison`` now handles ``astropy.nddata.Variance`` and
+  ``astropy.nddata.InverseVariance`` uncertainties instead of assuming
   the uncertainty is standard deviation. [#899]
 
 Bug Fixes
@@ -253,7 +256,7 @@ New Features
 
 - Allow overriding existing astropy registry elements. [#861]
 
-- ``Spectrum1D`` will now swap the spectral axis with the last axis on initialization 
+- ``Spectrum1D`` will now swap the spectral axis with the last axis on initialization
   if it can be identified from the WCS and is not last, rather than erroring. [#654, #822]
 
 Bug Fixes

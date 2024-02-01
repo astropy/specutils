@@ -8,6 +8,44 @@ from gwcs import WCS as GWCS
 from gwcs import coordinate_frames as cf
 
 
+class SpectralGWCS(GWCS):
+    """
+    This is a placeholder lookup-table GWCS created when a :class:`~specutils.Spectrum1D` is
+    instantiated with a ``spectral_axis`` and no WCS.
+    """
+    def __init__(self, *args, **kwargs):
+        self.original_unit = kwargs.pop("original_unit", "")
+        super().__init__(*args, **kwargs)
+
+    def copy(self):
+        """
+        Return a shallow copy of the object.
+
+        Convenience method so user doesn't have to import the
+        :mod:`copy` stdlib module.
+
+        .. warning::
+            Use `deepcopy` instead of `copy` unless you know why you need a
+            shallow copy.
+        """
+        return copy.copy(self)
+
+    def deepcopy(self):
+        """
+        Return a deep copy of the object.
+
+        Convenience method so user doesn't have to import the
+        :mod:`copy` stdlib module.
+        """
+        return copy.deepcopy(self)
+
+    def pixel_to_world(self, *args, **kwargs):
+        if self.original_unit == '':
+            return u.Quantity(super().pixel_to_world_values(*args, **kwargs))
+        return super().pixel_to_world(*args, **kwargs).to(
+            self.original_unit, equivalencies=u.spectral())
+
+
 def refraction_index(wavelength, method='Griesen2006', co2=None):
     """
     Calculates the index of refraction of dry air at standard temperature
@@ -210,14 +248,8 @@ def gwcs_from_array(array):
         forward_transform.inverse = SpectralTabular1D(
                 array[::-1], lookup_table=np.arange(len(array))[::-1])
 
-    class SpectralGWCS(GWCS):
-        def pixel_to_world(self, *args, **kwargs):
-            if orig_array.unit == '':
-                return u.Quantity(super().pixel_to_world_values(*args, **kwargs))
-            return super().pixel_to_world(*args, **kwargs).to(
-                orig_array.unit, equivalencies=u.spectral())
-
-    tabular_gwcs = SpectralGWCS(forward_transform=forward_transform,
+    tabular_gwcs = SpectralGWCS(original_unit = orig_array.unit,
+                                forward_transform=forward_transform,
                                 input_frame=coord_frame,
                                 output_frame=spec_frame)
 

@@ -150,10 +150,29 @@ def test_spectral_axis_conversions():
     with pytest.raises(ValueError):
         spec.velocity
 
-    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec = Spectrum1D(spectral_axis=np.arange(100, 150) * u.nm,
                       flux=np.random.randn(49) * u.Jy)
 
-    new_spec = spec.with_spectral_unit(u.GHz)  # noqa
+    new_spec = spec.with_spectral_axis_unit(u.km/u.s, rest_value=125*u.um,
+                                       velocity_convention="relativistic")
+
+    assert new_spec.spectral_axis.unit == u.km/u.s
+    assert new_spec.wcs.world_axis_units[0] == "km.s**-1"
+    # Make sure meta stored the old WCS correctly
+    assert new_spec.meta["original_wcs"].world_axis_units[0] == "nm"
+    assert new_spec.meta["original_spectral_axis_unit"] == "nm"
+
+    wcs_dict = {"CTYPE1": "WAVE", "CRVAL1": 3.622e3, "CDELT1": 8e-2,
+                "CRPIX1": 0, "CUNIT1": "Angstrom"}
+    wcs_spec = Spectrum1D(flux=np.random.randn(49) * u.Jy, wcs=WCS(wcs_dict),
+                          meta={'header': wcs_dict.copy()})
+    new_spec = wcs_spec.with_spectral_axis_unit(u.km/u.s, rest_value=125*u.um,
+                                       velocity_convention="relativistic")
+    new_spec.meta['original_wcs'].wcs.crval = [3.777e-7]
+    new_spec.meta['header']['CRVAL1'] = 3777.0
+
+    assert wcs_spec.wcs.wcs.crval[0] == 3.622e-7
+    assert wcs_spec.meta['header']['CRVAL1'] == 3622.
 
 
 def test_spectral_slice():
