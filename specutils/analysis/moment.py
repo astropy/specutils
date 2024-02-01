@@ -21,7 +21,7 @@ def moment(spectrum, regions=None, order=0, axis=-1):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
         The spectrum object over which the width will be calculated.
 
-    regions: `~specutils.utils.SpectralRegion` or list of `~specutils.utils.SpectralRegion`
+    regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
         Region within the spectrum to calculate the gaussian sigma width. If
         regions is `None`, computation is performed over entire spectrum.
 
