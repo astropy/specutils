@@ -108,10 +108,6 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
     observed_truncated = observed_spectrum[matching_indices.min():matching_indices.max()+1]
 
-    # If there was no overlap, we raise an error
-    #if len(template_obswavelength.flux) == 0:
-    #    raise ValueError("The template spectrum and observed spectrum have no overlap")
-
     # Convert the uncertainty to standard deviation if needed
     stddev = observed_truncated.uncertainty.represent_as(StdDevUncertainty).array
 
@@ -122,10 +118,10 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
     # Numerator
     num_right = normalization * template_obswavelength.flux
-    num = observed_spectrum.flux - num_right
+    num = observed_truncated.flux - num_right
 
     # Denominator
-    denom = stddev * observed_spectrum.flux.unit
+    denom = stddev * observed_truncated.flux.unit
 
     # Get chi square
     result = (num/denom)**2
@@ -134,8 +130,8 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
     # Create normalized template spectrum, which will be returned with
     # corresponding chi2
     normalized_template_spectrum = Spectrum1D(
-        spectral_axis=template_spectrum.spectral_axis,
-        flux=template_spectrum.flux*normalization)
+        spectral_axis=template_obswavelength.spectral_axis,
+        flux=template_obswavelength.flux*normalization)
 
     return normalized_template_spectrum, chi2
 
@@ -165,12 +161,16 @@ def template_match(observed_spectrum, spectral_templates, redshift=None,
     resample_method : `string`
         Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
         Anything else does not resample the spectrum.
-
+    extrapolation_treatment : `string`
+        Three options for what to do if the template spectrum and observed spectrum have regions
+        that do not overlap: ``nan_fill`` and ``zero_fill`` to fill the non-overlapping bins,
+        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler.
 
     Returns
     -------
     normalized_template_spectrum : :class:`~specutils.Spectrum1D`
-        The template spectrum that has been normalized.
+        The template spectrum that has been normalized and resampled to the observed
+        spectrum's spectral axis.
     redshift : `None` or `float`
         The value of the redshift that provides the smallest chi2.
     smallest_chi_index : `int`
@@ -250,13 +250,17 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
         Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
         Anything else does not resample the spectrum.
     extrapolation_treatment : `string`
+        Three options for what to do if the template spectrum and observed spectrum have regions
+        that do not overlap: ``nan_fill`` and ``zero_fill`` to fill the non-overlapping bins,
+        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler.
 
 
     Returns
     -------
     redshifted_spectrum: :class:`~specutils.Spectrum1D`
         A new Spectrum1D object which incorporates the template_spectrum with a spectral_axis
-        that has been redshifted using the final_redshift.
+        that has been redshifted using the final_redshift, and resampled to that of the
+        observed spectrum.
     final_redshift : `float`
         The best-fit redshift for template_spectrum to match the observed_spectrum.
     normalized_template_spectrum : :class:`~specutils.Spectrum1D`

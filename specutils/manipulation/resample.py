@@ -57,7 +57,7 @@ class FluxConservingResampler(ResamplerBase):
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN,
-        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        ``'zero_fill'`` to set those points to zero, or ``'truncate'`` to
         truncate any non-overlapping bins of the spectrum.
 
     Examples
@@ -126,7 +126,7 @@ class FluxConservingResampler(ResamplerBase):
 
         low_out_of_range = np.where(output_bin_edges < input_bin_edges[0])[0]
         if len(low_out_of_range) > 0:  # if any bins below wavelength range
-            min_idx = low_out_of_range[-1] + 1
+            min_idx = low_out_of_range[-1]  # This doesn't need +1 because bin_edges has len+1 compared to output_fluxes
             output_fluxes[:min_idx] = fill_val
             if errs is not None:
                 output_errs[:min_idx] = fill_val
@@ -374,7 +374,7 @@ class LinearInterpolatedResampler(ResamplerBase):
                                                           unit=orig_spectrum.unit)
 
         if self.extrapolation_treatment == 'truncate':
-            fin_spec_axis = fin_spec_axis[np.where(v)]
+            fin_spec_axis = fin_spec_axis[np.where(~np.isnan(out_flux))]
             new_unc = new_unc[np.where(~np.isnan(out_flux))]
             out_flux = out_flux[np.where(~np.isnan(out_flux))]
 
