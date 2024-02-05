@@ -76,7 +76,7 @@ class FluxConservingResampler(ResamplerBase):
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23]  *u.nm
     >>> fluxc_resample = FluxConservingResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [  nan,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
+    <Spectrum1D(flux=<Quantity [  1. ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
     """
 
     def _fluxc_resample(self, input_bin_centers, output_bin_centers,
@@ -124,7 +124,7 @@ class FluxConservingResampler(ResamplerBase):
         min_idx = 0
         max_idx = None
 
-        low_out_of_range = np.where(output_bin_edges < input_bin_edges[0])[0]
+        low_out_of_range = np.where(output_bin_edges <= input_bin_edges[0])[0]
         if len(low_out_of_range) > 0:  # if any bins below wavelength range
             min_idx = low_out_of_range[-1]  # This doesn't need +1 because bin_edges has len+1 compared to output_fluxes
             output_fluxes[:min_idx] = fill_val

@@ -48,7 +48,7 @@ def test_expanded_grid_fluxconserving():
     results = inst(input_spectra, resamp_grid)
 
     assert_quantity_allclose(results.flux,
-                             np.array([np.nan, 3., 6., 7., 6.25, 10., 20.,
+                             np.array([1., 3., 6., 7., 6.25, 10., 20.,
                                        np.nan, np.nan])*u.mJy)
 
 
