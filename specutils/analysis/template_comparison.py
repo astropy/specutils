@@ -164,7 +164,8 @@ def template_match(observed_spectrum, spectral_templates, redshift=None,
     extrapolation_treatment : `string`
         Three options for what to do if the template spectrum and observed spectrum have regions
         that do not overlap: ``nan_fill`` and ``zero_fill`` to fill the non-overlapping bins,
-        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler.
+        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler, defaults to
+        ``truncate``.
 
     Returns
     -------
@@ -252,7 +253,8 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
     extrapolation_treatment : `string`
         Three options for what to do if the template spectrum and observed spectrum have regions
         that do not overlap: ``nan_fill`` and ``zero_fill`` to fill the non-overlapping bins,
-        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler.
+        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler, defaults to
+        ``truncate``.
 
 
     Returns

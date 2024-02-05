@@ -150,6 +150,12 @@ def test_expanded_grid_interp_linear():
                              np.array([np.nan, 3.5, 5.5, 6.75, 6.5, 9.5, np.nan,
                                        np.nan, np.nan])*u.mJy)
 
+    inst = LinearInterpolatedResampler(extrapolation_treatment="truncate")
+    results = inst(input_spectra, resamp_grid)
+
+    assert_quantity_allclose(results.flux,
+                             np.array([3.5, 5.5, 6.75, 6.5, 9.5])*u.mJy)
+
 
 def test_expanded_grid_interp_spline():
     """
@@ -168,6 +174,14 @@ def test_expanded_grid_interp_spline():
                              np.array([np.nan, 3.98808594, 6.94042969, 6.45869141,
                                        5.89921875, 7.29736328, np.nan, np.nan,
                                        np.nan])*u.mJy)
+
+    inst = SplineInterpolatedResampler(extrapolation_treatment="truncate")
+    input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    results = inst(input_spectra, resamp_grid)
+
+    assert_quantity_allclose(results.flux,
+                             np.array([3.98808594, 6.94042969, 6.45869141,
+                                       5.89921875, 7.29736328])*u.mJy)
 
 
 @pytest.mark.parametrize("edgetype,lastvalue",

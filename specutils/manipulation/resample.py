@@ -293,7 +293,8 @@ class FluxConservingResampler(ResamplerBase):
 
         if self.extrapolation_treatment == 'truncate':
             fin_spec_axis = fin_spec_axis[np.where(~np.isnan(output_fluxes))]
-            new_errs = new_errs[np.where(~np.isnan(output_fluxes))]
+            if new_errs is not None:
+                new_errs = new_errs[np.where(~np.isnan(output_fluxes))]
             output_fluxes = output_fluxes[np.where(~np.isnan(output_fluxes))]
 
         resampled_spectrum = Spectrum1D(flux=output_fluxes,
@@ -375,7 +376,8 @@ class LinearInterpolatedResampler(ResamplerBase):
 
         if self.extrapolation_treatment == 'truncate':
             fin_spec_axis = fin_spec_axis[np.where(~np.isnan(out_flux))]
-            new_unc = new_unc[np.where(~np.isnan(out_flux))]
+            if new_unc is not None:
+                new_unc = new_unc[np.where(~np.isnan(out_flux))]
             out_flux = out_flux[np.where(~np.isnan(out_flux))]
 
         return Spectrum1D(spectral_axis=fin_spec_axis,
@@ -395,7 +397,8 @@ class SplineInterpolatedResampler(ResamplerBase):
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN,
         ``'zero_fill'`` to set those points to zero, or ``'truncate'`` to
-        truncate any non-overlapping bins of the spectrum.
+        truncate any non-overlapping bins of the spectrum. Any other value will
+        have the spline interpolate beyond the edges of the original data.
 
     Examples
     --------
@@ -439,13 +442,17 @@ class SplineInterpolatedResampler(ResamplerBase):
         """
         orig_axis_in_new = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
         flux_spline = CubicSpline(orig_axis_in_new.value, orig_spectrum.flux.value,
-                                  extrapolate=self.extrapolation_treatment != 'nan_fill')
+                                  extrapolate=self.extrapolation_treatment not in ('nan_fill',
+                                                                                   'zero_fill',
+                                                                                   'truncate'))
         out_flux_val = flux_spline(fin_spec_axis.value)
 
         new_unc = None
         if orig_spectrum.uncertainty is not None:
             unc_spline = CubicSpline(orig_axis_in_new.value, orig_spectrum.uncertainty.array,
-                                     extrapolate=self.extrapolation_treatment != 'nan_fill')
+                                     extrapolate=self.extrapolation_treatment not in ('nan_fill',
+                                                                                      'zero_fill',
+                                                                                      'truncate'))
             out_unc_val = unc_spline(fin_spec_axis.value)
             new_unc = orig_spectrum.uncertainty.__class__(array=out_unc_val, unit=orig_spectrum.unit)
 
@@ -453,15 +460,16 @@ class SplineInterpolatedResampler(ResamplerBase):
         if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
 
-            origedges = orig_spectrum.spectral_axis.bin_edges
-            off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
-            out_flux_val[off_edges] = fill_val
-            if new_unc is not None:
-                new_unc.array[off_edges] = fill_val
+        origedges = orig_spectrum.spectral_axis.bin_edges
+        off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
+        out_flux_val[off_edges] = fill_val
+        if new_unc is not None:
+            new_unc.array[off_edges] = fill_val
 
         if self.extrapolation_treatment == 'truncate':
             fin_spec_axis = fin_spec_axis[np.where(~np.isnan(out_flux_val))]
-            new_unc = new_unc[np.where(~np.isnan(out_flux_val))]
+            if new_unc is not None:
+                new_unc = new_unc[np.where(~np.isnan(out_flux_val))]
             out_flux_val = out_flux_val[np.where(~np.isnan(out_flux_val))]
 
         return Spectrum1D(spectral_axis=fin_spec_axis,

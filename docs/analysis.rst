@@ -217,7 +217,7 @@ This function will:
     2. Compute the chi-square between the observed spectrum and each template.
     3. Return the lowest chi-square and its corresponding template spectrum,
        normalized to the observed spectrum (and the index of the template
-       spectrum if the list of templates is iterable). It also
+       spectrum if the list of templates is iterable).
 
 If the redshift is unknown, the user specifies a grid of redshift values in the
 form of an iterable object such as a list, tuple, or numpy array with the redshift
