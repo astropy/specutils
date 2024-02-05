@@ -312,7 +312,7 @@ class LinearInterpolatedResampler(ResamplerBase):
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN,
-        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        ``'zero_fill'`` to set those points to zero, or ``'truncate'`` to
         truncate any non-overlapping bins of the spectrum.
 
     Examples
@@ -394,7 +394,7 @@ class SplineInterpolatedResampler(ResamplerBase):
     extrapolation_treatment : str
         What to do when resampling off the edge of the spectrum.  Can be
         ``'nan_fill'`` to have points beyond the edges by set to NaN,
-        ``'zero_fill'`` to set thoe points to zero, or ``'truncate'`` to
+        ``'zero_fill'`` to set those points to zero, or ``'truncate'`` to
         truncate any non-overlapping bins of the spectrum.
 
     Examples
