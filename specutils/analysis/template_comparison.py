@@ -130,8 +130,8 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
     # Create normalized template spectrum, which will be returned with
     # corresponding chi2
     normalized_template_spectrum = Spectrum1D(
-        spectral_axis=template_obswavelength.spectral_axis,
-        flux=template_obswavelength.flux*normalization)
+        spectral_axis=template_spectrum.spectral_axis,
+        flux=template_spectrum.flux*normalization)
 
     return normalized_template_spectrum, chi2
 
@@ -283,10 +283,8 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
     for rs in redshift:
 
         # Create new redshifted spectrum and run it through the chi2 method
-        redshifted_spectrum = Spectrum1D(spectral_axis=template_spectrum.spectral_axis*(1+rs),
-                                         flux=template_spectrum.flux,
-                                         uncertainty=template_spectrum.uncertainty,
-                                         meta=template_spectrum.meta)
+        redshifted_spectrum = template_spectrum._copy()
+        redshifted_spectrum.shift_spectrum_to(redshift=rs)
 
         normalized_spectral_template, chi2 = _chi_square_for_templates(observed_spectrum,
                                                                        redshifted_spectrum,

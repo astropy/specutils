@@ -63,8 +63,8 @@ def test_template_match_minimal_overlap():
     tm_result = template_comparison.template_match(spec, spec1)
     np.testing.assert_almost_equal(tm_result[3], 0)
 
-    assert len(tm_result[0].flux) == 1
-    assert quantity_allclose(tm_result[0].flux, 1.763*u.Jy, atol=0.01*u.Jy)
+    assert len(tm_result[0].flux) == 50
+    assert quantity_allclose(tm_result[0].flux, spec1.flux*4.17, atol=0.01*u.Jy)
 
 
 def test_template_match_spectrum():
