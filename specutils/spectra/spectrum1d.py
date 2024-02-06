@@ -750,9 +750,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return result
 
     def __repr__(self):
-        inner_str = (f"flux: {self.flux.shape}, mean={np.nanmean(self.flux):.5f}; "
-                     f"spectral_axis: {self.spectral_axis[0]:.5f} to {self.spectral_axis[-1]:.5f}"
-                     f" (length={len(self.spectral_axis)})")
+        if self.flux.ndim == 1 or self.flux.size < 20:
+            flux_str = np.array2string(self.flux, threshold=8)
+        else:
+            flux_str = self.flux.shape
+        spectral_axis_str = np.array2string(self.spectral_axis, threshold=8)
+        inner_str = (f"flux: {flux_str}, mean={np.nanmean(self.flux):.5f}; "
+                     f"spectral_axis: {spectral_axis_str} (length={len(self.spectral_axis)})")
 
         if self.uncertainty is not None:
             inner_str += f"; uncertainty: {self.uncertainty.__class__.__name__}"
