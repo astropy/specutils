@@ -724,10 +724,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return -1 * (self - other)
 
     def _format_array_summary(self, label, array):
-        array_str = np.array2string(array)
+        array_str = np.array2string(array, threshold=8, prefix=label)
         if len(array) >= 1:
             mean = np.nanmean(array)
-            s = f"{label}\n {array_str} {array.unit},  mean={mean:.5f}"
+            s = f"{label} {array_str} {array.unit},  mean={mean:.5f}"
             return s
         else:
             return "{:17} [ ],  mean= n/a".format(label+':')
@@ -744,17 +744,18 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         # Add information about uncertainties if available
         if self.uncertainty:
-            result += (f'\nUncertainty:\n{type(self.uncertainty).__name__} '
+            result += (f'\nUncertainty: {type(self.uncertainty).__name__} '
                        f'({self.uncertainty.array} {self.uncertainty.unit})')
 
         return result
 
     def __repr__(self):
-        inner_str = "flux={}, spectral_axis={}".format(repr(self.flux),
-                                                       repr(self.spectral_axis))
+        inner_str = (f"flux: {self.flux.shape}, mean={np.nanmean(self.flux):.5f}; "
+                     f"spectral_axis: {self.spectral_axis[0]:.5f} to {self.spectral_axis[-1]:.5f}"
+                     f" (length={len(self.spectral_axis)})")
 
         if self.uncertainty is not None:
-            inner_str += ", uncertainty={}".format(repr(self.uncertainty))
+            inner_str += f"; uncertainty: {self.uncertainty.__class__.__name__}"
 
         result = "<Spectrum1D({})>".format(inner_str)
 
