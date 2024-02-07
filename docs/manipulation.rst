@@ -336,16 +336,16 @@ the ``spectral_axis``. Therefore one can use a construct like this:
     >>> flux = 100 * np.abs(np.random.default_rng(42).standard_normal(10)) * u.Jy
     >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
     >>> spectrum  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
-               195.10351887, 130.21795069,  12.78404032,  31.62425923,
-                 1.68011575,  85.30439276] Jy>, spectral_axis=<SpectralAxis [0., 1., 2., 3., 4., 5., 6., 7., 8., 9.] um>)>
+    <Spectrum1D(flux: <Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
+                195.10351887, 130.21795069,  12.78404032,  31.62425923,
+                 1.68011575,  85.30439276] Jy>, mean=76.02860 Jy; spectral_axis: <SpectralAxis [0. 1. 2. ... 7. 8. 9.] um> (length=10))>
 
     >>> shift = 12300 * u.AA
     >>> new_spec = Spectrum1D(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
     >>> new_spec  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
+    <Spectrum1D(flux: <Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
                195.10351887, 130.21795069,  12.78404032,  31.62425923,
-                 1.68011575,  85.30439276] Jy>, spectral_axis=<SpectralAxis [ 1.23,  2.23,  3.23,  4.23,  5.23,  6.23,  7.23,  8.23,  9.23, 10.23] um>)>
+                 1.68011575,  85.30439276] Jy>, mean=76.02860 Jy; spectral_axis: <SpectralAxis [ 1.23  2.23  3.23 ...  8.23  9.23 10.23] um> (length=10))>
 
 Replacing a region
 ------------------
@@ -367,7 +367,7 @@ with the spline knots:
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> result = model_replace(input_spectrum, None, model=spline_knots)
     >>> result
-    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>, spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
+    <Spectrum1D(flux: <Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>, mean=11.00000 mJy; spectral_axis: <SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 The default behavior is to keep the data outside the replaced region unchanged.
 Alternatively, the spectrum outside the replaced region can be filled with zeros:
@@ -377,8 +377,7 @@ Alternatively, the spectrum outside the replaced region can be filled with zeros
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> result = model_replace(input_spectrum, None, model=spline_knots, extrapolation_treatment='zero_fill')
     >>> result
-    <Spectrum1D(flux=<Quantity [ 0.,  0.,  0.,  8., 10., 12., 14.,  0.,  0.,  0.] mJy>,
-        spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
+    <Spectrum1D(flux: <Quantity [ 0.,  0.,  0.,  8., 10., 12., 14.,  0.,  0.,  0.] mJy>, mean=4.40000 mJy; spectral_axis: <SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 One can define the spline knots by providing an instance of `~specutils.SpectralRegion`,
 and the number of knots to be evenly spread along the region:
@@ -389,8 +388,7 @@ and the number of knots to be evenly spread along the region:
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=4)
     >>> result
-    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>,
-        spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
+    <Spectrum1D(flux: <Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>, mean=11.00000 mJy; spectral_axis: <SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 A model fitted over the region can also be used to replace the spectrum flux values:
 
@@ -405,8 +403,8 @@ A model fitted over the region can also be used to replace the spectrum flux val
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=fitted_model)
     >>> result  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [1.        , 1.1       , 0.9       , 4.40801804, 9.58271877,
-               5.61238054, 0.88556096, 1.        , 1.2       , 1.1       ] mJy>, spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
+    <Spectrum1D(flux: <Quantity [1.        , 1.1       , 0.9       , 4.40801804, 9.58271877,
+               5.61238054, 0.88556096, 1.        , 1.2       , 1.1       ] mJy>, mean=2.67887 mJy; spectral_axis: <SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 Reference/API
 -------------
