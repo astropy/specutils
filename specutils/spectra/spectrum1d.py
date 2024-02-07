@@ -751,7 +751,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return result
 
     def __repr__(self):
-        if (self.flux.ndim == 1 and self.flux.size < 10) or self.flux.size < 20:
+        if (self.flux.ndim == 1 and self.flux.size <= 10) or self.flux.size <= 20:
             flux_str = repr(self.flux)
         else:
             flux_str = f" shape {self.flux.shape}"
