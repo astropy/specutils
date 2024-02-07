@@ -427,17 +427,17 @@ def test_repr():
     spec_with_wcs = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
-    assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<SpectralAxis' in result
+    assert result.startswith('<Spectrum1D(flux: <Quantity [')
+    assert 'spectral_axis: <SpectralAxis' in result
 
     spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy,
                                uncertainty=StdDevUncertainty(
                                    np.random.sample(10), unit='Jy'))
     result = repr(spec_with_unc)
-    assert result.startswith('<Spectrum1D(flux=<Quantity [')
-    assert 'spectral_axis=<SpectralAxis' in result
-    assert 'uncertainty=StdDevUncertainty(' in result
+    assert result.startswith('<Spectrum1D(flux: <Quantity [')
+    assert 'spectral_axis: <SpectralAxis' in result
+    assert 'uncertainty: StdDevUncertainty' in result
 
 
 def test_str():
@@ -451,7 +451,7 @@ def test_str():
     sa = spec.spectral_axis
     assert len(lines) == 4
     assert lines[1].startswith('Flux:')
-    assert 'mean={:.5}'.format(np.nanmean(flux)) in lines[2]
+    assert 'mean={:.5f}'.format(np.nanmean(flux)) in lines[2]
     assert lines[3].startswith('Spectral Axis:')
     assert f'mean={np.nanmean(sa):.5f}' in lines[3]
 
@@ -463,9 +463,9 @@ def test_str():
     lines = result.split('\n')
     unc = spec_with_uncertainty.uncertainty
     print(spec_with_uncertainty)
-    assert len(lines) == 6
+    assert len(lines) == 5
     assert lines[4].startswith('Uncertainty')
-    assert f'StdDevUncertainty ([{unc.array[0]:.8f}' in lines[4]
+    assert f'StdDevUncertainty ([{unc.array[0]:.7f}' in lines[4]
 
     # Test string representation with multiple flux
     spec_multi_flux = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,

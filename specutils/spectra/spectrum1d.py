@@ -745,16 +745,19 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # Add information about uncertainties if available
         if self.uncertainty:
             result += (f'\nUncertainty: {type(self.uncertainty).__name__} '
-                       f'({self.uncertainty.array} {self.uncertainty.unit})')
+                       f'({np.array2string(self.uncertainty.array, threshold=8)}'
+                       f' {self.uncertainty.unit})')
 
         return result
 
     def __repr__(self):
-        if self.flux.ndim == 1 or self.flux.size < 20:
-            flux_str = np.array2string(self.flux, threshold=8)
+        if (self.flux.ndim == 1 and self.flux.size < 10) or self.flux.size < 20:
+            flux_str = repr(self.flux)
         else:
-            flux_str = self.flux.shape
-        spectral_axis_str = np.array2string(self.spectral_axis, threshold=8)
+            flux_str = f" shape {self.flux.shape}"
+        spectral_axis_str = (repr(self.spectral_axis).split("[")[0] +
+                             np.array2string(self.spectral_axis, threshold=8) +
+                             f" {self.spectral_axis.unit}>")
         inner_str = (f"flux: {flux_str}, mean={np.nanmean(self.flux):.5f}; "
                      f"spectral_axis: {spectral_axis_str} (length={len(self.spectral_axis)})")
 
