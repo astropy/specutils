@@ -107,7 +107,7 @@ method applys the median filter across the flux.
     >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
     ...                    flux=np.random.default_rng(12345).random(49) * u.Jy)
     >>> median_smooth(spec1, width=3) # doctest: +FLOAT_CMP
-    <Spectrum1D(flux:  shape (49,), mean=0.49378 Jy; spectral_axis: <SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
+    <Spectrum1D(flux:  shape (49,), mean=0.48620 Jy; spectral_axis: <SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
 
 Resampling
 ----------
