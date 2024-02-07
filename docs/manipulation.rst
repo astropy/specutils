@@ -59,19 +59,7 @@ along the spectral dimension.
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
     >>> gaussian_smooth(spec1, stddev=3) # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [0.25860917, 0.32640733, 0.38562205, 0.43159269, 0.46445898,
-               0.48828727, 0.50822537, 0.52741247, 0.54565787, 0.56035736,
-               0.56880835, 0.57015658, 0.56561802, 0.55700108, 0.54472603,
-               0.52720679, 0.50217622, 0.46914624, 0.43114785, 0.39432907,
-               0.36548049, 0.34885759, 0.34456742, 0.34936895, 0.35949514,
-               0.37376516, 0.39451092, 0.42591854, 0.47068509, 0.5272207 ,
-               0.58920337, 0.64763434, 0.69379067, 0.72157276, 0.7284874 ,
-               0.71560131, 0.68696137, 0.64870578, 0.60757162, 0.56898454,
-               0.53520565, 0.5047466 , 0.47338241, 0.43641424, 0.39090495,
-               0.3368543 , 0.27706956, 0.21605198, 0.15868783] Jy>, spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10., 11., 12., 13., 14.,
-       15., 16., 17., 18., 19., 20., 21., 22., 23., 24., 25., 26., 27., 28.,
-       29., 30., 31., 32., 33., 34., 35., 36., 37., 38., 39., 40., 41., 42.,
-       43., 44., 45., 46., 47., 48., 49.] nm>)>
+    <Spectrum1D(flux:  shape (49,), mean=0.48009 Jy; spectral_axis: <SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
 
 Each of the specific smoothing methods create the appropriate `astropy.convolution.convolve`
 kernel and then call a helper function :func:`~specutils.manipulation.convolution_smooth`

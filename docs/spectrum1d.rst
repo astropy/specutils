@@ -326,69 +326,11 @@ value will apply to the lower bound input.
     >>> lower = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205, dec=26, unit=u.deg)]
     >>> upper = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205.5, dec=27.5, unit=u.deg)]
     >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [[[0.70861236],
-                [0.5663815 ],
-                [0.0606386 ],
-                [0.13811995],
-                [0.8974065 ]],
-    <BLANKLINE>
-               [[0.97618597],
-                [0.870499  ],
-                 [0.01522275],
-                 [0.59180312],
-                 [0.29160346]],
-    <BLANKLINE>
-               [[0.13274479],
-                [0.99381789],
-                [0.767089  ],
-                [0.73765335],
-                [0.36185756]],
-    <BLANKLINE>
-               [[0.09635759],
-                [0.38060021],
-                [0.63263223],
-                [0.60785285],
-                [0.4914904 ]],
-    <BLANKLINE>
-               [[0.83173506],
-                [0.1679683 ],
-                [0.39415721],
-                [0.25540459],
-                [0.39779061]],
-    <BLANKLINE>
-               [[0.27625437],
-                [0.90381118],
-                [0.65453332],
-                [0.64141404],
-                [0.36941242]],
-    <BLANKLINE>
-               [[0.90620901],
-                [0.41437874],
-                [0.71279457],
-                [0.41105785],
-                [0.7459662 ]],
-    <BLANKLINE>
-               [[0.57160214],
-                [0.45227951],
-                [0.29112881],
-                [0.44654224],
-                [0.65356417]],
-    <BLANKLINE>
-               [[0.60171961],
-                [0.46916617],
-                [0.3919754 ],
-                [0.01304226],
-                [0.32085301]],
-    <BLANKLINE>
-               [[0.00470581],
-                [0.54743546],
-                [0.24740782],
-                [0.77903598],
-                [0.63457146]]] Jy>, spectral_axis=<SpectralAxis
-       (observer to target:
-          radial_velocity=0.0 km / s
-          redshift=0.0)
-      [4.90049987e-06] m>)>
+    <Spectrum1D(flux:  shape (10, 5, 1), mean=0.49653 Jy; spectral_axis: <SpectralAxis
+        (observer to target:
+           radial_velocity=0.0 km / s
+           redshift=0.0)
+      [4.90049987e-06] m> (length=1))>
 
 Collapsing
 ----------
