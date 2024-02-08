@@ -49,31 +49,11 @@ Print the contents of 3 spectral axis points in a 3x3 spaxel array:
 .. code-block:: python
 
     >>> sc[30:33,30:33,2000:2003] # doctest: +REMOTE_DATA
-    <Spectrum1D(flux=<Quantity [[[0.48920232, 0.4987253 , 0.5098349 ],
-                [0.493365  , 0.4964812 , 0.5223962 ],
-                [0.49446177, 0.4909543 , 0.5304416 ]],
-    <BLANKLINE>
-               [[0.53114057, 0.53538376, 0.5467784 ],
-                [0.53761804, 0.533159  , 0.554437  ],
-                [0.5470889 , 0.54905874, 0.57109433]],
-    <BLANKLINE>
-               [[0.5599331 , 0.554316  , 0.5618426 ],
-                [0.5763055 , 0.5668046 , 0.5774939 ],
-                [0.59571505, 0.60118765, 0.59942234]]] 1e-17 erg / (Angstrom s spaxel cm2)>, spectral_axis=<SpectralAxis
-       (observer to target:
-          radial_velocity=0.0 km / s
-          redshift=0.0)
-      [5.73984286e-07, 5.74116466e-07, 5.74248676e-07] m>, uncertainty=InverseVariance([[[4324.235 , 4326.87  , 4268.985 ],
-                      [5128.3867, 5142.5005, 4998.457 ],
-                      [4529.9097, 4545.8345, 4255.305 ]],
-    <BLANKLINE>
-                     [[4786.163 , 4811.216 , 4735.3135],
-                      [4992.71  , 5082.1294, 4927.881 ],
-                      [4992.9683, 5046.971 , 4798.005 ]],
-    <BLANKLINE>
-                     [[4831.2236, 4887.096 , 4806.84  ],
-                      [3895.8677, 4027.9104, 3896.0195],
-                      [4521.258 , 4630.997 , 4503.0396]]]))>
+    <Spectrum1D(flux:  shape (3, 3, 3), mean=0.54165 1e-17 erg / (Angstrom s spaxel cm2); spectral_axis: <SpectralAxis
+        (observer to target:
+           radial_velocity=0.0 km / s
+           redshift=0.0)
+      [5.73984286e-07 5.74116466e-07 5.74248676e-07] m> (length=3); uncertainty: InverseVariance)>
 
 
 Spectral slab extraction
@@ -90,31 +70,11 @@ spectral regions from the cube.
     >>> ss.shape  # doctest: +REMOTE_DATA
     (74, 74, 3)
     >>> ss[30:33,30:33,::] # doctest: +REMOTE_DATA
-    <Spectrum1D(flux=<Quantity [[[0.6103081 , 0.95697385, 1.0791174 ],
-                [0.5663384 , 0.8872061 , 1.0814004 ],
-                [0.520966  , 0.7819859 , 1.024845  ]],
-    <BLANKLINE>
-               [[0.64514536, 0.96376216, 1.083235  ],
-                [0.6112465 , 0.89025146, 1.058679  ],
-                [0.56316894, 0.77895504, 0.99165994]],
-    <BLANKLINE>
-               [[0.65954393, 0.9084677 , 0.9965009 ],
-                [0.6255246 , 0.84401435, 0.9930112 ],
-                [0.59066033, 0.762025  , 0.9361185 ]]] 1e-17 erg / (Angstrom s spaxel cm2)>, spectral_axis=<SpectralAxis
-       (observer to target:
-          radial_velocity=0.0 km / s
-          redshift=0.0)
-      [5.00034537e-07, 5.00149688e-07, 5.00264865e-07] m>, uncertainty=InverseVariance([[[3449.242 , 2389.292 , 2225.105 ],
-                      [4098.7485, 2965.88  , 2632.497 ],
-                      [3589.92  , 2902.7622, 2292.3823]],
-    <BLANKLINE>
-                     [[3563.3342, 2586.58  , 2416.039 ],
-                      [4090.8855, 3179.1702, 2851.823 ],
-                      [4158.919 , 3457.0115, 2841.1965]],
-    <BLANKLINE>
-                     [[3684.6013, 3056.2   , 2880.6592],
-                      [3221.7888, 2801.3518, 2525.541 ],
-                      [3936.68  , 3461.534 , 3047.6135]]]))>
+    <Spectrum1D(flux:  shape (3, 3, 3), mean=0.83004 1e-17 erg / (Angstrom s spaxel cm2); spectral_axis: <SpectralAxis
+        (observer to target:
+           radial_velocity=0.0 km / s
+           redshift=0.0)
+      [5.00034537e-07 5.00149688e-07 5.00264865e-07] m> (length=3); uncertainty: InverseVariance)>
 
 
 Spectral Bounding Region

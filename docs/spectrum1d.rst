@@ -64,7 +64,7 @@ a loader.
     >>> import urllib
     >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
     >>> Spectrum1D.read(specs, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
-    <Spectrum1D(flux=<Quantity [30.596626,...]...>
+    <Spectrum1D(flux:  shape (3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2); spectral_axis: <SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty: InverseVariance)>
 
 Note that the same spectrum could be more conveniently downloaded via
 astroquery, if the user has that package installed:
@@ -74,7 +74,7 @@ astroquery, if the user has that package installed:
      >>> from astroquery.sdss import SDSS  # doctest: +REMOTE_DATA
      >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160, data_release=14)  # doctest: +REMOTE_DATA
      >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec")  # doctest: +REMOTE_DATA
-     <Spectrum1D(flux=<Quantity [30.596626,...]...>
+     <Spectrum1D(flux:  shape (3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2); spectral_axis: <SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty: InverseVariance)>
 
 
 List of Loaders
