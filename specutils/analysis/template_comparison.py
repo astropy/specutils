@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from astropy.nddata import StdDevUncertainty
 
@@ -30,6 +32,7 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
     """
     if stddev is None:
         stddev = observed_spectrum.uncertainty.represent_as(StdDevUncertainty).quantity
+
     num = np.nansum((observed_spectrum.flux*template_spectrum.flux) / (stddev**2))
     # We need to limit this sum to where observed_spectrum is not NaN as well.
     template_filtered = ((template_spectrum.flux / stddev)**2)
@@ -39,7 +42,7 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
     return num/denom
 
 
-def _resample(resample_method):
+def _resample(resample_method, extrapolation_treatment):
     """
     Find the user preferred method of resampling the template spectrum to fit
     the observed spectrum.
@@ -55,18 +58,19 @@ def _resample(resample_method):
         This is the actual class that will handle the resampling.
     """
     if resample_method == "flux_conserving":
-        return FluxConservingResampler()
+        return FluxConservingResampler(extrapolation_treatment=extrapolation_treatment)
 
     if resample_method == "linear_interpolated":
-        return LinearInterpolatedResampler()
+        return LinearInterpolatedResampler(extrapolation_treatment=extrapolation_treatment)
 
     if resample_method == "spline_interpolated":
-        return SplineInterpolatedResampler()
+        return SplineInterpolatedResampler(extrapolation_treatment=extrapolation_treatment)
 
     return None
 
 
-def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_method):
+def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_method,
+                              extrapolation_treatment, warn_no_overlap=True):
     """
     Resample the template spectrum to match the wavelength of the observed
     spectrum. Then, calculate chi2 on the flux of the two spectra.
@@ -88,25 +92,36 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
         normalized template spectrum.
     """
     # Resample template
-    if _resample(resample_method) != 0:
-        fluxc_resample = _resample(resample_method)
+    if _resample(resample_method, extrapolation_treatment) != 0:
+        fluxc_resample = _resample(resample_method, extrapolation_treatment)
         template_obswavelength = fluxc_resample(template_spectrum,
                                                 observed_spectrum.spectral_axis)
 
+    # With truncate, template may be smaller than observed spectrum if they don't fully overlap
+    matching_indices = np.intersect1d(observed_spectrum.spectral_axis,
+                                      template_obswavelength.spectral_axis,
+                                      return_indices=True)[1]
+    if len(matching_indices) == 0:
+        if warn_no_overlap:
+            warnings.warn("Template spectrum has no overlap with observed spectrum.")
+        return None, np.nan
+
+    observed_truncated = observed_spectrum[matching_indices.min():matching_indices.max()+1]
+
     # Convert the uncertainty to standard deviation if needed
-    stddev = observed_spectrum.uncertainty.represent_as(StdDevUncertainty).array
+    stddev = observed_truncated.uncertainty.represent_as(StdDevUncertainty).array
 
     # Normalize spectra
-    normalization = _normalize_for_template_matching(observed_spectrum,
+    normalization = _normalize_for_template_matching(observed_truncated,
                                                      template_obswavelength,
                                                      stddev)
 
     # Numerator
     num_right = normalization * template_obswavelength.flux
-    num = observed_spectrum.flux - num_right
+    num = observed_truncated.flux - num_right
 
     # Denominator
-    denom = stddev * observed_spectrum.flux.unit
+    denom = stddev * observed_truncated.flux.unit
 
     # Get chi square
     result = (num/denom)**2
@@ -121,9 +136,8 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
     return normalized_template_spectrum, chi2
 
 
-def template_match(observed_spectrum, spectral_templates,
-                   resample_method="flux_conserving",
-                   redshift=None):
+def template_match(observed_spectrum, spectral_templates, redshift=None,
+                   resample_method="flux_conserving", extrapolation_treatment="truncate"):
     """
     Find which spectral templates is the best fit to an observed spectrum by
     computing the chi-squared. If two template_spectra have the same chi2, the
@@ -138,20 +152,26 @@ def template_match(observed_spectrum, spectral_templates,
         over. The template spectra, which will be resampled, normalized, and
         compared to the observed spectrum, where the smallest chi2 and
         normalized template spectrum will be returned.
-    resample_method : `string`
-        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
-        Anything else does not resample the spectrum.
     redshift : 'float', `int`, `list`, `tuple`, 'numpy.array`
         If the user knows the redshift they want to apply to the spectrum/spectra within spectral_templates,
         then this float or int value redshift can be applied to each template before attempting the match.
         Or, alternatively, an iterable with redshift values to be applied to each template, before computation
         of the corresponding chi2 value, can be passed via this same parameter. For each template, the redshift
         value that results in the smallest chi2 is used.
+    resample_method : `string`
+        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
+        Anything else does not resample the spectrum.
+    extrapolation_treatment : `string`
+        Three options for what to do if the template spectrum and observed spectrum have regions
+        that do not overlap: ``nan_fill`` and ``zero_fill`` to fill the non-overlapping bins,
+        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler, defaults to
+        ``truncate``.
 
     Returns
     -------
     normalized_template_spectrum : :class:`~specutils.Spectrum1D`
-        The template spectrum that has been normalized.
+        The template spectrum that has been normalized and resampled to the observed
+        spectrum's spectral axis.
     redshift : `None` or `float`
         The value of the redshift that provides the smallest chi2.
     smallest_chi_index : `int`
@@ -174,7 +194,7 @@ def template_match(observed_spectrum, spectral_templates,
 
         else:
             normalized_spectral_template, chi2 = _chi_square_for_templates(
-                observed_spectrum, spectral_templates, resample_method)
+                observed_spectrum, spectral_templates, resample_method, extrapolation_treatment)
 
         chi2_list.append(chi2)
 
@@ -202,7 +222,7 @@ def template_match(observed_spectrum, spectral_templates,
 
         else:
             normalized_spectral_template, chi2 = _chi_square_for_templates(
-                observed_spectrum, spectrum, resample_method)
+                observed_spectrum, spectrum, resample_method, extrapolation_treatment)
 
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
@@ -214,7 +234,8 @@ def template_match(observed_spectrum, spectral_templates,
     return smallest_chi_spec, final_redshift, smallest_chi_index, chi2_min, chi2_list
 
 
-def template_redshift(observed_spectrum, template_spectrum, redshift):
+def template_redshift(observed_spectrum, template_spectrum, redshift,
+                      resample_method="flux_conserving", extrapolation_treatment="truncate"):
     """
     Find the best-fit redshift for template_spectrum to match observed_spectrum using chi2.
 
@@ -226,12 +247,22 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
         The template spectrum, which will have it's redshift calculated.
     redshift : `float`, `int`, `list`, `tuple`, 'numpy.array`
         A scalar or iterable with the redshift values to test.
+    resample_method : `string`
+        Three resample options: flux_conserving, linear_interpolated, and spline_interpolated.
+        Anything else does not resample the spectrum.
+    extrapolation_treatment : `string`
+        Three options for what to do if the template spectrum and observed spectrum have regions
+        that do not overlap: ``nan_fill`` and ``zero_fill`` to fill the non-overlapping bins,
+        or ``truncate`` to remove the non-overlapping bins. Passed to the resampler, defaults to
+        ``truncate``.
+
 
     Returns
     -------
     redshifted_spectrum: :class:`~specutils.Spectrum1D`
         A new Spectrum1D object which incorporates the template_spectrum with a spectral_axis
-        that has been redshifted using the final_redshift.
+        that has been redshifted using the final_redshift, and resampled to that of the
+        observed spectrum.
     final_redshift : `float`
         The best-fit redshift for template_spectrum to match the observed_spectrum.
     normalized_template_spectrum : :class:`~specutils.Spectrum1D`
@@ -243,6 +274,7 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
     """
     chi2_min = None
     final_redshift = None
+    final_spectrum = None
     chi2_list = []
 
     redshift = np.array(redshift).reshape((np.array(redshift).size,))
@@ -251,13 +283,14 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
     for rs in redshift:
 
         # Create new redshifted spectrum and run it through the chi2 method
-        redshifted_spectrum = Spectrum1D(spectral_axis=template_spectrum.spectral_axis*(1+rs),
-                                         flux=template_spectrum.flux,
-                                         uncertainty=template_spectrum.uncertainty,
-                                         meta=template_spectrum.meta)
+        redshifted_spectrum = template_spectrum._copy()
+        redshifted_spectrum.shift_spectrum_to(redshift=rs)
 
-        normalized_spectral_template, chi2 = _chi_square_for_templates(
-            observed_spectrum, redshifted_spectrum, "flux_conserving")
+        normalized_spectral_template, chi2 = _chi_square_for_templates(observed_spectrum,
+                                                                       redshifted_spectrum,
+                                                                       resample_method,
+                                                                       extrapolation_treatment,
+                                                                       warn_no_overlap=False)
 
         chi2_list.append(chi2)
 
@@ -266,5 +299,9 @@ def template_redshift(observed_spectrum, template_spectrum, redshift):
             chi2_min = chi2
             final_redshift = rs
             final_spectrum = redshifted_spectrum
+
+    if final_spectrum is None:
+        warnings.warn("Template spectrum and observed spectrum have no overlap after"
+                      "applying specified redshift(s) to template.")
 
     return final_spectrum, final_redshift, normalized_spectral_template, chi2_min, chi2_list

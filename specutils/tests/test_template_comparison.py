@@ -18,7 +18,7 @@ def test_template_match_no_overlap():
 
     # Create test spectra
     spec_axis = np.linspace(0, 50, 50) * u.AA
-    spec_axis_no_overlap = np.linspace(51, 102, 50) * u.AA
+    spec_axis_no_overlap = np.linspace(52, 103, 50) * u.AA
 
     spec = Spectrum1D(spectral_axis=spec_axis,
                       flux=np.random.randn(50) * u.Jy,
@@ -29,16 +29,12 @@ def test_template_match_no_overlap():
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     # Get result from template_match
-    tm_result = template_comparison.template_match(spec, spec1)
-    assert tm_result[3] == 0.0
+    with pytest.warns(UserWarning, match="Template spectrum has no overlap with observed spectrum"):
+        tm_result = template_comparison.template_match(spec, spec1)
 
-    # Create new spectrum for comparison
-    spec_result = Spectrum1D(spectral_axis=spec_axis,
-                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
-    try:
-        assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    except AssertionError:
-        pytest.xfail('TODO: investigate why this is failing')
+    assert np.isnan(tm_result[3])
+
+    assert tm_result[0] is None
 
 
 def test_template_match_minimal_overlap():
@@ -56,24 +52,19 @@ def test_template_match_minimal_overlap():
     spec_axis_min_overlap[0] = 51.0 * u.AA
 
     spec = Spectrum1D(spectral_axis=spec_axis,
-                      flux=np.random.randn(50) * u.Jy,
+                      flux=abs(np.random.randn(50)) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     spec1 = Spectrum1D(spectral_axis=spec_axis_min_overlap,
-                       flux=np.random.randn(50) * u.Jy,
+                       flux=abs(np.random.randn(50)) * u.Jy,
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     # Get result from template_match
     tm_result = template_comparison.template_match(spec, spec1)
-    assert tm_result[3] == 0.0
+    np.testing.assert_almost_equal(tm_result[3], 0)
 
-    # Create new spectrum for comparison
-    spec_result = Spectrum1D(spectral_axis=spec_axis,
-                             flux=spec1.flux * template_comparison._normalize_for_template_matching(spec, spec1))
-    try:
-        assert quantity_allclose(tm_result[0].flux, spec_result.flux, atol=0.01*u.Jy)
-    except AssertionError:
-        pytest.xfail('TODO: investigate why all elements in tm_result[0] are NaN even with overlap')
+    assert len(tm_result[0].flux) == 50
+    assert quantity_allclose(tm_result[0].flux, spec1.flux*4.17, atol=0.01*u.Jy)
 
 
 def test_template_match_spectrum():
@@ -332,7 +323,7 @@ def test_template_redshift_with_multiple_template_spectra_in_match():
     # TODO: Determine cause of and fix failing assert
     # np.testing.assert_almost_equal(tm_result[1], redshift)
 
-    np.testing.assert_almost_equal(tm_result[3], 1172.135458895792)
+    np.testing.assert_almost_equal(tm_result[3], 1172.1446112796834)
 
     # When a spectrum collection is matched with a redshift
     # grid, a list-of-lists is returned with the trial chi2

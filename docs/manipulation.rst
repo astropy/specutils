@@ -41,9 +41,9 @@ implemented are: :func:`~specutils.manipulation.box_smooth`
 :func:`~specutils.manipulation.gaussian_smooth`
 (:class:`~astropy.convolution.Gaussian1DKernel`), and
 :func:`~specutils.manipulation.trapezoid_smooth`
-(:class:`~astropy.convolution.Trapezoid1DKernel`). Note that, although 
+(:class:`~astropy.convolution.Trapezoid1DKernel`). Note that, although
 these kernels are 1D, they can be applied to higher-dimensional
-data (e.g. spectral cubes), in which case the data will be smoothed only 
+data (e.g. spectral cubes), in which case the data will be smoothed only
 along the spectral dimension.
 
 .. code-block:: python
@@ -102,8 +102,8 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
        43., 44., 45., 46., 47., 48., 49.] nm>)>
 
 In this case, the ``spec1_bsmooth2`` result should be equivalent to the ``spec1_bsmooth`` in
-the section above (assuming the flux data of the input ``spec`` is the same). Note that, 
-as in the case of the kernel-specific functions, a 1D kernel can be applied to a 
+the section above (assuming the flux data of the input ``spec`` is the same). Note that,
+as in the case of the kernel-specific functions, a 1D kernel can be applied to a
 multi-dimensional spectrum and will smooth that spectrum along the spectral dimension.
 In the case of :func:`~specutils.manipulation.convolution_smooth`, one can also input
 a higher-dimensional kernel that matches the dimensionality of the data.
@@ -156,6 +156,9 @@ Each of these classes takes in a :class:`~specutils.Spectrum1D` and a user
 defined output dispersion grid, and returns a new :class:`~specutils.Spectrum1D`
 with the resampled flux. Currently the resampling classes expect the new
 dispersion grid unit to be the same as the input spectrum's dispersion grid unit.
+Additionally, all resamplers take an optional ``extrapolation_treatment`` keyword which
+can be ``nan_fill``, ``zero_fill``, or ``truncate``, to determine what to do with output
+wavelength bins that have no overlap with the original spectrum.
 
 If the input :class:`~specutils.Spectrum1D` contains an uncertainty,
 :class:`~specutils.manipulation.FluxConservingResampler` will propogate the
@@ -402,7 +405,7 @@ with the spline knots:
     >>> result
     <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>, spectral_axis=<SpectralAxis [ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.] Angstrom>)>
 
-The default behavior is to keep the data outside the replaced region unchanged. 
+The default behavior is to keep the data outside the replaced region unchanged.
 Alternatively, the spectrum outside the replaced region can be filled with zeros:
 
 .. code-block:: python
