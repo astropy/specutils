@@ -427,17 +427,17 @@ def test_repr():
     spec_with_wcs = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy)
     result = repr(spec_with_wcs)
-    assert result.startswith('<Spectrum1D(flux: <Quantity [')
-    assert 'spectral_axis: <SpectralAxis' in result
+    assert result.startswith('<Spectrum1D(flux=<Quantity [')
+    assert 'spectral_axis=<SpectralAxis' in result
 
     spec_with_unc = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                flux=np.random.random(10) * u.Jy,
                                uncertainty=StdDevUncertainty(
                                    np.random.sample(10), unit='Jy'))
     result = repr(spec_with_unc)
-    assert result.startswith('<Spectrum1D(flux: <Quantity [')
-    assert 'spectral_axis: <SpectralAxis' in result
-    assert 'uncertainty: StdDevUncertainty' in result
+    assert result.startswith('<Spectrum1D(flux=<Quantity [')
+    assert 'spectral_axis=<SpectralAxis' in result
+    assert 'uncertainty=StdDevUncertainty' in result
 
 
 def test_str():
@@ -450,9 +450,9 @@ def test_str():
     flux = spec.flux
     sa = spec.spectral_axis
     assert len(lines) == 4
-    assert lines[1].startswith('Flux:')
+    assert lines[1].startswith('Flux=')
     assert 'mean={:.5f}'.format(np.nanmean(flux)) in lines[2]
-    assert lines[3].startswith('Spectral Axis:')
+    assert lines[3].startswith('Spectral Axis=')
     assert f'mean={np.nanmean(sa):.5f}' in lines[3]
 
     # Test string representation with uncertainty
@@ -473,15 +473,15 @@ def test_str():
     result = str(spec_multi_flux)
     lines = result.split('\n')
     assert len(lines) == 8
-    assert lines[1].startswith('Flux:')
+    assert lines[1].startswith('Flux=')
 
     # Test string representation with single-dimensional flux
     spec_single_flux = Spectrum1D([1] * u.Jy, [0] * u.nm)
     result = str(spec_single_flux)
     assert result == \
 """Spectrum1D (length=1)
-Flux: [1.] Jy,  mean=1.00000 Jy
-Spectral Axis: [0.] nm,  mean=0.00000 nm"""
+Flux=[1.] Jy,  mean=1.00000 Jy
+Spectral Axis=[0.] nm,  mean=0.00000 nm"""
 
 
 def test_equivalencies():

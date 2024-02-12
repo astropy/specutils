@@ -64,7 +64,7 @@ a loader.
     >>> import urllib
     >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
     >>> Spectrum1D.read(specs, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
-    <Spectrum1D(flux:  shape (3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2); spectral_axis: <SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty: InverseVariance)>
+    <Spectrum1D(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
 
 Note that the same spectrum could be more conveniently downloaded via
 astroquery, if the user has that package installed:
@@ -74,7 +74,7 @@ astroquery, if the user has that package installed:
      >>> from astroquery.sdss import SDSS  # doctest: +REMOTE_DATA
      >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160, data_release=14)  # doctest: +REMOTE_DATA
      >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec")  # doctest: +REMOTE_DATA
-     <Spectrum1D(flux:  shape (3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2); spectral_axis: <SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty: InverseVariance)>
+     <Spectrum1D(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
 
 
 List of Loaders
@@ -326,7 +326,7 @@ value will apply to the lower bound input.
     >>> lower = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205, dec=26, unit=u.deg)]
     >>> upper = [SpectralCoord(4.9, unit=u.um), SkyCoord(ra=205.5, dec=27.5, unit=u.deg)]
     >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
-    <Spectrum1D(flux:  shape (10, 5, 1), mean=0.49653 Jy; spectral_axis: <SpectralAxis
+    <Spectrum1D(flux=[[[0.708612359963129 ... 0.6345714580773677]]] Jy (shape=(10, 5, 1), mean=0.49653 Jy); spectral_axis=<SpectralAxis
         (observer to target:
            radial_velocity=0.0 km / s
            redshift=0.0)
@@ -356,8 +356,8 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
 .. code-block:: python
 
     >>> spec.mean(axis='spatial')  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux: <Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
-               0.66084728, 0.45881921, 0.38715911, 0.39967185, 0.53257671] Jy>, mean=0.49803 Jy; spectral_axis: <SpectralAxis
+    <Spectrum1D(flux=<Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
+               0.66084728, 0.45881921, 0.38715911, 0.39967185, 0.53257671] Jy> (shape=(10,), mean=0.49803 Jy); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
           redshift=0.0)

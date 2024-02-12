@@ -76,7 +76,8 @@ class FluxConservingResampler(ResamplerBase):
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23]  *u.nm
     >>> fluxc_resample = FluxConservingResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [  1. ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy>, spectral_axis=<SpectralAxis [ 1.,  5.,  9., 13., 14., 17., 21., 22., 23.] nm>)>
+    <Spectrum1D(flux=<Quantity [  1. ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy> (shape=(9,), mean=8.70833 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
+
     """
 
     def _fluxc_resample(self, input_bin_centers, output_bin_centers,
@@ -332,7 +333,7 @@ class LinearInterpolatedResampler(ResamplerBase):
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
     >>> fluxc_resample = LinearInterpolatedResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux: <Quantity [ nan, 3.5 , 5.5 , 6.75, 6.5 , 9.5 ,  nan,  nan,  nan] mJy>, mean=6.35000 mJy; spectral_axis: <SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
+    <Spectrum1D(flux=<Quantity [ nan, 3.5 , 5.5 , 6.75, 6.5 , 9.5 ,  nan,  nan,  nan] mJy> (shape=(9,), mean=6.35000 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
 
     """
     def __init__(self, extrapolation_treatment='nan_fill'):
@@ -416,8 +417,8 @@ class SplineInterpolatedResampler(ResamplerBase):
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
     >>> fluxc_resample = SplineInterpolatedResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux: <Quantity [       nan, 3.98808594, 6.94042969, 6.45869141, 5.89921875,
-               7.29736328,        nan,        nan,        nan] mJy>, mean=6.11676 mJy; spectral_axis: <SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
+    <Spectrum1D(flux=<Quantity [       nan, 3.98808594, 6.94042969, 6.45869141, 5.89921875,
+               7.29736328,        nan,        nan,        nan] mJy> (shape=(9,), mean=6.11676 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
 
     """
     def __init__(self, extrapolation_treatment='nan_fill'):

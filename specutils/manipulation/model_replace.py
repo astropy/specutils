@@ -65,7 +65,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
     >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> model_replace(input_spectrum, None, spline_knots)
-    <Spectrum1D(flux: <Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy>, mean=11.00000 mJy; spectral_axis: <SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
     """
     if extrapolation_treatment not in ('data_fill', 'zero_fill'):
