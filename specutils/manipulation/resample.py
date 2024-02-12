@@ -76,7 +76,7 @@ class FluxConservingResampler(ResamplerBase):
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23]  *u.nm
     >>> fluxc_resample = FluxConservingResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [  1. ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy> (shape=(9,), mean=8.70833 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
+    <Spectrum1D(flux=<Quantity [ 1.  ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy> (shape=(9,), mean=7.60714 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
 
     """
 
