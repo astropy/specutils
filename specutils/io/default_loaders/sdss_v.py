@@ -174,6 +174,8 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
         meta["header"] = hdulist[0].header
         # SDSS masks are arrays of bit values storing multiple bool conds
         mask = hdulist[3].data[idx]
+        # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+        mask = mask != 0
 
     return Spectrum1D(
         spectral_axis=spectral_axis,
@@ -250,6 +252,8 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
         meta = dict()
         meta["header"] = hdulist[0].header
         mask = hdulist[3].data.flatten()
+        # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+        mask = mask != 0
 
     return Spectrum1D(spectral_axis=spectral_axis,
                       flux=flux,
@@ -295,6 +299,8 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
             # Copy metadata for each, adding chip bitmask and MJD to each
             meta = common_meta.copy()
             mask = hdulist[3].data[chip]
+            # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+            mask = mask != 0
 
             spectra.append(
                 Spectrum1D(
@@ -407,6 +413,9 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     except KeyError:
         mask = hdulist[hdu].data["OR_MASK"]
 
+    # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+    mask = mask != 0
+
     # Fetch metadata
     # NOTE: specFull file does not include S/N value, but this gets calculated
     #       for mwmVisit/mwmStar files when they are created.
@@ -445,17 +454,21 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
     Spectrum1D
         The spectrum contained in the file
     """
-    if hdu is None:
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # Check if file is empty first
+        datasums = []
+        for i in range(1, len(hdulist)):
+            datasums.append(int(hdulist[i].header.get("DATASUM")))
+        if (np.array(datasums) == 0).all():
+            raise ValueError("Specified file is empty.")
+
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
-        with read_fileobj_or_hdulist(file_obj, memmap=False,
-                                     **kwargs) as hdulist:
+        if hdu is None:
             for i in range(len(hdulist)):
                 if hdulist[i].header.get("DATASUM") != "0":
                     hdu = i
                     break
 
-        # raise ValueError("HDU not specified! Please specify a HDU to load.")
-    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu, **kwargs)
 
 
@@ -486,6 +499,14 @@ def load_sdss_mwm_list(file_obj, **kwargs):
     """
     spectra = SpectrumList()
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # Check if file is empty first
+        datasums = []
+        for hdu in range(1, len(hdulist)):
+            datasums.append(int(hdulist[hdu].header.get("DATASUM")))
+        if (np.array(datasums) == 0).all():
+            raise ValueError("Specified file is empty.")
+
+        # Now load file
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
@@ -516,7 +537,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     """
     if hdulist[hdu].header.get("DATASUM") == "0":
-        raise ValueError(
+        raise IndexError(
             "Attemped to load an empty HDU specified at HDU{}".format(hdu))
 
     # Fetch wavelength
@@ -543,6 +564,8 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     # Collect bitmask
     mask = hdulist[hdu].data["pixel_flags"]
+    # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+    mask = mask != 0
 
     # collapse shape if 1D spectra in 2D array
     # NOTE: this fixes a jdaviz handling bug for 2D of shape 1,
@@ -562,7 +585,11 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     # Add identifiers (obj, telescope, mjd, datatype)
     # TODO: need to see what metadata we're interested in for the MWM files.
     meta["telescope"] = hdulist[hdu].data["telescope"]
-    meta["obj"] = hdulist[hdu].data["obj"]
+    meta["instrument"] = hdulist[hdu].header.get("INSTRMNT")
+    try:
+        meta["obj"] = hdulist[hdu].data["obj"]
+    except KeyError:
+        pass
     try:
         meta["date"] = hdulist[hdu].data["date_obs"]
         meta["mjd"] = hdulist[hdu].data["mjd"]
