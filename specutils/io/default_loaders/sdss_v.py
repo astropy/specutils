@@ -1,5 +1,4 @@
 """Register reader functions for various spectral formats."""
-from collections import OrderedDict
 from typing import Optional
 
 import numpy as np
@@ -21,8 +20,6 @@ __all__ = [
     "load_sdss_mwm_1d",
     "load_sdss_mwm_list",
 ]
-
-## IDENTIFIER
 
 
 def apVisit_identify(origin, *args, **kwargs):
@@ -88,7 +85,6 @@ def mwm_identify(origin, *args, **kwargs):
                 and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5)))
 
 
-## HELPERS
 def _wcs_log_linear(naxis, cdelt, crval):
     """
     Convert WCS from log to linear.
@@ -122,7 +118,7 @@ def _fetch_flux_unit(hdu):
     return Unit(flux_unit)
 
 
-## APOGEE files
+# APOGEE files
 @data_loader(
     "SDSS-V apStar",
     identifier=apStar_identify,
@@ -314,8 +310,7 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
     return spectra
 
 
-## BOSS REDUX products (specLite, specFull, custom coadd files, etc)
-
+# BOSS REDUX products (specLite, specFull, custom coadd files, etc)
 
 @data_loader(
     "SDSS-V spec",
@@ -430,7 +425,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
                       meta=meta)
 
 
-## MWM LOADERS
+# MWM LOADERS
 @data_loader(
     "SDSS-V mwm",
     identifier=mwm_identify,
