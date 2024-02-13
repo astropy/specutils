@@ -13,8 +13,12 @@ Bug Fixes
 - ``with_spectral_unit`` has been changed to ``with_spectral_axis_unit`` and actually works
   now. [#1119]
 
+- Fixed numpy error when printing a ``Spectrum1D`` object. [#1123]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated the format of ``Spectrum1D.__str__`` and ``Spectrum1D.__repr__``. [#1123]
 
 1.12.0 (2023-10-17)
 -------------------

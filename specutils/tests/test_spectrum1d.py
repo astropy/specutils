@@ -437,7 +437,7 @@ def test_repr():
     result = repr(spec_with_unc)
     assert result.startswith('<Spectrum1D(flux=<Quantity [')
     assert 'spectral_axis=<SpectralAxis' in result
-    assert 'uncertainty=StdDevUncertainty(' in result
+    assert 'uncertainty=StdDevUncertainty' in result
 
 
 def test_str():
@@ -449,42 +449,39 @@ def test_str():
     lines = result.split('\n')
     flux = spec.flux
     sa = spec.spectral_axis
-    assert len(lines) == 3
-    assert lines[1].startswith('flux:')
-    assert '[ {:.5}, ..., {:.5} ]'.format(flux[0], flux[-1]) in lines[1]
-    assert 'mean={:.5}'.format(np.mean(flux)) in lines[1]
-    assert lines[2].startswith('spectral axis:')
-    assert '[ {:.5}, ..., {:.5} ]'.format(sa[0], sa[-1]) in lines[2]
-    assert 'mean={:5}'.format(np.mean(sa)) in lines[2]
+    assert len(lines) == 4
+    assert lines[1].startswith('Flux=')
+    assert 'mean={:.5f}'.format(np.nanmean(flux)) in lines[2]
+    assert lines[3].startswith('Spectral Axis=')
+    assert f'mean={np.nanmean(sa):.5f}' in lines[3]
 
     # Test string representation with uncertainty
     spec_with_uncertainty = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                        flux=np.random.random(10) * u.Jy,
-                                       uncertainty=np.random.random(10))
+                                       uncertainty=StdDevUncertainty(np.random.random(10)))
     result = str(spec_with_uncertainty)
     lines = result.split('\n')
     unc = spec_with_uncertainty.uncertainty
     print(spec_with_uncertainty)
-    assert len(lines) == 4
-    assert lines[3].startswith('uncertainty')
-    assert '[ {}, ..., {} ]'.format(unc[0], unc[-1]) in lines[3]
+    assert len(lines) == 5
+    assert lines[4].startswith('Uncertainty')
+    assert f'StdDevUncertainty ([{unc.array[0]:.7f}' in lines[4]
 
     # Test string representation with multiple flux
     spec_multi_flux = Spectrum1D(spectral_axis=np.linspace(100, 1000, 10) * u.nm,
                                  flux=np.random.random((3,10)) * u.Jy)
     result = str(spec_multi_flux)
     lines = result.split('\n')
-    assert len(lines) == 5
-    for i, line in enumerate(lines[1:4]):
-        assert line.startswith('flux{:2}:'.format(i))
+    assert len(lines) == 8
+    assert lines[1].startswith('Flux=')
 
     # Test string representation with single-dimensional flux
     spec_single_flux = Spectrum1D([1] * u.Jy, [0] * u.nm)
     result = str(spec_single_flux)
     assert result == \
 """Spectrum1D (length=1)
-flux:             [ 1.0 Jy ],  mean=1.0 Jy
-spectral axis:    [ 0.0 nm ],  mean=0.0 nm"""
+Flux=[1.] Jy,  mean=1.00000 Jy
+Spectral Axis=[0.] nm,  mean=0.00000 nm"""
 
 
 def test_equivalencies():
