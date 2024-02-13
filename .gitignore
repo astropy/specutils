@@ -66,4 +66,9 @@ pip-wheel-metadata/
 # Mac OSX
 .DS_Store
 .vscode
+
+# Other
 .pytest_cache
+.jukit
+venv
+.venv
