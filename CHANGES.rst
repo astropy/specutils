@@ -1,11 +1,24 @@
-1.13.0 (unreleased)
+1.13.0 (2024-02-19)
 -------------------
 
 New Features
 ^^^^^^^^^^^^
 
+- Added SDSS-V file format readers. [#1107]
+
+- Switched from using ``numpy.correlate`` to ``scipy.signal.correlate`` in ``template_correlate``
+  and enabled passing through the ``method`` argument. [#1114]
+
+- Added DESI file format readers. [#1116]
+
+- Added ``truncate`` option for resampler and template correlation extrapolation treatment. [#1121]
+
 Bug Fixes
 ^^^^^^^^^
+
+- SDSS reader now properly exposes the ``spPlate_identify`` and ``spPlate_loader`` functions. [#1097]
+
+- Masks now round-trip through tabular-fits reader/write. [#1104]
 
 - ``template_correlate`` no longer errors when used on a ``Spectrum1D`` that lacks an
   ``uncertainty`` array. [#1118]
@@ -13,10 +26,15 @@ Bug Fixes
 - ``with_spectral_unit`` has been changed to ``with_spectral_axis_unit`` and actually works
   now. [#1119]
 
+- Template correlation functions now truncate to overlapping region to avoid NaNs in normalization
+  when spectrum and template have non-overlapping regions. [#1121]
+
 - Fixed numpy error when printing a ``Spectrum1D`` object. [#1123]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Made a couple small updates to developer docs. [#1110, #1112]
 
 - Updated the format of ``Spectrum1D.__str__`` and ``Spectrum1D.__repr__``. [#1123]
 
