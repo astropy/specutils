@@ -80,10 +80,14 @@ class OneDSpectrumMixin():
         """
         return u.Quantity(self.data, unit=self.unit, copy=False)
 
+    @deprecated('v1.13', alternative="with_flux_unit")
     def new_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
+        return self.with_flux_unit(unit, equivalencies=equivalencies,
+                                  suppress_conversion=suppress_conversion)
+
+    def with_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
         """
-        Converts the flux data to the specified unit.  This is an in-place
-        change to the object.
+        Returns a new spectrum with a different flux unit
 
         Parameters
         ----------

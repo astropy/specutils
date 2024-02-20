@@ -277,12 +277,12 @@ def test_flux_unit_conversion():
 
     # Simple Unit Conversion
     s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500])*u.nm)
-    converted_spec = s.new_flux_unit(unit=u.uJy)
+    converted_spec = s.with_flux_unit(unit=u.uJy)
     assert ((26.0 * u.Jy).to(u.uJy) == converted_spec.flux[0])
 
     # Make sure incompatible units raise UnitConversionError
     with pytest.raises(u.UnitConversionError):
-        s.new_flux_unit(unit=u.m)
+        s.with_flux_unit(unit=u.m)
 
     # Pass custom equivalencies
     s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy,
@@ -290,12 +290,12 @@ def test_flux_unit_conversion():
     eq = [[u.Jy, u.m,
           lambda x: np.full_like(np.array(x), 1000.0, dtype=np.double),
           lambda x: np.full_like(np.array(x), 0.001, dtype=np.double)]]
-    converted_spec = s.new_flux_unit(unit=u.m, equivalencies=eq)
+    converted_spec = s.with_flux_unit(unit=u.m, equivalencies=eq)
     assert 1000.0 * u.m == converted_spec.flux[0]
 
     # Check if suppressing the unit conversion works
     s = Spectrum1D(flux=np.array([26.0, 44.5]) * u.Jy, spectral_axis=np.array([400, 500]) * u.nm)
-    new_spec = s.new_flux_unit("uJy", suppress_conversion=True)
+    new_spec = s.with_flux_unit("uJy", suppress_conversion=True)
     assert new_spec.flux[0] == 26.0 * u.uJy
 
 
