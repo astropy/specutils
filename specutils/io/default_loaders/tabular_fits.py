@@ -74,6 +74,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
 
     tab = Table.read(file_obj, format='fits', hdu=hdu)
 
+    # Get the header from HDU0
+    tab.meta = fits.getheader(file_obj, 0)
+
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
     # or alternatively compare against shape of 1st column.
@@ -181,8 +184,12 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
         if columns[c].ndim > 1:
             columns[c] = columns[c].T
 
-    tab = Table(columns, names=colnames, meta=header)
+    tab = Table(columns, names=colnames)
+    hdu1 = fits.BinTableHDU(data=tab, header=header)
+    hdu1.header['EXTNAME'] = 'DATA'
+    hdu0 = fits.PrimaryHDU(header=header)
 
-    # Todo: support writing to other HDUs than the default (1st)
-    #       and an 'update' mode so different HDUs can be written to separately
-    tab.write(file_name, format="fits", **kwargs)
+    hdulist = fits.HDUList([hdu0, hdu1])
+
+    # TODO: Use output_verify options to check for valid FITS
+    hdulist.writeto(file_name, **kwargs)
