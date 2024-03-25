@@ -61,14 +61,6 @@ class OneDSpectrumMixin():
         return self._spectral_axis
 
     @property
-    @deprecated('v1.1', alternative="spectral_axis.unit")
-    def spectral_axis_unit(self):
-        """
-        Returns the units of the spectral axis.
-        """
-        return u.Unit(self.wcs.world_axis_units[0])
-
-    @property
     def flux(self):
         """
         Converts the stored data and unit information into a quantity.
@@ -104,7 +96,7 @@ class OneDSpectrumMixin():
 
         Returns
         -------
-        `~specutils.Spectrum1D`
+        `~specutils.Spectrum`
             A new spectrum with the converted flux array
         """
         new_spec = deepcopy(self)
