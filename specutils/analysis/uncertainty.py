@@ -19,7 +19,7 @@ def snr(spectrum, region=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
         The spectrum object overwhich the equivalent width will be calculated.
 
     region: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -41,7 +41,7 @@ def snr(spectrum, region=None):
     """
 
     if not hasattr(spectrum, 'uncertainty') or spectrum.uncertainty is None:
-        raise Exception("Spectrum1D currently requires the uncertainty be defined.")
+        raise Exception("Spectrum currently requires the uncertainty be defined.")
 
     # No region, therefore whole spectrum.
     if region is None:
@@ -64,7 +64,7 @@ def _snr_single_region(spectrum, region=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
         The spectrum object overwhich the equivalent width will be calculated.
 
     region: `~specutils.SpectralRegion`
@@ -106,7 +106,7 @@ def snr_derived(spectrum, region=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
         The spectrum object overwhich the equivalent width will be calculated.
 
     region: `~specutils.SpectralRegion`
@@ -152,7 +152,7 @@ def _snr_derived(spectrum, region=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
         The spectrum object overwhich the equivalent width will be calculated.
 
     region: `~specutils.SpectralRegion`

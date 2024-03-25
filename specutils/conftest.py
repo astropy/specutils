@@ -10,7 +10,7 @@ import pytest
 from astropy import units as u
 from astropy.modeling import models
 
-from specutils.spectra import Spectrum1D
+from specutils.spectra import Spectrum
 
 try:
     from pytest_astropy_header.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
@@ -46,11 +46,11 @@ class SpectraExamples:
     several examples of simple spectra that are to be used in the tests
     (e.g., arithmetic tests, smoothing tests etc).
 
-    The purpose of this being a test class instead of using a `Spectrum1D`
-    directly is that it contains both the `Spectrum1D` object and the flux
+    The purpose of this being a test class instead of using a `Spectrum`
+    directly is that it contains both the `Spectrum` object and the flux
     that was used to *create* the Spectrum.  That's for tests that ensure
     the simpler operations just on the flux arrays are carried through to
-    the `Spectrum1D` operations.
+    the `Spectrum` operations.
 
     Each of the spectra are created from a base noise-less spectrum
     constructed from 4 Gaussians and a ramp. Then three example spectra
@@ -104,11 +104,11 @@ class SpectraExamples:
         #
 
         self._flux_e1 = self.base_flux + 400 * np.random.random(self.base_flux.shape)
-        self._s1_um_mJy_e1 = Spectrum1D(spectral_axis=self.wavelengths_um * u.um,
+        self._s1_um_mJy_e1 = Spectrum(spectral_axis=self.wavelengths_um * u.um,
                                         flux=self._flux_e1 * u.mJy)
 
         self._flux_e2 = self.base_flux + 400 * np.random.random(self.base_flux.shape)
-        self._s1_um_mJy_e2 = Spectrum1D(spectral_axis=self.wavelengths_um * u.um,
+        self._s1_um_mJy_e2 = Spectrum(spectral_axis=self.wavelengths_um * u.um,
                                         flux=self._flux_e2 * u.mJy)
 
         #
@@ -116,7 +116,7 @@ class SpectraExamples:
         #
 
         self.wavelengths_AA = self.wavelengths_um * 10000
-        self._s1_AA_mJy_e3 = Spectrum1D(spectral_axis=self.wavelengths_AA * u.AA,
+        self._s1_AA_mJy_e3 = Spectrum(spectral_axis=self.wavelengths_AA * u.AA,
                                         flux=self._flux_e1 * u.mJy)
 
         #
@@ -124,7 +124,7 @@ class SpectraExamples:
         #
 
         self._flux_e4 = (self.base_flux + 400 * np.random.random(self.base_flux.shape)) * 1000000
-        self._s1_AA_nJy_e4 = Spectrum1D(spectral_axis=self.wavelengths_AA * u.AA,
+        self._s1_AA_nJy_e4 = Spectrum(spectral_axis=self.wavelengths_AA * u.AA,
                                         flux=self._flux_e4 * u.nJy)
 
         #
@@ -134,7 +134,7 @@ class SpectraExamples:
         self._s1_um_mJy_e1_masked.mask = (np.random.randn(*self.base_flux.shape) + 1) > 0
 
         # Create a spectrum like 1, but with descending spectral axis
-        self._s1_um_mJy_e1_desc = Spectrum1D(spectral_axis=self.wavelengths_um[::-1] * u.um,
+        self._s1_um_mJy_e1_desc = Spectrum(spectral_axis=self.wavelengths_um[::-1] * u.um,
                                              flux=self._flux_e1[::-1] * u.mJy)
 
     @property
