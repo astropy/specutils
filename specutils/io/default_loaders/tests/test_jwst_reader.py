@@ -10,7 +10,7 @@ from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs.wcs import WCS
 
-from specutils import Spectrum1D, SpectrumList
+from specutils import Spectrum, SpectrumList
 
 try:
     from stdatamodels import asdf_in_fits
@@ -104,7 +104,7 @@ def test_jwst_1d_multi_reader(tmp_path, spec_multi, format):
     assert len(data) == 3
 
     for item in data:
-        assert isinstance(item, Spectrum1D)
+        assert isinstance(item, Spectrum)
 
     assert data[0].shape == (100,)
     assert data[1].shape == (120,)
@@ -115,12 +115,12 @@ def test_jwst_1d_multi_reader(tmp_path, spec_multi, format):
                          [('EXTRACT1D', 'JWST x1d'),
                           ('COMBINE1D', 'JWST c1d')], indirect=['spec_single'])
 def test_jwst_1d_single_reader(tmp_path, spec_single, format):
-    """Test Spectrum1D.read for JWST x1d data"""
+    """Test Spectrum.read for JWST x1d data"""
     tmpfile = str(tmp_path / 'jwst.fits')
     spec_single.writeto(tmpfile)
 
-    data = Spectrum1D.read(tmpfile, format=format)
-    assert type(data) is Spectrum1D
+    data = Spectrum.read(tmpfile, format=format)
+    assert type(data) is Spectrum
     assert data.shape == (100,)
 
 
@@ -133,20 +133,20 @@ def test_jwst_srctpye_defaults(tmp_path, x1d_single, srctype):
     x1d_single['EXTRACT1D'].header['SRCTYPE'] == srctype
     x1d_single.writeto(tmpfile)
 
-    data = Spectrum1D.read(tmpfile, format='JWST x1d')
-    assert type(data) is Spectrum1D
+    data = Spectrum.read(tmpfile, format='JWST x1d')
+    assert type(data) is Spectrum
     assert data.shape == (100,)
     assert x1d_single['EXTRACT1D'].header['SRCTYPE'] == "POINT"
 
 
 @pytest.mark.parametrize('spec_single', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_single'])
 def test_jwst_1d_single_reader_no_format(tmp_path, spec_single):
-    """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
+    """Test Spectrum.read for JWST c1d/x1d data without format arg"""
     tmpfile = str(tmp_path / 'jwst.fits')
     spec_single.writeto(tmpfile)
 
-    data = Spectrum1D.read(tmpfile)
-    assert type(data) is Spectrum1D
+    data = Spectrum.read(tmpfile)
+    assert type(data) is Spectrum
     assert data.shape == (100,)
     assert data.unit == u.Jy
     assert data.spectral_axis.unit == u.um
@@ -154,7 +154,7 @@ def test_jwst_1d_single_reader_no_format(tmp_path, spec_single):
 
 @pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
 def test_jwst_1d_multi_reader_no_format(tmp_path, spec_multi):
-    """Test Spectrum1D.read for JWST c1d/x1d data without format arg"""
+    """Test Spectrum.read for JWST c1d/x1d data without format arg"""
     tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
@@ -163,12 +163,12 @@ def test_jwst_1d_multi_reader_no_format(tmp_path, spec_multi):
     assert len(data) == 3
 
     for item in data:
-        assert isinstance(item, Spectrum1D)
+        assert isinstance(item, Spectrum)
 
 
 @pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
 def test_jwst_1d_multi_reader_check_units(tmp_path, spec_multi):
-    """Test units for Spectrum1D.read for JWST c1d/x1d data"""
+    """Test units for Spectrum.read for JWST c1d/x1d data"""
     tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
@@ -184,19 +184,19 @@ def test_jwst_1d_reader_meta(tmp_path, spec_single):
     tmpfile = str(tmp_path / 'jwst.fits')
     spec_single.writeto(tmpfile)
 
-    data = Spectrum1D.read(tmpfile)
+    data = Spectrum.read(tmpfile)
     assert ('TELESCOP', 'JWST') in data.meta['header'].items()
     assert ('SRCTYPE', 'POINT') in data.meta['header'].items()
 
 
 @pytest.mark.parametrize('spec_multi', ['EXTRACT1D', 'COMBINE1D'], indirect=['spec_multi'])
 def test_jwst_1d_single_reader_fail_on_multi(tmp_path, spec_multi):
-    """Make sure Spectrum1D.read on JWST c1d/x1d with many spectra errors out"""
+    """Make sure Spectrum.read on JWST c1d/x1d with many spectra errors out"""
     tmpfile = str(tmp_path / 'jwst.fits')
     spec_multi.writeto(tmpfile)
 
     with pytest.raises(IORegistryError):
-        Spectrum1D.read(tmpfile)
+        Spectrum.read(tmpfile)
 
 
 @pytest.mark.parametrize("srctype", ["BADVAL"])
@@ -222,7 +222,7 @@ def test_jwst_reader_warning_stddev(tmp_path, x1d_single):
     hdulist.writeto(tmpfile)
 
     with pytest.warns(Warning) as record:
-        Spectrum1D.read(tmpfile)
+        Spectrum.read(tmpfile)
         for r in record:
             if r.message is AstropyUserWarning:
                 assert "Standard Deviation has values of 0" in r.message
@@ -313,7 +313,7 @@ def test_jwst_s2d_reader(tmp_path, s2d_single):
     model = s2d_single
     model.save(path)
 
-    spec = Spectrum1D.read(path)
+    spec = Spectrum.read(path)
     assert hasattr(spec, "spectral_axis")
     assert spec.unit == u.dimensionless_unscaled
 
@@ -428,12 +428,12 @@ def cube(tmp_path, tmp_asdf):
 
 @pytest.mark.skipif(not HAS_STDATAMODELS, reason="requires stdatamodels")
 def test_jwst_s3d_single(tmp_path, cube):
-    """Test Spectrum1D.read for JWST x1d data"""
+    """Test Spectrum.read for JWST x1d data"""
     tmpfile = str(tmp_path / 'jwst_s3d.fits')
     cube.writeto(tmpfile)
 
-    data = Spectrum1D.read(tmpfile, format='JWST s3d')
-    assert type(data) is Spectrum1D
+    data = Spectrum.read(tmpfile, format='JWST s3d')
+    assert type(data) is Spectrum
     assert data.shape == (30, 10, 10)
     assert data.uncertainty is not None
     assert data.mask is not None
