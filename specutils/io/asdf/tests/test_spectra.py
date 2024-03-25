@@ -5,7 +5,7 @@ from astropy import units as u
 from astropy.coordinates import FK5
 from astropy.nddata import StdDevUncertainty
 
-from specutils import Spectrum1D, SpectrumList, SpectralAxis
+from specutils import Spectrum, SpectrumList, SpectralAxis
 from specutils.io.asdf.tests.helpers import (
     assert_spectrum1d_equal, assert_spectrumlist_equal, assert_spectral_axis_equal)
 
@@ -15,7 +15,7 @@ def create_spectrum1d(xmin, xmax, uncertainty=False, mask=False):
     wavelength = np.linspace(xmin, xmax, 10) * u.nm
     unc = StdDevUncertainty(flux * 0.1) if uncertainty else None
     msk = np.array([0, 1, 1, 0, 1, 0, 1, 1, 0, 1], dtype=np.uint8) if mask else None
-    return Spectrum1D(spectral_axis=wavelength, flux=flux, uncertainty=unc, mask=msk)
+    return Spectrum(spectral_axis=wavelength, flux=flux, uncertainty=unc, mask=msk)
 
 
 @pytest.mark.parametrize('uncertainty', [False, True])

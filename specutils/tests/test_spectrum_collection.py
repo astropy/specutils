@@ -78,7 +78,7 @@ def test_collection_without_optional_arguments():
 
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
-def test_create_collection_from_spectrum1D():
+def test_create_collection_from_spectrum():
     spec = Spectrum(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
                       redshift=0.1), flux=np.random.randn(50) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))

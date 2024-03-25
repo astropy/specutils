@@ -109,9 +109,9 @@ def test_flux_conservation(specflux, specwavebins, outwavebins):
     assert_quantity_allclose(flux_in, flux_out)
 
 
-def test_multi_dim_spectrum1D():
+def test_multi_dim_spectrum():
     """
-    Test for input spectrum1Ds that have a two dimensional flux and
+    Test for input spectra that have a two dimensional flux and
     uncertainty.
     """
     flux_2d = np.array([np.ones(10) * 5, np.ones(10) * 6, np.ones(10) * 7])

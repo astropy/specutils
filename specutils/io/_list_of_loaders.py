@@ -1,5 +1,5 @@
 import io
-from specutils import Spectrum1D
+from specutils import Spectrum
 import specutils.io.default_loaders  # noqa
 """
 The purpose of this file is to receive a list of loaders from
@@ -12,7 +12,7 @@ set it as the __doc__.
 def _list_of_loaders():
     # Receive list of loaders
     list_of_loaders = io.StringIO()
-    Spectrum1D.read.list_formats(list_of_loaders)
+    Spectrum.read.list_formats(list_of_loaders)
 
     # Use the second line (which uses "-" to split the
     # first row from the rest) to create the "=" signs

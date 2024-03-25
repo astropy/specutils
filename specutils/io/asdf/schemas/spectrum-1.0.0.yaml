@@ -1,12 +1,12 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
-id: "http://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0"
+id: "http://astropy.org/schemas/specutils/spectra/spectrum-1.0.0"
 
 title: >
   Represents a one-dimensional spectrum
 description: |
-  This schema represents a Spectrum1D object from specutils.
+  This schema represents a Spectrum object from specutils.
 
 type: object
 properties:

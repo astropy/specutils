@@ -16,7 +16,7 @@ def assert_spectral_axis_equal(a, b):
 
 
 def assert_spectrum1d_equal(a, b):
-    """Equality test for use in ASDF unit tests for Spectrum1D."""
+    """Equality test for use in ASDF unit tests for Spectrum."""
     __tracebackhide__ = True
 
     assert_quantity_allclose(a.flux, b.flux)

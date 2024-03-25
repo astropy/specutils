@@ -11,11 +11,11 @@ tags:
   title: Represents a spectral axis
   description: |-
     This schema represents a SpectralAxis object
-- tag_uri: tag:astropy.org:specutils/spectra/spectrum1d-1.0.0
-  schema_uri: http://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0
+- tag_uri: tag:astropy.org:specutils/spectra/spectrum-1.0.0
+  schema_uri: http://astropy.org/schemas/specutils/spectra/spectrum-1.0.0
   title: Represents a one-dimensional spectrum
   description: |-
-    This schema represents a Spectrum1D object from specutils.
+    This schema represents a Spectrum object from specutils.
 - tag_uri: tag:astropy.org:specutils/spectra/spectrum_list-1.0.0
   schema_uri: http://astropy.org/schemas/specutils/spectra/spectrum_list-1.0.0
   title: Represents a list of one-dimensional spectra
