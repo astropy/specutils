@@ -11,7 +11,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
 
-from specutils.spectra import Spectrum1D
+from specutils.spectra import Spectrum
 
 
 @contextlib.contextmanager
@@ -55,7 +55,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
 def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
     """
     Given a table and a mapping of the table column names to attributes
-    on the Spectrum1D object, parse the information into a Spectrum1D.
+    on the Spectrum object, parse the information into a Spectrum.
 
     Parameters
     ----------
@@ -64,24 +64,24 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
 
     column_mapping : dict
         A dictionary describing the relation between the table columns
-        and the arguments of the `Spectrum1D` class, along with unit
+        and the arguments of the `Spectrum` class, along with unit
         information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum1D` keyword argument, and the second element is the
+        associated `Spectrum` keyword argument, and the second element is the
         unit for the file column (or ``None`` to take unit from the table)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
                               'WAVE': ('spectral_axis'spectral_axisu', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
-        WCS object passed to the Spectrum1D initializer.
+        WCS object passed to the Spectrum initializer.
 
     verbose : bool
         Print extra info.
 
     Returns
     -------
-    :class:`~specutils.Spectrum1D`
+    :class:`~specutils.Spectrum`
         The spectrum with 'spectral_axis', 'flux' and optionally 'uncertainty'
         as identified by `column_mapping`.
     """
@@ -135,12 +135,12 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
         spec_kwargs['uncertainty'] = StdDevUncertainty(
             spec_kwargs.get('uncertainty'))
 
-    return Spectrum1D(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
+    return Spectrum(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
 def generic_spectrum_from_table(table, wcs=None, **kwargs):
     """
-    Load spectrum from an Astropy table into a Spectrum1D object.
+    Load spectrum from an Astropy table into a Spectrum object.
     Uses the following logic to figure out which column is which:
 
      * Spectral axis (dispersion) is the first column with units
@@ -162,7 +162,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
 
     Returns
     -------
-    :class:`~specutils.Spectrum1D`
+    :class:`~specutils.Spectrum`
         The spectrum that is represented by the data from the columns
         as automatically identified above.
 
@@ -290,10 +290,10 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
     else:
         mask = None
 
-    # Create the Spectrum1D object and return it
+    # Create the Spectrum object and return it
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
         # For > 1D spectral axis transpose to row-major format and return SpectrumCollection
-        spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+        spectrum = Spectrum(flux=flux, spectral_axis=spectral_axis,
                               uncertainty=err, meta={'header': table.meta}, wcs=wcs,
                               mask=mask)
 
