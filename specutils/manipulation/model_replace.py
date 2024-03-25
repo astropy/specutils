@@ -4,7 +4,7 @@ from scipy.interpolate import CubicSpline
 from astropy.units import Quantity
 from astropy.modeling import Fittable1DModel
 
-from ..spectra import Spectrum1D
+from ..spectra import Spectrum
 from ..utils import QuantityModel
 from . import extract_region
 
@@ -17,7 +17,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
     Parameters
     ----------
 
-    spectrum : `~specutils.Spectrum1D`
+    spectrum : `~specutils.Spectrum`
         The spectrum to be modified.
 
     replace_region : `~specutils.SpectralRegion`
@@ -48,7 +48,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
 
     Returns
     -------
-    spectrum : `~specutils.Spectrum1D`
+    spectrum : `~specutils.Spectrum`
         The spectrum with the region replaced by spline values, and data
         values or zeros outside the spline region. The spectral axis will
         have the same units as the spline knots.
@@ -58,14 +58,14 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
 
     >>> import numpy as np
     >>> import astropy.units as u
-    >>> from specutils.spectra.spectrum1d import Spectrum1D
+    >>> from specutils.spectra.spectrum1d import Spectrum
     >>> from specutils.manipulation.model_replace import model_replace
     >>> wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
-    >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    >>> input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> model_replace(input_spectrum, None, spline_knots)
-    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
     """
     if extrapolation_treatment not in ('data_fill', 'zero_fill'):
@@ -147,7 +147,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
         new_unc = spectrum.uncertainty.__class__(array=out_uncert,
                                                  unit=spectrum.uncertainty.unit)
 
-    return Spectrum1D(spectral_axis=new_spectral_axis, flux=out, uncertainty=new_unc)
+    return Spectrum(spectral_axis=new_spectral_axis, flux=out, uncertainty=new_unc)
 
 
 def _compute_spline_values(spectrum, spline_knots, new_spectral_axis, interpolate_uncertainty):
