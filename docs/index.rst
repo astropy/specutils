@@ -27,14 +27,14 @@ guiding document for spectroscopic development in the Astropy Project.
 Changes in version 2
 ====================
 
-Specutils version 2 implemented a major change in that `~specutils.Spectrum1D`
+Specutils version 2 implemented a major change in that `~specutils.Spectrum`
 no longer forces the spectral axis to be last for multi-dimensional data. This
 was motivated by the desire for greater flexibility to allow for interoperability
 with other packages that may wish to use ``specutils`` classes as the basis for
 their own, and by the desire for consistency with the axis order that results
 from a simple ``astropy.io.fits.read`` of a file. The legacy behavior can be
 replicated by setting ``move_spectral_axis='last'`` when creating a new
-`~specutils.Spectrum1D` object.
+`~specutils.Spectrum` object.
 
 For a summary of other changes in version 2, please see the
 `release notes <https://github.com/astropy/specutils/releases>`_.
@@ -69,12 +69,12 @@ may have downloaded from some archive, or reduced from your own observations.
     ...     specdata = f[1].data  # doctest: +REMOTE_DATA
 
     Then we re-format this dataset into astropy quantities, and create a
-    `~specutils.Spectrum1D` object:
+    `~specutils.Spectrum` object:
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> lamb = 10**specdata['loglam'] * u.AA # doctest: +REMOTE_DATA
     >>> flux = specdata['flux'] * 10**-17 * u.Unit('erg cm-2 s-1 AA-1') # doctest: +REMOTE_DATA
-    >>> spec = Spectrum1D(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
+    >>> spec = Spectrum(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
 
     And we plot it:
 

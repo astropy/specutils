@@ -2,13 +2,13 @@
 Working with Spectral Cubes
 ###########################
 
-Spectral cubes can be read directly with :class:`~specutils.Spectrum1D`.
+Spectral cubes can be read directly with :class:`~specutils.Spectrum`.
 A specific example of this is demonstrated here. In addition to the functions
 demonstrated below, as a subclass of `NDCube <https://github.com/sunpy/ndcube>`_,
-:class:`~specutils.Spectrum1D` also inherits useful methods for e.g. cropping
+:class:`~specutils.Spectrum` also inherits useful methods for e.g. cropping
 based on combinations of world and spectral coordinates. Most of the
 functionality inherited from `~ndcube.NDCube` requires initializing the
-``Spectrum1D`` object with a WCS describing the coordinates for all axes of
+``Spectrum`` object with a WCS describing the coordinates for all axes of
 the data.
 
 Note that the workflow described here is for spectral cubes that are rectified
@@ -25,15 +25,15 @@ Loading a cube
 ==============
 
 We'll use a ``MaNGA cube`` for our example, and load the data from the
-repository directly into a new ``Spectrum1D`` object:
+repository directly into a new ``Spectrum`` object:
 
 .. code-block:: python
 
     >>> from astropy.utils.data import download_file
-    >>> from specutils.spectra import Spectrum1D
+    >>> from specutils.spectra import Spectrum
     >>> filename = "https://stsci.box.com/shared/static/28a88k1qfipo4yxc4p4d40v4axtlal8y.fits"
     >>> file = download_file(filename, cache=True) # doctest: +REMOTE_DATA
-    >>> sc = Spectrum1D.read(file, format='MaNGA cube') # doctest: +REMOTE_DATA
+    >>> sc = Spectrum.read(file, format='MaNGA cube') # doctest: +REMOTE_DATA
 
 
 The cube has  74x74 spaxels with 4563 spectral axis points in each one:
@@ -49,7 +49,7 @@ Print the contents of 3 spectral axis points in a 3x3 spaxel array:
 .. code-block:: python
 
     >>> sc[30:33,30:33,2000:2003] # doctest: +REMOTE_DATA
-    <Spectrum1D(flux=[[[0.4892023205757141 ... 0.5994223356246948]]] 1e-17 erg / (Angstrom s spaxel cm2) (shape=(3, 3, 3), mean=0.54165 1e-17 erg / (Angstrom s spaxel cm2)); spectral_axis=<SpectralAxis
+    <Spectrum(flux=[[[0.4892023205757141 ... 0.5994223356246948]]] 1e-17 erg / (Angstrom s spaxel cm2) (shape=(3, 3, 3), mean=0.54165 1e-17 erg / (Angstrom s spaxel cm2)); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
           redshift=0.0)
@@ -70,7 +70,7 @@ spectral regions from the cube.
     >>> ss.shape  # doctest: +REMOTE_DATA
     (74, 74, 3)
     >>> ss[30:33,30:33,::] # doctest: +REMOTE_DATA
-    <Spectrum1D(flux=[[[0.6103081107139587 ... 0.936118483543396]]] 1e-17 erg / (Angstrom s spaxel cm2) (shape=(3, 3, 3), mean=0.83004 1e-17 erg / (Angstrom s spaxel cm2)); spectral_axis=<SpectralAxis
+    <Spectrum(flux=[[[0.6103081107139587 ... 0.936118483543396]]] 1e-17 erg / (Angstrom s spaxel cm2) (shape=(3, 3, 3), mean=0.83004 1e-17 erg / (Angstrom s spaxel cm2)); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
           redshift=0.0)
@@ -134,13 +134,13 @@ cube, using `~specutils.manipulation.spectral_slab` and
     import matplotlib.pyplot as plt
     import astropy.units as u
     from astropy.utils.data import download_file
-    from specutils import Spectrum1D, SpectralRegion
+    from specutils import Spectrum, SpectralRegion
     from specutils.analysis import moment
     from specutils.manipulation import spectral_slab
 
     filename = "https://stsci.box.com/shared/static/28a88k1qfipo4yxc4p4d40v4axtlal8y.fits"
     fn = download_file(filename, cache=True)
-    spec1d = Spectrum1D.read(fn)
+    spec1d = Spectrum.read(fn)
 
     # Extract H-alpha sub-cube for moment maps using spectral_slab
     subspec = spectral_slab(spec1d, 6745.*u.AA, 6765*u.AA)

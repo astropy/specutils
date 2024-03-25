@@ -8,7 +8,7 @@ approach applies to continuum fitting or even full-spectrum fitting.
 ``specutils`` provides conveniences that aim to leverage the  general fitting
 framework of `astropy.modeling` to spectral-specific tasks.
 
-At a high level, this fitting  takes the `~specutils.Spectrum1D` object and a
+At a high level, this fitting  takes the `~specutils.Spectrum` object and a
 list of `~astropy.modeling.Model` objects that have initial guesses for each of
 the parameters. these are used to create a compound model created from the model
 initial guesses.  This model is then actually fit to the spectrum's ``flux``,
@@ -19,7 +19,7 @@ Line Finding
 ------------
 
 There are two techniques implemented in order to find emission and/or absorption
-lines in a `~specutils.Spectrum1D` spectrum.
+lines in a `~specutils.Spectrum` spectrum.
 
 The first technique is `~specutils.fitting.find_lines_threshold` that will
 find lines by thresholding the flux based on a factor applied to the
@@ -38,7 +38,7 @@ We start with a synthetic spectrum:
    >>> import numpy as np
    >>> from astropy.modeling import models
    >>> import astropy.units as u
-   >>> from specutils import Spectrum1D, SpectralRegion
+   >>> from specutils import Spectrum, SpectralRegion
 
    >>> np.random.seed(42)
    >>> g1 = models.Gaussian1D(1, 4.6, 0.2)
@@ -46,7 +46,7 @@ We start with a synthetic spectrum:
    >>> g3 = models.Gaussian1D(-1.7, 8.2, 0.1)
    >>> x = np.linspace(0, 10, 200)
    >>> y = g1(x) + g2(x) + g3(x) + np.random.normal(0., 0.2, x.shape)
-   >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+   >>> spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
    >>> from matplotlib import pyplot as plt
    >>> plt.plot(spectrum.spectral_axis, spectrum.flux) # doctest: +IGNORE_OUTPUT
@@ -234,7 +234,7 @@ initial guess.
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -242,7 +242,7 @@ initial guess.
     x = np.linspace(0., 10., 200)
     y = 3 * np.exp(-0.5 * (x- 6.3)**2 / 0.8**2)
     y += np.random.normal(0., 0.2, x.shape)
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum and calculate the fitted flux values (``y_fit``)
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um)
@@ -274,7 +274,7 @@ output the fitted model in the spectrum units.
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -284,7 +284,7 @@ output the fitted model in the spectrum units.
     y += np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=61000*u.AA, stddev=10000.*u.AA)
@@ -313,7 +313,7 @@ mean of the model initial guess (so ``2*u.um`` around ``5.5*u.um``).
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -323,7 +323,7 @@ mean of the model initial guess (so ``2*u.um`` around ``5.5*u.um``).
     y += np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=5.5*u.um, stddev=1.*u.um)
@@ -352,7 +352,7 @@ Single peak fit using spectral data *only* within the window
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -362,7 +362,7 @@ Single peak fit using spectral data *only* within the window
     y += np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=5.5*u.um, stddev=1.*u.um)
@@ -391,7 +391,7 @@ model out.
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -403,7 +403,7 @@ model out.
     y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum to fit
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum
     g1_init = models.Gaussian1D(amplitude=2.3*u.Jy, mean=5.6*u.um, stddev=0.1*u.um)
@@ -432,7 +432,7 @@ Double peak fit using data in the spectrum from ``4.3*u.um`` to ``5.3*u.um``, on
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -444,7 +444,7 @@ Double peak fit using data in the spectrum from ``4.3*u.um`` to ``5.3*u.um``, on
     y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum to fit
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum
     g2_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.7*u.um, stddev=0.2*u.um)
@@ -472,7 +472,7 @@ Double peak fit using data in the spectrum centered on ``4.7*u.um`` +/- ``0.3*u.
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -484,7 +484,7 @@ Double peak fit using data in the spectrum centered on ``4.7*u.um`` +/- ``0.3*u.
     y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum to fit
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit the spectrum
     g2_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.7*u.um, stddev=0.2*u.um)
@@ -513,7 +513,7 @@ each within ``0.2*u.um`` of the model's mean.
     from astropy.modeling import models
     from astropy import units as u
 
-    from specutils.spectra import Spectrum1D
+    from specutils.spectra import Spectrum
     from specutils.fitting import fit_lines
 
     # Create a simple spectrum with a Gaussian.
@@ -525,7 +525,7 @@ each within ``0.2*u.um`` of the model's mean.
     y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
     # Create the spectrum to fit
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Fit each peak
     gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
@@ -555,7 +555,7 @@ the corresponding window.
     >>> import matplotlib.pyplot as plt
     >>> from astropy.modeling import models
     >>> from astropy import units as u
-    >>> from specutils.spectra import Spectrum1D
+    >>> from specutils.spectra import Spectrum
     >>> from specutils.fitting import fit_lines
 
     >>> # Create a simple spectrum with a Gaussian.
@@ -567,7 +567,7 @@ the corresponding window.
     >>> y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
     >>> # Create the spectrum to fit
-    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    >>> spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     >>> # Fit each peak
     >>> gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
@@ -598,7 +598,7 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
     >>> import matplotlib.pyplot as plt
     >>> from astropy.modeling import models
     >>> from astropy import units as u
-    >>> from specutils.spectra import Spectrum1D, SpectralRegion
+    >>> from specutils.spectra import Spectrum, SpectralRegion
     >>> from specutils.fitting import fit_lines
 
     >>> # Create a simple spectrum with a Gaussian.
@@ -609,7 +609,7 @@ all the data *except* between ``5.2*u.um`` and ``5.8*u.um``.
     >>> y = g1(x) + g2(x) + np.random.normal(0., 0.2, x.shape)
 
     >>> # Create the spectrum to fit
-    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    >>> spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     >>> # Fit each peak
     >>> gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
@@ -642,7 +642,7 @@ convenience functions to perform exactly this task.  An example is shown below.
     >>> import matplotlib.pyplot as plt
     >>> from astropy.modeling import models
     >>> from astropy import units as u
-    >>> from specutils.spectra import Spectrum1D, SpectralRegion
+    >>> from specutils.spectra import Spectrum, SpectralRegion
     >>> from specutils.fitting import fit_generic_continuum
 
     >>> np.random.seed(0)
@@ -653,7 +653,7 @@ convenience functions to perform exactly this task.  An example is shown below.
     >>> y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
     >>> y += y_continuum
 
-    >>> spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    >>> spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     >>> with warnings.catch_warnings():  # Ignore warnings
     ...     warnings.simplefilter('ignore')
@@ -698,7 +698,7 @@ is specified by a sequence:
     >>> import matplotlib.pyplot as plt
     >>> import astropy.units as u
 
-    >>> from specutils.spectra.spectrum1d import Spectrum1D
+    >>> from specutils.spectra.spectrum1d import Spectrum
     >>> from specutils.fitting.continuum import fit_continuum
 
     >>> np.random.seed(0)
@@ -707,7 +707,7 @@ is specified by a sequence:
     >>> y += np.random.normal(0., 0.2, x.shape)
     >>> y += 3.2 * np.exp(-0.5 * (x - 5.6) ** 2 / 4.8 ** 2)
 
-    >>> spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    >>> spectrum = Spectrum(flux=y * u.Jy, spectral_axis=x * u.um)
     >>> region = [(1 * u.um, 5 * u.um), (7 * u.um, 10 * u.um)]
     >>> with warnings.catch_warnings():  # Ignore warnings
     ...     warnings.simplefilter('ignore')
