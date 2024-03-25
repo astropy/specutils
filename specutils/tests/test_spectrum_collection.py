@@ -6,7 +6,7 @@ from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 from gwcs.wcs import WCS as GWCS
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum1d import Spectrum
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -41,10 +41,10 @@ def test_create_spectrum_collection(spectrum_collection):
 
 
 def test_spectrum_collection_slicing(spectrum_collection):
-    # Test that slicing a spectrum collection returns a Spectrum1D
+    # Test that slicing a spectrum collection returns a Spectrum
     single_spec = spectrum_collection[0]
 
-    assert isinstance(single_spec, Spectrum1D)
+    assert isinstance(single_spec, Spectrum)
     assert isinstance(single_spec.flux, u.Quantity)
     assert isinstance(single_spec.spectral_axis, u.Quantity)
     assert single_spec.flux.shape == spectrum_collection.flux.shape[1:]
@@ -79,10 +79,10 @@ def test_collection_without_optional_arguments():
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_spectrum1D():
-    spec = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
+    spec = Spectrum(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
                       redshift=0.1), flux=np.random.randn(50) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-    spec1 = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(20, 60, 50) * u.AA,
+    spec1 = Spectrum(spectral_axis=SpectralCoord(np.linspace(20, 60, 50) * u.AA,
                        redshift=0.1), flux=np.random.randn(50) * u.Jy,
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
@@ -100,16 +100,16 @@ def test_create_collection_from_spectrum1D():
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_collections():
-    spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+    spec = Spectrum(spectral_axis=np.linspace(0, 50, 50) * u.AA,
                       flux=np.random.randn(50) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-    spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+    spec1 = Spectrum(spectral_axis=np.linspace(20, 60, 50) * u.AA,
                        flux=np.random.randn(50) * u.Jy,
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
     spec_coll1 = SpectrumCollection.from_spectra([spec, spec1])
 
-    spec2 = Spectrum1D(spectral_axis=np.linspace(40, 80, 50) * u.AA,
+    spec2 = Spectrum(spectral_axis=np.linspace(40, 80, 50) * u.AA,
                        flux=np.random.randn(50) * u.Jy,
                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
 
@@ -129,19 +129,19 @@ def test_create_collection_from_collections():
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated uncertainties of the same type')
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_spectra_without_uncertainties():
-    spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+    spec = Spectrum(spectral_axis=np.linspace(0, 50, 50) * u.AA,
                       flux=np.random.randn(50) * u.Jy)
-    spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+    spec1 = Spectrum(spectral_axis=np.linspace(20, 60, 50) * u.AA,
                        flux=np.random.randn(50) * u.Jy)
 
     SpectrumCollection.from_spectra([spec, spec1])
 
 
 def test_mismatched_spectral_axes_parameters():
-    spec = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
+    spec = Spectrum(spectral_axis=SpectralCoord(np.linspace(0, 50, 50) * u.AA,
                       radial_velocity=u.Quantity(100.0, "km/s")),
                       flux=np.random.randn(50) * u.Jy)
-    spec1 = Spectrum1D(spectral_axis=SpectralCoord(np.linspace(20, 60, 50) * u.AA,
+    spec1 = Spectrum(spectral_axis=SpectralCoord(np.linspace(20, 60, 50) * u.AA,
                        radial_velocity=u.Quantity(200.0, "km/s")),
                        flux=np.random.randn(50) * u.Jy)
 

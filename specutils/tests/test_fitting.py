@@ -11,7 +11,7 @@ from ..fitting import (estimate_line_parameters, find_lines_derivative,
                        find_lines_threshold, fit_lines)
 from ..manipulation import (extract_region, noise_region_uncertainty,
                             spectrum_from_model)
-from ..spectra import SpectralRegion, Spectrum1D
+from ..spectra import SpectralRegion, Spectrum
 
 
 def single_peak():
@@ -63,7 +63,7 @@ def test_find_lines_derivative():
 
     # Create the spectrum to fit
     x_double, y_double = double_peak_absorption_and_emission()
-    spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+    spectrum = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
 
     # Derivative method
     with pytest.warns(AstropyUserWarning,
@@ -81,7 +81,7 @@ def test_find_lines_threshold():
 
     # Create the spectrum to fit
     x_double, y_double = double_peak_absorption_and_emission()
-    spectrum = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+    spectrum = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
 
     # Derivative method
     noise_region = SpectralRegion(0*u.um, 3*u.um)
@@ -104,7 +104,7 @@ def test_single_peak_estimate():
 
     # Create the spectrum
     x_single, y_single = single_peak()
-    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+    s_single = Spectrum(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
     #
     # Estimate parameter Gaussian1D
@@ -181,7 +181,7 @@ def test_single_peak_fit():
 
     # Create the spectrum
     x_single, y_single = single_peak()
-    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+    s_single = Spectrum(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um)
@@ -222,10 +222,10 @@ def test_single_peak_fit_with_and_without_uncertainties():
             y = np.random.poisson(ymod)
             unc = np.sqrt(ymod)
             if valid_uncertainty:
-                spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
+                spec = Spectrum(spectral_axis=x, flux=y * u.Jy,
                                   uncertainty=StdDevUncertainty(unc * u.Jy))
             else:
-                spec = Spectrum1D(spectral_axis=x, flux=y * u.Jy,
+                spec = Spectrum(spectral_axis=x, flux=y * u.Jy,
                                   uncertainty=None)
 
             weights = 'unc' if implicit_weights else unc ** -1
@@ -254,7 +254,7 @@ def test_single_peak_fit_window():
 
     # Create the sepctrum
     x_single, y_single = single_peak()
-    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+    s_single = Spectrum(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=5.5*u.um, stddev=1.*u.um)
@@ -278,7 +278,7 @@ def test_single_peak_fit_tuple_window():
 
     # Create the spectrum to fit
     x_single, y_single = single_peak()
-    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+    s_single = Spectrum(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=5.5*u.um, stddev=1.*u.um)
@@ -302,7 +302,7 @@ def test_double_peak_fit():
 
     # Create the spectrum to fit
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
 
     # Fit the spectrum
     g1_init = models.Gaussian1D(amplitude=2.3*u.Jy, mean=5.6*u.um, stddev=0.1*u.um)
@@ -327,7 +327,7 @@ def test_double_peak_fit_tuple_window():
 
     # Create the spectrum to fit
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
 
     # Fit the spectrum.
     g2_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.7*u.um, stddev=0.2*u.um)
@@ -351,7 +351,7 @@ def test_double_peak_fit_window():
 
     # Create the specturm to fit
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
 
     # Fit the spectrum
     g2_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.7*u.um, stddev=0.2*u.um)
@@ -375,7 +375,7 @@ def test_double_peak_fit_separate_window():
 
     # Create the spectrum to fit
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
 
     # Fit the spectrum
     gl_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.8*u.um, stddev=0.2*u.um)
@@ -409,7 +409,7 @@ def test_double_peak_fit_separate_window_tuple_window():
     """
 
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
 
     g1_init = models.Gaussian1D(amplitude=2.*u.Jy, mean=5.3*u.um, stddev=0.2*u.um)
     g2_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.9*u.um, stddev=0.1*u.um)
@@ -442,7 +442,7 @@ def test_double_peak_fit_with_exclusion():
     """
 
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um, rest_value=0*u.um)
 
     g1_init = models.Gaussian1D(amplitude=1.*u.Jy, mean=4.9*u.um, stddev=0.2*u.um)
     g1_fit = fit_lines(s_double, g1_init, exclude_regions=[SpectralRegion(5.2*u.um, 5.8*u.um)])
@@ -472,7 +472,7 @@ def test_fixed_parameters():
     x = np.linspace(0., 10., 200)
     y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
     y += np.random.normal(0., 0.2, x.shape)
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Test passing fixed and bounds parameters
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um,
@@ -503,7 +503,7 @@ def test_name_preservation_after_fitting():
     x = np.linspace(0., 10., 200)
     y = 3 * np.exp(-0.5 * (x - 6.3)**2 / 0.8**2)
     y += np.random.normal(0., 0.2, x.shape)
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     subcomponents = models.Gaussian1D(name="Model I") * models.Gaussian1D(name="Second Model")
     c_model = subcomponents + models.Gaussian1D(name="Model 3")
@@ -525,7 +525,7 @@ def test_ignore_units():
 
     # Create the spectrum
     x_single, y_single = single_peak()
-    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+    s_single = Spectrum(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3, mean=6.1, stddev=1.)
@@ -548,7 +548,7 @@ def test_ignore_units():
 
     # Create the spectrum to fit
     x_double, y_double = double_peak()
-    s_double = Spectrum1D(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
+    s_double = Spectrum(flux=y_double*u.Jy, spectral_axis=x_double*u.um)
 
     # Fit the spectrum
     g1_init = models.Gaussian1D(amplitude=2.3, mean=5.6, stddev=0.1)
@@ -573,7 +573,7 @@ def test_fitter_parameters():
 
     # Create the spectrum
     x_single, y_single = single_peak()
-    s_single = Spectrum1D(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
+    s_single = Spectrum(flux=y_single*u.Jy, spectral_axis=x_single*u.um)
 
     # Fit the spectrum
     g_init = models.Gaussian1D(amplitude=3.*u.Jy, mean=6.1*u.um, stddev=1.*u.um)
@@ -609,7 +609,7 @@ def test_spectrum_from_model():
     y_continuum = 3.2 * np.exp(-0.5 * (x - 5.6)**2 / 4.8**2)
     y += y_continuum
 
-    spectrum = Spectrum1D(flux=y*u.Jy, spectral_axis=x*u.um)
+    spectrum = Spectrum(flux=y*u.Jy, spectral_axis=x*u.um)
 
     # Unitless test
     chebyshev = models.Chebyshev1D(3, c0=0.1, c1=4, c2=5)
@@ -640,7 +640,7 @@ def test_masking():
     Test fitting spectra with masks
     """
     wl, flux = double_peak()
-    s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
+    s = Spectrum(flux=flux*u.Jy, spectral_axis=wl*u.um)
 
     # first we fit a single gaussian to the double_peak model, using the
     # known-good second peak (but a bit higher in amplitude). It should lock
@@ -651,7 +651,7 @@ def test_masking():
 
     # now create a spectrum where the region around the second peak is masked.
     # The fit should now go to the *first* peak
-    s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=(5.1 < wl)&(wl < 6.1))
+    s_msk = Spectrum(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=(5.1 < wl)&(wl < 6.1))
     g_fit2 = fit_lines(s_msk, g_init)
     assert u.allclose(g_fit2.mean.value, 4.6, atol=.1)
 
@@ -670,13 +670,13 @@ def test_window_extras():
     window_region = SpectralRegion(4*u.um, 8*u.um)
     mask = (5.1 < wl) & (wl < 6.1)
 
-    s_msk = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=mask)
+    s_msk = Spectrum(flux=flux*u.Jy, spectral_axis=wl*u.um, mask=mask)
 
     g_fit1 = fit_lines(s_msk, g_init, window=window_region)
     assert u.allclose(g_fit1.mean.value, 4.6, atol=.1)
 
     # check that if we weight instead of masking, we get the same result
-    s = Spectrum1D(flux=flux*u.Jy, spectral_axis=wl*u.um)
+    s = Spectrum(flux=flux*u.Jy, spectral_axis=wl*u.um)
     weights = (~mask).astype(float)
     g_fit2 = fit_lines(s, g_init, weights=weights, window=window_region)
     assert u.allclose(g_fit2.mean.value, 4.6, atol=.1)
@@ -689,7 +689,7 @@ def test_window_extras():
 
 def test_fit_subspectrum():
     # Create test spectrum
-    spectrum = Spectrum1D(
+    spectrum = Spectrum(
         flux=np.random.sample(10) * u.Jy,
         spectral_axis=(np.arange(10) + 6558) * u.AA,
         rest_value=6561.16*u.angstrom,
