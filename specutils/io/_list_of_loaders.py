@@ -3,7 +3,7 @@ from specutils import Spectrum
 import specutils.io.default_loaders  # noqa
 """
 The purpose of this file is to receive a list of loaders from
-specutils.spectrum1d.read.list_formats(), format that list
+specutils.spectrum.read.list_formats(), format that list
 into something that can be used by `automodapi`, and then
 set it as the __doc__.
 """

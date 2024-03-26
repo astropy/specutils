@@ -22,7 +22,7 @@ def centroid(spectrum, regions=None, region=None, analytic=True):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the centroid will be calculated.  If the uncertainty
         is populated, the returned quantity will include an uncertainty attribute with
         the propagated uncertainty (as Standard Deviation-style uncertainties).  This uncertainty
@@ -78,7 +78,7 @@ def _centroid_single_region(spectrum, region=None, analytic=True):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object overwhich the centroid will be calculated.
 
     region : `~specutils.SpectralRegion`

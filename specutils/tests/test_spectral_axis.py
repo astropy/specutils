@@ -7,7 +7,7 @@ from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, Galactic,
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from ..spectra.spectral_axis import SpectralAxis
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 
 from astropy.tests.helper import assert_quantity_allclose
 

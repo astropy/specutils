@@ -6,7 +6,7 @@ from astropy.nddata import StdDevUncertainty
 from ..manipulation import (FluxConservingResampler,
                             LinearInterpolatedResampler,
                             SplineInterpolatedResampler)
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 
 __all__ = ['template_match', 'template_redshift']
 

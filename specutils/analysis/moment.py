@@ -19,7 +19,7 @@ def moment(spectrum, regions=None, order=0, axis='spectral'):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`

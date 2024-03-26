@@ -222,7 +222,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     threshold: float or `~astropy.units.Quantity`

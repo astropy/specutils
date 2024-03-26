@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..analysis import template_comparison
 from astropy.tests.helper import quantity_allclose

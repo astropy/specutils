@@ -28,8 +28,8 @@ class SpectralAxisConverter(SpectralCoordConverter):
 
 class SpectrumConverter(Converter):
     """ASDF converter to serialize/deserialize Spectrum objects."""
-    tags = ["tag:astropy.org:specutils/spectra/spectrum1d-*"]
-    types = ["specutils.spectra.spectrum1d.Spectrum"]
+    tags = ["tag:astropy.org:specutils/spectra/spectrum-*"]
+    types = ["specutils.spectra.spectrum.Spectrum"]
 
     def to_yaml_tree(self, obj, tag, ctx):
         """Converts Spectrum object into tree used for YAML representation."""

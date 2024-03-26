@@ -5,7 +5,7 @@ from asdf_astropy.testing.helpers import assert_spectral_coord_equal
 from astropy.tests.helper import assert_quantity_allclose
 from numpy.testing import assert_allclose, assert_array_equal
 
-__all__ = ["assert_spectral_axis_equal", "assert_spectrum1d_equal", "assert_spectrumlist_equal"]
+__all__ = ["assert_spectral_axis_equal", "assert_spectrum_equal", "assert_spectrumlist_equal"]
 
 
 def assert_spectral_axis_equal(a, b):
@@ -15,7 +15,7 @@ def assert_spectral_axis_equal(a, b):
     assert_spectral_coord_equal(a, b)
 
 
-def assert_spectrum1d_equal(a, b):
+def assert_spectrum_equal(a, b):
     """Equality test for use in ASDF unit tests for Spectrum."""
     __tracebackhide__ = True
 
@@ -40,4 +40,4 @@ def assert_spectrumlist_equal(a, b):
 
     assert len(a) == len(b)
     for x, y in zip(a, b):
-        assert_spectrum1d_equal(x, y)
+        assert_spectrum_equal(x, y)

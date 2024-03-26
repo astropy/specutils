@@ -5,7 +5,7 @@ from astropy import constants as const
 from astropy.nddata import StdDevUncertainty
 from astropy.modeling import models
 
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 from ..analysis import correlation
 
 

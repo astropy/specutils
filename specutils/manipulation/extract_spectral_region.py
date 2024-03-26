@@ -30,12 +30,12 @@ def _subregion_to_edge_pixels(subregion, spectrum):
     """
     Calculate and return the left and right indices defined
     by the lower and upper bounds and based on the input
-    `~specutils.spectra.spectrum1d.Spectrum`. The left and right indices will
+    `~specutils.spectra.spectrum.Spectrum`. The left and right indices will
     be returned.
 
     Parameters
     ----------
-    spectrum: `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum: `~specutils.spectra.spectrum.Spectrum`
         The spectrum object from which the region will be extracted.
 
     Returns
@@ -174,7 +174,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         extracted_spectrum = extracted_spectrum[0]
 
     # Otherwise, if requested to return a single spectrum, we need to combine
-    # the spectrum1d objects in extracted_spectrum and return a single object.
+    # the Spectrum objects in extracted_spectrum and return a single object.
     elif return_single_spectrum:
         concat_keys = ['flux', 'uncertainty', 'mask']  # spectral_axis handled manually
         copy_keys = ['velocity_convention', 'rest_value', 'meta']

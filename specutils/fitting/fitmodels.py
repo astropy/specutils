@@ -10,7 +10,7 @@ from astropy.table import QTable
 from scipy.signal import convolve
 
 from ..spectra.spectral_region import SpectralRegion
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 from ..utils import QuantityModel
 from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
 from ..manipulation import extract_region

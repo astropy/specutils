@@ -126,7 +126,7 @@ For more details on usage of specutils, see the sections listed below.
 
     installation
     types_of_spectra
-    spectrum1d
+    spectrum
     spectrum_collection
     spectral_cube
     spectral_regions

@@ -27,7 +27,7 @@ def gaussian_sigma_width(spectrum, regions=None, analytic=True):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -62,7 +62,7 @@ def gaussian_fwhm(spectrum, regions=None, analytic=True):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object overwhich the width will be calculated.
 
     regions : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -99,7 +99,7 @@ def fwhm(spectrum, regions=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -130,7 +130,7 @@ def fwzi(spectrum, regions=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`

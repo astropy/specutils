@@ -6,7 +6,7 @@ from astropy.modeling import models
 
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra.spectrum1d import Spectrum, SpectralRegion
+from ..spectra.spectrum import Spectrum, SpectralRegion
 from ..manipulation.model_replace import model_replace
 from ..fitting import fit_lines
 

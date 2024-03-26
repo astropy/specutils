@@ -8,7 +8,7 @@ The specutils package comes with a set of tools for doing common analysis
 tasks on astronomical spectra. Some examples of applying these tools are
 described below. The basic spectrum shown here is used in the examples in the
 sub-sections below - a gaussian-profile line with flux of 5 GHz Jy.  See
-:doc:`spectrum1d` for more on creating spectra:
+:doc:`spectrum` for more on creating spectra:
 
 .. plot::
     :include-source: true

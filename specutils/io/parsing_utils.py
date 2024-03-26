@@ -24,7 +24,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
         Provides a generator-iterator representing the open file object handle.
     """
     # Access the fileobj or filename arg
-    # Do this so identify functions are useable outside of Spectrum1d.read context
+    # Do this so identify functions are useable outside of Spectrum.read context
     try:
         fileobj = args[2]
     except IndexError:
@@ -87,7 +87,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     """
     spec_kwargs = {}
 
-    # Associate columns of the file with the appropriate spectrum1d arguments
+    # Associate columns of the file with the appropriate Spectrum arguments
     for col_name, (kwarg_name, cm_unit) in column_mapping.items():
         # If the table object couldn't parse any unit information,
         # fallback to the column mapper defined unit

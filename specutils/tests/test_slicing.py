@@ -4,7 +4,7 @@ from astropy.tests.helper import quantity_allclose
 import numpy as np
 from numpy.testing import assert_allclose
 
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 
 
 def test_spectral_axes():

@@ -206,7 +206,7 @@ def simulated_spectra():
         flux2 = define_spectra.s1_um_mJy_e2_flux
         flux3 = flux1 + flux2
 
-        # Calculate using the spectrum1d/nddata code
+        # Calculate using the spectrum/nddata code
         spec3 = define_spectra.s1_um_mJy_e1 + define_spectra.s1_um_mJy_e2
 
         assert np.allclose(spec3.flux.value, flux3)

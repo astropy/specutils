@@ -5,7 +5,7 @@ import astropy.units as u
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.utils.exceptions import AstropyUserWarning
 
-from ..spectra.spectrum1d import Spectrum
+from ..spectra.spectrum import Spectrum
 from ..spectra import SpectralRegion
 from ..fitting.continuum import fit_generic_continuum, fit_continuum
 from ..manipulation.smoothing import median_smooth

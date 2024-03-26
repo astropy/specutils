@@ -58,7 +58,7 @@ def model_replace(spectrum, replace_region, model=10, extrapolation_treatment='d
 
     >>> import numpy as np
     >>> import astropy.units as u
-    >>> from specutils.spectra.spectrum1d import Spectrum
+    >>> from specutils.spectra.spectrum import Spectrum
     >>> from specutils.manipulation.model_replace import model_replace
     >>> wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])

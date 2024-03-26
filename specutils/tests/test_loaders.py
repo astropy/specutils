@@ -51,7 +51,7 @@ def test_get_loaders_by_extension():
 
 
 @remote_access([{'id': '1481190', 'filename': 'L5g_0355+11_Cruz09.fits'}])
-def test_spectrum1d_GMOSfits(remote_data_path):
+def test_spectrum_GMOSfits(remote_data_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, UnitsWarning))
         optical_spec_2 = Spectrum.read(remote_data_path, format='wcs1d-fits')
@@ -1264,7 +1264,7 @@ def test_subaru_pfs_loader(tmp_path):
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': '1D-c0022498-344732.fits'}])
-def test_spectrum1d_6dfgs_tabular(remote_data_path):
+def test_spectrum_6dfgs_tabular(remote_data_path):
     spec = Spectrum.read(remote_data_path)
 
     assert spec.spectral_axis.unit == u.Unit("Angstrom")
@@ -1280,7 +1280,7 @@ def test_spectrum1d_6dfgs_tabular(remote_data_path):
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732v_spectrum0.fits'}])
-def test_spectrum1d_6dfgs_split_v(remote_data_path):
+def test_spectrum_6dfgs_split_v(remote_data_path):
     spec = Spectrum.read(remote_data_path)
 
     assert spec.spectral_axis.unit == u.Unit("Angstrom")
@@ -1296,7 +1296,7 @@ def test_spectrum1d_6dfgs_split_v(remote_data_path):
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732r_spectrum0.fits'}])
-def test_spectrum1d_6dfgs_split_r(remote_data_path):
+def test_spectrum_6dfgs_split_r(remote_data_path):
     spec = Spectrum.read(remote_data_path)
 
     assert spec.spectral_axis.unit == u.Unit("Angstrom")
@@ -1312,7 +1312,7 @@ def test_spectrum1d_6dfgs_split_r(remote_data_path):
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732combined_spectrum0.fits'}])
-def test_spectrum1d_6dfgs_split_combined(remote_data_path):
+def test_spectrum_6dfgs_split_combined(remote_data_path):
     spec = Spectrum.read(remote_data_path)
 
     assert spec.spectral_axis.unit == u.Unit("Angstrom")
@@ -1328,7 +1328,7 @@ def test_spectrum1d_6dfgs_split_combined(remote_data_path):
 
 @pytest.mark.filterwarnings(r'ignore:.*did not parse as fits unit')
 @remote_access([{'id': '3733958', 'filename': 'all-c0022498-344732.fits'}])
-def test_spectrum1d_6dfgs_combined(remote_data_path):
+def test_spectrum_6dfgs_combined(remote_data_path):
     specs = SpectrumList.read(remote_data_path)
 
     for spec in specs:

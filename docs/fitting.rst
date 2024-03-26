@@ -698,7 +698,7 @@ is specified by a sequence:
     >>> import matplotlib.pyplot as plt
     >>> import astropy.units as u
 
-    >>> from specutils.spectra.spectrum1d import Spectrum
+    >>> from specutils.spectra.spectrum import Spectrum
     >>> from specutils.fitting.continuum import fit_continuum
 
     >>> np.random.seed(0)
