@@ -1,6 +1,6 @@
-========================
-Working with Spectrums
-========================
+=============================
+Working with Spectrum objects
+=============================
 
 As described in more detail in :doc:`types_of_spectra`, the core data class in
 specutils for a single spectrum is `~specutils.Spectrum`.  This object

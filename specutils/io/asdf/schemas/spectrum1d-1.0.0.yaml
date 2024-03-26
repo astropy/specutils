@@ -1,0 +1,43 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://astropy.org/schemas/specutils/spectra/spectrum1d-1.0.0"
+
+title: >
+  Represents a one-dimensional spectrum
+description: |
+  This schema represents a Spectrum1D object from specutils.
+
+type: object
+properties:
+  flux:
+    description: |
+      Quantity that represents the flux component of the spectrum
+    $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
+  spectral_axis:
+    description: |
+      SpectralCoord that represents the spectral axis of the spectrum
+    anyOf:
+      - tag: tag:astropy.org:specutils/spectra/spectral_axis-1.0.0
+      - $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
+      - $ref: "http://astropy.org/schemas/astropy/coordinates/spectralcoord-1.0.0"
+  uncertainty:
+    description: |
+      Uncertainty information about the spectrum
+    type: object
+    properties:
+      uncertainty_type:
+        description: |
+          String describing the type of uncertainty data
+        type: string
+        enum: ["std", "var", "ivar", "unknown"]
+      data:
+        description: |
+          Array representing the uncertainty data
+        $ref: "http://stsci.edu/schemas/asdf/core/ndarray-1.0.0"
+  mask:
+    description: |
+      Mask information about the spectrum
+    $ref: "http://stsci.edu/schemas/asdf/core/ndarray-1.0.0"
+required: [flux, spectral_axis]
+...
