@@ -15,7 +15,7 @@ New Features
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Spectrum1D renames to Spectrum. []
+- Spectrum1D renamed to Spectrum. [#1126]
 
 1.13.0 (2024-02-19)
 -------------------
