@@ -338,7 +338,7 @@ value will apply to the lower bound input.
     >>> lower = [SkyCoord(ra=205, dec=26, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
     >>> upper = [SkyCoord(ra=205.5, dec=27.5, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
     >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
-    <Spectrum(flux=[[[0.708612359963129 ... 0.6345714580773677]]] Jy (shape=(10, 5, 1), mean=0.49653 Jy); spectral_axis=<SpectralAxis
+    <Spectrum(flux=[[[0.708612359963129 ... 0.6345714580773677]]] Jy (shape=(1, 5, 10), mean=0.49653 Jy); spectral_axis=<SpectralAxis
         (observer to target:
            radial_velocity=0.0 km / s
            redshift=0.0)
