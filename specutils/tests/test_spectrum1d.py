@@ -7,7 +7,6 @@ from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 from astropy.tests.helper import quantity_allclose
 from astropy.wcs import WCS
-from numpy.testing import assert_allclose
 
 from .conftest import remote_access
 from ..spectra import Spectrum
