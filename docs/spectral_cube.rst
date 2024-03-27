@@ -48,7 +48,7 @@ Print the contents of 3 spectral axis points in a 3x3 spaxel array:
 
 .. code-block:: python
 
-    >>> sc[30:33,30:33,2000:2003] # doctest: +REMOTE_DATA
+    >>> sc[2000:2003, 30:33, 30:33] # doctest: +REMOTE_DATA
     <Spectrum(flux=[[[0.4892023205757141 ... 0.5994223356246948]]] 1e-17 erg / (Angstrom s spaxel cm2) (shape=(3, 3, 3), mean=0.54165 1e-17 erg / (Angstrom s spaxel cm2)); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
@@ -68,8 +68,8 @@ spectral regions from the cube.
     >>> from specutils.manipulation import spectral_slab
     >>> ss = spectral_slab(sc, 5000.*u.AA, 5003.*u.AA) # doctest: +REMOTE_DATA
     >>> ss.shape  # doctest: +REMOTE_DATA
-    (74, 74, 3)
-    >>> ss[30:33,30:33,::] # doctest: +REMOTE_DATA
+    (3, 74, 74)
+    >>> ss[::, 30:33,30:33] # doctest: +REMOTE_DATA
     <Spectrum(flux=[[[0.6103081107139587 ... 0.936118483543396]]] 1e-17 erg / (Angstrom s spaxel cm2) (shape=(3, 3, 3), mean=0.83004 1e-17 erg / (Angstrom s spaxel cm2)); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
