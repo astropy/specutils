@@ -21,7 +21,7 @@ For eample, to identify a SDSS MaNGA data cube file:
     >>> from astropy.utils.data import download_file
     >>> from specutils.io.registers import identify_spectrum_format
     >>>
-    >>> url = 'https://dr15.sdss.org/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
+    >>> url = 'https://dr17.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
     >>> dd = download_file(url)  # doctest: +REMOTE_DATA
     >>> identify_spectrum_format(dd)  # doctest: +REMOTE_DATA
     'MaNGA cube'
