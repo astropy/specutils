@@ -12,7 +12,7 @@ from astropy.io import registry
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
 
-from specutils import Spectrum1D, SpectrumList
+from specutils import Spectrum, SpectrumList
 from specutils.io import data_loader
 from specutils.io.parsing_utils import generic_spectrum_from_table  # or something like that
 from specutils.io.registers import _astropy_has_priorities
@@ -27,7 +27,7 @@ def test_generic_spectrum_from_table(recwarn):
     flux = np.ones(len(wave))*1.e-14*u.Jy
     table = Table([wave, flux], names=["wave", "flux"])
 
-    # Test that the units and values of the Spectrum1D object match those in the table
+    # Test that the units and values of the Spectrum object match those in the table
     spectrum = generic_spectrum_from_table(table)
     assert spectrum.spectral_axis.unit == table['wave'].unit
     assert spectrum.flux.unit == table['flux'].unit
@@ -74,7 +74,7 @@ def test_speclist_autoidentify():
     assert (formats['Auto-identify'] == 'Yes').all()
 
 
-@pytest.mark.filterwarnings(r'ignore:.*data loader provided for Spectrum1D without explicit identifier')
+@pytest.mark.filterwarnings(r'ignore:.*data loader provided for Spectrum without explicit identifier')
 def test_default_identifier(tmp_path):
 
     fname = str(tmp_path / 'empty.txt')
@@ -88,7 +88,7 @@ def test_default_identifier(tmp_path):
         """Doesn't actually get used."""
         return
 
-    for datatype in [Spectrum1D, SpectrumList]:
+    for datatype in [Spectrum, SpectrumList]:
         fmts = registry.identify_format('read', datatype, fname, None, [], {})
         assert format_name in fmts
 
@@ -114,7 +114,7 @@ def test_default_identifier_extension(tmp_path):
         """Doesn't actually get used."""
         return
 
-    for datatype in [Spectrum1D, SpectrumList]:
+    for datatype in [Spectrum, SpectrumList]:
         fmts = registry.identify_format('read', datatype, good_fname, None, [], {})
         assert format_name in fmts
 
@@ -147,7 +147,7 @@ def test_custom_identifier(tmp_path):
         """Doesn't actually get used."""
         return
 
-    for datatype in [Spectrum1D, SpectrumList]:
+    for datatype in [Spectrum, SpectrumList]:
         fmts = registry.identify_format('read', datatype, good_fname, None, [], {})
         assert format_name in fmts
 
@@ -179,7 +179,7 @@ def test_loader_uses_priority(tmp_path):
     def counting_loader1(*args, **kwargs):
         counter["test1"] += 1
         wave = np.arange(1, 1.1, 0.01)*u.AA
-        return Spectrum1D(
+        return Spectrum(
             spectral_axis=wave,
             flux=np.ones(len(wave))*1.e-14*u.Jy,
         )
@@ -188,16 +188,16 @@ def test_loader_uses_priority(tmp_path):
     def counting_loader2(*args, **kwargs):
         counter["test2"] += 1
         wave = np.arange(1, 1.1, 0.01)*u.AA
-        return Spectrum1D(
+        return Spectrum(
             spectral_axis=wave,
             flux=np.ones(len(wave))*1.e-14*u.Jy,
         )
 
-    Spectrum1D.read(fname)
+    Spectrum.read(fname)
     assert counter["test2"] == 1
     assert counter["test1"] == 0
 
-    for datatype in [Spectrum1D, SpectrumList]:
+    for datatype in [Spectrum, SpectrumList]:
         registry.unregister_reader("test_counting_loader1", datatype)
         registry.unregister_identifier("test_counting_loader1", datatype)
         registry.unregister_reader("test_counting_loader2", datatype)

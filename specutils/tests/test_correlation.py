@@ -5,7 +5,7 @@ from astropy import constants as const
 from astropy.nddata import StdDevUncertainty
 from astropy.modeling import models
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 from ..analysis import correlation
 
 
@@ -25,13 +25,13 @@ def test_autocorrelation():
     flux1 = f1 + g1(spec_axis)
 
     # Observed spectrum must have a rest wavelength value set in.
-    spec1 = Spectrum1D(spectral_axis=spec_axis,
+    spec1 = Spectrum(spectral_axis=spec_axis,
                        flux=flux1,
                        uncertainty=StdDevUncertainty(np.random.sample(size), unit='Jy'),
                        velocity_convention='optical',
                        rest_value=5020.*u.AA)
 
-    spec2 = Spectrum1D(spectral_axis=spec_axis,
+    spec2 = Spectrum(spectral_axis=spec_axis,
                        flux=flux1,
                        uncertainty=StdDevUncertainty(np.random.sample(size), unit='Jy'))
 
@@ -51,7 +51,7 @@ def test_autocorrelation():
     assert maximum == midpoint
 
     # Test that this works without uncertainty
-    spec1 = Spectrum1D(spectral_axis=spec_axis,
+    spec1 = Spectrum(spectral_axis=spec_axis,
                        flux=flux1,
                        velocity_convention='optical',
                        rest_value=5020.*u.AA)
@@ -93,13 +93,13 @@ def test_correlation():
     flux2 = f2 + g2(spec_axis)
 
     # Observed spectrum must have a rest wavelength value set in.
-    spec1 = Spectrum1D(spectral_axis=spec_axis,
+    spec1 = Spectrum(spectral_axis=spec_axis,
                        flux=flux1,
                        uncertainty=StdDevUncertainty(np.random.sample(size), unit='Jy'),
                        velocity_convention='optical',
                        rest_value=rest_value)
 
-    spec2 = Spectrum1D(spectral_axis=spec_axis,
+    spec2 = Spectrum(spectral_axis=spec_axis,
                        flux=flux2,
                        uncertainty=StdDevUncertainty(np.random.sample(size), unit='Jy'))
 
@@ -172,13 +172,13 @@ def test_correlation_zero_padding():
 
     # Observed spectrum must have a rest wavelength value set in.
     # Uncertainty is arbitrary.
-    spec1 = Spectrum1D(spectral_axis=spec_axis_1,
+    spec1 = Spectrum(spectral_axis=spec_axis_1,
                        flux=flux1,
                        uncertainty=StdDevUncertainty(np.random.sample(size1), unit='Jy'),
                        velocity_convention='optical',
                        rest_value=rest_value)
 
-    spec2 = Spectrum1D(spectral_axis=spec_axis_2,
+    spec2 = Spectrum(spectral_axis=spec_axis_2,
                        flux=flux2,
                        uncertainty=StdDevUncertainty(np.random.sample(size2), unit='Jy'))
 
@@ -236,13 +236,13 @@ def test_correlation_random_lines():
 
     # Observed spectrum must have a rest wavelength value set in.
     # Uncertainty is arbitrary.
-    spec1 = Spectrum1D(spectral_axis=spec_axis_1,
+    spec1 = Spectrum(spectral_axis=spec_axis_1,
                        flux=flux1,
                        uncertainty=StdDevUncertainty(np.random.sample(size1), unit='Jy'),
                        velocity_convention='optical',
                        rest_value=rest_value)
 
-    spec2 = Spectrum1D(spectral_axis=spec_axis_2,
+    spec2 = Spectrum(spectral_axis=spec_axis_2,
                        flux=flux2,
                        uncertainty=StdDevUncertainty(np.random.sample(size2), unit='Jy'))
 

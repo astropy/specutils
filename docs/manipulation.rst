@@ -24,7 +24,7 @@ Smoothing
 Specutils provides smoothing for spectra in two forms: 1) convolution based
 using smoothing `astropy.convolution` and 2) median filtering
 using the :func:`scipy.signal.medfilt`.  Each of these act on the flux
-of the :class:`~specutils.Spectrum1D` object.
+of the :class:`~specutils.Spectrum` object.
 
 .. note:: Specutils smoothing kernel widths and standard deviations are
              in units of pixels and not ``Quantity``.
@@ -48,18 +48,18 @@ along the spectral dimension.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> import astropy.units as u
     >>> import numpy as np
     >>> from specutils.manipulation import box_smooth, gaussian_smooth, trapezoid_smooth
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    >>> spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
     ...                    flux=np.random.default_rng(12345).random(49)*u.Jy)
     >>> spec1_bsmooth = box_smooth(spec1, width=3)
     >>> spec1_gsmooth = gaussian_smooth(spec1, stddev=3)
     >>> spec1_tsmooth = trapezoid_smooth(spec1, width=3)
     >>> gaussian_smooth(spec1, stddev=3) # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=[0.25860917267578276 ... 0.15868783272966752] Jy (shape=(49,), mean=0.48009 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
+    <Spectrum(flux=[0.25860917267578276 ... 0.15868783272966752] Jy (shape=(49,), mean=0.48009 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
 
 Each of the specific smoothing methods create the appropriate `astropy.convolution.convolve`
 kernel and then call a helper function :func:`~specutils.manipulation.convolution_smooth`
@@ -72,10 +72,10 @@ that takes the spectrum and an astropy 1D kernel.  So, one could also do:
 
     >>> box1d_kernel = Box1DKernel(width=3)
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    >>> spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
     ...                    flux=np.random.default_rng(12345).random(49) * u.Jy)
     >>> convolution_smooth(spec1, box1d_kernel) # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=[0.1813647873923075 ... 0.1201562712204726] Jy (shape=(49,), mean=0.49378 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
+    <Spectrum(flux=[0.1813647873923075 ... 0.1201562712204726] Jy (shape=(49,), mean=0.49378 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
 
 In this case, the ``spec1_bsmooth2`` result should be equivalent to the ``spec1_bsmooth`` in
 the section above (assuming the flux data of the input ``spec`` is the same). Note that,
@@ -104,29 +104,29 @@ method applys the median filter across the flux.
 
     >>> from specutils.manipulation import median_smooth
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    >>> spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
     ...                    flux=np.random.default_rng(12345).random(49) * u.Jy)
     >>> median_smooth(spec1, width=3) # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=[0.22733602246716966 ... 0.005022333717131788] Jy (shape=(49,), mean=0.48620 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
+    <Spectrum(flux=[0.22733602246716966 ... 0.005022333717131788] Jy (shape=(49,), mean=0.48620 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
 
 Resampling
 ----------
 :ref:`specutils <specutils>` contains several classes for resampling the flux
-in a :class:`~specutils.Spectrum1D` object.  Currently supported methods of
+in a :class:`~specutils.Spectrum` object.  Currently supported methods of
 resampling are integrated flux conserving with :class:`~specutils.manipulation.FluxConservingResampler`,
 linear interpolation with :class:`~specutils.manipulation.LinearInterpolatedResampler`,
 and cubic spline with :class:`~specutils.manipulation.SplineInterpolatedResampler`.
-Each of these classes takes in a :class:`~specutils.Spectrum1D` and a user
-defined output dispersion grid, and returns a new :class:`~specutils.Spectrum1D`
+Each of these classes takes in a :class:`~specutils.Spectrum` and a user
+defined output dispersion grid, and returns a new :class:`~specutils.Spectrum`
 with the resampled flux. Currently the resampling classes expect the new
 dispersion grid unit to be the same as the input spectrum's dispersion grid unit.
 Additionally, all resamplers take an optional ``extrapolation_treatment`` keyword which
 can be ``nan_fill``, ``zero_fill``, or ``truncate``, to determine what to do with output
 wavelength bins that have no overlap with the original spectrum.
 
-If the input :class:`~specutils.Spectrum1D` contains an uncertainty,
+If the input :class:`~specutils.Spectrum` contains an uncertainty,
 :class:`~specutils.manipulation.FluxConservingResampler` will propogate the
-uncertainty to the final output :class:`~specutils.Spectrum1D`. However, the
+uncertainty to the final output :class:`~specutils.Spectrum`. However, the
 other two implemented resampling classes (:class:`~specutils.manipulation.LinearInterpolatedResampler`
 and :class:`~specutils.manipulation.SplineInterpolatedResampler`) will ignore
 any input uncertainty.
@@ -153,12 +153,12 @@ Here's a set of simple examples showing each of the three types of resampling:
     ...     specdata = f[1].data[1020:1250]  # doctest: +REMOTE_DATA
 
     Then we re-format this dataset into astropy quantities, and create a
-    `~specutils.Spectrum1D` object:
+    `~specutils.Spectrum` object:
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> lamb = 10**specdata['loglam'] * u.AA # doctest: +REMOTE_DATA
     >>> flux = specdata['flux'] * 10**-17 * u.Unit('erg cm-2 s-1 AA-1') # doctest: +REMOTE_DATA
-    >>> input_spec = Spectrum1D(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
+    >>> input_spec = Spectrum(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
 
     >>> f, ax = plt.subplots()  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     >>> ax.step(input_spec.spectral_axis, input_spec.flux) # doctest: +IGNORE_OUTPUT +REMOTE_DATA
@@ -216,8 +216,8 @@ single spectrum. This can be achieved as follows:
     :align: center
     :context: close-figs
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.micron, flux=np.random.randn(49)*u.Jy)
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(51, 100) * u.micron, flux=(np.random.randn(49)+1)*u.Jy)
+    >>> spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.micron, flux=np.random.randn(49)*u.Jy)
+    >>> spec2 = Spectrum(spectral_axis=np.arange(51, 100) * u.micron, flux=(np.random.randn(49)+1)*u.Jy)
 
     >>> new_spectral_axis = np.concatenate([spec1.spectral_axis.value, spec2.spectral_axis.to_value(spec1.spectral_axis.unit)]) * spec1.spectral_axis.unit
 
@@ -257,7 +257,7 @@ known uncertainty:
     >>> spectral_model = models.Gaussian1D(amplitude=3*u.Jy, mean=5*u.GHz, stddev=0.8*u.GHz)
     >>> flux = spectral_model(spectral_axis)
     >>> flux += np.random.default_rng(42).normal(0., 0.2, spectral_axis.shape) * u.Jy
-    >>> noisy_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
+    >>> noisy_gaussian = Spectrum(spectral_axis=spectral_axis, flux=flux)
 
 Now we estimate the uncertainty from the region that does *not* contain
 the line:
@@ -289,7 +289,7 @@ S/N Threshold Mask
 
 It is useful to be able to find all the spaxels in an ND spectrum
 in which the signal to noise ratio is greater than some threshold.
-This method implements this functionality so that a `~specutils.Spectrum1D`
+This method implements this functionality so that a `~specutils.Spectrum`
 object, `~specutils.SpectrumCollection` or an :class:`~astropy.nddata.NDData` derived
 object may be passed in as the first parameter. The second parameter
 is a floating point threshold.
@@ -302,13 +302,13 @@ then call the ``snr_threshold`` method:
     >>> import numpy as np
     >>> from astropy.nddata import StdDevUncertainty
     >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> from specutils.manipulation import snr_threshold
     >>> wavelengths = np.arange(0, 10)*u.um
     >>> rng = np.random.default_rng(42)
     >>> flux = 100*np.abs(rng.standard_normal(10))*u.Jy
     >>> uncertainty = StdDevUncertainty(np.abs(rng.standard_normal(10))*u.Jy)
-    >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
+    >>> spectrum = Spectrum(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
     >>> spectrum_masked = snr_threshold(spectrum, 50)
     >>> # To create a masked flux array
     >>> flux_masked = spectrum_masked.flux
@@ -331,19 +331,19 @@ the ``spectral_axis``. Therefore one can use a construct like this:
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> wavelengths = np.arange(0, 10) * u.um
     >>> flux = 100 * np.abs(np.random.default_rng(42).standard_normal(10)) * u.Jy
-    >>> spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    >>> spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     >>> spectrum  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
+    <Spectrum(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
                195.10351887, 130.21795069,  12.78404032,  31.62425923,
                  1.68011575,  85.30439276] Jy> (shape=(10,), mean=76.02860 Jy); spectral_axis=<SpectralAxis [0. 1. 2. ... 7. 8. 9.] um> (length=10))>
 
     >>> shift = 12300 * u.AA
-    >>> new_spec = Spectrum1D(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
+    >>> new_spec = Spectrum(spectral_axis=spectrum.spectral_axis + shift, flux=spectrum.flux)
     >>> new_spec  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
+    <Spectrum(flux=<Quantity [ 30.47170798, 103.99841062,  75.04511958,  94.05647164,
                195.10351887, 130.21795069,  12.78404032,  31.62425923,
                  1.68011575,  85.30439276] Jy> (shape=(10,), mean=76.02860 Jy); spectral_axis=<SpectralAxis [ 1.23  2.23  3.23 ...  8.23  9.23 10.23] um> (length=10))>
 
@@ -363,11 +363,11 @@ with the spline knots:
     >>> from specutils.manipulation.model_replace import model_replace
     >>> wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     >>> flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
-    >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    >>> input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> result = model_replace(input_spectrum, None, model=spline_knots)
     >>> result
-    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 The default behavior is to keep the data outside the replaced region unchanged.
 Alternatively, the spectrum outside the replaced region can be filled with zeros:
@@ -377,7 +377,7 @@ Alternatively, the spectrum outside the replaced region can be filled with zeros
     >>> spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
     >>> result = model_replace(input_spectrum, None, model=spline_knots, extrapolation_treatment='zero_fill')
     >>> result
-    <Spectrum1D(flux=<Quantity [ 0.,  0.,  0.,  8., 10., 12., 14.,  0.,  0.,  0.] mJy> (shape=(10,), mean=4.40000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum(flux=<Quantity [ 0.,  0.,  0.,  8., 10., 12., 14.,  0.,  0.,  0.] mJy> (shape=(10,), mean=4.40000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 One can define the spline knots by providing an instance of `~specutils.SpectralRegion`,
 and the number of knots to be evenly spread along the region:
@@ -388,7 +388,7 @@ and the number of knots to be evenly spread along the region:
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=4)
     >>> result
-    <Spectrum1D(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum(flux=<Quantity [ 2.,  4.,  6.,  8., 10., 12., 14., 16., 18., 20.] mJy> (shape=(10,), mean=11.00000 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 A model fitted over the region can also be used to replace the spectrum flux values:
 
@@ -397,14 +397,14 @@ A model fitted over the region can also be used to replace the spectrum flux val
     >>> from astropy.modeling import models
     >>> from specutils.fitting import fit_lines
     >>> flux_val = np.array([1, 1.1, 0.9, 4., 10., 5., 2., 1., 1.2, 1.1])
-    >>> input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    >>> input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     >>> model = models.Gaussian1D(10, 5.6, 1.2)
     >>> fitted_model = fit_lines(input_spectrum, model)
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=fitted_model)
     >>> result  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [1.        , 1.1       , 0.9       , 4.40803188, 9.58269826,
-               5.61240079, 0.88557902, 1.        , 1.2       , 1.1       ] mJy> (shape=(10,), mean=2.67887 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum(flux=<Quantity [1.        , 1.1       , 0.9       , 4.40803188, 9.58269826,
+              5.61240079, 0.88557902, 1.        , 1.2       , 1.1       ] mJy> (shape=(10,), mean=2.67887 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 Reference/API
 -------------

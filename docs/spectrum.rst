@@ -1,17 +1,17 @@
-========================
-Working with Spectrum1Ds
-========================
+=============================
+Working with Spectrum objects
+=============================
 
 As described in more detail in :doc:`types_of_spectra`, the core data class in
-specutils for a single spectrum is :class:`~specutils.Spectrum1D`.  This object
+specutils for a single spectrum is :class:`~specutils.Spectrum`.  This object
 can represent either one or many spectra, all with the same ``spectral_axis``.
 This section describes some of the basic features of this class.
 
 Basic Spectrum Creation
 -----------------------
 
-The simplest way to create a :class:`~specutils.Spectrum1D` is to create
-it explicitly from arrays or :class:`~astropy.units.Quantity` objects:
+The simplest way to create a :class:`~specutils.Spectrum` is to
+create it explicitly from arrays or :class:`~astropy.units.Quantity` objects:
 
 .. plot::
     :include-source:
@@ -20,10 +20,10 @@ it explicitly from arrays or :class:`~astropy.units.Quantity` objects:
     >>> import numpy as np
     >>> import astropy.units as u
     >>> import matplotlib.pyplot as plt
-    >>> from specutils import Spectrum1D
-    >>> flux = np.random.randn(200) * u.Jy
-    >>> wavelength = np.arange(5100, 5300) * u.AA
-    >>> spec1d = Spectrum1D(spectral_axis=wavelength, flux=flux)
+    >>> from specutils import Spectrum
+    >>> flux = np.random.randn(200)*u.Jy
+    >>> wavelength = np.arange(5100, 5300)*u.AA
+    >>> spec1d = Spectrum(spectral_axis=wavelength, flux=flux)
     >>> ax = plt.subplots()[1]  # doctest: +SKIP
     >>> ax.plot(spec1d.spectral_axis, spec1d.flux)  # doctest: +SKIP
     >>> ax.set_xlabel("Dispersion")  # doctest: +SKIP
@@ -50,8 +50,8 @@ custom loaders (see below).
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
-    >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
+    >>> from specutils import Spectrum
+    >>> spec1d = Spectrum.read("/path/to/file.fits")  # doctest: +SKIP
 
 Most of these default specutils loaders can also read an existing
 `astropy.io.fits.HDUList` object (for FITS formats) or an open file object
@@ -64,11 +64,11 @@ information to automatically identify a loader.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> import urllib
     >>> spec = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
-    >>> Spectrum1D.read(spec, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
-    <Spectrum1D(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
+    >>> Spectrum.read(spec, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
+    <Spectrum(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
 
 Note that the same spectrum could be more conveniently downloaded via
 astroquery, if the user has that package installed:
@@ -77,16 +77,16 @@ astroquery, if the user has that package installed:
 
      >>> from astroquery.sdss import SDSS  # doctest: +REMOTE_DATA
      >>> specs = SDSS.get_spectra(plate=751, mjd=52251, fiberID=160, data_release=14)  # doctest: +REMOTE_DATA
-     >>> Spectrum1D.read(specs[0], format="SDSS-III/IV spec")  # doctest: +REMOTE_DATA
-     <Spectrum1D(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
+     >>> Spectrum.read(specs[0], format="SDSS-III/IV spec")  # doctest: +REMOTE_DATA
+     <Spectrum(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
 
 
 List of Loaders
 ~~~~~~~~~~~~~~~
 
-The `~specutils.Spectrum1D` class has built-in support for various input and output formats.
+The `~specutils.Spectrum` class has built-in support for various input and output formats.
 A full list of the supported formats is shown in the table below and
-can be accessed interactively with ``Spectrum1D.read.list_formats()``.
+can be accessed interactively with ``Spectrum.read.list_formats()``.
 Note that the JWST readers require the ``stdatamodels`` package to be
 installed, which is an optional dependency for ``specutils``.
 
@@ -105,9 +105,9 @@ by the above list can be found in the :doc:`custom loading </custom_loading>` pa
 Writing to a File
 -----------------
 
-Similarly, a `~specutils.Spectrum1D` object can be saved to any of the
+Similarly, a `~specutils.Spectrum` object can be saved to any of the
 formats supporting writing (currently only the two generic FITS formats)
-by using the :meth:`specutils.Spectrum1D.write` method.
+by using the :meth:`specutils.Spectrum.write` method.
 
 .. code-block:: python
 
@@ -140,8 +140,8 @@ or any object, like a `dict`, that can instantiate one) as the header of the
 Including Uncertainties
 -----------------------
 
-The :class:`~specutils.Spectrum1D` class supports uncertainties, and
-arithmetic operations performed with :class:`~specutils.Spectrum1D`
+The :class:`~specutils.Spectrum` class supports uncertainties, and
+arithmetic operations performed with :class:`~specutils.Spectrum`
 objects will propagate uncertainties.
 
 Uncertainties are a special subclass of :class:`~astropy.nddata.NDData`, and their
@@ -150,10 +150,10 @@ specify the uncertainty type at creation time.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> from astropy.nddata import StdDevUncertainty
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
+    >>> spec = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
 
 .. warning:: Not defining an uncertainty class will result in an
              :class:`~astropy.nddata.UnknownUncertainty` object which will not
@@ -163,7 +163,7 @@ specify the uncertainty type at creation time.
 Including Masks
 ---------------
 
-Masks are also available for :class:`~specutils.Spectrum1D`, following the
+Masks are also available for :class:`~specutils.Spectrum`, following the
 same mechanisms as :class:`~astropy.nddata.NDData`.  That is, the mask should
 have the property that it is ``False``/``0`` wherever the data is *good*, and
 ``True``/anything else where it should be masked.  This allows "data quality"
@@ -175,7 +175,7 @@ values are frequently "infectious", in that arithmetic operations sometimes
 propagate to yield results as just ``NaN`` where the intent is instead to skip
 that particular pixel. It also makes it impossible to store data that in the
 spectrum that may have meaning but should *sometimes* be masked.  The separate
-``mask`` attribute in :class:`~specutils.Spectrum1D` addresses that in that the
+``mask`` attribute in :class:`~specutils.Spectrum` addresses that in that the
 spectrum may still have a value underneath the mask, but it is not used in most
 calculations. To allow for compatibility with ``NaN``-masking representations,
 however, specutils will recognize ``flux`` values input as ``NaN`` and set the
@@ -185,24 +185,24 @@ mask to ``True`` for those values unless explicitly overridden.
 Including Redshift or Radial Velocity
 -------------------------------------
 
-The :class:`~specutils.Spectrum1D` class supports setting a redshift or radial
+The :class:`~specutils.Spectrum` class supports setting a redshift or radial
 velocity upon initialization of the object, as well as updating these values.
 The default value for redshift and radial velocity is zero - to create a
-:class:`~specutils.Spectrum1D` with a non-zero value, simply set the appropriate
+:class:`~specutils.Spectrum` with a non-zero value, simply set the appropriate
 attribute on object creation:
 
 .. code-block:: python
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, redshift = 0.15)
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, radial_velocity = 1000 * u.Unit("km/s"))
+    >>> spec1 = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, redshift = 0.15)
+    >>> spec2 = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, radial_velocity = 1000 * u.Unit("km/s"))
 
 By default, updating either the ``redshift`` or ``radial_velocity`` attributes
-of an existing :class:`~specutils.Spectrum1D` directly uses the
-:meth:`specutils.Spectrum1D.shift_spectrum_to` method, which also updates the
+of an existing :class:`~specutils.Spectrum` directly uses the
+:meth:`specutils.Spectrum.shift_spectrum_to` method, which also updates the
 values of the ``spectral_axis`` to match the new frame. To leave the
 ``spectral_axis`` values unchanged while updating the ``redshift`` or
-``radial_velocity`` value, use the :meth:`specutils.Spectrum1D.set_redshift_to`
-or :meth:`specutils.Spectrum1D.set_radial_velocity_to` method as appropriate.
+``radial_velocity`` value, use the :meth:`specutils.Spectrum.set_redshift_to`
+or :meth:`specutils.Spectrum.set_radial_velocity_to` method as appropriate.
 An example of the different treatments of the ``spectral_axis`` is shown below.
 
 .. code-block:: python
@@ -224,7 +224,7 @@ An example of the different treatments of the ``spectral_axis`` is shown below.
           redshift=0.016819635148755285)
       [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
 
-.. _spectrum1d-defining-wcs:
+.. _spectrum-defining-wcs:
 
 Defining WCS
 ------------
@@ -232,7 +232,7 @@ Defining WCS
 Specutils always maintains a WCS object whether it is passed explicitly by the
 user, or is created dynamically by specutils itself. In the latter case, the
 user need not be aware that the WCS object is being used, and can interact
-with the :class:`~specutils.Spectrum1D` object as if it were only a simple
+with the :class:`~specutils.Spectrum` object as if it were only a simple
 data container.
 
 Currently, specutils understands two WCS formats: FITS WCS and GWCS. When a user
@@ -248,14 +248,14 @@ Providing a FITS-style WCS
 
 .. code-block:: python
 
-    >>> from specutils.spectra import Spectrum1D
+    >>> from specutils.spectra import Spectrum
     >>> import astropy.wcs as fitswcs
     >>> import astropy.units as u
     >>> import numpy as np
     >>> my_wcs = fitswcs.WCS(header={
     ...     'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom', 'CTYPE1': 'WAVE',
     ...     'RESTFRQ': 1400000000, 'CRPIX1': 25})
-    >>> spec = Spectrum1D(flux=[5,6,7] * u.Jy, wcs=my_wcs)
+    >>> spec = Spectrum(flux=[5,6,7] * u.Jy, wcs=my_wcs)
     >>> spec.spectral_axis  # doctest: +FLOAT_CMP
     <SpectralAxis
        (observer to target:
@@ -267,7 +267,7 @@ Providing a FITS-style WCS
     >>> spec.wcs.pixel_to_world(np.arange(3))  # doctest: +FLOAT_CMP
     <SpectralCoord [6.5388e-07, 6.5398e-07, 6.5408e-07] m>
 
-When creating a `~specutils.Spectrum1D` using a WCS, you can also use the
+When creating a `~specutils.Spectrum` using a WCS, you can also use the
 ``move_spectral_axis`` argument to force the spectral axis to a certain dimension
 of a multi-dimenasional flux array. Prior to ``specutils`` version 2.0, the flux
 array was always reordered such that the spectral axis corresponded to the last
@@ -280,7 +280,7 @@ the spatial axes (most often RA and Dec) in any particular order.
 Multi-dimensional Data Sets
 ---------------------------
 
-`~specutils.Spectrum1D` also supports the multidimensional case where you
+`~specutils.Spectrum` also supports the multidimensional case where you
 have, for example, an ``(n_spectra, n_pix)``
 shaped data set where each ``n_spectra`` element provides a different flux
 data array. ``flux`` and ``uncertainty`` may be multidimensional as
@@ -292,7 +292,7 @@ common spectral axis. In cases where the flux axis corresponding to the spectral
 axis cannot be determined automatically (for example, if multiple flux axes
 have the same length as the spectral axis), the spectral axis must be specified
 with the ``spectral_axis_index`` argument when initializing the
-`~specutils.Spectrum1D`.
+`~specutils.Spectrum`.
 
 .. note:: The case where each flux data array is related to a *different* spectral
           axis is encapsulated in the :class:`~specutils.SpectrumCollection`
@@ -300,10 +300,10 @@ with the ``spectral_axis_index`` argument when initializing the
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
+    >>> spec = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                 flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec_slice = spec[0]
     >>> spec_slice.spectral_axis
     <SpectralAxis [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
@@ -312,22 +312,22 @@ with the ``spectral_axis_index`` argument when initializing the
                0.33281393, 0.59830875, 0.18673419, 0.67275604, 0.94180287] Jy>
 
 While the above example only shows two dimensions, this concept generalizes to
-any number of dimensions for `~specutils.Spectrum1D`.
+any number of dimensions for `~specutils.Spectrum`.
 
 
 Slicing
 -------
 
-As seen above, `~specutils.Spectrum1D` supports slicing in the same way as any
-other array-like object. Additionally, a `~specutils.Spectrum1D` can be sliced
+As seen above, `~specutils.Spectrum` supports slicing in the same way as any
+other array-like object. Additionally, a `~specutils.Spectrum` can be sliced
 along the spectral axis using world coordinates.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
+    >>> spec = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                 flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec_slice = spec[5002*u.AA:5006*u.AA]
     >>> spec_slice.spectral_axis
     <SpectralAxis [5002., 5003., 5004., 5005.] Angstrom>
@@ -337,17 +337,17 @@ same time as slicing the spectral axis based on spectral values.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
+    >>> spec = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                 flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec_slice = spec[2:4, 5002*u.AA:5006*u.AA]
     >>> spec_slice.shape
     (2, 4)
 
-If the `specutils.Spectrum1D` was created with a WCS that included spatial
+If the `specutils.Spectrum` was created with a WCS that included spatial
 information, for example in case of a spectral cube with two spatial dimensions,
-the `specutils.Spectrum1D.crop` method can be used to subset the data based on
+the `specutils.Spectrum.crop` method can be used to subset the data based on
 the world coordinates. The inputs required are two sets up `astropy.coordinates`
 objects defining the upper and lower corner of the region desired. Note that if
 one of the coordinates is decreasing along an axis, the higher world coordinate
@@ -370,11 +370,11 @@ value will apply to the lower bound input.
     ...          'DISPAXIS': 2, 'VELOSYS': -2538.02,
     ...          'SPECSYS': 'BARYCENT', 'RADESYS': 'ICRS', 'EQUINOX': 2000.0,
     ...          'LONPOLE': 180.0, 'LATPOLE': 27.004754})
-    >>> spec = Spectrum1D(flux=np.random.default_rng(12345).random((20, 5, 10)) * u.Jy, wcs=w)  # doctest: +IGNORE_WARNINGS
+    >>> spec = Spectrum(flux=np.random.default_rng(12345).random((20, 5, 10)) * u.Jy, wcs=w)  # doctest: +IGNORE_WARNINGS
     >>> lower = [SkyCoord(ra=205, dec=26, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
     >>> upper = [SkyCoord(ra=205.5, dec=27.5, unit=u.deg), SpectralCoord(4.9, unit=u.um)]
     >>> spec.crop(lower, upper)  # doctest: +IGNORE_WARNINGS +FLOAT_CMP
-    <Spectrum1D(flux=[[[0.708612359963129 ... 0.6345714580773677]]] Jy (shape=(10, 5, 1), mean=0.49653 Jy); spectral_axis=<SpectralAxis
+    <Spectrum(flux=[[[0.708612359963129 ... 0.6345714580773677]]] Jy (shape=(1, 5, 10), mean=0.49653 Jy); spectral_axis=<SpectralAxis
         (observer to target:
            radial_velocity=0.0 km / s
            redshift=0.0)
@@ -383,17 +383,17 @@ value will apply to the lower bound input.
 Collapsing
 ----------
 
-`~specutils.Spectrum1D` has built-in convenience methods for collapsing the
+`~specutils.Spectrum` has built-in convenience methods for collapsing the
 flux array of the spectrum via various statistics. The available statistics are
 mean, median, sum, max, and min, and may be called either on a specific axis
 (or axes) or over the entire flux array. The collapse methods currently respect
-the ``mask`` attribute of the `~specutils.Spectrum1D`, but do not propagate
+the ``mask`` attribute of the `~specutils.Spectrum`, but do not propagate
 any ``uncertainty`` attached to the spectrum.
 
 .. code-block:: python
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
+    >>> spec = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                 flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec.mean()  # doctest: +FLOAT_CMP
     <Quantity 0.49802844 Jy>
 
@@ -404,7 +404,7 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
 .. code-block:: python
 
     >>> spec.mean(axis='spatial')  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
+    <Spectrum(flux=<Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
                0.66084728, 0.45881921, 0.38715911, 0.39967185, 0.53257671] Jy> (shape=(10,), mean=0.49803 Jy); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
@@ -412,11 +412,11 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
       [5000. 5001. 5002. ... 5007. 5008. 5009.] Angstrom> (length=10))>
 
 Note that in this case, the result of the collapse operation is a
-`~specutils.Spectrum1D` rather than an `astropy.units.Quantity`, because the
+`~specutils.Spectrum` rather than an `astropy.units.Quantity`, because the
 collapse operation left the spectral axis intact.
 
 It is also possible to supply your own function for the collapse operation by
-calling `~specutils.Spectrum1D.collapse()` and providing a callable function
+calling `~specutils.Spectrum.collapse()` and providing a callable function
 to the ``method`` argument.
 
 .. code-block:: python

@@ -3,7 +3,7 @@ Spectral Regions
 ================
 
 A spectral region may be defined and may encompass one, or more,
-sub-regions. They are defined independently of a `~specutils.Spectrum1D`
+sub-regions. They are defined independently of a `~specutils.Spectrum`
 object in the sense that spectral regions like "near the Halpha line rest
 wavelength" have meaning independent of the details of a particular spectrum.
 
@@ -149,11 +149,11 @@ Region Extraction
 -----------------
 
 Given a `~specutils.SpectralRegion`, one can extract a sub-spectrum
-from a `~specutils.Spectrum1D` object. If the `~specutils.SpectralRegion`
-has multiple sub-regions then by default a list of `~specutils.Spectrum1D` objects
+from a `~specutils.Spectrum` object. If the `~specutils.SpectralRegion`
+has multiple sub-regions then by default a list of `~specutils.Spectrum` objects
 will be returned. If the ``return_single_spectrum`` argument is set to ``True``,
 the resulting spectra will be concatenated together into a single
-`~specutils.Spectrum1D` object instead.
+`~specutils.Spectrum` object instead.
 
 An example of a single sub-region `~specutils.SpectralRegion`:
 
@@ -161,11 +161,11 @@ An example of a single sub-region `~specutils.SpectralRegion`:
 
     >>> from astropy import units as u
     >>> import numpy as np
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> from specutils.manipulation import extract_region
 
     >>> region = SpectralRegion(8*u.nm, 22*u.nm)
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> spectrum = Spectrum(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> sub_spectrum = extract_region(spectrum, region)
     >>> sub_spectrum.spectral_axis
     <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,
@@ -178,10 +178,10 @@ as would be expected:
 
     >>> from astropy import units as u
     >>> import numpy as np
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> from specutils.manipulation import extract_region
 
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> spectrum = Spectrum(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> region_angstroms = SpectralRegion(80*u.AA, 220*u.AA)
     >>> sub_spectrum = extract_region(spectrum, region_angstroms)
     >>> sub_spectrum.spectral_axis
@@ -199,11 +199,11 @@ An example of a multiple sub-region `~specutils.SpectralRegion`:
 
     >>> from astropy import units as u
     >>> import numpy as np
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> from specutils.manipulation import extract_region
 
     >>> region = SpectralRegion([(8*u.nm, 22*u.nm), (34*u.nm, 40*u.nm)])
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
+    >>> spectrum = Spectrum(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)*u.Jy)
     >>> sub_spectra = extract_region(spectrum, region)
     >>> sub_spectra[0].spectral_axis
     <SpectralAxis [ 8.,  9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21.,
@@ -228,10 +228,10 @@ in between disjointed spectral regions, can be extracted with
 
     >>> from astropy import units as u
     >>> import numpy as np
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> from specutils.manipulation import extract_bounding_spectral_region
 
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    >>> spectrum = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
     ...                       flux=np.random.default_rng(12345).random(49)*u.Jy)
     >>> region = SpectralRegion([(8*u.nm, 12*u.nm), (24*u.nm, 30*u.nm)])
     >>> sub_spectrum = extract_bounding_spectral_region(spectrum, region)
@@ -250,10 +250,10 @@ into ``specutils``:
 
     >>> from astropy import units as u
     >>> import numpy as np
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> from specutils.manipulation import spectral_slab
 
-    >>> spectrum = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    >>> spectrum = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
     ...                       flux=np.random.default_rng(12345).random(49)*u.Jy)
     >>> sub_spectrum = spectral_slab(spectrum, 8*u.nm, 20*u.nm)
     >>> sub_spectrum.spectral_axis
@@ -270,7 +270,7 @@ finding functions:
 
     >>> from astropy import units as u
     >>> import numpy as np
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> from astropy.modeling.models import Gaussian1D
     >>> from specutils.fitting import find_lines_derivative
 
@@ -280,7 +280,7 @@ finding functions:
 
     >>> x = np.linspace(0, 10, 200)
     >>> y = g1(x) + g2(x) + g3(x)
-    >>> spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    >>> spectrum = Spectrum(flux=y * u.Jy, spectral_axis=x * u.um)
 
     >>> lines = find_lines_derivative(spectrum, flux_threshold=0.01)
     >>> spec_reg = SpectralRegion.from_line_list(lines)
@@ -350,7 +350,11 @@ Reference/API
     :no-inheritance-diagram:
 
     :skip: test
+<<<<<<< HEAD
     :skip: QTable
     :skip: Spectrum1D
+=======
+    :skip: Spectrum
+>>>>>>> bbaa7431 (Update spectrum class name from Spectrum1D to Spectrum (#1126))
     :skip: SpectrumCollection
     :skip: SpectralAxis

@@ -6,7 +6,7 @@ from astropy.tests.helper import quantity_allclose
 from astropy.modeling import models
 from astropy.nddata.nduncertainty import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum, SpectralRegion
 from ..manipulation import noise_region_uncertainty
 
 
@@ -15,7 +15,7 @@ def pure_noise_spectrum(amplitude=1*u.mJy):
 
     lamb = np.linspace(4000, 10000, 1000)*u.AA
     flux = np.random.randn(1000) * amplitude
-    return Spectrum1D(spectral_axis=lamb, flux=flux)
+    return Spectrum(spectral_axis=lamb, flux=flux)
 
 
 def test_noise_region_unc():
@@ -48,7 +48,7 @@ def test_noise_estimate_uncertainty():
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.um, stddev=1*u.um)
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux)
 
     # Assign uncertainties using the default standard deviation
     spectral_region = SpectralRegion(50*u.um, 80*u.um)

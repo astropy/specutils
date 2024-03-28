@@ -12,21 +12,21 @@ a separate python file and place the file in their ``~/.specutils`` directory.
 Loading from a FITS File
 ------------------------
 A spectra with a *Linear Wavelength Solution* can be read using the ``read``
-method of the :class:`~specutils.Spectrum1D` class to parse the file name and
+method of the :class:`~specutils.Spectrum` class to parse the file name and
 format
 
 
 .. code-block:: python
 
   import os
-  from specutils import Spectrum1D
+  from specutils import Spectrum
 
   file_path = os.path.join('path/to/folder', 'file_with_1d_wcs.fits')
 
-  spec = Spectrum1D.read(file_path, format='wcs1d-fits')
+  spec = Spectrum.read(file_path, format='wcs1d-fits')
 
 
-This will create a :class:`~specutils.Spectrum1D` object that you can manipulate later.
+This will create a :class:`~specutils.Spectrum` object that you can manipulate later.
 
 For instance, you could plot the spectrum.
 
@@ -51,7 +51,7 @@ Defining a custom loader consists of importing the
 `~specutils.io.registers.data_loader` decorator from specutils and attaching
 it to a function that knows how to parse the user's data.  The return object
 of this function must be an instance of one of the spectral classes
-(:class:`~specutils.Spectrum1D`, :class:`~specutils.SpectrumCollection`,
+(:class:`~specutils.Spectrum`, :class:`~specutils.SpectrumCollection`,
 :class:`~specutils.SpectrumList`).
 
 Optionally, the user may define an identifier function. This function acts to
@@ -69,11 +69,11 @@ ensure that the data file being loaded is compatible with the loader function.
     from astropy.wcs import WCS
 
     from specutils.io.registers import data_loader
-    from specutils import Spectrum1D
+    from specutils import Spectrum
 
 
     # Define an optional identifier. If made specific enough, this circumvents the
-    # need to add ``format="my-format"`` in the ``Spectrum1D.read`` call.
+    # need to add ``format="my-format"`` in the ``Spectrum.read`` call.
     def identify_generic_fits(origin, *args, **kwargs):
         return (isinstance(args[0], str) and
                 os.path.splitext(args[0].lower())[1] == '.fits')
@@ -92,7 +92,7 @@ ensure that the data file being loaded is compatible with the loader function.
             uncertainty = StdDevUncertainty(tab["err"])
             data = tab["flux"] * Unit("Jy")
 
-        return Spectrum1D(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)
+        return Spectrum(flux=data, wcs=wcs, uncertainty=uncertainty, meta=meta)
 
 
 An ``extensions`` keyword can be provided. This allows for basic filename
@@ -109,17 +109,17 @@ with a particular extension.
     loaders = get_loaders_by_extension('fits')
 
 The returned list contains the format labels that can be fed into the ``format``
-keyword argument of the ``Spectrum1D.read`` method.
+keyword argument of the ``Spectrum.read`` method.
 
 After placing this python file in the user's ``~/.specutils`` directory, it
 can be utilized by referencing its name in the ``read`` method of the
-:class:`~specutils.Spectrum1D` class
+:class:`~specutils.Spectrum` class
 
 .. code-block:: python
 
-    from specutils import Spectrum1D
+    from specutils import Spectrum
 
-    spec = Spectrum1D.read("path/to/data", format="my-format")
+    spec = Spectrum.read("path/to/data", format="my-format")
 
 .. _multiple_spectra:
 
@@ -134,11 +134,11 @@ custom JWST data loader as an example:
 .. literalinclude:: ../specutils/io/default_loaders/jwst_reader.py
     :language: python
 
-Note that by default, any loader that uses ``dtype=Spectrum1D`` will also
+Note that by default, any loader that uses ``dtype=Spectrum`` will also
 automatically add a reader for `~specutils.SpectrumList`. This enables user
 code to call `specutils.SpectrumList.read <astropy.nddata.NDIOMixin.read>` in
 all cases if it can't make assumptions about whether a loader returns one or
-many `~specutils.Spectrum1D` objects. This method is available since
+many `~specutils.Spectrum` objects. This method is available since
 `~specutils.SpectrumList` makes use of the Astropy IO registry (see
 `astropy.io.registry.read`).
 
@@ -171,11 +171,11 @@ This again will be done in a separate python file and placed in the user's
 
 The custom writer can be used by passing the name of the custom writer to the
 ``format`` argument of the ``write`` method on the
-:class:`~specutils.Spectrum1D`.
+:class:`~specutils.Spectrum`.
 
 .. code-block:: python
 
-    spec = Spectrum1D(flux=np.random.sample(100) * u.Jy,
+    spec = Spectrum(flux=np.random.sample(100) * u.Jy,
                       spectral_axis=np.arange(100) * u.AA)
 
     spec.write("my_output.fits", format="fits-writer")

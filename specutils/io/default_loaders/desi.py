@@ -23,7 +23,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 
 import numpy as np
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import _fits_identify_by_name, read_fileobj_or_hdulist
 
@@ -92,7 +92,7 @@ def spectra_loader(file_obj, **kwargs):
     Returns
     -------
     SpectrumList
-        Each spectrograph arm, or 'band' is represented as a Spectrum1D
+        Each spectrograph arm, or 'band' is represented as a Spectrum
         object in the SpectrumList.
     """
     return _read_desi(file_obj, **kwargs)
@@ -119,7 +119,7 @@ def coadd_loader(file_obj, **kwargs):
     Returns
     -------
     SpectrumList
-        Each spectrograph arm, or 'band' is represented as a Spectrum1D
+        Each spectrograph arm, or 'band' is represented as a Spectrum
         object in the SpectrumList.
     """
     return _read_desi(file_obj, **kwargs)
@@ -142,7 +142,7 @@ def _read_desi(file_obj, **kwargs):
     Returns
     -------
     SpectrumList
-        Each spectrograph arm, or 'band' is represented as a Spectrum1D
+        Each spectrograph arm, or 'band' is represented as a Spectrum
         object in the SpectrumList.
     """
     expected_hdus = ('PRIMARY', 'FIBERMAP', 'EXP_FIBERMAP',
@@ -196,5 +196,5 @@ def _read_desi(file_obj, **kwargs):
         if i == 0:
             for key, value in meta_zero.items():
                 band_data[band]['meta'][key] = value
-        sl.append(Spectrum1D(**(band_data[band])))
+        sl.append(Spectrum(**(band_data[band])))
     return sl

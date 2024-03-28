@@ -16,18 +16,17 @@ from ..utils.wcs_utils import gwcs_from_array
 
 from ndcube import NDCube
 
-__all__ = ['Spectrum1D']
+__all__ = ['Spectrum1D', 'Spectrum']
 
 
-class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
+class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     """
-    Spectrum container for 1D spectral data.
+    Spectrum container for N-dimensional data with one spectral axis.
 
-    Note that "1D" in this case refers to the fact that there is only one
-    spectral axis.  `Spectrum1D` can contain "vector 1D spectra" by having the
-    ``flux`` have a shape with dimension greater than 1.  The requirement
-    is that the last dimension of ``flux`` match the length of the
-    ``spectral_axis``.
+    `Spectrum` can contain "vector spectra" by having the
+    ``flux`` have a shape with dimension greater than 1.  One dimension of
+    ``flux`` must match the length of the ``spectral_axis`` if ``spectral_axis``
+    is provided.
 
     For multidimensional spectra that are all the same shape but have different
     spectral axes, use a :class:`~specutils.SpectrumCollection`.  For a
@@ -39,7 +38,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     ----------
     flux : `~astropy.units.Quantity`
         The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
-        or an existing `~Spectrum1D` or `~ndcube.NDCube` object.
+        or an existing `~Spectrum` or `~ndcube.NDCube` object.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
@@ -87,9 +86,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                  redshift=None, radial_velocity=None, bin_specification=None,
                  move_spectral_axis=None, **kwargs):
 
-        # If the flux (data) argument is already a Spectrum1D (as it would
+        # If the flux (data) argument is already a Spectrum (as it would
         # be for internal arithmetic operations), avoid setup entirely.
-        if isinstance(flux, Spectrum1D):
+        if isinstance(flux, Spectrum):
             super().__init__(flux)
             return
 
@@ -161,7 +160,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if (not isinstance(flux, u.Quantity) or isinstance(flux, float)
                 or isinstance(flux, int)) and np.ndim(flux) == 0:
 
-            super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
+            super(Spectrum, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
 
         if rest_value is None:
@@ -410,13 +409,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def __getitem__(self, item):
         """
         Override the class indexer. We do this here because there are two cases
-        for slicing on a ``Spectrum1D``:
+        for slicing on a ``Spectrum``:
 
             1.) When the flux is one dimensional, indexing represents a single
                 flux value at a particular spectral axis bin, and returns a new
-                ``Spectrum1D`` where all attributes are sliced.
+                ``Spectrum`` where all attributes are sliced.
             2.) When flux is multi-dimensional (i.e. several fluxes over the
-                same spectral axis), indexing returns a new ``Spectrum1D`` with
+                same spectral axis), indexing returns a new ``Spectrum`` with
                 the sliced flux range and a deep copy of all other attributes.
 
         The first case is handled by the parent class, while the second is
@@ -530,7 +529,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         #  a regular slicing operation, the wcs is handed back to the
         #  initializer and a new spectral axis is created. This would then also
         #  be in length units, which may not be the units used initially. So,
-        #  we create a new ``Spectrum1D`` that includes the sliced spectral
+        #  we create a new ``Spectrum`` that includes the sliced spectral
         #  axis. This means that a new wcs object will be created with the
         #  appropriate unit translation handling.
         if "original_wcs" not in self.meta:
@@ -544,7 +543,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def _copy(self, **kwargs):
         """
-        Perform deep copy operations on each attribute of the ``Spectrum1D``
+        Perform deep copy operations on each attribute of the ``Spectrum``
         object.
         """
         alt_kwargs = dict(
@@ -591,7 +590,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         value (default), over a specified numerical axis or axes if specified, or
         over the spectral or non-spectral axes if ``physical_type`` is specified.
 
-        If the collapse leaves the spectral axis unchanged, a `~specutils.Spectrum1D`
+        If the collapse leaves the spectral axis unchanged, a `~specutils.Spectrum`
         will be returned. Otherwise an `~astropy.units.Quantity` array will be
         returned.
 
@@ -613,7 +612,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         Returns
         -------
-        :class:`~specutils.Spectrum1D` or :class:`~astropy.units.Quantity`
+        :class:`~specutils.Spectrum` or :class:`~astropy.units.Quantity`
 
         """
         collapse_funcs = {"mean": np.nanmean, "max": np.nanmax, "min": np.nanmin,
@@ -641,13 +640,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             collapsed_flux = collapse_funcs[method](flux_to_collapse, axis=axis)
 
-        # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
+        # Return a Spectrum if we collapsed over the spectral axis, a Quantity if not
         if axis in (self.spectral_axis_index, None):
             return collapsed_flux
         elif isinstance(axis, tuple) and self.spectral_axis_index in axis:
             return collapsed_flux
         else:
-            return Spectrum1D(collapsed_flux, wcs=self.wcs)
+            return Spectrum(collapsed_flux, wcs=self.wcs)
 
     def mean(self, **kwargs):
         return self.collapse("mean", **kwargs)
@@ -802,9 +801,9 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def with_spectral_axis_last(self):
         """
-        Convenience method to return a new copy of theSpectrum1D with the spectral axis last.
+        Convenience method to return a new copy of the Spectrum with the spectral axis last.
         """
-        return Spectrum1D(flux=self.flux, wcs=self.wcs,
+        return Spectrum(flux=self.flux, wcs=self.wcs,
                           mask=self.mask, uncertainty=self.uncertainty,
                           redshift=self.redshift, move_spectral_axis="last")
 
@@ -875,7 +874,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             return "{:17} [ ],  mean= n/a".format(label+':')
 
     def __str__(self):
-        result = "Spectrum1D "
+        result = "Spectrum "
         result += "(length={})\n".format(len(self.spectral_axis))
 
         # Add Flux information
@@ -911,6 +910,13 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if self.uncertainty is not None:
             inner_str += f"; uncertainty={self.uncertainty.__class__.__name__}"
 
-        result = "<Spectrum1D({})>".format(inner_str)
+        result = "<Spectrum({})>".format(inner_str)
 
         return result
+
+
+@deprecated(since="2.0", alternative="Spectrum")
+class Spectrum1D(Spectrum):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
