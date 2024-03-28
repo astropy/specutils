@@ -4,7 +4,7 @@ import pytest
 from astropy.io import fits
 from astropy.units import Unit, Angstrom
 
-from specutils import Spectrum1D, SpectrumList
+from specutils import Spectrum, SpectrumList
 
 
 def generate_apogee_hdu(observatory="APO", with_wl=True, datasum="0"):
@@ -462,15 +462,15 @@ def spec_HDUList(n_spectra):
     ],
 )
 def test_mwm_1d(file_obj, hdu, with_wl, hduflags):
-    """Test mwm Spectrum1D loader"""
+    """Test mwm Spectrum loader"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList(hduflags, with_wl).writeto(tmpfile, overwrite=True)
 
     if hdu is None:
-        data = Spectrum1D.read(tmpfile)
+        data = Spectrum.read(tmpfile)
     else:
-        data = Spectrum1D.read(tmpfile, hdu=hdu)
-    assert isinstance(data, Spectrum1D)
+        data = Spectrum.read(tmpfile, hdu=hdu)
+    assert isinstance(data, Spectrum)
     assert isinstance(data.meta["header"], fits.Header)
     if data.meta["instrument"].lower() == "apogee":
         length = 8575
@@ -500,7 +500,7 @@ def test_mwm_list(file_obj, with_wl, hduflags):
     data = SpectrumList.read(tmpfile, format="SDSS-V mwm multi")
     assert isinstance(data, SpectrumList)
     for i in range(len(data)):
-        assert isinstance(data[i], Spectrum1D)
+        assert isinstance(data[i], Spectrum)
         assert isinstance(data[i].meta["header"], fits.Header)
         if data[i].meta["instrument"].lower() == "apogee":
             length = 8575
@@ -525,11 +525,11 @@ def test_mwm_list(file_obj, with_wl, hduflags):
     ],
 )
 def test_mwm_1d_fail_spec(file_obj, hdu, hduflags):
-    """Test mwm Spectrum1D loader fail on bad spec"""
+    """Test mwm Spectrum loader fail on bad spec"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList(hduflags, True).writeto(tmpfile, overwrite=True)
     with pytest.raises(IndexError):
-        Spectrum1D.read(tmpfile, hdu=hdu)
+        Spectrum.read(tmpfile, hdu=hdu)
 
 
 @pytest.mark.parametrize(
@@ -540,12 +540,12 @@ def test_mwm_1d_fail_spec(file_obj, hdu, hduflags):
     ],
 )
 def test_mwm_1d_fail(file_obj, with_wl):
-    """Test mwm Spectrum1D loader fail on empty"""
+    """Test mwm Spectrum loader fail on empty"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList([0, 0, 0, 0], with_wl).writeto(tmpfile, overwrite=True)
 
     with pytest.raises(ValueError):
-        Spectrum1D.read(tmpfile)
+        Spectrum.read(tmpfile)
 
 
 @pytest.mark.parametrize(
@@ -579,8 +579,8 @@ def test_spec_1d(file_obj, n_spectra):
     idxs = [1] + list(np.arange(5, 5 + n_spectra, 1))
 
     for i in idxs:
-        data = Spectrum1D.read(tmpfile, hdu=i)
-        assert isinstance(data, Spectrum1D)
+        data = Spectrum.read(tmpfile, hdu=i)
+        assert isinstance(data, Spectrum)
         assert len(data.flux.value) == 10
         assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
 
@@ -630,7 +630,7 @@ def test_spec_1d_fail_hdu(file_obj, hdu):
     spec_HDUList(5).writeto(tmpfile, overwrite=True)
 
     with pytest.raises(ValueError):
-        Spectrum1D.read(tmpfile, hdu=hdu)
+        Spectrum.read(tmpfile, hdu=hdu)
 
 
 @pytest.mark.parametrize(
@@ -644,8 +644,8 @@ def test_apStar_1D(file_obj, idx):
     tmpfile = str(file_obj) + ".fits"
     apStar_HDUList(6).writeto(tmpfile, overwrite=True)
 
-    data = Spectrum1D.read(tmpfile, idx=idx)
-    assert isinstance(data, Spectrum1D)
+    data = Spectrum.read(tmpfile, idx=idx)
+    assert isinstance(data, Spectrum)
     assert len(data.flux.value) == 10
     assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
 
@@ -670,7 +670,7 @@ def test_apStar_list(file_obj, n_spectra):
     assert isinstance(data, SpectrumList)
     assert len(data) == n_spectra
     for i in range(len(data)):
-        assert isinstance(data[i], Spectrum1D)
+        assert isinstance(data[i], Spectrum)
         assert len(data[i].flux.value) == 10
         assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         assert len(data[i].spectral_axis.value) == 10
@@ -702,8 +702,8 @@ def test_apVisit_1D(file_obj):
     tmpfile = str(file_obj) + ".fits"
     apVisit_HDUList().writeto(tmpfile, overwrite=True)
 
-    data = Spectrum1D.read(tmpfile)
-    assert isinstance(data, Spectrum1D)
+    data = Spectrum.read(tmpfile)
+    assert isinstance(data, Spectrum)
     assert np.array_equal(data.spectral_axis.value, np.arange(1, 31, 1))
     assert len(data.flux.value) == 30
     assert data.meta["header"].get("foobar") == "barfoo"

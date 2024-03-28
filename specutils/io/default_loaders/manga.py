@@ -2,7 +2,7 @@ import astropy.units as u
 from astropy.nddata import InverseVariance
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -33,7 +33,7 @@ def identify_manga_rss(origin, *args, **kwargs):
 
 
 @data_loader(
-    "MaNGA cube", identifier=identify_manga_cube, dtype=Spectrum1D,
+    "MaNGA cube", identifier=identify_manga_cube, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def manga_cube_loader(file_obj, **kwargs):
@@ -48,7 +48,7 @@ def manga_cube_loader(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
 
@@ -60,7 +60,7 @@ def manga_cube_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    "MaNGA rss", identifier=identify_manga_rss, dtype=Spectrum1D,
+    "MaNGA rss", identifier=identify_manga_rss, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def manga_rss_loader(file_obj, **kwargs):
@@ -75,7 +75,7 @@ def manga_rss_loader(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
 
@@ -87,12 +87,12 @@ def manga_rss_loader(file_obj, **kwargs):
 
 
 def _load_manga_spectra(hdulist, per_unit=None):
-    """ Return a MaNGA Spectrum1D object
+    """ Return a MaNGA Spectrum object
 
-    Returns a Spectrum1D object for a MaNGA data files. Use the `per_unit`
+    Returns a Spectrum object for a MaNGA data files. Use the `per_unit`
     kwarg to indicate the "spaxel" or "fiber" unit for cubes and rss files,
     respectively. Note that the spectral axis will automatically be moved to
-    be last during Spectrum1D initialization.
+    be last during Spectrum initialization.
 
     Parameters
     ----------
@@ -103,7 +103,7 @@ def _load_manga_spectra(hdulist, per_unit=None):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     unit = u.Unit('1e-17 erg / (Angstrom cm2 s)')
@@ -118,5 +118,5 @@ def _load_manga_spectra(hdulist, per_unit=None):
     # SDSS masks are arrays of bit values storing multiple boolean conditions.
     mask = hdulist['MASK'].data != 0
 
-    return Spectrum1D(flux=flux, meta={'header': hdr}, wcs=wcs,
+    return Spectrum(flux=flux, meta={'header': hdr}, wcs=wcs,
                       uncertainty=ivar, mask=mask)

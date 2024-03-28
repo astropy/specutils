@@ -2,7 +2,7 @@ from astropy.nddata import VarianceUncertainty
 from astropy.units import Unit
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -37,9 +37,9 @@ def load_spectrum_from_extension(hdu, primary_header):
     variance = VarianceUncertainty(hdu.data[1])
     sky = hdu.data[2] * Unit("count/s")
 
-    meta["sky"] = Spectrum1D(flux=sky, wcs=wcs)
+    meta["sky"] = Spectrum(flux=sky, wcs=wcs)
 
-    return Spectrum1D(flux=spectrum, wcs=wcs, meta=meta, uncertainty=variance)
+    return Spectrum(flux=spectrum, wcs=wcs, meta=meta, uncertainty=variance)
 
 
 @data_loader(

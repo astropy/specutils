@@ -11,7 +11,7 @@ from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -77,7 +77,7 @@ def apVisit_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
 
@@ -103,7 +103,7 @@ def apVisit_loader(file_obj, **kwargs):
                                      hdulist[4].data[2, :]])
         dispersion_unit = Unit('Angstrom')
 
-    return Spectrum1D(data=data * unit,
+    return Spectrum(data=data * unit,
                       uncertainty=uncertainty,
                       spectral_axis=dispersion * dispersion_unit,
                       meta=meta)
@@ -125,7 +125,7 @@ def apStar_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
 
@@ -145,7 +145,7 @@ def apStar_loader(file_obj, **kwargs):
                                                   np.zeros((data.shape[0],)))).T, 0)[:, 0]
     dispersion_unit = Unit('Angstrom')
 
-    return Spectrum1D(data=data * unit,
+    return Spectrum(data=data * unit,
                       uncertainty=uncertainty,
                       spectral_axis=dispersion * dispersion_unit,
                       meta=meta)
@@ -166,7 +166,7 @@ def aspcapStar_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
 
@@ -184,7 +184,7 @@ def aspcapStar_loader(file_obj, **kwargs):
     dispersion = 10**wcs.all_pix2world(np.arange(data.shape[0]), 0)[0]
     dispersion_unit = Unit('Angstrom')
 
-    return Spectrum1D(data=data * unit,
+    return Spectrum(data=data * unit,
                       uncertainty=uncertainty,
                       spectral_axis=dispersion * dispersion_unit,
                       meta=meta,

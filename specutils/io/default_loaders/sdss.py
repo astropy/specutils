@@ -15,7 +15,7 @@ from astropy.nddata import StdDevUncertainty, InverseVariance
 
 import numpy as np
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -123,7 +123,7 @@ def spec_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the 'loglam' (wavelength) and 'flux'
         data columns in the BINTABLE extension of the FITS `file_obj`.
     """
@@ -146,7 +146,7 @@ def spec_loader(file_obj, **kwargs):
 
         mask = hdulist[1].data["and_mask"] != 0
 
-    return Spectrum1D(
+    return Spectrum(
         flux=flux,
         spectral_axis=dispersion * dispersion_unit,
         uncertainty=uncertainty,
@@ -178,7 +178,7 @@ def spSpec_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the wavelength solution from the
         header WCS and data array of the primary HDU.
     """
@@ -206,7 +206,7 @@ def spSpec_loader(file_obj, **kwargs):
 
         mask = hdulist[0].data[3, :] != 0
 
-    return Spectrum1D(flux=flux,
+    return Spectrum(flux=flux,
                       wcs=fixed_wcs,
                       uncertainty=uncertainty,
                       meta=meta,
@@ -231,7 +231,7 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectra represented by the wavelength solution from the header WCS
         and the data array of the primary HDU (typically 640 along dimension 1).
     """
@@ -259,7 +259,7 @@ def spPlate_loader(file_obj, limit=None, **kwargs):
         mask = hdulist[2].data[0:limit, :] != 0
         meta["plugmap"] = Table.read(hdulist[5])[0:limit]
 
-    return Spectrum1D(flux=flux,
+    return Spectrum(flux=flux,
                       wcs=fixed_wcs,
                       uncertainty=uncertainty,
                       meta=meta,

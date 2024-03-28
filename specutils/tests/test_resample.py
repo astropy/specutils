@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.nddata import VarianceUncertainty, InverseVariance, StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
 
@@ -41,7 +41,7 @@ def test_expanded_grid_fluxconserving():
 
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
-    input_spectra = Spectrum1D(flux=flux_val * u.mJy, spectral_axis=wave_val * u.nm)
+    input_spectra = Spectrum(flux=flux_val * u.mJy, spectral_axis=wave_val * u.nm)
     resamp_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
 
     inst = FluxConservingResampler()
@@ -58,7 +58,7 @@ def test_stddev_uncert_propogation():
     """
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([20, 30, 40, 50, 60])
-    input_spectra = Spectrum1D(flux=flux_val * u.mJy, spectral_axis=wave_val * u.AA,
+    input_spectra = Spectrum(flux=flux_val * u.mJy, spectral_axis=wave_val * u.AA,
                                uncertainty=StdDevUncertainty([0.1, 0.25, 0.1, 0.25, 0.1]))
 
     inst = FluxConservingResampler()
@@ -97,7 +97,7 @@ def test_flux_conservation(specflux, specwavebins, outwavebins):
     specwave = (specwavebins[:-1] + specwavebins[1:])/2
     outwave = (outwavebins[:-1] + outwavebins[1:])/2
 
-    in_spec = Spectrum1D(spectral_axis=specwave, flux=specflux)
+    in_spec = Spectrum(spectral_axis=specwave, flux=specflux)
     out_spec = FluxConservingResampler()(in_spec, outwave)
 
     in_dwl = delta_wl(in_spec.spectral_axis)
@@ -109,14 +109,14 @@ def test_flux_conservation(specflux, specwavebins, outwavebins):
     assert_quantity_allclose(flux_in, flux_out)
 
 
-def test_multi_dim_spectrum1D():
+def test_multi_dim_spectrum():
     """
-    Test for input spectrum1Ds that have a two dimensional flux and
+    Test for input spectra that have a two dimensional flux and
     uncertainty.
     """
     flux_2d = np.array([np.ones(10) * 5, np.ones(10) * 6, np.ones(10) * 7])
 
-    input_spectra = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
+    input_spectra = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA,
                                flux=flux_2d * u.Jy,
                                uncertainty=StdDevUncertainty(flux_2d / 10))
 
@@ -140,7 +140,7 @@ def test_expanded_grid_interp_linear():
 
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
-    input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    input_spectra = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     resamp_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.AA
 
     inst = LinearInterpolatedResampler()
@@ -164,7 +164,7 @@ def test_expanded_grid_interp_spline():
 
     flux_val = np.array([1, 3, 7, 6, 20])
     wave_val = np.array([2, 4, 12, 16, 20])
-    input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    input_spectra = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     resamp_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.AA
 
     inst = SplineInterpolatedResampler()
@@ -176,7 +176,7 @@ def test_expanded_grid_interp_spline():
                                        np.nan])*u.mJy)
 
     inst = SplineInterpolatedResampler(extrapolation_treatment="truncate")
-    input_spectra = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    input_spectra = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
     results = inst(input_spectra, resamp_grid)
 
     assert_quantity_allclose(results.flux,
@@ -187,7 +187,7 @@ def test_expanded_grid_interp_spline():
 @pytest.mark.parametrize("edgetype,lastvalue",
                          [("nan_fill", np.nan), ("zero_fill", 0)])
 def test_resample_edges(edgetype, lastvalue, all_resamplers):
-    input_spectrum = Spectrum1D(spectral_axis=[2, 4, 12, 16, 20] * u.micron,
+    input_spectrum = Spectrum(spectral_axis=[2, 4, 12, 16, 20] * u.micron,
                                 flux=[1, 3, 7, 6, 20] * u.mJy)
     resamp_grid = [1, 3, 7, 16, 20, 100] * u.micron
 
@@ -200,7 +200,7 @@ def test_resample_edges(edgetype, lastvalue, all_resamplers):
 
 
 def test_resample_different_units(all_resamplers):
-    input_spectrum = Spectrum1D(spectral_axis=[5000, 6000, 7000] * u.AA,
+    input_spectrum = Spectrum(spectral_axis=[5000, 6000, 7000] * u.AA,
                                 flux=[1, 2, 3] * u.mJy)
     resampler = all_resamplers("nan_fill")
     if all_resamplers == FluxConservingResampler:
@@ -217,7 +217,7 @@ def test_resample_different_units(all_resamplers):
 
 def test_resample_uncs(all_resamplers):
     sdunc = StdDevUncertainty([0.1, 0.2, 0.3]*u.mJy)
-    input_spectrum = Spectrum1D(spectral_axis=[5000, 6000, 7000] * u.AA,
+    input_spectrum = Spectrum(spectral_axis=[5000, 6000, 7000] * u.AA,
                                 flux=[1, 2, 3] * u.mJy,
                                 uncertainty=sdunc)
 
@@ -243,7 +243,7 @@ def test_fluxconservingresampler_against_spectres():
     spectral_axis = [1, 2, 3, 7, 9, 10, 14]*u.AA
     new_spec_axis = [2, 3, 4, 12]*u.AA
     errs = VarianceUncertainty([0.5, 0.25, 0.15, 0.45, 0.75, 1.5, 0.1])
-    input_spectra = Spectrum1D(spectral_axis=spectral_axis, flux=flux,
+    input_spectra = Spectrum(spectral_axis=spectral_axis, flux=flux,
                                uncertainty=errs)
 
     inst = FluxConservingResampler()

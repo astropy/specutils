@@ -2,7 +2,7 @@ import astropy.units as u
 from astropy.tests.helper import assert_quantity_allclose
 import numpy as np
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 
 
 def test_spectral_axes():
@@ -11,9 +11,9 @@ def test_spectral_axes():
 
     flux3 = flux1 + flux2
 
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
                        flux=flux1 * u.Jy)
-    spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec2 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
                        flux=flux2 * u.Jy)
 
     spec3 = spec1 + spec2
@@ -28,7 +28,7 @@ def test_add_basic_spectra(simulated_spectra):
     flux2 = simulated_spectra.s1_um_mJy_e2_flux
     flux3 = flux1 + flux2
 
-    # Calculate using the spectrum1d/nddata code
+    # Calculate using the spectrum/nddata code
     spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_um_mJy_e2
 
     assert np.allclose(spec3.flux.value, flux3)
@@ -42,7 +42,7 @@ def test_add_diff_flux_prefix(simulated_spectra):
     flux2 = simulated_spectra.s1_AA_nJy_e4_flux
     flux3 = flux1 + (flux2 / 1000000)
 
-    # Calculate using the spectrum1d/nddata code
+    # Calculate using the spectrum/nddata code
     spec3 = simulated_spectra.s1_AA_mJy_e3 + simulated_spectra.s1_AA_nJy_e4
 
     assert np.allclose(spec3.flux.value, flux3)
@@ -55,7 +55,7 @@ def test_subtract_basic_spectra(simulated_spectra):
     flux2 = simulated_spectra.s1_um_mJy_e2_flux
     flux3 = flux2 - flux1
 
-    # Calculate using the spectrum1d/nddata code
+    # Calculate using the spectrum/nddata code
     spec3 = simulated_spectra.s1_um_mJy_e2 - simulated_spectra.s1_um_mJy_e1
 
     assert np.allclose(spec3.flux.value, flux3)
@@ -68,7 +68,7 @@ def test_divide_basic_spectra(simulated_spectra):
     flux2 = simulated_spectra.s1_um_mJy_e2_flux
     flux3 = flux1 / flux2
 
-    # Calculate using the spectrum1d/nddata code
+    # Calculate using the spectrum/nddata code
     spec3 = simulated_spectra.s1_um_mJy_e1 / simulated_spectra.s1_um_mJy_e2
 
     assert np.allclose(spec3.flux.value, flux3)
@@ -81,7 +81,7 @@ def test_multiplication_basic_spectra(simulated_spectra):
     flux2 = simulated_spectra.s1_um_mJy_e2_flux
     flux3 = flux1 * flux2
 
-    # Calculate using the spectrum1d/nddata code
+    # Calculate using the spectrum/nddata code
     spec3 = simulated_spectra.s1_um_mJy_e1 * simulated_spectra.s1_um_mJy_e2
 
     assert np.allclose(spec3.flux.value, flux3)
@@ -89,7 +89,7 @@ def test_multiplication_basic_spectra(simulated_spectra):
 
 def test_add_diff_spectral_axis(simulated_spectra):
 
-    # Calculate using the spectrum1d/nddata code
+    # Calculate using the spectrum/nddata code
     spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3  # noqa
 
 
@@ -110,8 +110,8 @@ def test_mask_nans():
     flux2 = np.random.random(10)
     nan_idx = [1, 3, 5]
     flux2[nan_idx] = np.nan
-    spec1 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=flux1 * u.Jy)
-    spec2 = Spectrum1D(spectral_axis=np.arange(10) * u.nm, flux=flux2 * u.Jy)
+    spec1 = Spectrum(spectral_axis=np.arange(10) * u.nm, flux=flux1 * u.Jy)
+    spec2 = Spectrum(spectral_axis=np.arange(10) * u.nm, flux=flux2 * u.Jy)
 
     spec3 = spec1 + spec2
 

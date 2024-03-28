@@ -11,7 +11,7 @@ from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 import shlex
 
-from ...spectra import Spectrum1D, SpectrumCollection
+from ...spectra import Spectrum, SpectrumCollection
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -52,7 +52,7 @@ def identify_wcs1d_fits(origin, *args, **kwargs):
 
 
 @data_loader("wcs1d-fits", identifier=identify_wcs1d_fits,
-             dtype=Spectrum1D, extensions=['fits', 'fit'], priority=5)
+             dtype=Spectrum, extensions=['fits', 'fit'], priority=5)
 def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
                       hdu=None, verbose=False, mask_hdu=True,
                       uncertainty_hdu=True, uncertainty_type=None, **kwargs):
@@ -96,7 +96,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
     Returns
     -------
-    :class:`~specutils.Spectrum1D`
+    :class:`~specutils.Spectrum`
 
     Notes
     -----
@@ -214,7 +214,7 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if wcs.naxis > 4:
         raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
 
-    return Spectrum1D(flux=data, wcs=wcs, mask=mask, uncertainty=uncertainty,
+    return Spectrum(flux=data, wcs=wcs, mask=mask, uncertainty=uncertainty,
                       meta=meta, spectral_axis_index=spectral_axis_index)
 
 
@@ -227,7 +227,7 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
 
     Parameters
     ----------
-    spectrum : :class:`~specutils.Spectrum1D`
+    spectrum : :class:`~specutils.Spectrum`
     file_name : str
         The path to the FITS file
     hdu : int, optional
@@ -251,7 +251,7 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
         hdulist = wcs.to_fits()
         header = hdulist[0].header
     except AttributeError as err:
-        raise ValueError(f'Only Spectrum1D objects with valid WCS can be written as wcs1d: {err}')
+        raise ValueError(f'Only Spectrum objects with valid WCS can be written as wcs1d: {err}')
 
     # Verify spectral axis constructed from WCS
     disp = spectrum.spectral_axis
@@ -302,7 +302,7 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
         hdu += 1
     # Warn if saving was requested (per explicitly choosing extension name).
     elif uncertainty_name is not None and uncertainty_name != '':
-        warnings.warn("No uncertainty array found in this Spectrum1D, none saved.",
+        warnings.warn("No uncertainty array found in this Spectrum, none saved.",
                       AstropyUserWarning)
 
     # Append mask array
@@ -322,7 +322,7 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
         hdu += 1
     # Warn if saving was requested (per explicitly choosing extension name).
     elif mask_name is not None and mask_name != '':
-        warnings.warn("No mask found in this Spectrum1D, none saved.", AstropyUserWarning)
+        warnings.warn("No mask found in this Spectrum, none saved.", AstropyUserWarning)
 
     if hasattr(funit, 'long_names') and len(funit.long_names) > 0:
         comment = f'[{funit.long_names[0]}] {funit.physical_type}'
@@ -371,9 +371,9 @@ def identify_iraf_wcs(origin, *args, **kwargs):
     return is_wcs
 
 
-@data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum1D, extensions=['fits'])
+@data_loader('iraf', identifier=identify_iraf_wcs, dtype=Spectrum, extensions=['fits'])
 def non_linear_wcs1d_fits(file_obj, **kwargs):
-    """Load Spectrum1D with WCS spectral axis from FITS files written by IRAF
+    """Load Spectrum with WCS spectral axis from FITS files written by IRAF
 
     Parameters
     ----------
@@ -395,7 +395,7 @@ def non_linear_wcs1d_fits(file_obj, **kwargs):
 
     Returns
     -------
-    :class:`~specutils.Spectrum1D`
+    :class:`~specutils.Spectrum`
     """
     spectral_axis, flux, meta = _read_non_linear_iraf_fits(file_obj, **kwargs)
 
@@ -417,7 +417,7 @@ def non_linear_wcs1d_fits(file_obj, **kwargs):
             raise ValueError('Spectral axis and flux dimensions do not match: '
                              f'{spectral_axis.shape} != {flux.shape}!')
 
-    return Spectrum1D(flux=flux, spectral_axis=spectral_axis, meta=meta)
+    return Spectrum(flux=flux, spectral_axis=spectral_axis, meta=meta)
 
 
 @data_loader('iraf', identifier=identify_iraf_wcs, dtype=SpectrumCollection, extensions=['fits'])
@@ -453,7 +453,7 @@ def non_linear_multispec_fits(file_obj, **kwargs):
 
     if spectral_axis.ndim == 1:
         warnings.warn(f'Read 1D spectral axis of length {spectral_axis.shape[0]} - '
-                      'consider loading into Spectrum1D.')
+                      'consider loading into Spectrum.')
         spectral_axis = spectral_axis.reshape((1, -1))
     if flux.ndim == 1:
         flux = flux.reshape((1, -1))
@@ -498,7 +498,7 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
     Returns
     -------
     Tuple of data to pass to :class:`~specutils.SpectrumCollection` or
-        `:class:`~specutils.Spectrum1D` on initialization:
+        `:class:`~specutils.Spectrum` on initialization:
 
     spectral_axis : :class:`~astropy.units.Quantity`
         The spectral axis or axes as constructed from WCS(hdulist[0].header).

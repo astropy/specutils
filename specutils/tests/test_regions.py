@@ -5,7 +5,7 @@ from astropy.modeling.models import Gaussian1D
 from astropy.tests.helper import assert_quantity_allclose
 
 from specutils.fitting import find_lines_derivative
-from specutils.spectra import Spectrum1D, SpectralRegion
+from specutils.spectra import Spectrum, SpectralRegion
 
 
 def test_lower_upper():
@@ -163,7 +163,7 @@ def test_invert():
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
     # Invert from spectrum.
-    spectrum = Spectrum1D(spectral_axis=np.linspace(0.05, 3, 20)*u.um,
+    spectrum = Spectrum(spectral_axis=np.linspace(0.05, 3, 20)*u.um,
                           flux=np.random.random(20)*u.Jy)
     sr_inverted = sr.invert_from_spectrum(spectrum)
     for ii, expected in enumerate(sr_inverted_expected):
@@ -178,7 +178,7 @@ def test_from_list_list():
     x = np.linspace(0, 10, 200)
     y = g1(x) + g2(x) + g3(x)
 
-    spectrum = Spectrum1D(flux=y * u.Jy, spectral_axis=x * u.um)
+    spectrum = Spectrum(flux=y * u.Jy, spectral_axis=x * u.um)
 
     lines = find_lines_derivative(spectrum, flux_threshold=0.01)
 

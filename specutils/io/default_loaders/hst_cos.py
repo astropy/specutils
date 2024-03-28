@@ -1,7 +1,7 @@
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -30,7 +30,7 @@ def cos_spectrum_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
 
@@ -49,7 +49,7 @@ def cos_spectrum_loader(file_obj, **kwargs):
     data = data[sort_idx]
     uncertainty = uncertainty[sort_idx]
 
-    return Spectrum1D(flux=data,
+    return Spectrum(flux=data,
                       spectral_axis=dispersion,
                       uncertainty=uncertainty,
                       meta=meta)

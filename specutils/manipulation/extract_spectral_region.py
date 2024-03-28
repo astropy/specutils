@@ -3,7 +3,7 @@ from math import floor, ceil  # faster than int(np.floor/ceil(float))
 import numpy as np
 
 from astropy import units as u
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum, SpectralRegion
 
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
@@ -30,12 +30,12 @@ def _subregion_to_edge_pixels(subregion, spectrum):
     """
     Calculate and return the left and right indices defined
     by the lower and upper bounds and based on the input
-    `~specutils.spectra.spectrum1d.Spectrum1D`. The left and right indices will
+    `~specutils.spectra.spectrum.Spectrum`. The left and right indices will
     be returned.
 
     Parameters
     ----------
-    spectrum: `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum: `~specutils.spectra.spectrum.Spectrum`
         The spectrum object from which the region will be extracted.
 
     Returns
@@ -106,14 +106,14 @@ def _subregion_to_edge_pixels(subregion, spectrum):
 
 def extract_region(spectrum, region, return_single_spectrum=False):
     """
-    Extract a region from the input `~specutils.Spectrum1D`
+    Extract a region from the input `~specutils.Spectrum`
     defined by the lower and upper bounds defined by the ``region``
     instance.  The extracted region will be returned as a new
-    `~specutils.Spectrum1D`.
+    `~specutils.Spectrum`.
 
     Parameters
     ----------
-    spectrum: `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum`
         The spectrum object from which the region will be extracted.
 
     region: `~specutils.SpectralRegion`
@@ -121,12 +121,12 @@ def extract_region(spectrum, region, return_single_spectrum=False):
 
     return_single_spectrum: `bool`
         If ``region`` has multiple sections, whether to return a single spectrum
-        instead of multiple `~specutils.Spectrum1D` objects.  The returned spectrum
+        instead of multiple `~specutils.Spectrum` objects.  The returned spectrum
         will be a unique, concatenated, spectrum of all sub-regions.
 
     Returns
     -------
-    spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum` or list of `~specutils.Spectrum`
         Excised spectrum, or list of spectra if the input region contained multiple
         subregions and ``return_single_spectrum`` is `False`.
 
@@ -146,7 +146,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         And we calculate ``sub_spectrum = extract_region(spectrum, region)``, then the ``sub_spectrum``
         spectral axis will be ``[0.2, 0.3, 0.4, 0.5] * u.um``.
 
-    If the ``region`` does not overlap with the ``spectrum`` then an empty Spectrum1D object
+    If the ``region`` does not overlap with the ``spectrum`` then an empty Spectrum object
     will be returned.
 
     """
@@ -156,7 +156,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
 
         # If both indices are out of bounds then return an empty spectrum
         if left_index == right_index:
-            empty_spectrum = Spectrum1D(spectral_axis=[]*spectrum.spectral_axis.unit,
+            empty_spectrum = Spectrum(spectral_axis=[]*spectrum.spectral_axis.unit,
                                         flux=[]*spectrum.flux.unit)
             extracted_spectrum.append(empty_spectrum)
         else:
@@ -174,7 +174,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         extracted_spectrum = extracted_spectrum[0]
 
     # Otherwise, if requested to return a single spectrum, we need to combine
-    # the spectrum1d objects in extracted_spectrum and return a single object.
+    # the Spectrum objects in extracted_spectrum and return a single object.
     elif return_single_spectrum:
         concat_keys = ['flux', 'uncertainty', 'mask']  # spectral_axis handled manually
         copy_keys = ['velocity_convention', 'rest_value', 'meta']
@@ -205,7 +205,7 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         # so we'll concatenate that first and track the unique indices
         spectral_axis = _get_joined_value(extracted_spectrum, 'spectral_axis')
         spectral_axis_unique, unique_inds = np.unique(spectral_axis, return_index=True)
-        return Spectrum1D(spectral_axis=spectral_axis_unique,
+        return Spectrum(spectral_axis=spectral_axis_unique,
                           **{key: _get_joined_value(extracted_spectrum, key, unique_inds)
                              for key in concat_keys+copy_keys})
 
@@ -214,14 +214,14 @@ def extract_region(spectrum, region, return_single_spectrum=False):
 
 def spectral_slab(spectrum, lower, upper):
     """
-    Extract a slab from the input `~specutils.Spectrum1D`
+    Extract a slab from the input `~specutils.Spectrum`
     defined by the lower and upper bounds defined by the ``region``
     instance.  The extracted region will be returned as a new
-    `~specutils.Spectrum1D`.
+    `~specutils.Spectrum`.
 
     Parameters
     ----------
-    spectrum: `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum`
         The spectrum object from which the region will be extracted.
 
     lower, upper: `~astropy.units.Quantity`
@@ -230,7 +230,7 @@ def spectral_slab(spectrum, lower, upper):
 
     Returns
     -------
-    spectrum: `~specutils.Spectrum1D` or list of `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum` or list of `~specutils.Spectrum`
         Excised spectrum, or list of spectra if the input region contained multiple
         subregions.
 
@@ -255,7 +255,7 @@ def extract_bounding_spectral_region(spectrum, region):
 
     Parameters
     ----------
-    spectrum: `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum`
         The spectrum object from which the region will be extracted.
 
     region: `~specutils.SpectralRegion`
@@ -264,7 +264,7 @@ def extract_bounding_spectral_region(spectrum, region):
 
     Returns
     -------
-    spectrum: `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum`
         Excised spectrum from the bounding region defined by the set of
         sub-regions in the input ``region`` instance.
 
