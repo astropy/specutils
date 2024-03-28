@@ -6,7 +6,7 @@ from astropy.table import Table
 import astropy.units as u
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping,
@@ -40,7 +40,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
-             dtype=Spectrum1D, extensions=['fits', 'fit'], priority=6)
+             dtype=Spectrum, extensions=['fits', 'fit'], priority=6)
 def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=False, **kwargs):
     """
     Load spectrum from a FITS file tabular extension.
@@ -57,10 +57,10 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
         Set to ``True`` to instead store the header from the specified data HDU.
     column_mapping : dict
         A dictionary describing the relation between the FITS file columns
-        and the arguments of the `Spectrum1D` class, along with unit
+        and the arguments of the `Spectrum` class, along with unit
         information. The dictionary keys should be the FITS file column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum1D` keyword argument, and the second element is the
+        associated `Spectrum` keyword argument, and the second element is the
         unit for the file column (or ``None`` to take unit from the table header)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
@@ -73,7 +73,7 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
 
     Returns
     -------
-    data : :class:`Spectrum1D`
+    data : :class:`Spectrum`
         The spectrum that is represented by the data in the input table.
     """
     # Parse the wcs information. The wcs will be passed to the column finding
@@ -108,7 +108,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
 
     Parameters
     ----------
-    spectrum : :class:`Spectrum1D`
+    spectrum : :class:`Spectrum`
     file_name : str, file-like or `pathlib.Path`
         File to write to. If a file object, must be opened in a writeable mode.
     hdu : int

@@ -6,7 +6,7 @@ from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, Galactic,
                                  SpectralCoord, FK5)
 
 from ..spectra.spectral_axis import SpectralAxis
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 
 from astropy.tests.helper import assert_quantity_allclose
 
@@ -125,7 +125,7 @@ def test_create_from_spectral_axis(observer, target):
 def test_change_radial_velocity():
     wave = np.linspace(100, 200, 100) * u.AA
     flux = np.ones(100) * u.one
-    spec = Spectrum1D(spectral_axis=wave, flux=flux,
+    spec = Spectrum(spectral_axis=wave, flux=flux,
                       radial_velocity=0 * u.km / u.s)
 
     assert spec.radial_velocity == 0 * u.km/u.s
@@ -134,7 +134,7 @@ def test_change_radial_velocity():
 
     assert spec.radial_velocity == 1 * u.km/u.s
 
-    spec = Spectrum1D(spectral_axis=wave, flux=flux,
+    spec = Spectrum(spectral_axis=wave, flux=flux,
                       radial_velocity=10 * u.km / u.s)
 
     assert spec.radial_velocity == 10 * u.km / u.s
@@ -147,7 +147,7 @@ def test_change_radial_velocity():
 def test_no_change_radial_velocity():
     wave = np.linspace(100, 200, 100) * u.AA
     flux = np.ones(100) * u.one
-    spec = Spectrum1D(spectral_axis=wave, flux=flux,
+    spec = Spectrum(spectral_axis=wave, flux=flux,
                       radial_velocity=0 * u.km / u.s)
 
     assert spec.radial_velocity == 0 * u.km/u.s
@@ -159,7 +159,7 @@ def test_no_change_radial_velocity():
 def test_change_redshift():
     wave = np.linspace(100, 200, 100) * u.AA
     flux = np.ones(100) * u.one
-    spec = Spectrum1D(spectral_axis=wave, flux=flux, redshift=0)
+    spec = Spectrum(spectral_axis=wave, flux=flux, redshift=0)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0))
@@ -171,7 +171,7 @@ def test_change_redshift():
     assert_quantity_allclose(spec.redshift, u.Quantity(0.1))
     assert isinstance(spec.spectral_axis, SpectralAxis)
 
-    spec = Spectrum1D(spectral_axis=wave, flux=flux, redshift=0.2)
+    spec = Spectrum(spectral_axis=wave, flux=flux, redshift=0.2)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.2))
@@ -187,7 +187,7 @@ def test_change_redshift():
 def test_no_change_redshift():
     wave = np.linspace(100, 200, 100) * u.AA
     flux = np.ones(100) * u.one
-    spec = Spectrum1D(spectral_axis=wave, flux=flux, redshift=0)
+    spec = Spectrum(spectral_axis=wave, flux=flux, redshift=0)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0))
@@ -211,5 +211,5 @@ def test_pixel_descending_error():
     spec_unit = u.pix
 
     with pytest.raises(ValueError, match="u.pix spectral axes should always be ascending"):
-        Spectrum1D(spectral_axis=(np.arange(5100, 5300)[::-1])*spec_unit,
+        Spectrum(spectral_axis=(np.arange(5100, 5300)[::-1])*spec_unit,
                 flux=np.random.randn(200)*flux_unit)

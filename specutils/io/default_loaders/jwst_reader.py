@@ -10,7 +10,7 @@ from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from gwcs.wcstools import grid_from_bounding_box
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -127,7 +127,7 @@ def _identify_jwst_fits(*args):
 
 
 @data_loader(
-    "JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum1D,
+    "JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def jwst_c1d_single_loader(file_obj, **kwargs):
@@ -141,7 +141,7 @@ def jwst_c1d_single_loader(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
@@ -175,7 +175,7 @@ def jwst_c1d_multi_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    "JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
+    "JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10
 )
 def jwst_x1d_single_loader(file_obj, **kwargs):
@@ -189,7 +189,7 @@ def jwst_x1d_single_loader(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
@@ -367,7 +367,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength,
+            spec = Spectrum(flux=flux, spectral_axis=wavelength,
                               uncertainty=uncertainty, meta=meta)
             spectra.append(spec)
 
@@ -375,7 +375,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
 
 
 @data_loader(
-    "JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum1D,
+    "JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def jwst_s2d_single_loader(filename, **kwargs):
@@ -389,7 +389,7 @@ def jwst_s2d_single_loader(filename, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_s2d_loader(filename, **kwargs)
@@ -489,17 +489,17 @@ def _jwst_s2d_loader(filename, **kwargs):
                 # Make sure all rows are the same
                 if not (lam == wavelength_array).all():
                     raise RuntimeError("This 2D or 3D spectrum is not rectified "
-                                       "and cannot be loaded into a Spectrum1D object.")
+                                       "and cannot be loaded into a Spectrum object.")
             elif dispaxis == 2:
                 flux_array = hdu.data.T
                 wavelength_array = lam[:, 0]
                 # Make sure all columns are the same
                 if not (lam.T == lam[None, :, 0]).all():
                     raise RuntimeError("This 2D or 3D spectrum is not rectified "
-                                       "and cannot be loaded into a Spectrum1D object.")
+                                       "and cannot be loaded into a Spectrum object.")
             else:
                 raise RuntimeError("This 2D spectrum has an unknown dispaxis "
-                                   "and cannot be loaded into a Spectrum1D object.")
+                                   "and cannot be loaded into a Spectrum object.")
 
             flux = Quantity(flux_array, unit=flux_unit)
             wavelength = Quantity(wavelength_array, unit=lam_unit)
@@ -510,14 +510,14 @@ def _jwst_s2d_loader(filename, **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spec = Spectrum(flux=flux, spectral_axis=wavelength, meta=meta)
             spectra.append(spec)
 
     return SpectrumList(spectra)
 
 
 @data_loader(
-    "JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum1D,
+    "JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def jwst_s3d_single_loader(filename, **kwargs):
@@ -531,7 +531,7 @@ def jwst_s3d_single_loader(filename, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_s3d_loader(filename, **kwargs)
@@ -610,7 +610,7 @@ def _jwst_s3d_loader(filename, **kwargs):
             mask_name = primary_header.get("MASKEXT", "DQ")
             mask = hdulist[mask_name].data
 
-            spec = Spectrum1D(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask, spectral_axis_index=0)
+            spec = Spectrum(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask, spectral_axis_index=0)
 
             spectra.append(spec)
 

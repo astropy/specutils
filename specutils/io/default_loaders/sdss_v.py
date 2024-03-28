@@ -8,7 +8,7 @@ from astropy.nddata import InverseVariance, StdDevUncertainty
 from astropy.units import Angstrom, Quantity, Unit
 from astropy.utils.exceptions import AstropyUserWarning
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..parsing_utils import read_fileobj_or_hdulist
 from ..registers import data_loader
 
@@ -127,13 +127,13 @@ def _fetch_flux_unit(hdu):
 @data_loader(
     "SDSS-V apStar",
     identifier=apStar_identify,
-    dtype=Spectrum1D,
+    dtype=Spectrum,
     priority=10,
     extensions=["fits"],
 )
 def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
     """
-    Load an apStar file as a Spectrum1D.
+    Load an apStar file as a Spectrum.
 
     Parameters
     ----------
@@ -144,7 +144,7 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file
 
     """
@@ -178,7 +178,7 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
         # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
         mask = mask != 0
 
-    return Spectrum1D(
+    return Spectrum(
         spectral_axis=spectral_axis,
         flux=flux,
         uncertainty=e_flux,
@@ -213,7 +213,7 @@ def load_sdss_apStar_list(file_obj, **kwargs):
         nvisits = hdulist[0].header.get("NVISITS")
         if nvisits <= 1:
             raise ValueError(
-                "Only 1 visit in this file. Use Spectrum1D.read() instead.")
+                "Only 1 visit in this file. Use Spectrum.read() instead.")
         return SpectrumList([
             load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
             for i in range(nvisits)
@@ -223,13 +223,13 @@ def load_sdss_apStar_list(file_obj, **kwargs):
 @data_loader(
     "SDSS-V apVisit",
     identifier=apVisit_identify,
-    dtype=Spectrum1D,
+    dtype=Spectrum,
     priority=10,
     extensions=["fits"],
 )
 def load_sdss_apVisit_1D(file_obj, **kwargs):
     """
-    Load an apVisit file as a Spectrum1D.
+    Load an apVisit file as a Spectrum.
 
     Parameters
     ----------
@@ -238,7 +238,7 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file
     """
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")
@@ -257,7 +257,7 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
         # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
         mask = mask != 0
 
-    return Spectrum1D(spectral_axis=spectral_axis,
+    return Spectrum(spectral_axis=spectral_axis,
                       flux=flux,
                       mask=mask,
                       uncertainty=e_flux,
@@ -306,7 +306,7 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
             mask = mask != 0
 
             spectra.append(
-                Spectrum1D(
+                Spectrum(
                     spectral_axis=spectral_axis,
                     flux=flux,
                     mask=mask,
@@ -321,13 +321,13 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
-    dtype=Spectrum1D,
+    dtype=Spectrum,
     priority=5,
     extensions=["fits"],
 )
 def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     """
-    Load a given BOSS spec file as a Spectrum1D object.
+    Load a given BOSS spec file as a Spectrum object.
 
     Parameters
     ----------
@@ -338,7 +338,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file at the specified HDU.
     """
     if hdu is None:
@@ -398,7 +398,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file
 
     """
@@ -427,7 +427,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     meta["header"] = hdulist[0].header
     meta["name"] = hdulist[hdu].name
 
-    return Spectrum1D(spectral_axis=spectral_axis,
+    return Spectrum(spectral_axis=spectral_axis,
                       flux=flux,
                       uncertainty=ivar,
                       mask=mask,
@@ -438,7 +438,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
 @data_loader(
     "SDSS-V mwm",
     identifier=mwm_identify,
-    dtype=Spectrum1D,
+    dtype=Spectrum,
     priority=20,
     extensions=["fits"],
 )
@@ -447,7 +447,7 @@ def load_sdss_mwm_1d(file_obj,
                      visit: Optional[int] = None,
                      **kwargs):
     """
-    Load an unspecified spec file as a Spectrum1D.
+    Load an unspecified spec file as a Spectrum.
 
     Parameters
     ----------
@@ -460,7 +460,7 @@ def load_sdss_mwm_1d(file_obj,
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file
     """
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
@@ -504,8 +504,9 @@ def load_sdss_mwm_list(file_obj, **kwargs):
 
     Returns
     -------
-    SpectrumList[Spectrum1D]
-        A list spectra from each visit with each instrument at each observatory (mwmVisit), or the coadd from each instrument/observatory (mwmStar).
+    SpectrumList[Spectrum]
+        A list of spectra from each visit with each instrument at each observatory (mwmVisit),
+        or the coadd from each instrument/observatory (mwmStar).
     """
     spectra = SpectrumList()
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
@@ -538,7 +539,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     Returns
     -------
-    list[Spectrum1D]
+    list[Spectrum]
         List of spectrum with 1D flux contained in the HDU.
 
     """
@@ -608,7 +609,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         meta["sdss_id"] = hdulist[hdu].data['sdss_id']
 
     # drop back a list of Spectrum1Ds to unpack
-    return Spectrum1D(
+    return Spectrum(
         spectral_axis=spectral_axis,
         flux=flux,
         uncertainty=e_flux,

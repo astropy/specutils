@@ -11,7 +11,7 @@ from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import _fits_identify_by_name, read_fileobj_or_hdulist
 
@@ -49,7 +49,7 @@ def pfs_spec_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data : Spectrum1D
+    data : Spectrum
         The spectrum that is represented by the data in this table.
     """
 
@@ -84,7 +84,7 @@ def pfs_spec_loader(file_obj, **kwargs):
 
         mask = hdulist[2].data['mask'] != 0
 
-    return Spectrum1D(flux=data * unit,
+    return Spectrum(flux=data * unit,
                       spectral_axis=wave * wave_unit,
                       uncertainty=uncertainty,
                       meta=meta,
