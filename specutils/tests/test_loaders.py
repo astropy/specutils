@@ -154,7 +154,7 @@ def test_manga_cube():
 
 @pytest.mark.remote_data
 def test_manga_rss():
-    url = 'https://dr17.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
+    url = 'https://dr17.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8485/stack/manga-8485-1901-LOGRSS.fits.gz'
     spec = Spectrum.read(url, format='MaNGA rss')
 
     assert isinstance(spec, Spectrum)
