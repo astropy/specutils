@@ -4,26 +4,26 @@ from astropy.tests.helper import quantity_allclose
 import numpy as np
 from numpy.testing import assert_allclose
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 
 
 def test_spectral_axes():
-    spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
                        flux=np.random.sample(49) * 100 * u.Jy)
 
     sliced_spec1 = spec1[0:2]
 
-    assert isinstance(sliced_spec1, Spectrum1D)
+    assert isinstance(sliced_spec1, Spectrum)
     assert_allclose(sliced_spec1.wcs.pixel_to_world(0), spec1.wcs.pixel_to_world(0))
 
     flux2 = np.random.sample((10, 49)) * 100
 
-    spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec2 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
                        flux=flux2 * u.Jy)
 
     sliced_spec2 = spec2[0]
 
-    assert isinstance(sliced_spec2, Spectrum1D)
+    assert isinstance(sliced_spec2, Spectrum)
     assert_allclose(sliced_spec2.wcs.pixel_to_world(np.arange(10)), spec2.wcs.pixel_to_world(np.arange(10)))
     assert sliced_spec2.flux.shape[0] == 49
 
@@ -31,7 +31,7 @@ def test_spectral_axes():
 def test_slicing():
 
     # Create the initial spectrum
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.um, flux=2*np.arange(10)*u.Jy)
+    spec = Spectrum(spectral_axis=np.arange(10) * u.um, flux=2*np.arange(10)*u.Jy)
 
     # Slice it.
     sub_spec = spec[4:8]
@@ -78,17 +78,17 @@ def test_slicing_with_fits():
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
                                  'CTYPE1': 'WAVE', 'RESTFRQ': 1400000000, 'CRPIX1': 25})
 
-    spec = Spectrum1D(flux=[5, 6, 7, 8, 9, 10] * u.Jy, wcs=my_wcs)
+    spec = Spectrum(flux=[5, 6, 7, 8, 9, 10] * u.Jy, wcs=my_wcs)
     spec_slice = spec[1:5]
 
-    assert isinstance(spec_slice, Spectrum1D)
+    assert isinstance(spec_slice, Spectrum)
     assert spec_slice.flux.size == 4
     assert quantity_allclose(spec_slice.wcs.pixel_to_world([0, 1, 2, 3]),
                              spec.wcs.pixel_to_world([1, 2, 3, 4]))
 
 
 def test_slicing_multidim():
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
+    spec = Spectrum(spectral_axis=np.arange(10) * u.AA,
                       flux=np.random.sample((5, 10)) * u.Jy,
                       mask=np.random.sample((5, 10)) > 0.5)
 

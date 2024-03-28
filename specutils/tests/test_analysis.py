@@ -8,7 +8,7 @@ from astropy.stats.funcs import gaussian_sigma_to_fwhm
 from astropy.tests.helper import quantity_allclose
 from astropy.utils.exceptions import AstropyUserWarning
 
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum, SpectralRegion
 from ..spectra.spectrum_collection import SpectrumCollection
 from ..spectra.spectral_axis import SpectralAxis
 
@@ -28,7 +28,7 @@ def test_line_flux():
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux)
 
     result = line_flux(spectrum)
 
@@ -44,7 +44,7 @@ def test_line_flux():
 def test_line_flux_uncertainty():
     np.random.seed(42)
 
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
+    spec = Spectrum(spectral_axis=np.arange(10) * u.AA,
                       flux=np.random.sample(10) * u.Jy,
                       uncertainty=StdDevUncertainty(np.random.sample(10) * 0.01))
 
@@ -68,7 +68,7 @@ def test_line_flux_masked():
     noise = 400 * np.random.random(flux.shape) * u.mJy
     flux += noise
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     spectrum.uncertainty = StdDevUncertainty(noise)
 
     spectrum_masked = snr_threshold(spectrum, 10.)
@@ -96,7 +96,7 @@ def test_equivalent_width():
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + 1*u.Jy
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux)
 
     result = equivalent_width(spectrum)
 
@@ -123,7 +123,7 @@ def test_equivalent_width_masked():
     noise = 400 * np.random.random(flux.shape) * u.mJy
     flux += noise
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     spectrum.uncertainty = StdDevUncertainty(noise)
 
     spectrum_masked = snr_threshold(spectrum, 10.)
@@ -152,7 +152,7 @@ def test_equivalent_width_regions():
     noise = np.random.normal(0., 0.001, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + 1*u.Jy
 
-    spec = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spec = Spectrum(spectral_axis=frequencies, flux=flux)
     result = equivalent_width(spec, regions=SpectralRegion(60*u.GHz, 10*u.GHz))
 
     expected = -(np.sqrt(2*np.pi) * u.GHz)
@@ -170,7 +170,7 @@ def test_equivalent_width_continuum(continuum):
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise + continuum
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux)
 
     result = equivalent_width(spectrum, continuum=continuum)
 
@@ -194,7 +194,7 @@ def test_equivalent_width_absorption():
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = continuum - g(frequencies) + noise
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux)
 
     result = equivalent_width(spectrum)
 
@@ -226,7 +226,7 @@ def test_equivalent_width_bin_edges(bin_specification):
     noise = np.random.normal(0., 0.01, spectral_axis.shape) * flunit
     flux = continuum - g(spectral_axis) + noise
 
-    spectrum = Spectrum1D(spectral_axis=spectral_axis, flux=flux)
+    spectrum = Spectrum(spectral_axis=spectral_axis, flux=flux)
 
     result = equivalent_width(spectrum)
 
@@ -317,14 +317,14 @@ def test_snr_multiple_flux(simulated_spectra):
     #
 
     uncertainty = StdDevUncertainty(0.1*np.random.random((5, 10))*u.mJy)
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA,
+    spec = Spectrum(spectral_axis=np.arange(10) * u.AA,
                       flux=np.random.sample((5, 10)) * u.Jy,
                       uncertainty=uncertainty)
     snr_spec = snr(spec)
     assert np.allclose(np.array(snr_spec), [18.20863867, 31.89475309, 14.51598119, 22.24603204, 32.01461421])
 
     uncertainty = StdDevUncertainty(0.1*np.random.random(10)*u.mJy)
-    spec = Spectrum1D(spectral_axis=np.arange(10) * u.AA, flux=np.random.sample(10) * u.Jy, uncertainty=uncertainty)
+    spec = Spectrum(spectral_axis=np.arange(10) * u.AA, flux=np.random.sample(10) * u.Jy, uncertainty=uncertainty)
     snr_spec = snr(spec)
 
     assert np.allclose(np.array(snr_spec), 31.325265361800415)
@@ -438,7 +438,7 @@ def test_snr_derived():
     x = np.arange(1, 101) * u.um
     y = np.random.random(len(x))*u.Jy
 
-    spectrum = Spectrum1D(spectral_axis=x, flux=y)
+    spectrum = Spectrum(spectral_axis=x, flux=y)
 
     assert np.allclose(snr_derived(spectrum), 1.604666860424951)
 
@@ -455,7 +455,7 @@ def test_snr_derived_masked():
     x = np.arange(1, 101) * u.um
     y = np.random.random(len(x))*u.Jy
     mask = (np.random.randn(x.shape[0])) > 0
-    spectrum = Spectrum1D(spectral_axis=x, flux=y, mask=mask)
+    spectrum = Spectrum(spectral_axis=x, flux=y, mask=mask)
 
     assert np.allclose(snr_derived(spectrum), 2.08175408)
 
@@ -549,7 +549,7 @@ def test_inverted_centroid(simulated_spectra, analytic):
     spec_centroid_expected = (np.sum(spectrum.flux * spectrum.spectral_axis) /
                               np.sum(spectrum.flux))
 
-    spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+    spectrum_inverted = Spectrum(spectral_axis=spectrum.spectral_axis,
                                    flux=-spectrum.flux, uncertainty=uncertainty)
     spec_centroid_inverted = centroid(spectrum_inverted, analytic=analytic)
     assert np.allclose(spec_centroid_inverted.value, spec_centroid_expected.value)
@@ -569,7 +569,7 @@ def test_inverted_centroid_masked(simulated_spectra, analytic):
                                      spectrum.spectral_axis[~spectrum.mask]) /
                               np.sum(spectrum.flux[~spectrum.mask]))
 
-    spectrum_inverted = Spectrum1D(spectral_axis=spectrum.spectral_axis,
+    spectrum_inverted = Spectrum(spectral_axis=spectrum.spectral_axis,
                                    flux=-spectrum.flux,
                                    mask=spectrum.mask,
                                    uncertainty=uncertainty)
@@ -590,7 +590,7 @@ def test_centroid_multiple_flux(simulated_spectra, analytic):
 
     np.random.seed(42)
 
-    spec = Spectrum1D(spectral_axis=np.arange(1, 11) * u.um,
+    spec = Spectrum(spectral_axis=np.arange(1, 11) * u.um,
                       flux=np.random.sample((5, 10)) * u.Jy)
     uncertainty = StdDevUncertainty(0.1*np.random.random(spec.flux.shape)*u.mJy)
     spec.uncertainty = uncertainty
@@ -619,7 +619,7 @@ def test_gaussian_sigma_width(analytic):
     frequencies = np.linspace(0, mean*2, 101)[1:] * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies))
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
@@ -647,7 +647,7 @@ def test_gaussian_sigma_width_masked(analytic):
 
     mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty, mask=mask)
 
     result = gaussian_sigma_width(spectrum, analytic=analytic)
@@ -673,7 +673,7 @@ def test_gaussian_sigma_width_regions(analytic):
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
 
     compound = g1 + g2 + g3
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=compound(frequencies),
+    spectrum = Spectrum(spectral_axis=frequencies, flux=compound(frequencies),
                           uncertainty=uncertainty)
 
     region1 = SpectralRegion(15*u.GHz, 5*u.GHz)
@@ -722,10 +722,10 @@ def test_gaussian_sigma_width_multi_spectrum(analytic):
     flux += 0.001*np.random.random(flux.shape)*u.Jy - 0.0005*u.Jy
 
     if analytic:
-        spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+        spectra = Spectrum(spectral_axis=frequencies, flux=flux)
     else:
         uncertainty = StdDevUncertainty(0.1*np.random.random(flux.shape)*u.Jy)
-        spectra = Spectrum1D(spectral_axis=frequencies, flux=flux, uncertainty=uncertainty)
+        spectra = Spectrum(spectral_axis=frequencies, flux=flux, uncertainty=uncertainty)
 
     results = gaussian_sigma_width(spectra, analytic=analytic)
 
@@ -744,7 +744,7 @@ def test_gaussian_fwhm(analytic):
     frequencies = np.linspace(0, mean*2, 101)[1:] * u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies))
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
@@ -773,7 +773,7 @@ def test_gaussian_fwhm_masked(analytic):
 
     mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty, mask=mask)
 
     result = gaussian_fwhm(spectrum, analytic=analytic)
@@ -798,7 +798,7 @@ def test_gaussian_fwhm_uncentered(mean):
     uncertainty=StdDevUncertainty(0.1*np.random.random(len(frequencies))*u.Jy)
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=mean*u.GHz, stddev=0.8*u.GHz)
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies),
                           uncertainty=uncertainty)
 
     result = gaussian_fwhm(spectrum)
@@ -817,7 +817,7 @@ def test_fwhm_masked():
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
     mask = (np.random.randn(frequencies.shape[0]) + 1.) > 0
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies),
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies),
                           mask=mask)
 
     result = fwhm(spectrum)
@@ -829,7 +829,7 @@ def test_fwhm_masked():
     wavelengths = np.linspace(1, 10, 100) * u.um
     flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     # Note that this makes a little more sense than the previous version;
     # since the maximum value occurs at wavelength=1, and the half-value of
@@ -842,7 +842,7 @@ def test_fwhm_masked():
     wavelengths = np.linspace(1, 10, 31) * u.um
     flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
 
     assert quantity_allclose(result, 1.01 * u.um)
@@ -851,7 +851,7 @@ def test_fwhm_masked():
     wavelengths = np.linspace(1, 10, 100) * u.um
     flux = wavelengths.value * u.Jy  # highest point last.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     assert result == 5 * u.um
 
@@ -859,7 +859,7 @@ def test_fwhm_masked():
     wavelengths = np.linspace(1, 10, 100) * u.um
     flux = np.ones(wavelengths.shape) * u.Jy  # highest point last.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     assert result == 9 * u.um
 
@@ -873,7 +873,7 @@ def test_fwhm():
     stddev = 0.8*u.GHz
     g1 = models.Gaussian1D(amplitude=5*u.Jy, mean=2*u.GHz, stddev=stddev)
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=g1(frequencies))
+    spectrum = Spectrum(spectral_axis=frequencies, flux=g1(frequencies))
 
     result = fwhm(spectrum)
 
@@ -884,7 +884,7 @@ def test_fwhm():
     wavelengths = np.linspace(1, 10, 100) * u.um
     flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     # Note that this makes a little more sense than the previous version;
     # since the maximum value occurs at wavelength=1, and the half-value of
@@ -897,7 +897,7 @@ def test_fwhm():
     wavelengths = np.linspace(1, 10, 31) * u.um
     flux = (1.0 / wavelengths.value) * u.Jy  # highest point first.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     assert quantity_allclose(result, 1.01 * u.um)
 
@@ -905,7 +905,7 @@ def test_fwhm():
     wavelengths = np.linspace(1, 10, 100) * u.um
     flux = wavelengths.value * u.Jy  # highest point last.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     assert result == 5*u.um
 
@@ -913,7 +913,7 @@ def test_fwhm():
     wavelengths = np.linspace(1, 10, 100) * u.um
     flux = np.ones(wavelengths.shape) * u.Jy  # highest point last.
 
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux)
     result = fwhm(spectrum)
     assert result == 9*u.um
 
@@ -934,7 +934,7 @@ def test_fwhm_multi_spectrum():
     flux[1] = g2(frequencies)
     flux[2] = g3(frequencies)
 
-    spectra = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectra = Spectrum(spectral_axis=frequencies, flux=flux)
 
     results = fwhm(spectra)
 
@@ -954,8 +954,8 @@ def test_fwzi():
     flux = g(disp)
     flux_with_noise = g(disp) + ((np.random.sample(disp.size) - 0.5) * 0.1) * u.Jy
 
-    spec = Spectrum1D(spectral_axis=disp, flux=flux)
-    spec_with_noise = Spectrum1D(spectral_axis=disp, flux=flux_with_noise)
+    spec = Spectrum(spectral_axis=disp, flux=flux)
+    spec_with_noise = Spectrum(spectral_axis=disp, flux=flux_with_noise)
 
     assert quantity_allclose(fwzi(spec), 226.89732509 * u.AA)
     assert quantity_allclose(fwzi(spec_with_noise), 106.99998944 * u.AA)
@@ -977,7 +977,7 @@ def test_fwzi_masked():
     uncertainty = StdDevUncertainty(0.1*np.random.random(len(disp))*u.Jy)
     mask = (np.random.randn(disp.shape[0]) - 0.5) > 0
 
-    spec = Spectrum1D(spectral_axis=disp, flux=flux, uncertainty=uncertainty,
+    spec = Spectrum(spectral_axis=disp, flux=flux, uncertainty=uncertainty,
                       mask=mask)
 
     assert quantity_allclose(fwzi(spec), 35.9996284 * u.AA)
@@ -998,7 +998,7 @@ def test_fwzi_multi_spectrum():
     for i in range(3):
         flux[i] = models.Gaussian1D(*params[i])(disp)
 
-    spec = Spectrum1D(spectral_axis=disp, flux=flux * u.Jy)
+    spec = Spectrum(spectral_axis=disp, flux=flux * u.Jy)
 
     expected = [113.51706001 * u.AA, 567.21252727 * u.AA, 499.5024546 * u.AA]
 
@@ -1010,21 +1010,21 @@ def test_is_continuum_below_threshold():
     # No mask, no uncertainty
     wavelengths = [300, 500, 1000] * u.nm
     data = [0.001, -0.003, 0.003] * u.Jy
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=data)
 
     assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
 
 #    # No mask, no uncertainty, threshold is float
 #    wavelengths = [300, 500, 1000] * u.nm
 #    data = [0.0081, 0.0043, 0.0072] * u.Jy
-#    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data)
+#    spectrum = Spectrum(spectral_axis=wavelengths, flux=data)
 #    assert True == is_continuum_below_threshold(spectrum, threshold=0.1)
 
     # No mask, with uncertainty
     wavelengths = [300, 500, 1000] * u.nm
     data = [0.03, 0.029, 0.031] * u.Jy
     uncertainty = StdDevUncertainty([1.01, 1.03, 1.01] * u.Jy)
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty)
 
     assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
@@ -1034,7 +1034,7 @@ def test_is_continuum_below_threshold():
     data = [0.01, 1.029, 0.013] * u.Jy
     mask = np.array([False, True, False])
     uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty, mask=mask)
 
     assert is_continuum_below_threshold(spectrum, threshold=0.1*u.Jy) == True  # noqa
@@ -1044,7 +1044,7 @@ def test_is_continuum_below_threshold():
     data = [10.03, 10.029, 10.033] * u.Jy
     mask = np.array([False, False, False])
     uncertainty = StdDevUncertainty([1.01, 1.13, 1.1] * u.Jy)
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=data,
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=data,
                           uncertainty=uncertainty, mask=mask)
 
     with pytest.warns(AstropyUserWarning,
@@ -1062,7 +1062,7 @@ def test_moment():
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux)
 
     moment_0 = moment(spectrum, order=0)
     assert moment_0.unit.is_equivalent(u.Jy * u.GHz)
@@ -1095,7 +1095,7 @@ def test_moment_cube():
 
     flux_multid = np.broadcast_to(flux, [9, 10, flux.shape[0]]) * u.Jy
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux_multid)
 
     moment_0 = moment(spectrum, order=0)
 
@@ -1145,7 +1145,7 @@ def test_moment_cube_order_2():
 
     flux_multid = np.broadcast_to(flux, [10, 10, flux.shape[0]]) * u.Jy
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux_multid)
 
     # higher order
     moment_2 = moment(spectrum, order=2)
@@ -1182,7 +1182,7 @@ def test_moment_cube_order_1_to_6():
 
     flux_multid = np.broadcast_to(flux, [9, 10, flux.shape[0]]) * u.Jy
 
-    spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+    spectrum = Spectrum(spectral_axis=frequencies, flux=flux_multid)
 
     moment_1 = moment(spectrum, order=1)
 
@@ -1226,13 +1226,13 @@ def test_moment_collection():
     g = models.Gaussian1D(amplitude=1*u.Jy, mean=10*u.GHz, stddev=1*u.GHz)
     noise = np.random.normal(0., 0.01, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
-    s1 = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    s1 = Spectrum(spectral_axis=frequencies, flux=flux)
 
     frequencies = np.linspace(200, 2, 10000) * u.GHz
     g = models.Gaussian1D(amplitude=2*u.Jy, mean=20*u.GHz, stddev=2*u.GHz)
     noise = np.random.normal(0., 0.02, frequencies.shape) * u.Jy
     flux = g(frequencies) + noise
-    s2 = Spectrum1D(spectral_axis=frequencies, flux=flux)
+    s2 = Spectrum(spectral_axis=frequencies, flux=flux)
 
     collection = SpectrumCollection.from_spectra([s1, s2])
 

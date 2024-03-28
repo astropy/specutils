@@ -5,7 +5,7 @@ import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum, SpectralRegion
 from ..manipulation import extract_region, extract_bounding_spectral_region, spectral_slab
 from ..manipulation.utils import linear_exciser
 
@@ -34,12 +34,12 @@ def test_region_simple(simulated_spectra):
 
 def test_pixel_spectralaxis_extraction():
     """
-    Tests a region extraction on a Spectrum1D with a u.pix defined spectral axis
+    Tests a region extraction on a Spectrum with a u.pix defined spectral axis
     """
     flux_unit = u.dimensionless_unscaled
     spec_unit = u.pix
 
-    spec1d = Spectrum1D(spectral_axis=np.arange(5100, 5300)*spec_unit,
+    spec1d = Spectrum(spectral_axis=np.arange(5100, 5300)*spec_unit,
                         flux=np.random.randn(200)*flux_unit)
 
     # Case 1: Region is safely within the bounds of a continuously-defined Spec1D
@@ -124,7 +124,7 @@ def test_slab_simple(simulated_spectra):
 
 def test_slab_pixels():
     range_iter = range(5)
-    spectrum = Spectrum1D(flux=np.stack(
+    spectrum = Spectrum(flux=np.stack(
                           [np.zeros((2, 2)) + i for i in range_iter], axis=-1) * u.nJy,
                           spectral_axis_index=2)
     for i in range_iter:
@@ -134,7 +134,7 @@ def test_slab_pixels():
 
 
 def test_region_ghz(simulated_spectra):
-    spectrum = Spectrum1D(flux=simulated_spectra.s1_um_mJy_e1.flux,
+    spectrum = Spectrum(flux=simulated_spectra.s1_um_mJy_e1.flux,
                           spectral_axis=simulated_spectra.s1_um_mJy_e1.frequency)
 
     region = SpectralRegion(499654.09666667*u.GHz, 374740.5725*u.GHz)
@@ -159,7 +159,7 @@ def test_region_ghz_spectrum_wave(simulated_spectra):
 def test_region_simple_check_ends(simulated_spectra):
     np.random.seed(42)
 
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    spectrum = Spectrum(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
     region = SpectralRegion(8*u.um, 15*u.um)
 
     sub_spectrum = extract_region(spectrum, region)
@@ -177,10 +177,10 @@ def test_region_simple_check_ends(simulated_spectra):
 
 
 def test_region_empty():
-    empty_spectrum = Spectrum1D(spectral_axis=[]*u.um, flux=[]*u.Jy)
+    empty_spectrum = Spectrum(spectral_axis=[]*u.um, flux=[]*u.Jy)
 
     # Region past upper range of spectrum
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
+    spectrum = Spectrum(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
     region = SpectralRegion(28*u.um, 30*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -191,7 +191,7 @@ def test_region_empty():
     assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region below lower range of spectrum
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
+    spectrum = Spectrum(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
     region = SpectralRegion(0.1*u.um, 0.3*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -202,7 +202,7 @@ def test_region_empty():
     assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region below lower range of spectrum and upper range in the spectrum.
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=2*np.linspace(1, 25, 25)*u.Jy)
+    spectrum = Spectrum(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=2*np.linspace(1, 25, 25)*u.Jy)
     region = SpectralRegion(0.1*u.um, 3.3*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -316,7 +316,7 @@ def test_bounding_region(simulated_spectra):
 
 
 def test_extract_region_pixels():
-    spectrum = Spectrum1D(spectral_axis=np.linspace(4000, 10000, 25)*u.AA,
+    spectrum = Spectrum(spectral_axis=np.linspace(4000, 10000, 25)*u.AA,
                           flux=np.arange(25)*u.Jy)
     region = SpectralRegion(10*u.pixel, 12*u.pixel)
 
@@ -326,7 +326,7 @@ def test_extract_region_pixels():
 
 
 def test_extract_region_mismatched_units():
-    spectrum = Spectrum1D(spectral_axis=np.arange(25)*u.nm,
+    spectrum = Spectrum(spectral_axis=np.arange(25)*u.nm,
                           flux=np.arange(25)*u.Jy)
 
     region = SpectralRegion(100*u.AA, 119*u.AA)
@@ -338,7 +338,7 @@ def test_extract_region_mismatched_units():
 
 @pytest.mark.filterwarnings('ignore:A SpectralRegion with multiple subregions was provided')
 def test_linear_excise_invert_from_spectrum():
-    spec = Spectrum1D(flux=np.random.sample(100) * u.Jy,
+    spec = Spectrum(flux=np.random.sample(100) * u.Jy,
                       spectral_axis=np.arange(100) * u.AA)
     inc_regs = (SpectralRegion(0 * u.AA, 50 * u.AA) +
                 SpectralRegion(60 * u.AA, 80 * u.AA) +
@@ -358,7 +358,7 @@ def test_extract_masked():
     flux = np.arange(4)*u.Jy
     mask = [False, False, True, True]
 
-    masked_spec = Spectrum1D(spectral_axis=wl, flux=flux, mask=mask)
+    masked_spec = Spectrum(spectral_axis=wl, flux=flux, mask=mask)
     region = SpectralRegion(1.5 * u.nm, 3.5 * u.nm)
 
     extracted = extract_region(masked_spec, region)
@@ -369,7 +369,7 @@ def test_extract_masked():
 
 def test_extract_multid_flux():
     flux = np.random.sample((10, 49)) * 100
-    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=flux * u.Jy)
 
     region = SpectralRegion(10 * u.nm, 20 * u.nm)
@@ -381,7 +381,7 @@ def test_extract_multid_flux():
 
 def test_slab_multid_flux():
     flux = np.random.sample((10, 49)) * 100
-    spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
+    spec = Spectrum(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=flux * u.Jy)
 
     extracted = spectral_slab(spec, 10 * u.nm, 20 * u.nm)
