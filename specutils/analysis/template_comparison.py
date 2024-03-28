@@ -6,7 +6,7 @@ from astropy.nddata import StdDevUncertainty
 from ..manipulation import (FluxConservingResampler,
                             LinearInterpolatedResampler,
                             SplineInterpolatedResampler)
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 
 __all__ = ['template_match', 'template_redshift']
 
@@ -18,9 +18,9 @@ def _normalize_for_template_matching(observed_spectrum, template_spectrum, stdde
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    template_spectrum : :class:`~specutils.Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum, which needs to be normalized in order to be
         compared with the observed spectrum.
 
@@ -77,15 +77,15 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    template_spectrum : :class:`~specutils.Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum, which will be resampled to match the wavelength
         of the observed spectrum.
 
     Returns
     -------
-    normalized_template_spectrum : :class:`~specutils.Spectrum1D`
+    normalized_template_spectrum : :class:`~specutils.Spectrum`
         The normalized spectrum template.
     chi2 : `float`
         The chi2 of the flux of the observed spectrum and the flux of the
@@ -129,7 +129,7 @@ def _chi_square_for_templates(observed_spectrum, template_spectrum, resample_met
 
     # Create normalized template spectrum, which will be returned with
     # corresponding chi2
-    normalized_template_spectrum = Spectrum1D(
+    normalized_template_spectrum = Spectrum(
         spectral_axis=template_spectrum.spectral_axis,
         flux=template_spectrum.flux*normalization)
 
@@ -145,10 +145,10 @@ def template_match(observed_spectrum, spectral_templates, redshift=None,
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    spectral_templates : :class:`~specutils.Spectrum1D` or :class:`~specutils.SpectrumCollection` or `list`
-        That will give a single :class:`~specutils.Spectrum1D` when iterated
+    spectral_templates : :class:`~specutils.Spectrum` or :class:`~specutils.SpectrumCollection` or `list`
+        That will give a single :class:`~specutils.Spectrum` when iterated
         over. The template spectra, which will be resampled, normalized, and
         compared to the observed spectrum, where the smallest chi2 and
         normalized template spectrum will be returned.
@@ -169,7 +169,7 @@ def template_match(observed_spectrum, spectral_templates, redshift=None,
 
     Returns
     -------
-    normalized_template_spectrum : :class:`~specutils.Spectrum1D`
+    normalized_template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum that has been normalized and resampled to the observed
         spectrum's spectral axis.
     redshift : `None` or `float`
@@ -201,7 +201,7 @@ def template_match(observed_spectrum, spectral_templates, redshift=None,
         return normalized_spectral_template, final_redshift, 0, chi2, chi2_list
 
     # At this point, the template spectrum is either a ``SpectrumCollection``
-    # or a multi-dimensional``Spectrum1D``. Loop through the object and return
+    # or a multi-dimensional``Spectrum``. Loop through the object and return
     # the template spectrum with the lowest chi square and its corresponding
     # chi square.
     chi2_min = None
@@ -241,9 +241,9 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    template_spectrum : :class:`~specutils.Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum, which will have it's redshift calculated.
     redshift : `float`, `int`, `list`, `tuple`, 'numpy.array`
         A scalar or iterable with the redshift values to test.
@@ -259,13 +259,13 @@ def template_redshift(observed_spectrum, template_spectrum, redshift,
 
     Returns
     -------
-    redshifted_spectrum: :class:`~specutils.Spectrum1D`
-        A new Spectrum1D object which incorporates the template_spectrum with a spectral_axis
+    redshifted_spectrum: :class:`~specutils.Spectrum`
+        A new Spectrum object which incorporates the template_spectrum with a spectral_axis
         that has been redshifted using the final_redshift, and resampled to that of the
         observed spectrum.
     final_redshift : `float`
         The best-fit redshift for template_spectrum to match the observed_spectrum.
-    normalized_template_spectrum : :class:`~specutils.Spectrum1D`
+    normalized_template_spectrum : :class:`~specutils.Spectrum`
         The normalized spectrum template.
     chi2_min: `float`
         The smallest chi2 value that was found.

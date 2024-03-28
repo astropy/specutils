@@ -3,7 +3,7 @@ import warnings
 
 from astropy.utils.exceptions import AstropyUserWarning
 from astropy.coordinates import SpectralCoord
-from ..spectra import Spectrum1D, SpectralRegion
+from ..spectra import Spectrum, SpectralRegion
 
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
@@ -12,7 +12,7 @@ def true_exciser(spectrum, region):
     """
     Basic spectral excise method where the array elements in the spectral
     region defined by the parameter ``region`` (a `~specutils.SpectralRegion`)
-    will be deleted from all applicable elements of the Spectrum1D object:
+    will be deleted from all applicable elements of the Spectrum object:
     flux, spectral_axis, mask, and uncertainty. If multiple subregions are
     defined in ``region``, all the subregions will be excised.
 
@@ -20,16 +20,16 @@ def true_exciser(spectrum, region):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the excision will be applied.
+    spectrum : `~specutils.Spectrum`
+        The `~specutils.Spectrum` object to which the excision will be applied.
 
     region : `~specutils.SpectralRegion`
         The region of the spectrum to remove.
 
     Returns
     -------
-    spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` with the region excised.
+    spectrum : `~specutils.Spectrum`
+        Output `~specutils.Spectrum` with the region excised.
 
     Raises
     ------
@@ -66,7 +66,7 @@ def true_exciser(spectrum, region):
         new_uncertainty = None
 
     # Return a new object with the regions excised.
-    return Spectrum1D(flux=new_flux,
+    return Spectrum(flux=new_flux,
                       spectral_axis=new_spectral_axis,
                       uncertainty=new_uncertainty,
                       mask=new_mask,
@@ -87,16 +87,16 @@ def linear_exciser(spectrum, region):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the excision will be applied.
+    spectrum : `~specutils.Spectrum`
+        The `~specutils.Spectrum` object to which the excision will be applied.
 
     region : `~specutils.SpectralRegion`
         The region of the spectrum to replace.
 
     Returns
     -------
-    spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` with the region excised.
+    spectrum : `~specutils.Spectrum`
+        Output `~specutils.Spectrum` with the region excised.
 
     Raises
     ------
@@ -140,7 +140,7 @@ def linear_exciser(spectrum, region):
             new_uncertainty[s:e] = np.sqrt(spectrum.uncertainty[s]**2 + spectrum.uncertainty[e]**2)
 
     # Return a new object with the regions excised.
-    return Spectrum1D(flux=modified_flux,
+    return Spectrum(flux=modified_flux,
                       spectral_axis=spectral_axis,
                       uncertainty=new_uncertainty,
                       wcs=spectrum.wcs,
@@ -157,8 +157,8 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the excision will be applied.
+    spectrum : `~specutils.Spectrum`
+        The `~specutils.Spectrum` object to which the excision will be applied.
 
     regions : list of `~specutils.SpectralRegion`
         Each element of the list is a `~specutils.SpectralRegion`. The flux
@@ -175,8 +175,8 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
 
     Returns
     -------
-    spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which has the regions excised.
+    spectrum : `~specutils.Spectrum`
+        Output `~specutils.Spectrum` which has the regions excised.
 
     Raises
     ------
@@ -186,8 +186,8 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
     """
 
     # Parameter checks
-    if not isinstance(spectrum, Spectrum1D):
-        raise ValueError('The spectrum parameter must be Spectrum1D object.')
+    if not isinstance(spectrum, Spectrum):
+        raise ValueError('The spectrum parameter must be Spectrum object.')
 
     for region in regions:
         spectrum = excise_region(spectrum, region, exciser)
@@ -202,8 +202,8 @@ def excise_region(spectrum, region, exciser=true_exciser):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to which the smoothing will be applied.
+    spectrum : `~specutils.Spectrum`
+        The `~specutils.Spectrum` object to which the smoothing will be applied.
 
     region : `~specutils.SpectralRegion`
         A `~specutils.SpectralRegion` object defining the region to excise.
@@ -219,8 +219,8 @@ def excise_region(spectrum, region, exciser=true_exciser):
 
     Returns
     -------
-    spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` with the region excised.
+    spectrum : `~specutils.Spectrum`
+        Output `~specutils.Spectrum` with the region excised.
 
     Raises
     ------
@@ -230,8 +230,8 @@ def excise_region(spectrum, region, exciser=true_exciser):
     """
 
     # Parameter checks
-    if not isinstance(spectrum, Spectrum1D):
-        raise ValueError('The spectrum parameter must be a Spectrum1D object.')
+    if not isinstance(spectrum, Spectrum):
+        raise ValueError('The spectrum parameter must be a Spectrum object.')
 
     if not isinstance(region, SpectralRegion):
         raise ValueError('The region parameter must be a SpectralRegion object.')
@@ -245,23 +245,23 @@ def excise_region(spectrum, region, exciser=true_exciser):
 
 def spectrum_from_model(model_input, spectrum):
     """
-    This method will create a `~specutils.Spectrum1D` object
+    This method will create a `~specutils.Spectrum` object
     with the flux defined by calling the input ``model``. All
-    other parameters for the output `~specutils.Spectrum1D` object
-    will be the same as the input `~specutils.Spectrum1D` object.
+    other parameters for the output `~specutils.Spectrum` object
+    will be the same as the input `~specutils.Spectrum` object.
 
     Parameters
     ----------
     model : `~astropy.modeling.Model`
         The input model or compound model from which flux is calculated.
 
-    spectrum : `~specutils.Spectrum1D`
-        The `~specutils.Spectrum1D` object to use as the model template.
+    spectrum : `~specutils.Spectrum`
+        The `~specutils.Spectrum` object to use as the model template.
 
     Returns
     -------
-    spectrum : `~specutils.Spectrum1D`
-        Output `~specutils.Spectrum1D` which is copy of the one passed in with the updated flux.
+    spectrum : `~specutils.Spectrum`
+        Output `~specutils.Spectrum` which is copy of the one passed in with the updated flux.
         The uncertainty will not be copied as it is not necessarily the same.
 
     """
@@ -275,7 +275,7 @@ def spectrum_from_model(model_input, spectrum):
     else:
         flux = model_input(spectrum.spectral_axis.value)*spectrum.flux.unit
 
-    return Spectrum1D(flux=flux,
+    return Spectrum(flux=flux,
                       spectral_axis=spectrum.spectral_axis,
                       wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,

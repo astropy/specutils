@@ -6,7 +6,7 @@ from astropy.table import Table
 import astropy.units as u
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping,
@@ -40,7 +40,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
-             dtype=Spectrum1D, extensions=['fits', 'fit'], priority=6)
+             dtype=Spectrum, extensions=['fits', 'fit'], priority=6)
 def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     """
     Load spectrum from a FITS file.
@@ -54,17 +54,17 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
         The HDU of the fits file (default: 1st extension) to read from
     column_mapping : dict
         A dictionary describing the relation between the FITS file columns
-        and the arguments of the `Spectrum1D` class, along with unit
+        and the arguments of the `Spectrum` class, along with unit
         information. The dictionary keys should be the FITS file column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum1D` keyword argument, and the second element is the
+        associated `Spectrum` keyword argument, and the second element is the
         unit for the ASCII file column::
 
             column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
     # Parse the wcs information. The wcs will be passed to the column finding
@@ -96,7 +96,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
 
     Parameters
     ----------
-    spectrum: Spectrum1D
+    spectrum: Spectrum
     file_name: str
         The path to the FITS file
     hdu: int

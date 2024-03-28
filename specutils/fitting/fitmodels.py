@@ -10,7 +10,7 @@ from astropy.table import QTable
 from scipy.signal import convolve
 
 from ..spectra.spectral_region import SpectralRegion
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 from ..utils import QuantityModel
 from ..analysis import fwhm, gaussian_sigma_width, centroid, warn_continuum_below_threshold
 from ..manipulation import extract_region
@@ -24,7 +24,7 @@ __all__ = ['find_lines_threshold', 'find_lines_derivative', 'fit_lines',
 # the astropy models but it was determined that this is a decent start as most
 # fitting will probably use one of these.
 #
-# Each method list must take a Spectrum1D object and should return a Quantity.
+# Each method list must take a Spectrum object and should return a Quantity.
 _parameter_estimators = {
     'Gaussian1D': {
         'amplitude': lambda s: max(s.flux),
@@ -66,7 +66,7 @@ def estimate_line_parameters(spectrum, model, region=None):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`
+    spectrum : `~specutils.Spectrum`
         The spectrum object from which we will estimate the model parameters.
 
     model : `~astropy.modeling.Model`
@@ -114,7 +114,7 @@ def find_lines_threshold(spectrum, noise_factor=1):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`
+    spectrum : `~specutils.Spectrum`
         The spectrum object in which the lines will be found.
 
     noise_factor : float
@@ -169,7 +169,7 @@ def find_lines_derivative(spectrum, flux_threshold=None):
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectrum object over which the equivalent width will be calculated.
     flux_threshold : float, `~astropy.units.Quantity` or None
         The threshold a pixel must be above to be considered part of a line. If
@@ -267,7 +267,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectrum object over which the equivalent width will be calculated.
     model: `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
         The model or list of models that contain the initial guess.
@@ -454,7 +454,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
         # TODO: really the spectral region machinery should have the power
         # to create a mask, and we'd just use that...
         idxarr = np.arange(spectrum.flux.size).reshape(spectrum.flux.shape)
-        index_spectrum = Spectrum1D(spectral_axis=dispersion,
+        index_spectrum = Spectrum(spectral_axis=dispersion,
                                     flux=u.Quantity(idxarr, u.Jy, dtype=int))
 
         extracted_regions = extract_region(index_spectrum, window)
@@ -480,7 +480,7 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
 
     input_spectrum = spectrum
 
-    spectrum = Spectrum1D(
+    spectrum = Spectrum(
         flux=flux.value * flux_unit,
         spectral_axis=dispersion,
         wcs=input_spectrum.wcs,
@@ -585,7 +585,7 @@ def _strip_units_from_model(model_in, spectrum, convert=True):
         class instantiation.
 
         If convert is False, then we will *not* do the conversion of units
-        to the units of the Spectrum1D object.  Otherwise we will convert.
+        to the units of the Spectrum object.  Otherwise we will convert.
     """
 
     #
