@@ -10,6 +10,8 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Compatibility with numpy 2.0 and astropy 6.1. [#1130]
+
 1.13.0 (2024-02-19)
 -------------------
 
