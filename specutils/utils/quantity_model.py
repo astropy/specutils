@@ -1,6 +1,8 @@
+import numpy as np
 from astropy import units as u
 
 __all__ = ['QuantityModel']
+_NUMPY_COPY_IF_NEEDED = False if np.__version__.startswith("1.") else None
 
 
 class QuantityModel:
@@ -72,4 +74,4 @@ class QuantityModel:
     def __call__(self, x, *args, **kwargs):
         unitlessx = x.to(self.input_units).value
         result = self.unitless_model(unitlessx, *args, **kwargs)
-        return u.Quantity(result, self.return_units, copy=False)
+        return u.Quantity(result, self.return_units, copy=_NUMPY_COPY_IF_NEEDED)
