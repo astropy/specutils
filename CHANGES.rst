@@ -1,14 +1,11 @@
-1.14.0 (unreleased)
+1.14.0 (2024-04-16)
 -------------------
-
-New Features
-^^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``new_flux_unit`` changed to ``with_flux_unit`` to match spectral version,
+  updated docstring to reflect actual behavior. [#1124]
 
 - Compatibility with numpy 2.0 and astropy 6.1. [#1130]
 
