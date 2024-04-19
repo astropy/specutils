@@ -25,12 +25,12 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.11 with astropy data and coverage
+          - name: Python 3.11 with remote data and coverage
             os: ubuntu-latest
             python: '3.11'
             toxenv: py311-test-cov
             toxargs: -v
-            toxposargs: --remote-data=astropy
+            toxposargs: --remote-data=any
 
           - name: Python 3.12 (Windows)
             os: windows-latest
