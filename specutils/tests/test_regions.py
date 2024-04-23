@@ -190,6 +190,7 @@ def test_from_list_list():
     for i, reg in enumerate(expected):
         assert_quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].upper))
 
+
 def test_read_write():
     sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
     sr.write("test_sr.ecsv")
