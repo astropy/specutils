@@ -306,6 +306,31 @@ also invert the spectral region
 and use that result as the ``exclude_regions`` argument in the `~specutils.fitting.fit_lines` function in order to avoid
 attempting to fit any of the continuum region.
 
+Reading and Writing
+-------------------
+
+`~specutils.SpectralRegion` objects can be written to ``ecsv`` files, which uses the `~astropy.tables.QTable` write machinery:
+
+.. code_block:: python
+
+    >>> spec_reg.write("spectral_region.ecsv")
+
+This overwrites existing files by default if a duplicate filename is input. The resulting files can be read back in
+to create a new `~specutils.SpectralRegion` using the ``read`` class method:
+
+.. code_block:: python
+
+    >>> spec_reg = SpectralRegion.read("spectral_region.ecsv")
+
+The `~astropy.tables.QTable` created to write out the `~specutils.SpectralRegion` to file can also be accessed
+directly with the ``as_table`` method, and a `~specutils.SpectralRegion` can be created directly from a `~astropy.tables.QTable`
+with the appropriate columns (minimally ``lower_bound`` and ``upper_bound``) using the ``from_qtable`` class method.
+
+.. code_block:: python
+
+    >>> spec_reg_table = spec_reg.as_table()
+    >>> spec_reg_2 = SpectralRegion.from_qtable(spec_reg_table)
+
 Reference/API
 -------------
 
