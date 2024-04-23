@@ -117,6 +117,7 @@ class SpectralRegion:
         Parameters
         ----------
         table : `~astropy.table.QTable`
+            An `~astropy.table.QTable` object with ``lower_bound`` and ``upper_bound`` columns.
 
         Returns
         -------
@@ -132,12 +133,13 @@ class SpectralRegion:
     @classmethod
     def read(cls, filename):
         """
-        Read in the ecsv file format output by the SpectralRegion.write method.
+        Create a ``SpectralRegion`` from an ecsv file output by the
+        ``SpectralRegion.write`` method.
 
         Parameters
         ----------
         filename : str
-            The name of the ecsv file on disk to be read in as a SpectralRegion.
+            The name of the ecsv file on disk to be read in as a ``SpectralRegion``.
         """
         table = QTable.read(filename)
         return cls.from_qtable(table)
@@ -386,11 +388,14 @@ class SpectralRegion:
         return QTable([lower_bounds, upper_bounds], names=("lower_bound", "upper_bound"))
 
     def as_table(self):
+        """Returns an `~astropy.table.QTable` with the upper and lower bound
+        of each subregion in the ``SpectralRegion``."""
         return self._table
 
     def write(self, filename="spectral_region.ecsv", overwrite=True):
         """
         Write the SpectralRegion to an ecsv file using `~astropy.table.QTable`.
+        Overwrites by default.
         """
         if not filename.endswith("ecsv"):
             raise ValueError("SpectralRegions can only be written out to ecsv files.")
