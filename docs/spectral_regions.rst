@@ -150,9 +150,9 @@ Region Extraction
 
 Given a `~specutils.SpectralRegion`, one can extract a sub-spectrum
 from a `~specutils.Spectrum1D` object. If the `~specutils.SpectralRegion`
-has multiple sub-regions then by default a list of `~specutils.Spectrum1D` objects 
-will be returned. If the ``return_single_spectrum`` argument is set to ``True``, 
-the resulting spectra will be concatenated together into a single 
+has multiple sub-regions then by default a list of `~specutils.Spectrum1D` objects
+will be returned. If the ``return_single_spectrum`` argument is set to ``True``,
+the resulting spectra will be concatenated together into a single
 `~specutils.Spectrum1D` object instead.
 
 An example of a single sub-region `~specutils.SpectralRegion`:
@@ -240,8 +240,8 @@ in between disjointed spectral regions, can be extracted with
         22., 23., 24., 25., 26., 27., 28., 29., 30.] nm>
 
 
-`~specutils.manipulation.spectral_slab` is basically an alternate entry point for 
-`~specutils.manipulation.extract_region`. Notice the slightly different way to input the spectral 
+`~specutils.manipulation.spectral_slab` is basically an alternate entry point for
+`~specutils.manipulation.extract_region`. Notice the slightly different way to input the spectral
 axis range to be extracted.
 This function's purpose is to facilitate migration of ``spectral_cube`` functionality
 into ``specutils``:
@@ -315,6 +315,8 @@ Reference/API
     :no-inheritance-diagram:
 
     :skip: test
+    :skip: QTable
+    :skip: cached_property
     :skip: Spectrum1D
     :skip: SpectrumCollection
     :skip: SpectralAxis

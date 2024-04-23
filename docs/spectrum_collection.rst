@@ -106,6 +106,8 @@ Reference/API
     :no-inheritance-diagram:
 
     :skip: test
+    :skip: QTable
+    :skip: cached_property
     :skip: Spectrum1D
     :skip: SpectralRegion
     :skip: SpectralAxis
