@@ -1,6 +1,8 @@
 import itertools
+from functools import cached_property
 import sys
 
+from astropy.table import QTable
 import astropy.units as u
 
 
@@ -105,6 +107,40 @@ class SpectralRegion:
 
         return cls([(x - width * 0.5, x + width * 0.5)
                     for x in table['line_center']])
+
+    @classmethod
+    def from_qtable(cls, table):
+        """
+        Generate a ``SpectralRegion`` instance from an `~astropy.table.QTable`
+        object has has ``lower_bound`` and ``upper_bound`` columns
+
+        Parameters
+        ----------
+        table : `~astropy.table.QTable`
+
+        Returns
+        -------
+        `~specutils.SpectralRegion`
+            The spectral region based on the table of bounds.
+        """
+        subregions = []
+        for row in table:
+            subregions.append([row["lower_bound"], row["upper_bound"]])
+
+        return cls(subregions)
+
+    @classmethod
+    def read(cls, filename):
+        """
+        Read in the ecsv file format output by the SpectralRegion.write method.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the ecsv file on disk to be read in as a SpectralRegion.
+        """
+        table = QTable.read(filename)
+        return cls.from_qtable(table)
 
     def _info(self):
         """
@@ -337,3 +373,26 @@ class SpectralRegion:
         #
 
         return SpectralRegion([(x, y) for x, y in zip(newlist[0::2], newlist[1::2])])
+
+    @cached_property
+    def _table(self):
+        # Return the information defining the spectral region as an astropy QTable
+        lower_bounds = []
+        upper_bounds = []
+        for subregion in self.subregions:
+            lower_bounds.append(subregion[0])
+            upper_bounds.append(subregion[1])
+
+        return QTable([lower_bounds, upper_bounds], names=("lower_bound", "upper_bound"))
+
+    def as_table(self):
+        return self._table
+
+    def write(self, filename="spectral_region.ecsv", overwrite=True):
+        """
+        Write the SpectralRegion to an ecsv file using `~astropy.table.QTable`.
+        """
+        if not filename.endswith("ecsv"):
+            raise ValueError("SpectralRegions can only be written out to ecsv files.")
+
+        self._table.write(filename, overwrite=overwrite)
