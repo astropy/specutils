@@ -387,6 +387,5 @@ Reference/API
 
     :skip: test
     :skip: QTable
-    :skip: cached_property
     :skip: SpectrumCollection
     :skip: SpectralRegion

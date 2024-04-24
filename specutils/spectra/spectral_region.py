@@ -1,5 +1,4 @@
 import itertools
-from functools import cached_property
 import sys
 
 from astropy.table import QTable
@@ -376,7 +375,7 @@ class SpectralRegion:
 
         return SpectralRegion([(x, y) for x, y in zip(newlist[0::2], newlist[1::2])])
 
-    @cached_property
+    @property
     def _table(self):
         # Return the information defining the spectral region as an astropy QTable
         lower_bounds = []

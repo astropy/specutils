@@ -107,7 +107,6 @@ Reference/API
 
     :skip: test
     :skip: QTable
-    :skip: cached_property
     :skip: Spectrum1D
     :skip: SpectralRegion
     :skip: SpectralAxis

@@ -341,7 +341,6 @@ Reference/API
 
     :skip: test
     :skip: QTable
-    :skip: cached_property
     :skip: Spectrum1D
     :skip: SpectrumCollection
     :skip: SpectralAxis
