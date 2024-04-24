@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-  pull_request_target:
+  pull_request:
   schedule:
     # run every Wednesday at 5pm UTC
     - cron: '17 0 * * 3'
