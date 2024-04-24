@@ -76,6 +76,8 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   allowed_failures:
     name: ${{ matrix.name }}
