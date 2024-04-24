@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-  pull_request:
+  pull_request_target:
   schedule:
     # run every Wednesday at 5pm UTC
     - cron: '17 0 * * 3'
@@ -74,10 +74,10 @@ jobs:
     - name: Upload coverage to codecov
       if: ${{ contains(matrix.toxenv,'-cov') }}
       uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        file: ./coverage.xml
 
   allowed_failures:
     name: ${{ matrix.name }}
