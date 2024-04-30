@@ -189,3 +189,14 @@ def test_from_list_list():
 
     for i, reg in enumerate(expected):
         assert_quantity_allclose(reg, (spec_reg[i].lower, spec_reg[i].upper))
+
+
+def test_read_write():
+    sr = SpectralRegion([(0.45*u.um, 0.6*u.um), (0.8*u.um, 0.9*u.um)])
+    sr.write("test_sr.ecsv")
+    sr2 = SpectralRegion.read("test_sr.ecsv")
+    assert list(sr2.as_table().columns) == ["lower_bound", "upper_bound"]
+
+    sr3 = SpectralRegion.from_qtable(sr2.as_table())
+    assert sr3.subregions[0] == sr.subregions[0]
+    assert sr3.subregions[1] == sr.subregions[1]

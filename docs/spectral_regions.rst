@@ -150,9 +150,9 @@ Region Extraction
 
 Given a `~specutils.SpectralRegion`, one can extract a sub-spectrum
 from a `~specutils.Spectrum1D` object. If the `~specutils.SpectralRegion`
-has multiple sub-regions then by default a list of `~specutils.Spectrum1D` objects 
-will be returned. If the ``return_single_spectrum`` argument is set to ``True``, 
-the resulting spectra will be concatenated together into a single 
+has multiple sub-regions then by default a list of `~specutils.Spectrum1D` objects
+will be returned. If the ``return_single_spectrum`` argument is set to ``True``,
+the resulting spectra will be concatenated together into a single
 `~specutils.Spectrum1D` object instead.
 
 An example of a single sub-region `~specutils.SpectralRegion`:
@@ -240,8 +240,8 @@ in between disjointed spectral regions, can be extracted with
         22., 23., 24., 25., 26., 27., 28., 29., 30.] nm>
 
 
-`~specutils.manipulation.spectral_slab` is basically an alternate entry point for 
-`~specutils.manipulation.extract_region`. Notice the slightly different way to input the spectral 
+`~specutils.manipulation.spectral_slab` is basically an alternate entry point for
+`~specutils.manipulation.extract_region`. Notice the slightly different way to input the spectral
 axis range to be extracted.
 This function's purpose is to facilitate migration of ``spectral_cube`` functionality
 into ``specutils``:
@@ -306,6 +306,31 @@ also invert the spectral region
 and use that result as the ``exclude_regions`` argument in the `~specutils.fitting.fit_lines` function in order to avoid
 attempting to fit any of the continuum region.
 
+Reading and Writing
+-------------------
+
+`~specutils.SpectralRegion` objects can be written to ``ecsv`` files, which uses the `~astropy.table.QTable` write machinery:
+
+.. code-block:: python
+
+    >>> spec_reg.write("spectral_region.ecsv")
+
+This overwrites existing files by default if a duplicate filename is input. The resulting files can be read back in
+to create a new `~specutils.SpectralRegion` using the ``read`` class method:
+
+.. code-block:: python
+
+    >>> spec_reg = SpectralRegion.read("spectral_region.ecsv")
+
+The `~astropy.table.QTable` created to write out the `~specutils.SpectralRegion` to file can also be accessed
+directly with the ``as_table`` method, and a `~specutils.SpectralRegion` can be created directly from a `~astropy.table.QTable`
+with the appropriate columns (minimally ``lower_bound`` and ``upper_bound``) using the ``from_qtable`` class method.
+
+.. code-block:: python
+
+    >>> spec_reg_table = spec_reg.as_table()
+    >>> spec_reg_2 = SpectralRegion.from_qtable(spec_reg_table)
+
 Reference/API
 -------------
 
@@ -315,6 +340,7 @@ Reference/API
     :no-inheritance-diagram:
 
     :skip: test
+    :skip: QTable
     :skip: Spectrum1D
     :skip: SpectrumCollection
     :skip: SpectralAxis

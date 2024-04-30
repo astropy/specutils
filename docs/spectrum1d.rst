@@ -386,5 +386,6 @@ Reference/API
     :headings: -~
 
     :skip: test
+    :skip: QTable
     :skip: SpectrumCollection
     :skip: SpectralRegion
