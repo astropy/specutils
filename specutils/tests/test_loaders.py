@@ -1740,3 +1740,46 @@ def test_jwst_niriss_c1d_v1_2_3(remote_data_path):
     [assert_multi_equals(d.shape, r) for d,r in zip(data, [(56,), (107,)])]
     [assert_multi_equals(d.unit, u.Jy) for d in data]
     [assert_multi_equals(d.spectral_axis.unit, u.um) for d in data]
+
+
+class TestSAMI:
+    @remote_access([
+        {'id': "10802828", 'filename':"24433_A_adaptive_blue.fits.gz"},
+        {'id': "10802828", 'filename':"24433_A_adaptive_red.fits.gz"},
+        {'id': "10802828", 'filename':"24433_A_annular_blue.fits.gz"},
+        {'id': "10802828", 'filename':"24433_A_annular_red.fits.gz"},
+        {'id': "10802828", 'filename':"24433_A_cube_blue.fits.gz"},
+        {'id': "10802828", 'filename':"24433_A_cube_red.fits.gz"},
+        {'id': "10802828", 'filename':"24433_adaptive_blue.fits.gz"},
+        {'id': "10802828", 'filename':"24433_adaptive_red.fits.gz"},
+        {'id': "10802828", 'filename':"24433_spectrum_1-4-arcsec_blue.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_1-4-arcsec_red.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_2-arcsec_blue.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_2-arcsec_red.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_3-arcsec_blue.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_3-arcsec_red.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_3-kpc_blue.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_3-kpc_red.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_4-arcsec_blue.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_4-arcsec_red.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_re_blue.fits"},
+        {'id': "10802828", 'filename':"24433_spectrum_re_red.fits"},
+    ])
+    def test_sami_guess(self, remote_data_path):
+        spectra = SpectrumList.read(remote_data_path)
+        assert len(spectra) == 1
+
+        spec = spectra[0]
+        assert isinstance(spec.uncertainty, VarianceUncertainty)
+        assert spec.flux.unit == u.Unit('10**(-16) erg/s/cm**2/angstrom/pixel')
+
+        if len(spec.flux.shape) == 3:
+            # This is a cube
+            assert spec.flux.shape == (50, 50, 2048)
+            assert "sami_QC_table" in spec.meta
+            assert "sami_dust_vector_weights" in spec.meta
+
+        else:
+            # This is a 1D spectrum
+            assert spec.flux.shape == (2048,)
+            assert "sami_aperture_spectra_mask" in spec.meta

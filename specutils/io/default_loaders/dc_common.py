@@ -306,7 +306,12 @@ def add_single_spectra_to_map(
         return None
 
     if valid_wcs or not spec_wcs_info:
-        wcs = WCS(header)
+        try:
+            wcs = WCS(header)
+        except (ValueError, KeyError):
+            if fallback_header is None:
+                raise
+            wcs = WCS(fallback_header)
         if drop_wcs_axes is not None:
             if isinstance(drop_wcs_axes, Callable):
                 wcs = drop_wcs_axes(wcs)
@@ -352,9 +357,7 @@ def add_single_spectra_to_map(
         spectrum.uncertainty = UNCERTAINTY_MAP[purpose](aligned_flux)
         spectrum.meta["uncertainty_header"] = header
 
-    # We never actually want to return something, this just flags it to pylint
-    # that we know we're breaking out of the function when skip is selected
-    return None
+    return spectrum
 
 
 def get_purpose(
