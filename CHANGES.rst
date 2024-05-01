@@ -1,14 +1,11 @@
-1.15.0 (unreleased)
+1.15.0 (2024-05-01)
 -------------------
 
 New Features
 ^^^^^^^^^^^^
 
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Implemented ``SpectralRegion.write()`` and ``SpectralRegion.read()`` to round-trip spectral
+regions to/from ECSV files via ``astropy.table.QTable``. [#1133]
 
 1.14.0 (2024-04-16)
 -------------------
