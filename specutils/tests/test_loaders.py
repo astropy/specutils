@@ -202,7 +202,7 @@ def test_sdss_spec(tmp_path):
 @pytest.mark.remote_data
 def test_sdss_spspec(tmp_path):
     sp_pattern = 'spSpec-51957-0273-016.fit'
-    url = f'http://das.sdss.org/spectro/1d_26/0273/1d/{sp_pattern}'
+    url = f'https://das.sdss.org/spectro/1d_26/0273/1d/{sp_pattern}'
     with urllib.request.urlopen(url) as response:
         # Read from open file object
         spec = Spectrum1D.read(response, format="SDSS-I/II spSpec")
@@ -256,7 +256,7 @@ def test_sdss_spspec_stream():
     """Test direct read and recognition of SDSS-I/II spSpec from remote URL,
     i.e. do not rely on filename pattern.
     """
-    sdss_url = 'http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit'
+    sdss_url = 'https://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit'
     spec = Spectrum1D.read(sdss_url)
 
     assert isinstance(spec, Spectrum1D)
@@ -279,7 +279,7 @@ def test_sdss_compressed(compress, tmp_path):
 
     # Deliberately not using standard filename pattern to test header info.
     tmp_filename = tmp_path / 'SDSS-I.fits'
-    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+    with urllib.request.urlopen('https://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
         with open(tmp_filename, 'wb') as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
@@ -307,7 +307,7 @@ def test_sdss_compressed(compress, tmp_path):
 def test_sdss_spplate(tmp_path):
     """Test loading of multi-object spectrum from SDSS `spPlate` format FITS file.
     """
-    with urllib.request.urlopen('http://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
+    with urllib.request.urlopen('https://das.sdss.org/spectro/1d_26/0273/1d/spSpec-51957-0273-016.fit') as response:
         # Read reference spectrum from open file object
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', FITSFixedWarning)
