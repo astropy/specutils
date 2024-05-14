@@ -71,13 +71,35 @@ jobs:
     - name: Run tests
       run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
     # TODO: Do we need --gcov-glob "*cextern*" ?
-    - name: Upload coverage to codecov
+    - name: Upload coverage to artifacts
       if: ${{ contains(matrix.toxenv,'-cov') }}
-      uses: codecov/codecov-action@v4
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      uses: actions/upload-artifact@v4
       with:
-        file: ./coverage.xml
+        name: coverage_${{ matrix.toxenv }}.xml
+        path: coverage.xml
+        if-no-files-found: error
+
+  upload-codecov:
+    needs: [ tests ]
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    name: Upload Coverage
+    steps:
+    - name: Download coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: coverage
+        pattern: coverage_*
+        merge-multiple: true
+    - name: Upload report to Codecov
+      if: ${{ hashFiles('coverage/') != '' }}
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: coverage
+        fail_ci_if_error: true
+        verbose: true
 
   allowed_failures:
     name: ${{ matrix.name }}
