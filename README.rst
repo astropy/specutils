@@ -12,11 +12,11 @@ Specutils
    :alt: Coverage Status
 
 .. |Docs| image:: https://readthedocs.org/projects/specutils/badge/?version=latest
-   :target: http://specutils.readthedocs.io/en/latest/?badge=latest
+   :target: https://specutils.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
-   :target: http://www.astropy.org/
+.. |Astropy| image:: https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
+   :target: https://www.astropy.org/
    :alt: Powered by Astropy
 
 Specutils is an `Astropy affiliated package <http://affiliated.astropy.org/>`_
