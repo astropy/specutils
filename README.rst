@@ -1,21 +1,23 @@
 Specutils
 =========
 
-.. image:: https://github.com/astropy/specutils/workflows/CI/badge.svg
-    :target: https://github.com/astropy/specutils/actions
-    :alt: GitHub Actions CI Status
+|CI| |Coverage| |Docs| |Astropy|
 
-.. image:: https://codecov.io/github/astropy/specutils/branch/master/graph/badge.svg
-    :target: https://codecov.io/github/astropy/specutils
-    :alt: Coverage Status
+.. |CI| image:: https://github.com/astropy/specutils/workflows/CI/badge.svg
+   :target: https://github.com/astropy/specutils/actions
+   :alt: GitHub Actions CI Status
 
-.. image:: https://readthedocs.org/projects/specutils/badge/?version=latest
-    :target: http://specutils.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+.. |Coverage| image:: https://codecov.io/github/astropy/specutils/branch/main/graph/badge.svg
+   :target: https://codecov.io/github/astropy/specutils
+   :alt: Coverage Status
 
-.. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
-    :target: http://www.astropy.org/
-    :alt: Powered by Astropy
+.. |Docs| image:: https://readthedocs.org/projects/specutils/badge/?version=latest
+   :target: http://specutils.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
+.. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
+   :target: http://www.astropy.org/
+   :alt: Powered by Astropy
 
 Specutils is an `Astropy affiliated package <http://affiliated.astropy.org/>`_
 with the goal of providing a shared set of Python representations of
@@ -53,7 +55,6 @@ the terms of the BSD 3-Clause license. This package is based upon
 the `Astropy package template <https://github.com/astropy/package-template>`_
 which is licensed under the BSD 3-clause license. See the ``licenses`` folder for
 more information.
-
 
 Contributing
 ------------
@@ -98,4 +99,3 @@ The primary branch for this repo has been transitioned from ``master`` to ``main
    git branch -u origin/main main
 
 If you are using a GUI to manage your repos you'll have to find the equivalent commands as it's different for different programs. Alternatively, you can just delete your local clone and re-clone!
-
