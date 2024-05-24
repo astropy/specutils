@@ -150,7 +150,7 @@ The `~specutils.analysis.moment` function computes moments of any order:
 
     >>> from specutils.analysis import moment
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz)) # doctest:+FLOAT_CMP
-    <Quantity 98.26318995 Jy>
+    <Quantity 4.93784874 GHz Jy>
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=1) # doctest:+FLOAT_CMP
     <Quantity 4.99909151 GHz>
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=2) # doctest:+FLOAT_CMP
