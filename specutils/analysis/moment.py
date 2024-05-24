@@ -5,6 +5,7 @@ spectral features.
 
 import numpy as np
 from ..manipulation import extract_region
+from ..spectra import SpectralAxis
 from .utils import computation_wrapper
 
 
@@ -61,7 +62,8 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
         return None
 
     if order == 0:
-        return np.sum(flux, axis=axis)
+        dx = np.abs(np.diff(spectral_axis.bin_edges))
+        return np.sum(flux * dx, axis=axis)
 
     dispersion = spectral_axis
     if len(flux.shape) > len(spectral_axis.shape):
