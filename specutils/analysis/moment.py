@@ -5,7 +5,7 @@ spectral features.
 
 import numpy as np
 from ..manipulation import extract_region
-from ..spectra import SpectralAxis
+from ..spectra import SpectrumCollection
 from .utils import computation_wrapper
 
 
@@ -40,6 +40,9 @@ def moment(spectrum, regions=None, order=0, axis=-1):
         Moment of the spectrum. Returns None if (order < 0 or None)
 
     """
+    if isinstance(spectrum, SpectrumCollection):
+        return [computation_wrapper(_compute_moment, spec, regions,order=order, axis=axis)
+                for spec in spectrum]
     return computation_wrapper(_compute_moment, spectrum, regions,
                                order=order, axis=axis)
 
