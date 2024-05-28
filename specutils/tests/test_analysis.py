@@ -1164,8 +1164,8 @@ def test_moment_cube_order_2():
     assert moment_2.shape == (10, 10000)
     assert moment_2.unit.is_equivalent(u.GHz**2)
     # check assorted values.
-    assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][0], 8.078e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[1][0], 8.078e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[0][3], 2.019e-28*u.GHz**2, rtol=0.01)
 
 
