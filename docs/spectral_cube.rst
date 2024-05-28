@@ -115,9 +115,9 @@ along the spectral axis (remember that the spectral axis is always last in a
     >>> m.shape  # doctest: +REMOTE_DATA
     (74, 74)
     >>> m[30:33,30:33]  # doctest: +REMOTE_DATA +FLOAT_CMP
-    <Quantity [[6.45261317e-07, 6.46265069e-07, 6.48128166e-07],
-               [6.46467930e-07, 6.47941283e-07, 6.51460998e-07],
-               [6.48672775e-07, 6.52631872e-07, 6.56733087e-07]] m>
+    <Quantity [[6.97933331e-07, 6.98926463e-07, 7.00540974e-07],
+               [6.98959625e-07, 7.00280655e-07, 7.03511823e-07],
+               [7.00740294e-07, 7.04527986e-07, 7.08245958e-07]] m>
 
 Use Case
 ========
