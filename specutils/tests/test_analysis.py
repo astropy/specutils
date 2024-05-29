@@ -1065,8 +1065,8 @@ def test_moment():
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux)
 
     moment_0 = moment(spectrum, order=0)
-    assert moment_0.unit.is_equivalent(u.Jy)
-    assert quantity_allclose(moment_0, 252.96*u.Jy, atol=0.01*u.Jy)
+    assert moment_0.unit.is_equivalent(u.Jy * u.GHz)
+    assert quantity_allclose(moment_0, 2.5045*u.Jy*u.GHz, atol=0.001*u.Jy*u.GHz)
 
     moment_1 = moment(spectrum, order=1)
     assert moment_1.unit.is_equivalent(u.GHz)
@@ -1096,6 +1096,11 @@ def test_moment_cube():
     flux_multid = np.broadcast_to(flux, [9, 10, flux.shape[0]]) * u.Jy
 
     spectrum = Spectrum1D(spectral_axis=frequencies, flux=flux_multid)
+
+    moment_0 = moment(spectrum, order=0)
+
+    assert moment_0.shape == (9, 10)
+    assert moment_0.unit.is_equivalent(u.Jy*u.GHz)
 
     moment_1 = moment(spectrum, order=1)
 
@@ -1159,8 +1164,8 @@ def test_moment_cube_order_2():
     assert moment_2.shape == (10, 10000)
     assert moment_2.unit.is_equivalent(u.GHz**2)
     # check assorted values.
-    assert quantity_allclose(moment_2[0][0], 2.019e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[1][0], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][0], 8.078e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[1][0], 8.078e-28*u.GHz**2, rtol=0.01)
     assert quantity_allclose(moment_2[0][3], 2.019e-28*u.GHz**2, rtol=0.01)
 
 
