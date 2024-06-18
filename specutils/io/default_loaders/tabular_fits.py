@@ -53,7 +53,7 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     hdu : int
         The HDU of the fits file (default: 1st extension) to read from
     store_data_header : bool
-        Defaults to ``False``, which stores the primary header in ``Spectrum1D.meta['header']``.
+        Defaults to ``False``, which stores the primary header in ``Spectrum.meta['header']``.
         Set to ``True`` to instead store the header from the specified data HDU.
     column_mapping : dict
         A dictionary describing the relation between the FITS file columns
@@ -114,10 +114,10 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     hdu : int
         Header Data Unit in FITS file to write to (currently only extension HDU 1)
     update_header : bool
-        Write all compatible items in ``Spectrum1D.meta`` directly to FITS header;
-        this will overwrite any identically named keys from ``Spectrum1D.meta['header']``.
+        Write all compatible items in ``Spectrum.meta`` directly to FITS header;
+        this will overwrite any identically named keys from ``Spectrum.meta['header']``.
     store_data_header : bool
-        If ``True``, store ``Spectrum1D.meta['header']`` in the header of the target data HDU
+        If ``True``, store ``Spectrum.meta['header']`` in the header of the target data HDU
         instead of the primary header (default ``False``).
     wunit : str or `~astropy.units.Unit`
         Unit for the spectral axis (wavelength or frequency-like)

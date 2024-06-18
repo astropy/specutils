@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.nddata import VarianceUncertainty, InverseVariance, StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra.spectrum1d import Spectrum, SpectralAxis
+from ..spectra.spectrum import Spectrum, SpectralAxis
 from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
 

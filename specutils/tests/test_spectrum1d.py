@@ -2,7 +2,9 @@ import astropy.units as u
 import astropy.wcs as fitswcs
 import gwcs
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
+
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 from astropy.tests.helper import quantity_allclose
@@ -189,7 +191,7 @@ def test_spectral_axis_conversions():
 
 def test_spectral_axis_and_flux_conversions():
     """A little bit from both sets of tests."""
-    spec = Spectrum1D(spectral_axis=np.arange(100, 150) * u.nm,
+    spec = Spectrum(spectral_axis=np.arange(100, 150) * u.nm,
                       flux=np.ones(49) * u.Jy)
 
     new_spec = spec.with_spectral_axis_and_flux_units(
