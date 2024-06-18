@@ -737,10 +737,10 @@ def test_tabular_fits_roundtrip_header(tmp_path, metadata_hdu):
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.erg / (u.s * u.cm**2 * u.AA)
     hdr = fits.header.Header({'TELESCOP': 'Crystal', 'OBSERVER': 'Cruz'})
-    spec = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    spec = Spectrum(flux=flux, spectral_axis=disp, meta={'header': hdr})
     tmpfile = str(tmp_path / '_tst.fits')
     spec.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
-    spec = Spectrum1D.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+    spec = Spectrum.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
 
     # Confirm HDU-specific header cards are read back in.
     assert spec.meta['header']['NAXIS'] == metadata_hdu * 2
@@ -749,7 +749,7 @@ def test_tabular_fits_roundtrip_header(tmp_path, metadata_hdu):
     # Write it out and read back again to compare full headers.
     tmpfile = str(tmp_path / '_tst2.fits')
     spec.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
-    spectrum = Spectrum1D.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+    spectrum = Spectrum.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
 
     # 'EXTNAME' is rewritten by the writer and may pop up in a different location.
     if metadata_hdu == 1:
@@ -763,10 +763,10 @@ def test_tabular_fits_update_header(tmp_path, metadata_hdu):
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.erg / (u.s * u.cm**2 * u.AA)
     hdr = fits.header.Header({'TELESCOP': 'Crystal', 'OBSERVER': 'Cruz'})
-    spec = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    spec = Spectrum(flux=flux, spectral_axis=disp, meta={'header': hdr})
     tmpfile = str(tmp_path / '_tst.fits')
     spec.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
-    spectrum = Spectrum1D.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+    spectrum = Spectrum.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
 
     assert spectrum.meta['header']['OBSERVER'] == 'Cruz'
     assert spectrum.meta['header']['TELESCOP'] == 'Crystal'
@@ -1871,7 +1871,7 @@ class TestSAMI:
 
         if len(spec.flux.shape) == 3:
             # This is a cube
-            assert spec.flux.shape == (50, 50, 2048)
+            assert spec.flux.shape == (2048, 50, 50)
             assert "sami_QC_table" in spec.meta
             assert "sami_dust_vector_weights" in spec.meta
 

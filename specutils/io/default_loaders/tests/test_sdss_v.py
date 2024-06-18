@@ -451,8 +451,8 @@ def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
                                                             overwrite=True)
 
     with pytest.warns(AstropyUserWarning):
-        data = Spectrum1D.read(tmpfile, hdu=hdu)
-        assert isinstance(data, Spectrum1D)
+        data = Spectrum.read(tmpfile, hdu=hdu)
+        assert isinstance(data, Spectrum)
         assert isinstance(data.meta["header"], fits.Header)
         if data.meta["instrument"].lower() == "apogee":
             length = 8575
