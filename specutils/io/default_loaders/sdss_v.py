@@ -605,7 +605,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         meta["name"] = hdulist[hdu].name
         meta["sdss_id"] = hdulist[hdu].data['sdss_id']
 
-    # drop back a list of Spectrum1Ds to unpack
+    # drop back a list of Spectrum objects to unpack
     return Spectrum(
         spectral_axis=spectral_axis,
         flux=flux,

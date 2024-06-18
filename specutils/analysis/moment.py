@@ -51,6 +51,9 @@ def _compute_moment(spectrum, regions=None, order=0, axis='spectral'):
     """
     This is a helper function for the above `moment()` method.
     """
+    if int(order) != order or order < 0:
+        raise ValueError("Order must be a positive integer.")
+
     if axis == "spectral":
         if isinstance(spectrum, SpectrumCollection):
             axes = [spec.spectral_axis_index for spec in spectrum]
@@ -71,23 +74,29 @@ def _compute_moment(spectrum, regions=None, order=0, axis='spectral'):
     # Ignore masks for now. This should be fully addressed when
     # specutils gets revamped to handle multi-dimensional masks.
     flux = calc_spectrum.flux
+
     spectral_axis = calc_spectrum.spectral_axis
+    # If axis is not the spectral axis, we simply use pixel values for dx and dispersion
+    if (axis != spectrum.spectral_axis_index and
+            not (axis == -1 and spectrum.spectral_axis_index == spectrum.flux.ndim-1)):
+        dx = np.ones(flux.shape[axis])
+        dispersion = np.arange(flux.shape[axis]) + 1
+    else:
+        dx = np.abs(np.diff(spectral_axis.bin_edges))
+        dispersion = spectral_axis
 
-    if order is None or order < 0:
-        return None
+    # We now have to account for the desired axis being anywhere, not always last
+    if len(flux.shape) > len(spectral_axis.shape):
+        for i in range(flux.ndim):
+            if i != axis:
+                dx = np.expand_dims(dx, i)
+                dx = np.repeat(dx, flux.shape[i], i)
+                dispersion = np.expand_dims(dispersion, i)
+                dispersion = np.repeat(dispersion, flux.shape[i], i)
 
-    dx = np.abs(np.diff(spectral_axis.bin_edges))
     m0 = np.sum(flux * dx, axis=axis)
     if order == 0:
         return m0
-
-    dispersion = spectral_axis
-    # We now have to account for the spectral axis being anywhere, not always last
-    if len(flux.shape) > len(spectral_axis.shape):
-        for i in range(flux.ndim):
-            if i != calc_spectrum.spectral_axis_index:
-                dispersion = np.expand_dims(dispersion, i)
-                dispersion = np.repeat(dispersion, flux.shape[i], i)
 
     if order == 1:
         return np.sum(flux * dispersion * dx, axis=axis) / m0

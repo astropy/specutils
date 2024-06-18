@@ -156,6 +156,11 @@ The `~specutils.analysis.moment` function computes moments of any order:
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=2) # doctest:+FLOAT_CMP
     <Quantity 0.58586695 GHz2>
 
+By default the moment is calculated along the spectral axis, but any axis can be specified with
+the ``axis`` keyword. Non-spectral-axis moments are calculated using integer pixel values for the
+dispersion and return unitless values. Although they are available, they are perhaps of
+questionable usefulness.
+
 
 Line Widths
 -----------

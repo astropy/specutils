@@ -350,11 +350,7 @@ Reference/API
     :no-inheritance-diagram:
 
     :skip: test
-<<<<<<< HEAD
     :skip: QTable
-    :skip: Spectrum1D
-=======
     :skip: Spectrum
->>>>>>> bbaa7431 (Update spectrum class name from Spectrum1D to Spectrum (#1126))
     :skip: SpectrumCollection
     :skip: SpectralAxis
