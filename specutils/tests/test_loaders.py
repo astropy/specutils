@@ -1775,7 +1775,7 @@ class TestSAMI:
 
         if len(spec.flux.shape) == 3:
             # This is a cube
-            assert spec.flux.shape == (50, 50, 2048)
+            assert spec.flux.shape == (2048, 50, 50)
             assert "sami_QC_table" in spec.meta
             assert "sami_dust_vector_weights" in spec.meta
 
