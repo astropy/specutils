@@ -782,7 +782,7 @@ def test_tabular_fits_compressed(compress, tmp_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', FITSFixedWarning)
         os.system(f'{compress} {tmpfile}')
-        spec = Spectrum1D.read(tmpfile + ext[compress])
+        spec = Spectrum1D.read(tmpfile + ext[compress], format='tabular-fits')
 
     assert isinstance(spec, Spectrum1D)
     assert spec.spectral_axis.shape[0] == len(disp)
@@ -794,7 +794,7 @@ def test_tabular_fits_compressed(compress, tmp_path):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', FITSFixedWarning)
         os.system(f'mv {tmpfile}{ext[compress]} {tmpfile}')
-        spec = Spectrum1D.read(tmpfile)
+        spec = Spectrum1D.read(tmpfile, format='tabular-fits')
 
     assert isinstance(spec, Spectrum1D)
     assert spec.spectral_axis.shape[0] == len(disp)
