@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- Added 'filter_non_finite' flag to `fit_lines` to allow data with non-finite
+  weights to be fit after filtering. [#1078]
+
 Bug Fixes
 ^^^^^^^^^
 
