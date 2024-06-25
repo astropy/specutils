@@ -668,15 +668,11 @@ def test_tabular_fits_maskheader(tmp_path):
     tmpfile = str(tmp_path / '_tst.fits')
     spectrum.write(tmpfile, format='tabular-fits')
 
-    print(f"spetrum meta: \n {repr(spectrum.meta['header'])}")
     # Read it in and check against the original
     with fits.open(tmpfile) as hdulist:
-        # print(f'\nhdu info:\n')
-        # hdulist.info()
-        # print(f'\nhdu0 header:\n{repr(hdulist[0].header)}')
-        # print(f'\nhdu1 header:\n{repr(hdulist[1].header)}')
 
         # Test HDU0 header
+        assert hdulist[0].header['NAXIS'] == 0
         assert hdulist[0].header['OBSERVER'] == 'Parsons'
 
         # keys relevant to datashape are in HDU1 header
