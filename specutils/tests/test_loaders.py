@@ -678,16 +678,8 @@ def test_tabular_fits_maskheader(tmp_path):
 
         # Test HDU0 header
         assert hdulist[0].header['OBSERVER'] == 'Parsons'
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-        # keys relevant to datashape are in HDU 1
-=======
-    
-=======
->>>>>>> 8bef29ce (codestyle fix)
         # keys relevant to datashape are in HDU1 header
->>>>>>> 34257f44 (restore old legacy tests.)
         assert hdulist[1].header['NAXIS'] == 2
         assert hdulist[1].header['NAXIS2'] == disp.shape[0]
 
@@ -705,7 +697,7 @@ def test_tabular_fits_update_header(tmp_path):
     spectrum = Spectrum1D.read(tmpfile, format='tabular-fits')
 
     # Now write with updated header information from spectrum.meta
-    spectrum.meta['header'].update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1})
+    spectrum.meta.update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1, 'NAXIS2': 12})
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
                    update_header=True)
 
