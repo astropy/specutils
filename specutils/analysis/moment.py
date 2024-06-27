@@ -51,8 +51,8 @@ def _compute_moment(spectrum, regions=None, order=0, axis='spectral'):
     """
     This is a helper function for the above `moment()` method.
     """
-    if order is None or order < 0:
-        return None
+    if int(order) != order or order < 0:
+        raise ValueError("Order must be a positive integer.")
 
     if axis == "spectral":
         if isinstance(spectrum, SpectrumCollection):
