@@ -1116,12 +1116,12 @@ def test_moment_cube():
     assert moment_1_last.unit.is_equivalent(moment_1.unit)
     assert quantity_allclose(moment_1, moment_1_last, rtol=1.E-5)
 
-    # spatial 1st order - returns the dispersion
+    # spatial 1st order
     moment_1 = moment(spectrum, order=1, axis=1)
 
     assert moment_1.shape == (9, 10000)
-    assert moment_1.unit.is_equivalent(u.GHz)
-    assert quantity_allclose(moment_1, frequencies, rtol=1.E-5)
+    assert moment_1.unit.is_equivalent(u.dimensionless_unscaled)
+    assert quantity_allclose(moment_1, np.ones((9, 10000))*5.5, rtol=1.E-5)
 
     # higher order
     moment_2 = moment(spectrum, order=2)
@@ -1162,11 +1162,11 @@ def test_moment_cube_order_2():
     moment_2 = moment(spectrum, order=2, axis=1)
 
     assert moment_2.shape == (10, 10000)
-    assert moment_2.unit.is_equivalent(u.GHz**2)
+    assert moment_2.unit.is_equivalent(u.dimensionless_unscaled)
     # check assorted values.
-    assert quantity_allclose(moment_2[0][0], 8.078e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[1][0], 8.078e-28*u.GHz**2, rtol=0.01)
-    assert quantity_allclose(moment_2[0][3], 2.019e-28*u.GHz**2, rtol=0.01)
+    assert quantity_allclose(moment_2[0][0], 8.25, rtol=0.01)
+    assert quantity_allclose(moment_2[1][0], 8.25, rtol=0.01)
+    assert quantity_allclose(moment_2[0][3], 8.25, rtol=0.01)
 
 
 def test_moment_cube_order_1_to_6():
