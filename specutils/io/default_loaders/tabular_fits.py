@@ -41,7 +41,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D, extensions=['fits', 'fit'], priority=6)
-def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
+def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=False, **kwargs):
     """
     Load spectrum from a FITS file.
 
@@ -52,6 +52,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
             or HDUList (as resulting from astropy.io.fits.open()).
     hdu: int
         The HDU of the fits file (default: 1st extension) to read from
+    store_data_header: bool
+        Defaults to False, which stores the primary header in the Spectrum1D.meta attribute.
+        Set to True to instead store the header from the specified data HDU.
     column_mapping : dict
         A dictionary describing the relation between the FITS file columns
         and the arguments of the `Spectrum1D` class, along with unit
@@ -74,7 +77,10 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
         primary_header = hdulist[0].header
         tab = Table.read(hdulist[hdu])
 
-    tab.meta = primary_header
+    if store_data_header:
+        tab.meta = hdulist[hdu].header
+    else:
+        tab.meta = primary_header
 
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
