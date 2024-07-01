@@ -10,6 +10,8 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Changed the ``tabular-fits`` reader to round-trip the primary header. [#1113]
+
 1.15.0 (2024-05-01)
 -------------------
 
