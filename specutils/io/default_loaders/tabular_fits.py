@@ -74,13 +74,11 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     # routines to search for spectral axis information in the file.
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         wcs = WCS(hdulist[hdu].header)
-        primary_header = hdulist[0].header
         tab = Table.read(hdulist[hdu])
-
-    if store_data_header:
-        tab.meta = hdulist[hdu].header
-    else:
-        tab.meta = primary_header
+        if store_data_header:
+            tab.meta = hdulist[hdu].header
+        else:
+            tab.meta = hdulist[0].header
 
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
