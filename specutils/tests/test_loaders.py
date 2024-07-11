@@ -657,7 +657,8 @@ def test_tabular_fits_mask(tmp_path, mask_type):
         assert sp1.mask.dtype == sp2.mask.dtype
 
 
-def test_tabular_fits_maskheader(tmp_path):
+@pytest.mark.parametrize("metadata_hdu", [0, 1])
+def test_tabular_fits_maskheader(tmp_path, metadata_hdu):
     # Create a small data set + header with reserved FITS keywords
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.Jy
@@ -666,46 +667,76 @@ def test_tabular_fits_maskheader(tmp_path):
 
     spectrum = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
     tmpfile = str(tmp_path / '_tst.fits')
-    spectrum.write(tmpfile, format='tabular-fits')
+    spectrum.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
 
     # Read it in and check against the original
     with fits.open(tmpfile) as hdulist:
 
         # Test HDU0 header
         assert hdulist[0].header['NAXIS'] == 0
-        assert hdulist[0].header['OBSERVER'] == 'Parsons'
 
         # keys relevant to datashape are in HDU1 header
         assert hdulist[1].header['NAXIS'] == 2
         assert hdulist[1].header['NAXIS2'] == disp.shape[0]
 
-        # Test legacy behaviour of metadata in HDU1 header
-        assert hdulist[1].header['OBSERVER'] == 'Parsons'
+        # Test storage of metadata in selected HDU header
+        assert hdulist[metadata_hdu].header['OBSERVER'] == 'Parsons'
 
 
-def test_tabular_fits_update_header(tmp_path):
+@pytest.mark.parametrize("metadata_hdu", [0, 1])
+def test_tabular_fits_roundtrip_header(tmp_path, metadata_hdu):
+    """Test roundtrip of full header."""
     disp = np.linspace(1, 1.2, 21) * u.AA
     flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.erg / (u.s * u.cm**2 * u.AA)
     hdr = fits.header.Header({'TELESCOP': 'Crystal', 'OBSERVER': 'Cruz'})
     spec = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    tmpfile = str(tmp_path / '_tst.fits')
+    spec.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+    spec = Spectrum1D.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+
+    # Confirm HDU-specific header cards are read back in.
+    assert spec.meta['header']['NAXIS'] == metadata_hdu * 2
+    assert spec.meta['header']['TELESCOP'] == 'Crystal'
+
+    # Write it out and read back again to compare full headers.
     tmpfile = str(tmp_path / '_tst2.fits')
-    spec.write(tmpfile, format='tabular-fits')
-    spectrum = Spectrum1D.read(tmpfile, format='tabular-fits')
+    spec.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+    spectrum = Spectrum1D.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+
+    # 'EXTNAME' is rewritten by the writer and may pop up in a different location.
+    if metadata_hdu == 1:
+        assert spectrum.meta['header'].pop('EXTNAME') == spec.meta['header'].pop('EXTNAME')
+    assert spectrum.meta['header'] == spec.meta['header']
+
+
+@pytest.mark.parametrize("metadata_hdu", [0, 1])
+def test_tabular_fits_update_header(tmp_path, metadata_hdu):
+    """Test modification of header items using ``update_header`` option."""
+    disp = np.linspace(1, 1.2, 21) * u.AA
+    flux = np.random.normal(0., 1.0e-14, disp.shape[0]) * u.erg / (u.s * u.cm**2 * u.AA)
+    hdr = fits.header.Header({'TELESCOP': 'Crystal', 'OBSERVER': 'Cruz'})
+    spec = Spectrum1D(flux=flux, spectral_axis=disp, meta={'header': hdr})
+    tmpfile = str(tmp_path / '_tst.fits')
+    spec.write(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+    spectrum = Spectrum1D.read(tmpfile, format='tabular-fits', store_data_header=bool(metadata_hdu))
+
+    assert spectrum.meta['header']['OBSERVER'] == 'Cruz'
+    assert spectrum.meta['header']['TELESCOP'] == 'Crystal'
 
     # Now write with updated header information from spectrum.meta
-    spectrum.meta.update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1, 'NAXIS2': 12})
+    spectrum.meta['header'].update({'OBSERVER': 'Rosse', 'EXPTIME': 32.1, 'NAXIS2': 12})
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
-                   update_header=True)
+                   update_header=True, store_data_header=bool(metadata_hdu))
 
     with fits.open(tmpfile) as hdulist:
-        assert hdulist[0].header['OBSERVER'] == 'Rosse'
         assert hdulist[1].header['NAXIS2'] == disp.shape[0]
-        assert_allclose(hdulist[1].header['EXPTIME'], 3.21e1)
+        assert hdulist[metadata_hdu].header['OBSERVER'] == 'Rosse'
+        assert_allclose(hdulist[metadata_hdu].header['EXPTIME'], 3.21e1)
 
     # Test that unsupported types (dict) are not added to written header
     spectrum.meta['MYHEADER'] = {'OBSDATE': '1848-02-26', 'TARGET': 'M51'}
     spectrum.write(tmpfile, format='tabular-fits', overwrite=True,
-                   update_header=True)
+                   update_header=True, store_data_header=bool(metadata_hdu))
 
     with fits.open(tmpfile) as hdulist:
         assert 'MYHEADER' not in hdulist[0].header

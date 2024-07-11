@@ -199,7 +199,9 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     else:
         hdu0 = fits.PrimaryHDU(header=header)
         hdu1 = fits.BinTableHDU(data=tab)
-    hdu1.header['EXTNAME'] = 'DATA'
+
+    # This will overwrite any 'EXTNAME' previously read from a valid header; should it?
+    hdu1.header.update(EXTNAME='DATA')
 
     hdulist = fits.HDUList([hdu0, hdu1])
 
