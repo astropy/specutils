@@ -41,7 +41,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
 
 @data_loader("tabular-fits", identifier=identify_tabular_fits,
              dtype=Spectrum1D, extensions=['fits', 'fit'], priority=6)
-def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
+def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=False, **kwargs):
     """
     Load spectrum from a FITS file.
 
@@ -52,6 +52,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
             or HDUList (as resulting from astropy.io.fits.open()).
     hdu: int
         The HDU of the fits file (default: 1st extension) to read from
+    store_data_header: bool
+        Defaults to ``False``, which stores the primary header in ``Spectrum1D.meta['header']``.
+        Set to ``True`` to instead store the header from the specified data HDU.
     column_mapping : dict
         A dictionary describing the relation between the FITS file columns
         and the arguments of the `Spectrum1D` class, along with unit
@@ -71,8 +74,11 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
     # routines to search for spectral axis information in the file.
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         wcs = WCS(hdulist[hdu].header)
-
-    tab = Table.read(file_obj, format='fits', hdu=hdu)
+        tab = Table.read(hdulist[hdu])
+        if store_data_header:
+            tab.meta = hdulist[hdu].header
+        else:
+            tab.meta = hdulist[0].header
 
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
@@ -90,7 +96,7 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, **kwargs):
 
 
 @custom_writer("tabular-fits")
-def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwargs):
+def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_data_header=False, **kwargs):
     """
     Write spectrum to BINTABLE extension of a FITS file.
 
@@ -102,7 +108,11 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
     hdu: int
         Header Data Unit in FITS file to write to (currently only extension HDU 1)
     update_header: bool
-        Update FITS header with all compatible entries in `spectrum.meta`
+        Write all compatible items in ``Spectrum1D.meta`` directly to FITS header;
+        this will overwrite any identically named keys from ``Spectrum1D.meta['header']``.
+    store_data_header: bool
+        If ``True``, store ``Spectrum1D.meta['header']`` in the header of the target data HDU
+        instead of the primary header (default ``False``).
     wunit : str or `~astropy.units.Unit`
         Unit for the spectral axis (wavelength or frequency-like)
     funit : str or `~astropy.units.Unit`
@@ -117,6 +127,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
 
     header = spectrum.meta.get('header', fits.header.Header()).copy()
 
+    # Should this warn about incompatible items or overwriting existing ones?
     if update_header:
         hdr_types = (str, int, float, complex, bool,
                      np.floating, np.integer, np.complexfloating, np.bool_)
@@ -181,8 +192,18 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, **kwarg
         if columns[c].ndim > 1:
             columns[c] = columns[c].T
 
-    tab = Table(columns, names=colnames, meta=header)
+    tab = Table(columns, names=colnames)
+    if store_data_header:
+        hdu0 = fits.PrimaryHDU()
+        hdu1 = fits.BinTableHDU(data=tab, header=header)
+    else:
+        hdu0 = fits.PrimaryHDU(header=header)
+        hdu1 = fits.BinTableHDU(data=tab)
 
-    # Todo: support writing to other HDUs than the default (1st)
-    #       and an 'update' mode so different HDUs can be written to separately
-    tab.write(file_name, format="fits", **kwargs)
+    # This will overwrite any 'EXTNAME' previously read from a valid header; should it?
+    hdu1.header.update(EXTNAME='DATA')
+
+    hdulist = fits.HDUList([hdu0, hdu1])
+
+    # TODO: Use output_verify options to check for valid FITS
+    hdulist.writeto(file_name, **kwargs)
