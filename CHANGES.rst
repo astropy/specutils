@@ -10,10 +10,12 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Changed the ``tabular-fits`` reader/writer to round-trip the primary header.
-   The reader now by default reads the primary header into ``meta``; the old behaviour
-   can be restored by setting the option ``store_data_header=True``. The writer is writing
-   copies of ``meta['header']`` to both primary and data extension headers. [#1113]
+- Changed the ``tabular-fits`` reader/writer to round-trip the header,
+  by default in the primary HDU. The reader now reads the primary
+  header into ``meta['header']``; the old behaviour of reading the
+  header from the data extension can be restored by setting the option
+  ``store_data_header=True``. The writer is taking a corresponding option
+  for saving ``meta['header']`` to either primary or data extension headers. [#1113]
 
 1.15.0 (2024-05-01)
 -------------------
