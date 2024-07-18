@@ -5,6 +5,7 @@ from math import floor, ceil  # faster than int(np.floor/ceil(float))
 import numpy as np
 
 from astropy import units as u
+from astropy.nddata import Covariance
 from ..spectra import Spectrum1D, SpectralRegion
 
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
@@ -189,6 +190,9 @@ def extract_region(spectrum, region, return_single_spectrum=False):
                 uncert = sps[0].uncertainty
                 if uncert is None:
                     return None
+                if isinstance(uncert, Covariance):
+                    raise NotImplementedError("Cannot yet combine spectral regions with "
+                                              "covariant uncertainties.")
                 uncert._array = np.concatenate([sp.uncertainty._array for sp in sps])
                 return uncert[unique_inds] if unique_inds is not None else uncert
             elif key in concat_keys or key == 'spectral_axis':
