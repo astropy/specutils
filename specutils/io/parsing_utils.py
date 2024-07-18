@@ -150,7 +150,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, correl=None, v
                               'Ignoring correlation matrix data.')
                 correl = None
         # NOTE: This is not an `else` or `elif` block in order to catch the
-        # change to correl=None when handling the excemption above.
+        # change to correl=None when handling the exception above.
         if correl is None:
             spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
 
@@ -313,7 +313,7 @@ def generic_spectrum_from_table(table, wcs=None, correl=None, **kwargs):
                               'Ignoring correlation matrix data.')
                 correl = None
         # NOTE: This is not an `else` or `elif` block in order to catch the
-        # change to correl=None when handling the excemption above.
+        # change to correl=None when handling the exception above.
         if correl is None:
             err = StdDevUncertainty(err.to(err.unit))
             if np.min(table[err_column]) <= 0.:
