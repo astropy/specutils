@@ -6,7 +6,7 @@ from astropy import units as u
 from astropy.coordinates import SpectralCoord
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
-from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataArray
+from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataArray, Covariance
 from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
@@ -37,8 +37,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     Parameters
     ----------
     flux : `~astropy.units.Quantity`
-        The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
-        or an existing `~Spectrum` or `~ndcube.NDCube` object.
+        The flux data for this spectrum. This can be a simple
+        `~astropy.units.Quantity`, or an existing `~Spectrum` or
+        `~ndcube.NDCube` object.  If an `~ndcube.NDCube` object, all other
+        arguments are ignored.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
@@ -71,8 +73,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         values represent edges of the wavelength bin, or centers of the bin.
     uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
-        spectrum arithmetic. Can take a unit, but if none is given, will use
-        the unit defined in the flux.
+        spectrum arithmetic. Can take a unit, but if none is given, will use the
+        unit defined in the flux.  Note that functionality is limited for
+        `~astropy.nddata.Covariance` instances, particularly for
+        multidimensional data.
     mask : `~numpy.ndarray`-like
         Array where values in the flux to be masked are those that
         ``astype(bool)`` converts to True. (For example, integer arrays are not
@@ -415,10 +419,13 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             raise ValueError('Spectral axis must be strictly increasing or decreasing.')
 
         if hasattr(self, 'uncertainty') and self.uncertainty is not None:
-            if not flux.shape == self.uncertainty.array.shape:
-                raise ValueError(
-                    "Flux axis ({}) and uncertainty ({}) shapes must be the "
-                    "same.".format(flux.shape, self.uncertainty.array.shape))
+            if isinstance(self.uncertainty, Covariance):
+                uncertainty_shape = self.uncertainty.data_shape
+            else:
+                uncertainty_shape = self.uncertainty.array.shape
+            if not flux.shape == uncertainty_shape:
+                raise ValueError(f"Flux axis ({flux.shape}) and uncertainty ({uncertainty_shape}) "
+                                 "shapes must be the same.")
 
     def __getitem__(self, item):
         """
@@ -498,11 +505,17 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             else:
                 new_meta = deepcopy(self.meta)
 
+            if isinstance(self.uncertainty, Covariance):
+                new_unc = self.uncertainty.sub_matrix(item)
+            elif self.uncertainty is not None:
+                new_unc = self.uncertainty[item]
+            else:
+                new_unc = None
+
             return self._copy(
                 flux=self.flux[item],
                 spectral_axis=self.spectral_axis[spec_item],
-                uncertainty=self.uncertainty[item]
-                if self.uncertainty is not None else None,
+                uncertainty=new_unc,
                 mask=self.mask[item] if self.mask is not None else None,
                 meta=new_meta, wcs=None, spectral_axis_index=new_spectral_axis_index)
 
@@ -919,8 +932,13 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         # Add information about uncertainties if available
         if self.uncertainty:
+            _arr = (
+                self.uncertainty.toarray()
+                if isinstance(self.uncertainty, Covariance)
+                else self.uncertainty.array
+            )
             result += (f'\nUncertainty={type(self.uncertainty).__name__} '
-                       f'({np.array2string(self.uncertainty.array, threshold=8)}'
+                       f'({np.array2string(_arr, threshold=8)}'
                        f' {self.uncertainty.unit})')
 
         return result

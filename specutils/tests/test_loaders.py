@@ -6,6 +6,7 @@ import warnings
 import pytest
 import astropy.units as u
 import numpy as np
+from scipy import sparse
 from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
@@ -13,7 +14,7 @@ from astropy.units import UnitsWarning
 from astropy.wcs import FITSFixedWarning, WCS
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
-from astropy.nddata import StdDevUncertainty, InverseVariance, VarianceUncertainty
+from astropy.nddata import StdDevUncertainty, InverseVariance, VarianceUncertainty, Covariance
 from astropy.tests.helper import quantity_allclose
 from astropy.utils.exceptions import AstropyUserWarning
 
@@ -597,6 +598,45 @@ def test_tabular_fits_writer(tmp_path, spectral_axis):
     assert quantity_allclose(spec.flux, spectrum.flux)
     assert quantity_allclose(spec.uncertainty.quantity,
                              spectrum.uncertainty.quantity)
+
+
+def test_tabular_fits_cov_io(tmp_path):
+    # Create a fake spectrum
+    wave = np.arange(4500., 5500., 1.) * u.AA
+    flux = np.full(len(wave), 10) * u.Jy
+    # And covariance
+    cov_diags = [
+        np.ones(1000, dtype=float),
+        np.full(1000-1, 0.5, dtype=float),
+        np.full(1000-2, 0.2, dtype=float),
+    ]
+    cov = Covariance(sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2)
+
+    # Create the Spectrum1D
+    spectrum = Spectrum1D(flux=flux, spectral_axis=wave, uncertainty=cov)
+    # Simple test of ingestion
+    assert np.array_equal(spectrum.uncertainty.toarray(), cov.toarray()), \
+            'Covariance not included correctly'
+    # Write it
+    tmpfile = str(tmp_path / '_tst.fits')
+    spectrum.write(tmpfile, format='tabular-fits')
+
+    # Check the output file
+    with fits.open(tmpfile) as hdu:
+        assert len(hdu) == 3, 'Should contain 3 extensions, primary, DATA, CORREL'
+        assert np.array_equal([h.name for h in hdu], ['PRIMARY', 'DATA', 'CORREL']), \
+                'Extension names are wrong'
+        assert all([h.__class__.__name__ == 'BinTableHDU' for h in hdu[1:]]), \
+                'Data extensions should both be BinTableHDU'
+        assert len(hdu['CORREL'].data) == cov.nnz, 'Number of non-zero cov elements mismatch'
+
+    # Read it
+    _spectrum = Spectrum1D.read(tmpfile)
+    assert spectrum.flux.unit == _spectrum.flux.unit
+    assert spectrum.spectral_axis.unit == _spectrum.spectral_axis.unit
+    assert quantity_allclose(spectrum.spectral_axis, _spectrum.spectral_axis)
+    assert quantity_allclose(spectrum.flux, _spectrum.flux)
+    assert np.array_equal(spectrum.uncertainty.toarray(), _spectrum.uncertainty.toarray())
 
 
 @pytest.mark.parametrize("ndim", range(1, 4))
