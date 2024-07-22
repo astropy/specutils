@@ -267,6 +267,12 @@ def median_smooth(spectrum, width):
     # Get the flux of the input spectrum
     flux = spectrum.flux
 
+    if (
+            not isinstance(flux.dtype, (float, int)) or
+            not np.issubdtype(flux.dtype, (np.floating, np.integer))
+    ):
+        flux = flux.astype(float)
+
     # Smooth based on the input kernel
     smoothed_flux = medfilt(flux, width)
 
