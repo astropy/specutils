@@ -4,6 +4,8 @@ from astropy import units as u
 __all__ = ['QuantityModel']
 _NUMPY_COPY_IF_NEEDED = False if np.__version__.startswith("1.") else None
 
+_NUMPY_COPY_IF_NEEDED = False if np.__version__.startswith("1.") else None
+
 
 class QuantityModel:
     """
