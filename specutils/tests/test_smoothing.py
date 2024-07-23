@@ -5,6 +5,7 @@ from scipy.signal import medfilt
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
+from ..spectra import Spectrum1D
 from ..manipulation.smoothing import (convolution_smooth, box_smooth,
                                       gaussian_smooth, trapezoid_smooth,
                                       median_smooth)
@@ -45,7 +46,7 @@ def compare_flux(flux_smooth1, flux_smooth2, flux_original, rtol=0.01):
 
 def test_smooth_custom_kernel(simulated_spectra):
     """
-    Test CustomKernel smoothing with correct parmaeters.
+    Test CustomKernel smoothing with correct parameters.
     """
 
     # Create the original spectrum
@@ -67,7 +68,7 @@ def test_smooth_custom_kernel(simulated_spectra):
 @pytest.mark.parametrize("width", [1, 2.3])
 def test_smooth_box_good(simulated_spectra, width):
     """
-    Test Box1DKernel smoothing with correct parmaeters.
+    Test Box1DKernel smoothing with correct parameters.
 
     Width values need to be a number greater than 0.
     """
@@ -93,7 +94,7 @@ def test_smooth_box_good(simulated_spectra, width):
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
 def test_smooth_box_bad(simulated_spectra, width):
     """
-    Test Box1DKernel smoothing with incorrect parmaeters.
+    Test Box1DKernel smoothing with incorrect parameters.
 
     Width values need to be a number greater than 0.
     """
@@ -109,7 +110,7 @@ def test_smooth_box_bad(simulated_spectra, width):
 @pytest.mark.parametrize("stddev", [1, 2.3])
 def test_smooth_gaussian_good(simulated_spectra, stddev):
     """
-    Test Gaussian1DKernel smoothing with correct parmaeters.
+    Test Gaussian1DKernel smoothing with correct parameters.
 
     Standard deviation values need to be a number greater than 0.
     """
@@ -135,7 +136,7 @@ def test_smooth_gaussian_good(simulated_spectra, stddev):
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
 def test_smooth_gaussian_bad(simulated_spectra, stddev):
     """
-    Test MexicanHat1DKernel smoothing with incorrect parmaeters.
+    Test MexicanHat1DKernel smoothing with incorrect parameters.
 
     Standard deviation values need to be a number greater than 0.
     """
@@ -151,7 +152,7 @@ def test_smooth_gaussian_bad(simulated_spectra, stddev):
 @pytest.mark.parametrize("stddev", [1, 2.3])
 def test_smooth_trapezoid_good(simulated_spectra, stddev):
     """
-    Test Trapezoid1DKernel smoothing with correct parmaeters.
+    Test Trapezoid1DKernel smoothing with correct parameters.
 
     Standard deviation values need to be a number greater than 0.
     """
@@ -177,7 +178,7 @@ def test_smooth_trapezoid_good(simulated_spectra, stddev):
 @pytest.mark.parametrize("stddev", [-1, 0, 'a'])
 def test_smooth_trapezoid_bad(simulated_spectra, stddev):
     """
-    Test Trapezoid1DKernel smoothing with incorrect parmaeters.
+    Test Trapezoid1DKernel smoothing with incorrect parameters.
 
     Standard deviation values need to be a number greater than 0.
     """
@@ -193,7 +194,7 @@ def test_smooth_trapezoid_bad(simulated_spectra, stddev):
 @pytest.mark.parametrize("width", [1, 3, 9])
 def test_smooth_median_good(simulated_spectra, width):
     """
-    Test Median smoothing with correct parmaeters.
+    Test Median smoothing with correct parameters.
 
     Width values need to be a number greater than 0.
     """
@@ -218,7 +219,7 @@ def test_smooth_median_good(simulated_spectra, width):
 @pytest.mark.parametrize("width", [-1, 0, 'a'])
 def test_smooth_median_bad(simulated_spectra, width):
     """
-    Test Median smoothing with incorrect parmaeters.
+    Test Median smoothing with incorrect parameters.
 
     Width values need to be a number greater than 0.
     """
@@ -233,7 +234,7 @@ def test_smooth_median_bad(simulated_spectra, width):
 
 def test_smooth_custom_kernel_uncertainty(simulated_spectra):
     """
-    Test CustomKernel smoothing with correct parmaeters.
+    Test CustomKernel smoothing with correct parameters.
     """
 
     np.random.seed(42)
@@ -268,3 +269,15 @@ def test_smooth_custom_kernel_uncertainty(simulated_spectra):
     spec1_smoothed = convolution_smooth(spec1, custom_kernel)
     uncertainty_smoothed_astropy = convolution.convolve(spec1.uncertainty.array, custom_kernel)
     assert np.allclose(spec1_smoothed.uncertainty.array, uncertainty_smoothed_astropy)
+
+
+def test_medfilt_dtype():
+    """
+    Check that dtypes not supported by scipy's medfilt method are
+    converted to supported dtypes before they are passed to scipy.
+    """
+    flux = [1, 2, 3] * u.Jy
+
+    for dtype in ('>f4', np.float32, 'i4', int):
+        spectrum = Spectrum1D(flux=flux.astype(dtype), spectral_axis=[1, 2, 3] * u.um)
+        median_smooth(spectrum, 1)
