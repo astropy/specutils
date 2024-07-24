@@ -144,7 +144,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, correl=None, v
         if correl is not None:
             err = spec_kwargs.get('uncertainty')
             try:
-                spec_kwargs['uncertainty'] = Covariance.from_tables(err**2, correl, quiet=True)
+                spec_kwargs['uncertainty'] = Covariance.from_tables(err**2, correl)
             except (ValueError, TypeError):
                 warnings.warn('Unable to parse correlation table into a Covariance object.  '
                               'Ignoring correlation matrix data.')
@@ -307,7 +307,7 @@ def generic_spectrum_from_table(table, wcs=None, correl=None, **kwargs):
             err = table[err_column]
         if correl is not None:
             try:
-                err = Covariance.from_tables(err**2, correl, quiet=True)
+                err = Covariance.from_tables(err**2, correl)
             except (ValueError, TypeError):
                 warnings.warn('Unable to parse correlation table into a Covariance object.  '
                               'Ignoring correlation matrix data.')
