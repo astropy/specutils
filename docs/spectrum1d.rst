@@ -21,8 +21,8 @@ create it explicitly from arrays or `~astropy.units.Quantity` objects:
     >>> import astropy.units as u
     >>> import matplotlib.pyplot as plt
     >>> from specutils import Spectrum1D
-    >>> flux = np.random.randn(200)*u.Jy
-    >>> wavelength = np.arange(5100, 5300)*u.AA
+    >>> flux = np.random.randn(200) * u.Jy
+    >>> wavelength = np.arange(5100, 5300) * u.AA
     >>> spec1d = Spectrum1D(spectral_axis=wavelength, flux=flux)
     >>> ax = plt.subplots()[1]  # doctest: +SKIP
     >>> ax.plot(spec1d.spectral_axis, spec1d.flux)  # doctest: +SKIP
@@ -42,21 +42,25 @@ Reading from a File
 -------------------
 
 ``specutils`` takes advantage of the Astropy IO machinery and allows loading and
-writing to files. The example below shows loading a FITS file. While specutils
-has some basic data loaders, for more complicated or custom files, users are
-encouraged to :doc:`create their own loader </custom_loading>`.
+writing to files. The example below shows loading a FITS file.
+``specutils`` has built-in (default) data loaders for some ASCII-based
+formats and a range of FITS file formats specific to various
+telescopes and observatories, but can also be extended by user's own
+custom loaders (see below).
 
 .. code-block:: python
 
     >>> from specutils import Spectrum1D
     >>> spec1d = Spectrum1D.read("/path/to/file.fits")  # doctest: +SKIP
 
-Most of the built-in specutils default loaders can also read an existing
-`astropy.io.fits.HDUList` object or an open file object (as resulting
-from e.g. streaming a file from the internet). Note that in these cases, a
-format string corresponding to an existing loader must be supplied because
-these objects lack enough contextual information to automatically identify
-a loader.
+Most of these default specutils loaders can also read an existing
+`astropy.io.fits.HDUList` object (for FITS formats) or an open file object
+(as resulting from e.g. streaming a file from the internet), and will
+transparently support common compression formats such as ``gzip``,
+``bzip2`` or ``lzma`` (``xz``).
+Note that in these cases, a format string corresponding to an existing loader
+should be supplied because these objects may lack enough contextual
+information to automatically identify a loader.
 
 .. code-block:: python
 
@@ -81,23 +85,36 @@ List of Loaders
 ~~~~~~~~~~~~~~~
 
 The `~specutils.Spectrum1D` class has built-in support for various input and output formats.
-A full list of the supported formats is shown in the table below. Note that the JWST readers
-require the ``stdatamodels`` package to be installed, which is an optional dependency for
-``specutils``.
+A full list of the supported formats is shown in the table below and
+can be accessed interactively with ``Spectrum1D.read.list_formats()``.
+Note that the JWST readers require the ``stdatamodels`` package to be
+installed, which is an optional dependency for ``specutils``.
 
 .. automodule:: specutils.io._list_of_loaders
 
-| More information on creating custom loaders can be found in the :doc:`custom loading </custom_loading>` page.
+Call the help function for a specific loader to access further documentation
+on that format and optional parameters accepted by the ``read`` function,
+e.g. as ``Spectrum1D.read.help('tabular-fits')``.
+
+More information on creating custom loaders for formats not covered
+by the above list can be found in the :doc:`custom loading </custom_loading>` page.
 
 Writing to a File
 -----------------
 
-Similarly, a `~specutils.Spectrum1D` object can be saved to any of the supported formats using the
-:meth:`specutils.Spectrum1D.write` method.
+Similarly, a `~specutils.Spectrum1D` object can be saved to any of the
+formats supporting writing (currently only the two generic FITS formats)
+by using the :meth:`specutils.Spectrum1D.write` method.
 
 .. code-block:: python
 
     >>> spec1d.write("/path/to/output.fits")  # doctest: +SKIP
+
+Note that the above example, calling ``write()`` without specifying
+any format, will default to the ``wcs1d-fits`` loader if the `~specutils.Spectrum1D`
+has a compatible WCS, and to ``tabular-fits`` otherwise, or if writing
+to another than the primary HDU (``hdu=0``) has been selected.
+For better control of the file type, the ``format`` parameter should be explicitly passed.
 
 | More information on creating custom writers can be found in :ref:`custom_writer`.
 
@@ -117,7 +134,7 @@ specify the uncertainty type at creation time.
     >>> from specutils import Spectrum1D
     >>> from astropy.nddata import StdDevUncertainty
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
 
 .. warning:: Not defining an uncertainty class will result in an
              :class:`~astropy.nddata.UnknownUncertainty` object which will not
@@ -157,8 +174,8 @@ attribute on object creation:
 
 .. code-block:: python
 
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, redshift = 0.15)
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA, flux=np.random.sample(10)*u.Jy, radial_velocity = 1000*u.Unit("km/s"))
+    >>> spec1 = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, redshift = 0.15)
+    >>> spec2 = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, radial_velocity = 1000 * u.Unit("km/s"))
 
 By default, updating either the ``redshift`` or ``radial_velocity`` attributes
 of an existing :class:`~specutils.Spectrum1D` directly uses the
@@ -253,8 +270,8 @@ common spectral axis.
 
     >>> from specutils import Spectrum1D
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec_slice = spec[0]
     >>> spec_slice.spectral_axis
     <SpectralAxis [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
@@ -278,8 +295,8 @@ along the spectral axis using world coordinates.
 
     >>> from specutils import Spectrum1D
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec_slice = spec[5002*u.AA:5006*u.AA]
     >>> spec_slice.spectral_axis
     <SpectralAxis [5002., 5003., 5004., 5005.] Angstrom>
@@ -291,8 +308,8 @@ same time as slicing the spectral axis based on spectral values.
 
     >>> from specutils import Spectrum1D
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec_slice = spec[2:4, 5002*u.AA:5006*u.AA]
     >>> spec_slice.shape
     (2, 4)
@@ -344,8 +361,8 @@ any ``uncertainty`` attached to the spectrum.
 
 .. code-block:: python
 
-    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010)*u.AA,
-    ...                   flux=np.random.default_rng(12345).random((5, 10))*u.Jy)
+    >>> spec = Spectrum1D(spectral_axis=np.arange(5000, 5010) * u.AA,
+    ...                   flux=np.random.default_rng(12345).random((5, 10)) * u.Jy)
     >>> spec.mean()  # doctest: +FLOAT_CMP
     <Quantity 0.49802844 Jy>
 
