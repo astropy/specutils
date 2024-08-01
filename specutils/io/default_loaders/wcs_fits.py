@@ -92,7 +92,9 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         The ``uncertainty_type`` of `~astropy.nddata.NDUncertainty`
         (one of 'std', 'var', 'ivar'; default: try to infer from HDU EXTNAME).
     **kwargs
-        Extra keywords for :func:`~specutils.io.parsing_utils.read_fileobj_or_hdulist`.
+        Additional optional keywords passed to
+        :func:`~specutils.io.parsing_utils.read_fileobj_or_hdulist`, and when
+        reading from a file-like object, through to :func:`~astropy.io.fits.open`.
 
     Returns
     -------
@@ -225,22 +227,24 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
     Parameters
     ----------
     spectrum : :class:`~specutils.Spectrum1D`
-    file_name : str
-        The path to the FITS file
+    file_name : str, file-like or `pathlib.Path`
+        File to write to. If a file object, must be opened in a writeable mode.
     hdu : int, optional
-        Header Data Unit in FITS file to write to (base 0; default primary HDU)
+        Header Data Unit in FITS file to write to (base 0; default primary HDU).
     update_header : bool, optional
-        Update FITS header with all compatible entries in `spectrum.meta`
+        Update FITS header with all compatible entries in `spectrum.meta`.
     flux_name : str, optional
-        HDU name to store flux spectrum under (default 'FLUX')
+        HDU name to store flux spectrum under (default 'FLUX').
     mask_name : str or `None`, optional
-        HDU name to store mask under (default 'MASK'; `None`: do not save)
+        HDU name to store mask under (default 'MASK'; `None`: do not save).
     uncertainty_name : str or `None`, optional
-        HDU name to store uncertainty under (default set from type; `None`: do not save)
+        HDU name to store uncertainty under (default set from type; `None`: do not save).
     unit : str or :class:`~astropy.units.Unit`, optional
-        Unit for the flux (and associated uncertainty; defaults to ``spectrum.flux.unit``)
+        Unit for the flux (and associated uncertainty; defaults to ``spectrum.flux.unit``).
     dtype : str or :class:`~numpy.dtype`, optional
-        Floating point type for storing flux array (defaults to ``spectrum.flux.dtype``)
+        Floating point type for storing flux array (defaults to ``spectrum.flux.dtype``).
+    **kwargs
+        Additional optional keywords passed to :func:`~astropy.io.fits.HDUList.writeto`.
     """
     # Create HDU list from WCS
     try:

@@ -43,16 +43,16 @@ def identify_tabular_fits(origin, *args, **kwargs):
              dtype=Spectrum1D, extensions=['fits', 'fit'], priority=6)
 def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=False, **kwargs):
     """
-    Load spectrum from a FITS file.
+    Load spectrum from a FITS file tabular extension.
 
     Parameters
     ----------
-    file_obj: str, file-like, or HDUList
+    file_obj : str, file-like, or :class:`~astropy.io.fits.HDUList`
             FITS file name, object (provided from name by Astropy I/O Registry),
-            or HDUList (as resulting from astropy.io.fits.open()).
-    hdu: int
+            or HDU list (as resulting from `~astropy.io.fits.open`).
+    hdu : int
         The HDU of the fits file (default: 1st extension) to read from
-    store_data_header: bool
+    store_data_header : bool
         Defaults to ``False``, which stores the primary header in ``Spectrum1D.meta['header']``.
         Set to ``True`` to instead store the header from the specified data HDU.
     column_mapping : dict
@@ -61,14 +61,20 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
         information. The dictionary keys should be the FITS file column names
         while the values should be a two-tuple where the first element is the
         associated `Spectrum1D` keyword argument, and the second element is the
-        unit for the ASCII file column::
+        unit for the file column (or ``None`` to take unit from the table header)::
 
-            column_mapping = {'FLUX': ('flux', 'Jy')}
+            column_mapping = {'FLUX': ('flux', 'Jy'),
+                              'WAVE': ('spectral_axis', 'um')}
+
+    **kwargs
+        Additional optional keywords passed to
+        :func:`~specutils.io.parsing_utils.read_fileobj_or_hdulist`, and when
+        reading from a file-like object, through to :func:`~astropy.io.fits.open`.
 
     Returns
     -------
-    data: Spectrum1D
-        The spectrum that is represented by the data in this table.
+    data : :class:`Spectrum1D`
+        The spectrum that is represented by the data in the input table.
     """
     # Parse the wcs information. The wcs will be passed to the column finding
     # routines to search for spectral axis information in the file.
@@ -90,7 +96,7 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     # If no column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, wcs=wcs, **kwargs)
+        return generic_spectrum_from_table(tab, wcs=wcs)
 
     return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs)
 
@@ -102,15 +108,15 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
 
     Parameters
     ----------
-    spectrum: Spectrum1D
-    file_name: str
-        The path to the FITS file
-    hdu: int
+    spectrum : :class:`Spectrum1D`
+    file_name : str, file-like or `pathlib.Path`
+        File to write to. If a file object, must be opened in a writeable mode.
+    hdu : int
         Header Data Unit in FITS file to write to (currently only extension HDU 1)
-    update_header: bool
+    update_header : bool
         Write all compatible items in ``Spectrum1D.meta`` directly to FITS header;
         this will overwrite any identically named keys from ``Spectrum1D.meta['header']``.
-    store_data_header: bool
+    store_data_header : bool
         If ``True``, store ``Spectrum1D.meta['header']`` in the header of the target data HDU
         instead of the primary header (default ``False``).
     wunit : str or `~astropy.units.Unit`
@@ -121,6 +127,9 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
         Floating point type for storing spectral axis array
     ftype : str or `~numpy.dtype`
         Floating point type for storing flux array
+    hdulist : :class:`~astropy.io.fits.HDUList`
+    **kwargs
+        Additional optional keywords passed to :func:`~astropy.io.fits.HDUList.writeto`.
     """
     if hdu < 1:
         raise ValueError(f'FITS does not support BINTABLE extension in HDU {hdu}.')

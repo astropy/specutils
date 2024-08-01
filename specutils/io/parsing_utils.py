@@ -68,10 +68,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
         information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
         associated `Spectrum1D` keyword argument, and the second element is the
-        unit for the file column (or ``None`` to take unit from the table)::
+        unit for the file column (or ``None`` to take unit from the table header)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
-                              'WAVE': ('spectral_axis'spectral_axisu', 'um')}
+                              'WAVE': ('spectral_axis', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
@@ -138,7 +138,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     return Spectrum1D(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
-def generic_spectrum_from_table(table, wcs=None, **kwargs):
+def generic_spectrum_from_table(table, wcs=None):
     """
     Load spectrum from an Astropy table into a Spectrum1D object.
     Uses the following logic to figure out which column is which:

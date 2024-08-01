@@ -3,15 +3,15 @@ Working with Spectrum1Ds
 ========================
 
 As described in more detail in :doc:`types_of_spectra`, the core data class in
-specutils for a single spectrum is `~specutils.Spectrum1D`.  This object
+specutils for a single spectrum is :class:`~specutils.Spectrum1D`.  This object
 can represent either one or many spectra, all with the same ``spectral_axis``.
 This section describes some of the basic features of this class.
 
 Basic Spectrum Creation
 -----------------------
 
-The simplest way to create a `~specutils.Spectrum1D` is to
-create it explicitly from arrays or `~astropy.units.Quantity` objects:
+The simplest way to create a :class:`~specutils.Spectrum1D` is to create
+it explicitly from arrays or :class:`~astropy.units.Quantity` objects:
 
 .. plot::
     :include-source:
@@ -66,8 +66,8 @@ information to automatically identify a loader.
 
     >>> from specutils import Spectrum1D
     >>> import urllib
-    >>> specs = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
-    >>> Spectrum1D.read(specs, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
+    >>> spec = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
+    >>> Spectrum1D.read(spec, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
     <Spectrum1D(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
 
 Note that the same spectrum could be more conveniently downloaded via
@@ -94,7 +94,10 @@ installed, which is an optional dependency for ``specutils``.
 
 Call the help function for a specific loader to access further documentation
 on that format and optional parameters accepted by the ``read`` function,
-e.g. as ``Spectrum1D.read.help('tabular-fits')``.
+e.g. as ``Spectrum1D.read.help('tabular-fits')``. Additional optional parameters
+are generally passed through to the backend functions performing the actual
+reading operation, which depend on the loader. For loaders for FITS files for example,
+this will often be :func:`astropy.io.fits.open`.
 
 More information on creating custom loaders for formats not covered
 by the above list can be found in the :doc:`custom loading </custom_loading>` page.
@@ -115,6 +118,8 @@ any format, will default to the ``wcs1d-fits`` loader if the `~specutils.Spectru
 has a compatible WCS, and to ``tabular-fits`` otherwise, or if writing
 to another than the primary HDU (``hdu=0``) has been selected.
 For better control of the file type, the ``format`` parameter should be explicitly passed.
+Again, additional optional parameters are forwarded to the backend writing functions,
+which for the FITS writers is :meth:`astropy.io.fits.HDUList.writeto`.
 
 | More information on creating custom writers can be found in :ref:`custom_writer`.
 
