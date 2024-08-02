@@ -37,11 +37,6 @@ jobs:
             python: '3.12'
             toxenv: py312-test
 
-          - name: Python 3.12 (MacOS X)
-            os: macos-latest
-            python: '3.12'
-            toxenv: py312-test
-
           - name: Python 3.10
             os: ubuntu-latest
             python: '3.10'
@@ -113,6 +108,12 @@ jobs:
             python: '3.12'
             toxenv: py312-test-devdeps
             toxposargs: --remote-data=any
+
+          # doctest failure due to different no. of significant digits on arm64 (#1146)
+          - name: Python 3.12 (macOS)
+            os: macos-latest
+            python: '3.12'
+            toxenv: py312-test
 
     steps:
     - name: Checkout code

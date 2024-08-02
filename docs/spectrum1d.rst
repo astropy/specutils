@@ -132,9 +132,9 @@ For spectra read from files containing header-like attributes like a FITS
 :class:`~astropy.io.fits.Header` or :attr:`astropy.table.Table.meta`,
 loaders are conventionally storing this in ``Spectrum1D.meta['header']``.
 
-Conversely the two provided FITS writers are saving the contents of any
+The two provided FITS writers (``tabular-fits`` and ``wcs1d-fits``) save the contents of
 ``Spectrum1D.meta['header']`` (which should be an :class:`astropy.io.fits.Header`
-or any object like a `dict` that can instantiate one) as the header of the
+or any object, like a `dict`, that can instantiate one) as the header of the
 :class:`~astropy.io.fits.hdu.PrimaryHDU`.
 
 Including Uncertainties
