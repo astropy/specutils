@@ -144,21 +144,23 @@ def generic_spectrum_from_table(table, wcs=None):
     Uses the following logic to figure out which column is which:
 
      * Spectral axis (dispersion) is the first column with units
-     compatible with u.spectral() or with length units such as 'pix'.
+     compatible with ``u.spectral()`` or with length units such as 'pix'.
+     Need not be present, if a valid ``wcs`` parameter is passed.
 
      * Flux is taken from the first column with units compatible with
-     u.spectral_density(), or with other likely culprits such as
+     ``u.spectral_density()``, or with other likely culprits such as
      'adu' or 'cts/s'.
 
      * Uncertainty comes from the next column with the same units as flux.
 
     Parameters
     ----------
-    file_name: str
-        The path to the ECSV file
+    table : :class:`~astropy.table.Table`
+        Table containing a column of ``flux``, and optionally ``spectral_axis``
+        and ``uncertainty`` as defined above.
     wcs : :class:`~astropy.wcs.WCS`
         A FITS WCS object. If this is present, the machinery will fall back
-        to using the wcs to find the dispersion information.
+        and default to using the ``wcs`` to find the dispersion information.
 
     Returns
     -------
@@ -212,7 +214,7 @@ def generic_spectrum_from_table(table, wcs=None):
         additional_valid_units = [u.Unit('adu'), u.Unit('ct/s'), u.Unit('count')]
         found_column = None
 
-        # First, search for a column with units compatible with Janskies
+        # First, search for a column with units compatible with Jansky
         for c in columns_to_search:
             try:
                 # Check for multi-D flux columns

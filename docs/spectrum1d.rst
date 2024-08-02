@@ -123,6 +123,20 @@ which for the FITS writers is :meth:`astropy.io.fits.HDUList.writeto`.
 
 | More information on creating custom writers can be found in :ref:`custom_writer`.
 
+Metadata
+--------
+
+The :attr:`specutils.Spectrum1D.meta` attribute provides a dictionary to store
+additional information on the data, like origin, date and other circumstances.
+For spectra read from files containing header-like attributes like a FITS
+:class:`~astropy.io.fits.Header` or :attr:`astropy.table.Table.meta`,
+loaders are conventionally storing this in ``Spectrum1D.meta['header']``.
+
+Conversely the two provided FITS writers are saving the contents of any
+``Spectrum1D.meta['header']`` (which should be an :class:`astropy.io.fits.Header`
+or any object like a `dict` that can instantiate one) as the header of the
+:class:`~astropy.io.fits.hdu.PrimaryHDU`.
+
 Including Uncertainties
 -----------------------
 
