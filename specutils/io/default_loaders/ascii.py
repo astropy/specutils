@@ -51,7 +51,7 @@ def ascii_loader(file_name, column_mapping=None, **kwargs):
     # If no column mapping is given, attempt to parse the ascii files using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, **kwargs)
+        return generic_spectrum_from_table(tab)
 
     return spectrum_from_column_mapping(tab, column_mapping)
 
@@ -95,6 +95,6 @@ def ipac_loader(file_name, column_mapping=None, **kwargs):
     # If no column mapping is given, attempt to parse the ascii files using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, **kwargs)
+        return generic_spectrum_from_table(tab)
 
     return spectrum_from_column_mapping(tab, column_mapping)

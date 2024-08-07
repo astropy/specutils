@@ -68,10 +68,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
         information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
         associated `Spectrum1D` keyword argument, and the second element is the
-        unit for the file column (or ``None`` to take unit from the table)::
+        unit for the file column (or ``None`` to take unit from the table header)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
-                              'WAVE': ('spectral_axis'spectral_axisu', 'um')}
+                              'WAVE': ('spectral_axis', 'um')}
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum1D initializer.
@@ -138,27 +138,29 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     return Spectrum1D(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
-def generic_spectrum_from_table(table, wcs=None, **kwargs):
+def generic_spectrum_from_table(table, wcs=None):
     """
     Load spectrum from an Astropy table into a Spectrum1D object.
     Uses the following logic to figure out which column is which:
 
      * Spectral axis (dispersion) is the first column with units
-     compatible with u.spectral() or with length units such as 'pix'.
+     compatible with ``u.spectral()`` or with length units such as 'pix'.
+     Need not be present, if a valid ``wcs`` parameter is passed.
 
      * Flux is taken from the first column with units compatible with
-     u.spectral_density(), or with other likely culprits such as
+     ``u.spectral_density()``, or with other likely culprits such as
      'adu' or 'cts/s'.
 
      * Uncertainty comes from the next column with the same units as flux.
 
     Parameters
     ----------
-    file_name: str
-        The path to the ECSV file
+    table : :class:`~astropy.table.Table`
+        Table containing a column of ``flux``, and optionally ``spectral_axis``
+        and ``uncertainty`` as defined above.
     wcs : :class:`~astropy.wcs.WCS`
         A FITS WCS object. If this is present, the machinery will fall back
-        to using the wcs to find the dispersion information.
+        and default to using the ``wcs`` to find the dispersion information.
 
     Returns
     -------
@@ -212,7 +214,7 @@ def generic_spectrum_from_table(table, wcs=None, **kwargs):
         additional_valid_units = [u.Unit('adu'), u.Unit('ct/s'), u.Unit('count')]
         found_column = None
 
-        # First, search for a column with units compatible with Janskies
+        # First, search for a column with units compatible with Jansky
         for c in columns_to_search:
             try:
                 # Check for multi-D flux columns

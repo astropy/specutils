@@ -57,8 +57,8 @@ highlight_language = 'python3'
 # check_sphinx_version("1.2.1")
 
 # Include other packages to link against
-intersphinx_mapping['astropy'] = ('https://docs.astropy.org/en/latest/', None)
-intersphinx_mapping['gwcs'] = ('https://gwcs.readthedocs.io/en/latest/', None)
+intersphinx_mapping['astropy'] = ('https://docs.astropy.org/en/stable/', None)
+intersphinx_mapping['gwcs'] = ('https://gwcs.readthedocs.io/en/stable/', None)
 intersphinx_mapping['reproject'] = ('https://reproject.readthedocs.io/en/stable/', None)
 intersphinx_mapping['mpl_animators'] = ('https://docs.sunpy.org/projects/mpl-animators/en/stable/', None)
 

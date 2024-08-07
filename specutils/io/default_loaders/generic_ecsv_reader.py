@@ -45,6 +45,6 @@ def generic_ecsv(file_name, column_mapping=None, **kwargs):
     table = Table.read(file_name, format='ascii.ecsv')
 
     if column_mapping is None:
-        return generic_spectrum_from_table(table, **kwargs)
+        return generic_spectrum_from_table(table)
 
     return spectrum_from_column_mapping(table, column_mapping)
