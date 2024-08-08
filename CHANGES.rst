@@ -7,8 +7,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
-- Arithmetic now preserves spectral axis values resulting from setting redshift or
-  radial velocity as expected. [#1158]
+- Arithmetic operations on ``Spectrum1D`` objects now preserve spectral axis values that
+  were updated by setting redshift or radial velocity. [#1158]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
