@@ -131,3 +131,12 @@ def test_with_constants(simulated_spectra):
     r_sub_result = 2 - spec
     l_sub_result = -1 * (spec - 2)
     assert_quantity_allclose(r_sub_result.flux, l_sub_result.flux)
+
+
+def test_arithmetic_after_shift(simulated_spectra):
+    spec = simulated_spectra.s1_um_mJy_e1
+    spec.shift_spectrum_to(redshift = 1)
+
+    # Test that doing arithmetic preserves the shifted spectral axis
+    spec *= 2
+    assert_quantity_allclose(spec.spectral_axis, 2*np.linspace(0.4, 1.05, 100)*u.um)

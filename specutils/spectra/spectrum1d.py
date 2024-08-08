@@ -680,6 +680,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def radial_velocity(self, val):
         self.shift_spectrum_to(radial_velocity=val)
 
+    def _return_with_redshift(self, result):
+        result.shift_spectrum_to(redshift=self.redshift)
+        return result
+
     def __add__(self, other):
         if not isinstance(other, (NDCube, u.Quantity)):
             try:
@@ -687,7 +691,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             except TypeError:
                 return NotImplemented
 
-        return self.add(other)
+        return self._return_with_redshift(self.add(other))
 
     def __sub__(self, other):
         if not isinstance(other, NDCube):
@@ -696,25 +700,25 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             except TypeError:
                 return NotImplemented
 
-        return self.subtract(other)
+        return self._return_with_redshift(self.subtract(other))
 
     def __mul__(self, other):
         if not isinstance(other, NDCube):
             other = u.Quantity(other)
 
-        return self.multiply(other)
+        return self._return_with_redshift(self.multiply(other))
 
     def __div__(self, other):
         if not isinstance(other, NDCube):
             other = u.Quantity(other)
 
-        return self.divide(other)
+        return self._return_with_redshift(self.divide(other))
 
     def __truediv__(self, other):
         if not isinstance(other, NDCube):
             other = u.Quantity(other)
 
-        return self.divide(other)
+        return self._return_with_redshift(self.divide(other))
 
     __radd__ = __add__
 
