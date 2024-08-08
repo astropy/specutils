@@ -1,14 +1,17 @@
-1.16.0 (unreleased)
+1.16.0 (2024-08-08)
 -------------------
-
-New Features
-^^^^^^^^^^^^
 
 Bug Fixes
 ^^^^^^^^^
 
 - Arithmetic operations on ``Spectrum1D`` objects now preserve spectral axis values that
   were updated by setting redshift or radial velocity. [#1158]
+
+- Ensure supported dtype is passed to ``medfilt`` during smoothing. [#1156]
+
+- Adjusted copy semantics for numpy 2 compatibility. [#1145]
+
+- Fixed moment 0 calculation to sum flux*dx (rather than flux) to match ``line_flux``. [#1141]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,6 +22,8 @@ Other Changes and Additions
   header from the data extension can be restored by setting the option
   ``store_data_header=True``. The writer is taking a corresponding option
   for saving ``meta['header']`` to either primary or data extension headers. [#1113]
+
+- Improved documentation for readers/writers. [#1152, #1157]
 
 1.15.0 (2024-05-01)
 -------------------
