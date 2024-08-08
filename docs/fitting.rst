@@ -145,19 +145,17 @@ For example, based on the spectrum defined above we can first select a region:
    >>> sub_region = SpectralRegion(4*u.um, 5*u.um)
    >>> sub_spectrum = extract_region(spectrum, sub_region)
 
-Then estimate the line  parameters it it for a Gaussian line profile::
+Then estimate the line parameters for a Gaussian line profile::
 
-   >>> print(estimate_line_parameters(sub_spectrum, models.Gaussian1D()))  # doctest: +FLOAT_CMP
-      Model: Gaussian1D
-      Inputs: ('x',)
-      Outputs: ('y',)
-      Model set size: 1
-      Parameters:
-              amplitude            mean             stddev
-                  Jy                um                um
-          ------------------ ---------------- -------------------
-          1.1845669151078486 4.57517271067525 0.19373372929165977
+   >>> result = estimate_line_parameters(sub_spectrum, models.Gaussian1D())
+   >>> print(result.amplitude)  # doctest: +FLOAT_CMP
+   Parameter('amplitude', value=1.1845669151078486, unit=Jy)
 
+   >>> print(result.mean)  # doctest: +FLOAT_CMP
+   Parameter('mean', value=4.57517271067525, unit=um)
+
+   >>> print(result.stddev)  # doctest: +FLOAT_CMP
+   Parameter('stddev', value=0.19373372929165977, unit=um, bounds=(1.1754943508222875e-38, None))
 
 If an `~astropy.modeling.Model` is used that does not have the predefined
 parameter estimators, or if one wants to use different parameter estimators then
