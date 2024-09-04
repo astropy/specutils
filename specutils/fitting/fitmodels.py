@@ -169,7 +169,7 @@ def find_lines_derivative(spectrum, flux_threshold=None):
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : `~specutils.Spectrum1D`
         The spectrum object over which the equivalent width will be calculated.
     flux_threshold : float, `~astropy.units.Quantity` or None
         The threshold a pixel must be above to be considered part of a line. If
@@ -267,7 +267,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : `~specutils.Spectrum1D`
         The spectrum object over which the equivalent width will be calculated.
     model: `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
         The model or list of models that contain the initial guess.
@@ -281,9 +281,10 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
         use in the fitting.  Note that if a mask is present on the spectrum, it
         will be applied to the ``weights`` as it would be to the spectrum
         itself.
-    window : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
+    window : `~specutils.SpectralRegion`, `~astropy.units.Quantity`, or list of either
         Regions of the spectrum to use in the fitting. If None, then the
-        whole spectrum will be used in the fitting.\
+        whole spectrum will be used in the fitting. If a single `~astropy.units.Quantity`
+        is input, it will be used as the width of the region around the model mean.
     get_fit_info : bool, optional
         Flag to return the ``fit_info`` from the underlying scipy optimizer used
         in the fitting. If True, the returned model will have a ``fit_info``
@@ -430,16 +431,21 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
 
     # In this case the window defines the area around the center of each model
     window_indices = None
-    if window is not None and isinstance(window, (float, int)):
-        center = model.mean
-        window_indices = np.nonzero((dispersion >= center-window) &
-                                    (dispersion < center+window))
+    if window is not None and isinstance(window, u.Quantity):
+        print("Got quantity window")
+        if isinstance(window.value, (float, int)):
+            center = model.mean
+            window_indices = np.nonzero((dispersion >= center-window) &
+                                        (dispersion < center+window))
+        elif len(window.value) == 2:
+            window_indices = np.nonzero((dispersion >= window.min()) &
+                                        (dispersion <= window.max()))
 
     # In this case the window is the start and end points of where we
     # should fit
     elif window is not None and isinstance(window, tuple):
-        window_indices = np.nonzero((dispersion >= window[0]) &
-                                    (dispersion <= window[1]))
+        window_indices = np.nonzero((dispersion >= min(window)) &
+                                    (dispersion <= max(window)))
 
     # in this case the window is spectral regions that determine where
     # to fit.
