@@ -399,7 +399,7 @@ def test_double_peak_fit_separate_window():
                                        2.27480254e-037, 1.54723641e-016, 3.40669622e-004, 2.42814100e+000,
                                        5.60245215e-005, 4.18452504e-018, 1.01176103e-039, 7.91905729e-070,
                                        2.00647052e-108, 1.64571961e-155, 4.36960988e-211, 3.75572034e-275])
-    print(yr_double_fit.value[::10])
+
     assert np.allclose(yr_double_fit.value[::10], yr_double_fit_expected, atol=1e-5)
 
 

@@ -432,7 +432,6 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
     # In this case the window defines the area around the center of each model
     window_indices = None
     if window is not None and isinstance(window, u.Quantity):
-        print("Got quantity window")
         if isinstance(window.value, (float, int)):
             center = model.mean
             window_indices = np.nonzero((dispersion >= center-window) &
