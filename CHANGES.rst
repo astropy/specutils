@@ -7,6 +7,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed specifying a single value for ``window`` in ``analysis.fit_lines``. [#1164]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
