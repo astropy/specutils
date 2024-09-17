@@ -43,7 +43,7 @@ def true_exciser(spectrum, region):
 
     for subregion in region:
         # Find the indices of the spectral_axis array corresponding to the subregion
-        region_mask = (spectral_axis >= region.lower) & (spectral_axis < region.upper)
+        region_mask = (spectral_axis >= region.lower) & (spectral_axis <= region.upper)
         temp_indices = np.nonzero(region_mask)[0]
         if excise_indices is None:
             excise_indices = temp_indices
@@ -125,7 +125,7 @@ def linear_exciser(spectrum, region):
 
     for subregion in region:
         # Find the indices of the spectral_axis array corresponding to the subregion
-        region_mask = (spectral_axis >= subregion.lower) & (spectral_axis < subregion.upper)
+        region_mask = (spectral_axis >= subregion.lower) & (spectral_axis <= subregion.upper)
         inclusive_indices = np.nonzero(region_mask)[0]
         # Now set the flux values for these indices to be a
         # linear range
