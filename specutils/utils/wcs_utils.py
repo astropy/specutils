@@ -46,7 +46,7 @@ class SpectralGWCS(GWCS):
             self.original_unit, equivalencies=u.spectral())
 
 
-def refraction_index(wavelength, method='Griesen2006', co2=None):
+def refraction_index(wavelength, method='Morton2000', co2=None):
     """
     Calculates the index of refraction of dry air at standard temperature
     and pressure, at different wavelengths, using different methods.
@@ -57,7 +57,9 @@ def refraction_index(wavelength, method='Griesen2006', co2=None):
         Vacuum wavelengths with an astropy.unit.
     method : str, optional
         Method used to convert wavelengths. Options are:
-        'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747),
+        'Morton2000' (default) - from Morton (2000, ApJS, 130, 403), eqn 8. Used by VALD,
+            the Vienna Atomic Line Database. Very similar to Edlen (1966).
+        'Griesen2006' - from Greisen et al. (2006, A&A 446, 747),
             eqn. 65, standard used by International Unionof Geodesy and Geophysics
         'Edlen1953' - from Edlen (1953, J. Opt. Soc. Am, 43, 339). Standard
             adopted by IAU (resolution No. C15, Commission 44, XXI GA, 1991),
@@ -67,12 +69,15 @@ def refraction_index(wavelength, method='Griesen2006', co2=None):
             from optical and near UV data.
         'PeckReeder1972' - from Peck & Reeder (1972, J. Opt. Soc. 62), derived
             from additional infrared measurements (up to 1700 nm).
-        'Morton2000' - from Morton (2000, ApJS, 130, 403), eqn 8. Used by VALD,
-            the Vienna Atomic Line Database. Very similar to Edlen (1966).
         'Ciddor1996' - from Ciddor (1996, Appl. Opt. 35, 1566). Based on
             Peck & Reeder (1972), but updated to account for the changes in
             the international temperature scale and adjust the results for
             CO2 concentration. Arguably most accurate conversion available.
+        Note that all options except for 'Griesen2006' have singularities in the far
+        UV. 'Griesen2006' gives values that are slightly inconsistent with the
+        other methods (~0.07 Angstrom difference at visible wavelengths), but it is
+        the best option in the FUV due to the mathematical singularities in the others.
+        See https://github.com/astropy/specutils/issues/1162 for more detail.
     co2 : number, optional
         CO2 concentration in ppm. Only used for method='Ciddor1996'. If not
         given, a default concentration of 450 ppm is used.
@@ -85,6 +90,11 @@ def refraction_index(wavelength, method='Griesen2006', co2=None):
     VALID_METHODS = ['Griesen2006', 'Edlen1953', 'Edlen1966', 'Morton2000',
                      'PeckReeder1972', 'Ciddor1996']
     assert isinstance(method, str), 'method must be a string'
+    if method != 'Griesen2006' and wavelength.min() < 250 * u.nm:
+        raise ValueError("The chosen method is invalid for wavelengths below 250 nm."
+                         " 'Griesen2006' is the only option for this wavelength range -"
+                         " see the specutils.utils.wcs_utils.refraction_index docstring"
+                         " for more detail.")
     method = method.lower()
     sigma2 = (1 / wavelength.to(u.um).value)**2
     if method == 'griesen2006':
@@ -106,7 +116,7 @@ def refraction_index(wavelength, method='Griesen2006', co2=None):
     return refr + 1
 
 
-def vac_to_air(wavelength, method='Griesen2006', co2=None):
+def vac_to_air(wavelength, method='Morton2000', co2=None):
     """
     Converts vacuum to air wavelengths using different methods.
 
@@ -115,7 +125,7 @@ def vac_to_air(wavelength, method='Griesen2006', co2=None):
     wavelength : `Quantity` object (number or sequence)
         Vacuum wavelengths with an astropy.unit.
     method : str, optional
-        One of the methods in refraction_index().
+        One of the methods in refraction_index(), default is 'Morton2000'.
     co2 : number, optional
         Atmospheric CO2 concentration in ppm. Only used for method='Ciddor1996'.
         If not given, a default concentration of 450 ppm is used.
@@ -129,7 +139,7 @@ def vac_to_air(wavelength, method='Griesen2006', co2=None):
     return wavelength / refr
 
 
-def air_to_vac(wavelength, scheme='inversion', method='Griesen2006', co2=None,
+def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
                precision=1e-12, maxiter=30):
     """
     Converts air to vacuum wavelengths using different methods.
@@ -148,7 +158,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Griesen2006', co2=None,
         'iteration' - uses an iterative scheme to invert the index of refraction.
     method : str, optional
         Only used if scheme is 'inversion' or 'iteration'. One of the methods
-        in refraction_index().
+        in refraction_index(), default is 'Morton2000'
     co2 : number, optional
         Atmospheric CO2 concentration in ppm. Only used if scheme='inversion' and
         method='Ciddor1996'. If not given, a default concentration of 450 ppm is used.
