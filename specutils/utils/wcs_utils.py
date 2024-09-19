@@ -60,7 +60,7 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
         'Morton2000' (default) - from Morton (2000, ApJS, 130, 403), eqn 8. Used by VALD,
             the Vienna Atomic Line Database. Very similar to Edlen (1966).
         'Griesen2006' - from Greisen et al. (2006, A&A 446, 747),
-            eqn. 65, standard used by International Unionof Geodesy and Geophysics
+            eqn. 65, standard used by International Union of Geodesy and Geophysics
         'Edlen1953' - from Edlen (1953, J. Opt. Soc. Am, 43, 339). Standard
             adopted by IAU (resolution No. C15, Commission 44, XXI GA, 1991),
             which refers to Oosterhoff (1957) that uses Edlen (1953). Also used

@@ -12,6 +12,9 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- ``utils.wcs_utils.refraction_index`` (and thus ``air_to_vac`` and ``vac_to_air``)
+  now defaults to ``Morton2000`` as the method instead of ``Griesen2006``. [#1169]
+
 1.16.0 (2024-08-08)
 -------------------
 
