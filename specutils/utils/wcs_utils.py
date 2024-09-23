@@ -90,7 +90,7 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
     VALID_METHODS = ['Griesen2006', 'Edlen1953', 'Edlen1966', 'Morton2000',
                      'PeckReeder1972', 'Ciddor1996']
     assert isinstance(method, str), 'method must be a string'
-    if method != 'Griesen2006' and wavelength.min() < 250 * u.nm:
+    if method != 'Griesen2006' and wavelength.min() < 200 * u.nm:
         raise ValueError("The chosen method is invalid for wavelengths below 250 nm."
                          " 'Griesen2006' is the only option for this wavelength range -"
                          " see the specutils.utils.wcs_utils.refraction_index docstring"
