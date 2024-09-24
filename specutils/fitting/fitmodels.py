@@ -259,8 +259,8 @@ def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
 
 
 def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
-              exclude_regions=None, weights=None, window=None, get_fit_info=False,
-              **kwargs):
+              exclude_regions=None, exclude_region_upper_bounds=False, weights=None,
+              window=None, get_fit_info=False, **kwargs):
     """
     Fit the input models to the spectrum. The parameter values of the
     input models will be used as the initial conditions for the fit.
@@ -275,8 +275,12 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
         Fitter instance to be used when fitting model to spectrum.
     exclude_regions : list of `~specutils.SpectralRegion`
         List of regions to exclude in the fitting.
+    exclude_region_upper_bounds : bool, optional
+        Set to True to override the default pythonic slicing on the excluded regions (inclusive
+        lower bound, exclusive upper bound) and remove spectral values less than or equal to
+        the upper bound of the region rather than strictly less than the upper bound.
     weights : array-like or 'unc', optional
-        If 'unc', the unceratinties from the spectrum object are used to
+        If 'unc', the uncertainties from the spectrum object are used to
         to calculate the weights. If array-like, represents the weights to
         use in the fitting.  Note that if a mask is present on the spectrum, it
         will be applied to the ``weights`` as it would be to the spectrum
@@ -310,7 +314,8 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
     #
 
     if exclude_regions is not None:
-        spectrum = excise_regions(spectrum, exclude_regions)
+        spectrum = excise_regions(spectrum, exclude_regions,
+                                  inclusive_upper=exclude_region_upper_bounds)
 
     #
     # Make the model a list if not already
@@ -358,6 +363,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
             model_guess,
             fitter=fitter,
             exclude_regions=exclude_regions,
+            exclude_region_upper_bounds=exclude_region_upper_bounds,
             weights=weights,
             window=model_window,
             get_fit_info=get_fit_info,
@@ -377,8 +383,8 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
 
 
 def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
-               exclude_regions=None, weights=None, window=None, get_fit_info=False,
-               ignore_units=False, **kwargs):
+               exclude_regions=None, exclude_region_upper_bounds=False, weights=None,
+               window=None, get_fit_info=False, ignore_units=False, **kwargs):
     """
     Fit the input model (initial conditions) to the spectrum.  Output will be
     the same model with the parameters set based on the fitting.
@@ -390,7 +396,8 @@ def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertaintie
     #
 
     if exclude_regions is not None:
-        spectrum = excise_regions(spectrum, exclude_regions)
+        spectrum = excise_regions(spectrum, exclude_regions,
+                                  inclusive_upper=exclude_region_upper_bounds)
 
     if isinstance(weights, str):
         if weights == 'unc':
