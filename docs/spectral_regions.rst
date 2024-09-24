@@ -291,8 +291,13 @@ finding functions:
       (7.690954773869347 um, 8.690954773869347 um)
 
 This can be fed into the ``exclude_regions`` argument of the `~specutils.fitting.fit_generic_continuum` or
-`~specutils.fitting.fit_continuum` functions to avoid fitting regions that contain line features. Conversely, users can
-also invert the spectral region
+`~specutils.fitting.fit_continuum` functions to avoid fitting regions that contain line features. Note that,
+by default, this uses pythonic slicing, i.e., spectral values greater than or equal to the lower bound and
+less than the upper bound of the region will be excluded from the fit. For convenience in some cases, the
+``exclude_region_upper_bounds`` keyword can be set to ``True`` to exlude spectral values less than *or equal*
+to the upper bound instead.
+
+Conversely, users can also invert the spectral region
 
 .. code-block:: python
 
