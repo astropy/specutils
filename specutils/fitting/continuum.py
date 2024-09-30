@@ -57,7 +57,8 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
 
 
 def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
-                  exclude_regions=None, window=None, weights=None):
+                  exclude_regions=None, exclude_region_upper_bounds=False,
+                  window=None, weights=None):
     """
     Entry point for fitting using the `~astropy.modeling.fitting`
     machinery.
@@ -74,6 +75,11 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
     exclude_regions : list of 2-tuples
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
+    exclude_region_upper_bounds : bool, optional
+        Set to True to override the default pythonic slicing on the excluded regions (inclusive
+        lower bound, exclusive upper bound) and remove spectral values less than or equal to
+        the upper bound of the region rather than strictly less than the upper bound. Passed
+        through to the fitmodels routine.
     window : tuple of wavelengths
         Start and end wavelengths used for fitting.
     weights : list  (NOT IMPLEMENTED YET)
@@ -93,7 +99,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
 
     # Fit the flux to the model
     continuum_spectrum = fit_lines(spectrum, model, fitter, exclude_regions,
-                                   weights, w)
+                                   exclude_region_upper_bounds, weights, w)
 
     return continuum_spectrum
 

@@ -8,7 +8,7 @@ from ..spectra import Spectrum1D, SpectralRegion
 __all__ = ['excise_regions', 'linear_exciser', 'spectrum_from_model']
 
 
-def true_exciser(spectrum, region):
+def true_exciser(spectrum, region, inclusive_upper=False):
     """
     Basic spectral excise method where the array elements in the spectral
     region defined by the parameter ``region`` (a `~specutils.SpectralRegion`)
@@ -25,6 +25,10 @@ def true_exciser(spectrum, region):
 
     region : `~specutils.SpectralRegion`
         The region of the spectrum to remove.
+
+    inclusive_upper : bool, optional
+        Set to True to override the default pythonic slicing on the regions (inclusive
+        lower bound, exclusive upper bound) to include the specified upper bound instead.
 
     Returns
     -------
@@ -43,7 +47,11 @@ def true_exciser(spectrum, region):
 
     for subregion in region:
         # Find the indices of the spectral_axis array corresponding to the subregion
-        region_mask = (spectral_axis >= region.lower) & (spectral_axis < region.upper)
+        if inclusive_upper:
+            region_mask = (spectral_axis >= subregion.lower) & (spectral_axis <= subregion.upper)
+        else:
+            region_mask = (spectral_axis >= subregion.lower) & (spectral_axis < subregion.upper)
+
         temp_indices = np.nonzero(region_mask)[0]
         if excise_indices is None:
             excise_indices = temp_indices
@@ -76,7 +84,7 @@ def true_exciser(spectrum, region):
                       radial_velocity=spectrum.radial_velocity if not isinstance(new_spectral_axis, SpectralCoord) else None)
 
 
-def linear_exciser(spectrum, region):
+def linear_exciser(spectrum, region, inclusive_upper=False):
     """
     Basic spectral excise method where the spectral region defined by the
     parameter ``region`` (a `~specutils.SpectralRegion`) will result
@@ -125,7 +133,11 @@ def linear_exciser(spectrum, region):
 
     for subregion in region:
         # Find the indices of the spectral_axis array corresponding to the subregion
-        region_mask = (spectral_axis >= subregion.lower) & (spectral_axis < subregion.upper)
+        if inclusive_upper:
+            region_mask = (spectral_axis >= subregion.lower) & (spectral_axis <= subregion.upper)
+        else:
+            region_mask = (spectral_axis >= subregion.lower) & (spectral_axis < subregion.upper)
+
         inclusive_indices = np.nonzero(region_mask)[0]
         # Now set the flux values for these indices to be a
         # linear range
@@ -150,7 +162,7 @@ def linear_exciser(spectrum, region):
                       radial_velocity=spectrum.radial_velocity if not isinstance(spectral_axis, SpectralCoord) else None)
 
 
-def excise_regions(spectrum, regions, exciser=true_exciser):
+def excise_regions(spectrum, regions, exciser=true_exciser, inclusive_upper=False):
     """
     Method to remove or replace the flux in the defined regions of the spectrum
     depending on the function provided in the ``exciser`` argument.
@@ -173,6 +185,10 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
         methods could be defined and used by this routine.
         default: true_exciser
 
+    inclusive_upper : bool, optional
+        Set to True to override the default pythonic slicing on the regions (inclusive
+        lower bound, exclusive upper bound) to include the specified upper bound instead.
+
     Returns
     -------
     spectrum : `~specutils.Spectrum1D`
@@ -190,12 +206,12 @@ def excise_regions(spectrum, regions, exciser=true_exciser):
         raise ValueError('The spectrum parameter must be Spectrum1D object.')
 
     for region in regions:
-        spectrum = excise_region(spectrum, region, exciser)
+        spectrum = excise_region(spectrum, region, exciser, inclusive_upper=inclusive_upper)
 
     return spectrum
 
 
-def excise_region(spectrum, region, exciser=true_exciser):
+def excise_region(spectrum, region, exciser=true_exciser, inclusive_upper=False):
     """
     Method to remove or replace the flux in the defined regions of the spectrum
     depending on the function provided in the ``exciser`` argument.
@@ -216,6 +232,10 @@ def excise_region(spectrum, region, exciser=true_exciser):
         Method that takes the spectrum and region and does the excising. Other
         methods could be defined and used by this routine.
         default: true_exciser
+
+    inclusive_upper : bool, optional
+        Set to True to override the default pythonic slicing on the regions (inclusive
+        lower bound, exclusive upper bound) to include the specified upper bound instead.
 
     Returns
     -------
@@ -240,7 +260,7 @@ def excise_region(spectrum, region, exciser=true_exciser):
     #  Call the exciser method
     #
 
-    return exciser(spectrum, region)
+    return exciser(spectrum, region, inclusive_upper=inclusive_upper)
 
 
 def spectrum_from_model(model_input, spectrum):
