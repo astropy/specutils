@@ -12,6 +12,8 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Dropped support for python 3.9. [#1176]
+
 - ``utils.wcs_utils.refraction_index`` (and thus ``air_to_vac`` and ``vac_to_air``)
   now defaults to ``Morton2000`` as the method instead of ``Griesen2006``. [#1169]
 
