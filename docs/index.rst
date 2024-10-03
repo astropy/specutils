@@ -122,6 +122,7 @@ For more details on usage of specutils, see the sections listed below.
     fitting
     manipulation
     arithmetic
+    wcs_utils
     custom_loading
     identify
 

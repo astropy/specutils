@@ -55,29 +55,38 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
     ----------
     wavelength : `Quantity` object (number or sequence)
         Vacuum wavelengths with an astropy.unit.
+
     method : str, optional
         Method used to convert wavelengths. Options are:
+
         'Morton2000' (default) - from Morton (2000, ApJS, 130, 403), eqn 8. Used by VALD,
             the Vienna Atomic Line Database. Very similar to Edlen (1966).
+
         'Griesen2006' - from Greisen et al. (2006, A&A 446, 747),
             eqn. 65, standard used by International Union of Geodesy and Geophysics
+
         'Edlen1953' - from Edlen (1953, J. Opt. Soc. Am, 43, 339). Standard
             adopted by IAU (resolution No. C15, Commission 44, XXI GA, 1991),
             which refers to Oosterhoff (1957) that uses Edlen (1953). Also used
             by Morton (1991, ApJS, 77, 119), which is frequently cited as IAU source.
+
         'Edlen1966' - from Edlen (1966, Metrologia 2, 71), rederived constants
             from optical and near UV data.
+
         'PeckReeder1972' - from Peck & Reeder (1972, J. Opt. Soc. 62), derived
             from additional infrared measurements (up to 1700 nm).
+
         'Ciddor1996' - from Ciddor (1996, Appl. Opt. 35, 1566). Based on
             Peck & Reeder (1972), but updated to account for the changes in
             the international temperature scale and adjust the results for
             CO2 concentration. Arguably most accurate conversion available.
+
         Note that all options except for 'Griesen2006' have singularities in the far
         UV. 'Griesen2006' gives values that are slightly inconsistent with the
         other methods (~0.07 Angstrom difference at visible wavelengths), but it is
         the best option in the FUV due to the mathematical singularities in the others.
         See https://github.com/astropy/specutils/issues/1162 for more detail.
+
     co2 : number, optional
         CO2 concentration in ppm. Only used for method='Ciddor1996'. If not
         given, a default concentration of 450 ppm is used.
@@ -148,23 +157,29 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
     ----------
     wavelength : `Quantity` object (number or sequence)
         Air wavelengths with an astropy.unit.
+
     scheme : str, optional
         How to convert from vacuum to air wavelengths. Options are:
-        'inversion' (default) - result is simply the inversion (1 / n) of the
+
+            * 'inversion' (default) - result is simply the inversion (1 / n) of the
             refraction index of air. Griesen et al. (2006) report that the error
             in naively inverting is less than 10^-9.
-        'Piskunov' - uses an analytical solution derived by Nikolai Piskunov
+            * 'Piskunov' - uses an analytical solution derived by Nikolai Piskunov
             and used by the Vienna Atomic Line Database (VALD).
-        'iteration' - uses an iterative scheme to invert the index of refraction.
+            * 'iteration' - uses an iterative scheme to invert the index of refraction.
+
     method : str, optional
         Only used if scheme is 'inversion' or 'iteration'. One of the methods
         in refraction_index(), default is 'Morton2000'
+
     co2 : number, optional
         Atmospheric CO2 concentration in ppm. Only used if scheme='inversion' and
         method='Ciddor1996'. If not given, a default concentration of 450 ppm is used.
+
     precision : float
         Maximum fractional value in refraction conversion beyond at which iteration will
         be stopped. Only used if scheme='iteration'.
+
     maxiter : integer
         Maximum number of iterations to run. Only used if scheme='iteration'.
 
@@ -214,6 +229,7 @@ def air_to_vac_deriv(wavelength, method='Griesen2006'):
     ----------
     wavelength : `Quantity` object (number or sequence)
         Air wavelengths with an astropy.unit.
+
     method : str, optional
         Method used to convert wavelength derivative. Options are:
         'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747),

@@ -22,4 +22,13 @@ than this limit.
 .. image:: refractive_index_singularities.png
    :alt: Demonstration of singularities in the equations for refractive index.
 
-For additional context and discussion, see https://github.com/astropy/specutils/issues/1162
+For additional context and discussion, see https://github.com/astropy/specutils/issues/1162.
+
+Reference/API
+-------------
+.. automodapi:: specutils.utils.wcs_utils
+    :no-heading:
+
+    :skip: GWCS
+    :skip: Shift
+    :skip: Tabular1D
