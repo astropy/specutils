@@ -51,7 +51,7 @@ New Features
 ^^^^^^^^^^^^
 
 - Implemented ``SpectralRegion.write()`` and ``SpectralRegion.read()`` to round-trip spectral
-regions to/from ECSV files via ``astropy.table.QTable``. [#1133]
+  regions to/from ECSV files via ``astropy.table.QTable``. [#1133]
 
 1.14.0 (2024-04-16)
 -------------------
