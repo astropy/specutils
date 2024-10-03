@@ -235,8 +235,7 @@ def air_to_vac_deriv(wavelength, method='Griesen2006'):
 
     method : str, optional
         Method used to convert wavelength derivative. Options are:
-        'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747),
-            eqn. 66.
+        'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747), eqn. 66.
 
     Returns
     -------
