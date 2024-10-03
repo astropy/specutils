@@ -85,7 +85,8 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
         UV. 'Griesen2006' gives values that are slightly inconsistent with the
         other methods (~0.07 Angstrom difference at visible wavelengths), but it is
         the best option in the FUV due to the mathematical singularities in the others.
-        See https://github.com/astropy/specutils/issues/1162 for more detail.
+        See https://specutils.readthedocs.io/en/latest/wcs_utils.html for more detail, or
+        https://github.com/astropy/specutils/issues/1162 for additional context.
 
     co2 : number, optional
         CO2 concentration in ppm. Only used for method='Ciddor1996'. If not
@@ -162,15 +163,17 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
         How to convert from vacuum to air wavelengths. Options are:
 
             * 'inversion' (default) - result is simply the inversion (1 / n) of the
-            refraction index of air. Griesen et al. (2006) report that the error
-            in naively inverting is less than 10^-9.
+              refraction index of air. Griesen et al. (2006) report that the error
+              in naively inverting is less than 10^-9.
+
             * 'Piskunov' - uses an analytical solution derived by Nikolai Piskunov
-            and used by the Vienna Atomic Line Database (VALD).
+              and used by the Vienna Atomic Line Database (VALD).
+
             * 'iteration' - uses an iterative scheme to invert the index of refraction.
 
     method : str, optional
         Only used if scheme is 'inversion' or 'iteration'. One of the methods
-        in refraction_index(), default is 'Morton2000'
+        in `~specutils.utils.wcs_utils.refraction_index`, default is 'Morton2000'
 
     co2 : number, optional
         Atmospheric CO2 concentration in ppm. Only used if scheme='inversion' and
