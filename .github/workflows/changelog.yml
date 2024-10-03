@@ -1,0 +1,21 @@
+name: Changelog check
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changelog:
+    name: Check changelog entry
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check change log entry
+      uses: scientific-python/action-check-changelogfile@0.3
+      env:
+        CHANGELOG_FILENAME: CHANGES.rst
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CHECK_MILESTONE: false

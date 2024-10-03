@@ -51,7 +51,7 @@ New Features
 ^^^^^^^^^^^^
 
 - Implemented ``SpectralRegion.write()`` and ``SpectralRegion.read()`` to round-trip spectral
-regions to/from ECSV files via ``astropy.table.QTable``. [#1133]
+  regions to/from ECSV files via ``astropy.table.QTable``. [#1133]
 
 1.14.0 (2024-04-16)
 -------------------
@@ -209,8 +209,10 @@ Bug Fixes
 ^^^^^^^^^
 
 - Fix bug in fitting with weights if weights argument is set to 'unc'. [#979]
+
 - Fix bug in JWST reader which caused multi-extension files to load only the
   primary HDU [#982]
+
 - Implemented conversion to expected uncertainty type in a few functions that
   were still just assuming the uncertainty was the correct type. [#984]
 
@@ -261,9 +263,6 @@ Other Changes and Additions
 1.7.0 (2022-02-21)
 ------------------
 
-New Features
-^^^^^^^^^^^^
-
 Bug Fixes
 ^^^^^^^^^
 
@@ -294,8 +293,8 @@ New Features
 - SpectralRegion and Spectrum1D now allow descending (in wavelength space) as
   well as ascending spectral values. [#911]
 
-1.5.0
------
+1.5.0 (2021-11-23)
+------------------
 
 New Features
 ^^^^^^^^^^^^
@@ -328,16 +327,16 @@ Other Changes and Additions
 
 - Minor changes for astropy 5.0 compatibility. [#895]
 
-1.4.1
------
+1.4.1 (2021-09-17)
+------------------
 
 Bug Fixes
 ^^^^^^^^^
 
 - Fix JWST s3d loader. [#866]
 
-1.4
----
+1.4 (2021-09-13)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -360,8 +359,8 @@ Other Changes and Additions
 
 - ``Spectrum1D`` now subclasses ``NDCube`` instead of ``NDDataRef``. [#754, #822, #850]
 
-1.3.1
------
+1.3.1 (2021-08-27)
+------------------
 
 New Features
 ^^^^^^^^^^^^
@@ -381,8 +380,8 @@ Other Changes and Additions
 
 - Improve continuum flux calculation in ``equivalent_width``. [#843]
 
-1.3
----
+1.3 (2021-06-18)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -407,8 +406,8 @@ Other Changes and Additions
 
 - Removed unused astropy config code. [#805]
 
-1.2
----
+1.2 (2021-03-14)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -492,8 +491,8 @@ Other Changes and Additions
 
 - Remove astropy helpers and CI helpers dependencies. [#562]
 
-1.1
----
+1.1 (2020-09-17)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -577,8 +576,8 @@ Other Changes and Additions
 
 - Improve mask handling in analysis functions. [#701]
 
-1.0
----
+1.0 (2020-03-19)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -622,8 +621,8 @@ Other Changes and Additions
 - Remove spectral_resolution stub from Spectrum1D. [#606]
 
 
-0.7
----
+0.7 (unreleased)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -638,8 +637,8 @@ Bug Fixes
 - Address ``MexicanHat1D`` name change in documentation. [#564]
 
 
-0.6.1
------
+0.6.1 (unreleased)
+------------------
 
 API Changes
 ^^^^^^^^^^^
@@ -694,8 +693,8 @@ Other Changes and Additions
 - Include travis stages in test matrix. [#515]
 
 
-0.6
----
+0.6 (2019-09-19)
+----------------
 
 New Features
 ^^^^^^^^^^^^
@@ -725,11 +724,8 @@ Bug Fixes
 
 - Fix for continuum fitting on pixel-axis dispersions.
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-0.5.3
------
+0.5.3 (unreleased)
+------------------
 
 Bug Fixes
 ^^^^^^^^^
@@ -740,10 +736,11 @@ Bug Fixes
 
 
 0.5.2 (2019-02-06)
-----------------
+------------------
 
 Bug Fixes
 ^^^^^^^^^
+
 - Bugfixes for astropy helpers, pep8 syntax checking, and plotting in docs [#416,#417,#419]
 
 - All automatically generated ``SpectrumList`` loaders now have identifiers. [#440]
@@ -752,10 +749,10 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 - Improve explanation on creating spectrum continua. [#420]
 
 - Wrap IO identifier functions to ensure they always return True or False and log any errors. [#404]
-
 
 0.5.1 (2018-11-29)
 ------------------
@@ -771,6 +768,6 @@ Bug Fixes
 0.5 (2018-11-21)
 ----------------
 
-This was the first release of specutils executing the
-[APE14](https://github.com/astropy/astropy-APEs/blob/main/APE14.rst)
-plan (i.e. the "new" specutils) and therefore intended for broad use.
+- This was the first release of specutils executing the
+  [APE14](https://github.com/astropy/astropy-APEs/blob/main/APE14.rst)
+  plan (i.e. the "new" specutils) and therefore intended for broad use.
