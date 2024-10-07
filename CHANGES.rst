@@ -10,6 +10,9 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Replaced ``LevMarLSQFitter`` with ``TRFLSQFitter`` as the former is no longer
+  recommended by ``astropy``. [#1180]
+
 1.17.0 (2024-10-04)
 -------------------
 

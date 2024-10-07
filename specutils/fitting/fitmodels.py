@@ -258,7 +258,7 @@ def _generate_line_list_table(spectrum, emission_inds, absorption_inds):
     return qtable
 
 
-def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
+def fit_lines(spectrum, model, fitter=fitting.TRFLSQFitter(calc_uncertainties=True),
               exclude_regions=None, exclude_region_upper_bounds=False, weights=None,
               window=None, get_fit_info=False, **kwargs):
     """
@@ -382,7 +382,7 @@ def fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties
     return fitted_models
 
 
-def _fit_lines(spectrum, model, fitter=fitting.LevMarLSQFitter(calc_uncertainties=True),
+def _fit_lines(spectrum, model, fitter=fitting.TRFLSQFitter(calc_uncertainties=True),
                exclude_regions=None, exclude_region_upper_bounds=False, weights=None,
                window=None, get_fit_info=False, ignore_units=False, **kwargs):
     """

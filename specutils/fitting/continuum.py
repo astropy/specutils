@@ -1,6 +1,6 @@
 import astropy.units as u
 from astropy.modeling.polynomial import Chebyshev1D
-from astropy.modeling.fitting import LevMarLSQFitter
+from astropy.modeling.fitting import TRFLSQFitter
 
 from ..fitting import fit_lines
 from ..manipulation.smoothing import median_smooth
@@ -11,7 +11,7 @@ __all__ = ['fit_continuum', 'fit_generic_continuum']
 
 
 def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
-                          fitter=LevMarLSQFitter(),
+                          fitter=TRFLSQFitter(),
                           exclude_regions=None, weights=None):
     """
     Basic fitting of the continuum of an input spectrum. The input
@@ -29,7 +29,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
         `~scipy.signal.medfilt` for more information.
     fitter : `~astropy.fitting._FitterMeta`
         The astropy fitter to use for fitting the model.
-        Default: `~astropy.modeling.fitting.LevMarLSQFitter`
+        Default: `~astropy.modeling.fitting.TRFLSQFitter`
     exclude_regions : list of 2-tuples
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
@@ -56,7 +56,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
                          exclude_regions=exclude_regions, weights=weights)
 
 
-def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
+def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=TRFLSQFitter(),
                   exclude_regions=None, exclude_region_upper_bounds=False,
                   window=None, weights=None):
     """
@@ -71,7 +71,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=LevMarLSQFitter(),
         The list of models that contain the initial guess.
     fitter : `~astropy.fitting._FitterMeta`
         The astropy fitter to use for fitting the model.
-        Default: `~astropy.modeling.fitting.LevMarLSQFitter`
+        Default: `~astropy.modeling.fitting.TRFLSQFitter`
     exclude_regions : list of 2-tuples
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
