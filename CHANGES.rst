@@ -7,6 +7,9 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed ``Spectrum1D.with_flux_unit()`` not converting uncertainty along
+  with flux unit. [#1181]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

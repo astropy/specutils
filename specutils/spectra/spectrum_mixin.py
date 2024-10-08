@@ -3,6 +3,7 @@ from copy import deepcopy
 import numpy as np
 import astropy.units.equivalencies as eq
 from astropy import units as u
+from astropy.nddata import StdDevUncertainty
 from astropy.utils.decorators import deprecated
 
 DOPPLER_CONVENTIONS = {}
@@ -86,8 +87,9 @@ class OneDSpectrumMixin():
                                   suppress_conversion=suppress_conversion)
 
     def with_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
-        """
-        Returns a new spectrum with a different flux unit
+        """Returns a new spectrum with a different flux unit.
+        If uncertainty is defined, it will be converted to
+        `~astropy.nddata.StdDevUncertainty` in the new unit.
 
         Parameters
         ----------
@@ -99,13 +101,16 @@ class OneDSpectrumMixin():
             Set to spectral_density by default.
 
         suppress_conversion : bool
-            Set to true if updating the unit without
-            converting data values.
+            Set to `True` if updating the flux unit without
+            converting data values. This is ignored for
+            ``uncertainty`` component.
 
         Returns
         -------
         `~specutils.Spectrum1D`
             A new spectrum with the converted flux array
+            (and uncertainty, if applicable).
+
         """
         new_spec = deepcopy(self)
 
@@ -120,6 +125,11 @@ class OneDSpectrumMixin():
             new_spec._unit = new_data.unit
         else:
             new_spec._unit = u.Unit(unit)
+
+        if self.uncertainty is not None:
+            new_spec.uncertainty = StdDevUncertainty(
+                self.uncertainty.represent_as(StdDevUncertainty).quantity.to(
+                    unit, equivalencies=equivalencies))
 
         return new_spec
 
