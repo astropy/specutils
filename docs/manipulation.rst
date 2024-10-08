@@ -403,8 +403,8 @@ A model fitted over the region can also be used to replace the spectrum flux val
     >>> region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
     >>> result = model_replace(input_spectrum, region, model=fitted_model)
     >>> result  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [1.        , 1.1       , 0.9       , 4.40801804, 9.58271877,
-               5.61238054, 0.88556096, 1.        , 1.2       , 1.1       ] mJy> (shape=(10,), mean=2.67887 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
+    <Spectrum1D(flux=<Quantity [1.        , 1.1       , 0.9       , 4.40803188, 9.58269826,
+               5.61240079, 0.88557902, 1.        , 1.2       , 1.1       ] mJy> (shape=(10,), mean=2.67887 mJy); spectral_axis=<SpectralAxis [ 1.  2.  3. ...  8.  9. 10.] Angstrom> (length=10))>
 
 Reference/API
 -------------

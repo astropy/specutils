@@ -126,8 +126,8 @@ def test_from_fitted_model():
     assert result.uncertainty is None
     assert result.flux.unit == input_spectrum.flux.unit
 
-    expected_flux = np.array([1., 1.1, 0.9, 4.40801804, 9.58271877,
-                              5.61238054, 0.88556096, 1., 1.2, 1.1]) * u.mJy
+    expected_flux = np.array([1, 1.1, 0.9, 4.408032, 9.582698,
+                              5.612401, 0.885579, 1, 1.2, 1.1]) * u.mJy
 
     assert_quantity_allclose(result.flux, expected_flux)
     assert_quantity_allclose(result.spectral_axis, input_spectrum.spectral_axis)

@@ -199,7 +199,7 @@ each parameter, but that is optional.
 
 The `~specutils.fitting.fit_lines` function takes as input the spectrum to be fit
 and the set of models with initial guesses, and by default uses the
-`~astropy.modeling.fitting.LevMarLSQFitter` to perform the fit. You may override
+`~astropy.modeling.fitting.TRFLSQFitter` to perform the fit. You may override
 this by providing a different fitter to the ``fitter`` input parameter.  Note
 that the default fitter will populate the ``stds`` attribute of the returned
 models with estimates of the standard deviation uncertainty in the fit parameters,
