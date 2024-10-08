@@ -114,7 +114,7 @@ def test_spec_flux_conv_pix2(suppress_conversion):
     flux_orig = np.arange(24).reshape((2, 3, 4)) * u.Jy
     uncert_orig = StdDevUncertainty(flux_orig)
     mask_orig = np.zeros(flux_orig.shape, dtype=bool)
-    rs_orig = 0.0001
+    rs_orig = 0.0001 * u.dimensionless_unscaled
     sp_orig = Spectrum1D(
         flux=flux_orig, uncertainty=uncert_orig, mask=mask_orig, wcs=w,
         redshift=rs_orig, meta=meta)
@@ -131,14 +131,15 @@ def test_spec_flux_conv_pix2(suppress_conversion):
     assert sp_pix2_specutils.flux.unit == u.Jy / PIX2
     assert sp_pix2_specutils.uncertainty.unit == u.Jy / PIX2
     assert_quantity_allclose(sp_pix2_specutils.flux, sp_pix2_jdaviz.flux)
-    assert_quantity_allclose(sp_pix2_specutils.uncertainty, sp_pix2_jdaviz.uncertainty)
+    assert_quantity_allclose(
+        sp_pix2_specutils.uncertainty.quantity, sp_pix2_jdaviz.uncertainty.quantity)
     assert_quantity_allclose(sp_pix2_specutils.spectral_axis, sp_pix2_jdaviz.spectral_axis)
     assert_array_equal(sp_pix2_specutils.mask, sp_pix2_jdaviz.mask)
     assert_dict_equal(sp_pix2_specutils.wcs.to_header(), sp_pix2_jdaviz.wcs.to_header())
     assert_dict_equal(sp_pix2_specutils.meta, sp_pix2_jdaviz.meta)
     assert sp_pix2_specutils.velocity_convention == sp_pix2_jdaviz.velocity_convention
-    assert_quantity_allclose(sp_pix2_specutils.rest_value, sp_pix2_jdaviz.rest_value)
-    assert_qauntity_allclose(sp_pix2_specutils.redshift, sp_pix2_jdaviz.redshift)
+    assert sp_pix2_specutils.rest_value is sp_pix2_jdaviz.rest_value  # None
+    assert_quantity_allclose(sp_pix2_specutils.redshift, sp_pix2_jdaviz.redshift)
     assert_quantity_allclose(sp_pix2_specutils.radial_velocity, sp_pix2_jdaviz.radial_velocity)
     if "bin_specification" in sp_orig:
         assert sp_pix2_specutils.bin_specification == sp_pix2_jdaviz.bin_specification
