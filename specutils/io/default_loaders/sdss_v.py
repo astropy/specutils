@@ -312,6 +312,7 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 # BOSS REDUX products (specLite, specFull, custom coadd files, etc)
 
+
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -578,16 +579,16 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     meta["snr"] = np.array(hdulist[hdu].data["snr"])
 
     # Add identifiers (obj, telescope, mjd, datatype)
-    # TODO: need to see what metadata we're interested in for the MWM files.
     meta["telescope"] = hdulist[hdu].data["telescope"]
     meta["instrument"] = hdulist[hdu].header.get("INSTRMNT")
-    try:
+    try:  # get obj if exists
         meta["obj"] = hdulist[hdu].data["obj"]
     except KeyError:
         pass
+
+    # choose between mwmVisit/Star via KeyError except
     try:
-        meta["date"] = hdulist[hdu].data["date_obs"]
-        meta["mjd"] = hdulist[hdu].data["mjd"]
+        meta['mjd'] = hdulist[hdu].data['mjd']
         meta["datatype"] = "mwmVisit"
     except KeyError:
         meta["mjd"] = (str(hdulist[hdu].data["min_mjd"][0]) + "->" +
@@ -595,6 +596,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         meta["datatype"] = "mwmStar"
     finally:
         meta["name"] = hdulist[hdu].name
+        meta["sdss_id"] = hdulist[hdu].data['sdss_id']
 
     return Spectrum1D(
         spectral_axis=spectral_axis,
