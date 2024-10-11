@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- New ``Spectrum1D.with_spectral_axis_and_flux_units`` method to convert both
+  spectral axis and flux units at the same time. [#1184]
+
 Bug Fixes
 ^^^^^^^^^
 
