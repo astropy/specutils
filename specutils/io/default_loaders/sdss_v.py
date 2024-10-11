@@ -94,7 +94,7 @@ def mwm_identify(origin, *args, **kwargs):
 
 def astra_identify(origin, *args, **kwargs):
     """
-    Check whether given input is FITS and has SDSS-V astra model spectra 
+    Check whether given input is FITS and has SDSS-V astra model spectra
     BINTABLE in all 4 extensions. This is used for Astropy I/O Registry.
     """
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
@@ -333,11 +333,6 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 
 # BOSS REDUX products (specLite, specFull, custom coadd files, etc)
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 15dd4a21 (add: astraStar/Visit model spectrum default loaders)
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
