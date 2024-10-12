@@ -1,11 +1,17 @@
 import os
+<<<<<<< HEAD
 import warnings  # noqa ; required for pytest
+=======
+>>>>>>> 51e8a2e9 (fix: SDSS-V SpectrumList loader ambiguity + add: BOSS-only mwm test cases)
 
 import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.units import Angstrom, Unit
+<<<<<<< HEAD
 from astropy.utils.exceptions import AstropyUserWarning
+=======
+>>>>>>> 51e8a2e9 (fix: SDSS-V SpectrumList loader ambiguity + add: BOSS-only mwm test cases)
 
 from specutils import Spectrum, SpectrumList
 
