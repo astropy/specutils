@@ -183,9 +183,10 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
 
 
 @data_loader(
-    "SDSS-V apStar multi",
+    "SDSS-V apStar",
     identifier=apStar_identify,
     dtype=SpectrumList,
+    force=True,
     priority=10,
     extensions=["fits"],
 )
@@ -259,9 +260,10 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
 
 
 @data_loader(
-    "SDSS-V apVisit multi",
+    "SDSS-V apVisit",
     identifier=apVisit_identify,
     dtype=SpectrumList,
+    force=True,
     priority=10,
     extensions=["fits"],
 )
@@ -338,6 +340,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     """
     if hdu is None:
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
+        print('HDU not specified. Loading coadd spectrum (HDU1)')
         hdu = 1  # defaulting to coadd
         # raise ValueError("HDU not specified! Please specify a HDU to load.")
     elif hdu in [2, 3, 4]:
@@ -348,9 +351,10 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
 
 
 @data_loader(
-    "SDSS-V spec multi",
+    "SDSS-V spec",
     identifier=spec_sdss5_identify,
     dtype=SpectrumList,
+    force=True,
     priority=5,
     extensions=["fits"],
 )
@@ -463,14 +467,17 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
             for i in range(len(hdulist)):
                 if hdulist[i].header.get("DATASUM") != "0":
                     hdu = i
+                    print('HDU not specified. Loading spectrum at (HDU{})'.
+                          format(i))
                     break
 
         return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu, **kwargs)
 
 
 @data_loader(
-    "SDSS-V mwm multi",
+    "SDSS-V mwm",
     identifier=mwm_identify,
+    force=True,
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],
