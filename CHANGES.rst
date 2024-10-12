@@ -159,11 +159,17 @@ Bug Fixes
 - Fixed extracting a spectral region when one of spectrum/region is in wavelength
   and the other is in frequency units. [#1187]
 
+- Fixed ``mwmVisit`` SDSS-V ``Spectrum1D`` and ``SpectrumList`` default loader being unable to load files containing only BOSS instrument spectra. [#1185]
+
+- Fixed automatic format detection for SDSS-V ``SpectrumList`` default loaders. [#1185]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Replaced ``LevMarLSQFitter`` with ``TRFLSQFitter`` as the former is no longer
   recommended by ``astropy``. [#1180]
+
+- "Multi" loaders have been removed from SDSS-V ``SpectrumList`` default loaders. [#1185]
 
 1.17.0 (2024-10-04)
 -------------------
