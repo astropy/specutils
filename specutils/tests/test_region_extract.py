@@ -20,7 +20,7 @@ FLUX_ARRAY = [1605.71612173, 1651.41650744, 2057.65798618, 2066.73502361, 1955.7
 def test_region_simple(simulated_spectra):
 
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion(0.6*u.um, 0.8*u.um)
