@@ -177,13 +177,11 @@ def test_region_simple_check_ends(simulated_spectra):
     assert sub_spectrum.spectral_axis.value[-1] == 25
 
 
-def test_region_empty(simulated_spectra):
-    np.random.seed(42)
-
+def test_region_empty():
     empty_spectrum = Spectrum1D(spectral_axis=[]*u.um, flux=[]*u.Jy)
 
     # Region past upper range of spectrum
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
     region = SpectralRegion(28*u.um, 30*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -194,7 +192,7 @@ def test_region_empty(simulated_spectra):
     assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region below lower range of spectrum
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
     region = SpectralRegion(0.1*u.um, 0.3*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -221,10 +219,8 @@ def test_region_empty(simulated_spectra):
 
 
 def test_region_descending(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion(0.8*u.um, 0.6*u.um)
@@ -253,10 +249,8 @@ def test_descending_spectral_axis(simulated_spectra):
 
 
 def test_region_two_sub(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
@@ -293,10 +287,8 @@ def test_region_two_sub(simulated_spectra):
 
 
 def test_bounding_region(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
