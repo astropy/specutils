@@ -18,10 +18,9 @@ FLUX_ARRAY = [1605.71612173, 1651.41650744, 2057.65798618, 2066.73502361, 1955.7
 
 
 def test_region_simple(simulated_spectra):
-    np.random.seed(42)
 
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion(0.6*u.um, 0.8*u.um)
@@ -145,6 +144,16 @@ def test_region_ghz(simulated_spectra):
 
     sub_spectrum_flux_expected = FLUX_ARRAY * u.mJy
 
+    assert_quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
+
+
+def test_region_ghz_spectrum_wave(simulated_spectra):
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    region = SpectralRegion(499654.09666667*u.GHz, 374740.5725*u.GHz)
+
+    sub_spectrum = extract_region(spectrum, region)
+
+    sub_spectrum_flux_expected = FLUX_ARRAY * u.mJy
     assert_quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
 
 
