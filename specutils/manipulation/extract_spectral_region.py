@@ -103,7 +103,11 @@ def _subregion_to_edge_pixels(subregion, spectrum):
 
         right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order, "right")
 
-    return left_index, right_index
+    # If the spectrum is in wavelength and region is in Hz (for example), these still might be reversed
+    if left_index < right_index:
+        return left_index, right_index
+    else:
+        return right_index, left_index
 
 
 def extract_region(spectrum, region, return_single_spectrum=False):

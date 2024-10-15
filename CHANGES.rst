@@ -13,6 +13,9 @@ Bug Fixes
 - Fixed ``Spectrum1D.with_flux_unit()`` not converting uncertainty along
   with flux unit. [#1181]
 
+- Fixed extracting a spectral region when one of spectrum/region is in wavelength
+  and the other is in frequency units. [#1187]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
