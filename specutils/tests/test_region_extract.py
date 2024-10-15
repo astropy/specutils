@@ -111,10 +111,8 @@ def test_pixel_spectralaxis_extraction():
 
 
 def test_slab_simple(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     sub_spectrum = spectral_slab(spectrum, 0.6*u.um, 0.8*u.um)
@@ -220,7 +218,7 @@ def test_region_empty():
 
 def test_region_descending(simulated_spectra):
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion(0.8*u.um, 0.6*u.um)
@@ -250,7 +248,7 @@ def test_descending_spectral_axis(simulated_spectra):
 
 def test_region_two_sub(simulated_spectra):
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
@@ -288,7 +286,7 @@ def test_region_two_sub(simulated_spectra):
 
 def test_bounding_region(simulated_spectra):
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.ones(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
