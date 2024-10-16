@@ -13,13 +13,9 @@ from ..parsing_utils import read_fileobj_or_hdulist
 from ..registers import data_loader
 
 __all__ = [
-    "load_sdss_apVisit_1D",
     "load_sdss_apVisit_list",
-    "load_sdss_apStar_1D",
     "load_sdss_apStar_list",
-    "load_sdss_spec_1D",
     "load_sdss_spec_list",
-    "load_sdss_mwm_1d",
     "load_sdss_mwm_list",
 ]
 
@@ -230,7 +226,7 @@ def load_sdss_apStar_list(file_obj, **kwargs):
             raise ValueError(
                 "Only 1 visit in this file. Use Spectrum.read() instead.")
         return SpectrumList([
-            load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
+            _load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
             for i in range(nvisits)
         ])
 
@@ -374,7 +370,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     identifier=spec_sdss5_identify,
     dtype=SpectrumList,
     force=True,
-    priority=5,
+    priority=10,
     extensions=["fits"],
 )
 def load_sdss_spec_list(file_obj, **kwargs):
@@ -504,7 +500,7 @@ def load_sdss_mwm_1d(file_obj,
     identifier=mwm_identify,
     force=True,
     dtype=SpectrumList,
-    priority=20,
+    priority=10,
     extensions=["fits"],
 )
 def load_sdss_mwm_list(file_obj, **kwargs):
@@ -704,16 +700,15 @@ def load_astra_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             datasums.append(int(hdulist[hdu].header.get("DATASUM")))
         if (np.array(datasums) == 0).all():
-            raise ValueError("Specified file is empty.")
+            raise RuntimeError("Specified file is empty.")
 
         # Now load file
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
-                # TODO: validate if we want this printed warning or not.
-                # it might get annoying & fill logs with useless alerts.
-                print("WARNING: HDU{} ({}) is empty.".format(
-                    hdu, hdulist[hdu].name))
+                warnings.warn(
+                    "WARNING: HDU{} ({}) is empty.".format(
+                        hdu, hdulist[hdu].name), AstropyUserWarning)
                 continue
             spectra.append(_load_astra_hdu(hdulist, hdu))
     return spectra
@@ -800,10 +795,52 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, **kwargs):
     finally:
         meta["name"] = hdulist[hdu].name
 
-    return Spectrum1D(
-        spectral_axis=spectral_axis,
-        flux=flux,
-        uncertainty=e_flux,
-        mask=mask,
-        meta=meta,
-    )
+    # drop back a list of Spectrum1Ds to unpack
+    metadicts = _split_mwm_meta_dict(meta)
+    return [
+        Spectrum1D(
+            spectral_axis=spectral_axis,
+            flux=flux[i],
+            uncertainty=e_flux[i],
+            mask=mask[i],
+            meta=metadicts[i],
+        ) for i in range(flux.shape[0])
+    ]
+
+
+def _split_mwm_meta_dict(d):
+    """
+    Metadata sub-loader subfunction for MWM files.
+
+    Parameters
+    ----------
+    d: dict
+        Initial metadata dictionary.
+
+    Returns
+    -------
+    dicts: list[dict]
+        List of dicts with unpacked metadata for length > 1 array objects.
+
+    """
+    # find the length of entries
+    N = max(len(v) if isinstance(v, np.ndarray) else 1 for v in d.values())
+
+    # create N dictionaries to hold the split results
+    dicts = [{} for _ in range(N)]
+
+    for key, value in d.items():
+        if isinstance(value, np.ndarray):
+            # Ensure that the length of the list matches N
+            if len(value) != N:
+                # an error case we ignore
+                continue
+            # distribute each element to the corresponding metadict
+            for i in range(N):
+                dicts[i][key] = value[i]
+        else:
+            # if it's a single object, copy it to each metadict
+            for i in range(N):
+                dicts[i][key] = value
+
+    return dicts
