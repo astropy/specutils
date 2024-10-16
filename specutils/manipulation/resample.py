@@ -461,8 +461,8 @@ class SplineInterpolatedResampler(ResamplerBase):
         if self.extrapolation_treatment == 'zero_fill':
             fill_val = 0
 
-        origedges = orig_spectrum.spectral_axis.bin_edges
-        off_edges = (fin_spec_axis < origedges[0]) | (origedges[-1] < fin_spec_axis)
+        orig_edges = orig_spectrum.spectral_axis.bin_edges
+        off_edges = (fin_spec_axis < np.min(orig_edges)) | (np.max(orig_edges) < fin_spec_axis)
         out_flux_val[off_edges] = fill_val
         if new_unc is not None:
             new_unc.array[off_edges] = fill_val
