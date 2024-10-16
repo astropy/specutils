@@ -20,7 +20,9 @@ Other Changes and Additions
 - Replaced ``LevMarLSQFitter`` with ``TRFLSQFitter`` as the former is no longer
   recommended by ``astropy``. [#1180]
 
-- "Multi" loaders have been removed from SDSS-V ``SpectrumList`` default loaders. [#1185]
+- All "Multi" loaders have been merged into the standard SDSS-V ``SpectrumList`` default loaders. [#1185]
+
+- All ``Spectrum1D`` loaders have been removed from SDSS-V default loaders. [#1185]
 
 1.17.0 (2024-10-04)
 -------------------
