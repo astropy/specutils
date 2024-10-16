@@ -664,8 +664,7 @@ def load_astra_1d(file_obj, hdu: Optional[int] = None, **kwargs):
             for i in range(len(hdulist)):
                 if hdulist[i].header.get("DATASUM") != "0":
                     hdu = i
-                    print('HDU not specified. Loading spectrum at (HDU{})'.
-                          format(i))
+                    print(f'HDU not specified. Loading spectrum at (HDU{i}).')
                     break
 
         return _load_astra_hdu(hdulist, hdu, **kwargs)
