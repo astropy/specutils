@@ -1,21 +1,24 @@
 """Register reader functions for various spectral formats."""
-import warnings
 from typing import Optional
 
 import numpy as np
-from astropy.io.fits import BinTableHDU, HDUList, ImageHDU
-from astropy.nddata import InverseVariance, StdDevUncertainty
-from astropy.units import Angstrom, Quantity, Unit
-from astropy.utils.exceptions import AstropyUserWarning
+from astropy.units import Unit, Quantity, Angstrom
+from astropy.nddata import StdDevUncertainty, InverseVariance
+from astropy.io.fits import HDUList, BinTableHDU, ImageHDU
 
 from ...spectra import Spectrum, SpectrumList
 from ..parsing_utils import read_fileobj_or_hdulist
 from ..registers import data_loader
+from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = [
+    "load_sdss_apVisit_1D",
     "load_sdss_apVisit_list",
+    "load_sdss_apStar_1D",
     "load_sdss_apStar_list",
+    "load_sdss_spec_1D",
     "load_sdss_spec_list",
+    "load_sdss_mwm_1d",
     "load_sdss_mwm_list",
 ]
 
@@ -226,7 +229,7 @@ def load_sdss_apStar_list(file_obj, **kwargs):
             raise ValueError(
                 "Only 1 visit in this file. Use Spectrum.read() instead.")
         return SpectrumList([
-            _load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
+            load_sdss_apStar_1D(file_obj, idx=i, **kwargs)
             for i in range(nvisits)
         ])
 
@@ -329,6 +332,43 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 
 # BOSS REDUX products (specLite, specFull, custom coadd files, etc)
+
+
+@data_loader(
+    "SDSS-V spec",
+    identifier=spec_sdss5_identify,
+    dtype=Spectrum1D,
+    priority=5,
+    extensions=["fits"],
+)
+def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
+    """
+    Load a given BOSS spec file as a Spectrum1D object.
+
+    Parameters
+    ----------
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList..
+    hdu : int
+        The specified HDU to load a given spectra from.
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum contained in the file at the specified HDU.
+    """
+    if hdu is None:
+        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
+        print('HDU not specified. Loading coadd spectrum (HDU1)')
+        hdu = 1  # defaulting to coadd
+        # raise ValueError("HDU not specified! Please specify a HDU to load.")
+    elif hdu in [2, 3, 4]:
+        raise ValueError("Invalid HDU! HDU{} is not spectra.".format(hdu))
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # directly load the coadd at HDU1
+        return _load_BOSS_HDU(hdulist, hdu, **kwargs)
+
+
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -370,7 +410,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     identifier=spec_sdss5_identify,
     dtype=SpectrumList,
     force=True,
-    priority=10,
+    priority=5,
     extensions=["fits"],
 )
 def load_sdss_spec_list(file_obj, **kwargs):
@@ -500,7 +540,7 @@ def load_sdss_mwm_1d(file_obj,
     identifier=mwm_identify,
     force=True,
     dtype=SpectrumList,
-    priority=10,
+    priority=20,
     extensions=["fits"],
 )
 def load_sdss_mwm_list(file_obj, **kwargs):
@@ -699,15 +739,16 @@ def load_astra_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             datasums.append(int(hdulist[hdu].header.get("DATASUM")))
         if (np.array(datasums) == 0).all():
-            raise RuntimeError("Specified file is empty.")
+            raise ValueError("Specified file is empty.")
 
         # Now load file
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
-                warnings.warn(
-                    "WARNING: HDU{} ({}) is empty.".format(
-                        hdu, hdulist[hdu].name), AstropyUserWarning)
+                # TODO: validate if we want this printed warning or not.
+                # it might get annoying & fill logs with useless alerts.
+                print("WARNING: HDU{} ({}) is empty.".format(
+                    hdu, hdulist[hdu].name))
                 continue
             spectra.append(_load_astra_hdu(hdulist, hdu))
     return spectra

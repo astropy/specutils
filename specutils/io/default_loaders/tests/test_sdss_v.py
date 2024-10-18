@@ -612,7 +612,7 @@ def test_mwm_list_fail(file_obj, with_wl):
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList([0, 0, 0, 0], with_wl).writeto(tmpfile, overwrite=True)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         SpectrumList.read(tmpfile)
     os.remove(tmpfile)
 
