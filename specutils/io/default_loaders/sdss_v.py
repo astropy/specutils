@@ -1,10 +1,12 @@
 """Register reader functions for various spectral formats."""
+import warnings
 from typing import Optional
 
 import numpy as np
 from astropy.units import Unit, Quantity, Angstrom
 from astropy.nddata import StdDevUncertainty, InverseVariance
 from astropy.io.fits import HDUList, BinTableHDU, ImageHDU
+from astropy.utils.exceptions import AstropyUserWarning
 
 from ...spectra import Spectrum, SpectrumList
 from ..parsing_utils import read_fileobj_or_hdulist
@@ -332,8 +334,6 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 
 # BOSS REDUX products (specLite, specFull, custom coadd files, etc)
-
-
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -359,7 +359,8 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     """
     if hdu is None:
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
-        print('HDU not specified. Loading coadd spectrum (HDU1)')
+        warnings.warn('HDU not specified. Loading coadd spectrum (HDU1)',
+                      AstropyUserWarning)
         hdu = 1  # defaulting to coadd
         # raise ValueError("HDU not specified! Please specify a HDU to load.")
     elif hdu in [2, 3, 4]:
@@ -745,10 +746,9 @@ def load_astra_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
-                # TODO: validate if we want this printed warning or not.
-                # it might get annoying & fill logs with useless alerts.
-                print("WARNING: HDU{} ({}) is empty.".format(
-                    hdu, hdulist[hdu].name))
+                warnings.warn(
+                    "WARNING: HDU{} ({}) is empty.".format(
+                        hdu, hdulist[hdu].name), AstropyUserWarning)
                 continue
             spectra.append(_load_astra_hdu(hdulist, hdu))
     return spectra
@@ -767,8 +767,8 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     Returns
     -------
-    Spectrum1D
-        The spectrum with nD flux contained in the HDU.
+    list[Spectrum1D]
+        List of spectrum with 1D flux contained in the HDU.
 
     """
     if hdulist[hdu].header.get("DATASUM") == "0":
