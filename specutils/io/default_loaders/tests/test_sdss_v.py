@@ -8,13 +8,16 @@ from astropy.units import Angstrom, Unit
 from specutils import Spectrum1D, SpectrumList
 
 
-def generate_apogee_hdu(observatory="APO", with_wl=True, datasum="0"):
+def generate_apogee_hdu(observatory="APO",
+                        with_wl=True,
+                        datasum="0",
+                        nvisits=1):
     wl = (10**(4.179 + 6e-6 * np.arange(8575))).reshape((1, -1))
-    flux = np.zeros_like(wl)
-    ivar = np.zeros_like(wl)
-    pixel_flags = np.zeros_like(wl)
-    continuum = np.zeros_like(wl)
-    nmf_rectified_model_flux = np.zeros_like(wl)
+    flux = np.array([np.zeros_like(wl)] * nvisits)
+    ivar = np.array([np.zeros_like(wl)] * nvisits)
+    pixel_flags = np.array([np.zeros_like(wl)] * nvisits)
+    continuum = np.array([np.zeros_like(wl)] * nvisits)
+    nmf_rectified_model_flux = np.array([np.zeros_like(wl)] * nvisits)
 
     columns = [
         fits.Column(name="spectrum_pk_id", array=[159783564], format="K"),
@@ -79,10 +82,13 @@ def generate_apogee_hdu(observatory="APO", with_wl=True, datasum="0"):
     return fits.BinTableHDU.from_columns(columns, header=header)
 
 
-def generate_boss_hdu(observatory="APO", with_wl=True, datasum="0"):
+def generate_boss_hdu(observatory="APO", with_wl=True, datasum="0", nvisits=1):
     wl = (10**(3.5523 + 1e-4 * np.arange(4648))).reshape((1, -1))
-    flux = ivar = continuum = pixel_flags = nmf_rectified_model_flux = np.zeros_like(
-        wl)
+    flux = np.array([np.zeros_like(wl)] * nvisits)
+    ivar = np.array([np.zeros_like(wl)] * nvisits)
+    pixel_flags = np.array([np.zeros_like(wl)] * nvisits)
+    continuum = np.array([np.zeros_like(wl)] * nvisits)
+    nmf_rectified_model_flux = np.array([np.zeros_like(wl)] * nvisits)
     columns = [
         fits.Column(name="spectrum_pk_id", array=[0], format="K"),
         fits.Column(name="release", array=["sdss5"], format="5A"),
@@ -285,7 +291,7 @@ def fake_primary_hdu():
     ]))
 
 
-def mwm_HDUList(hduflags, with_wl):
+def mwm_HDUList(hduflags, with_wl, **kwargs):
     hdulist = [fake_primary_hdu()]
     for i, flag in enumerate(hduflags):
         obs = ["APO", "LCO"]
@@ -293,12 +299,14 @@ def mwm_HDUList(hduflags, with_wl):
             hdulist.append(
                 generate_boss_hdu(obs[i % 2],
                                   with_wl=with_wl,
-                                  datasum=str(flag)))
+                                  datasum=str(flag),
+                                  **kwargs))
         else:
             hdulist.append(
                 generate_apogee_hdu(obs[i % 2],
                                     with_wl=with_wl,
-                                    datasum=str(flag)))
+                                    datasum=str(flag),
+                                    **kwargs))
 
     print(hdulist)
     return fits.HDUList(hdulist)
@@ -426,22 +434,59 @@ def spec_HDUList(n_spectra):
 
 # TEST MWM loaders
 @pytest.mark.parametrize(
+    "file_obj, hdu, visit, with_wl, hduflags, nvisits",
+    [
+        ("mwm-temp", None, None, False, [0, 0, 1, 0], 1),  # visit
+        ("mwm-temp", 3, None, False, [0, 0, 1, 0], 1),
+        ("mwm-temp", None, 2, False, [0, 1, 1, 0], 3),  # multi-ext visits
+        ("mwm-temp", 2, 2, False, [0, 1, 1, 0], 3),
+        ("mwm-temp", None, None, True, [0, 0, 1, 0], 1),  # star
+        ("mwm-temp", 3, None, True, [0, 0, 1, 0], 1),
+        ("mwm-temp", None, None, True, [0, 1, 1, 0], 1),
+        ("mwm-temp", 2, None, True, [0, 1, 1, 0], 1),
+    ],
+)
+def test_mwm_1d(file_obj, hdu, visit, with_wl, hduflags, nvisits):
+    """Test mwm Spectrum1D loader"""
+    tmpfile = str(file_obj) + ".fits"
+    mwm_HDUList(hduflags, with_wl, nvisits=nvisits).writeto(tmpfile,
+                                                            overwrite=True)
+
+    data = Spectrum1D.read(tmpfile, hdu=hdu, visit=visit)
+    assert isinstance(data, Spectrum1D)
+    assert isinstance(data.meta["header"], fits.Header)
+    if data.meta["instrument"].lower() == "apogee":
+        length = 8575
+    elif data.meta["instrument"].lower() == "boss":
+        length = 4648
+    else:
+        raise ValueError(
+            "INSTRMNT tag in test HDU header is not set properly.")
+    assert len(data.spectral_axis.value) == length
+    assert len(data.flux.value) == length
+    assert data.spectral_axis.unit == Angstrom
+    assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
     "file_obj, with_wl, hduflags",
     [
         ("mwm-temp", False, [0, 0, 1, 1]),
-        ("mwm-temp", True, [0, 0, 1, 1]),
         ("mwm-temp", False, [0, 1, 1, 0]),
-        ("mwm-temp", True, [0, 1, 1, 0]),
         ("mwm-temp", False, [1, 1, 0, 0]),
-        ("mwm-temp", True, [1, 1, 0, 0]),
         ("mwm-temp", False, [1, 1, 1, 1]),
+        ("mwm-temp", True, [0, 0, 1, 1]),
+        ("mwm-temp", True, [0, 1, 1, 0]),
+        ("mwm-temp", True, [1, 1, 0, 0]),
         ("mwm-temp", True, [1, 1, 1, 1]),
     ],
 )
 def test_mwm_list(file_obj, with_wl, hduflags):
     """Test mwm SpectrumList loader"""
     tmpfile = str(file_obj) + ".fits"
-    mwm_HDUList(hduflags, with_wl).writeto(tmpfile, overwrite=True)
+    mwm_HDUList(hduflags, with_wl,
+                nvisits=1 if with_wl else 3).writeto(tmpfile, overwrite=True)
 
     data = SpectrumList.read(tmpfile)
     assert isinstance(data, SpectrumList)
@@ -467,6 +512,41 @@ def test_mwm_list(file_obj, with_wl, hduflags):
 
 
 @pytest.mark.parametrize(
+    "file_obj, hdu, hduflags",
+    [
+        ("mwm-temp", 1, [0, 1, 0, 1]),
+        ("mwm-temp", 2, [1, 0, 1, 1]),
+        ("mwm-temp", 3, [0, 0, 0, 1]),
+        ("mwm-temp", 4, [0, 1, 1, 0]),
+    ],
+)
+def test_mwm_1d_fail_spec(file_obj, hdu, hduflags):
+    """Test mwm Spectrum1D loader fail on bad spec"""
+    tmpfile = str(file_obj) + ".fits"
+    mwm_HDUList(hduflags, True).writeto(tmpfile, overwrite=True)
+    with pytest.raises(IndexError):
+        Spectrum1D.read(tmpfile, hdu=hdu)
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
+    "file_obj, with_wl",
+    [
+        ("mwm-temp", False),
+        ("mwm-temp", True),
+    ],
+)
+def test_mwm_1d_fail(file_obj, with_wl):
+    """Test mwm Spectrum1D loader fail on empty"""
+    tmpfile = str(file_obj) + ".fits"
+    mwm_HDUList([0, 0, 0, 0], with_wl).writeto(tmpfile, overwrite=True)
+
+    with pytest.raises(ValueError):
+        Spectrum1D.read(tmpfile)
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
     "file_obj, with_wl",
     [
         ("mwm-temp", False),
@@ -478,8 +558,36 @@ def test_mwm_list_fail(file_obj, with_wl):
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList([0, 0, 0, 0], with_wl).writeto(tmpfile, overwrite=True)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         SpectrumList.read(tmpfile)
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
+    "file_obj,n_spectra",
+    [
+        ("spec-temp", 1),
+        ("spec-temp", 5),
+    ],
+)
+def test_spec_1d(file_obj, n_spectra):
+    """Test BOSS spec loader"""
+    tmpfile = str(file_obj) + ".fits"
+    spec_HDUList(n_spectra).writeto(tmpfile, overwrite=True)
+
+    idxs = [1] + list(np.arange(5, 5 + n_spectra, 1))
+
+    for i in idxs:
+        data = Spectrum1D.read(tmpfile, hdu=i)
+        assert isinstance(data, Spectrum1D)
+        assert len(data.flux.value) == 10
+        assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+
+        assert len(data.spectral_axis.value) == 10
+        assert data.spectral_axis.unit == Angstrom
+        assert len(data.mask) == 10
+
+        assert data[i].meta["header"].get("foobar") == "barfoo"
     os.remove(tmpfile)
 
 
@@ -509,6 +617,48 @@ def test_spec_list(file_obj, n_spectra):
 
 
 @pytest.mark.parametrize(
+    "file_obj,hdu",
+    [
+        ("spec-temp", 2),
+        ("spec-temp", 3),
+        ("spec-temp", 4),
+    ],
+    ids=["Fail on HDU2", "Fail on HDU3", "Fail on HDU4"],
+)
+def test_spec_1d_fail_hdu(file_obj, hdu):
+    """Test if fail on reading HDU2, HDU3, or HDU4 (non-spectra)"""
+    tmpfile = str(file_obj) + ".fits"
+    spec_HDUList(5).writeto(tmpfile, overwrite=True)
+
+    with pytest.raises(ValueError):
+        Spectrum1D.read(tmpfile, hdu=hdu)
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
+    "file_obj,idx",
+    [
+        ("apStar-temp", 1),
+        ("apStar-temp", 4),
+    ],
+)
+def test_apStar_1D(file_obj, idx):
+    tmpfile = str(file_obj) + ".fits"
+    apStar_HDUList(6).writeto(tmpfile, overwrite=True)
+
+    data = Spectrum1D.read(tmpfile, idx=idx)
+    assert isinstance(data, Spectrum1D)
+    assert len(data.flux.value) == 10
+    assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+
+    assert len(data.spectral_axis.value) == 10
+    assert data.spectral_axis.unit == Angstrom
+
+    assert data.meta["header"].get("foobar") == "barfoo"
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
     "file_obj,n_spectra",
     [
         ("apStar-temp", 3),
@@ -528,6 +678,40 @@ def test_apStar_list(file_obj, n_spectra):
         assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         assert len(data[i].spectral_axis.value) == 10
         assert data[i].meta["header"].get("foobar") == "barfoo"
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
+    "file_obj",
+    [
+        ("apStar-temp"),
+    ],
+)
+def test_apStar_fail_list(file_obj):
+    """Test if fail on reading 1D apStar as list"""
+    tmpfile = str(file_obj) + ".fits"
+    apStar_HDUList(1).writeto(tmpfile, overwrite=True)
+
+    with pytest.raises(ValueError):
+        SpectrumList.read(tmpfile)
+    os.remove(tmpfile)
+
+
+@pytest.mark.parametrize(
+    "file_obj",
+    [
+        ("apVisit-temp"),
+    ],
+)
+def test_apVisit_1D(file_obj):
+    tmpfile = str(file_obj) + ".fits"
+    apVisit_HDUList().writeto(tmpfile, overwrite=True)
+
+    data = Spectrum1D.read(tmpfile)
+    assert isinstance(data, Spectrum1D)
+    assert np.array_equal(data.spectral_axis.value, np.arange(1, 31, 1))
+    assert len(data.flux.value) == 30
+    assert data.meta["header"].get("foobar") == "barfoo"
     os.remove(tmpfile)
 
 
