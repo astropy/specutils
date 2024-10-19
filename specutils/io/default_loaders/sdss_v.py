@@ -470,7 +470,7 @@ def load_sdss_mwm_1d(file_obj,
 
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
         if hdu is None:
-            for i in range(len(hdulist)):
+            for i in range(1, len(hdulist)):
                 if hdulist[i].header.get("DATASUM") != "0":
                     hdu = i
                     warnings.warn(
@@ -478,17 +478,8 @@ def load_sdss_mwm_1d(file_obj,
                         format(i), AstropyUserWarning)
                     break
 
-        # load spectra
-        spectra_list = _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu)
-
-        # if mwmVisit AND visit not specified, load first visit in the HDU
-        if visit is None:
-            if spectra_list[0].meta['datatype'].lower() == 'mwmvisit':
-                warnings.warn(
-                    'Visit to load not specified. Loading spectrum at index 0. Specify with (visit=...)',
-                    AstropyUserWarning)
-            visit = 0
-        return spectra_list[visit]
+        # load spectra and return
+        return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu)
 
 
 @data_loader(
@@ -530,8 +521,7 @@ def load_sdss_mwm_list(file_obj, **kwargs):
                     "WARNING: HDU{} ({}) is empty.".format(
                         hdu, hdulist[hdu].name), AstropyUserWarning)
                 continue
-            spectra_list = _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu)
-            [spectra.append(spectra_list[i]) for i in range(len(spectra_list))]
+            spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
     return spectra
 
 
@@ -585,6 +575,10 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     # collapse shape if 1D spectra in 2D array
     #       it could be that it's expected to be parsed this way.
+    if flux.shape[0] == 1:
+        flux = np.ravel(flux)
+        e_flux = e_flux[0]  # different class
+        mask = np.ravel(mask)
 
     # Create metadata
     meta = dict()
@@ -605,7 +599,6 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     try:
         meta['mjd'] = hdulist[hdu].data['mjd']
         meta["datatype"] = "mwmVisit"
-
     except KeyError:
         meta["min_mjd"] = str(hdulist[hdu].data["min_mjd"][0])
         meta["max_mjd"] = str(hdulist[hdu].data["max_mjd"][0])
@@ -615,51 +608,10 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         meta["sdss_id"] = hdulist[hdu].data['sdss_id']
 
     # drop back a list of Spectrum1Ds to unpack
-    metadicts = _split_mwm_meta_dict(meta)
-    return [
-        Spectrum1D(
-            spectral_axis=spectral_axis,
-            flux=flux[i],
-            uncertainty=e_flux[i],
-            mask=mask[i],
-            meta=metadicts[i],
-        ) for i in range(flux.shape[0])
-    ]
-
-
-def _split_mwm_meta_dict(d):
-    """   
-    Metadata sub-loader subfunction for MWM files.
-
-    Parameters
-    ----------
-    d: dict
-        Initial metadata dictionary.
-
-    Returns
-    -------
-    dicts: list[dict]
-        List of dicts with unpacked metadata for length > 1 array objects.
-
-    """
-    # find the length of entries
-    N = max(len(v) if isinstance(v, np.ndarray) else 1 for v in d.values())
-
-    # create N dictionaries to hold the split results
-    dicts = [{} for _ in range(N)]
-
-    for key, value in d.items():
-        if isinstance(value, np.ndarray):
-            # Ensure that the length of the list matches N
-            if len(value) != N:
-                # an error case we ignore
-                continue
-            # distribute each element to the corresponding metadict
-            for i in range(N):
-                dicts[i][key] = value[i]
-        else:
-            # if it's a single object, copy it to each metadict
-            for i in range(N):
-                dicts[i][key] = value
-
-    return dicts
+    return Spectrum1D(
+        spectral_axis=spectral_axis,
+        flux=flux,
+        uncertainty=e_flux,
+        mask=mask,
+        meta=meta,
+    )
