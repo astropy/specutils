@@ -517,9 +517,6 @@ def load_sdss_mwm_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
-                warnings.warn(
-                    "WARNING: HDU{} ({}) is empty.".format(
-                        hdu, hdulist[hdu].name), AstropyUserWarning)
                 continue
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
     return spectra

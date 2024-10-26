@@ -1,9 +1,11 @@
 import os
+import warnings  # noqa ; required for pytest
 
 import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.units import Angstrom, Unit
+from astropy.utils.exceptions import AstropyUserWarning
 
 from specutils import Spectrum1D, SpectrumList
 
@@ -432,27 +434,59 @@ def spec_HDUList(n_spectra):
     return hdulist
 
 
-# TEST MWM loaders
 @pytest.mark.parametrize(
-    "file_obj, hdu, visit, with_wl, hduflags, nvisits",
+    "file_obj, hdu, with_wl, hduflags, nvisits",
     [
-        ("mwm-temp", None, None, False, [0, 0, 1, 0], 1),  # visit
-        ("mwm-temp", 3, None, False, [0, 0, 1, 0], 1),
-        ("mwm-temp", None, 2, False, [0, 1, 1, 0], 2),  # multi-ext visits
-        ("mwm-temp", 2, 2, False, [0, 1, 1, 0], 3),
-        ("mwm-temp", None, None, True, [0, 0, 1, 0], 1),  # star
-        ("mwm-temp", 3, None, True, [0, 0, 1, 0], 1),
-        ("mwm-temp", None, None, True, [0, 1, 1, 0], 1),
-        ("mwm-temp", 2, None, True, [0, 1, 1, 0], 1),
+        ("mwm-temp", None, False, [0, 0, 1, 0], 1),  # visit
+        ("mwm-temp", None, False, [0, 1, 1, 0], 3),  # multi-ext visits
+        ("mwm-temp", None, True, [0, 0, 1, 0], 1),  # star
+        ("mwm-temp", None, True, [0, 1, 1, 0], 1),
     ],
 )
-def test_mwm_1d(file_obj, hdu, visit, with_wl, hduflags, nvisits):
+def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
+    """Test mwm Spectrum1D loader when HDU isn't specified"""
+    tmpfile = str(file_obj) + ".fits"
+    mwm_HDUList(hduflags, with_wl, nvisits=nvisits).writeto(tmpfile,
+                                                            overwrite=True)
+
+    with pytest.warns(AstropyUserWarning):
+        data = Spectrum1D.read(tmpfile, hdu=hdu)
+        assert isinstance(data, Spectrum1D)
+        assert isinstance(data.meta["header"], fits.Header)
+        if data.meta["instrument"].lower() == "apogee":
+            length = 8575
+        elif data.meta["instrument"].lower() == "boss":
+            length = 4648
+        else:
+            raise ValueError(
+                "INSTRMNT tag in test HDU header is not set properly.")
+        assert len(data.spectral_axis.value) == length
+        assert data.flux.value.shape[-1] == length
+        if nvisits > 1:
+            assert data.flux.value.shape[0] == nvisits
+
+        assert data.spectral_axis.unit == Angstrom
+        assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+        os.remove(tmpfile)
+
+
+# TEST MWM loaders
+@pytest.mark.parametrize(
+    "file_obj, hdu, with_wl, hduflags, nvisits",
+    [
+        ("mwm-temp", 3, False, [0, 0, 1, 0], 1),
+        ("mwm-temp", 3, False, [0, 1, 1, 0], 5),
+        ("mwm-temp", 3, True, [0, 0, 1, 0], 1),
+        ("mwm-temp", 2, True, [0, 1, 1, 0], 1),
+    ],
+)
+def test_mwm_1d(file_obj, hdu, with_wl, hduflags, nvisits):
     """Test mwm Spectrum1D loader"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList(hduflags, with_wl, nvisits=nvisits).writeto(tmpfile,
                                                             overwrite=True)
 
-    data = Spectrum1D.read(tmpfile, hdu=hdu, visit=visit)
+    data = Spectrum1D.read(tmpfile, hdu=hdu)
     assert isinstance(data, Spectrum1D)
     assert isinstance(data.meta["header"], fits.Header)
     if data.meta["instrument"].lower() == "apogee":
