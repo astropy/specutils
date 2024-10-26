@@ -1,4 +1,4 @@
-1.18.0 (unreleased)
+1.19.0 (unreleased)
 -------------------
 
 New Features
@@ -7,12 +7,32 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1.18.0 (2024-10-16)
+-------------------
+
+New Features
+^^^^^^^^^^^^
+
+- New ``Spectrum1D.with_spectral_axis_and_flux_units`` method to convert both
+  spectral axis and flux units at the same time. [#1184]
+
+Bug Fixes
+^^^^^^^^^
+
 - Fixed ``Spectrum1D.with_flux_unit()`` not converting uncertainty along
   with flux unit. [#1181]
 
-- Fixed ``mwmVisit`` SDSS-V ``Spectrum1D`` and ``SpectrumList`` default loader being unable to load files containing only BOSS instrument spectra. [#1185]
+- Fixed ``mwmVisit`` SDSS-V ``Spectrum1D`` and ``SpectrumList`` default loader 
+  being unable to load files containing only BOSS instrument spectra. [#1185]
 
 - Fixed automatic format detection for SDSS-V ``SpectrumList`` default loaders. [#1185]
+
+- Fixed extracting a spectral region when one of spectrum/region is in wavelength
+  and the other is in frequency units. [#1187]
+
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

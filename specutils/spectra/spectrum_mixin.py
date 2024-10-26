@@ -86,6 +86,26 @@ class OneDSpectrumMixin():
         return self.with_flux_unit(unit, equivalencies=equivalencies,
                                   suppress_conversion=suppress_conversion)
 
+    def _convert_flux(self, unit, equivalencies=None, suppress_conversion=False):
+        """This is always done in-place.
+        Also see :meth:`with_flux_unit`."""
+
+        if not suppress_conversion:
+            if equivalencies is None:
+                equivalencies = eq.spectral_density(self.spectral_axis)
+
+            new_data = self.flux.to(unit, equivalencies=equivalencies)
+
+            self._data = new_data.value
+            self._unit = new_data.unit
+        else:
+            self._unit = u.Unit(unit)
+
+        if self.uncertainty is not None:
+            self.uncertainty = StdDevUncertainty(
+                self.uncertainty.represent_as(StdDevUncertainty).quantity.to(
+                    unit, equivalencies=equivalencies))
+
     def with_flux_unit(self, unit, equivalencies=None, suppress_conversion=False):
         """Returns a new spectrum with a different flux unit.
         If uncertainty is defined, it will be converted to
@@ -107,30 +127,14 @@ class OneDSpectrumMixin():
 
         Returns
         -------
-        `~specutils.Spectrum1D`
+        new_spec : `~specutils.Spectrum1D`
             A new spectrum with the converted flux array
             (and uncertainty, if applicable).
 
         """
         new_spec = deepcopy(self)
-
-        if not suppress_conversion:
-            if equivalencies is None:
-                equivalencies = eq.spectral_density(self.spectral_axis)
-
-            new_data = self.flux.to(
-                unit, equivalencies=equivalencies)
-
-            new_spec._data = new_data.value
-            new_spec._unit = new_data.unit
-        else:
-            new_spec._unit = u.Unit(unit)
-
-        if self.uncertainty is not None:
-            new_spec.uncertainty = StdDevUncertainty(
-                self.uncertainty.represent_as(StdDevUncertainty).quantity.to(
-                    unit, equivalencies=equivalencies))
-
+        new_spec._convert_flux(
+            unit, equivalencies=equivalencies, suppress_conversion=suppress_conversion)
         return new_spec
 
     @property
@@ -175,7 +179,7 @@ class OneDSpectrumMixin():
 
         Returns
         -------
-        ~`astropy.units.Quantity`
+        new_data : `~astropy.units.Quantity`
             The converted dispersion array in the new dispersion space.
         """
         if self.rest_value is None:
@@ -202,8 +206,7 @@ class OneDSpectrumMixin():
         self.with_spectral_axis_unit(unit, velocity_convention=velocity_convention,
                                      rest_value=rest_value)
 
-    def with_spectral_axis_unit(self, unit, velocity_convention=None,
-                           rest_value=None):
+    def with_spectral_axis_unit(self, unit, velocity_convention=None, rest_value=None):
         """
         Returns a new spectrum with a different spectral axis unit. Note that this creates a new
         object using the converted spectral axis and thus drops the original WCS, if it existed,
@@ -230,11 +233,9 @@ class OneDSpectrumMixin():
                      even if your spectrum has air wavelength units
 
         """
-
-        velocity_convention = velocity_convention if velocity_convention is not None else self.velocity_convention # noqa
+        velocity_convention = velocity_convention if velocity_convention is not None else self.velocity_convention  # noqa
         rest_value = rest_value if rest_value is not None else self.rest_value
-        unit = self._new_wcs_argument_validation(unit, velocity_convention,
-                                                 rest_value)
+        unit = self._new_wcs_argument_validation(unit, velocity_convention, rest_value)
 
         # Store the original unit information and WCS for posterity
         meta = deepcopy(self._meta)
@@ -251,6 +252,24 @@ class OneDSpectrumMixin():
 
         return self.__class__(flux=self.flux, spectral_axis=new_spectral_axis, meta=meta,
                               uncertainty=self.uncertainty, mask=self.mask)
+
+    def with_spectral_axis_and_flux_units(self, spectral_axis_unit, flux_unit,
+                                          velocity_convention=None, rest_value=None,
+                                          flux_equivalencies=None, suppress_flux_conversion=False):
+        """Perform :meth:`with_spectral_axis_unit` and :meth:`with_flux_unit` together.
+        See the respective methods for input and output definitions.
+
+        Returns
+        -------
+        new_spec : `~specutils.Spectrum1D`
+            Spectrum in requested units.
+
+        """
+        new_spec = self.with_spectral_axis_unit(
+            spectral_axis_unit, velocity_convention=velocity_convention, rest_value=rest_value)
+        new_spec._convert_flux(
+            flux_unit, equivalencies=flux_equivalencies, suppress_conversion=suppress_flux_conversion)
+        return new_spec
 
     def _new_wcs_argument_validation(self, unit, velocity_convention,
                                      rest_value):

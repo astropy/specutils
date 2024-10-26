@@ -18,10 +18,9 @@ FLUX_ARRAY = [1605.71612173, 1651.41650744, 2057.65798618, 2066.73502361, 1955.7
 
 
 def test_region_simple(simulated_spectra):
-    np.random.seed(42)
 
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion(0.6*u.um, 0.8*u.um)
@@ -112,10 +111,8 @@ def test_pixel_spectralaxis_extraction():
 
 
 def test_slab_simple(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     sub_spectrum = spectral_slab(spectrum, 0.6*u.um, 0.8*u.um)
@@ -148,6 +145,16 @@ def test_region_ghz(simulated_spectra):
     assert_quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
 
 
+def test_region_ghz_spectrum_wave(simulated_spectra):
+    spectrum = simulated_spectra.s1_um_mJy_e1
+    region = SpectralRegion(499654.09666667*u.GHz, 374740.5725*u.GHz)
+
+    sub_spectrum = extract_region(spectrum, region)
+
+    sub_spectrum_flux_expected = FLUX_ARRAY * u.mJy
+    assert_quantity_allclose(sub_spectrum.flux, sub_spectrum_flux_expected)
+
+
 def test_region_simple_check_ends(simulated_spectra):
     np.random.seed(42)
 
@@ -168,13 +175,11 @@ def test_region_simple_check_ends(simulated_spectra):
     assert sub_spectrum.spectral_axis.value[-1] == 25
 
 
-def test_region_empty(simulated_spectra):
-    np.random.seed(42)
-
+def test_region_empty():
     empty_spectrum = Spectrum1D(spectral_axis=[]*u.um, flux=[]*u.Jy)
 
     # Region past upper range of spectrum
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
     region = SpectralRegion(28*u.um, 30*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -185,7 +190,7 @@ def test_region_empty(simulated_spectra):
     assert sub_spectrum.flux.unit == empty_spectrum.flux.unit
 
     # Region below lower range of spectrum
-    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.random.random(25)*u.Jy)
+    spectrum = Spectrum1D(spectral_axis=np.linspace(1, 25, 25)*u.um, flux=np.ones(25)*u.Jy)
     region = SpectralRegion(0.1*u.um, 0.3*u.um)
     sub_spectrum = extract_region(spectrum, region)
 
@@ -212,10 +217,8 @@ def test_region_empty(simulated_spectra):
 
 
 def test_region_descending(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion(0.8*u.um, 0.6*u.um)
@@ -244,10 +247,8 @@ def test_descending_spectral_axis(simulated_spectra):
 
 
 def test_region_two_sub(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
@@ -284,10 +285,8 @@ def test_region_two_sub(simulated_spectra):
 
 
 def test_bounding_region(simulated_spectra):
-    np.random.seed(42)
-
     spectrum = simulated_spectra.s1_um_mJy_e1
-    uncertainty = StdDevUncertainty(0.1*np.random.random(len(spectrum.flux))*u.mJy)
+    uncertainty = StdDevUncertainty(np.full(spectrum.flux.shape, 0.1) * u.mJy)
     spectrum.uncertainty = uncertainty
 
     region = SpectralRegion([(0.6*u.um, 0.8*u.um), (0.86*u.um, 0.89*u.um)])
