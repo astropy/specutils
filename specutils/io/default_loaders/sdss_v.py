@@ -523,7 +523,6 @@ def load_sdss_mwm_1d(file_obj,
         if (np.array(datasums) == 0).all():
             raise ValueError("Specified file is empty.")
 
-        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
         if hdu is None:
             for i, hduext in enumerate(hdulist):
                 if hduext.header.get("DATASUM") != "0" and len(hduext.data) > 0:
@@ -700,9 +699,8 @@ def load_astra_1d(file_obj, hdu: Optional[int] = None, **kwargs):
         if (np.array(datasums) == 0).all():
             raise ValueError("Specified file is empty.")
 
-        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
         if hdu is None:
-            for i in range(len(hdulist)):
+            for i in range(1, len(hdulist)):
                 if hdulist[i].header.get("DATASUM") != "0":
                     hdu = i
                     print(f'HDU not specified. Loading spectrum at (HDU{i}).')
@@ -814,26 +812,25 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, **kwargs):
     meta = dict()
     meta["header"] = hdulist[0].header
 
-    # Add SNR to metadata
-    meta["snr"] = np.array(hdulist[hdu].data["snr"])
-
     # Add identifiers (obj, telescope, mjd, datatype)
-    # TODO: need to see what metadata we're interested in for the MWM files.
-    #meta["telescope"] = hdulist[hdu].data["telescope"]
-    #meta["instrument"] = hdulist[hdu].header.get("INSTRMNT")
-    try:
+    meta["telescope"] = hdulist[hdu].data["telescope"]
+    meta['instrument'] = 'BOSS' if hdu <= 2 else 'APOGEE'
+    try:  # get obj if exists
         meta["obj"] = hdulist[hdu].data["obj"]
     except KeyError:
         pass
+
+    # choose between mwmVisit/Star via KeyError except
     try:
-        meta["mjd"] = hdulist[hdu].data["mjd"]
+        meta['mjd'] = hdulist[hdu].data['mjd']
         meta["datatype"] = "astraVisit"
     except KeyError:
-        meta['min_mjd'] = str(hdulist[hdu].data["min_mjd"][0])
+        meta["min_mjd"] = str(hdulist[hdu].data["min_mjd"][0])
         meta["max_mjd"] = str(hdulist[hdu].data["max_mjd"][0])
         meta["datatype"] = "astraStar"
     finally:
         meta["name"] = hdulist[hdu].name
+        meta["sdss_id"] = hdulist[hdu].data['sdss_id']
 
     # drop back a list of Spectrum1Ds to unpack
     metadicts = _split_mwm_meta_dict(meta)
