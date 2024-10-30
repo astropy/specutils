@@ -87,7 +87,22 @@ def mwm_identify(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (("V_ASTRA" in hdulist[0].header.keys()) and len(hdulist) > 0
                 and ("SDSS_ID" in hdulist[0].header.keys())
-                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5)))
+                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
+                and all('model_flux' not in hdulist[i].columns.names
+                        for i in range(1, 5)))
+
+
+def astra_identify(origin, *args, **kwargs):
+    """
+    Check whether given input is FITS and has SDSS-V astra model spectra 
+    BINTABLE in all 4 extensions. This is used for Astropy I/O Registry.
+    """
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        return (("V_ASTRA" in hdulist[0].header.keys()) and len(hdulist) > 0
+                and ("SDSS_ID" in hdulist[0].header.keys())
+                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
+                and all('model_flux' in hdulist[i].columns.names
+                        for i in range(1, 5)))
 
 
 def _wcs_log_linear(naxis, cdelt, crval):
@@ -318,6 +333,11 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 
 # BOSS REDUX products (specLite, specFull, custom coadd files, etc)
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 15dd4a21 (add: astraStar/Visit model spectrum default loaders)
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -609,6 +629,181 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     # drop back a list of Spectrum objects to unpack
     return Spectrum(
+        spectral_axis=spectral_axis,
+        flux=flux,
+        uncertainty=e_flux,
+        mask=mask,
+        meta=meta,
+    )
+
+
+@data_loader(
+    "SDSS-V astra model",
+    identifier=astra_identify,
+    dtype=Spectrum1D,
+    priority=20,
+    extensions=["fits"],
+)
+def load_astra_1d(file_obj, hdu: Optional[int] = None, **kwargs):
+    """
+    Load an astra model spectrum file as a Spectrum1D.
+
+    Parameters
+    ----------
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
+    hdu : int
+        Specified HDU to load.
+
+    Returns
+    -------
+    spectrum : Spectrum1D
+        The spectra contained in the file from the provided HDU OR the first entry.
+    """
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # Check if file is empty first
+        datasums = []
+        for i in range(1, len(hdulist)):
+            datasums.append(int(hdulist[i].header.get("DATASUM")))
+        if (np.array(datasums) == 0).all():
+            raise ValueError("Specified file is empty.")
+
+        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
+        if hdu is None:
+            for i in range(len(hdulist)):
+                if hdulist[i].header.get("DATASUM") != "0":
+                    hdu = i
+                    break
+
+        return _load_astra_hdu(hdulist, hdu, **kwargs)
+
+
+@data_loader(
+    "SDSS-V astra model",
+    identifier=astra_identify,
+    force=True,
+    dtype=SpectrumList,
+    priority=20,
+    extensions=["fits"],
+)
+def load_astra_list(file_obj, **kwargs):
+    """
+    Load an astra model spectrum file as a SpectrumList.
+
+    Parameters
+    ----------
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
+
+    Returns
+    -------
+    spectra: SpectrumList
+        All of the spectra contained in the file.
+    """
+    spectra = SpectrumList()
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # Check if file is empty first
+        datasums = []
+        for hdu in range(1, len(hdulist)):
+            datasums.append(int(hdulist[hdu].header.get("DATASUM")))
+        if (np.array(datasums) == 0).all():
+            raise ValueError("Specified file is empty.")
+
+        # Now load file
+        for hdu in range(1, len(hdulist)):
+            if hdulist[hdu].header.get("DATASUM") == "0":
+                # Skip zero data HDU's
+                # TODO: validate if we want this printed warning or not.
+                # it might get annoying & fill logs with useless alerts.
+                print("WARNING: HDU{} ({}) is empty.".format(
+                    hdu, hdulist[hdu].name))
+                continue
+            spectra.append(_load_astra_hdu(hdulist, hdu))
+    return spectra
+
+
+def _load_astra_hdu(hdulist: HDUList, hdu: int, **kwargs):
+    """
+    HDU loader subfunction for astra model spectrum files
+
+    Parameters
+    ----------
+    hdulist: HDUList
+        HDUList generated from imported file.
+    hdu: int
+        Specified HDU to load.
+
+    Returns
+    -------
+    Spectrum1D
+        The spectrum with nD flux contained in the HDU.
+
+    """
+    if hdulist[hdu].header.get("DATASUM") == "0":
+        raise IndexError(
+            "Attemped to load an empty HDU specified at HDU{}".format(hdu))
+
+    # Fetch wavelength
+    # encoded as WCS for visit, and 'wavelength' for star
+    try:
+        wavelength = np.array(hdulist[hdu].data["wavelength"])[0]
+    except KeyError:
+        wavelength = _wcs_log_linear(
+            hdulist[hdu].header.get("NPIXELS"),
+            hdulist[hdu].header.get("CDELT"),
+            hdulist[hdu].header.get("CRVAL"),
+        )
+    finally:
+        if wavelength is None:
+            raise ValueError(
+                "Couldn't find wavelength data in HDU{}.".format(hdu))
+        spectral_axis = Quantity(wavelength, unit=Angstrom)
+
+    # Fetch flux, e_flux
+    # NOTE:: flux info is not written
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
+    flux = Quantity(hdulist[hdu].data["model_flux"] *
+                    hdulist[hdu].data['continuum'],
+                    unit=flux_unit)
+    e_flux = InverseVariance(array=hdulist[hdu].data["ivar"])
+
+    # Collect bitmask
+    mask = hdulist[hdu].data["pixel_flags"]
+    # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+    mask = mask != 0
+
+    # collapse shape if 1D spectra in 2D array, makes readout easier
+    if flux.shape[0] == 1:
+        flux = flux[0]
+        e_flux = e_flux[0]
+        mask = mask[0]
+
+    # Create metadata
+    meta = dict()
+    meta["header"] = hdulist[0].header
+
+    # Add SNR to metadata
+    meta["snr"] = np.array(hdulist[hdu].data["snr"])
+
+    # Add identifiers (obj, telescope, mjd, datatype)
+    # TODO: need to see what metadata we're interested in for the MWM files.
+    #meta["telescope"] = hdulist[hdu].data["telescope"]
+    #meta["instrument"] = hdulist[hdu].header.get("INSTRMNT")
+    try:
+        meta["obj"] = hdulist[hdu].data["obj"]
+    except KeyError:
+        pass
+    try:
+        meta["mjd"] = hdulist[hdu].data["mjd"]
+        meta["datatype"] = "astraVisit"
+    except KeyError:
+        meta['min_mjd'] = str(hdulist[hdu].data["min_mjd"][0])
+        meta["max_mjd"] = str(hdulist[hdu].data["max_mjd"][0])
+        meta["datatype"] = "astraStar"
+    finally:
+        meta["name"] = hdulist[hdu].name
+
+    return Spectrum1D(
         spectral_axis=spectral_axis,
         flux=flux,
         uncertainty=e_flux,
