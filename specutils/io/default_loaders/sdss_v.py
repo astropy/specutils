@@ -1,10 +1,12 @@
 """Register reader functions for various spectral formats."""
+import warnings
 from typing import Optional
 
 import numpy as np
 from astropy.units import Unit, Quantity, Angstrom
 from astropy.nddata import StdDevUncertainty, InverseVariance
 from astropy.io.fits import HDUList, BinTableHDU, ImageHDU
+from astropy.utils.exceptions import AstropyUserWarning
 
 from ...spectra import Spectrum1D, SpectrumList
 from ..registers import data_loader
@@ -183,9 +185,10 @@ def load_sdss_apStar_1D(file_obj, idx: int = 0, **kwargs):
 
 
 @data_loader(
-    "SDSS-V apStar multi",
+    "SDSS-V apStar",
     identifier=apStar_identify,
     dtype=SpectrumList,
+    force=True,
     priority=10,
     extensions=["fits"],
 )
@@ -259,9 +262,10 @@ def load_sdss_apVisit_1D(file_obj, **kwargs):
 
 
 @data_loader(
-    "SDSS-V apVisit multi",
+    "SDSS-V apVisit",
     identifier=apVisit_identify,
     dtype=SpectrumList,
+    force=True,
     priority=10,
     extensions=["fits"],
 )
@@ -311,7 +315,6 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 
 
 # BOSS REDUX products (specLite, specFull, custom coadd files, etc)
-
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -337,6 +340,8 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     """
     if hdu is None:
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
+        warnings.warn('HDU not specified. Loading coadd spectrum (HDU1)',
+                      AstropyUserWarning)
         hdu = 1  # defaulting to coadd
         # raise ValueError("HDU not specified! Please specify a HDU to load.")
     elif hdu in [2, 3, 4]:
@@ -347,9 +352,10 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
 
 
 @data_loader(
-    "SDSS-V spec multi",
+    "SDSS-V spec",
     identifier=spec_sdss5_identify,
     dtype=SpectrumList,
+    force=True,
     priority=5,
     extensions=["fits"],
 )
@@ -433,7 +439,10 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     priority=20,
     extensions=["fits"],
 )
-def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
+def load_sdss_mwm_1d(file_obj,
+                     hdu: Optional[int] = None,
+                     visit: Optional[int] = None,
+                     **kwargs):
     """
     Load an unspecified spec file as a Spectrum1D.
 
@@ -441,8 +450,10 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
     ----------
     file_obj : str, file-like, or HDUList
         FITS file name, file object, or HDUList..
-    hdu : int
+    hdu : Optional[int]
         Specified HDU to load.
+    visit : Optional[int]
+        Specified visit index to load.
 
     Returns
     -------
@@ -459,17 +470,22 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
 
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
         if hdu is None:
-            for i in range(len(hdulist)):
+            for i in range(1, len(hdulist)):
                 if hdulist[i].header.get("DATASUM") != "0":
                     hdu = i
+                    warnings.warn(
+                        'HDU not specified. Loading spectrum at (HDU{})'.
+                        format(i), AstropyUserWarning)
                     break
 
-        return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu, **kwargs)
+        # load spectra and return
+        return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu)
 
 
 @data_loader(
-    "SDSS-V mwm multi",
+    "SDSS-V mwm",
     identifier=mwm_identify,
+    force=True,
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],
@@ -485,12 +501,8 @@ def load_sdss_mwm_list(file_obj, **kwargs):
 
     Returns
     -------
-    SpectrumList
-        The spectra contained in the file, where:
-            Spectrum1D
-                A given spectra of nD flux
-            None
-                If there are no spectra for that spectrograph/observatory
+    SpectrumList[Spectrum1D]
+        A list spectra from each visit with each instrument at each observatory (mwmVisit), or the coadd from each instrument/observatory (mwmStar).
     """
     spectra = SpectrumList()
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
@@ -505,10 +517,6 @@ def load_sdss_mwm_list(file_obj, **kwargs):
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
-                # TODO: validate if we want this printed warning or not.
-                # it might get annoying & fill logs with useless alerts.
-                print("WARNING: HDU{} ({}) is empty.".format(
-                    hdu, hdulist[hdu].name))
                 continue
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
     return spectra
@@ -527,8 +535,8 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     Returns
     -------
-    Spectrum1D
-        The spectrum with nD flux contained in the HDU.
+    list[Spectrum1D]
+        List of spectrum with 1D flux contained in the HDU.
 
     """
     if hdulist[hdu].header.get("DATASUM") == "0":
@@ -563,12 +571,11 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     mask = mask != 0
 
     # collapse shape if 1D spectra in 2D array
-    # NOTE: this fixes a jdaviz handling bug for 2D of shape 1,
     #       it could be that it's expected to be parsed this way.
     if flux.shape[0] == 1:
-        flux = flux[0]
-        e_flux = e_flux[0]
-        mask = mask[0]
+        flux = np.ravel(flux)
+        e_flux = e_flux[0]  # different class
+        mask = np.ravel(mask)
 
     # Create metadata
     meta = dict()
@@ -578,24 +585,26 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
     meta["snr"] = np.array(hdulist[hdu].data["snr"])
 
     # Add identifiers (obj, telescope, mjd, datatype)
-    # TODO: need to see what metadata we're interested in for the MWM files.
     meta["telescope"] = hdulist[hdu].data["telescope"]
     meta["instrument"] = hdulist[hdu].header.get("INSTRMNT")
-    try:
+    try:  # get obj if exists
         meta["obj"] = hdulist[hdu].data["obj"]
     except KeyError:
         pass
+
+    # choose between mwmVisit/Star via KeyError except
     try:
-        meta["date"] = hdulist[hdu].data["date_obs"]
-        meta["mjd"] = hdulist[hdu].data["mjd"]
+        meta['mjd'] = hdulist[hdu].data['mjd']
         meta["datatype"] = "mwmVisit"
     except KeyError:
-        meta["mjd"] = (str(hdulist[hdu].data["min_mjd"][0]) + "->" +
-                       str(hdulist[hdu].data["max_mjd"][0]))
+        meta["min_mjd"] = str(hdulist[hdu].data["min_mjd"][0])
+        meta["max_mjd"] = str(hdulist[hdu].data["max_mjd"][0])
         meta["datatype"] = "mwmStar"
     finally:
         meta["name"] = hdulist[hdu].name
+        meta["sdss_id"] = hdulist[hdu].data['sdss_id']
 
+    # drop back a list of Spectrum1Ds to unpack
     return Spectrum1D(
         spectral_axis=spectral_axis,
         flux=flux,
