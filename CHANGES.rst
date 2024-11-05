@@ -12,6 +12,9 @@ Bug Fixes
 
 - Fixed automatic format detection for SDSS-V ``SpectrumList`` default loaders. [#1185]
 
+- Fixed ``SplineInterpolatedResampler`` when input and output spectral axes are different
+  physical types, e.g. wavelength and velocity. [#1190]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -34,7 +37,6 @@ Bug Fixes
 
 - Fixed extracting a spectral region when one of spectrum/region is in wavelength
   and the other is in frequency units. [#1187]
-
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
