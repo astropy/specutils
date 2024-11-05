@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.nddata import VarianceUncertainty, InverseVariance, StdDevUncertainty
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum1d import Spectrum1D, SpectralAxis
 from ..manipulation.resample import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
 
@@ -213,6 +213,22 @@ def test_resample_different_units(all_resamplers):
     resamp_grid = [550, 650]*u.nm
     resampled = resampler(input_spectrum, resamp_grid)
     assert not np.any(np.isnan(resampled.flux))
+
+    resamp_grid = [550, 650]*u.nm
+    resampled = resampler(input_spectrum, resamp_grid)
+
+    # Test conversion to velocity grid
+    rest_wavelength = 656.2 * u.nm
+    wavelengths = np.linspace(640, 672, 10) * u.nm
+    flux = np.ones(10) * u.mJy
+    spec1d = Spectrum1D(spectral_axis=wavelengths, velocity_convention="optical", flux=flux)
+    spec1d.spectral_axis.doppler_rest = rest_wavelength
+
+    velocities = np.linspace(-1000, 1000, 5) * u.km/u.s
+    velocity_grid = SpectralAxis(velocities, doppler_rest=rest_wavelength,
+                                 doppler_convention="optical")
+    velocity_binned = resampler(spec1d, velocity_grid)
+    assert not np.any(np.isnan(velocity_binned.flux))
 
 
 def test_resample_uncs(all_resamplers):
