@@ -479,11 +479,7 @@ def _jwst_s2d_loader(filename, **kwargs):
 
             # Get the wavelength array from the GWCS object which returns a
             # tuple of (RA, Dec, lambda)
-            with warnings.catch_warnings():
-                # https://github.com/spacetelescope/gwcs/pull/522
-                warnings.filterwarnings(
-                    "ignore", message="The bounding_box was set in C order.*")
-                grid = grid_from_bounding_box(wcs.bounding_box)
+            grid = grid_from_bounding_box(wcs.bounding_box)
             _, _, lam = wcs(*grid)
             _, _, lam_unit = wcs.output_frame.unit
 
@@ -591,11 +587,7 @@ def _jwst_s3d_loader(filename, **kwargs):
             # tuple of (RA, Dec, lambda).
             # Since the spatial and spectral axes are orthogonal in s3d data,
             # it is much faster to compute a slice down the spectral axis.
-            with warnings.catch_warnings():
-                # https://github.com/spacetelescope/gwcs/pull/522
-                warnings.filterwarnings(
-                    "ignore", message="The bounding_box was set in C order.*")
-                grid = grid_from_bounding_box(wcs.bounding_box)[:, :, 0, 0]
+            grid = grid_from_bounding_box(wcs.bounding_box)[:, :, 0, 0]
             _, _, wavelength_array = wcs(*grid)
             _, _, wavelength_unit = wcs.output_frame.unit
 
