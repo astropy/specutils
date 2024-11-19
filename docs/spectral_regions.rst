@@ -327,6 +327,11 @@ to create a new `~specutils.SpectralRegion` using the ``read`` class method:
 
     >>> spec_reg = SpectralRegion.read("spectral_region.ecsv")
 
+.. testcleanup::
+
+    >>> import os
+    >>> os.remove("spectral_region.ecsv")
+
 The `~astropy.table.QTable` created to write out the `~specutils.SpectralRegion` to file can also be accessed
 directly with the ``as_table`` method, and a `~specutils.SpectralRegion` can be created directly from a `~astropy.table.QTable`
 with the appropriate columns (minimally ``lower_bound`` and ``upper_bound``) using the ``from_qtable`` class method.
