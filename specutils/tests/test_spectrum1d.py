@@ -318,7 +318,7 @@ def test_wcs_transformations():
     spec = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm,
                       flux=np.ones(49) * u.Jy)
 
-    pix_axis = spec.wcs.world_to_pixel(np.arange(20, 30) * u.nm)
+    pix_axis = spec.wcs.world_to_pixel_values(np.arange(20, 30) * u.nm)
     disp_axis = spec.wcs.pixel_to_world(np.arange(20, 30))
 
     assert isinstance(pix_axis, np.ndarray)
@@ -326,7 +326,7 @@ def test_wcs_transformations():
 
     # Test transform with different unit
     with u.set_enabled_equivalencies(u.spectral()):
-        spec.wcs.world_to_pixel(np.arange(20, 30) * u.GHz)
+        spec.wcs.world_to_pixel_values(np.arange(20, 30) * u.GHz)
 
     # Test with a FITS WCS
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
