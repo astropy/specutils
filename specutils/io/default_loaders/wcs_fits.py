@@ -620,11 +620,11 @@ def _read_non_linear_iraf_wcs(header, wcsdim, verbose=False):
                   'alow': lambda x: int(float(x)), 'ahigh': lambda x: int(float(x)),
                   'weight': float, 'zeropoint': float,
                   'ftype': int, 'order': lambda x: int(float(x)),
-                  'pmin': lambda x: int(float(x)), 'pmax': lambda x: int(float(x))}
+                  'pmin': lambda x: float(x), 'pmax': lambda x: float(x)}
 
     ctypen = header['CTYPE{:d}'.format(wcsdim)]
     if verbose:
-        print(f'Attempting to read CTYPE{wcsdim}: {ctypen}')
+        print(f'Attempting to read CTYPE{wcsdim}: {ctypen} from WAT{wcsdim}*')
     if ctypen == 'MULTISPE':
         # This is extracting all header cards for f'WAT{wcsdim}_*' into a list
         wat_head = header['WAT{:d}*'.format(wcsdim)]
@@ -640,6 +640,8 @@ def _read_non_linear_iraf_wcs(header, wcsdim, verbose=False):
             for key in wat_head:
                 wat_string += f'{header[key]:68s}'  # Keep header from stripping trailing blanks!
             wat_array = shlex.split(wat_string.replace('=', ' '))
+            if verbose:
+                print(f'Extracted WAT{wcsdim} array[{len(wat_array)}]')
             if len(wat_array) % 2 == 0:
                 for i in range(0, len(wat_array), 2):
                     # if wat_array[i] not in wcs_dict.keys():
@@ -655,13 +657,13 @@ def _read_non_linear_iraf_wcs(header, wcsdim, verbose=False):
     for n, sp in enumerate(specn):
         spec = wat_wcs_dict[sp].split()
         wcs_dict = dict((k, wcs_parser[k](spec[i])) for i, k in enumerate(wcs_parser.keys()))
-        wcs_dict['fpar'] = [float(i) for i in spec[15:]]
+        wcs_dict['fpar'] = [float(i) for i in spec[15:15+wcs_dict['order']]]
 
         if verbose:
             print(f'Retrieving model for {sp}: {wcs_dict["dtype"]} {wcs_dict["ftype"]}')
-        math_model = _set_math_model(wcs_dict=wcs_dict)
+        math_model = _set_math_model(wcs_dict=wcs_dict, verbose=verbose)
 
-        spectral_axis[n] = math_model(range(1, wcs_dict['pnum'] + 1)) / (1. + wcs_dict['z'])
+        spectral_axis[n] = math_model(np.arange(wcs_dict['pnum']) + 1) / (1. + wcs_dict['z'])
 
     if verbose:
         print(f'Constructed spectral axis of shape {spectral_axis.shape}')
@@ -710,19 +712,25 @@ def _set_math_model(wcs_dict, verbose=False):
         return _none()
     elif wcs_dict['dtype'] == 0:
         if verbose:
-            print('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
+            print('Setting linear model for DTYPE={dtype:d}'.format(**wcs_dict))
         return _linear_solution(wcs_dict=wcs_dict)
     elif wcs_dict['dtype'] == 1:
         if verbose:
-            print('Setting model for DTYPE={dtype:d}'.format(**wcs_dict))
+            print('Setting log-linear model for DTYPE={dtype:d}'.format(**wcs_dict))
         return _log_linear(wcs_dict=wcs_dict)
     elif wcs_dict['dtype'] == 2:
         if verbose:
-            print('Setting model for DTYPE={dtype:d} FTYPE={ftype:d}'.format(**wcs_dict))
+            print('Setting non-linear model for DTYPE={dtype:d} FTYPE={ftype:d}'.format(**wcs_dict))
         if wcs_dict['ftype'] == 1:
-            return _chebyshev(wcs_dict=wcs_dict)
+            model = _chebyshev(wcs_dict=wcs_dict)
+            if verbose:
+                print(f'Chebyshev series of degree {model.degree} on domain {model.domain}: {model.parameters}')
+            return model
         elif wcs_dict['ftype'] == 2:
-            return _non_linear_legendre(wcs_dict=wcs_dict)
+            model = _non_linear_legendre(wcs_dict=wcs_dict)
+            if verbose:
+                print(f'Legendre series of degree {model.degree} on domain {model.domain}: {model.parameters}')
+            return model
         elif wcs_dict['ftype'] == 3:
             return _non_linear_cspline(wcs_dict=wcs_dict)
         elif wcs_dict['ftype'] == 4:
