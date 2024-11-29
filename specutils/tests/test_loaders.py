@@ -398,7 +398,8 @@ def test_iraf_linear(remote_data_path):
 @pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
 @remote_access([{'id': '3359180', 'filename': 'log-linear_fits_solution.fits'}])
 def test_iraf_log_linear(remote_data_path):
-
+    """Non-linear wavelength solution for DTYPE=1 (log-linear) encoded IRAF-style (not implemented).
+    """
     with pytest.raises(NotImplementedError):
         assert Spectrum1D.read(remote_data_path, format='iraf')
 
@@ -407,7 +408,9 @@ def test_iraf_log_linear(remote_data_path):
 @pytest.mark.filterwarnings('ignore:Read spectral axis of shape')
 @remote_access([{'id': '3359190', 'filename': 'non-linear_fits_solution_cheb.fits'}])
 def test_iraf_non_linear_chebyshev(remote_data_path):
-    chebyshev_model = models.Chebyshev1D(degree=2, domain=[1616, 3259])
+    """Read non-linear wavelength solution for FTYPE=1 (Chebyshev series) encoded IRAF-style.
+    """
+    chebyshev_model = models.Chebyshev1D(degree=2, domain=[1616.37, 3259.98])
     chebyshev_model.c0.value = 5115.64008186
     chebyshev_model.c1.value = 535.515983712
     chebyshev_model.c2.value = -0.779265625182
@@ -415,15 +418,27 @@ def test_iraf_non_linear_chebyshev(remote_data_path):
     wavelength_axis = chebyshev_model(range(1, 4097)) * u.angstrom
 
     spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
-
     assert isinstance(spectrum_1d, Spectrum1D)
-    assert_allclose(wavelength_axis, spectrum_1d.wavelength)
+    assert_allclose(spectrum_1d.wavelength, wavelength_axis, rtol=1e-10)
 
     # Read from HDUList
     with fits.open(remote_data_path) as hdulist:
         spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
-    assert isinstance(spectrum_1d, Spectrum1D)
-    assert_allclose(wavelength_axis, spectrum_1d.wavelength)
+        assert isinstance(spectrum_1d, Spectrum1D)
+        assert_allclose(spectrum_1d.wavelength, wavelength_axis, rtol=1e-10)
+        assert_allclose(spectrum_1d.wavelength[[0, 1, -1]],
+                        [3514.56625403, 3515.2291341, 6190.37186578] * u.angstrom, rtol=1e-10)
+
+        # Read pmin, pmax as integer values (standard interpretation pre #1196)
+        hdulist[0].header['WAT2_002'] = '.39 1. 0. 1 3 1616    3259    5115.64008185559 535.515983711607 -0.7'
+        chebyshev_model.domain = [1616, 3259]
+        wavelength_axis = chebyshev_model(range(1, 4097)) * u.angstrom
+
+        spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
+        assert isinstance(spectrum_1d, Spectrum1D)
+        assert_allclose(spectrum_1d.wavelength, wavelength_axis, rtol=1e-10)
+        assert_allclose(spectrum_1d.wavelength[[0, 1, -1]],
+                        [3514.41405321, 3515.07718045, 6191.20308524] * u.angstrom, rtol=1e-10)
 
 
 @pytest.mark.filterwarnings('ignore:Flux unit was not provided')
@@ -431,19 +446,37 @@ def test_iraf_non_linear_chebyshev(remote_data_path):
 @pytest.mark.filterwarnings('ignore:Read spectral axis of shape')
 @remote_access([{'id': '3359194', 'filename': 'non-linear_fits_solution_legendre.fits'}])
 def test_iraf_non_linear_legendre(remote_data_path):
-
-    legendre_model = models.Legendre1D(degree=3, domain=[21, 4048])
+    """Read non-linear wavelength solution for FTYPE=2 (Legendre series) encoded IRAF-style.
+    """
+    legendre_model = models.Legendre1D(degree=3, domain=[21.64, 4048.55])
     legendre_model.c0.value = 5468.67555891
     legendre_model.c1.value = 835.332144466
     legendre_model.c2.value = -6.02202094803
     legendre_model.c3.value = -1.13142953897
-
     wavelength_axis = legendre_model(range(1, 4143)) * u.angstrom
 
     spectrum_1d = Spectrum1D.read(remote_data_path, format='iraf')
-
     assert isinstance(spectrum_1d, Spectrum1D)
-    assert_allclose(wavelength_axis, spectrum_1d.wavelength)
+    assert_allclose(spectrum_1d.wavelength, wavelength_axis, rtol=1e-10)
+
+    # Read from HDUList
+    with fits.open(remote_data_path) as hdulist:
+        spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
+        assert isinstance(spectrum_1d, Spectrum1D)
+        assert_allclose(spectrum_1d.wavelength, wavelength_axis, rtol=1e-10)
+        assert_allclose(spectrum_1d.wavelength[[0, 1, -1]],
+                        [4619.77414264, 4620.19462372, 6334.43272858] * u.angstrom, rtol=1e-10)
+
+        # Read pmin, pmax as integer values (standard interpretation pre #1196)
+        hdulist[0].header['WAT2_002'] = '.00 1. 0. 2 4 21    4048.00000000000 5468.67555890614 835.3321444656'
+        legendre_model.domain = [21, 4048]
+        wavelength_axis = legendre_model(range(1, 4143)) * u.angstrom
+
+        spectrum_1d = Spectrum1D.read(hdulist, format='iraf')
+        assert isinstance(spectrum_1d, Spectrum1D)
+        assert_allclose(spectrum_1d.wavelength, wavelength_axis, rtol=1e-10)
+        assert_allclose(spectrum_1d.wavelength[[0, 1, -1]],
+                        [4620.04343851, 4620.46391004 , 6334.65282602] * u.angstrom, rtol=1e-10)
 
 
 @pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
@@ -466,7 +499,7 @@ def test_iraf_non_linear_cubic_spline(remote_data_path):
 @pytest.mark.remote_data
 def test_iraf_multispec_chebyshev():
     """Test loading of SpectrumCollection from IRAF MULTISPEC format FITS file -
-    nonlinear 2D WCS with Chebyshev solution (FTYPE=1).
+    nonlinear 2D WCS with Chebyshev solution (DTYPE=2, FTYPE=1).
     """
     iraf_url = 'https://github.com/astropy/specutils/raw/legacy-specutils/specutils/io/tests/files'
     # Read reference ASCII spectrum from remote file.
@@ -486,7 +519,7 @@ def test_iraf_multispec_chebyshev():
 @pytest.mark.remote_data
 def test_iraf_multispec_legendre():
     """Test loading of SpectrumCollection from IRAF MULTISPEC format FITS file -
-    nonlinear 2D WCS with Legendre solution (FTYPE=2).
+    nonlinear 2D WCS with Legendre solution (DTYPE=2, FTYPE=2).
     """
     iraf_url = 'https://github.com/astropy/specutils/raw/legacy-specutils/specutils/io/tests/files'
     # Read reference ASCII spectrum from remote file.
