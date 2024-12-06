@@ -4,6 +4,9 @@
 New Features
 ^^^^^^^^^^^^
 
+- Added new SDSS-V ``Spectrum1D`` and ``SpectrumList`` default loaders for 
+  ``astraStar`` and ``astraVisit`` datatypes. [#1203]
+
 Bug Fixes
 ^^^^^^^^^
 
