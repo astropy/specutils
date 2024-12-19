@@ -330,7 +330,7 @@ def test_wcs_transformations():
     with u.set_enabled_equivalencies(u.spectral()):
         # After spacetelescope/gwcs#457 is merged and released, this can be changed to
         # spec.wcs.world_to_pixel_values(np.arange(20, 30) * u.GHz)
-        spec.wcs.world_to_pixel(SpectralCoord(np.arange(20, 30) * u.GHz))
+        spec.wcs.world_to_pixel(SpectralCoord(np.arange(6.9e6, 1e7) * u.GHz))
 
     # Test with a FITS WCS
     my_wcs = fitswcs.WCS(header={'CDELT1': 1, 'CRVAL1': 6562.8, 'CUNIT1': 'Angstrom',
