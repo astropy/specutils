@@ -779,9 +779,6 @@ def test_tabular_fits_update_header(tmp_path, metadata_hdu):
 
 
 @pytest.mark.filterwarnings("ignore:The unit 'Angstrom' has been deprecated")
-# Ignore upstream warnings from GWCS
-@pytest.mark.filterwarnings('ignore:The get_format_name function is deprecated')
-@pytest.mark.filterwarnings('ignore:The class "Fits" has been renamed')
 def test_tabular_fits_autowrite(tmp_path):
     """Test writing of Spectrum1D with automatic selection of BINTABLE format."""
     disp = np.linspace(1, 1.2, 21) * u.AA
