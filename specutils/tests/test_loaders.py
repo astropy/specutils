@@ -610,7 +610,7 @@ def test_tabular_fits_cov_io(tmp_path):
         np.full(1000-1, 0.5, dtype=float),
         np.full(1000-2, 0.2, dtype=float),
     ]
-    cov = Covariance(sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2)
+    cov = Covariance(array=sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2)
 
     # Create the Spectrum1D
     spectrum = Spectrum1D(flux=flux, spectral_axis=wave, uncertainty=cov)
@@ -628,7 +628,8 @@ def test_tabular_fits_cov_io(tmp_path):
                 'Extension names are wrong'
         assert all([h.__class__.__name__ == 'BinTableHDU' for h in hdu[1:]]), \
                 'Data extensions should both be BinTableHDU'
-        assert len(hdu['CORREL'].data) == cov.nnz, 'Number of non-zero cov elements mismatch'
+        assert len(hdu['CORREL'].data) == cov.stored_nnz, \
+                'Number of non-zero cov elements mismatch'
 
     # Read it
     _spectrum = Spectrum1D.read(tmpfile)
