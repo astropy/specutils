@@ -1,7 +1,7 @@
 import numpy as np
 
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, Covariance
 from astropy.table import Table
 import astropy.units as u
 from astropy.wcs import WCS
@@ -47,9 +47,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
 
     Parameters
     ----------
-    file_obj : str, file-like, or :class:`~astropy.io.fits.HDUList`
-            FITS file name, object (provided from name by Astropy I/O Registry),
-            or HDU list (as resulting from `~astropy.io.fits.open`).
+    file_obj : str, file-like, or HDUList
+        FITS file name, object (provided from name by Astropy I/O Registry),
+        or HDUList (as resulting from astropy.io.fits.open()).
     hdu : int
         The HDU of the fits file (default: 1st extension) to read from
     store_data_header : bool
@@ -73,8 +73,8 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
 
     Returns
     -------
-    data : :class:`Spectrum1D`
-        The spectrum that is represented by the data in the input table.
+    data : Spectrum1D
+        The spectrum that is represented by the data in this table.
     """
     # Parse the wcs information. The wcs will be passed to the column finding
     # routines to search for spectral axis information in the file.
@@ -86,6 +86,12 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
         else:
             tab.meta = hdulist[0].header
 
+        # Determine if there is a correlation matrix
+        correl = None
+        if 'CORREL' in [h.name for h in hdulist]:
+            correl = Table.read(hdulist['CORREL'])
+            correl.meta = hdulist['CORREL'].header
+
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
     # or alternatively compare against shape of 1st column.
@@ -96,9 +102,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     # If no column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, wcs=wcs)
+        return generic_spectrum_from_table(tab, wcs=wcs, correl=correl, **kwargs)
 
-    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs)
+    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs, correl=correl)
 
 
 @custom_writer("tabular-fits")
@@ -131,6 +137,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     **kwargs
         Additional optional keywords passed to :func:`~astropy.io.fits.HDUList.writeto`.
     """
+    # TODO: `hdu` is not used below.  Is this necessary?
     if hdu < 1:
         raise ValueError(f'FITS does not support BINTABLE extension in HDU {hdu}.')
 
@@ -144,7 +151,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
                        isinstance(keyword[1], hdr_types)])
 
     # Strip header of FITS reserved keywords
-    for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
+    for keyword in ['EXTNAME', 'NAXIS', 'NAXIS1', 'NAXIS2']:
         header.remove(keyword, ignore_missing=True)
 
     # Add dispersion array and unit
@@ -168,20 +175,26 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     colnames = [dispname, "flux"]
 
     # Include uncertainty - units to be inferred from spectrum.flux
+    correl = None
     if spectrum.uncertainty is not None:
-        try:
-            unc = (
-                spectrum
-                .uncertainty
-                .represent_as(StdDevUncertainty)
-                .quantity
-                .to(funit, equivalencies=u.spectral_density(disp))
-            )
-            columns.append(unc.astype(ftype))
+        if isinstance(spectrum.uncertainty, Covariance):
+            var, correl = spectrum.uncertainty.to_tables()
+            columns.append(np.sqrt(var) * funit)
             colnames.append("uncertainty")
-        except RuntimeWarning:
-            raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
-                             " to divide-by-zero error.")
+        else:
+            try:
+                unc = (
+                    spectrum
+                    .uncertainty
+                    .represent_as(StdDevUncertainty)
+                    .quantity
+                    .to(funit, equivalencies=u.spectral_density(disp))
+                )
+                columns.append(unc.astype(ftype))
+                colnames.append("uncertainty")
+            except RuntimeWarning:
+                raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
+                                " to divide-by-zero error.")
 
     # Add mask column if present
     if spectrum.mask is not None:
@@ -197,6 +210,7 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
         colnames.append('mask')
 
     # For > 1D data transpose from row-major format
+    # TODO: revisit this
     for c in range(1, len(columns)):
         if columns[c].ndim > 1:
             columns[c] = columns[c].T
@@ -204,15 +218,14 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     tab = Table(columns, names=colnames)
     if store_data_header:
         hdu0 = fits.PrimaryHDU()
-        hdu1 = fits.BinTableHDU(data=tab, header=header)
+        hdu1 = fits.BinTableHDU(data=tab, header=header, name='DATA')
     else:
         hdu0 = fits.PrimaryHDU(header=header)
-        hdu1 = fits.BinTableHDU(data=tab)
-
-    # This will overwrite any 'EXTNAME' previously read from a valid header; should it?
-    hdu1.header.update(EXTNAME='DATA')
+        hdu1 = fits.BinTableHDU(data=tab, name='DATA')
 
     hdulist = fits.HDUList([hdu0, hdu1])
+    if correl is not None:
+        hdulist.append(fits.BinTableHDU(data=correl, name='CORREL'))
 
     # TODO: Use output_verify options to check for valid FITS
     hdulist.writeto(file_name, **kwargs)
