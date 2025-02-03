@@ -293,8 +293,6 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
         for i in range(len(mapped_axes)):
             out_mapping[mapped_axes[i]] = i
 
-        print(out_mapping)
-
         forward_transform = (Mapping(mapped_axes) |
                              Identity(naxes - 1) & SpectralTabular1D(np.arange(len(array)), lookup_table=array) |
                              Mapping(out_mapping))

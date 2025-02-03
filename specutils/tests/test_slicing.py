@@ -23,8 +23,12 @@ def test_spectral_axes():
 
     sliced_spec2 = spec2[0]
 
+    print(sliced_spec2.shape)
+    print(spec2.shape)
+
     assert isinstance(sliced_spec2, Spectrum)
-    assert_allclose(sliced_spec2.wcs.pixel_to_world(np.arange(10)), spec2.wcs.pixel_to_world(np.arange(10)))
+    assert_allclose(sliced_spec2.wcs.pixel_to_world(np.arange(10)),
+                    spec2.wcs.pixel_to_world([0,]*10, np.arange(10))[1])
     assert sliced_spec2.flux.shape[0] == 49
 
 
@@ -107,4 +111,4 @@ def test_slicing_multidim():
     assert spec1.mask.shape == (10,)
 
     assert quantity_allclose(spec3.spectral_axis, spec.spectral_axis[4:7])
-    assert quantity_allclose(spec3.wcs.pixel_to_world([0,1,2]), spec3.spectral_axis[0:3])
+    assert quantity_allclose(spec3.wcs.pixel_to_world([0, 0, 0], [0,1,2])[1], spec3.spectral_axis[0:3])
