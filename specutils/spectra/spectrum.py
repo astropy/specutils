@@ -832,14 +832,16 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def _other_as_correct_class(self, other):
         # NDArithmetic mixin will try to turn other into a Spectrum, which will fail
         # sometimes because of not specifiying the spectral axis index
-        flux = u.Quantity(other, unit=self.unit)
-        if flux.ndim > 1 and flux.shape == self.shape:
-            return Spectrum(flux=flux, spectral_axis=self.spectral_axis,
+        if not isinstance(other, u.Quantity):
+            other = u.Quantity(other, unit=self.unit)
+        if other.ndim > 1 and other.shape == self.shape:
+            print("Making other operator a Spectrum")
+            return Spectrum(flux=other, spectral_axis=self.spectral_axis,
                             spectral_axis_index=self.spectral_axis_index)
-        return flux
+        return other
 
     def __add__(self, other):
-        if not isinstance(other, (NDCube, u.Quantity)):
+        if not isinstance(other, (Spectrum)):
             try:
                 other = self._other_as_correct_class(other)
             except TypeError:
@@ -848,7 +850,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return self._return_with_redshift(self.add(other))
 
     def __sub__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, Spectrum):
             try:
                 other = self._other_as_correct_class(other)
             except TypeError:
@@ -857,19 +859,19 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return self._return_with_redshift(self.subtract(other))
 
     def __mul__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, Spectrum):
             other = self._other_as_correct_class(other)
 
         return self._return_with_redshift(self.multiply(other))
 
     def __div__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, Spectrum):
             other = self._other_as_correct_class(other)
 
         return self._return_with_redshift(self.divide(other))
 
     def __truediv__(self, other):
-        if not isinstance(other, NDCube):
+        if not isinstance(other, Spectrum):
             other = self._other_as_correct_class(other)
 
         return self._return_with_redshift(self.divide(other))
