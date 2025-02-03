@@ -845,7 +845,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             except TypeError:
                 return NotImplemented
 
-        return self._return_with_redshift(self.add(other, spectral_axis_index=self.spectral_axis_index))  # noqa
+        return self._return_with_redshift(self.add(other))
 
     def __sub__(self, other):
         if not isinstance(other, NDCube):
@@ -854,25 +854,25 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             except TypeError:
                 return NotImplemented
 
-        return self._return_with_redshift(self.subtract(other, spectral_axis_index=self.spectral_axis_index))  # noqa
+        return self._return_with_redshift(self.subtract(other))
 
     def __mul__(self, other):
         if not isinstance(other, NDCube):
             other = self._other_as_correct_class(other)
 
-        return self._return_with_redshift(self.multiply(other, spectral_axis_index=self.spectral_axis_index))  # noqa
+        return self._return_with_redshift(self.multiply(other))
 
     def __div__(self, other):
         if not isinstance(other, NDCube):
             other = self._other_as_correct_class(other)
 
-        return self._return_with_redshift(self.divide(other, spectral_axis_index=self.spectral_axis_index))  # noqa
+        return self._return_with_redshift(self.divide(other))
 
     def __truediv__(self, other):
         if not isinstance(other, NDCube):
             other = self._other_as_correct_class(other)
 
-        return self._return_with_redshift(self.divide(other, spectral_axis_index=self.spectral_axis_index))  # noqa
+        return self._return_with_redshift(self.divide(other))
 
     __radd__ = __add__
 
