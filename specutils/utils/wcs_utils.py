@@ -39,12 +39,6 @@ class SpectralGWCS(GWCS):
         """
         return copy.deepcopy(self)
 
-    def pixel_to_world(self, *args, **kwargs):
-        if self.original_unit == '':
-            return u.Quantity(super().pixel_to_world_values(*args, **kwargs))
-        return super().pixel_to_world(*args, **kwargs).to(
-            self.original_unit, equivalencies=u.spectral())
-
 
 def refraction_index(wavelength, method='Morton2000', co2=None):
     """
@@ -264,7 +258,7 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     axes_type[spectral_axis_index] = "SPECTRAL"
 
     detector_frame = cf.CoordinateFrame(naxes=naxes,
-                                        unit=[u.pix,] * naxes,
+                                        unit=['',] * naxes,
                                         axes_order=axes_order,
                                         axes_type=axes_type
                                         )
@@ -274,7 +268,7 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     if naxes > 1:
         axes_order.remove(spectral_axis_index)
         spatial_frame = cf.CoordinateFrame(naxes=naxes - 1,
-                                           unit=[u.pix,] * (naxes -1),
+                                           unit=['',] * (naxes -1),
                                            axes_type=['Spatial',] * (naxes - 1),
                                            axes_order=axes_order)
         output_frame = cf.CompositeFrame(frames=[spatial_frame, spectral_frame])
