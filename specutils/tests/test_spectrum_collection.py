@@ -15,14 +15,15 @@ from ..utils.wcs_utils import gwcs_from_array
 def spectrum_collection():
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)) + 1, unit='AA')
-    wcs = np.array([gwcs_from_array(x, flux.shape) for x in spectral_axis])
+    wcs = np.array([gwcs_from_array(x, flux.shape, spectral_axis_index=1) for x in spectral_axis])
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     mask = np.ones((5, 10)).astype(bool)
     meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
 
     spec_coll = SpectrumCollection(
         flux=flux, spectral_axis=spectral_axis, wcs=wcs,
-        uncertainty=uncertainty, mask=mask, meta=meta)
+        uncertainty=uncertainty, mask=mask, meta=meta,
+        spectral_axis_index=1)
 
     return spec_coll
 
@@ -59,7 +60,7 @@ def test_collection_without_optional_arguments():
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)) + 1, unit='AA')
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
-    wcs = np.array([gwcs_from_array(x, flux.shape) for x in spectral_axis])
+    wcs = np.array([gwcs_from_array(x, flux.shape, spectral_axis_index=1) for x in spectral_axis])
     mask = np.ones((5, 10)).astype(bool)
     meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
 
