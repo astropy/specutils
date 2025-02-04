@@ -837,8 +837,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if not isinstance(other, u.Quantity):
             other = u.Quantity(other, unit=self.unit)
         if other.shape == self.shape:
-                return Spectrum(flux=other, spectral_axis=self.spectral_axis,
-                                spectral_axis_index=self.spectral_axis_index)
+            return Spectrum(flux=other, spectral_axis=self.spectral_axis,
+                            spectral_axis_index=self.spectral_axis_index)
 
         return other
 

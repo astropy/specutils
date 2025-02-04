@@ -252,6 +252,8 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
 
     if naxes > 1 and spectral_axis_index is None:
         raise ValueError("spectral_axis_index must be set for multidimensional flux arrays")
+    elif naxes == 1:
+        spectral_axis_index=0
 
     axes_order = list(np.arange(naxes))
     axes_type = ['SPATIAL',] * naxes
