@@ -873,7 +873,6 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             if self.uncertainty is None:
                 new_uncertainty = None
             else:
-                print(self.uncertainty)
                 new_uncertainty = deepcopy(self.uncertainty)
                 new_uncertainty.array *= other
             return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
