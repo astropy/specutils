@@ -654,7 +654,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         elif isinstance(axis, tuple) and self.spectral_axis_index in axis:
             return collapsed_flux
         else:
-            return Spectrum(collapsed_flux, wcs=self.wcs)
+            # Pass the spectral axis rather than WCS in this case, so we don't have to
+            # figure out which part of a multidimensional WCS is the spectral part.
+            return Spectrum(collapsed_flux, spectral_axis=self.spectral_axis)
 
     def mean(self, **kwargs):
         return self.collapse("mean", **kwargs)
