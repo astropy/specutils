@@ -834,10 +834,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # sometimes because of not specifiying the spectral axis index
         if not isinstance(other, u.Quantity):
             other = u.Quantity(other, unit=self.unit)
-        if other.ndim > 1 and other.shape == self.shape:
-            print("Making other operator a Spectrum")
-            return Spectrum(flux=other, spectral_axis=self.spectral_axis,
-                            spectral_axis_index=self.spectral_axis_index)
+        if other.shape == self.shape:
+                return Spectrum(flux=other, spectral_axis=self.spectral_axis,
+                                spectral_axis_index=self.spectral_axis_index)
+
         return other
 
     def __add__(self, other):

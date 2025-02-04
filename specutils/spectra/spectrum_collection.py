@@ -114,7 +114,7 @@ class SpectrumCollection(NDIOMixin):
 
         return Spectrum(flux=flux, spectral_axis=spectral_axis,
                           uncertainty=uncertainty, wcs=wcs, mask=mask,
-                          meta=meta, spectral_axis_index=self._spectral_axis_index)
+                          meta=meta)
 
     @classmethod
     def from_spectra(cls, spectra):
