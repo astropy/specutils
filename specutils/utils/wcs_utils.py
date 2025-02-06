@@ -302,7 +302,6 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     else:
         axes_order.append(spectral_axis_index)
         # WCS axis order is reverse of numpy array order
-        #axes_order.reverse()
         mapped_axes = axes_order
         print(mapped_axes)
         out_mapping = np.ones(len(mapped_axes)).astype(int)
