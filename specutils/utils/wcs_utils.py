@@ -250,8 +250,12 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     orig_array = u.Quantity(array)
     naxes = len(flux_shape)
 
-    if naxes > 1 and spectral_axis_index is None:
-        raise ValueError("spectral_axis_index must be set for multidimensional flux arrays")
+    if naxes > 1:
+        if spectral_axis_index is None:
+            raise ValueError("spectral_axis_index must be set for multidimensional flux arrays")
+        else:
+            # Axis order is reversed for WCS from numpy array
+            spectral_axis_index = naxes-spectral_axis_index-1
     elif naxes == 1:
         spectral_axis_index=0
 
@@ -265,7 +269,14 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
                                         axes_type=axes_type
                                         )
 
-    spectral_frame = cf.SpectralFrame(unit=array.unit, axes_order=(spectral_axis_index,))
+    if array.unit == "":
+        # Spectrum was initialized without a wcs or spectral axis
+        spectral_frame = cf.CoordinateFrame(naxes=1,
+                                           unit=['',],
+                                           axes_type=['Spectral',],
+                                           axes_order=(spectral_axis_index,))
+    else:
+        spectral_frame = cf.SpectralFrame(unit=array.unit, axes_order=(spectral_axis_index,))
 
     if naxes > 1:
         axes_order.remove(spectral_axis_index)
@@ -290,13 +301,17 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
         forward_transform = SpectralTabular1D(np.arange(len(array)), lookup_table=array)
     else:
         axes_order.append(spectral_axis_index)
+        # WCS axis order is reverse of numpy array order
+        #axes_order.reverse()
         mapped_axes = axes_order
+        print(mapped_axes)
         out_mapping = np.ones(len(mapped_axes)).astype(int)
+        print(out_mapping)
         for i in range(len(mapped_axes)):
             out_mapping[mapped_axes[i]] = i
 
         forward_transform = (Mapping(mapped_axes) |
-                             Identity(naxes - 1) & SpectralTabular1D(np.arange(len(array)), lookup_table=array) |
+                             SpectralTabular1D(np.arange(len(array)), lookup_table=array) & Identity(naxes - 1) |
                              Mapping(out_mapping))
 
     # If our spectral axis is in descending order, we have to flip the lookup

@@ -381,10 +381,18 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 wcs_args.reverse()
                 temp_coords = self.wcs.pixel_to_world(*wcs_args)
                 # If there are spatial axes, temp_coords will have a SkyCoord and a SpectralCoord
-                if isinstance(temp_coords, list):
+                if isinstance(temp_coords, list) or (isinstance(temp_coords, tuple) and
+                                                     isinstance(temp_coords[0], np.ndarray)):
                     for coords in temp_coords:
                         if isinstance(coords, SpectralCoord):
                             spec_axis = coords
+                            break
+                    else:
+                        if self.spectral_axis_index > len(temp_coords) - 1:
+                            # In this case the spatial axes are grouped in their own tuple
+                            spec_axis = temp_coords[self.spectral_axis_index-1]
+                        else:
+                            spec_axis = temp_coords[self.spectral_axis_index]
                 else:
                     spec_axis = temp_coords
 
