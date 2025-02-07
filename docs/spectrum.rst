@@ -406,9 +406,6 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
     >>> spec.mean(axis='spatial')  # doctest: +FLOAT_CMP
     <Spectrum(flux=<Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
                0.66084728, 0.45881921, 0.38715911, 0.39967185, 0.53257671] Jy> (shape=(10,), mean=0.49803 Jy); spectral_axis=<SpectralAxis
-       (observer to target:
-          radial_velocity=0.0 km / s
-          redshift=0.0)
       [5000. 5001. 5002. ... 5007. 5008. 5009.] Angstrom> (length=10))>
 
 Note that in this case, the result of the collapse operation is a

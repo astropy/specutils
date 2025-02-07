@@ -264,6 +264,7 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     axes_type[spectral_axis_index] = "SPECTRAL"
 
     detector_frame = cf.CoordinateFrame(naxes=naxes,
+                                        name='detector',
                                         unit=['',] * naxes,
                                         axes_order=axes_order,
                                         axes_type=axes_type
@@ -306,9 +307,8 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
         out_mapping = np.ones(len(mapped_axes)).astype(int)
         for i in range(len(mapped_axes)):
             out_mapping[mapped_axes[i]] = i
-
         forward_transform = (Mapping(mapped_axes) |
-                             SpectralTabular1D(np.arange(len(array)), lookup_table=array) & Identity(naxes - 1) |
+                             Identity(naxes - 1) & SpectralTabular1D(np.arange(len(array)), lookup_table=array) |
                              Mapping(out_mapping))
 
     # If our spectral axis is in descending order, we have to flip the lookup
