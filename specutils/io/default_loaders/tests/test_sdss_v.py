@@ -24,14 +24,15 @@ def generate_apogee_hdu(observatory="APO",
 
     columns = [
         fits.Column(name="spectrum_pk_id", array=[159783564], format="K"),
-        fits.Column(name="release", array=[b"sdss5"]*nvisits, format="5A"),
-        fits.Column(name="v_astra", array=[b"0.5.0"]*nvisits, format="5A"),
+        fits.Column(name="release", array=[b"sdss5"] * nvisits, format="5A"),
+        fits.Column(name="v_astra", array=[b"0.5.0"] * nvisits, format="5A"),
         fits.Column(name="healpix", array=[3], format="J"),
-        fits.Column(name="sdss_id", array=[42]*nvisits, format="K"),
-        fits.Column(name="apred", array=[b"1.2"]*nvisits, format="3A"),
+        fits.Column(name="sdss_id", array=[42] * nvisits, format="K"),
+        fits.Column(name="apred", array=[b"1.2"] * nvisits, format="3A"),
         fits.Column(name="obj", array=[b"2M19534321+6705175"], format="18A"),
-        fits.Column(name="telescope", array=[b"apo25m"]*nvisits, format="6A"),
-        fits.Column(name="snr", array=[50]*nvisits, format="E"),
+        fits.Column(name="telescope", array=[b"apo25m"] * nvisits,
+                    format="6A"),
+        fits.Column(name="snr", array=[50] * nvisits, format="E"),
     ]
     if with_wl:
         columns.append(
@@ -47,7 +48,7 @@ def generate_apogee_hdu(observatory="APO",
         columns += [
             fits.Column(name="mjd", array=[59804], format="J"),
         ]
-    flux_col = 'model_flux' if astra else 'flux'
+    flux_col = "model_flux" if astra else "flux"
 
     columns += [
         fits.Column(name=flux_col, array=flux, format="8575E", dim="(8575)"),
@@ -98,14 +99,14 @@ def generate_boss_hdu(observatory="APO",
     continuum = np.array([np.zeros_like(wl)] * nvisits)
     nmf_rectified_model_flux = np.array([np.zeros_like(wl)] * nvisits)
     columns = [
-        fits.Column(name="spectrum_pk_id", array=[0]*nvisits, format="K"),
-        fits.Column(name="release", array=["sdss5"]*nvisits, format="5A"),
+        fits.Column(name="spectrum_pk_id", array=[0] * nvisits, format="K"),
+        fits.Column(name="release", array=["sdss5"] * nvisits, format="5A"),
         fits.Column(name="v_astra", array=["0.5.0"], format="5A"),
         fits.Column(name="healpix", array=[34], format="J"),
         fits.Column(name="sdss_id", array=[42], format="K"),
         fits.Column(name="run2d", array=["6_1_2"], format="6A"),
-        fits.Column(name="telescope", array=["apo25m"]*nvisits, format="6A"),
-        fits.Column(name="snr", array=[50]*nvisits, format="E"),
+        fits.Column(name="telescope", array=["apo25m"] * nvisits, format="6A"),
+        fits.Column(name="snr", array=[50] * nvisits, format="E"),
     ]
 
     if with_wl:
@@ -122,7 +123,7 @@ def generate_boss_hdu(observatory="APO",
         columns += [
             fits.Column(name="mjd", array=[59804], format="J"),
         ]
-    flux_col = 'model_flux' if astra else 'flux'
+    flux_col = "model_flux" if astra else "flux"
     columns += [
         fits.Column(name=flux_col, array=flux, format="4648E", dim="(4648)"),
         fits.Column(name="ivar", array=ivar, format="4648E", dim="(4648)"),
@@ -472,9 +473,9 @@ def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
         if nvisits > 1:
             assert data.flux.value.shape[0] == nvisits
         if with_wl:
-            assert data.meta['datatype'].lower() == 'mwmstar'
-        else:                                        
-            assert data.meta['datatype'].lower() == 'mwmvisit'
+            assert data.meta["datatype"].lower() == "mwmstar"
+        else:
+            assert data.meta["datatype"].lower() == "mwmvisit"
         assert data.spectral_axis.unit == Angstrom
         assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         os.remove(tmpfile)
@@ -512,9 +513,9 @@ def test_astra_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
         if nvisits > 1:
             assert data.flux.value.shape[0] == nvisits
         if with_wl:
-            assert data.meta['datatype'].lower() == 'astrastar'
-        else:                                        
-            assert data.meta['datatype'].lower() == 'astravisit'
+            assert data.meta["datatype"].lower() == "astrastar"
+        else:
+            assert data.meta["datatype"].lower() == "astravisit"
         assert data.spectral_axis.unit == Angstrom
         assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         os.remove(tmpfile)
@@ -564,9 +565,9 @@ def test_mwm_1d(file_obj, hdu, with_wl, hduflags, nvisits):
     if nvisits > 1:
         assert data.flux.value.shape[0] == nvisits
     if with_wl:
-        assert data.meta['datatype'].lower() == 'mwmstar'
-    else:                                        
-        assert data.meta['datatype'].lower() == 'mwmvisit'
+        assert data.meta["datatype"].lower() == "mwmstar"
+    else:
+        assert data.meta["datatype"].lower() == "mwmvisit"
     assert data.spectral_axis.unit == Angstrom
     assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
     os.remove(tmpfile)
@@ -603,9 +604,9 @@ def test_astra_1d(file_obj, hdu, with_wl, hduflags, nvisits):
         assert data.flux.value.shape[0] == nvisits
 
     if with_wl:
-        assert data.meta['datatype'].lower() == 'astrastar'
-    else:                                        
-        assert data.meta['datatype'].lower() == 'astravisit'
+        assert data.meta["datatype"].lower() == "astrastar"
+    else:
+        assert data.meta["datatype"].lower() == "astravisit"
 
     assert data.spectral_axis.unit == Angstrom
     assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
@@ -645,9 +646,9 @@ def test_mwm_list(file_obj, with_wl, hduflags):
             raise ValueError(
                 "INSTRMNT tag in test HDU header is not set properly.")
         if with_wl:
-            assert data[i].meta['datatype'].lower() == 'mwmstar'
+            assert data[i].meta["datatype"].lower() == "mwmstar"
         else:
-            assert data[i].meta['datatype'].lower() == 'mwmvisit'
+            assert data[i].meta["datatype"].lower() == "mwmvisit"
         assert len(data[i].spectral_axis.value) == length
         assert data[i].flux.value.shape[-1] == length
         if nvisits > 1:
@@ -655,6 +656,7 @@ def test_mwm_list(file_obj, with_wl, hduflags):
         assert data[i].spectral_axis.unit == Angstrom
         assert data[i].flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
     os.remove(tmpfile)
+
 
 @pytest.mark.parametrize(
     "file_obj, with_wl, hduflags",
@@ -673,8 +675,8 @@ def test_astra_list(file_obj, with_wl, hduflags):
     """Test astra SpectrumList loader"""
     tmpfile = str(file_obj) + ".fits"
     nvisits = 1 if with_wl else 3
-    mwm_HDUList(hduflags, with_wl, nvisits=nvisits,astra=True).writeto(tmpfile,
-                                                            overwrite=True)
+    mwm_HDUList(hduflags, with_wl, nvisits=nvisits,
+                astra=True).writeto(tmpfile, overwrite=True)
 
     data = SpectrumList.read(tmpfile)
     assert isinstance(data, SpectrumList)
@@ -689,9 +691,9 @@ def test_astra_list(file_obj, with_wl, hduflags):
             raise ValueError(
                 "INSTRMNT tag in test HDU header is not set properly.")
         if with_wl:
-            assert data[i].meta['datatype'].lower() == 'astrastar'
-        else:                                           
-            assert data[i].meta['datatype'].lower() == 'astravisit'
+            assert data[i].meta["datatype"].lower() == "astrastar"
+        else:
+            assert data[i].meta["datatype"].lower() == "astravisit"
         assert len(data[i].spectral_axis.value) == length
         assert data[i].flux.value.shape[-1] == length
         if nvisits > 1:
@@ -735,6 +737,7 @@ def test_mwm_1d_fail(file_obj, with_wl):
         Spectrum.read(tmpfile)
     os.remove(tmpfile)
 
+
 @pytest.mark.parametrize(
     "file_obj, with_wl",
     [
@@ -745,7 +748,8 @@ def test_mwm_1d_fail(file_obj, with_wl):
 def test_astra_1d_fail(file_obj, with_wl):
     """Test astra Spectrum1D loader fail on empty"""
     tmpfile = str(file_obj) + ".fits"
-    mwm_HDUList([0, 0, 0, 0], with_wl,astra=True).writeto(tmpfile, overwrite=True)
+    mwm_HDUList([0, 0, 0, 0], with_wl, astra=True).writeto(tmpfile,
+                                                           overwrite=True)
 
     with pytest.raises(ValueError):
         Spectrum1D.read(tmpfile)
@@ -768,6 +772,7 @@ def test_mwm_list_fail(file_obj, with_wl):
         SpectrumList.read(tmpfile)
     os.remove(tmpfile)
 
+
 @pytest.mark.parametrize(
     "file_obj, with_wl",
     [
@@ -778,7 +783,8 @@ def test_mwm_list_fail(file_obj, with_wl):
 def test_astra_list_fail(file_obj, with_wl):
     """Test astra SpectrumList loader fail on empty"""
     tmpfile = str(file_obj) + ".fits"
-    mwm_HDUList([0, 0, 0, 0], with_wl,astra=True).writeto(tmpfile, overwrite=True)
+    mwm_HDUList([0, 0, 0, 0], with_wl, astra=True).writeto(tmpfile,
+                                                           overwrite=True)
 
     with pytest.raises(ValueError):
         SpectrumList.read(tmpfile)
