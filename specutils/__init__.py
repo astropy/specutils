@@ -5,7 +5,6 @@ Specutils: an astropy package for spectroscopy.
 import os
 
 from astropy import config as _config
-from astropy.tests.runner import TestRunner
 
 __citation__ = 'https://doi.org/10.5281/zenodo.1421356'
 
@@ -13,11 +12,6 @@ try:
     from .version import version as __version__
 except ImportError:
     __version__ = ''
-
-# Create the test function for self test
-test = TestRunner.make_test_runner_in(os.path.dirname(__file__))
-test.__test__ = False
-
 
 # Allow loading spectrum object from top level module
 from .spectra import *  # noqa
@@ -43,5 +37,4 @@ conf = Conf()
 # Clean up namespace
 del os
 del _config
-del TestRunner
 del _load_user_io
