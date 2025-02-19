@@ -421,7 +421,6 @@ Reference/API
     :no-heading:
     :headings: -~
 
-    :skip: test
     :skip: QTable
     :skip: SpectrumCollection
     :skip: SpectralRegion
