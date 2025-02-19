@@ -105,7 +105,6 @@ Reference/API
     :no-heading:
     :no-inheritance-diagram:
 
-    :skip: test
     :skip: QTable
     :skip: Spectrum1D
     :skip: SpectralRegion
