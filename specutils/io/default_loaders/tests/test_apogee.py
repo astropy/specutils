@@ -12,7 +12,7 @@ from specutils.io.default_loaders.apogee import apStar_loader, apVisit_loader, a
     "url",
     [
         "https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/stars/apo25m/N7789/apStar-r12-2M00005414+5522241.fits",
-        "https://data.sdss.org/sas/dr17/apogee/spectro/redux/dr17/stars/lco25m/293-37-C/2M03174068-7748459/asStar-dr17-2M03174068-7748459.fits",
+        "https://data.sdss.org/sas/dr17/apogee/spectro/redux/dr17/stars/lco25m/293-37-C/asStar-dr17-2M03174068-7748459.fits",
         "https://data.sdss.org/sas/dr13/apogee/spectro/redux/r6/stars/apo25m/4291/apStar-r6-2M07440053+1053592-55960.fits",
     ],
     ids=["apstar_dr16", "asstar_dr17", "apstar_dr13"],
@@ -28,8 +28,8 @@ def test_apStar_loader(tmp_path, url):
     "url",
     [
         "https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/visit/apo25m/N7789/5094/55874/apVisit-r12-5094-55874-123.fits",
-        "https://data.sdss.org/sas/dr17/apogee/spectro/redux/dr17/visit/lco25m/293-37-C/2M03174068-7748459/asVisit-dr17-11992-59187-227.fits",
-        "https://data.sdss.org/sas/dr13/apogee/spectro/redux/r6/apo25m/44925/55702/apVisit-r6-4925-55702-003.fits",
+        "https://data.sdss.org/sas/dr17/apogee/spectro/redux/dr17/visit/lco25m/293-37-C/11992/59187/asVisit-dr17-11992-59187-227.fits",
+        "https://data.sdss.org/sas/dr13/apogee/spectro/redux/r6/apo25m/4925/55702/apVisit-r6-4925-55702-003.fits",
     ],
     ids=["apvisit_dr16", "asvisit_dr17", "apvisit_dr13"],
 )
