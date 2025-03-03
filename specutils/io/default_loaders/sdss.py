@@ -7,17 +7,16 @@ Loader for SDSS spectrum files: spec_, spSpec_, and spPlate_.
 """
 import re
 
-from astropy.io import fits
-from astropy.table import Table
-from astropy.wcs import WCS
-from astropy.units import Unit
-from astropy.nddata import StdDevUncertainty, InverseVariance
-
 import numpy as np
+from astropy.io import fits
+from astropy.nddata import InverseVariance, StdDevUncertainty
+from astropy.table import Table
+from astropy.units import Unit
+from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
+from ..registers import data_loader
 
 __all__ = ['spec_identify', 'spSpec_identify', 'spPlate_identify',
            'spec_loader', 'spSpec_loader', 'spPlate_loader']
@@ -70,11 +69,13 @@ def spec_identify(origin, *args, **kwargs):
     """
     # Test if fits has extension of type BinTable and check for spec-specific keys
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
-        return (hdulist[0].header.get("TELESCOP") == "SDSS 2.5-M"
-                and hdulist[0].header.get("FIBERID", 0) > 0
-                and len(hdulist) > 1
-                and (isinstance(hdulist[1], fits.BinTableHDU)
-                     and hdulist[1].header.get("TTYPE3").lower() == "ivar"))
+        return (
+            hdulist[0].header.get("TELESCOP") == "SDSS 2.5-M"
+            and hdulist[0].header["VERS2D"].startswith("v5")
+            and hdulist[0].header.get("FIBERID", 0) > 0
+            and len(hdulist) > 1
+            and (isinstance(hdulist[1], fits.BinTableHDU) and hdulist[1].header.get("TTYPE3").lower() == "ivar")
+        )
 
 
 def spSpec_identify(origin, *args, **kwargs):

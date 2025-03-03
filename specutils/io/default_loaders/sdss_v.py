@@ -3,14 +3,14 @@ import warnings
 from typing import Optional
 
 import numpy as np
-from astropy.units import Unit, Quantity, Angstrom
-from astropy.nddata import StdDevUncertainty, InverseVariance
-from astropy.io.fits import HDUList, BinTableHDU, ImageHDU
+from astropy.io.fits import BinTableHDU, HDUList, ImageHDU
+from astropy.nddata import InverseVariance, StdDevUncertainty
+from astropy.units import Angstrom, Quantity, Unit
 from astropy.utils.exceptions import AstropyUserWarning
 
 from ...spectra import Spectrum1D, SpectrumList
-from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
+from ..registers import data_loader
 
 __all__ = [
     "load_sdss_apVisit_1D",
@@ -70,10 +70,13 @@ def spec_sdss5_identify(origin, *args, **kwargs):
         return (
             (hdulist[0].header.get("TELESCOP").lower() == "sdss 2.5-m")  # and
             # hdulist[0].header.get("OBSERVAT").lower() in ["apo", "lco"]
-            and (hdulist[1].header.get("TTYPE1").lower() == "flux") and
-            (hdulist[1].header.get("TTYPE2").lower() == "loglam") and
-            (len(hdulist) > 1) and (isinstance(hdulist[1], BinTableHDU)) and
-            (hdulist[1].header.get("TTYPE3").lower() == "ivar"))
+            and hdulist[0].header["VERS2D"].startswith("v6")
+            and (hdulist[1].header.get("TTYPE1").lower() == "flux")
+            and (hdulist[1].header.get("TTYPE2").lower() == "loglam")
+            and (len(hdulist) > 1)
+            and (isinstance(hdulist[1], BinTableHDU))
+            and (hdulist[1].header.get("TTYPE3").lower() == "ivar")
+        )
 
 
 def mwm_identify(origin, *args, **kwargs):
