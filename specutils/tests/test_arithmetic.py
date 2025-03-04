@@ -1,6 +1,7 @@
 import astropy.units as u
 from astropy.tests.helper import assert_quantity_allclose
 import numpy as np
+import pytest
 
 from ..spectra.spectrum import Spectrum
 
@@ -89,8 +90,9 @@ def test_multiplication_basic_spectra(simulated_spectra):
 
 def test_add_diff_spectral_axis(simulated_spectra):
 
-    # Calculate using the spectrum/nddata code
-    spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3  # noqa
+    # We now raise an error if the spectra aren't on the same spectral axis
+    with pytest.raises(ValueError, match="Spectral axis of both operands must match"):
+        spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3  # noqa
 
 
 def test_masks(simulated_spectra):

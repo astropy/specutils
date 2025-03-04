@@ -89,6 +89,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # If the flux (data) argument is already a Spectrum (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, Spectrum):
+            self._spectral_axis_index = flux.spectral_axis_index
+            self._spectral_axis = flux.spectral_axis
             super().__init__(flux)
             return
 
@@ -157,9 +159,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # In the case where the arithmetic operation is being performed with
         # a single float, int, or array object, just go ahead and ignore wcs
         # requirements
-        if (not isinstance(flux, u.Quantity) or isinstance(flux, float)
-                or isinstance(flux, int)) and np.ndim(flux) == 0:
-
+        if np.ndim(flux) == 0 and spectral_axis is None and wcs is None:
             super(Spectrum, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
 
@@ -332,7 +332,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 self._spectral_axis = spectral_axis
 
             if wcs is None:
-                wcs = gwcs_from_array(self._spectral_axis)
+                wcs = gwcs_from_array(self._spectral_axis,
+                                      flux.shape,
+                                      spectral_axis_index=self.spectral_axis_index
+                                      )
 
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
@@ -344,7 +347,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     raise ValueError("Must specify spectral_axis_index if no WCS or spectral"
                                      " axis is input.")
             size = flux.shape[self.spectral_axis_index] if not flux.isscalar else 1
-            wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
+            wcs = gwcs_from_array(np.arange(size) * u.Unit(""),
+                                  flux.shape,
+                                  spectral_axis_index=self.spectral_axis_index
+                                  )
 
         super().__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
@@ -379,6 +385,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     for coords in temp_coords:
                         if isinstance(coords, SpectralCoord):
                             spec_axis = coords
+                            break
+                    else:
+                        # WCS axis ordering is reverse of numpy
+                        spec_axis = temp_coords[len(temp_coords) - self.spectral_axis_index - 1]
                 else:
                     spec_axis = temp_coords
 
@@ -646,7 +656,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         elif isinstance(axis, tuple) and self.spectral_axis_index in axis:
             return collapsed_flux
         else:
-            return Spectrum(collapsed_flux, wcs=self.wcs)
+            # Pass the spectral axis rather than WCS in this case, so we don't have to
+            # figure out which part of a multidimensional WCS is the spectral part.
+            return Spectrum(collapsed_flux, spectral_axis=self.spectral_axis)
 
     def mean(self, **kwargs):
         return self.collapse("mean", **kwargs)
@@ -821,39 +833,74 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         result.shift_spectrum_to(redshift=self.redshift)
         return result
 
-    def __add__(self, other):
-        if not isinstance(other, (NDCube, u.Quantity)):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+    def _other_as_correct_class(self, other, force_quantity=False):
+        # NDArithmetic mixin will try to turn other into a Spectrum, which will fail
+        # sometimes because of not specifiying the spectral axis index
+        if isinstance(other, Spectrum):
+            # Take this opportunity to check if the spectral axes match
+            if not np.all(other.spectral_axis == self.spectral_axis):
+                raise ValueError("Spectral axis of both operands must match")
+        else:
+            if not isinstance(other, u.Quantity) and force_quantity:
+                other = other * self.unit
 
-        return self._return_with_redshift(self.add(other))
+        if isinstance(other, u.Quantity) and other.shape == self.shape:
+            return Spectrum(flux=other, spectral_axis=self.spectral_axis,
+                            spectral_axis_index=self.spectral_axis_index)
+
+        return other
+
+    def __add__(self, other):
+        other = self._other_as_correct_class(other, force_quantity=True)
+        if isinstance(other, (Spectrum)):
+            return self._return_with_redshift(self.add(other))
+        else:
+            new_flux = self.flux + other
+            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs, meta=self.meta,
+                                                       uncertainty=self.uncertainty))
 
     def __sub__(self, other):
-        if not isinstance(other, NDCube):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
-
-        return self._return_with_redshift(self.subtract(other))
+        other = self._other_as_correct_class(other, force_quantity=True)
+        if isinstance(other, (Spectrum)):
+            return self._return_with_redshift(self.subtract(other))
+        else:
+            new_flux = self.flux - other
+            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs, meta=self.meta,
+                                                       uncertainty=self.uncertainty))
 
     def __mul__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
-
-        return self._return_with_redshift(self.multiply(other))
+        other = self._other_as_correct_class(other)
+        if isinstance(other, (Spectrum)):
+            return self._return_with_redshift(self.multiply(other))
+        else:
+            new_flux = self.flux * other
+            if self.uncertainty is None:
+                new_uncertainty = None
+            else:
+                new_uncertainty = deepcopy(self.uncertainty)
+                new_uncertainty.array *= other
+            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
+                                                       meta=self.meta,
+                                                       uncertainty=new_uncertainty))
 
     def __div__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
-
-        return self._return_with_redshift(self.divide(other))
+        other = self._other_as_correct_class(other)
+        if isinstance(other, (Spectrum)):
+            return self._return_with_redshift(self.divide(other))
+        else:
+            new_flux = self.flux / other
+            if self.uncertainty is None:
+                new_uncertainty = None
+            else:
+                new_uncertainty = deepcopy(self.uncertainty)
+                new_uncertainty.array /= other
+            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
+                                                       meta=self.meta,
+                                                       uncertainty=self.uncertainty/other))
 
     def __truediv__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
+        if not isinstance(other, Spectrum):
+            other = self._other_as_correct_class(other)
 
         return self._return_with_redshift(self.divide(other))
 
@@ -901,11 +948,15 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             flux_str += f" {self.flux.unit}"
 
         flux_str += f" (shape={self.flux.shape}, mean={np.nanmean(self.flux):.5f}); "
-        spectral_axis_str = (repr(self.spectral_axis).split("[")[0] +
-                             np.array2string(self.spectral_axis, threshold=8) +
-                             f" {self.spectral_axis.unit}>")
-        spectral_axis_str = f"spectral_axis={spectral_axis_str} (length={len(self.spectral_axis)})"
-        inner_str = (flux_str + spectral_axis_str)
+        # Sometimes this errors if an error occurs during initialization
+        if hasattr(self, "_spectral_axis"):
+            spectral_axis_str = (repr(self.spectral_axis).split("[")[0] +
+                                    np.array2string(self.spectral_axis, threshold=8) +
+                                    f" {self.spectral_axis.unit}>")
+            spectral_axis_str = f"spectral_axis={spectral_axis_str} (length={len(self.spectral_axis)})"
+            inner_str = (flux_str + spectral_axis_str)
+        else:
+            inner_str = flux_str
 
         if self.uncertainty is not None:
             inner_str += f"; uncertainty={self.uncertainty.__class__.__name__}"
