@@ -9,6 +9,7 @@ Bug Fixes
 
 - Fixed loaders for IRAF-encoded non-linear Chebychev + Legendre wavelength
   solutions that were imposing integer-valued domain limits. [#1199]
+- Fixed loaders for SDSS APOGEE not correctly identifying the format [#1217]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -393,6 +393,7 @@ def spec_HDUList(n_spectra):
     hdr["FOOBAR"] = "barfoo"
     hdr["MJD5"] = 99999
     hdr["DATE-OBS"] = "1970-01-01"
+    hdr["VERS2D"] = "v6_1_2"
 
     # Init hdulist
     hdulist = fits.HDUList()

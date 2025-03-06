@@ -5,15 +5,14 @@ Loader for APOGEE spectrum files: apVisit_, apStar_, aspcapStar_ files.
 .. _apStar: https://data.sdss.org/datamodel/files/APOGEE_REDUX/APRED_VERS/APSTAR_VERS/TELESCOPE/LOCATION_ID/apStar.html
 .. _aspcapStar: https://data.sdss.org/datamodel/files/APOGEE_REDUX/APRED_VERS/APSTAR_VERS/ASPCAP_VERS/RESULTS_VERS/LOCATION_ID/aspcapStar.html
 """
-from astropy.wcs import WCS
-from astropy.units import Unit, def_unit
-from astropy.nddata import StdDevUncertainty
-
 import numpy as np
+from astropy.nddata import StdDevUncertainty
+from astropy.units import Unit, def_unit
+from astropy.wcs import WCS
 
 from ...spectra import Spectrum1D
-from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
+from ..registers import data_loader
 
 __all__ = ['apVisit_identify', 'apStar_identify', 'aspcapStar_identify',
            'apVisit_loader', 'apStar_loader', 'aspcapStar_loader']
@@ -27,11 +26,14 @@ def apVisit_identify(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         # Test if fits has extension of type BinTable and check for
         # apVisit-specific keys
-        return (hdulist[0].header.get('SURVEY') == 'apogee' and
-                len(hdulist) > 4 and
-                hdulist[1].header.get('BUNIT', 'none').startswith('Flux') and
-                hdulist[2].header.get('BUNIT', 'none').startswith('Flux') and
-                hdulist[4].header.get('BUNIT', 'none').startswith('Wavelen'))
+        return (
+            "apogee" in hdulist[0].header.get("SURVEY", "none")
+            and "APOGEE" in "".join(hdulist[0].header["HISTORY"])
+            and len(hdulist) > 4
+            and hdulist[1].header.get("BUNIT", "none").startswith("Flux")
+            and hdulist[2].header.get("BUNIT", "none").startswith("Flux")
+            and hdulist[4].header.get("BUNIT", "none").startswith("Wavelen")
+        )
 
 
 def apStar_identify(origin, *args, **kwargs):
@@ -42,8 +44,9 @@ def apStar_identify(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         # Test if fits has extension of type BinTable and check for
         # apogee-specific keys + keys for individual apVisits
-        return (hdulist[0].header.get('SURVEY') == 'apogee' and
-                hdulist[0].header.get('SFILE1', 'none').startswith('apVisit'))
+        return "APOGEE" in "".join(hdulist[0].header["HISTORY"]) and hdulist[0].header.get("SFILE1", "none").startswith(
+            ("apVisit", "asVisit")
+        )
 
 
 def aspcapStar_identify(origin, *args, **kwargs):
@@ -54,11 +57,12 @@ def aspcapStar_identify(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         # Test if fits has extension of type BinTable and check for
         # aspcapStar-specific keys
-        return (hdulist[0].header.get('TARG1') is not None and
-                len(hdulist) > 4 and
-                hdulist[1].header.get('NAXIS1', 0) > 8000 and
-                hdulist[2].header.get('NAXIS1', 0) > 8000 and
-                hdulist[-1].header.get('TTYPE45') == 'ASPCAPFLAG')
+        return (
+            len(hdulist) > 4
+            and hdulist[1].header.get("NAXIS1", 0) > 8000
+            and hdulist[2].header.get("NAXIS1", 0) > 8000
+            and "ASPCAPFLAG" in hdulist[-1].header.values()
+        )
 
 
 @data_loader(
