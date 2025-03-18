@@ -94,7 +94,7 @@ installed, which is an optional dependency for ``specutils``.
 
 Call the help function for a specific loader to access further documentation
 on that format and optional parameters accepted by the ``read`` function,
-e.g. as ``Spectrum1D.read.help('tabular-fits')``. Additional optional parameters
+e.g. as ``Spectrum.read.help('tabular-fits')``. Additional optional parameters
 are generally passed through to the backend functions performing the actual
 reading operation, which depend on the loader. For loaders for FITS files for example,
 this will often be :func:`astropy.io.fits.open`.
@@ -114,7 +114,7 @@ by using the :meth:`specutils.Spectrum.write` method.
     >>> spec1d.write("/path/to/output.fits")  # doctest: +SKIP
 
 Note that the above example, calling ``write()`` without specifying
-any format, will default to the ``wcs1d-fits`` loader if the `~specutils.Spectrum1D`
+any format, will default to the ``wcs1d-fits`` loader if the `~specutils.Spectrum`
 has a compatible WCS, and to ``tabular-fits`` otherwise, or if writing
 to another than the primary HDU (``hdu=0``) has been selected.
 For better control of the file type, the ``format`` parameter should be explicitly passed.
@@ -126,14 +126,14 @@ which for the FITS writers is :meth:`astropy.io.fits.HDUList.writeto`.
 Metadata
 --------
 
-The :attr:`specutils.Spectrum1D.meta` attribute provides a dictionary to store
+The :attr:`specutils.Spectrum.meta` attribute provides a dictionary to store
 additional information on the data, like origin, date and other circumstances.
 For spectra read from files containing header-like attributes like a FITS
 :class:`~astropy.io.fits.Header` or :attr:`astropy.table.Table.meta`,
-loaders are conventionally storing this in ``Spectrum1D.meta['header']``.
+loaders are conventionally storing this in ``Spectrum.meta['header']``.
 
 The two provided FITS writers (``tabular-fits`` and ``wcs1d-fits``) save the contents of
-``Spectrum1D.meta['header']`` (which should be an :class:`astropy.io.fits.Header`
+``Spectrum.meta['header']`` (which should be an :class:`astropy.io.fits.Header`
 or any object, like a `dict`, that can instantiate one) as the header of the
 :class:`~astropy.io.fits.hdu.PrimaryHDU`.
 
@@ -406,9 +406,6 @@ spectral axis, or 'spatial', which will collapse along all non-spectral axes.
     >>> spec.mean(axis='spatial')  # doctest: +FLOAT_CMP
     <Spectrum(flux=<Quantity [0.37273938, 0.53843905, 0.61351648, 0.57311623, 0.44339915,
                0.66084728, 0.45881921, 0.38715911, 0.39967185, 0.53257671] Jy> (shape=(10,), mean=0.49803 Jy); spectral_axis=<SpectralAxis
-       (observer to target:
-          radial_velocity=0.0 km / s
-          redshift=0.0)
       [5000. 5001. 5002. ... 5007. 5008. 5009.] Angstrom> (length=10))>
 
 Note that in this case, the result of the collapse operation is a

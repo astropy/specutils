@@ -17,6 +17,13 @@ New Features
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Initializing a ``Spectrum`` with only a spectral axis (not full WCS) will now
+  result in a GWCS matching the dimensionality of the flux array, rather than a
+  1D spectral GWCS in all cases. [#1211]
+
+- Spectrum arithmetic now checks whether the spectral axes of the two operand ``Spectrum``
+  objects are equal, and fails if they are not. [#1211]
+
 1.20.0 (unreleased)
 -------------------
 
