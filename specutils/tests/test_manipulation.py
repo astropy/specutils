@@ -129,7 +129,7 @@ def test_snr_threshold():
     np.random.seed(42)
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
-    wcs = np.array([gwcs_from_array(x) for x in spectral_axis])
+    wcs = np.array([gwcs_from_array(x, [10,]) for x in spectral_axis])
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     mask = np.ones((5, 10)).astype(bool)
     meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]

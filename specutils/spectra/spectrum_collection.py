@@ -53,7 +53,7 @@ class SpectrumCollection(NDIOMixin):
         each spectrum in the collection.
     """
     def __init__(self, flux, spectral_axis=None, wcs=None, uncertainty=None,
-                 mask=None, meta=None):
+                 mask=None, meta=None, spectral_axis_index=None):
         # Check for quantity
         if not isinstance(flux, u.Quantity):
             raise u.UnitsError("Flux must be a `Quantity`.")
@@ -89,6 +89,7 @@ class SpectrumCollection(NDIOMixin):
 
         self._flux = flux
         self._spectral_axis = spectral_axis
+        self._spectral_axis_index = spectral_axis_index
         self._wcs = wcs
         self._uncertainty = uncertainty
         self._mask = mask
@@ -153,6 +154,8 @@ class SpectrumCollection(NDIOMixin):
                             observer=sa[0].observer,
                             target=sa[0].target)
 
+        spectral_axis_index = spectra[0].spectral_axis_index
+
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
         # uncertainties.
@@ -183,7 +186,8 @@ class SpectrumCollection(NDIOMixin):
         meta = [spec.meta for spec in spectra]
 
         return cls(flux=flux, spectral_axis=spectral_axis,
-                   uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta)
+                   uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta,
+                   spectral_axis_index=spectral_axis_index)
 
     @property
     def flux(self):
@@ -194,6 +198,10 @@ class SpectrumCollection(NDIOMixin):
     def spectral_axis(self):
         """The spectral axes as a `~astropy.units.Quantity`."""
         return self._spectral_axis
+
+    @property
+    def spectral_axis_index(self):
+        return self._spectral_axis_index
 
     @property
     def frequency(self):
