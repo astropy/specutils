@@ -852,14 +852,27 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         return other
 
+    def _do_flux_arithmetic(self, other, arith_func):
+        '''
+        Perform an arithmetic operation by casting the flux as a NDDataArray
+        '''
+        operand1 = NDDataArray(self.flux, uncertainty=self.uncertainty, mask=self.mask)
+        if isinstance(other, (Spectrum)):
+            other = NDDataArray(other.flux, uncertainty=other.uncertainty, mask=other.mask)
+
+        func = getattr(operand1, arith_func)
+        return func(other)
+
     def __add__(self, other):
         other = self._other_as_correct_class(other, force_quantity=True)
-        if isinstance(other, (Spectrum)):
-            return self._return_with_redshift(self.add(other))
-        else:
-            new_flux = self.flux + other
-            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs, meta=self.meta,
-                                                       uncertainty=self.uncertainty))
+        new_flux = self._do_flux_arithmetic(other, "add")
+
+        return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
+                                                   wcs=self.wcs,
+                                                   meta=self.meta,
+                                                   uncertainty=new_flux.uncertainty,
+                                                   mask = new_flux.mask,
+                                                   spectral_axis_index=self.spectral_axis_index))
 
     def __sub__(self, other):
         try:
@@ -870,15 +883,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 return other.__rsub__(self)
             else:
                 raise
-        if isinstance(other, (Spectrum)):
-            operand1 = NDDataArray(self.flux, uncertainty=self.uncertainty, mask=self.mask)
-            operand2 = NDDataArray(other.flux, uncertainty=other.uncertainty, mask=other.mask)
-            new_flux = operand1.subtract(operand2)
 
-        else:
-            new_flux = NDDataArray(self.flux,
-                                   uncertainty=self.uncertainty,
-                                   mask=self.mask).subtract(other)
+        new_flux = self._do_flux_arithmetic(other, "subtract")
 
         return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
                                                    wcs=self.wcs,
@@ -899,8 +905,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 new_uncertainty = deepcopy(self.uncertainty)
                 new_uncertainty.array *= other
             return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
-                                                       meta=self.meta,
-                                                       uncertainty=new_uncertainty))
+                                                       meta=self.meta, mask=self.mask,
+                                                       uncertainty=new_uncertainty,
+                                                       spectral_axis_index=self.spectral_axis_index))  # noqa
 
     def __div__(self, other):
         other = self._other_as_correct_class(other)
@@ -914,8 +921,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 new_uncertainty = deepcopy(self.uncertainty)
                 new_uncertainty.array /= other
             return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
-                                                       meta=self.meta,
-                                                       uncertainty=self.uncertainty/other))
+                                                       meta=self.meta, mask=self.mask,
+                                                       uncertainty=new_uncertainty,
+                                                       spectral_axis_index=self.spectral_axis_index))  # noqa
 
     def __truediv__(self, other):
         if not isinstance(other, Spectrum):
