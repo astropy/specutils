@@ -270,10 +270,10 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
                                         axes_type=axes_type
                                         )
 
-    if array.unit == "":
+    if array.unit in ('', 'pix', 'pixel'):
         # Spectrum was initialized without a wcs or spectral axis
         spectral_frame = cf.CoordinateFrame(naxes=1,
-                                           unit=['',],
+                                           unit=[array.unit,],
                                            axes_type=['Spectral',],
                                            axes_order=(spectral_axis_index,))
     else:

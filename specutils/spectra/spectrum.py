@@ -6,7 +6,7 @@ from astropy import units as u
 from astropy.coordinates import SpectralCoord
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
-from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
+from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataArray
 from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
@@ -830,7 +830,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         self.shift_spectrum_to(radial_velocity=val)
 
     def _return_with_redshift(self, result):
-        result.shift_spectrum_to(redshift=self.redshift)
+        # We need actual spectral units to shift
+        if result.spectral_axis.unit not in ('', 'pix', 'pixels'):
+            result.shift_spectrum_to(redshift=self.redshift)
         return result
 
     def _other_as_correct_class(self, other, force_quantity=False):
@@ -860,13 +862,30 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                                        uncertainty=self.uncertainty))
 
     def __sub__(self, other):
-        other = self._other_as_correct_class(other, force_quantity=True)
+        try:
+            other = self._other_as_correct_class(other, force_quantity=True)
+        except TypeError:
+            # Might need special handling by other operand before ours
+            if hasattr(other, "__rsub__"):
+                return other.__rsub__(self)
+            else:
+                raise
         if isinstance(other, (Spectrum)):
-            return self._return_with_redshift(self.subtract(other))
+            operand1 = NDDataArray(self.flux, uncertainty=self.uncertainty, mask=self.mask)
+            operand2 = NDDataArray(other.flux, uncertainty=other.uncertainty, mask=other.mask)
+            new_flux = operand1.subtract(operand2)
+
         else:
-            new_flux = self.flux - other
-            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs, meta=self.meta,
-                                                       uncertainty=self.uncertainty))
+            new_flux = NDDataArray(self.flux,
+                                   uncertainty=self.uncertainty,
+                                   mask=self.mask).subtract(other)
+
+        return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
+                                                   wcs=self.wcs,
+                                                   meta=self.meta,
+                                                   uncertainty=new_flux.uncertainty,
+                                                   mask = new_flux.mask,
+                                                   spectral_axis_index=self.spectral_axis_index))
 
     def __mul__(self, other):
         other = self._other_as_correct_class(other)
