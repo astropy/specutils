@@ -835,7 +835,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             result.shift_spectrum_to(redshift=self.redshift)
         return result
 
-    def _other_as_correct_class(self, other, force_quantity=False):
+    def _check_input(self, other, force_quantity=False):
         # NDArithmetic mixin will try to turn other into a Spectrum, which will fail
         # sometimes because of not specifiying the spectral axis index
         if isinstance(other, Spectrum):
@@ -845,10 +845,6 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             if not isinstance(other, u.Quantity) and force_quantity:
                 other = other * self.unit
-
-        if isinstance(other, u.Quantity) and other.shape == self.shape:
-            return Spectrum(flux=other, spectral_axis=self.spectral_axis,
-                            spectral_axis_index=self.spectral_axis_index)
 
         return other
 
@@ -861,12 +857,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             other = NDDataArray(other.flux, uncertainty=other.uncertainty, mask=other.mask)
 
         func = getattr(operand1, arith_func)
-        return func(other)
-
-    def __add__(self, other):
-        other = self._other_as_correct_class(other, force_quantity=True)
-        new_flux = self._do_flux_arithmetic(other, "add")
-
+        new_flux = func(other)
         return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
                                                    wcs=self.wcs,
                                                    meta=self.meta,
@@ -874,9 +865,13 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                                    mask = new_flux.mask,
                                                    spectral_axis_index=self.spectral_axis_index))
 
+    def __add__(self, other):
+        other = self._check_input(other, force_quantity=True)
+        return self._do_flux_arithmetic(other, "add")
+
     def __sub__(self, other):
         try:
-            other = self._other_as_correct_class(other, force_quantity=True)
+            other = self._check_input(other, force_quantity=True)
         except TypeError:
             # Might need special handling by other operand before ours
             if hasattr(other, "__rsub__"):
@@ -884,50 +879,18 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             else:
                 raise
 
-        new_flux = self._do_flux_arithmetic(other, "subtract")
-
-        return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
-                                                   wcs=self.wcs,
-                                                   meta=self.meta,
-                                                   uncertainty=new_flux.uncertainty,
-                                                   mask = new_flux.mask,
-                                                   spectral_axis_index=self.spectral_axis_index))
+        return self._do_flux_arithmetic(other, "subtract")
 
     def __mul__(self, other):
-        other = self._other_as_correct_class(other)
-        if isinstance(other, (Spectrum)):
-            return self._return_with_redshift(self.multiply(other))
-        else:
-            new_flux = self.flux * other
-            if self.uncertainty is None:
-                new_uncertainty = None
-            else:
-                new_uncertainty = deepcopy(self.uncertainty)
-                new_uncertainty.array *= other
-            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
-                                                       meta=self.meta, mask=self.mask,
-                                                       uncertainty=new_uncertainty,
-                                                       spectral_axis_index=self.spectral_axis_index))  # noqa
+        other = self._check_input(other)
+        return self._do_flux_arithmetic(other, "multiply")
 
     def __div__(self, other):
-        other = self._other_as_correct_class(other)
-        if isinstance(other, (Spectrum)):
-            return self._return_with_redshift(self.divide(other))
-        else:
-            new_flux = self.flux / other
-            if self.uncertainty is None:
-                new_uncertainty = None
-            else:
-                new_uncertainty = deepcopy(self.uncertainty)
-                new_uncertainty.array /= other
-            return self._return_with_redshift(Spectrum(new_flux, wcs=self.wcs,
-                                                       meta=self.meta, mask=self.mask,
-                                                       uncertainty=new_uncertainty,
-                                                       spectral_axis_index=self.spectral_axis_index))  # noqa
+        other = self._check_input(other)
+        return self._do_flux_arithmetic(other, "divide")
 
     def __truediv__(self, other):
-        if not isinstance(other, Spectrum):
-            other = self._other_as_correct_class(other)
+        other = self._check_input(other)
 
         return self._return_with_redshift(self.divide(other))
 
