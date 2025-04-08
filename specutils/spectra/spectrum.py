@@ -83,7 +83,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     """
     def __init__(self, flux=None, spectral_axis=None, spectral_axis_index=None,
                  wcs=None, velocity_convention=None, rest_value=None,
-                 redshift=None, radial_velocity=None, bin_specification=None,
+                 redshift=None, radial_velocity=None, bin_specification="centers",
                  move_spectral_axis=None, **kwargs):
 
         # If the flux (data) argument is already a Spectrum (as it would
@@ -570,6 +570,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             spectral_axis_index=deepcopy(self.spectral_axis_index))
 
         alt_kwargs.update(kwargs)
+        if 'spectral_axis' in kwargs and 'wcs' not in kwargs:
+            # We assume in this case that the user wants to override with a new spectral axis
+            alt_kwargs['wcs'] = None
 
         return self.__class__(**alt_kwargs)
 
