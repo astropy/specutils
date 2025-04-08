@@ -63,7 +63,8 @@ def convolution_smooth(spectrum, kernel):
         kernel_ndim = kernel.array.ndim
 
     if flux.ndim > 1 and kernel_ndim == 1:
-        expand_axes = tuple(np.arange(flux.ndim-1))
+        expand_axes = list(np.arange(flux.ndim))
+        expand_axes.remove(spectrum.spectral_axis_index)
         kernel = np.expand_dims(kernel, expand_axes)
 
     # Smooth based on the input kernel
