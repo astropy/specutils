@@ -113,10 +113,7 @@ def convolution_smooth(spectrum, kernel):
                 AstropyUserWarning)
 
     # Return a new object with the smoothed flux.
-    return spectrum._copy(flux=u.Quantity(smoothed_flux, spectrum.unit),
-                          spectral_axis=u.Quantity(spectrum.spectral_axis,
-                                                   spectrum.spectral_axis.unit),
-                          uncertainty=uncertainty)
+    return spectrum._copy(flux=u.Quantity(smoothed_flux, spectrum.unit), uncertainty=uncertainty)
 
 
 def box_smooth(spectrum, width):
@@ -278,6 +275,4 @@ def median_smooth(spectrum, width):
     smoothed_flux = medfilt(flux, width)
 
     # Return a new object with the smoothed flux.
-    return spectrum._copy(flux=u.Quantity(smoothed_flux, spectrum.unit),
-                          spectral_axis=u.Quantity(spectrum.spectral_axis,
-                                                   spectrum.spectral_axis.unit))
+    return spectrum._copy(flux=u.Quantity(smoothed_flux, spectrum.unit))

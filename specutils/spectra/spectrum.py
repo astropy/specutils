@@ -83,7 +83,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     """
     def __init__(self, flux=None, spectral_axis=None, spectral_axis_index=None,
                  wcs=None, velocity_convention=None, rest_value=None,
-                 redshift=None, radial_velocity=None, bin_specification="centers",
+                 redshift=None, radial_velocity=None, bin_specification=None,
                  move_spectral_axis=None, **kwargs):
 
         # If the flux (data) argument is already a Spectrum (as it would
