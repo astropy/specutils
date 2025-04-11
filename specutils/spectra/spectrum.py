@@ -245,8 +245,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                         if phys_axes[i] is None:
                             continue
                         if (phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect" or
-                            phys_axes[i][7:12] == "Spect"):
-                                temp_axes.append(i)
+                                phys_axes[i][7:12] == "Spect"):
+                            temp_axes.append(i)
                     if len(temp_axes) != 1:
                         raise ValueError("Input WCS must have exactly one axis with "
                                         "spectral units, found {}".format(len(temp_axes)))
