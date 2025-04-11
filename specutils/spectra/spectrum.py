@@ -572,6 +572,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         alt_kwargs.update(kwargs)
         if 'spectral_axis' in kwargs and 'wcs' not in kwargs:
             # We assume in this case that the user wants to override with a new spectral axis
+            alt_kwargs['meta']['original_wcs'] = alt_kwargs['wcs']
             alt_kwargs['wcs'] = None
 
         return self.__class__(**alt_kwargs)
