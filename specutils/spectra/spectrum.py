@@ -244,7 +244,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     for i in range(len(phys_axes)):
                         if phys_axes[i] is None:
                             continue
-                        if phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect":
+                        if (phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect" or
+                                phys_axes[i][7:12] == "Spect"):
                             temp_axes.append(i)
                     if len(temp_axes) != 1:
                         raise ValueError("Input WCS must have exactly one axis with "
@@ -347,7 +348,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                     raise ValueError("Must specify spectral_axis_index if no WCS or spectral"
                                      " axis is input.")
             size = flux.shape[self.spectral_axis_index] if not flux.isscalar else 1
-            wcs = gwcs_from_array(np.arange(size) * u.Unit(""),
+            wcs = gwcs_from_array(np.arange(size) * u.Unit("pixel"),
                                   flux.shape,
                                   spectral_axis_index=self.spectral_axis_index
                                   )
@@ -569,6 +570,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             spectral_axis_index=deepcopy(self.spectral_axis_index))
 
         alt_kwargs.update(kwargs)
+        if 'spectral_axis' in kwargs and 'wcs' not in kwargs:
+            # We assume in this case that the user wants to override with a new spectral axis
+            alt_kwargs['meta']['original_wcs'] = alt_kwargs['wcs']
+            alt_kwargs['wcs'] = None
 
         return self.__class__(**alt_kwargs)
 
@@ -891,8 +896,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def __truediv__(self, other):
         other = self._check_input(other)
-
-        return self._return_with_redshift(self.divide(other))
+        return self._do_flux_arithmetic(other, "divide")
 
     __radd__ = __add__
 
