@@ -29,14 +29,14 @@ Changes in version 2
 
 The ``Spectrum1D`` class has been renamed to `~specutils.Spectrum` to reduce confusion
 about multi-dimensional flux arrays being supported. The current class name will be
-deprecated in version 2.1, and importing the old name will return a deprecation
+deprecated in version 2.1; importing the old name will work but raise a deprecation
 warning until then.
 
-Single-dimensional flux use cases should be mostly unchanged in 2.0, with a few
-exceptions. The main one being that spectrum arithmetic now checks that the spectral
-axis of both operands are equal, rather than simply checking that they are the same
-length. Thus, you will need to resample onto a common spectral axis if doing arithmetic
-on spectra with differing spectral axes.
+Single-dimensional flux use cases should be mostly unchanged in 2.0, with the exception
+being that spectrum arithmetic now checks that the spectral axis of both operands are
+equal, rather than simply checking that they are the same length. Thus, you will need
+to resample onto a common spectral axis if doing arithmetic on spectra with differing
+spectral axes.
 
 Specutils version 2 implemented a major change in that `~specutils.Spectrum`
 no longer forces the spectral axis to be last for multi-dimensional data. This
