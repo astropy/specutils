@@ -223,6 +223,7 @@ def template_match(observed_spectrum, spectral_templates, redshift=None,
         else:
             normalized_spectral_template, chi2 = _chi_square_for_templates(
                 observed_spectrum, spectrum, resample_method, extrapolation_treatment)
+            chi2_list.append(chi2)
 
         if chi2_min is None or chi2 < chi2_min:
             chi2_min = chi2
