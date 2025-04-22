@@ -4,7 +4,6 @@ from copy import deepcopy
 import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import lazyproperty
-from astropy.utils.decorators import deprecated
 from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
 
 from .spectral_axis import SpectralAxis
@@ -14,7 +13,7 @@ from ..utils.wcs_utils import gwcs_from_array
 
 from ndcube import NDCube
 
-__all__ = ['Spectrum1D']
+__all__ = ['Spectrum1D', 'Spectrum']
 
 
 class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
@@ -670,16 +669,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             raise ValueError("One of redshift or radial_velocity must be set.")
 
-    @redshift.setter
-    @deprecated('1.8.0', alternative='set_redshift_to or shift_spectrum_to')
-    def redshift(self, val):
-        self.shift_spectrum_to(redshift=val)
-
-    @radial_velocity.setter
-    @deprecated('1.8.0', alternative='set_radial_velocity_to or shift_spectrum_to')
-    def radial_velocity(self, val):
-        self.shift_spectrum_to(radial_velocity=val)
-
     def _return_with_redshift(self, result):
         result.shift_spectrum_to(redshift=self.redshift)
         return result
@@ -776,3 +765,16 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         result = "<Spectrum1D({})>".format(inner_str)
 
         return result
+
+
+class Spectrum(Spectrum1D):
+    '''
+    Adding this to 1.x so that people can update the name of the class in their
+    code without needing to wait for the 2.0 release or update their version pin.
+    '''
+    def __init__(self, *args, **kwargs):
+        if 'move_spectral_axis' in kwargs:
+            # This keyword doesn't do anything in 1.x, in 2.0 setting it to 'last'
+            # will reproduce moving the spectral axis to last as in 1.x.
+            kwargs.pop('move_spectral_axis')
+        super().__init__(*args, **kwargs)
