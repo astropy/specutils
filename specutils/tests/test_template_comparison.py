@@ -154,6 +154,7 @@ def test_template_match_list():
     # make sure that multiple template spectra will create a list of
     # chi2 values, one per template.
     assert len(tm_result) == 5
+    assert len(tm_result[4]) == 2
 
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
