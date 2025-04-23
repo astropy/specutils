@@ -4,7 +4,6 @@ import pytest
 from astropy import time
 from astropy.coordinates import (SkyCoord, EarthLocation, ICRS, Galactic,
                                  SpectralCoord, FK5)
-from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from ..spectra.spectral_axis import SpectralAxis
 from ..spectra.spectrum1d import Spectrum1D
