@@ -131,11 +131,7 @@ def test_change_radial_velocity():
 
     assert spec.radial_velocity == 0 * u.km/u.s
 
-    with pytest.warns(
-        AstropyDeprecationWarning,
-        match="Use set_radial_velocity_to or shift_spectrum_to instead"
-    ):
-        spec.radial_velocity = 1 * u.km / u.s
+    spec.set_radial_velocity_to(1 * u.km / u.s)
 
     assert spec.radial_velocity == 1 * u.km/u.s
 
@@ -144,11 +140,7 @@ def test_change_radial_velocity():
 
     assert spec.radial_velocity == 10 * u.km / u.s
 
-    with pytest.warns(
-        AstropyDeprecationWarning,
-        match="Use set_radial_velocity_to or shift_spectrum_to instead"
-    ):
-        spec.radial_velocity = 5 * u.km / u.s
+    spec.set_radial_velocity_to(5 * u.km / u.s)
 
     assert spec.radial_velocity == 5 * u.km / u.s
 
@@ -174,11 +166,7 @@ def test_change_redshift():
     assert_quantity_allclose(spec.redshift, u.Quantity(0))
     assert isinstance(spec.spectral_axis, SpectralAxis)
 
-    with pytest.warns(
-        AstropyDeprecationWarning,
-        match="Use set_redshift_to or shift_spectrum_to instead"
-    ):
-        spec.redshift = 0.1
+    spec.set_redshift_to(0.1)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.1))
@@ -190,11 +178,7 @@ def test_change_redshift():
     assert_quantity_allclose(spec.redshift, u.Quantity(0.2))
     assert isinstance(spec.spectral_axis, SpectralAxis)
 
-    with pytest.warns(
-        AstropyDeprecationWarning,
-        match="Use set_redshift_to or shift_spectrum_to instead"
-    ):
-        spec.redshift = 0.4
+    spec.set_redshift_to(0.4)
 
     assert spec.redshift.unit.physical_type == 'dimensionless'
     assert_quantity_allclose(spec.redshift, u.Quantity(0.4))
