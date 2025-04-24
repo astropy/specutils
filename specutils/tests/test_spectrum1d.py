@@ -138,6 +138,7 @@ def test_create_new_classname():
     flux = np.ones((5, len(freqs))) * u.Jy
     # The move_spectral_axis keyword is simply ignored for now.
     spec = Spectrum(spectral_axis=freqs, flux=flux, move_spectral_axis="last")
+    assert_allclose(spec.flux, flux)
 
 
 def test_spectral_axis_conversions():
