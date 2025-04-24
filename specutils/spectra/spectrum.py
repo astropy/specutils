@@ -86,6 +86,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                  redshift=None, radial_velocity=None, bin_specification=None,
                  move_spectral_axis=None, **kwargs):
 
+        if spectral_axis_index == -1:
+            spectral_axis_index = flux.ndim - 1
+
         # If the flux (data) argument is already a Spectrum (as it would
         # be for internal arithmetic operations), avoid setup entirely.
         if isinstance(flux, Spectrum):

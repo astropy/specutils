@@ -5,7 +5,7 @@ New Features
 ^^^^^^^^^^^^
 
 - Spectral axis can now be any axis, rather than being forced to be last. See docs
-  for more details. [#1033]
+  for more details. [#1033, #1226]
 
 - Spectrum now properly handles GWCS input for wcs attribute. [#1074]
 
@@ -23,6 +23,8 @@ Other Changes and Additions
 
 - Spectrum arithmetic now checks whether the spectral axes of the two operand ``Spectrum``
   objects are equal, and fails if they are not. [#1211]
+
+- Added documentation about transitioning from 1.x to 2.x. [#1226]
 
 1.20.2 (2025-05-27)
 -------------------
