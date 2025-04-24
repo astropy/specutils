@@ -9,12 +9,12 @@ import numpy as np
 from astropy.units import Unit
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..parsing_utils import read_fileobj_or_hdulist
 
 
 # Define an optional identifier. If made specific enough, this circumvents the
-# need to add `format="my-format"` in the `Spectrum1D.read` call.
+# need to add `format="my-format"` in the `Spectrum.read` call.
 def identify_generic_fits(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (hdulist[0].header['NAXIS'] == 3)
@@ -73,5 +73,5 @@ def generic_fits(file_obj, **kwargs):
 
         # should wcs be transformed to a 1D case ?
 
-    return Spectrum1D(flux=data, wcs=wcs, meta=meta, spectral_axis=freqs)
-    # return Spectrum1D(flux=data, wcs=wcs, meta=meta)     # this does not work yet
+    return Spectrum(flux=data, wcs=wcs, meta=meta, spectral_axis=freqs)
+    # return Spectrum(flux=data, wcs=wcs, meta=meta)     # this does not work yet

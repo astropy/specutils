@@ -2,7 +2,7 @@ import os
 
 from astropy.table import Table
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping)
@@ -14,7 +14,7 @@ def identify_ecsv(origin, *args, **kwargs):
             os.path.splitext(args[0].lower())[1] == '.ecsv')
 
 
-@data_loader("ECSV", identifier=identify_ecsv, dtype=Spectrum1D, priority=-10)
+@data_loader("ECSV", identifier=identify_ecsv, dtype=Spectrum, priority=-10)
 def generic_ecsv(file_name, column_mapping=None, **kwargs):
     """
     Read a spectrum from an ECSV file, using generic_spectrum_from_table_loader()
@@ -29,17 +29,17 @@ def generic_ecsv(file_name, column_mapping=None, **kwargs):
         The path to the ECSV file.
     column_mapping : dict
         A dictionary describing the relation between the ECSV file columns
-        and the arguments of the `Spectrum1D` class, along with unit
+        and the arguments of the `Spectrum` class, along with unit
         information. The dictionary keys should be the ECSV file column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum1D` keyword argument, and the second element is the
+        associated `Spectrum` keyword argument, and the second element is the
         unit for the ECSV file column::
 
             column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
     table = Table.read(file_name, format='ascii.ecsv')

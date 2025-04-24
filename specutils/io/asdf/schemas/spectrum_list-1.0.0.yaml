@@ -10,5 +10,5 @@ description:
 
 type: array
 items:
-  $ref: "spectrum1d-1.0.0"
+  $ref: "spectrum-1.0.0"
 ...

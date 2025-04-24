@@ -3,7 +3,7 @@ from astropy.table import Table
 from astropy.units import Quantity, Unit
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -62,7 +62,7 @@ def identify_6dfgs_combined_fits(origin, *args, **kwargs):
 
 
 @data_loader(
-    "6dFGS-tabular", identifier=identify_6dfgs_tabular_fits, dtype=Spectrum1D,
+    "6dFGS-tabular", identifier=identify_6dfgs_tabular_fits, dtype=Spectrum,
     extensions=["fit", "fits"], priority=10,
 )
 def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
@@ -86,7 +86,7 @@ def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The 6dF spectrum that is represented by the data in this table.
     """
 
@@ -101,11 +101,11 @@ def sixdfgs_tabular_fits_loader(file_obj, **kwargs):
         flux._unit = Unit("count/s")
     meta = {"header": header}
 
-    return Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+    return Spectrum(flux=flux, spectral_axis=wavelength, meta=meta)
 
 
 @data_loader(
-    "6dFGS-split", identifier=identify_6dfgs_split_fits, dtype=Spectrum1D,
+    "6dFGS-split", identifier=identify_6dfgs_split_fits, dtype=Spectrum,
     extensions=["fit", "fits"], priority=10,
 )
 def sixdfgs_split_fits_loader(file_obj, **kwargs):
@@ -128,7 +128,7 @@ def sixdfgs_split_fits_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The 6dF spectrum that is represented by the data in this file.
     """
 
@@ -190,7 +190,7 @@ def _load_single_6dfgs_hdu(hdu):
 
     sky_flux = hdu.data[2] * Unit("count") / w.wcs.cunit[0]
     sky_meta = {"header": header}
-    sky_spec = Spectrum1D(flux=sky_flux, wcs=w, meta=sky_meta)
+    sky_spec = Spectrum(flux=sky_flux, wcs=w, meta=sky_meta)
     meta["sky"] = sky_spec
 
-    return Spectrum1D(flux=flux, wcs=w, meta=meta, uncertainty=uncertainty)
+    return Spectrum(flux=flux, wcs=w, meta=meta, uncertainty=uncertainty)

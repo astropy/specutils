@@ -25,20 +25,20 @@ with their corresponding ``specutils`` representations:
    tabulated as an array, or encoded in a WCS). This is what typically is in
    mind when one speaks of "a single spectrum", and therefore the analysis tools
    are general couched as applying to this case. In ``specutils`` this is
-   represented by the `~specutils.Spectrum1D` object with a 1-dimensional
+   represented by the `~specutils.Spectrum` object with a 1-dimensional
    ``flux``.
 2. A set of fluxes that can be represented in an array-like form of shape
    ``n x m (x ...)``,  with a spectral axis strictly of length ``n`` (and a
    matched WCS). In ``specutils`` this is represented by the
-   `~specutils.Spectrum1D` object where ``len(flux.shape) > 1`` . In this sense
+   `~specutils.Spectrum` object where ``len(flux.shape) > 1`` . In this sense
    the "1D" refers to the spectral axis, *not* the flux. Note that 
-   `~specutils.Spectrum1D` subclasses `NDCube <https://github.com/sunpy/ndcube>`_,
+   `~specutils.Spectrum` subclasses `NDCube <https://github.com/sunpy/ndcube>`_,
    which provideds utilities useful for these sorts of multidimensional fluxes.
 3. A set of fluxes  of shape ``n x m (x ...)``, and a set of spectral axes that
    are the same shape. This is distinguished from the above cases because there
    are as many spectral axes as there are spectra.  In this sense it is a
    collection of spectra, so can be thought of as a collection of
-   `~specutils.Spectrum1D` objects.  But because it is often more performant to
+   `~specutils.Spectrum` objects.  But because it is often more performant to
    store the collection together as just one set of flux and spectral axis
    arrays, this case is represented by a separate object in ``specutils``:
    `~specutils.SpectrumCollection`.
@@ -48,14 +48,14 @@ with their corresponding ``specutils`` representations:
    performance benefit to be gained from using arrays (because the flux array is
    not rectangular), this case does not have a specific representation in
    ``specutils``.  Instead, this case should be dealt with by making lists (or
-   numpy object-arrays) of `~specutils.Spectrum1D` objects, and iterating over
+   numpy object-arrays) of `~specutils.Spectrum` objects, and iterating over
    them.
 
    Specutils does provide a `SpectrumList` class which is a simple subclass of
    `list` that is integrated with the Astropy IO registry. It enables data
    loaders to read and return multiple heterogenous spectra (see
    :ref:`multiple_spectra`). Users should not need to use `SpectrumList`
-   directly since a `list` of `Spectrum1D` objects is sufficient for all other
+   directly since a `list` of `Spectrum` objects is sufficient for all other
    purposes.
 
 In all of these cases, the objects have additional attributes (e.g.
@@ -64,7 +64,7 @@ under the assumption that the additional attributes have matched shape to either
 flux or spectral axis (or some combination of the two).
 
 As detailed above, these cases are represented in specutils via two classes:
-`~specutils.Spectrum1D` (Cases 1 and 2, and indirecly 4) and
+`~specutils.Spectrum` (Cases 1 and 2, and indirecly 4) and
 `~specutils.SpectrumCollection` (Case 3). A diagram of these data structures is
 proved below.
 

@@ -23,7 +23,7 @@ solution.
 
     >>> flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     >>> spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
-    >>> wcs = np.array([gwcs_from_array(x) for x in spectral_axis])
+    >>> wcs = np.array([gwcs_from_array(x, x.shape) for x in spectral_axis])
     >>> uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     >>> mask = np.ones((5, 10)).astype(bool)
     >>> meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]
@@ -45,20 +45,20 @@ Collections from 1D spectra
 ---------------------------
 
 It is also possible to create a :class:`~specutils.SpectrumCollection` from
-a list of :class:`~specutils.Spectrum1D`:
+a list of :class:`~specutils.Spectrum`:
 
 .. code:: python
 
     >>> import warnings
     >>> import numpy as np
     >>> from astropy import units as u
-    >>> from specutils import Spectrum1D, SpectrumCollection
-    >>> spec = Spectrum1D(spectral_axis=np.linspace(0, 50, 50) * u.AA,
+    >>> from specutils import Spectrum, SpectrumCollection
+    >>> spec = Spectrum(spectral_axis=np.linspace(0, 50, 50) * u.AA,
     ...                   flux=np.random.randn(50) * u.Jy,
     ...                   uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
     >>> with warnings.catch_warnings():  # Ignore warnings
     ...     warnings.simplefilter('ignore')
-    ...     spec1 = Spectrum1D(spectral_axis=np.linspace(20, 60, 50) * u.AA,
+    ...     spec1 = Spectrum(spectral_axis=np.linspace(20, 60, 50) * u.AA,
     ...                        flux=np.random.randn(50) * u.Jy,
     ...                        uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
     ...     spec_coll = SpectrumCollection.from_spectra([spec, spec1])
@@ -73,9 +73,9 @@ a list of :class:`~specutils.Spectrum1D`:
     Unit("Angstrom")
 
 :class:`~specutils.SpectrumCollection` objects can be treated just like
-:class:`~specutils.Spectrum1D` objects; calling a particular attribute on the
+:class:`~specutils.Spectrum` objects; calling a particular attribute on the
 object will return an array whose type depends on the type of the attribute in
-the :class:`~specutils.Spectrum1D` object.
+the :class:`~specutils.Spectrum` object.
 
 .. code:: python
 
@@ -106,6 +106,6 @@ Reference/API
     :no-inheritance-diagram:
 
     :skip: QTable
-    :skip: Spectrum1D
+    :skip: Spectrum
     :skip: SpectralRegion
     :skip: SpectralAxis

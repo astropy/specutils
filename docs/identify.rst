@@ -1,14 +1,14 @@
 ==============================
-Identifying Spectrum1D Formats
+Identifying Spectrum Formats
 ==============================
 
 ``specutils`` provides a convenience function,
 `~specutils.io.registers.identify_spectrum_format`, which attempts to guess the
-`~specutils.Spectrum1D` file format from the list of registered formats, and
+`~specutils.Spectrum` file format from the list of registered formats, and
 essentially acts as a wrapper on `~astropy.io.registry.identify_format`.
 
 This function is useful for identifying a spectrum file format without reading the
-whole file with the  `~specutils.Spectrum1D.read` method.  It uses the
+whole file with the  `~specutils.Spectrum.read` method.  It uses the
 same identification method as ``read`` however, so it provides a convenience
 of access outside of calling ``read`` without any change in underlying functionality.
 It returns the best guess as to a valid format from the list of ``Formats``

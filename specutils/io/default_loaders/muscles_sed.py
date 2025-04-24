@@ -3,7 +3,7 @@ from astropy.nddata import StdDevUncertainty
 from astropy.table import Table
 from astropy.units import Quantity
 
-from ...spectra import Spectrum1D
+from ...spectra import Spectrum
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -23,7 +23,7 @@ def identify_muscles_sed(origin, *args, **kwargs):
 
 
 @data_loader(
-    label="MUSCLES SED", identifier=identify_muscles_sed, dtype=Spectrum1D,
+    label="MUSCLES SED", identifier=identify_muscles_sed, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def muscles_sed(file_obj, **kwargs):
@@ -38,7 +38,7 @@ def muscles_sed(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
     # name is not used; what was it for?
@@ -54,5 +54,5 @@ def muscles_sed(file_obj, **kwargs):
     data = Quantity(tab["FLUX"])
     wavelength = Quantity(tab["WAVELENGTH"])
 
-    return Spectrum1D(flux=data, spectral_axis=wavelength,
+    return Spectrum(flux=data, spectral_axis=wavelength,
                       uncertainty=uncertainty, meta=meta)
