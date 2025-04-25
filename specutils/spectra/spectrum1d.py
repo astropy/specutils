@@ -776,5 +776,12 @@ class Spectrum(Spectrum1D):
         if 'move_spectral_axis' in kwargs:
             # This keyword doesn't do anything in 1.x, in 2.0 setting it to 'last'
             # will reproduce moving the spectral axis to last as in 1.x.
-            kwargs.pop('move_spectral_axis')
+            if 'flux' in kwargs:
+                flux = kwargs['flux']
+            else:
+                flux = args[0]
+            move_spectral_axis = kwargs.pop('move_spectral_axis', None)
+            if move_spectral_axis not in ['last', -1, flux.ndim -1, None]:
+                warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
+            kwargs.pop('spectral_axis_index', None)
         super().__init__(*args, **kwargs)
