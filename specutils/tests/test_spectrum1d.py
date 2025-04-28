@@ -9,7 +9,7 @@ from astropy.wcs import WCS
 from numpy.testing import assert_allclose
 
 from .conftest import remote_access
-from ..spectra import Spectrum1D
+from ..spectra import Spectrum1D, Spectrum
 
 
 def test_empty_spectrum():
@@ -126,6 +126,22 @@ def test_create_from_cube():
     assert_allclose(
         spec.spectral_axis.value,
         np.exp(np.array([1, 2]) * w.wcs.cdelt[-1] / w.wcs.crval[-1]) * w.wcs.crval[-1])
+
+
+def test_create_new_classname():
+    """
+    This is a test for the Spectrum subclass introduced in 1.20 to ease transition
+    to the new class name in 2.0.
+    """
+
+    freqs = np.arange(50) * u.GHz
+    flux = np.ones((5, len(freqs))) * u.Jy
+    # The move_spectral_axis and spectral_axis_index keywords sre simply ignored for now.
+    spec = Spectrum(spectral_axis=freqs, flux=flux, move_spectral_axis="last",
+                    spectral_axis_index=-1)
+    assert_allclose(spec.flux, flux)
+    with pytest.warns(match="ignored in specutils 1.x"):
+        spec = Spectrum(spectral_axis=freqs, flux=flux, move_spectral_axis="first")
 
 
 def test_spectral_axis_conversions():
