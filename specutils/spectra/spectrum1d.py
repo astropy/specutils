@@ -783,5 +783,5 @@ class Spectrum(Spectrum1D):
             move_spectral_axis = kwargs.pop('move_spectral_axis', None)
             if move_spectral_axis not in ['last', -1, flux.ndim -1, None]:
                 warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
-            kwargs.pop('spectral_axis_index', None)
+        kwargs.pop('spectral_axis_index', None)
         super().__init__(*args, **kwargs)
