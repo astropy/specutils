@@ -16,7 +16,7 @@ Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Added ``Spectrum`` class wrapper around ``Spectrum1D`` to ease transition to new
-  class name in 2.0. [#1229]
+  class name in 2.0. [#1229, #1230]
 
 - Removed redshift and radial velocity setters in ``Spectrum1D`` that have been deprecated
   since 1.8. [#1229]
