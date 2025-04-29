@@ -28,17 +28,21 @@ guiding document for spectroscopic development in the Astropy Project.
     development stage that some interfaces may change if user feedback and
     experience warrants it.
 
-Changes coming in version 2
-===========================
+Changes coming in version 2.0
+=============================
 
-The `~specutils.Spectrum1D` class will be renamed to ``Spectrum`` to reduce confusion
-about multi-dimensional flux arrays being supported. The current class name will be
-deprecated in version 2.1; importing the old name will work but raise a deprecation
-warning until then. Version 1.20 implemented a ``Spectrum`` class as a simple wrapper
-around `~specutils.Spectrum1D` so that users may update their code to the new
-class name now and avoid deprecation warnings when 2.0 releases. Note that the new
-keyword arguments ``move_spectral_axis`` and ``spectral_axis_index`` introduced in 2.0
-will be ignored in 1.x if used when initializing the ``Spectrum`` class.
+Specutils 2.0 has been in development for some time and is nearly ready for release.
+The major changes that will affect users are detailed here in an attempt to prepare
+users for the transition.
+
+The most visible change is that the `~specutils.Spectrum1D` class will be renamed
+to ``Spectrum`` to reduce confusion about multi-dimensional flux arrays being supported.
+The current class name will be deprecated in version 2.1; importing the old name will
+work but raise a deprecation warning until then. Version 1.20 implemented a ``Spectrum``
+class as a simple wrapper around `~specutils.Spectrum1D` so that you may update their
+code to the new class name now and avoid deprecation warnings when 2.0 releases. Note
+that the new keyword arguments ``move_spectral_axis`` and ``spectral_axis_index`` being
+introduced in 2.0 will be ignored in 1.x if used when initializing the ``Spectrum`` class.
 
 Single-dimensional flux use cases should be mostly unchanged in 2.0, with the exception
 being that spectrum arithmetic will check that the spectral axis of both operands are
@@ -59,8 +63,8 @@ based on the WCS (if provided) or the shape of the flux and spectral axis arrays
 but if the spectral axis index is unable to be automatically determined you will
 need to specify which flux array axis is the dispersion axis with the
 ``spectral_axis_index`` keyword. Note that since the ``spectral_axis`` can specify
-either bin edges or bin centers, a flux array of shape ``(10,11)`` with spectral axis
-of length 11 would be ambigious. In this case you could initialize a
+either bin edges or bin centers, a flux array of shape ``(10, 11)`` with spectral axis
+of length 10 or 11 would be ambigious. In this case you could initialize a
 ``Spectrum`` with ``bin_specification`` set to either "edges" or "centers"
 to break the degeneracy.
 
