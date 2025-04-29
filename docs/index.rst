@@ -39,7 +39,7 @@ The most visible change is that the `~specutils.Spectrum1D` class will be rename
 to ``Spectrum`` to reduce confusion about multi-dimensional flux arrays being supported.
 The current class name will be deprecated in version 2.1; importing the old name will
 work but raise a deprecation warning until then. Version 1.20 implemented a ``Spectrum``
-class as a simple wrapper around `~specutils.Spectrum1D` so that you may update their
+class as a simple wrapper around `~specutils.Spectrum1D` so that you may update your
 code to the new class name now and avoid deprecation warnings when 2.0 releases. Note
 that the new keyword arguments ``move_spectral_axis`` and ``spectral_axis_index`` being
 introduced in 2.0 will be ignored in 1.x if used when initializing the ``Spectrum`` class.
