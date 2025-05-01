@@ -1,8 +1,5 @@
-1.20.0 (unreleased)
+1.20.0 (2025-05-01)
 -------------------
-
-New Features
-^^^^^^^^^^^^
 
 Bug Fixes
 ^^^^^^^^^
@@ -20,6 +17,8 @@ Other Changes and Additions
 
 - Removed redshift and radial velocity setters in ``Spectrum1D`` that have been deprecated
   since 1.8. [#1229]
+
+- Added documentation about upcoming changes in specutils 2.0. [#1231]
 
 1.19.0 (2024-11-05)
 -------------------
