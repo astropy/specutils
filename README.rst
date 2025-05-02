@@ -47,6 +47,12 @@ continue to work on Python 2, it is not tested and support cannot be guaranteed
 (due to the sunsetting of Python 2 support by the Python and Astropy development
 teams).
 
+Migrating from Specutils 1.x to 2.x
+-----------------------------------
+
+For details about breaking changes coming in 2.0, please see the
+`specutils documentation <http://specutils.readthedocs.io/en/latest/>`_.
+
 License
 -------
 
