@@ -778,5 +778,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         return result
 
+
 # Temporarily allow Spectrum as an alias to Spectrum1D
 Spectrum = Spectrum1D
