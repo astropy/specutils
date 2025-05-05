@@ -1,11 +1,11 @@
-1.21.0 (unreleased)
+1.20.1 (unreleased)
 -------------------
-
-New Features
-^^^^^^^^^^^^
 
 Bug Fixes
 ^^^^^^^^^
+
+- Switch to using an alias rather than a subclass for the temporary 1.x access
+  to the new 2.x class name (``Spectrum``). [#1236]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
