@@ -11,9 +11,9 @@ Release Instructions
 4. Make a commit with this change and push to main, if you have permission, otherwise open a PR to main.
 5. Go to `Releases on GitHub <https://github.com/spacetelescope/jdaviz/releases>`_
    and `create a new GitHub release <https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository>`_
-   targeting the new branch you created (not ``main``!), and give it a new ``vX.Y.Z``
-   tag (do not choose any existing tags). Copy the relevant section from CHANGES.rst
-   into the release notes section and clean up any formatting problems.
+   targeting ``main``, and give it a new ``vX.Y.Z`` tag (do not choose any existing tags).
+   Copy the relevant section from CHANGES.rst into the release notes section and clean up
+   any formatting problems.
 6. Do "release" with new tag on GitHub repo.
 7. If there is a milestone for this release, "close" the milestone on GitHub.
 8. Check that the release was successfully uploaded to PyPi.
