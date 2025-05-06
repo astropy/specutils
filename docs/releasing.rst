@@ -14,7 +14,7 @@ Release Instructions
    targeting the new branch you created (not ``main``!), and give it a new ``vX.Y.Z``
    tag (do not choose any existing tags). Copy the relevant section from CHANGES.rst
    into the release notes section and clean up any formatting problems.
-12. Do "release" with new tag on GitHub repo.
-13. If there is a milestone for this release, "close" the milestone on GitHub.
-14. Check that the release was successfully uploaded to PyPi.
-15. Double-check (and fix if necessary) that relevant conda builds have proceeded sucessfully (e.g. https://github.com/conda-forge/specutils-feedstock)
+6. Do "release" with new tag on GitHub repo.
+7. If there is a milestone for this release, "close" the milestone on GitHub.
+8. Check that the release was successfully uploaded to PyPi.
+9. Double-check (and fix if necessary) that relevant conda builds have proceeded sucessfully (e.g. https://github.com/conda-forge/specutils-feedstock)
