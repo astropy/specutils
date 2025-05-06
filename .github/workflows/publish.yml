@@ -42,7 +42,7 @@ jobs:
         cd ..
         python -m venv testenv
         testenv/bin/pip install pytest pytest-astropy pytest-tornasync specutils/dist/*.whl
-        testenv/bin/pytest -p no:warnings --astropy-header --remote-data --pyargs specutils
+        testenv/bin/pytest --astropy-header --remote-data --pyargs specutils
 
     # NOTE: Do not run this part for PR testing.
     - name: Publish distribution 📦 to PyPI
