@@ -125,10 +125,9 @@ def test_hst_cos(remote_data_path):
     assert spec.flux.size > 0
 
 
-@remote_access([{'id': '1481192', 'filename': 'STIS_FUV.fits'},
-                {'id': '1481185', 'filename': 'STIS_NUV.fits'},
-                {'id': '1481183', 'filename': 'STIS_CCD.fits'}])
-def test_hst_stis(remote_data_path):
+@remote_access([{'id': '15320389', 'filename': 'oewgl2040_x1d.fits'},
+                {'id': '15320389', 'filename': 'ofb002010_sx1.fits'}])
+def test_hst_stis_1d(remote_data_path):
     spec = Spectrum1D.read(remote_data_path)
 
     assert isinstance(spec, Spectrum1D)
@@ -138,6 +137,22 @@ def test_hst_stis(remote_data_path):
     with fits.open(remote_data_path) as hdulist:
         spec = Spectrum1D.read(hdulist, format="HST/STIS")
     assert isinstance(spec, Spectrum1D)
+    assert spec.flux.size > 0
+
+
+@remote_access([{'id': '15320389', 'filename': 'oewge4040_x1d.fits'},
+                {'id': '15320389', 'filename': 'oeqi13020_x1d.fits'},
+                {'id': '15320389', 'filename': 'oeqw10040_x1d.fits'}])
+def test_hst_stis_multi(remote_data_path):
+    spec = SpectrumCollection.read(remote_data_path)
+
+    assert isinstance(spec, SpectrumCollection)
+    assert spec.flux.size > 0
+
+    # HDUList case
+    with fits.open(remote_data_path) as hdulist:
+        spec = SpectrumCollection.read(hdulist, format="HST/STIS multi")
+    assert isinstance(spec, SpectrumCollection)
     assert spec.flux.size > 0
 
 
