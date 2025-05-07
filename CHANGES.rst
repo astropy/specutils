@@ -1,4 +1,4 @@
-1.20.1 (unreleased)
+1.20.1 (2025-05-07)
 -------------------
 
 Bug Fixes
@@ -6,9 +6,6 @@ Bug Fixes
 
 - Switch to using an alias rather than a subclass for the temporary 1.x access
   to the new 2.x class name (``Spectrum``). [#1236]
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1.20.0 (2025-05-01)
 -------------------
