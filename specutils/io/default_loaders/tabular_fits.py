@@ -35,7 +35,7 @@ def identify_tabular_fits(origin, *args, **kwargs):
                 (hdulist[0].header.get('TELESCOP') == 'SDSS 2.5-M' and
                 hdulist[0].header.get('FIBERID') > 0) and not
                 (hdulist[0].header.get('TELESCOP') == 'HST' and
-                hdulist[0].header.get('INSTRUME') in ('COS', 'STIS')) and not 
+                hdulist[0].header.get('INSTRUME') in ('COS', 'STIS')) and not
                 (hdulist[0].header.get('TELESCOP') == 'JWST' and
                 ("EXTRACT1D" in hdulist or "COMBINE1D" in hdulist)))
 
