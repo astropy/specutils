@@ -3,6 +3,7 @@
 
 Bug Fixes
 ^^^^^^^^^
+- Made `tabular-fits` identifier more strict for which kinds of JWST data to exclude [#1234]
 
 - Switch to using an alias rather than a subclass for the temporary 1.x access
   to the new 2.x class name (``Spectrum``). [#1236]
