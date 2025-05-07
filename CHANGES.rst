@@ -6,6 +6,7 @@ New Features
 
 Bug Fixes
 ^^^^^^^^^
+- Made `tabular-fits` identifier more strict for which kinds of JWST data to exclude [#1234]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
