@@ -72,6 +72,18 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def __init__(self, flux=None, spectral_axis=None, wcs=None,
                  velocity_convention=None, rest_value=None, redshift=None,
                  radial_velocity=None, bin_specification=None, **kwargs):
+
+        # These will be new keywords in 2.x, we pop them here in case the
+        # alias for the new class name is being used
+        if 'move_spectral_axis' in kwargs:
+            good_inds = ['last', -1, None]
+            if flux is not None:
+                good_inds.append(flux.ndim - 1)
+            move_spectral_axis = kwargs.pop('move_spectral_axis', None)
+            if move_spectral_axis not in good_inds:
+                warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
+        kwargs.pop('spectral_axis_index', None)
+
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
             {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy',
@@ -767,21 +779,5 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return result
 
 
-class Spectrum(Spectrum1D):
-    '''
-    Adding this to 1.x so that people can update the name of the class in their
-    code without needing to wait for the 2.0 release or update their version pin.
-    '''
-    def __init__(self, *args, **kwargs):
-        if 'move_spectral_axis' in kwargs:
-            # This keyword doesn't do anything in 1.x, in 2.0 setting it to 'last'
-            # will reproduce moving the spectral axis to last as in 1.x.
-            if 'flux' in kwargs:
-                flux = kwargs['flux']
-            else:
-                flux = args[0]
-            move_spectral_axis = kwargs.pop('move_spectral_axis', None)
-            if move_spectral_axis not in ['last', -1, flux.ndim -1, None]:
-                warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
-        kwargs.pop('spectral_axis_index', None)
-        super().__init__(*args, **kwargs)
+# Temporarily allow Spectrum as an alias to Spectrum1D
+Spectrum = Spectrum1D

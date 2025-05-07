@@ -143,6 +143,8 @@ def test_create_new_classname():
     with pytest.warns(match="ignored in specutils 1.x"):
         spec = Spectrum(spectral_axis=freqs, flux=flux, move_spectral_axis="first")
 
+    assert_allclose(spec.spectral_axis.value, freqs.value)
+
 
 def test_spectral_axis_conversions():
     # By default the spectral axis units should be set to angstroms
