@@ -8,7 +8,7 @@ Bug Fixes
 ^^^^^^^^^
 
 - Fixed loaders for HST/STIS.  Added an "HST/STIS multi" reader for use with
-  ``SpectrumCollection`` to read multi-extension and/or multi-order echelle datasets.
+  ``SpectrumCollection`` to read multi-extension and/or multi-order echelle datasets. [#1233]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
