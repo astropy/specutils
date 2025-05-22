@@ -81,8 +81,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 good_inds.append(flux.ndim - 1)
             move_spectral_axis = kwargs.pop('move_spectral_axis', None)
             if move_spectral_axis not in good_inds:
-                warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
-        kwargs.pop('spectral_axis_index', None)
+                warnings.warn('move_spectral_axis is ignored in specutils 1.x.')
+
+        if 'spectral_axis_index' in kwargs:
+            warnings.warn('spectral_axis_index is ignored in specutils 1.x.')
+            kwargs.pop('spectral_axis_index', None)
 
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
