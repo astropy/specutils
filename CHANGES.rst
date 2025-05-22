@@ -16,6 +16,12 @@ Other Changes and Additions
 Bug Fixes
 ^^^^^^^^^
 
+- Fixed loaders for HST/STIS.  Added an "HST/STIS multi" reader for use with
+  ``SpectrumCollection`` to read multi-extension and/or multi-order echelle datasets. [#1233]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 - Switch to using an alias rather than a subclass for the temporary 1.x access
   to the new 2.x class name (``Spectrum``). [#1236]
 
