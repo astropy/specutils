@@ -131,7 +131,7 @@ def stis_multi_spectrum_loader(file_obj, **kwargs):
 def _construct_Spectrum1D_list(hdulist, sdqflags=None):
     """Construct a list of Spectrum1D objects from an HST/STIS FITS HDUList.
     """
-    meta = {'header_primary': hdulist[0].header}
+    meta = {'header': hdulist[0].header}
 
     # Loop over all reads and orders within the dataset and accumulate Spectrum1Ds:
     multi_spec = []
