@@ -76,9 +76,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # These will be new keywords in 2.x, we pop them here in case the
         # alias for the new class name is being used, and warn in cases that
         # would result in different behavior between 1.x and 2.x
-        good_inds = ['last', -1, None]
-        if flux is not None:
-            good_inds.append(flux.ndim - 1)
+        if 'move_spectral_axis' in kwargs or 'spectral_axis_index' in kwargs:
+            good_inds = ['last', -1, None]
+            if flux is not None and hasattr(flux, 'ndim'):
+                good_inds.append(flux.ndim - 1)
 
         if 'move_spectral_axis' in kwargs:
             move_spectral_axis = kwargs.pop('move_spectral_axis', None)
