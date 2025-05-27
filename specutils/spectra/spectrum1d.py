@@ -74,15 +74,22 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                  radial_velocity=None, bin_specification=None, **kwargs):
 
         # These will be new keywords in 2.x, we pop them here in case the
-        # alias for the new class name is being used
-        if 'move_spectral_axis' in kwargs:
+        # alias for the new class name is being used, and warn in cases that
+        # would result in different behavior between 1.x and 2.x
+        if 'move_spectral_axis' in kwargs or 'spectral_axis_index' in kwargs:
             good_inds = ['last', -1, None]
-            if flux is not None:
+            if flux is not None and hasattr(flux, 'ndim'):
                 good_inds.append(flux.ndim - 1)
+
+        if 'move_spectral_axis' in kwargs:
             move_spectral_axis = kwargs.pop('move_spectral_axis', None)
             if move_spectral_axis not in good_inds:
-                warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
-        kwargs.pop('spectral_axis_index', None)
+                warnings.warn('move_spectral_axis is ignored in specutils 1.x.')
+
+        if 'spectral_axis_index' in kwargs:
+            spectral_axis_index = kwargs.pop('spectral_axis_index', None)
+            if spectral_axis_index not in good_inds:
+                warnings.warn('spectral_axis_index is ignored in specutils 1.x.')
 
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
