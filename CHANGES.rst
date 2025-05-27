@@ -13,6 +13,18 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.20.2 (unreleased)
+-------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- Fixed loaders for HST/STIS.  Added an "HST/STIS multi" reader for use with
+  ``SpectrumCollection`` to read multi-extension and/or multi-order echelle datasets. [#1233]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1.20.1 (2025-05-07)
 -------------------
 
