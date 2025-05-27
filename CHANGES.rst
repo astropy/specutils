@@ -1,15 +1,3 @@
-1.21.0 (unreleased)
--------------------
-
-New Features
-^^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 1.20.2 (unreleased)
 -------------------
 
@@ -21,6 +9,8 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Warn about use of ``spectral_axis_index`` (new Spectrum1D kwarg for 2.0) in 1.x. [#1238]
 
 1.20.1 (2025-05-07)
 -------------------
