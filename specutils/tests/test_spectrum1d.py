@@ -8,6 +8,7 @@ import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 from astropy.tests.helper import quantity_allclose
+from astropy.utils.exceptions import AstropyDeprecationWarning
 from astropy.wcs import WCS
 
 from .conftest import remote_access
@@ -145,7 +146,7 @@ def test_create_from_cube():
     assert quantity_allclose(spec3.spectral_axis, spec_axis_from_wcs)
 
 
-def test_create_new_classname():
+def test_create_old_classname():
     """
     This is a test for the Spectrum subclass introduced in 1.20 to ease transition
     to the new class name in 2.0.
@@ -154,12 +155,9 @@ def test_create_new_classname():
     freqs = np.arange(50) * u.GHz
     flux = np.ones((5, len(freqs))) * u.Jy
     # The move_spectral_axis and spectral_axis_index keywords sre simply ignored for now.
-    spec = Spectrum(spectral_axis=freqs, flux=flux, move_spectral_axis="last",
-                    spectral_axis_index=-1)
+    with pytest.warns(AstropyDeprecationWarning):
+        spec = Spectrum1D(spectral_axis=freqs, flux=flux, spectral_axis_index=-1)
     assert_allclose(spec.flux, flux)
-    with pytest.warns(match="ignored in specutils 1.x"):
-        spec = Spectrum(spectral_axis=freqs, flux=flux, move_spectral_axis="first")
-
     assert_allclose(spec.spectral_axis.value, freqs.value)
 
 
