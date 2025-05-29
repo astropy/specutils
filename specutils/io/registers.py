@@ -10,7 +10,7 @@ from functools import wraps
 
 from astropy.io import registry as io_registry
 
-from ..spectra import Spectrum1D, SpectrumList, SpectrumCollection
+from ..spectra import Spectrum, SpectrumList, SpectrumCollection
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
 
@@ -25,7 +25,7 @@ def _astropy_has_priorities():
     return False
 
 
-def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
+def data_loader(label, identifier=None, dtype=Spectrum, extensions=None,
                 priority=0, force=False, autogenerate_spectrumlist=True, verbose=False):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
@@ -53,7 +53,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
         Default is ``False``. Passed down to astropy registry.
     autogenerate_spectrumlist : bool, optional
         Whether to automatically register a SpectrumList reader for any
-        data_loader that reads Spectrum1D objects.  Default is ``True``.
+        data_loader that reads Spectrum objects.  Default is ``True``.
     verbose : bool
         Print extra info.
 
@@ -109,8 +109,8 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
             print(f"Successfully loaded reader \"{label}\".")
 
         # Optionally register a SpectrumList reader for any data_loader that
-        # reads Spectrum1D objects.
-        if dtype is Spectrum1D and autogenerate_spectrumlist:
+        # reads Spectrum objects.
+        if dtype is Spectrum and autogenerate_spectrumlist:
             def load_spectrum_list(*args, **kwargs):
                 return SpectrumList([ func(*args, **kwargs) ])
 
@@ -140,7 +140,7 @@ def data_loader(label, identifier=None, dtype=Spectrum1D, extensions=None,
     return decorator
 
 
-def custom_writer(label, dtype=Spectrum1D, priority=0, force=False):
+def custom_writer(label, dtype=Spectrum, priority=0, force=False):
     def decorator(func):
         if _astropy_has_priorities():
             io_registry.register_writer(
@@ -180,7 +180,7 @@ def get_loaders_by_extension(extension):
                 for (fmt, cls), func in io_registry._readers.items()]
 
     return [fmt for (fmt, cls), func in _registered_readers()
-            if issubclass(cls, Spectrum1D) and
+            if issubclass(cls, Spectrum) and
             func.extensions is not None and
             extension in func.extensions]
 
@@ -213,21 +213,21 @@ def _load_user_io():
                     pass
 
 
-def identify_spectrum_format(filename, dtype=Spectrum1D):
+def identify_spectrum_format(filename, dtype=Spectrum):
     """ Attempt to identify a spectrum file format
 
     Given a filename, attempts to identify a valid file format
     from the list of registered specutils loaders.  Essentially a wrapper for
     `~astropy.io.registry.identify_format` setting **origin** to ``read`` and
-    **data_class_required** to `~specutils.Spectrum1D`.
+    **data_class_required** to `~specutils.Spectrum`.
 
     Parameters
     ----------
     filename : str
         A path to a file to be identified
     dtype: object
-        class type of Spectrum1D, SpectrumList, or SpectrumCollection. Default is
-        Spectrum1D.
+        class type of Spectrum, SpectrumList, or SpectrumCollection. Default is
+        Spectrum.
 
     Returns
     -------
@@ -242,8 +242,8 @@ def identify_spectrum_format(filename, dtype=Spectrum1D):
 
     # check for proper class type
     assert dtype in \
-        [Spectrum1D, SpectrumList, SpectrumCollection], \
-        'dtype class must be either Spectrum1D, SpectrumList, or SpectrumCollection'
+        [Spectrum, SpectrumList, SpectrumCollection], \
+        'dtype class must be either Spectrum, SpectrumList, or SpectrumCollection'
 
     # identify the file format
     valid_format = io_registry.identify_format(

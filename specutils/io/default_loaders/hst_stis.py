@@ -3,7 +3,7 @@ import numpy as np
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty
 
-from ...spectra import Spectrum1D, SpectrumCollection
+from ...spectra import Spectrum, SpectrumCollection
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -45,7 +45,7 @@ def identify_stis_multiorder_or_multiread(origin, *args, **kwargs):
 @data_loader(
     label="HST/STIS", identifier=identify_stis_1storder_and_singleread,
     extensions=['FITS', 'FIT', 'fits', 'fit'], priority=10,
-    dtype=Spectrum1D,
+    dtype=Spectrum,
 )
 def stis_single_spectrum_loader(file_obj, **kwargs):
     """Load STIS spectral data from the MAST archive into a spectrum object.
@@ -62,7 +62,7 @@ def stis_single_spectrum_loader(file_obj, **kwargs):
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
 
     Note
@@ -82,8 +82,8 @@ def stis_single_spectrum_loader(file_obj, **kwargs):
             raise RuntimeError('HST/STIS file has multiple orders (echelle data).  '
                                'Use SpectrumCollection.read() instead.')
 
-        # Extract the single spectrum returned from the list (a Spectrum1D object):
-        return _construct_Spectrum1D_list(hdulist, sdqflags=sdqflags)[0]
+        # Extract the single spectrum returned from the list (a Spectrum object):
+        return _construct_Spectrum_list(hdulist, sdqflags=sdqflags)[0]
 
 
 @data_loader(
@@ -121,19 +121,19 @@ def stis_multi_spectrum_loader(file_obj, **kwargs):
             raise ValueError('HST/STIS file is mising the SCI data extension.')
         if (len(hdulist) == 2) and (len(hdulist[1].data) == 1):
             raise RuntimeError('HST/STIS file is single-read and first-order.  '
-                               'Use Spectrum1D.read() instead.')
+                               'Use Spectrum.read() instead.')
 
-        multi_spec = _construct_Spectrum1D_list(hdulist, sdqflags=sdqflags)
+        multi_spec = _construct_Spectrum_list(hdulist, sdqflags=sdqflags)
 
     return SpectrumCollection.from_spectra(multi_spec)
 
 
-def _construct_Spectrum1D_list(hdulist, sdqflags=None):
-    """Construct a list of Spectrum1D objects from an HST/STIS FITS HDUList.
+def _construct_Spectrum_list(hdulist, sdqflags=None):
+    """Construct a list of Spectrum objects from an HST/STIS FITS HDUList.
     """
     meta = {'header': hdulist[0].header}
 
-    # Loop over all reads and orders within the dataset and accumulate Spectrum1Ds:
+    # Loop over all reads and orders within the dataset and accumulate Spectrum objects:
     multi_spec = []
     for ext in range(1, len(hdulist)):
         if sdqflags is None:
@@ -150,10 +150,10 @@ def _construct_Spectrum1D_list(hdulist, sdqflags=None):
 
 
 def _read_stis_order(order, meta=None, sdqflags=SDQFLAGS_DEFAULT):
-    """Construct a Spectrum1D object from a single STIS order (first-order or a
+    """Construct a Spectrum object from a single STIS order (first-order or a
     single echelle order).  Mask using SDQFLAGS.  Apply units.
     """
-    return Spectrum1D(
+    return Spectrum(
         flux=order['FLUX'] * FLUX_UNIT,
         spectral_axis=order['WAVELENGTH'] * DISP_UNIT,
         uncertainty=StdDevUncertainty(order['ERROR'] * FLUX_UNIT),

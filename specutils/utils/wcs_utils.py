@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 from astropy import units as u
-from astropy.modeling.models import Shift
+from astropy.modeling.models import Shift, Identity, Mapping
 from astropy.modeling.tabular import Tabular1D
 from gwcs import WCS as GWCS
 from gwcs import coordinate_frames as cf
@@ -10,7 +10,7 @@ from gwcs import coordinate_frames as cf
 
 class SpectralGWCS(GWCS):
     """
-    This is a placeholder lookup-table GWCS created when a :class:`~specutils.Spectrum1D` is
+    This is a placeholder lookup-table GWCS created when a :class:`~specutils.Spectrum` is
     instantiated with a ``spectral_axis`` and no WCS.
     """
     def __init__(self, *args, **kwargs):
@@ -38,12 +38,6 @@ class SpectralGWCS(GWCS):
         :mod:`copy` stdlib module.
         """
         return copy.deepcopy(self)
-
-    def pixel_to_world(self, *args, **kwargs):
-        if self.original_unit == '':
-            return u.Quantity(super().pixel_to_world_values(*args, **kwargs))
-        return super().pixel_to_world(*args, **kwargs).to(
-            self.original_unit, equivalencies=u.spectral())
 
 
 def refraction_index(wavelength, method='Morton2000', co2=None):
@@ -247,17 +241,53 @@ def air_to_vac_deriv(wavelength, method='Griesen2006'):
     return (1 + 1e-6 * (287.6155 - 1.62887 / wlum**2 - 0.04080 / wlum**4))
 
 
-def gwcs_from_array(array):
+def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     """
     Create a new WCS from provided tabular data. This defaults to being
-    a GWCS object.
+    a GWCS object with a lookup table for the spectral axis and filler
+    pixel to pixel identity conversions for spatial axes, if they exist.
     """
     orig_array = u.Quantity(array)
+    naxes = len(flux_shape)
 
-    coord_frame = cf.CoordinateFrame(naxes=1,
-                                     axes_type=('SPECTRAL',),
-                                     axes_order=(0,))
-    spec_frame = cf.SpectralFrame(unit=array.unit, axes_order=(0,))
+    if naxes > 1:
+        if spectral_axis_index is None:
+            raise ValueError("spectral_axis_index must be set for multidimensional flux arrays")
+        else:
+            # Axis order is reversed for WCS from numpy array
+            spectral_axis_index = naxes-spectral_axis_index-1
+    elif naxes == 1:
+        spectral_axis_index=0
+
+    axes_order = list(np.arange(naxes))
+    axes_type = ['SPATIAL',] * naxes
+    axes_type[spectral_axis_index] = "SPECTRAL"
+
+    detector_frame = cf.CoordinateFrame(naxes=naxes,
+                                        name='detector',
+                                        unit=['',] * naxes,
+                                        axes_order=axes_order,
+                                        axes_type=axes_type
+                                        )
+
+    if array.unit in ('', 'pix', 'pixel'):
+        # Spectrum was initialized without a wcs or spectral axis
+        spectral_frame = cf.CoordinateFrame(naxes=1,
+                                           unit=[array.unit,],
+                                           axes_type=['Spectral',],
+                                           axes_order=(spectral_axis_index,))
+    else:
+        spectral_frame = cf.SpectralFrame(unit=array.unit, axes_order=(spectral_axis_index,))
+
+    if naxes > 1:
+        axes_order.remove(spectral_axis_index)
+        spatial_frame = cf.CoordinateFrame(naxes=naxes - 1,
+                                           unit=['',] * (naxes -1),
+                                           axes_type=['Spatial',] * (naxes - 1),
+                                           axes_order=axes_order)
+        output_frame = cf.CompositeFrame(frames=[spatial_frame, spectral_frame])
+    else:
+        output_frame = spectral_frame
 
     # In order for the world_to_pixel transformation to automatically convert
     # input units, the equivalencies in the look up table have to be extended
@@ -265,8 +295,22 @@ def gwcs_from_array(array):
     SpectralTabular1D = type("SpectralTabular1D", (Tabular1D,),
                              {'input_units_equivalencies': {'x0': u.spectral()}})
 
-    forward_transform = SpectralTabular1D(np.arange(len(array)),
-                                          lookup_table=array)
+    # We pass through the pixel values of spatial axes with Identity and use a lookup
+    # table for the spectral axis values. We use Mapping to pipe the values to the correct
+    # model depending on which axis is the spectral axis
+    if naxes == 1:
+        forward_transform = SpectralTabular1D(np.arange(len(array)), lookup_table=array)
+    else:
+        axes_order.append(spectral_axis_index)
+        # WCS axis order is reverse of numpy array order
+        mapped_axes = axes_order
+        out_mapping = np.ones(len(mapped_axes)).astype(int)
+        for i in range(len(mapped_axes)):
+            out_mapping[mapped_axes[i]] = i
+        forward_transform = (Mapping(mapped_axes) |
+                             Identity(naxes - 1) & SpectralTabular1D(np.arange(len(array)), lookup_table=array) |
+                             Mapping(out_mapping))
+
     # If our spectral axis is in descending order, we have to flip the lookup
     # table to be ascending in order for world_to_pixel to work.
     if len(array) == 0 or array[-1] > array[0]:
@@ -278,8 +322,8 @@ def gwcs_from_array(array):
 
     tabular_gwcs = SpectralGWCS(original_unit = orig_array.unit,
                                 forward_transform=forward_transform,
-                                input_frame=coord_frame,
-                                output_frame=spec_frame)
+                                input_frame=detector_frame,
+                                output_frame=output_frame)
 
     # Store the intended unit from the origin input array
     #     tabular_gwcs._input_unit = orig_array.unit

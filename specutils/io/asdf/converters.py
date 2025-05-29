@@ -4,9 +4,9 @@ from asdf_astropy.converters import SpectralCoordConverter
 from astropy.nddata import (StdDevUncertainty, VarianceUncertainty,
                             InverseVariance, UnknownUncertainty)
 
-from specutils.spectra import Spectrum1D, SpectrumList
+from specutils.spectra import Spectrum, SpectrumList
 
-__all__ = ['Spectrum1DConverter', 'SpectrumListConverter']
+__all__ = ['SpectrumConverter', 'SpectrumListConverter']
 
 UNCERTAINTY_TYPE_MAPPING = {
     'std': StdDevUncertainty,
@@ -26,13 +26,15 @@ class SpectralAxisConverter(SpectralCoordConverter):
         return SpectralAxis(super().from_yaml_tree(node, tag, ctx))
 
 
-class Spectrum1DConverter(Converter):
-    """ASDF converter to serialize/deserialize Spectrum1D objects."""
-    tags = ["tag:astropy.org:specutils/spectra/spectrum1d-*"]
-    types = ["specutils.spectra.spectrum1d.Spectrum1D"]
+class SpectrumConverter(Converter):
+    """ASDF converter to serialize/deserialize Spectrum objects."""
+    tags = ["tag:astropy.org:specutils/spectra/spectrum-*",
+            "tag:astropy.org:specutils/spectra/spectrum1d-*"]
+    types = ["specutils.spectra.spectrum.Spectrum",
+             "specutils.spectra.spectrum.Spectrum1D"]
 
     def to_yaml_tree(self, obj, tag, ctx):
-        """Converts Spectrum1D object into tree used for YAML representation."""
+        """Converts Spectrum object into tree used for YAML representation."""
         node = {}
         node['flux'] = obj.flux
         node['spectral_axis'] = obj.spectral_axis
@@ -49,7 +51,7 @@ class Spectrum1DConverter(Converter):
         return node
 
     def from_yaml_tree(cls, node, tag, ctx):
-        """Converts tree representation back into Spectrum1D object."""
+        """Converts tree representation back into Spectrum object."""
         flux = node['flux']
         spectral_axis = node['spectral_axis']
         uncertainty = node.get('uncertainty', None)
@@ -60,7 +62,7 @@ class Spectrum1DConverter(Converter):
             data = uncertainty['data']
             uncertainty = class_(data)
 
-        return Spectrum1D(flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, mask=mask)
+        return Spectrum(flux=flux, spectral_axis=spectral_axis, uncertainty=uncertainty, mask=mask)
 
 
 class SpectrumListConverter(Converter):

@@ -50,7 +50,7 @@ teams).
 Migrating from Specutils 1.x to 2.x
 -----------------------------------
 
-For details about breaking changes coming in 2.0, please see the
+For details about breaking changes made in 2.0, please see the
 `specutils documentation <http://specutils.readthedocs.io/en/latest/>`_.
 
 License

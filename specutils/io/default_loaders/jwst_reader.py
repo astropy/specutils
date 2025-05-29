@@ -8,11 +8,9 @@ from astropy.units import Quantity
 from astropy.table import Table
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
-from astropy.time import Time
-from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -129,7 +127,7 @@ def _identify_jwst_fits(*args):
 
 
 @data_loader(
-    "JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum1D,
+    "JWST c1d", identifier=identify_jwst_c1d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def jwst_c1d_single_loader(file_obj, **kwargs):
@@ -143,7 +141,7 @@ def jwst_c1d_single_loader(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_spec1d_loader(file_obj, extname='COMBINE1D', **kwargs)
@@ -177,7 +175,7 @@ def jwst_c1d_multi_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    "JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum1D,
+    "JWST x1d", identifier=identify_jwst_x1d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10
 )
 def jwst_x1d_single_loader(file_obj, **kwargs):
@@ -191,7 +189,7 @@ def jwst_x1d_single_loader(file_obj, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs)
@@ -369,7 +367,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength,
+            spec = Spectrum(flux=flux, spectral_axis=wavelength,
                               uncertainty=uncertainty, meta=meta)
             spectra.append(spec)
 
@@ -377,7 +375,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
 
 
 @data_loader(
-    "JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum1D,
+    "JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def jwst_s2d_single_loader(filename, **kwargs):
@@ -391,7 +389,7 @@ def jwst_s2d_single_loader(filename, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_s2d_loader(filename, **kwargs)
@@ -491,17 +489,17 @@ def _jwst_s2d_loader(filename, **kwargs):
                 # Make sure all rows are the same
                 if not (lam == wavelength_array).all():
                     raise RuntimeError("This 2D or 3D spectrum is not rectified "
-                                       "and cannot be loaded into a Spectrum1D object.")
+                                       "and cannot be loaded into a Spectrum object.")
             elif dispaxis == 2:
                 flux_array = hdu.data.T
                 wavelength_array = lam[:, 0]
                 # Make sure all columns are the same
                 if not (lam.T == lam[None, :, 0]).all():
                     raise RuntimeError("This 2D or 3D spectrum is not rectified "
-                                       "and cannot be loaded into a Spectrum1D object.")
+                                       "and cannot be loaded into a Spectrum object.")
             else:
                 raise RuntimeError("This 2D spectrum has an unknown dispaxis "
-                                   "and cannot be loaded into a Spectrum1D object.")
+                                   "and cannot be loaded into a Spectrum object.")
 
             flux = Quantity(flux_array, unit=flux_unit)
             wavelength = Quantity(wavelength_array, unit=lam_unit)
@@ -512,14 +510,14 @@ def _jwst_s2d_loader(filename, **kwargs):
             header.extend(slit_header, strip=True, update=True)
             meta = {'header': header}
 
-            spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta)
+            spec = Spectrum(flux=flux, spectral_axis=wavelength, meta=meta)
             spectra.append(spec)
 
     return SpectrumList(spectra)
 
 
 @data_loader(
-    "JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum1D,
+    "JWST s3d", identifier=identify_jwst_s3d_fits, dtype=Spectrum,
     extensions=['fits'], priority=10,
 )
 def jwst_s3d_single_loader(filename, **kwargs):
@@ -533,7 +531,7 @@ def jwst_s3d_single_loader(filename, **kwargs):
 
     Returns
     -------
-    Spectrum1D
+    Spectrum
         The spectrum contained in the file.
     """
     spectrum_list = _jwst_s3d_loader(filename, **kwargs)
@@ -579,37 +577,8 @@ def _jwst_s3d_loader(filename, **kwargs):
             except (ValueError, KeyError):
                 flux_unit = None
 
-            # The spectral axis is first.  We need it last
-            flux_array = hdu.data.T
+            flux_array = hdu.data
             flux = Quantity(flux_array, unit=flux_unit)
-
-            # Get the wavelength array from the GWCS object which returns a
-            # tuple of (RA, Dec, lambda).
-            # Since the spatial and spectral axes are orthogonal in s3d data,
-            # it is much faster to compute a slice down the spectral axis.
-            grid = grid_from_bounding_box(wcs.bounding_box)[:, :, 0, 0]
-            _, _, wavelength_array = wcs(*grid)
-            _, _, wavelength_unit = wcs.output_frame.unit
-
-            wavelength = Quantity(wavelength_array, unit=wavelength_unit)
-
-            # The GWCS is currently broken for some IFUs, here we work around that
-            wcs = None
-            if wavelength.shape[0] != flux.shape[-1]:
-                # Need MJD-OBS for this workaround
-                if 'MJD-OBS' not in hdu.header:
-                    for key in ('MJD-BEG', 'DATE-OBS'):  # Possible alternatives
-                        if key in hdu.header:
-                            if key.startswith('MJD'):
-                                hdu.header['MJD-OBS'] = hdu.header[key]
-                                break
-                            else:
-                                t = Time(hdu.header[key])
-                                hdu.header['MJD-OBS'] = t.mjd
-                                break
-                wcs = WCS(hdu.header)
-                # Swap to match the flux transpose
-                wcs = wcs.swapaxes(-1, 0)
 
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
@@ -621,7 +590,7 @@ def _jwst_s3d_loader(filename, **kwargs):
             ext_name = primary_header.get("ERREXT", "ERR")
             err_type = hdulist[ext_name].header.get("ERRTYPE", 'ERR')
             err_unit = hdulist[ext_name].header.get("BUNIT", None)
-            err_array = hdulist[ext_name].data.T
+            err_array = hdulist[ext_name].data
 
             # ERRTYPE can be one of "ERR", "IERR", "VAR", "IVAR"
             # but mostly ERR for JWST cubes
@@ -639,13 +608,10 @@ def _jwst_s3d_loader(filename, **kwargs):
 
             # get mask information
             mask_name = primary_header.get("MASKEXT", "DQ")
-            mask = hdulist[mask_name].data.T
+            mask = hdulist[mask_name].data
 
-            if wcs is not None:
-                spec = Spectrum1D(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask)
-            else:
-                spec = Spectrum1D(flux=flux, spectral_axis=wavelength, meta=meta,
-                                  uncertainty=err, mask=mask)
+            spec = Spectrum(flux=flux, wcs=wcs, meta=meta, uncertainty=err, mask=mask, spectral_axis_index=0)
+
             spectra.append(spec)
 
     return SpectrumList(spectra)

@@ -2,7 +2,7 @@ import numpy as np
 
 from astropy import units as u
 
-from .. import Spectrum1D
+from .. import Spectrum
 from astropy.nddata.nduncertainty import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from .extract_spectral_region import extract_region
 
@@ -18,7 +18,7 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
     Parameters
     ----------
 
-    spectrum : `~specutils.Spectrum1D`
+    spectrum : `~specutils.Spectrum`
         The spectrum to which we want to set the uncertainty.
 
     spectral_region : `~specutils.SpectralRegion`
@@ -30,7 +30,7 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
 
     Returns
     -------
-    spectrum_uncertainty : `~specutils.Spectrum1D`
+    spectrum_uncertainty : `~specutils.Spectrum`
         The ``spectrum``, but with a constant uncertainty set by the result of
         the noise region calculation
     """
@@ -59,7 +59,7 @@ def noise_region_uncertainty(spectrum, spectral_region, noise_func=np.std):
         raise ValueError('Can not determine correct NDData Uncertainty based on units {} relative to the flux units {}'.format(noise.unit, spectrum.flux.unit))
 
     # Return new specturm with uncertainty set.
-    return Spectrum1D(flux=spectrum.flux, spectral_axis=spectrum.spectral_axis,
+    return Spectrum(flux=spectrum.flux, spectral_axis=spectrum.spectral_axis,
                       uncertainty=uncertainty,
                       wcs=spectrum.wcs,
                       velocity_convention=spectrum.velocity_convention,

@@ -11,7 +11,7 @@ from astropy.tests.helper import assert_quantity_allclose
 from astropy.wcs import WCS
 from numpy.testing import assert_array_equal
 
-from specutils import Spectrum1D, SpectralAxis
+from specutils import Spectrum, SpectralAxis
 
 PIX2 = u.pix * u.pix
 
@@ -33,24 +33,24 @@ def _eqv_flux_to_sb_pixel():
 # The original Jdaviz implementation we are replacing with native
 # specutils functionality.
 def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
-    """Converts a Spectrum1D object's flux units to flux per square pixel.
+    """Converts a Spectrum object's flux units to flux per square pixel.
 
-    This function takes a `specutils.Spectrum1D` object with flux units and converts the
+    This function takes a `specutils.Spectrum` object with flux units and converts the
     flux (and optionally, uncertainty) to a surface brightness per square pixel
     (e.g., from Jy to Jy/pix**2). This is done by updating the units of spectrum.flux
-    and (if present) spectrum.uncertainty, and creating a new `specutils.Spectrum1D`
+    and (if present) spectrum.uncertainty, and creating a new `specutils.Spectrum`
     object with the modified flux and uncertainty.
 
     Parameters
     ----------
-    spectrum : Spectrum1D
-        A `specutils.Spectrum1D` object containing flux data, which is assumed to be in
+    spectrum : Spectrum
+        A `specutils.Spectrum` object containing flux data, which is assumed to be in
         flux units without any angular component in the denominator.
 
     Returns
     -------
-    Spectrum1D
-        A new `specutils.Spectrum1D` object with flux and uncertainty (if present)
+    Spectrum
+        A new `specutils.Spectrum` object with flux and uncertainty (if present)
         converted to units of flux per square pixel.
 
     """
@@ -82,7 +82,7 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
     # initialize new spectrum1d with new flux, uncerts, and all other init parameters
     # from old input spectrum as well as any 'meta'. any more missing information
     # not in init signature that might be present in `spectrum`?
-    new_spec1d = Spectrum1D(flux=flux, uncertainty=uncerts,
+    new_spec1d = Spectrum(flux=flux, uncertainty=uncerts,
                             spectral_axis=spectrum.spectral_axis,
                             mask=spectrum.mask,
                             wcs=spectrum.wcs,
@@ -90,7 +90,7 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
                             rest_value=spectrum.rest_value, redshift=redshift,
                             radial_velocity=radial_velocity,
                             bin_specification=getattr(spectrum, 'bin_specification', None),
-                            meta=spectrum.meta)
+                            meta=spectrum.meta, spectral_axis_index=spectrum.spectral_axis_index)
 
     return new_spec1d
 
@@ -115,7 +115,7 @@ def test_spec_flux_conv_pix2(suppress_conversion):
     uncert_orig = StdDevUncertainty(flux_orig)
     mask_orig = np.zeros(flux_orig.shape, dtype=bool)
     rs_orig = 0.0001 * u.dimensionless_unscaled
-    sp_orig = Spectrum1D(
+    sp_orig = Spectrum(
         flux=flux_orig, uncertainty=uncert_orig, mask=mask_orig, wcs=w,
         redshift=rs_orig, meta=meta)
 

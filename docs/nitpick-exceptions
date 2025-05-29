@@ -15,7 +15,7 @@ py:obj SpectralCoord
 py:obj SpectralQuantity
 py:obj SkyCoord
 
-# Super class for Spectrum1D for which we don't control the API links.
+# Super class for Spectrum for which we don't control the API links.
 py:class ndcube.mixins.ndslicing.NDCubeSlicingMixin
 py:class ndcube.ndcube.NDCube
 py:class ndcube.ndcube.NDCubeABC

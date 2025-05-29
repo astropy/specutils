@@ -5,7 +5,7 @@ import numpy as np
 from astropy.nddata import VarianceUncertainty
 from astropy.table import Table
 import astropy.units as u
-from specutils import Spectrum1D, SpectrumList
+from specutils import Spectrum, SpectrumList
 from specutils.io.registers import data_loader
 
 from .dc_common import (
@@ -62,7 +62,7 @@ def load_aaomega_file(filename, *args, **kwargs):
         # read in Fibre table data....
         ftable = Table(fits_file[AAOMEGA_FIBRE_INDEX].data)
 
-        # A SpectrumList to hold all the Spectrum1D objects
+        # A SpectrumList to hold all the Spectrum objects
         sl = SpectrumList()
 
         # the row var contains the pixel data from the science frame
@@ -173,7 +173,7 @@ def load_aaomega_file(filename, *args, **kwargs):
             meta["fibre_index"] = i
 
             # Our science spectrum
-            spectrum = Spectrum1D(wcs=wcs, flux=flux, meta=meta)
+            spectrum = Spectrum(wcs=wcs, flux=flux, meta=meta)
             # If the VARIANCE spectrum exists, add it as an additional spectrum
             # in the meta dict with key 'variance'
             if var_idx is not None:
@@ -192,7 +192,7 @@ def load_aaomega_file(filename, *args, **kwargs):
                     "header": fib_header,
                     "purpose": "science_sky"
                 }
-                spectrum.meta["science_sky"] = Spectrum1D(
+                spectrum.meta["science_sky"] = Spectrum(
                     wcs=wcs, flux=rwss_flux, meta=rwss_meta
                 )
 

@@ -23,10 +23,56 @@ details about the underlying principles, see
 `APE13 <https://github.com/astropy/astropy-APEs/blob/main/APE13.rst>`_, the
 guiding document for spectroscopic development in the Astropy Project.
 
-.. note::
-    While specutils is available for general use, the API is in an early enough
-    development stage that some interfaces may change if user feedback and
-    experience warrants it.
+
+Changes in version 2
+====================
+
+The ``Spectrum1D`` class has been renamed to `~specutils.Spectrum` to reduce confusion
+about multi-dimensional flux arrays being supported. The current class name will be
+deprecated in version 2.1; importing the old name will work but raise a deprecation
+warning until then.
+
+Single-dimensional flux use cases should be mostly unchanged in 2.0, with the exception
+being that spectrum arithmetic now checks that the spectral axis of both operands are
+equal, rather than simply checking that they are the same length. Thus, you will need
+to resample onto a common spectral axis if doing arithmetic on spectra with differing
+spectral axes.
+
+Specutils version 2 implemented a major change in that `~specutils.Spectrum`
+no longer forces the spectral axis to be last for multi-dimensional data. This
+was motivated by the desire for greater flexibility to allow for interoperability
+with other packages that may wish to use ``specutils`` classes as the basis for
+their own, and by the desire for consistency with the axis order that results
+from a simple ``astropy.io.fits.read`` of a file. The legacy behavior can be
+replicated by setting ``move_spectral_axis='last'`` when creating a new
+`~specutils.Spectrum` object. `~specutils.Spectrum` will attempt to automatically
+determine which flux axis corresponds to the spectral axis during initialization
+based on the WCS (if provided) or the shape of the flux and spectral axis arrays,
+but if the spectral axis index is unable to be automatically determined you will
+need to specify which flux array axis is the dispersion axis with the
+``spectral_axis_index`` keyword. Note that since the ``spectral_axis`` can specify
+either bin edges or bin centers, a flux array of shape ``(10,11)`` with spectral axis
+of length 11 would be ambigious. In this case you could initialize a
+`~specutils.Spectrum` with ``bin_specification`` set to either "edges" or "centers"
+to break the degeneracy.
+
+An additional change for multi-dimensional spectra is that previously, initializing
+such a `~specutils.Spectrum` with a  ``spectral_axis`` specified, but no WCS, would
+create a `~specutils.Spectrum` instance with a one-dimensional GWCS that was essentially
+a lookup table with the spectral axis values. This case will now result in a GWCS with
+dimensionality matching that of the flux array to facilitate use with downstream packages
+that expect WCS dimensionality to match that of the data. The resulting spatial axes
+transforms are simple pixel to pixel identity operations, since no actual spatial
+coordinate information is available.
+
+In addition to the changes to the generated GWCS, handling of input GWCS has also been
+improved. This mostly manifests in the full GWCS (including spatial information) being
+retained in the resulting `~specutils.Spectrum` objects when reading, e.g., JWST spectral
+cubes.
+
+For a summary of the changes in version 2, you many also refer to the
+`release notes <https://github.com/astropy/specutils/releases>`_.
+
 
 Changes coming in version 2.0
 =============================
@@ -111,12 +157,12 @@ may have downloaded from some archive, or reduced from your own observations.
     ...     specdata = f[1].data  # doctest: +REMOTE_DATA
 
     Then we re-format this dataset into astropy quantities, and create a
-    `~specutils.Spectrum1D` object:
+    `~specutils.Spectrum` object:
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> lamb = 10**specdata['loglam'] * u.AA # doctest: +REMOTE_DATA
     >>> flux = specdata['flux'] * 10**-17 * u.Unit('erg cm-2 s-1 AA-1') # doctest: +REMOTE_DATA
-    >>> spec = Spectrum1D(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
+    >>> spec = Spectrum(spectral_axis=lamb, flux=flux) # doctest: +REMOTE_DATA
 
     And we plot it:
 
@@ -168,7 +214,7 @@ For more details on usage of specutils, see the sections listed below.
 
     installation
     types_of_spectra
-    spectrum1d
+    spectrum
     spectrum_collection
     spectral_cube
     spectral_regions

@@ -19,7 +19,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
 
     Parameters
     ----------
-    spectrum : `~specutils.Spectrum1D`, `~specutils.SpectrumCollection` or `~astropy.nddata.NDData`
+    spectrum : `~specutils.Spectrum`, `~specutils.SpectrumCollection` or `~astropy.nddata.NDData`
         The spectrum object overwhich the S/N threshold will be calculated.
 
     value: ``float``
@@ -31,7 +31,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
 
     Returns
     -------
-    spectrum: `~specutils.Spectrum1D`
+    spectrum: `~specutils.Spectrum`
         Output object with ``spectrum.mask`` set based on threshold.
 
     Notes
@@ -63,7 +63,7 @@ def snr_threshold(spectrum, value, op=operator.gt):
     if isinstance(op, str):
         op = operator_mapping[op]
 
-    # Spectrum1D
+    # Spectrum
     if hasattr(spectrum, 'flux'):
         data = spectrum.flux
 
