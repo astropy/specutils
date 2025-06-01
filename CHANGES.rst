@@ -3,6 +3,7 @@
 
 Bug Fixes
 ^^^^^^^^^
+- Made `tabular-fits` identifier more strict for which kinds of JWST data to exclude [#1234]
 
 - Fixed loaders for HST/STIS.  Added an "HST/STIS multi" reader for use with
   ``SpectrumCollection`` to read multi-extension and/or multi-order echelle datasets. [#1233]
