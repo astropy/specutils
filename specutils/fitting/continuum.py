@@ -19,7 +19,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectrum object overwhich the equivalent width will be calculated.
     model : list of `~astropy.modeling.Model`
         The list of models that contain the initial guess.
@@ -65,7 +65,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=TRFLSQFitter(),
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectrum object overwhich the equivalent width will be calculated.
     model: list of `~astropy.modeling.Model`
         The list of models that contain the initial guess.

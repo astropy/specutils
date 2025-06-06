@@ -7,7 +7,8 @@ py:obj NDUncertainty
 
 # Links that might not work yet, depending on the astropy version
 py:obj astropy.coordinates.SpectralQuantity
-py:class astropy.units.UnitBase
+py:class UnitBase
+py:class ConfigItem
 
 # Classes in the SpectralCoord/SpectralQuantity methods for which we can't
 # control the API links.
@@ -15,7 +16,7 @@ py:obj SpectralCoord
 py:obj SpectralQuantity
 py:obj SkyCoord
 
-# Super class for Spectrum1D for which we don't control the API links.
+# Super class for Spectrum for which we don't control the API links.
 py:class ndcube.mixins.ndslicing.NDCubeSlicingMixin
 py:class ndcube.ndcube.NDCube
 py:class ndcube.ndcube.NDCubeABC

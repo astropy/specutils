@@ -33,17 +33,17 @@ def ascii_loader(file_name, column_mapping=None, **kwargs):
         The path to the ASCII file.
     column_mapping : dict
         A dictionary describing the relation between the ASCII file columns
-        and the arguments of the `Spectrum1D` class, along with unit
+        and the arguments of the `Spectrum` class, along with unit
         information. The dictionary keys should be the ASCII file column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum1D` keyword argument, and the second element is the
+        associated `Spectrum` keyword argument, and the second element is the
         unit for the ASCII file column::
 
             column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
     tab = Table.read(file_name, format='ascii')
@@ -77,17 +77,17 @@ def ipac_loader(file_name, column_mapping=None, **kwargs):
         The path to the IPAC-style ASCII file.
     column_mapping : dict
         A dictionary describing the relation between the IPAC-style ASCII
-        file columns and the arguments of the `Spectrum1D` class, along with
+        file columns and the arguments of the `Spectrum` class, along with
         unit information. The dictionary keys should be the IPAC-style ASCII
         file column names while the values should be a two-tuple where the
-        first element is the associated `Spectrum1D` keyword argument, and the
+        first element is the associated `Spectrum` keyword argument, and the
         second element is the unit for the IPAC-style ASCII file column::
 
             column_mapping = {'FLUX': ('flux', 'Jy')}
 
     Returns
     -------
-    data: Spectrum1D
+    data: Spectrum
         The spectrum that is represented by the data in this table.
     """
     tab = Table.read(file_name, format='ascii.ipac')

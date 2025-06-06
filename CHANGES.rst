@@ -1,3 +1,31 @@
+2.0.0 (unreleased)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- Spectral axis can now be any axis, rather than being forced to be last. See docs
+  for more details. [#1033, #1226]
+
+- Spectrum now properly handles GWCS input for wcs attribute. [#1074]
+
+- JWST reader no longer transposes the input data cube for 3D data and retains
+  full GWCS information (including spatial). [#1074]
+
+- Spectrum1D renamed to Spectrum. [#1126]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Initializing a ``Spectrum`` with only a spectral axis (not full WCS) will now
+  result in a GWCS matching the dimensionality of the flux array, rather than a
+  1D spectral GWCS in all cases. [#1211, #1222]
+
+- Spectrum arithmetic now checks whether the spectral axes of the two operand ``Spectrum``
+  objects are equal, and fails if they are not. [#1211]
+
+- Added documentation about transitioning from 1.x to 2.x. [#1226]
+
 1.20.2 (2025-05-27)
 -------------------
 

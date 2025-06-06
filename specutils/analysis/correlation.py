@@ -7,7 +7,7 @@ from scipy.signal.windows import tukey
 from scipy.signal import correlate
 
 from ..manipulation import LinearInterpolatedResampler
-from .. import Spectrum1D
+from .. import Spectrum
 
 __all__ = ['template_correlate', 'template_logwl_resample']
 
@@ -28,9 +28,9 @@ def template_correlate(observed_spectrum, template_spectrum, lag_units=_KMS,
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    template_spectrum : :class:`~specutils.Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum, which will be correlated with
         the observed spectrum.
     lag_units: `~astropy.units.Unit`
@@ -149,9 +149,9 @@ def template_logwl_resample(spectrum, template, wblue=None, wred=None,
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    template_spectrum : :class:`~specutils.Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum.
     wblue, wred: float
         Wavelength limits to include in the correlation.
@@ -164,9 +164,9 @@ def template_logwl_resample(spectrum, template, wblue=None, wred=None,
 
     Returns
     -------
-    resampled_observed : :class:`~specutils.Spectrum1D`
+    resampled_observed : :class:`~specutils.Spectrum`
         The observed spectrum resampled to a common spectral_axis.
-    resampled_template: :class:`~specutils.Spectrum1D`
+    resampled_template: :class:`~specutils.Spectrum`
         The template spectrum resampled to a common spectral_axis.
     """
 
@@ -220,12 +220,12 @@ def template_logwl_resample(spectrum, template, wblue=None, wred=None,
     clean_spectrum_flux = np.nan_to_num(resampled_spectrum.flux.value) * resampled_spectrum.flux.unit
     clean_template_flux = np.nan_to_num(resampled_template.flux.value) * resampled_template.flux.unit
 
-    clean_spectrum = Spectrum1D(spectral_axis=resampled_spectrum.spectral_axis,
+    clean_spectrum = Spectrum(spectral_axis=resampled_spectrum.spectral_axis,
                         flux=clean_spectrum_flux,
                         uncertainty=resampled_spectrum.uncertainty,
                         velocity_convention='optical',
                         rest_value=spectrum.rest_value)
-    clean_template = Spectrum1D(spectral_axis=resampled_template.spectral_axis,
+    clean_template = Spectrum(spectral_axis=resampled_template.spectral_axis,
                         flux=clean_template_flux,
                         uncertainty=resampled_template.uncertainty,
                         velocity_convention='optical',
@@ -241,9 +241,9 @@ def _normalize(observed_spectrum, template_spectrum):
 
     Parameters
     ----------
-    observed_spectrum : :class:`~specutils.Spectrum1D`
+    observed_spectrum : :class:`~specutils.Spectrum`
         The observed spectrum.
-    template_spectrum : :class:`~specutils.Spectrum1D`
+    template_spectrum : :class:`~specutils.Spectrum`
         The template spectrum, which needs to be normalized in order to be
         compared with the observed spectrum.
 
