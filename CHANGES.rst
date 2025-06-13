@@ -1,3 +1,11 @@
+1.20.3 (2025-06-13)
+-------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- Ignore problematic astropy classes so docs will build. [#1241]
+
 1.20.2 (2025-05-27)
 -------------------
 
