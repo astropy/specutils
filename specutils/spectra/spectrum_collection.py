@@ -5,7 +5,7 @@ import numpy as np
 from astropy.nddata import NDUncertainty, StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 
-from .spectrum1d import Spectrum1D
+from .spectrum import Spectrum
 from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
@@ -17,18 +17,18 @@ class SpectrumCollection(NDIOMixin):
     but have different spectral axes. Spectra that meet this requirement can be
     stored as multidimensional arrays, and thus can have operations performed
     on them faster than if they are treated as individual
-    :class:`~specutils.Spectrum1D` objects.
+    :class:`~specutils.Spectrum` objects.
 
     For multidimensional spectra that all have the *same* spectral axis, use a
-    :class:`~specutils.Spectrum1D` with dimension greater than 1.  For a
+    :class:`~specutils.Spectrum` with dimension greater than 1.  For a
     collection of spectra that have different shapes, use
     :class:`~specutils.SpectrumList`. For more on this topic, see
     :ref:`specutils-representation-overview`.
 
     The attributes on this class uses the same names and conventions as
-    :class:`~specutils.Spectrum1D`, allowing some operations to work the same.
+    :class:`~specutils.Spectrum`, allowing some operations to work the same.
     Where this does not work, the user can use standard indexing notation to
-    access individual :class:`~specutils.Spectrum1D` objects.
+    access individual :class:`~specutils.Spectrum` objects.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ class SpectrumCollection(NDIOMixin):
         each spectrum in the collection.
     """
     def __init__(self, flux, spectral_axis=None, wcs=None, uncertainty=None,
-                 mask=None, meta=None):
+                 mask=None, meta=None, spectral_axis_index=None):
         # Check for quantity
         if not isinstance(flux, u.Quantity):
             raise u.UnitsError("Flux must be a `Quantity`.")
@@ -89,6 +89,7 @@ class SpectrumCollection(NDIOMixin):
 
         self._flux = flux
         self._spectral_axis = spectral_axis
+        self._spectral_axis_index = spectral_axis_index
         self._wcs = wcs
         self._uncertainty = uncertainty
         self._mask = mask
@@ -111,7 +112,7 @@ class SpectrumCollection(NDIOMixin):
             except KeyError:
                 meta = self.meta
 
-        return Spectrum1D(flux=flux, spectral_axis=spectral_axis,
+        return Spectrum(flux=flux, spectral_axis=spectral_axis,
                           uncertainty=uncertainty, wcs=wcs, mask=mask,
                           meta=meta)
 
@@ -119,12 +120,12 @@ class SpectrumCollection(NDIOMixin):
     def from_spectra(cls, spectra):
         """
         Create a spectrum collection from a set of individual
-        :class:`specutils.Spectrum1D` objects.
+        :class:`specutils.Spectrum` objects.
 
         Parameters
         ----------
         spectra : list, ndarray
-            A list of :class:`~specutils.Spectrum1D` objects to be held in the
+            A list of :class:`~specutils.Spectrum` objects to be held in the
             collection. Currently the spectral_axis parameters (e.g. observer,
             radial_velocity) must be the same for each spectrum.
         """
@@ -152,6 +153,8 @@ class SpectrumCollection(NDIOMixin):
                             doppler_convention=sa[0].doppler_convention,
                             observer=sa[0].observer,
                             target=sa[0].target)
+
+        spectral_axis_index = spectra[0].spectral_axis_index
 
         # Check that either all spectra have associated uncertainties, or that
         # none of them do. If only some do, log an error and ignore the
@@ -183,7 +186,8 @@ class SpectrumCollection(NDIOMixin):
         meta = [spec.meta for spec in spectra]
 
         return cls(flux=flux, spectral_axis=spectral_axis,
-                   uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta)
+                   uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta,
+                   spectral_axis_index=spectral_axis_index)
 
     @property
     def flux(self):
@@ -194,6 +198,10 @@ class SpectrumCollection(NDIOMixin):
     def spectral_axis(self):
         """The spectral axes as a `~astropy.units.Quantity`."""
         return self._spectral_axis
+
+    @property
+    def spectral_axis_index(self):
+        return self._spectral_axis_index
 
     @property
     def frequency(self):

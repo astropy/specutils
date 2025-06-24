@@ -13,7 +13,7 @@ from astropy.wcs.utils import pixel_to_pixel
 
 from ..parsing_utils import read_fileobj_or_hdulist
 from ..registers import data_loader
-from ... import Spectrum1D, SpectrumList
+from ... import Spectrum, SpectrumList
 
 
 HEADER_PUPOSE_KEYWORDS = ["EXTNAME", "HDUNAME"]
@@ -346,7 +346,7 @@ def add_single_spectra_to_map(
     meta = {"header": header, "purpose": PURPOSE_SPECTRA_MAP[purpose]}
 
     if purpose in CREATE_SPECTRA:
-        spectrum = Spectrum1D(wcs=wcs, flux=flux, meta=meta)
+        spectrum = Spectrum(wcs=wcs, flux=flux, meta=meta)
         spectra_map[PURPOSE_SPECTRA_MAP[purpose]].append(spectrum)
     elif purpose in ERROR_PURPOSES:
         try:

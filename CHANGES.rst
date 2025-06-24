@@ -1,15 +1,54 @@
-1.21.0 (unreleased)
--------------------
+2.0.0 (2025-06-12)
+------------------
 
 New Features
 ^^^^^^^^^^^^
+
+- Spectral axis can now be any axis, rather than being forced to be last. See docs
+  for more details. [#1033, #1226]
+
+- Spectrum now properly handles GWCS input for wcs attribute. [#1074]
+
+- JWST reader no longer transposes the input data cube for 3D data and retains
+  full GWCS information (including spatial). [#1074]
+
+- Spectrum1D renamed to Spectrum. [#1126]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Initializing a ``Spectrum`` with only a spectral axis (not full WCS) will now
+  result in a GWCS matching the dimensionality of the flux array, rather than a
+  1D spectral GWCS in all cases. [#1211, #1222]
+
+- Spectrum arithmetic now checks whether the spectral axes of the two operand ``Spectrum``
+  objects are equal, and fails if they are not. [#1211]
+
+- Added documentation about transitioning from 1.x to 2.x. [#1226]
+
+1.20.2 (2025-05-27)
+-------------------
 
 Bug Fixes
 ^^^^^^^^^
 - Made `tabular-fits` identifier more strict for which kinds of JWST data to exclude [#1234]
 
+- Fixed loaders for HST/STIS.  Added an "HST/STIS multi" reader for use with
+  ``SpectrumCollection`` to read multi-extension and/or multi-order echelle datasets. [#1233]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Warn about use of ``spectral_axis_index`` (new Spectrum1D kwarg for 2.0) in 1.x. [#1238]
+
+1.20.1 (2025-05-07)
+-------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- Switch to using an alias rather than a subclass for the temporary 1.x access
+  to the new 2.x class name (``Spectrum``). [#1236]
 
 1.20.0 (2025-05-01)
 -------------------

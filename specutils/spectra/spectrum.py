@@ -3,8 +3,11 @@ from copy import deepcopy
 
 import numpy as np
 from astropy import units as u
+from astropy.coordinates import SpectralCoord
 from astropy.utils.decorators import lazyproperty
-from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin
+from astropy.utils.decorators import deprecated
+from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataArray
+from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin
@@ -16,15 +19,14 @@ from ndcube import NDCube
 __all__ = ['Spectrum1D', 'Spectrum']
 
 
-class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
+class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     """
-    Spectrum container for 1D spectral data.
+    Spectrum container for N-dimensional data with one spectral axis.
 
-    Note that "1D" in this case refers to the fact that there is only one
-    spectral axis.  `Spectrum1D` can contain "vector 1D spectra" by having the
-    ``flux`` have a shape with dimension greater than 1.  The requirement
-    is that the last dimension of ``flux`` match the length of the
-    ``spectral_axis``.
+    `Spectrum` can contain "vector spectra" by having the
+    ``flux`` have a shape with dimension greater than 1.  One dimension of
+    ``flux`` must match the length of the ``spectral_axis`` if ``spectral_axis``
+    is provided.
 
     For multidimensional spectra that are all the same shape but have different
     spectral axes, use a :class:`~specutils.SpectrumCollection`.  For a
@@ -36,11 +38,21 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     ----------
     flux : `~astropy.units.Quantity`
         The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
-        or an existing `~Spectrum1D` or `~ndcube.NDCube` object.
+        or an existing `~Spectrum` or `~ndcube.NDCube` object.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
         if specifying bin edges.
+    spectral_axis_index : integer, optional
+        If it is ambiguous which axis is the spectral axis (e.g., if there are multiple
+        axes in the flux array with the same length as the input spectral_axis),
+        this argument is used to specify which is the spectral axis.
+    move_spectral_axis : int, str, optional
+        Force the spectral axis to be either the last axis (the default behavior prior
+        to version 2.0) by setting this argument to 'last' or -1, or the first axis by
+        setting this argument to 'first' or 0.
+        This will do a simple ``swapaxis`` between the relevant axis and original
+        spectral axis. If None, the spectral axis is left wherever it is in the input.
     wcs : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
         WCS information object that either has a spectral component or is
         only spectral.
@@ -69,9 +81,30 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         Arbitrary container for any user-specific information to be carried
         around with the spectrum container object.
     """
-    def __init__(self, flux=None, spectral_axis=None, wcs=None,
-                 velocity_convention=None, rest_value=None, redshift=None,
-                 radial_velocity=None, bin_specification=None, **kwargs):
+    def __init__(self, flux=None, spectral_axis=None, spectral_axis_index=None,
+                 wcs=None, velocity_convention=None, rest_value=None,
+                 redshift=None, radial_velocity=None, bin_specification=None,
+                 move_spectral_axis=None, **kwargs):
+
+        if spectral_axis_index == -1:
+            spectral_axis_index = flux.ndim - 1
+
+        # If the flux (data) argument is already a Spectrum (as it would
+        # be for internal arithmetic operations), avoid setup entirely.
+        if isinstance(flux, Spectrum):
+            self._spectral_axis_index = flux.spectral_axis_index
+            self._spectral_axis = flux.spectral_axis
+            super().__init__(flux)
+            return
+
+        self._spectral_axis_index = spectral_axis_index
+        # Might as well handle this right away
+        if spectral_axis_index is None and flux is not None:
+            if flux.ndim == 1:
+                self._spectral_axis_index = 0
+        elif flux is None:
+            self._spectral_axis_index = 0
+
         # Check for pre-defined entries in the kwargs dictionary.
         unknown_kwargs = set(kwargs).difference(
             {'data', 'unit', 'uncertainty', 'meta', 'mask', 'copy',
@@ -80,12 +113,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         if len(unknown_kwargs) > 0:
             raise ValueError("Initializer contains unknown arguments(s): {}."
                              "".format(', '.join(map(str, unknown_kwargs))))
-
-        # If the flux (data) argument is already a Spectrum1D (as it would
-        # be for internal arithmetic operations), avoid setup entirely.
-        if isinstance(flux, Spectrum1D):
-            super().__init__(flux)
-            return
 
         # Handle initializing from NDCube objects
         elif isinstance(flux, NDCube):
@@ -135,10 +162,8 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # In the case where the arithmetic operation is being performed with
         # a single float, int, or array object, just go ahead and ignore wcs
         # requirements
-        if (not isinstance(flux, u.Quantity) or isinstance(flux, float)
-                or isinstance(flux, int)) and np.ndim(flux) == 0:
-
-            super(Spectrum1D, self).__init__(data=flux, wcs=wcs, **kwargs)
+        if np.ndim(flux) == 0 and spectral_axis is None and wcs is None:
+            super(Spectrum, self).__init__(data=flux, wcs=wcs, **kwargs)
             return
 
         if rest_value is None:
@@ -162,66 +187,125 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                                    "energy/wavelength/frequency equivalent.")
 
         # If flux and spectral axis are both specified, check that their lengths
-        # match or are off by one (implying the spectral axis stores bin edges)
+        # match or are off by one (implying the spectral axis stores bin edges).
+        # If we can't determine which flux axis corresponds to the spectral axis
+        # we raise an error.
         if flux is not None and spectral_axis is not None:
-            if spectral_axis.shape[0] == flux.shape[-1]:
+            if spectral_axis_index is None:
+                if flux.ndim == 1:
+                    self._spectral_axis_index = 0
+                else:
+                    matching_axes = []
+                    if bin_specification == "centers":
+                        add_elements = [0,]
+                    elif bin_specification == "edges":
+                        add_elements = [1,]
+                    elif bin_specification is None:
+                        add_elements = [0,1]
+                    for i in range(flux.ndim):
+                        for add_element in add_elements:
+                            if spectral_axis.shape[0] == flux.shape[i] + add_element:
+                                matching_axes.append(i)
+
+                    if len(matching_axes) == 1:
+                        self._spectral_axis_index = matching_axes[0]
+                    else:
+                        raise ValueError("Unable to determine which flux axis corresponds to "
+                                         "the spectral axis. Please specify spectral_axis_index"
+                                         " or provide a spectral_axis matching a flux axis.")
+
+            # Make sure the length of the spectral axis matches the appropriate flux axis
+            if spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]:
                 if bin_specification == "edges":
-                    raise ValueError("A spectral axis input as bin edges"
-                        "must have length one greater than the flux axis")
+                    raise ValueError("A spectral axis input as bin edges must "
+                                     "have length one greater than the flux axis")
                 bin_specification = "centers"
-            elif spectral_axis.shape[0] == flux.shape[-1]+1:
+            elif spectral_axis.shape[0] == flux.shape[self.spectral_axis_index]+1:
                 if bin_specification == "centers":
-                    raise ValueError("A spectral axis input as bin centers"
+                    raise ValueError("A spectral axis input as bin centers "
                         "must be the same length as the flux axis")
                 bin_specification = "edges"
             else:
                 raise ValueError(
-                    "Spectral axis length ({}) must be the same size or one "
-                    "greater (if specifying bin edges) than that of the last "
-                    "flux axis ({})".format(spectral_axis.shape[0],
-                                            flux.shape[-1]))
+                    f"Spectral axis length ({spectral_axis.shape[0]}) must be the "
+                    "same size or one greater (if specifying bin edges) than that "
+                    f"of the corresponding flux axis ({flux.shape[self.spectral_axis_index]})")
 
-        # If a WCS is provided, check that the spectral axis is last and reorder
-        # the arrays if not
-        if wcs is not None and hasattr(wcs, "naxis"):
-            if wcs.naxis > 1:
+        # If a WCS is provided, determine which axis is the spectral axis
+        if wcs is not None:
+            naxis = None
+            if hasattr(wcs, "naxis"):
+                naxis = wcs.naxis
+            # GWCS doesn't have naxis
+            elif hasattr(wcs, "world_n_dim"):
+                naxis = wcs.world_n_dim
+
+            if naxis is not None and naxis > 1:
                 temp_axes = []
                 phys_axes = wcs.world_axis_physical_types
-                for i in range(len(phys_axes)):
-                    if phys_axes[i] is None:
-                        continue
-                    if phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect":
-                        temp_axes.append(i)
-                if len(temp_axes) != 1:
-                    raise ValueError("Input WCS must have exactly one axis with "
-                                     "spectral units, found {}".format(len(temp_axes)))
+                if self._spectral_axis_index is None:
+                    for i in range(len(phys_axes)):
+                        if phys_axes[i] is None:
+                            continue
+                        if (phys_axes[i][0:2] == "em" or phys_axes[i][0:5] == "spect" or
+                                phys_axes[i][7:12] == "Spect"):
+                            temp_axes.append(i)
+                    if len(temp_axes) != 1:
+                        raise ValueError("Input WCS must have exactly one axis with "
+                                        "spectral units, found {}".format(len(temp_axes)))
+                    else:
+                        # Due to FITS conventions, the WCS axes are listed in opposite
+                        # order compared to the data array.
+                        self._spectral_axis_index = len(flux.shape)-temp_axes[0]-1
 
-                # Due to FITS conventions, a WCS with spectral axis first corresponds
-                # to a flux array with spectral axis last.
-                if temp_axes[0] != 0:
-                    warnings.warn("Input WCS indicates that the spectral axis is not"
-                                  " last. Reshaping arrays to put spectral axis last.")
-                    wcs = wcs.swapaxes(0, temp_axes[0])
-                    if flux is not None:
-                        flux = np.swapaxes(flux, len(flux.shape)-temp_axes[0]-1, -1)
-                    if "mask" in kwargs:
-                        if kwargs["mask"] is not None:
-                            kwargs["mask"] = np.swapaxes(kwargs["mask"],
-                                                len(kwargs["mask"].shape)-temp_axes[0]-1, -1)
-                    if "uncertainty" in kwargs:
-                        if kwargs["uncertainty"] is not None:
-                            if isinstance(kwargs["uncertainty"], NDUncertainty):
-                                # Account for Astropy uncertainty types
-                                unc_len = len(kwargs["uncertainty"].array.shape)
-                                temp_unc = np.swapaxes(kwargs["uncertainty"].array,
-                                                       unc_len-temp_axes[0]-1, -1)
-                                if kwargs["uncertainty"].unit is not None:
-                                    temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
-                                kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
-                            else:
-                                kwargs["uncertainty"] = np.swapaxes(kwargs["uncertainty"],
-                                                        len(kwargs["uncertainty"].shape) -
-                                                        temp_axes[0]-1, -1)
+                if move_spectral_axis is not None:
+                    if isinstance(wcs, GWCS):
+                        raise ValueError("move_spectral_axis cannot be used with GWCS")
+                    if isinstance(move_spectral_axis, str):
+                        if move_spectral_axis.lower() == 'first':
+                            move_to_index = 0
+                        elif move_spectral_axis.lower() == 'last':
+                            move_to_index = wcs.naxis - 1
+                        else:
+                            raise ValueError("move_spectral_axis must be either 'first' or 'last'")
+                    elif isinstance(move_spectral_axis, int):
+                        move_to_index = move_spectral_axis
+                    else:
+                        raise ValueError("move_spectral_axis must be an integer or 'first'/'last'")
+
+                    if move_to_index != self._spectral_axis_index:
+                        wcs = wcs.swapaxes(self._spectral_axis_index, move_to_index)
+                        if flux is not None:
+                            flux = np.swapaxes(flux, self._spectral_axis_index, move_to_index)
+                        if "mask" in kwargs:
+                            if kwargs["mask"] is not None:
+                                kwargs["mask"] = np.swapaxes(kwargs["mask"],
+                                                    self._spectral_axis_index, move_to_index)
+                        if "uncertainty" in kwargs:
+                            if kwargs["uncertainty"] is not None:
+                                if isinstance(kwargs["uncertainty"], NDUncertainty):
+                                    # Account for Astropy uncertainty types
+                                    temp_unc = np.swapaxes(kwargs["uncertainty"].array,
+                                                           self._spectral_axis_index, move_to_index)
+                                    if kwargs["uncertainty"].unit is not None:
+                                        temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
+                                    kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
+                                else:
+                                    kwargs["uncertainty"] = np.swapaxes(kwargs["uncertainty"],
+                                                            self._spectral_axis_index, move_to_index)
+
+                        self._spectral_axis_index = move_to_index
+
+            else:
+                if flux is not None and flux.ndim == 1:
+                    self._spectral_axis_index = 0
+                else:
+                    if self.spectral_axis_index is None:
+                        raise ValueError("WCS is 1D but flux is multi-dimensional. Please"
+                                         " specify spectral_axis_index.")
+
+        elif move_spectral_axis is not None:
+            raise ValueError("Unable to use `move_spectral_axis` without a multi-dimensional WCS")
 
         # Attempt to parse the spectral axis. If none is given, try instead to
         # parse a given wcs. This is put into a GWCS object to
@@ -235,10 +319,6 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             # If spectral axis is provided as an astropy Quantity, convert it
             # to a specutils SpectralAxis object.
             if not isinstance(spectral_axis, SpectralAxis):
-                if spectral_axis.shape[0] == flux.shape[-1] + 1:
-                    bin_specification = "edges"
-                else:
-                    bin_specification = "centers"
                 self._spectral_axis = SpectralAxis(
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
@@ -256,13 +336,25 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 self._spectral_axis = spectral_axis
 
             if wcs is None:
-                wcs = gwcs_from_array(self._spectral_axis)
+                wcs = gwcs_from_array(self._spectral_axis,
+                                      flux.shape,
+                                      spectral_axis_index=self.spectral_axis_index
+                                      )
 
         elif wcs is None:
             # If no spectral axis or wcs information is provided, initialize
             # with an empty gwcs based on the flux.
-            size = flux.shape[-1] if not flux.isscalar else 1
-            wcs = gwcs_from_array(np.arange(size) * u.Unit(""))
+            if self.spectral_axis_index is None:
+                if flux.ndim == 1:
+                    self._spectral_axis_index = 0
+                else:
+                    raise ValueError("Must specify spectral_axis_index if no WCS or spectral"
+                                     " axis is input.")
+            size = flux.shape[self.spectral_axis_index] if not flux.isscalar else 1
+            wcs = gwcs_from_array(np.arange(size) * u.Unit("pixel"),
+                                  flux.shape,
+                                  spectral_axis_index=self.spectral_axis_index
+                                  )
 
         super().__init__(
             data=flux.value if isinstance(flux, u.Quantity) else flux,
@@ -276,11 +368,33 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             if hasattr(self.wcs, "spectral"):
                 # Handle generated 1D WCS that aren't set to spectral
                 if not self.wcs.is_spectral and self.wcs.naxis == 1:
-                    spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+                    spec_axis = self.wcs.pixel_to_world(
+                                    np.arange(self.flux.shape[self.spectral_axis_index]))
                 else:
-                    spec_axis = self.wcs.spectral.pixel_to_world(np.arange(self.flux.shape[-1]))
+                    spec_axis = self.wcs.spectral.pixel_to_world(
+                                    np.arange(self.flux.shape[self.spectral_axis_index]))
             else:
-                spec_axis = self.wcs.pixel_to_world(np.arange(self.flux.shape[-1]))
+                # We now keep the entire GWCS, including spatial information, so we need to include
+                # all axes in the pixel_to_world call. Note that this assumes/requires that the
+                # dispersion is the same at all spatial locations.
+                wcs_args = []
+                for i in range(len(self.flux.shape)):
+                    wcs_args.append(np.zeros(self.flux.shape[self.spectral_axis_index]))
+                # Replace with arange for the spectral axis
+                wcs_args[self.spectral_axis_index] = np.arange(self.flux.shape[self.spectral_axis_index])
+                wcs_args.reverse()
+                temp_coords = self.wcs.pixel_to_world(*wcs_args)
+                # If there are spatial axes, temp_coords will have a SkyCoord and a SpectralCoord
+                if isinstance(temp_coords, list):
+                    for coords in temp_coords:
+                        if isinstance(coords, SpectralCoord):
+                            spec_axis = coords
+                            break
+                    else:
+                        # WCS axis ordering is reverse of numpy
+                        spec_axis = temp_coords[len(temp_coords) - self.spectral_axis_index - 1]
+                else:
+                    spec_axis = temp_coords
 
             try:
                 if spec_axis.unit.is_equivalent(u.one):
@@ -309,34 +423,45 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def __getitem__(self, item):
         """
         Override the class indexer. We do this here because there are two cases
-        for slicing on a ``Spectrum1D``:
+        for slicing on a ``Spectrum``:
 
             1.) When the flux is one dimensional, indexing represents a single
                 flux value at a particular spectral axis bin, and returns a new
-                ``Spectrum1D`` where all attributes are sliced.
+                ``Spectrum`` where all attributes are sliced.
             2.) When flux is multi-dimensional (i.e. several fluxes over the
-                same spectral axis), indexing returns a new ``Spectrum1D`` with
+                same spectral axis), indexing returns a new ``Spectrum`` with
                 the sliced flux range and a deep copy of all other attributes.
 
         The first case is handled by the parent class, while the second is
         handled here.
         """
+        new_spectral_axis_index = self.spectral_axis_index
 
         if self.flux.ndim > 1 or (isinstance(item, tuple) and item[0] is Ellipsis):
             if isinstance(item, tuple):
-                if len(item) == len(self.flux.shape) or item[0] is Ellipsis:
-                    spec_item = item[-1]
+                if len(item) == self.flux.ndim or item[0] == Ellipsis:
+                    spec_item = item[self.spectral_axis_index]
                     if not isinstance(spec_item, slice):
                         if isinstance(item, u.Quantity):
                             raise ValueError("Indexing on single spectral axis "
                                              "values is not currently allowed, "
                                              "please use a slice.")
                         spec_item = slice(spec_item, spec_item+1, None)
-                        item = item[:-1] + (spec_item,)
+                        # We have to hack around updating this tuple entry
+                        item = list(item)
+                        item[self.spectral_axis_index] = spec_item
+                        item = tuple(item)
                 else:
                     # Slicing on less than the full number of axes means we want
                     # to keep the whole spectral axis
                     spec_item = slice(None, None, None)
+                    # If any slices are single integers, need to decrement the spectral axis index
+
+                for i in range(len(item)-1):
+                    # Decrement spectral_axis_index for each single element slice
+                    if isinstance(item[i], int):
+                        new_spectral_axis_index -= 1
+
             elif isinstance(item, slice) and (isinstance(item.start, u.Quantity) or
                     isinstance(item.stop, u.Quantity)):
                 # We only allow slicing with world coordinates along the spectral
@@ -352,7 +477,10 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 spec_item = item
             else:
                 # Slicing with a single integer or slice uses the leading axis,
-                # so we keep the whole spectral axis, which is last
+                # so we keep the whole spectral axis, which is last. Need to decrement
+                # the spectral axis index by one
+                if isinstance(item, int):
+                    new_spectral_axis_index -= 1
                 spec_item = slice(None, None, None)
 
             if (isinstance(spec_item.start, u.Quantity) or
@@ -376,7 +504,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 uncertainty=self.uncertainty[item]
                 if self.uncertainty is not None else None,
                 mask=self.mask[item] if self.mask is not None else None,
-                meta=new_meta, wcs=None)
+                meta=new_meta, wcs=None, spectral_axis_index=new_spectral_axis_index)
 
         if not isinstance(item, slice):
             if isinstance(item, u.Quantity):
@@ -393,6 +521,20 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         elif (isinstance(item.start, u.Quantity) or isinstance(item.stop, u.Quantity)):
             return self._spectral_slice(item)
 
+        # Work around error in SpectralCoord creation in super().__getitem__ for
+        # spectral axis in pixels.
+        if self.spectral_axis.unit == u.pix:
+            if "original_wcs" not in self.meta:
+                new_meta = deepcopy(self.meta)
+                new_meta["original_wcs"] = deepcopy(self.wcs)
+            return self._copy(
+                flux=self.flux[item],
+                spectral_axis=self.spectral_axis[item],
+                uncertainty=self.uncertainty[item]
+                if self.uncertainty is not None else None,
+                mask=self.mask[item] if self.mask is not None else None,
+                meta=new_meta, wcs=None, spectral_axis_index=new_spectral_axis_index)
+
         tmp_spec = super().__getitem__(item)
 
         # TODO: this is a workaround until we figure out how to deal with non-
@@ -401,7 +543,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         #  a regular slicing operation, the wcs is handed back to the
         #  initializer and a new spectral axis is created. This would then also
         #  be in length units, which may not be the units used initially. So,
-        #  we create a new ``Spectrum1D`` that includes the sliced spectral
+        #  we create a new ``Spectrum`` that includes the sliced spectral
         #  axis. This means that a new wcs object will be created with the
         #  appropriate unit translation handling.
         if "original_wcs" not in self.meta:
@@ -415,7 +557,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
     def _copy(self, **kwargs):
         """
-        Perform deep copy operations on each attribute of the ``Spectrum1D``
+        Perform deep copy operations on each attribute of the ``Spectrum``
         object.
         """
         alt_kwargs = dict(
@@ -427,9 +569,14 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             meta=deepcopy(self.meta),
             unit=deepcopy(self.unit),
             velocity_convention=deepcopy(self.velocity_convention),
-            rest_value=deepcopy(self.rest_value))
+            rest_value=deepcopy(self.rest_value),
+            spectral_axis_index=deepcopy(self.spectral_axis_index))
 
         alt_kwargs.update(kwargs)
+        if 'spectral_axis' in kwargs and 'wcs' not in kwargs:
+            # We assume in this case that the user wants to override with a new spectral axis
+            alt_kwargs['meta']['original_wcs'] = alt_kwargs['wcs']
+            alt_kwargs['wcs'] = None
 
         return self.__class__(**alt_kwargs)
 
@@ -461,7 +608,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         value (default), over a specified numerical axis or axes if specified, or
         over the spectral or non-spectral axes if ``physical_type`` is specified.
 
-        If the collapse leaves the spectral axis unchanged, a `~specutils.Spectrum1D`
+        If the collapse leaves the spectral axis unchanged, a `~specutils.Spectrum`
         will be returned. Otherwise an `~astropy.units.Quantity` array will be
         returned.
 
@@ -483,7 +630,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         Returns
         -------
-        :class:`~specutils.Spectrum1D` or :class:`~astropy.units.Quantity`
+        :class:`~specutils.Spectrum` or :class:`~astropy.units.Quantity`
 
         """
         collapse_funcs = {"mean": np.nanmean, "max": np.nanmax, "min": np.nanmin,
@@ -491,10 +638,11 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         if isinstance(axis, str):
             if axis == 'spectral':
-                axis = -1
+                axis = self.spectral_axis_index
             elif axis == 'spatial':
                 # generate tuple if needed for multiple spatial axes
-                axis = tuple([x for x in range(len(self.flux.shape) - 1)])
+                axis = tuple([x for x in range(len(self.flux.shape)) if
+                              x != self.spectral_axis_index])
             else:
                 raise ValueError("String axis input must be 'spatial' or 'spectral'")
 
@@ -510,13 +658,15 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             collapsed_flux = collapse_funcs[method](flux_to_collapse, axis=axis)
 
-        # Return a Spectrum1D if we collapsed over the spectral axis, a Quantity if not
-        if axis in (-1, None, len(self.flux.shape)-1):
+        # Return a Spectrum if we collapsed over the spectral axis, a Quantity if not
+        if axis in (self.spectral_axis_index, None):
             return collapsed_flux
-        elif isinstance(axis, tuple) and -1 in axis:
+        elif isinstance(axis, tuple) and self.spectral_axis_index in axis:
             return collapsed_flux
         else:
-            return Spectrum1D(collapsed_flux, wcs=self.wcs)
+            # Pass the spectral axis rather than WCS in this case, so we don't have to
+            # figure out which part of a multidimensional WCS is the spectral part.
+            return Spectrum(collapsed_flux, spectral_axis=self.spectral_axis)
 
     def mean(self, **kwargs):
         return self.collapse("mean", **kwargs)
@@ -669,45 +819,77 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             raise ValueError("One of redshift or radial_velocity must be set.")
 
+    def with_spectral_axis_last(self):
+        """
+        Convenience method to return a new copy of the Spectrum with the spectral axis last.
+        """
+        return Spectrum(flux=self.flux, wcs=self.wcs,
+                          mask=self.mask, uncertainty=self.uncertainty,
+                          redshift=self.redshift, move_spectral_axis="last")
+
     def _return_with_redshift(self, result):
-        result.shift_spectrum_to(redshift=self.redshift)
+        # We need actual spectral units to shift
+        if result.spectral_axis.unit not in ('', 'pix', 'pixels'):
+            result.shift_spectrum_to(redshift=self.redshift)
         return result
 
-    def __add__(self, other):
-        if not isinstance(other, (NDCube, u.Quantity)):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+    def _check_input(self, other, force_quantity=False):
+        # NDArithmetic mixin will try to turn other into a Spectrum, which will fail
+        # sometimes because of not specifiying the spectral axis index
+        if isinstance(other, Spectrum):
+            # Take this opportunity to check if the spectral axes match
+            if not np.all(other.spectral_axis == self.spectral_axis):
+                raise ValueError("Spectral axis of both operands must match")
+        else:
+            if not isinstance(other, u.Quantity) and force_quantity:
+                other = other * self.unit
 
-        return self._return_with_redshift(self.add(other))
+        return other
+
+    def _do_flux_arithmetic(self, other, arith_func):
+        '''
+        Perform an arithmetic operation by casting the flux as a NDDataArray
+        '''
+        operand1 = NDDataArray(self.flux, uncertainty=self.uncertainty, mask=self.mask)
+        if isinstance(other, (Spectrum)):
+            other = NDDataArray(other.flux, uncertainty=other.uncertainty, mask=other.mask)
+
+        func = getattr(operand1, arith_func)
+        new_flux = func(other)
+        return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
+                                                   wcs=self.wcs,
+                                                   meta=self.meta,
+                                                   uncertainty=new_flux.uncertainty,
+                                                   mask = new_flux.mask,
+                                                   spectral_axis_index=self.spectral_axis_index))
+
+    def __add__(self, other):
+        other = self._check_input(other, force_quantity=True)
+        return self._do_flux_arithmetic(other, "add")
 
     def __sub__(self, other):
-        if not isinstance(other, NDCube):
-            try:
-                other = u.Quantity(other, unit=self.unit)
-            except TypeError:
-                return NotImplemented
+        try:
+            other = self._check_input(other, force_quantity=True)
+        except TypeError:
+            # Might need special handling by other operand before ours
+            if hasattr(other, "__rsub__"):
+                return other.__rsub__(self)
+            else:
+                raise
 
-        return self._return_with_redshift(self.subtract(other))
+        return self._do_flux_arithmetic(other, "subtract")
 
     def __mul__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
-
-        return self._return_with_redshift(self.multiply(other))
+        other = self._check_input(other)
+        return self._do_flux_arithmetic(other, "multiply")
 
     def __div__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
-
-        return self._return_with_redshift(self.divide(other))
+        other = self._check_input(other)
+        return self._do_flux_arithmetic(other, "divide")
 
     def __truediv__(self, other):
-        if not isinstance(other, NDCube):
-            other = u.Quantity(other)
-
-        return self._return_with_redshift(self.divide(other))
+        other = self._check_input(other)
+        return self._do_flux_arithmetic(other, "divide")
 
     __radd__ = __add__
 
@@ -726,7 +908,7 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             return "{:17} [ ],  mean= n/a".format(label+':')
 
     def __str__(self):
-        result = "Spectrum1D "
+        result = "Spectrum "
         result += "(length={})\n".format(len(self.spectral_axis))
 
         # Add Flux information
@@ -753,35 +935,26 @@ class Spectrum1D(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             flux_str += f" {self.flux.unit}"
 
         flux_str += f" (shape={self.flux.shape}, mean={np.nanmean(self.flux):.5f}); "
-        spectral_axis_str = (repr(self.spectral_axis).split("[")[0] +
-                             np.array2string(self.spectral_axis, threshold=8) +
-                             f" {self.spectral_axis.unit}>")
-        spectral_axis_str = f"spectral_axis={spectral_axis_str} (length={len(self.spectral_axis)})"
-        inner_str = (flux_str + spectral_axis_str)
+        # Sometimes this errors if an error occurs during initialization
+        if hasattr(self, "_spectral_axis"):
+            spectral_axis_str = (repr(self.spectral_axis).split("[")[0] +
+                                    np.array2string(self.spectral_axis, threshold=8) +
+                                    f" {self.spectral_axis.unit}>")
+            spectral_axis_str = f"spectral_axis={spectral_axis_str} (length={len(self.spectral_axis)})"
+            inner_str = (flux_str + spectral_axis_str)
+        else:
+            inner_str = flux_str
 
         if self.uncertainty is not None:
             inner_str += f"; uncertainty={self.uncertainty.__class__.__name__}"
 
-        result = "<Spectrum1D({})>".format(inner_str)
+        result = "<Spectrum({})>".format(inner_str)
 
         return result
 
 
-class Spectrum(Spectrum1D):
-    '''
-    Adding this to 1.x so that people can update the name of the class in their
-    code without needing to wait for the 2.0 release or update their version pin.
-    '''
+@deprecated(since="2.0", alternative="Spectrum")
+class Spectrum1D(Spectrum):
+
     def __init__(self, *args, **kwargs):
-        if 'move_spectral_axis' in kwargs:
-            # This keyword doesn't do anything in 1.x, in 2.0 setting it to 'last'
-            # will reproduce moving the spectral axis to last as in 1.x.
-            if 'flux' in kwargs:
-                flux = kwargs['flux']
-            else:
-                flux = args[0]
-            move_spectral_axis = kwargs.pop('move_spectral_axis', None)
-            if move_spectral_axis not in ['last', -1, flux.ndim -1, None]:
-                warnings.warn("move_spectral_axis is ignored in specutils 1.x.")
-        kwargs.pop('spectral_axis_index', None)
         super().__init__(*args, **kwargs)

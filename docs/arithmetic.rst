@@ -20,16 +20,16 @@ Arithmetic support includes addition, subtract, multiplication, and division.
 
 .. code-block:: python
 
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> import astropy.units as u
     >>> import numpy as np
 
     >>> rng = np.random.default_rng(12345)
-    >>> spec1 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=rng.random(49)*u.Jy)
-    >>> spec2 = Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=rng.random(49)*u.Jy)
+    >>> spec1 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm, flux=rng.random(49)*u.Jy)
+    >>> spec2 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm, flux=rng.random(49)*u.Jy)
     >>> spec3 = spec1 + spec2
     >>> spec3  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=[0.8559405665668484 ... 0.9711264429515736] Jy (shape=(49,), mean=0.91592 Jy); spectral_axis=<SpectralAxis
+    <Spectrum(flux=[0.8559405665668484 ... 0.9711264429515736] Jy (shape=(49,), mean=0.91592 Jy); spectral_axis=<SpectralAxis
        (observer to target:
           radial_velocity=0.0 km / s
           redshift=0.0)
@@ -47,10 +47,10 @@ Arithmetic operations also support the propagation of unceratinty information.
 
     >>> rng = np.random.default_rng(12345)
     >>> wave = np.arange(10) * u.nm
-    >>> spec1 = Spectrum1D(spectral_axis=wave,
+    >>> spec1 = Spectrum(spectral_axis=wave,
     ...                    flux=rng.random(10)*u.Jy,
     ...                    uncertainty=StdDevUncertainty(rng.random(10) * 0.1))
-    >>> spec2 = Spectrum1D(spectral_axis=wave,
+    >>> spec2 = Spectrum(spectral_axis=wave,
     ...                    flux=rng.random(10)*u.Jy,
     ...                    uncertainty=StdDevUncertainty(rng.random(10) * 0.1))
     >>> spec1.uncertainty

@@ -5,7 +5,7 @@ from scipy.signal import medfilt
 import astropy.units as u
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 
-from ..spectra import Spectrum1D
+from ..spectra import Spectrum
 from ..manipulation.smoothing import (convolution_smooth, box_smooth,
                                       gaussian_smooth, trapezoid_smooth,
                                       median_smooth)
@@ -279,5 +279,5 @@ def test_medfilt_dtype():
     flux = [1, 2, 3] * u.Jy
 
     for dtype in ('>f4', np.float32, 'i4', int):
-        spectrum = Spectrum1D(flux=flux.astype(dtype), spectral_axis=[1, 2, 3] * u.um)
+        spectrum = Spectrum(flux=flux.astype(dtype), spectral_axis=[1, 2, 3] * u.um)
         median_smooth(spectrum, 1)

@@ -6,7 +6,7 @@ from astropy.modeling import models
 
 from astropy.tests.helper import assert_quantity_allclose
 
-from ..spectra.spectrum1d import Spectrum1D, SpectralRegion
+from ..spectra.spectrum import Spectrum, SpectralRegion
 from ..manipulation.model_replace import model_replace
 from ..fitting import fit_lines
 
@@ -15,7 +15,7 @@ def test_from_knots():
     wave_val = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     flux_val = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
 
-    input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
+    input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy)
 
     spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
 
@@ -43,7 +43,7 @@ def test_with_uncert_from_knots():
 
     uncert = StdDevUncertainty(uncert_val * u.mJy)
 
-    input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
+    input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
                                 uncertainty=uncert)
 
     spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
@@ -72,7 +72,7 @@ def test_with_uncert_zerofill_from_knots():
 
     uncert = StdDevUncertainty(uncert_val * u.mJy)
 
-    input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
+    input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
                                 uncertainty=uncert)
 
     spline_knots = [3.5, 4.7, 6.8, 7.1] * u.AA
@@ -93,7 +93,7 @@ def test_from_region():
 
     uncert = StdDevUncertainty(uncert_val * u.mJy)
 
-    input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
+    input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
                                 uncertainty=uncert)
 
     region = SpectralRegion(3.5*u.AA, 7.1*u.AA)
@@ -114,7 +114,7 @@ def test_from_fitted_model():
 
     uncert = StdDevUncertainty(uncert_val * u.mJy)
 
-    input_spectrum = Spectrum1D(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
+    input_spectrum = Spectrum(spectral_axis=wave_val * u.AA, flux=flux_val * u.mJy,
                                 uncertainty=uncert)
 
     model = models.Gaussian1D(10, 5.6, 1.2)

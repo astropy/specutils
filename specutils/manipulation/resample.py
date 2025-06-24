@@ -5,7 +5,7 @@ from astropy.nddata import VarianceUncertainty, InverseVariance
 from astropy.units import Quantity
 from scipy.interpolate import CubicSpline
 
-from ..spectra import Spectrum1D, SpectralAxis
+from ..spectra import Spectrum, SpectralAxis
 
 __all__ = ['ResamplerBase', 'FluxConservingResampler',
            'LinearInterpolatedResampler', 'SplineInterpolatedResampler']
@@ -31,14 +31,14 @@ class ResamplerBase(ABC):
 
     def __call__(self, orig_spectrum, fin_spec_axis):
         """
-        Return the resulting `~specutils.Spectrum1D` of the resampling.
+        Return the resulting `~specutils.Spectrum` of the resampling.
         """
         return self.resample1d(orig_spectrum, fin_spec_axis)
 
     @abstractmethod
     def resample1d(self, orig_spectrum, fin_spec_axis):
         """
-        Workhorse method that will return the resampled Spectrum1D
+        Workhorse method that will return the resampled Spectrum
         object.
         """
         return NotImplemented
@@ -68,15 +68,15 @@ class FluxConservingResampler(ResamplerBase):
 
     >>> import numpy as np
     >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> from specutils.manipulation import FluxConservingResampler
-    >>> input_spectra = Spectrum1D(
+    >>> input_spectra = Spectrum(
     ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23]  *u.nm
     >>> fluxc_resample = FluxConservingResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [ 1.  ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy> (shape=(9,), mean=7.60714 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
+    <Spectrum(flux=<Quantity [ 1.  ,  3.  ,  6.  ,  7.  ,  6.25, 10.  , 20.  ,   nan,   nan] mJy> (shape=(9,), mean=7.60714 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
 
     """
 
@@ -227,15 +227,15 @@ class FluxConservingResampler(ResamplerBase):
 
         Parameters
         ----------
-        orig_spectrum : `~specutils.Spectrum1D`
+        orig_spectrum : `~specutils.Spectrum`
             The original 1D spectrum.
         fin_spec_axis :  Quantity
             The desired spectral axis array.
 
         Returns
         -------
-        resampled_spectrum : `~specutils.Spectrum1D`
-            An output spectrum containing the resampled `~specutils.Spectrum1D`
+        resampled_spectrum : `~specutils.Spectrum`
+            An output spectrum containing the resampled `~specutils.Spectrum`
         """
 
         if isinstance(fin_spec_axis, Quantity):
@@ -298,9 +298,10 @@ class FluxConservingResampler(ResamplerBase):
                 new_errs = new_errs[np.where(~np.isnan(output_fluxes))]
             output_fluxes = output_fluxes[np.where(~np.isnan(output_fluxes))]
 
-        resampled_spectrum = Spectrum1D(flux=output_fluxes,
+        resampled_spectrum = Spectrum(flux=output_fluxes,
                                         spectral_axis=fin_spec_axis,
-                                        uncertainty=new_errs)
+                                        uncertainty=new_errs,
+                                        spectral_axis_index = orig_spectrum.spectral_axis_index)
 
         return resampled_spectrum
 
@@ -325,15 +326,15 @@ class LinearInterpolatedResampler(ResamplerBase):
 
     >>> import numpy as np
     >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> from specutils.manipulation import LinearInterpolatedResampler
-    >>> input_spectra = Spectrum1D(
+    >>> input_spectra = Spectrum(
     ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
     >>> fluxc_resample = LinearInterpolatedResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [ nan, 3.5 , 5.5 , 6.75, 6.5 , 9.5 ,  nan,  nan,  nan] mJy> (shape=(9,), mean=6.35000 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
+    <Spectrum(flux=<Quantity [ nan, 3.5 , 5.5 , 6.75, 6.5 , 9.5 ,  nan,  nan,  nan] mJy> (shape=(9,), mean=6.35000 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
 
     """
     def __init__(self, extrapolation_treatment='nan_fill'):
@@ -346,15 +347,15 @@ class LinearInterpolatedResampler(ResamplerBase):
 
         Parameters
         ----------
-        orig_spectrum : `~specutils.Spectrum1D`
+        orig_spectrum : `~specutils.Spectrum`
             The original 1D spectrum.
         fin_spec_axis : ndarray
             The desired spectral axis array.
 
         Returns
         -------
-        resample_spectrum : `~specutils.Spectrum1D`
-            An output spectrum containing the resampled `~specutils.Spectrum1D`
+        resample_spectrum : `~specutils.Spectrum`
+            An output spectrum containing the resampled `~specutils.Spectrum`
         """
 
         fill_val = np.nan  # bin_edges=nan_fill case
@@ -381,9 +382,10 @@ class LinearInterpolatedResampler(ResamplerBase):
                 new_unc = new_unc[np.where(~np.isnan(out_flux))]
             out_flux = out_flux[np.where(~np.isnan(out_flux))]
 
-        return Spectrum1D(spectral_axis=fin_spec_axis,
+        return Spectrum(spectral_axis=fin_spec_axis,
                           flux=out_flux,
-                          uncertainty=new_unc)
+                          uncertainty=new_unc,
+                          spectral_axis_index = orig_spectrum.spectral_axis_index)
 
 
 class SplineInterpolatedResampler(ResamplerBase):
@@ -409,15 +411,15 @@ class SplineInterpolatedResampler(ResamplerBase):
 
     >>> import numpy as np
     >>> import astropy.units as u
-    >>> from specutils import Spectrum1D
+    >>> from specutils import Spectrum
     >>> from specutils.manipulation import SplineInterpolatedResampler
-    >>> input_spectra = Spectrum1D(
+    >>> input_spectra = Spectrum(
     ...     flux=np.array([1, 3, 7, 6, 20]) * u.mJy,
     ...     spectral_axis=np.array([2, 4, 12, 16, 20]) * u.nm)
     >>> resample_grid = [1, 5, 9, 13, 14, 17, 21, 22, 23] * u.nm
     >>> fluxc_resample = SplineInterpolatedResampler()
     >>> fluxc_resample(input_spectra, resample_grid)  # doctest: +FLOAT_CMP
-    <Spectrum1D(flux=<Quantity [       nan, 3.98808594, 6.94042969, 6.45869141, 5.89921875,
+    <Spectrum(flux=<Quantity [       nan, 3.98808594, 6.94042969, 6.45869141, 5.89921875,
                7.29736328,        nan,        nan,        nan] mJy> (shape=(9,), mean=6.11676 mJy); spectral_axis=<SpectralAxis [ 1.  5.  9. ... 21. 22. 23.] nm> (length=9))>
 
     """
@@ -431,15 +433,15 @@ class SplineInterpolatedResampler(ResamplerBase):
 
         Parameters
         ----------
-        orig_spectrum : `~specutils.Spectrum1D`
+        orig_spectrum : `~specutils.Spectrum`
             The original 1D spectrum.
         fin_spec_axis : Quantity
             The desired spectral axis array.
 
         Returns
         -------
-        resample_spectrum : `~specutils.Spectrum1D`
-            An output spectrum containing the resampled `~specutils.Spectrum1D`
+        resample_spectrum : `~specutils.Spectrum`
+            An output spectrum containing the resampled `~specutils.Spectrum`
         """
         orig_axis_in_new = orig_spectrum.spectral_axis.to(fin_spec_axis.unit)
         flux_spline = CubicSpline(orig_axis_in_new.value, orig_spectrum.flux.value,
@@ -473,6 +475,7 @@ class SplineInterpolatedResampler(ResamplerBase):
                 new_unc = new_unc[np.where(~np.isnan(out_flux_val))]
             out_flux_val = out_flux_val[np.where(~np.isnan(out_flux_val))]
 
-        return Spectrum1D(spectral_axis=fin_spec_axis,
+        return Spectrum(spectral_axis=fin_spec_axis,
                           flux=out_flux_val*orig_spectrum.flux.unit,
-                          uncertainty=new_unc)
+                          uncertainty=new_unc,
+                          spectral_axis_index = orig_spectrum.spectral_axis_index)

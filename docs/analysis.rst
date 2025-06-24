@@ -8,7 +8,7 @@ The specutils package comes with a set of tools for doing common analysis
 tasks on astronomical spectra. Some examples of applying these tools are
 described below. The basic spectrum shown here is used in the examples in the
 sub-sections below - a gaussian-profile line with flux of 5 GHz Jy.  See
-:doc:`spectrum1d` for more on creating spectra:
+:doc:`spectrum` for more on creating spectra:
 
 .. plot::
     :include-source: true
@@ -18,14 +18,14 @@ sub-sections below - a gaussian-profile line with flux of 5 GHz Jy.  See
     >>> from astropy import units as u
     >>> from astropy.nddata import StdDevUncertainty
     >>> from astropy.modeling import models
-    >>> from specutils import Spectrum1D, SpectralRegion
+    >>> from specutils import Spectrum, SpectralRegion
     >>> np.random.seed(42)
     >>> spectral_axis = np.linspace(11., 1., 200) * u.GHz
     >>> spectral_model = models.Gaussian1D(amplitude=5*(2*np.pi*0.8**2)**-0.5*u.Jy, mean=5*u.GHz, stddev=0.8*u.GHz)
     >>> flux = spectral_model(spectral_axis)
     >>> flux += np.random.normal(0., 0.05, spectral_axis.shape) * u.Jy
     >>> uncertainty = StdDevUncertainty(0.2*np.ones(flux.shape)*u.Jy)
-    >>> noisy_gaussian = Spectrum1D(spectral_axis=spectral_axis, flux=flux, uncertainty=uncertainty)
+    >>> noisy_gaussian = Spectrum(spectral_axis=spectral_axis, flux=flux, uncertainty=uncertainty)
     >>> import matplotlib.pyplot as plt #doctest:+SKIP
     >>> plt.step(noisy_gaussian.spectral_axis, noisy_gaussian.flux) #doctest:+SKIP
 
@@ -48,7 +48,7 @@ spectrum:
 
 
 A second method to calculate SNR does not require the uncertainty defined
-on the `~specutils.Spectrum1D` object. This computes the signal to noise
+on the `~specutils.Spectrum` object. This computes the signal to noise
 ratio DER_SNR following the definition set forth by the Spectral
 Container Working Group of ST-ECF, MAST and CADC. This algorithm is described at
 https://esahubble.org/static/archives/stecfnewsletters/pdf/hst_stecf_0042.pdf
@@ -156,6 +156,11 @@ The `~specutils.analysis.moment` function computes moments of any order:
     >>> moment(noisy_gaussian, SpectralRegion(7*u.GHz, 3*u.GHz), order=2) # doctest:+FLOAT_CMP
     <Quantity 0.58586695 GHz2>
 
+By default the moment is calculated along the spectral axis, but any axis can be specified with
+the ``axis`` keyword. Non-spectral-axis moments are calculated using integer pixel values for the
+dispersion and return unitless values. Although they are available, they are perhaps of
+questionable usefulness.
+
 
 Line Widths
 -----------
@@ -257,15 +262,15 @@ An example of how to do template matching with an unknown redshift is:
    >>> resample_method = "flux_conserving"
    >>> rs_values = np.arange(min_redshift, max_redshift+delta_redshift, delta_redshift)
 
-   >>> observed_spectrum = Spectrum1D(spectral_axis=spec_axis*(1+observed_redshift), flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
-   >>> spectral_template = Spectrum1D(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+   >>> observed_spectrum = Spectrum(spectral_axis=spec_axis*(1+observed_redshift), flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
+   >>> spectral_template = Spectrum(spectral_axis=spec_axis, flux=np.random.randn(50) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(50), unit='Jy'))
    >>> tm_result = template_comparison.template_match(observed_spectrum=observed_spectrum, spectral_templates=spectral_template, resample_method=resample_method, redshift=rs_values) # doctest:+FLOAT_CMP
 
 
 Dust extinction
 ---------------
 
-Dust extinction can be applied to Spectrum1D instances via their internal arrays, using
+Dust extinction can be applied to Spectrum instances via their internal arrays, using
 the ``dust_extinction`` package (http://dust-extinction.readthedocs.io/en/latest)
 
 Below is an example of how to apply extinction.
@@ -277,14 +282,14 @@ Below is an example of how to apply extinction.
 
     wave = np.logspace(np.log10(1000), np.log10(3e4), num=10) * u.AA
     flux = blackbody_lambda(wave, 10000 * u.K)
-    spec = Spectrum1D(spectral_axis=wave, flux=flux)
+    spec = Spectrum(spectral_axis=wave, flux=flux)
 
     # define the model
     ext = F99(Rv=3.1)
 
     # extinguish (redden) the spectrum
     flux_ext = spec.flux * ext.extinguish(spec.spectral_axis, Ebv=0.5)
-    spec_ext = Spectrum1D(spectral_axis=wave, flux=flux_ext)
+    spec_ext = Spectrum(spectral_axis=wave, flux=flux_ext)
 
 
 Template Cross-correlation
@@ -311,8 +316,8 @@ value set.
     >>> flux1 = f1 + g1(spec_axis)
     >>> flux2 = f2 + g2(spec_axis)
     >>> uncertainty = StdDevUncertainty(0.2*np.ones(size)*u.Jy)
-    >>> ospec = Spectrum1D(spectral_axis=spec_axis, flux=flux1, uncertainty=uncertainty, velocity_convention='optical', rest_value=rest_value)
-    >>> tspec = Spectrum1D(spectral_axis=spec_axis, flux=flux2, uncertainty=uncertainty)
+    >>> ospec = Spectrum(spectral_axis=spec_axis, flux=flux1, uncertainty=uncertainty, velocity_convention='optical', rest_value=rest_value)
+    >>> tspec = Spectrum(spectral_axis=spec_axis, flux=flux2, uncertainty=uncertainty)
     >>> corr, lag = correlation.template_correlate(ospec, tspec)
 
 The lag values are reported in km/s units. The correlation values are computed after the template spectrum is

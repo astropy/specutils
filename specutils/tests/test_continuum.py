@@ -5,7 +5,7 @@ import astropy.units as u
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.utils.exceptions import AstropyUserWarning
 
-from ..spectra.spectrum1d import Spectrum1D
+from ..spectra.spectrum import Spectrum
 from ..spectra import SpectralRegion
 from ..fitting.continuum import fit_generic_continuum, fit_continuum
 from ..manipulation.smoothing import median_smooth
@@ -33,7 +33,7 @@ def test_continuum_fit():
     """
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
-    s_single_continuum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    s_single_continuum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_generic_continuum(s_single_continuum)
 
@@ -56,7 +56,7 @@ def test_continuum_calculation():
     """
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
-    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    spectrum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
     with pytest.warns(AstropyUserWarning, match='Model is linear in parameters'):
         g1_fit = fit_generic_continuum(spectrum)
 
@@ -79,7 +79,7 @@ def test_continuum_full_window():
     """
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
-    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    spectrum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
 
     # Smooth in the same way fit_generic_continuum does.
     spectrum_smoothed = median_smooth(spectrum, 3)
@@ -102,7 +102,7 @@ def test_continuum_spectral_region():
     """
 
     x_single_continuum, y_single_continuum = single_peak_continuum()
-    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    spectrum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
 
     # Smooth in the same way fit_generic_continuum does.
     spectrum_smoothed = median_smooth(spectrum, 3)
@@ -131,7 +131,7 @@ def test_continuum_window_no_noise():
     """
 
     x_single_continuum, y_single_continuum = single_peak_continuum(noise=0.)
-    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    spectrum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
 
     # Smooth in the same way fit_generic_continuum does.
     spectrum_smoothed = median_smooth(spectrum, 3)
@@ -165,7 +165,7 @@ def test_double_continuum_window():
     Fit to no-noise spectrum comprised of a exponential continuum plus an emission Gaussian
     """
     x_single_continuum, y_single_continuum = single_peak_continuum(noise=0.,constant_continuum=False)
-    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    spectrum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
 
     # Smooth in the same way fit_generic_continuum does.
     spectrum_smoothed = median_smooth(spectrum, 3)
@@ -200,7 +200,7 @@ def test_double_continuum_window_alternate():
 
     """
     x_single_continuum, y_single_continuum = single_peak_continuum(noise=0.,constant_continuum=False)
-    spectrum = Spectrum1D(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
+    spectrum = Spectrum(flux=y_single_continuum*u.Jy, spectral_axis=x_single_continuum*u.um)
 
     # Smooth in the same way fit_generic_continuum does.
     spectrum_smoothed = median_smooth(spectrum, 3)

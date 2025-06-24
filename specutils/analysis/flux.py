@@ -9,7 +9,7 @@ import numpy as np
 from astropy.nddata import VarianceUncertainty
 
 from .. import conf
-from ..spectra import Spectrum1D
+from ..spectra import Spectrum
 from ..manipulation import extract_region, LinearInterpolatedResampler
 from .utils import computation_wrapper
 import astropy.units as u
@@ -31,7 +31,7 @@ def line_flux(spectrum, regions=None,
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectrum object over which the summed flux will be calculated.
 
     regions : `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -69,7 +69,7 @@ def equivalent_width(spectrum, continuum=1, regions=None,
 
     Parameters
     ----------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectrum object overwhich the equivalent width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -119,7 +119,7 @@ def _compute_line_flux(spectrum, regions=None,
     # Account for the existence of a mask.
     if hasattr(calc_spectrum, 'mask') and calc_spectrum.mask is not None:
         mask = calc_spectrum.mask
-        new_spec = Spectrum1D(flux=calc_spectrum.flux[~mask],
+        new_spec = Spectrum(flux=calc_spectrum.flux[~mask],
                               spectral_axis=calc_spectrum.spectral_axis[~mask])
 
         if mask_interpolation is None:
@@ -166,7 +166,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     # Account for the existence of a mask.
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
         mask = spectrum.mask
-        spectrum = Spectrum1D(
+        spectrum = Spectrum(
             flux=spectrum.flux[~mask],
             spectral_axis=spectrum.spectral_axis[~mask])
 
@@ -179,7 +179,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
     if continuum.size == 1:
         continuum = continuum * np.ones(spectrum.flux.size)
 
-    cont_spec = Spectrum1D(flux=continuum,
+    cont_spec = Spectrum(flux=continuum,
                            spectral_axis=spectrum.spectral_axis)
     cont_flux = _compute_line_flux(cont_spec,
                                    mask_interpolation=mask_interpolation)
@@ -222,7 +222,7 @@ def is_continuum_below_threshold(spectrum, threshold=0.01):
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     threshold: float or `~astropy.units.Quantity`

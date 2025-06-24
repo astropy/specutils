@@ -12,14 +12,14 @@ from .utils import computation_wrapper
 __all__ = ['moment']
 
 
-def moment(spectrum, regions=None, order=0, axis=-1):
+def moment(spectrum, regions=None, order=0, axis='spectral'):
     """
     Estimate the moment of the spectrum.
 
 
     Parameters
     ----------
-    spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+    spectrum : `~specutils.spectra.spectrum.Spectrum`
         The spectrum object over which the width will be calculated.
 
     regions: `~specutils.SpectralRegion` or list of `~specutils.SpectralRegion`
@@ -29,9 +29,9 @@ def moment(spectrum, regions=None, order=0, axis=-1):
     order : int
         The order of the moment to be calculated. Default=0
 
-    axis : int
-        Axis along which a moment is calculated. Default=-1, computes along
-        the last axis (spectral axis).
+    axis : int, str
+        Axis along which a moment is calculated. Default='spectral', which computes
+        along the spectral axis.
 
 
     Returns
@@ -47,10 +47,25 @@ def moment(spectrum, regions=None, order=0, axis=-1):
                                order=order, axis=axis)
 
 
-def _compute_moment(spectrum, regions=None, order=0, axis=-1):
+def _compute_moment(spectrum, regions=None, order=0, axis='spectral'):
     """
     This is a helper function for the above `moment()` method.
     """
+    if int(order) != order or order < 0:
+        raise ValueError("Order must be a positive integer.")
+
+    if axis == "spectral":
+        if isinstance(spectrum, SpectrumCollection):
+            axes = [spec.spectral_axis_index for spec in spectrum]
+            if not np.all([x==axes[0] for x in axes]):
+                raise ValueError("All spectra in SpectrumCollection must have the same "
+                                 "spectral_axis_index for simultaneous moment calculation.")
+            # SpectumCollection adds a leading axis when it stacks the spectra.
+            axis = axes[0]+1
+
+        else:
+            axis = spectrum.spectral_axis_index
+
     if regions is not None:
         calc_spectrum = extract_region(spectrum, regions)
     else:
@@ -59,20 +74,29 @@ def _compute_moment(spectrum, regions=None, order=0, axis=-1):
     # Ignore masks for now. This should be fully addressed when
     # specutils gets revamped to handle multi-dimensional masks.
     flux = calc_spectrum.flux
+
     spectral_axis = calc_spectrum.spectral_axis
+    # If axis is not the spectral axis, we simply use pixel values for dx and dispersion
+    if (axis != spectrum.spectral_axis_index and
+            not (axis == -1 and spectrum.spectral_axis_index == spectrum.flux.ndim-1)):
+        dx = np.ones(flux.shape[axis])
+        dispersion = np.arange(flux.shape[axis]) + 1
+    else:
+        dx = np.abs(np.diff(spectral_axis.bin_edges))
+        dispersion = spectral_axis
 
-    if order is None or order < 0:
-        return None
+    # We now have to account for the desired axis being anywhere, not always last
+    if len(flux.shape) > len(spectral_axis.shape):
+        for i in range(flux.ndim):
+            if i != axis:
+                dx = np.expand_dims(dx, i)
+                dx = np.repeat(dx, flux.shape[i], i)
+                dispersion = np.expand_dims(dispersion, i)
+                dispersion = np.repeat(dispersion, flux.shape[i], i)
 
-    dx = np.abs(np.diff(spectral_axis.bin_edges))
     m0 = np.sum(flux * dx, axis=axis)
     if order == 0:
         return m0
-
-    dispersion = spectral_axis
-    if len(flux.shape) > len(spectral_axis.shape):
-        _shape = flux.shape[:-1] + (1,)
-        dispersion = np.tile(spectral_axis, _shape)
 
     if order == 1:
         return np.sum(flux * dispersion * dx, axis=axis) / m0

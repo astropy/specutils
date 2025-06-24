@@ -16,8 +16,8 @@ __all__ = ['OneDSpectrumMixin']
 
 class OneDSpectrumMixin():
     @property
-    def _spectral_axis_numpy_index(self):
-        return self.data.ndim - 1 - self.wcs.wcs.spec
+    def spectral_axis_index(self):
+        return self._spectral_axis_index
 
     @property
     def _spectral_axis_len(self):
@@ -60,14 +60,6 @@ class OneDSpectrumMixin():
         Returns the SpectralCoord object.
         """
         return self._spectral_axis
-
-    @property
-    @deprecated('v1.1', alternative="spectral_axis.unit")
-    def spectral_axis_unit(self):
-        """
-        Returns the units of the spectral axis.
-        """
-        return u.Unit(self.wcs.world_axis_units[0])
 
     @property
     def flux(self):
@@ -127,7 +119,7 @@ class OneDSpectrumMixin():
 
         Returns
         -------
-        new_spec : `~specutils.Spectrum1D`
+        new_spec : `~specutils.Spectrum`
             A new spectrum with the converted flux array
             (and uncertainty, if applicable).
 
@@ -261,7 +253,7 @@ class OneDSpectrumMixin():
 
         Returns
         -------
-        new_spec : `~specutils.Spectrum1D`
+        new_spec : `~specutils.Spectrum`
             Spectrum in requested units.
 
         """
@@ -270,6 +262,9 @@ class OneDSpectrumMixin():
         new_spec._convert_flux(
             flux_unit, equivalencies=flux_equivalencies, suppress_conversion=suppress_flux_conversion)
         return new_spec
+
+    def _axis_length_validation(self):
+        pass
 
     def _new_wcs_argument_validation(self, unit, velocity_convention,
                                      rest_value):

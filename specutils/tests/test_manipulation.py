@@ -5,7 +5,7 @@ import astropy.units as u
 from astropy.nddata import StdDevUncertainty, NDData
 from ..utils.wcs_utils import gwcs_from_array
 
-from ..spectra import Spectrum1D, SpectralRegion, SpectrumCollection
+from ..spectra import Spectrum, SpectralRegion, SpectrumCollection
 from ..manipulation import snr_threshold, excise_regions, linear_exciser
 
 
@@ -13,7 +13,7 @@ def test_true_exciser():
     np.random.seed(84)
     spectral_axis = np.linspace(5000, 5099, num=100)*u.AA
     flux = (np.random.randn(100) + 3) * u.Jy
-    spec = Spectrum1D(flux=flux, spectral_axis=spectral_axis)
+    spec = Spectrum(flux=flux, spectral_axis=spectral_axis)
     region = SpectralRegion([(5005,5010), (5060,5065)]*u.AA)
     excised_spec = excise_regions(spec, region)
 
@@ -30,7 +30,7 @@ def test_linear_exciser():
     np.random.seed(84)
     spectral_axis = np.linspace(5000,5099,num=100)*u.AA
     flux = (np.random.rand(100)*100) * u.Jy
-    spec = Spectrum1D(flux=flux, spectral_axis = spectral_axis)
+    spec = Spectrum(flux=flux, spectral_axis = spectral_axis)
     region = SpectralRegion([(5020,5030)]*u.AA)
     excised_spec = excise_regions(spec, region, exciser = linear_exciser)
 
@@ -47,7 +47,7 @@ def test_snr_threshold():
     wavelengths = np.arange(0, 10)*u.um
     flux = 100*np.abs(np.random.randn(10))*u.Jy
     uncertainty = StdDevUncertainty(np.abs(np.random.randn(10))*u.Jy)
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
 
     spectrum_masked = snr_threshold(spectrum, 50)
     assert all([x==y for x,y in zip(spectrum_masked.mask, [False, True, False, False, True, True, False, False, False, True])])
@@ -81,7 +81,7 @@ def test_snr_threshold():
     wavelengths = np.arange(0, 10)*u.um
     flux = 100*np.abs(np.random.randn(3, 4, 10))*u.Jy
     uncertainty = StdDevUncertainty(np.abs(np.random.randn(3, 4, 10))*u.Jy)
-    spectrum = Spectrum1D(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
+    spectrum = Spectrum(spectral_axis=wavelengths, flux=flux, uncertainty=uncertainty)
 
     spectrum_masked = snr_threshold(spectrum, 50)
 
@@ -129,7 +129,7 @@ def test_snr_threshold():
     np.random.seed(42)
     flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
     spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)), unit='AA')
-    wcs = np.array([gwcs_from_array(x) for x in spectral_axis])
+    wcs = np.array([gwcs_from_array(x, [10,]) for x in spectral_axis])
     uncertainty = StdDevUncertainty(np.random.sample((5, 10)), unit='Jy')
     mask = np.ones((5, 10)).astype(bool)
     meta = [{'test': 5, 'info': [1, 2, 3]} for i in range(5)]

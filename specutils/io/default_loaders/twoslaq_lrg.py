@@ -1,7 +1,7 @@
 from astropy.units import Unit
 from astropy.wcs import WCS
 
-from ...spectra import Spectrum1D, SpectrumList
+from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
 from ..parsing_utils import read_fileobj_or_hdulist
 
@@ -37,7 +37,7 @@ def twoslaq_lrg_fits_loader(file_obj, **kwargs):
 
     The LRG and QSO data appear to be in different formats, this only loads the
     LRG version. As there is a science and sky spectrum, the `SpectrumList`
-    loader provides both, whereas the `Spectrum1D` loader only provides the
+    loader provides both, whereas the `Spectrum` loader only provides the
     science.
 
     Parameters
@@ -66,12 +66,12 @@ def twoslaq_lrg_fits_loader(file_obj, **kwargs):
     meta = {"header": header}
 
     return SpectrumList([
-        Spectrum1D(flux=spectrum, wcs=wcs, meta=meta),
-        Spectrum1D(flux=sky, wcs=wcs, meta=meta),
+        Spectrum(flux=spectrum, wcs=wcs, meta=meta),
+        Spectrum(flux=sky, wcs=wcs, meta=meta),
     ])
 
 # Commented out until discussion about whether to provide science-only or not
-# @data_loader("2SLAQ-LRG", identifier=identify_2slaq_lrg,dtype=Spectrum1D,
+# @data_loader("2SLAQ-LRG", identifier=identify_2slaq_lrg,dtype=Spectrum,
 #              extensions=["fit", "fits"])
 # def twoslaq_lrg_fits_loader_only_science(filename, **kwargs):
 #     """
@@ -86,7 +86,7 @@ def twoslaq_lrg_fits_loader(file_obj, **kwargs):
 #
 #     The LRG and QSO data appear to be in different formats, this only loads the
 #     LRG version. As there is a science and sky spectrum, the `SpectrumList`
-#     loader provides both, whereas the `Spectrum1D` loader only provides the
+#     loader provides both, whereas the `Spectrum` loader only provides the
 #     science.
 #
 #     Parameters
@@ -95,7 +95,7 @@ def twoslaq_lrg_fits_loader(file_obj, **kwargs):
 #         The path to the FITS file
 #     Returns
 #     -------
-#     data: Spectrum1D
+#     data: Spectrum
 #         The 2SLAQ-LRG spectrum that is represented by the data in this file.
 #     """
 #     return SpectrumList.read(filename, format="2SLAQ-LRG")[0]
