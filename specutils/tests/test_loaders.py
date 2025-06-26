@@ -879,6 +879,7 @@ def test_tabular_fits_jwst():
     assert spec.spectral_axis.shape == (376,)
     assert spec.flux.unit == u.Jy
     assert spec.spectral_axis.unit == u.micron
+    assert spec.uncertainty.unit == u.Jy
     assert spec.meta['header']['TELESCOP'] == 'JWST'
 
 
