@@ -1,3 +1,12 @@
+2.1.0 (unreleased)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- Add new ``flux_col`` keyword argument to JWST x1d reader to override flux column
+  auto-detected from source type column (point vs surface brightness). [#1244]
+
 2.0.0 (2025-06-12)
 ------------------
 
