@@ -1316,7 +1316,7 @@ def test_aspcapstar_loader():
 def test_muscles_loader():
     """Test remote read and automatic recognition of muscles spec from URL.
     """
-    url = ("https://archive.stsci.edu/missions/hlsp/muscles/gj1214/"
+    url = ("https://archive.stsci.edu/missions/hlsp/muscles/v22/gj1214/"
            "hlsp_muscles_multi_multi_gj1214_broadband_v22_const-res-sed.fits")
     spec = Spectrum.read(url)
 
