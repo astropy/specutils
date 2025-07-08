@@ -284,7 +284,7 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     return SpectrumList(chain.from_iterable(spectra))
 
 
-def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
+def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
 
     Parameters
@@ -294,6 +294,9 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
           or HDUList (as resulting from astropy.io.fits.open()).
     extname: str
         The name of the science extension. Either "COMBINE1D" or "EXTRACT1D".  By default "EXTRACT1D".
+    flux_col: str
+        Optional keyword to force the reader to use the specified column as the flux,
+        rather than defaulting based on whether the source type is "EXTENDED" or "POINT".
 
     Returns
     -------
@@ -345,21 +348,37 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', **kwargs):
                               'Defaulting to srctype="POINT".')
                 srctype = 'POINT'
 
-            if srctype == "POINT":
-                flux = Quantity(data["FLUX"])
-                if 'ERROR' in data.colnames:
-                    uncertainty = StdDevUncertainty(data["ERROR"])
-                elif 'FLUX_ERROR' in data.colnames:
-                    uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
+            # If flux column was set manually, use that for flux
+            if flux_col is not None:
+                if flux_col.lower() == "flux":
+                    flux = Quantity(data["FLUX"])
+                    if 'ERROR' in data.colnames:
+                        uncertainty = StdDevUncertainty(data["ERROR"])
+                    elif 'FLUX_ERROR' in data.colnames:
+                        uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
+                    else:
+                        uncertainty = None
+                elif flux_col.lower() == "surf_bright":
+                    flux = Quantity(data["SURF_BRIGHT"])
+                    uncertainty = StdDevUncertainty(data["SB_ERROR"])
                 else:
-                    uncertainty = None
-            elif srctype == "EXTENDED":
-                flux = Quantity(data["SURF_BRIGHT"])
-                uncertainty = StdDevUncertainty(data["SB_ERROR"])
+                    flux = Quantity(data[flux_col])
             else:
-                raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
-                                   "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
-                                   "`surf_bright` columns.")
+                if srctype == "POINT":
+                    flux = Quantity(data["FLUX"])
+                    if 'ERROR' in data.colnames:
+                        uncertainty = StdDevUncertainty(data["ERROR"])
+                    elif 'FLUX_ERROR' in data.colnames:
+                        uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
+                    else:
+                        uncertainty = None
+                elif srctype == "EXTENDED":
+                    flux = Quantity(data["SURF_BRIGHT"])
+                    uncertainty = StdDevUncertainty(data["SB_ERROR"])
+                else:
+                    raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
+                                       "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
+                                       "`surf_bright` columns.")
 
             # Merge primary and slit headers and dump into meta
             slit_header = hdu.header
