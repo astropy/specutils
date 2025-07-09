@@ -870,6 +870,19 @@ def test_tabular_fits_compressed(compress, tmp_path):
     assert quantity_allclose(spec.flux, spectrum.flux)
 
 
+@pytest.mark.remote_data
+def test_tabular_fits_jwst():
+    """Test reading of tabular FITS file of a JWST spectrum."""
+    spec = Spectrum.read("https://bdnyc.s3.us-east-1.amazonaws.com/Beiler24/SDSSpJ1346-00NIR.fits")
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.shape == (376,)
+    assert spec.spectral_axis.shape == (376,)
+    assert spec.flux.unit == u.Jy
+    assert spec.spectral_axis.unit == u.micron
+    assert spec.uncertainty.unit == u.Jy
+    assert spec.meta['header']['TELESCOP'] == 'JWST'
+
+
 @pytest.mark.parametrize("spectral_axis", ['WAVE', 'FREQ', 'ENER', 'WAVN'])
 @pytest.mark.parametrize("uncertainty",
                          [None, StdDevUncertainty, VarianceUncertainty, InverseVariance])
