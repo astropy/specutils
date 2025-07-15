@@ -610,12 +610,12 @@ def test_tabular_fits_cov_io(tmp_path):
         np.full(1000-1, 0.5, dtype=float),
         np.full(1000-2, 0.2, dtype=float),
     ]
-    cov = Covariance(array=sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2)
+    cov = Covariance(array=sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2, assume_symmetric=True)
 
     # Create the Spectrum1D
     spectrum = Spectrum1D(flux=flux, spectral_axis=wave, uncertainty=cov)
     # Simple test of ingestion
-    assert np.array_equal(spectrum.uncertainty.toarray(), cov.toarray()), \
+    assert np.array_equal(spectrum.uncertainty.to_dense(), cov.to_dense()), \
             'Covariance not included correctly'
     # Write it
     tmpfile = str(tmp_path / '_tst.fits')
@@ -623,12 +623,12 @@ def test_tabular_fits_cov_io(tmp_path):
 
     # Check the output file
     with fits.open(tmpfile) as hdu:
-        assert len(hdu) == 3, 'Should contain 3 extensions, primary, DATA, CORREL'
-        assert np.array_equal([h.name for h in hdu], ['PRIMARY', 'DATA', 'CORREL']), \
+        assert len(hdu) == 3, 'Should contain 3 extensions, primary, DATA, COVAR'
+        assert np.array_equal([h.name for h in hdu], ['PRIMARY', 'DATA', 'COVAR']), \
                 'Extension names are wrong'
         assert all([h.__class__.__name__ == 'BinTableHDU' for h in hdu[1:]]), \
                 'Data extensions should both be BinTableHDU'
-        assert len(hdu['CORREL'].data) == cov.stored_nnz, \
+        assert len(hdu['COVAR'].data) == cov.stored_nnz, \
                 'Number of non-zero cov elements mismatch'
 
     # Read it
@@ -637,7 +637,9 @@ def test_tabular_fits_cov_io(tmp_path):
     assert spectrum.spectral_axis.unit == _spectrum.spectral_axis.unit
     assert quantity_allclose(spectrum.spectral_axis, _spectrum.spectral_axis)
     assert quantity_allclose(spectrum.flux, _spectrum.flux)
-    assert np.array_equal(spectrum.uncertainty.toarray(), _spectrum.uncertainty.toarray())
+    assert np.array_equal(spectrum.uncertainty.to_dense(), _spectrum.uncertainty.to_dense())
+
+    # TODO: Add test for multidim
 
 
 @pytest.mark.parametrize("ndim", range(1, 4))

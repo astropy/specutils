@@ -47,11 +47,11 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
 
     Parameters
     ----------
-    file_obj : str, file-like, or HDUList
-        FITS file name, object (provided from name by Astropy I/O Registry),
-        or HDUList (as resulting from astropy.io.fits.open()).
+    file_obj : str, file-like, or `~astropy.io.fits.HDUList`
+        FITS file name, object (provided from name by Astropy I/O Registry), or
+        `~astropy.io.fits.HDUList` (as resulting from `astropy.io.fits.open`).
     hdu : int
-        The HDU of the fits file (default: 1st extension) to read from
+        The HDU of the fits file (default: 1st extension) to read
     store_data_header : bool
         Defaults to ``False``, which stores the primary header in ``Spectrum.meta['header']``.
         Set to ``True`` to instead store the header from the specified data HDU.
@@ -86,11 +86,8 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
         else:
             tab.meta = hdulist[0].header
 
-        # Determine if there is a correlation matrix
-        correl = None
-        if 'CORREL' in [h.name for h in hdulist]:
-            correl = Table.read(hdulist['CORREL'])
-            correl.meta = hdulist['CORREL'].header
+        # Determine if there is a covariance matrix
+        covar = Table.read(hdulist['COVAR']) if 'COVAR' in [h.name for h in hdulist] else None
 
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
@@ -102,9 +99,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     # If no column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, wcs=wcs, correl=correl, **kwargs)
+        return generic_spectrum_from_table(tab, wcs=wcs, covar=covar, **kwargs)
 
-    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs, correl=correl)
+    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs, covar=covar)
 
 
 @custom_writer("tabular-fits")
@@ -175,11 +172,11 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     colnames = [dispname, "flux"]
 
     # Include uncertainty - units to be inferred from spectrum.flux
-    correl = None
+    covar = None
     if spectrum.uncertainty is not None:
         if isinstance(spectrum.uncertainty, Covariance):
-            var, correl = spectrum.uncertainty.to_tables()
-            columns.append(np.sqrt(var) * funit)
+            covar = spectrum.uncertainty.to_table()
+            columns.append(np.sqrt(spectrum.uncertainty.variance) * funit)
             colnames.append("uncertainty")
         else:
             try:
@@ -224,8 +221,8 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
         hdu1 = fits.BinTableHDU(data=tab, name='DATA')
 
     hdulist = fits.HDUList([hdu0, hdu1])
-    if correl is not None:
-        hdulist.append(fits.BinTableHDU(data=correl, name='CORREL'))
+    if covar is not None:
+        hdulist.append(fits.BinTableHDU(data=covar, name='COVAR'))
 
     # TODO: Use output_verify options to check for valid FITS
     hdulist.writeto(file_name, **kwargs)

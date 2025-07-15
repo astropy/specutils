@@ -506,7 +506,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 new_meta = deepcopy(self.meta)
 
             if isinstance(self.uncertainty, Covariance):
-                new_unc = self.uncertainty.sub_matrix(item)
+                new_unc = self.uncertainty.match_to_data_slice(item)
             elif self.uncertainty is not None:
                 new_unc = self.uncertainty[item]
             else:
@@ -933,7 +933,7 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         # Add information about uncertainties if available
         if self.uncertainty:
             _arr = (
-                self.uncertainty.toarray()
+                self.uncertainty.to_dense()
                 if isinstance(self.uncertainty, Covariance)
                 else self.uncertainty.array
             )
