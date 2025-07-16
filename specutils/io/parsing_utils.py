@@ -6,7 +6,7 @@ import io
 import contextlib
 
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, Covariance
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
@@ -52,7 +52,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
                 hdulist.close()
 
 
-def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
+def spectrum_from_column_mapping(table, column_mapping, wcs=None, covar=None, verbose=False):
     """
     Given a table and a mapping of the table column names to attributes
     on the Spectrum object, parse the information into a Spectrum.
@@ -75,6 +75,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
 
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum initializer.
+
+    covar : `astropy.table.Table`, optional
+        Table providing a covariance matrix for the uncertainties in coordinate
+        format; see `~astropy.nddata.Covariance`.
 
     verbose : bool
         Print extra info.
@@ -131,14 +135,27 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
         spec_kwargs.setdefault(kwarg_name, kwarg_val)
 
     # Ensure that the uncertainties are a subclass of NDUncertainty
+    if spec_kwargs.get('uncertainty') is None and covar is not None:
+        warnings.warn('Unable to parse uncertainty from provided table.  Ignoring provided '
+                      'covariance matrix data.')
+        covar = None
     if spec_kwargs.get('uncertainty') is not None:
-        spec_kwargs['uncertainty'] = StdDevUncertainty(
-            spec_kwargs.get('uncertainty'))
+        if covar is not None:
+            try:
+                spec_kwargs['uncertainty'] = Covariance.from_table(covar)
+            except (ValueError, TypeError):
+                warnings.warn('Unable to parse table with covariance data into into a Covariance '
+                              'object.  Ignoring covariance matrix data.')
+                covar = None
+        # NOTE: This is not an `else` or `elif` block in order to catch the
+        # change to covar=None when handling the exception above.
+        if covar is None:
+            spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
 
     return Spectrum(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
-def generic_spectrum_from_table(table, wcs=None):
+def generic_spectrum_from_table(table, wcs=None, covar=None, **kwargs):
     """
     Load spectrum from an Astropy table into a Spectrum object.
     Uses the following logic to figure out which column is which:
@@ -158,9 +175,12 @@ def generic_spectrum_from_table(table, wcs=None):
     table : :class:`~astropy.table.Table`
         Table containing a column of ``flux``, and optionally ``spectral_axis``
         and ``uncertainty`` as defined above.
-    wcs : :class:`~astropy.wcs.WCS`
+    wcs : :class:`~astropy.wcs.WCS`, optional
         A FITS WCS object. If this is present, the machinery will fall back
-        and default to using the ``wcs`` to find the dispersion information.
+        to using the ``wcs`` to find the dispersion information.
+    covar : `astropy.table.Table`, optional
+        Table providing a covariance matrix for the uncertainties in coordinate
+        format; see `~astropy.nddata.Covariance`.
 
     Returns
     -------
@@ -275,12 +295,27 @@ def generic_spectrum_from_table(table, wcs=None):
         if table[err_column].ndim > 1:
             err = table[err_column].T
         elif flux.ndim > 1:  # Repeat uncertainties over all flux columns
+            if covar is not None:
+                warnings.warn('When applying covariance, the dimensionality of the error '
+                              'array must match the dimensionality of the flux array.  Ignoring '
+                              'covariance.')
+                covar = None
             err = np.tile(table[err_column], flux.shape[0], 1)
         else:
             err = table[err_column]
-        err = StdDevUncertainty(err.to(err.unit))
-        if np.min(table[err_column]) <= 0.:
-            warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
+        if covar is not None:
+            try:
+                err = Covariance.from_table(covar)
+            except (ValueError, TypeError):
+                warnings.warn('Unable to parse covariance table into a Covariance object.  '
+                              'Ignoring covariance matrix data.')
+                covar = None
+        # NOTE: This is not an `else` or `elif` block in order to catch the
+        # change to covar=None when handling the exception above.
+        if covar is None:
+            err = StdDevUncertainty(err.to(err.unit))
+            if np.min(table[err_column]) <= 0.:
+                warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
     else:
         err = None
 
