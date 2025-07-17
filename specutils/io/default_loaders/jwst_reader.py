@@ -45,8 +45,10 @@ def _identify_spec1d_fits(origin, extname, *args, **kwargs):
     """ Generic spec 1d identifier function """
     is_jwst = _identify_jwst_fits(*args)
     with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
+        table = QTable(hdulist[extname].data)
+        spectrum_per_row = table[0]['WAVELENGTH'].shape != ()
         return (is_jwst and extname in hdulist and (extname, 2) not in hdulist and
-                hdulist[extname].header['NAXIS'] == 1)
+                not spectrum_per_row)
 
 
 def _identify_spec1d_multi_fits(origin, extname, *args, **kwargs):
