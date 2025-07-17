@@ -399,7 +399,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
 
             data = QTable.read(hdu)
 
-            if isinstance(data[0]['WAVELENGTH'], (np.ma.MaskedArray, np.ndarray)):
+            if data[0]['WAVELENGTH'].shape != ():
                 # In this case we have multiple spectra packed into a single extension, one target
                 # per row of the table
                 for row in data:
