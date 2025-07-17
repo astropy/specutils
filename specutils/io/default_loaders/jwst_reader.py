@@ -5,10 +5,11 @@ from itertools import chain
 
 import astropy.units as u
 from astropy.units import Quantity
-from astropy.table import Table
+from astropy.table import QTable
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from gwcs.wcstools import grid_from_bounding_box
+import numpy as np
 
 from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
@@ -44,7 +45,8 @@ def _identify_spec1d_fits(origin, extname, *args, **kwargs):
     """ Generic spec 1d identifier function """
     is_jwst = _identify_jwst_fits(*args)
     with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return (is_jwst and extname in hdulist and (extname, 2) not in hdulist)
+        return (is_jwst and extname in hdulist and (extname, 2) not in hdulist and
+                hdulist[extname].header['NAXIS'] == 1)
 
 
 def _identify_spec1d_multi_fits(origin, extname, *args, **kwargs):
@@ -53,7 +55,10 @@ def _identify_spec1d_multi_fits(origin, extname, *args, **kwargs):
     """
     is_jwst = _identify_jwst_fits(*args)
     with read_fileobj_or_hdulist(*args, memmap=False, **kwargs) as hdulist:
-        return is_jwst and (extname, 2) in hdulist
+        return is_jwst and ((extname, 2) in hdulist or
+                            (extname in hdulist and
+                             hdulist[extname].header['XTENSION'] == 'BINTABLE' and
+                             hdulist[extname].header['NAXIS'] == 2))
 
 
 def identify_jwst_c1d_fits(origin, *args, **kwargs):
@@ -283,6 +288,72 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     # stored within multiple FITS files, all unpacked into one `SpectrumList`
     return SpectrumList(chain.from_iterable(spectra))
 
+def _jwst_spectrum_from_table(data, hdu_header, primary_header, flux_col=None):
+    # Create a Spectrum from either a table or a single row of a table
+
+    wavelength = Quantity(data['WAVELENGTH'])
+
+    # Determine if FLUX or SURF_BRIGHT column should be returned
+    # based on whether it is point or extended source.
+    #
+    # SRCTYPE used to be in primary header, but was moved around. As
+    # per most recent pipeline definition, it should be in the
+    # EXTRACT1D extension.
+    #
+    # SRCTYPE should either be POINT or EXTENDED.  In some cases, it is UNKNOWN
+    # or missing.  If that's the case, default to using POINT as the SRCTYPE.
+    # Error out only when SRCTYPE is a bad value.
+    srctype = None
+    if "srctype" in hdu_header:
+        srctype = hdu_header.get("srctype", None)
+
+    # checking if SRCTPYE is missing or UNKNOWN
+    if not srctype or srctype == 'UNKNOWN':
+        warnings.warn('SRCTYPE is missing or UNKNOWN in JWST x1d loader. '
+                        'Defaulting to srctype="POINT".')
+        srctype = 'POINT'
+
+    # If flux column was set manually, use that for flux
+    if flux_col is not None:
+        if flux_col.lower() == "flux":
+            flux = Quantity(data["FLUX"])
+            if 'ERROR' in data.colnames:
+                uncertainty = StdDevUncertainty(data["ERROR"])
+            elif 'FLUX_ERROR' in data.colnames:
+                uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
+            else:
+                uncertainty = None
+        elif flux_col.lower() == "surf_bright":
+            flux = Quantity(data["SURF_BRIGHT"])
+            uncertainty = StdDevUncertainty(data["SB_ERROR"])
+        else:
+            flux = Quantity(data[flux_col])
+    else:
+        if srctype == "POINT":
+            flux = Quantity(data["FLUX"])
+            if 'ERROR' in data.colnames:
+                uncertainty = StdDevUncertainty(data["ERROR"])
+            elif 'FLUX_ERROR' in data.colnames:
+                uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
+            else:
+                uncertainty = None
+        elif srctype == "EXTENDED":
+            flux = Quantity(data["SURF_BRIGHT"])
+            uncertainty = StdDevUncertainty(data["SB_ERROR"])
+        else:
+            raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
+                                "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
+                                "`surf_bright` columns.")
+
+    # Merge primary and slit headers and dump into meta
+    header = primary_header.copy()
+    header.extend(hdu_header, strip=True, update=True)
+    meta = {'header': header}
+    if 'SOURCE_ID' in data.colnames:
+        meta['source_id'] = data['SOURCE_ID']
+
+    return Spectrum(flux=flux, spectral_axis=wavelength,
+                        uncertainty=uncertainty, meta=meta)
 
 def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
@@ -318,77 +389,26 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
             if hdu.name != extname:
                 continue
 
+            header = hdu.header
+
             # Correct some known bad unit strings before reading the table
             bad_units = {"(MJy/sr)^2": "MJy2 sr-2"}
             for c in hdu.columns:
                 if c.unit in bad_units:
                     c.unit = bad_units[c.unit]
 
-            data = Table.read(hdu)
+            data = QTable.read(hdu)
 
-            wavelength = Quantity(data["WAVELENGTH"])
-
-            # Determine if FLUX or SURF_BRIGHT column should be returned
-            # based on whether it is point or extended source.
-            #
-            # SRCTYPE used to be in primary header, but was moved around. As
-            # per most recent pipeline definition, it should be in the
-            # EXTRACT1D extension.
-            #
-            # SRCTYPE should either be POINT or EXTENDED.  In some cases, it is UNKNOWN
-            # or missing.  If that's the case, default to using POINT as the SRCTYPE.
-            # Error out only when SRCTYPE is a bad value.
-            srctype = None
-            if "srctype" in hdu.header:
-                srctype = hdu.header.get("srctype", None)
-
-            # checking if SRCTPYE is missing or UNKNOWN
-            if not srctype or srctype == 'UNKNOWN':
-                warnings.warn('SRCTYPE is missing or UNKNOWN in JWST x1d loader. '
-                              'Defaulting to srctype="POINT".')
-                srctype = 'POINT'
-
-            # If flux column was set manually, use that for flux
-            if flux_col is not None:
-                if flux_col.lower() == "flux":
-                    flux = Quantity(data["FLUX"])
-                    if 'ERROR' in data.colnames:
-                        uncertainty = StdDevUncertainty(data["ERROR"])
-                    elif 'FLUX_ERROR' in data.colnames:
-                        uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
-                    else:
-                        uncertainty = None
-                elif flux_col.lower() == "surf_bright":
-                    flux = Quantity(data["SURF_BRIGHT"])
-                    uncertainty = StdDevUncertainty(data["SB_ERROR"])
-                else:
-                    flux = Quantity(data[flux_col])
+            if isinstance(data[0]['WAVELENGTH'], (np.ma.MaskedArray, np.ndarray)):
+                # In this case we have multiple spectra packed into a single extension, one target
+                # per row of the table
+                for row in data:
+                    spec = _jwst_spectrum_from_table(row, header, primary_header, flux_col)
+                    spectra.append(spec)
             else:
-                if srctype == "POINT":
-                    flux = Quantity(data["FLUX"])
-                    if 'ERROR' in data.colnames:
-                        uncertainty = StdDevUncertainty(data["ERROR"])
-                    elif 'FLUX_ERROR' in data.colnames:
-                        uncertainty = StdDevUncertainty(data["FLUX_ERROR"])
-                    else:
-                        uncertainty = None
-                elif srctype == "EXTENDED":
-                    flux = Quantity(data["SURF_BRIGHT"])
-                    uncertainty = StdDevUncertainty(data["SB_ERROR"])
-                else:
-                    raise RuntimeError(f"Keyword SRCTYPE is {srctype}.  It should "
-                                       "be 'POINT' or 'EXTENDED'. Can't decide between `flux` and "
-                                       "`surf_bright` columns.")
-
-            # Merge primary and slit headers and dump into meta
-            slit_header = hdu.header
-            header = primary_header.copy()
-            header.extend(slit_header, strip=True, update=True)
-            meta = {'header': header}
-
-            spec = Spectrum(flux=flux, spectral_axis=wavelength,
-                              uncertainty=uncertainty, meta=meta)
-            spectra.append(spec)
+                # Otherwise the whole table is defining a single spectrum
+                spec = _jwst_spectrum_from_table(data, header, primary_header, flux_col)
+                spectra.append(spec)
 
     return SpectrumList(spectra)
 
