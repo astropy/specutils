@@ -7,6 +7,12 @@ New Features
 - Add new ``flux_col`` keyword argument to JWST x1d reader to override flux column
   auto-detected from source type column (point vs surface brightness). [#1244]
 
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated the JWST data readers to accomodate new WFSS file formats
+  with ``SpectrumList.read()``. [#1252]
+
 2.0.0 (2025-06-12)
 ------------------
 
