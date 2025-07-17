@@ -9,7 +9,6 @@ from astropy.table import QTable
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty, VarianceUncertainty, InverseVariance
 from gwcs.wcstools import grid_from_bounding_box
-import numpy as np
 
 from ...spectra import Spectrum, SpectrumList
 from ..registers import data_loader
@@ -290,6 +289,7 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     # stored within multiple FITS files, all unpacked into one `SpectrumList`
     return SpectrumList(chain.from_iterable(spectra))
 
+
 def _jwst_spectrum_from_table(data, hdu_header, primary_header, flux_col=None):
     # Create a Spectrum from either a table or a single row of a table
 
@@ -356,6 +356,7 @@ def _jwst_spectrum_from_table(data, hdu_header, primary_header, flux_col=None):
 
     return Spectrum(flux=flux, spectral_axis=wavelength,
                         uncertainty=uncertainty, meta=meta)
+
 
 def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
     """Implementation of loader for JWST x1d 1-D spectral data in FITS format
