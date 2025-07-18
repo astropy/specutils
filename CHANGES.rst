@@ -7,6 +7,12 @@ New Features
 - Add new ``flux_col`` keyword argument to JWST x1d reader to override flux column
   auto-detected from source type column (point vs surface brightness). [#1244]
 
+Bug Fixes
+^^^^^^^^^
+
+- Fixed/updated SDSS-V mwm data loader to account for a subset of targets with bad datasums. [#1253]
+
+
 2.0.0 (2025-06-12)
 ------------------
 
