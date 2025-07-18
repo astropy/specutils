@@ -17,6 +17,12 @@ Other Changes and Additions
 - Updated the JWST data readers to accomodate new WFSS file formats
   with ``SpectrumList.read()``. [#1252]
 
+Bug Fixes
+^^^^^^^^^
+
+- Fixed/updated SDSS-V mwm data loader to account for a subset of targets with bad datasums. [#1253]
+
+
 2.0.0 (2025-06-12)
 ------------------
 
