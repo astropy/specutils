@@ -11,17 +11,16 @@ New Features
   solutions; at the same time the IRAF equispec format gains the ability to read log-linear
   wavelength solutions. [#1254]
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Updated the JWST data readers to accomodate new WFSS file formats
-  with ``SpectrumList.read()``. [#1252]
-
 Bug Fixes
 ^^^^^^^^^
 
 - Fixed/updated SDSS-V mwm data loader to account for a subset of targets with bad datasums. [#1253]
 
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated the JWST data readers to accomodate new WFSS file formats
+  with ``SpectrumList.read()``. [#1252]
 
 2.0.0 (2025-06-12)
 ------------------
