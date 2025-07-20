@@ -511,9 +511,6 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
     meta : dict
         Dictionary of {'header': hdulist[0].header}.
     """
-    if verbose:
-        print('Loading 1D non-linear fits solution')
-
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
         for wcsdim in range(1, header['WCSDIM'] + 1):
@@ -659,11 +656,12 @@ def _read_non_linear_iraf_wcs(header, wcsdim, verbose=False):
     spectral_axis = np.empty((len(specn), header['NAXIS1']))
     for n, sp in enumerate(specn):
         spec = wat_wcs_dict[sp].split()
-        wcs_dict = dict((k, wcs_parser[k](spec[i])) for i, k in enumerate(wcs_parser.keys()))
-        wcs_dict['fpar'] = [float(i) for i in spec[15:15+wcs_dict['order']]]
+        wcs_dict = {k: wcs_parser[k](spec[i]) for i, k in zip(range(len(spec)), wcs_parser.keys())}
+        if len(spec) > 15:
+            wcs_dict['fpar'] = [float(i) for i in spec[15:15+wcs_dict['order']]]
 
         if verbose:
-            print(f'Retrieving model for {sp}: {wcs_dict["dtype"]} {wcs_dict["ftype"]}')
+            print(f'Retrieving model for {sp}: {wcs_dict["dtype"]} {wcs_dict.get("ftype", "Linear")}')
         math_model = _set_math_model(wcs_dict=wcs_dict, verbose=verbose)
 
         spectral_axis[n] = math_model(np.arange(wcs_dict['pnum']) + 1) / (1. + wcs_dict['z'])
@@ -774,23 +772,48 @@ def _none():
 def _linear_solution(wcs_dict):
     """Constructs a Linear1D model based on the WCS information obtained
     from the header.
-    """
-    intercept = wcs_dict['crval'] - (wcs_dict['crpix'] - 1) * wcs_dict['cdelt']
-    model = models.Linear1D(slope=wcs_dict['cdelt'], intercept=intercept)
 
-    return model
+    Parameters
+    ----------
+    wcs_dict : dict
+        Dictionary containing all the wcs information decoded from the header
+        and necessary for constructing the Linear1D model.
+
+    Returns
+    -------
+    model : `~astropy.modeling.Model`
+        A model instance with the wavelength solution.
+    """
+
+    # The header values are called differently for
+    # the linear case and the multispc case.
+    if {"crval", "crpix", "cdelt"} <= wcs_dict.keys():
+        slope = wcs_dict['cdelt']
+        intercept = wcs_dict['crval'] - (wcs_dict['crpix'] - 1) * wcs_dict['cdelt']
+    else:
+        # For multispec case
+        slope = wcs_dict['avdelt']
+        intercept = wcs_dict['dstart'] - 1 * wcs_dict['avdelt']
+
+    return models.Linear1D(slope=slope, intercept=intercept)
 
 
 def _log_linear(wcs_dict):
     """Returns a log linear model of the wavelength solution.
 
-    Not implemented
+    Parameters
+    ----------
+    wcs_dict : dict
+        Dictionary containing all the wcs information decoded from the header
+        and necessary for constructing the LogLinear1D model.
 
-    Raises
-    ------
-        NotImplementedError
+    Returns
+    -------
+    model : `~astropy.modeling.Model`
+        A  model instance with the wavelength solution.
     """
-    raise NotImplementedError
+    linear = _linear_solution(wcs_dict)
+    return models.Const1D(10)**linear
 
 
 def _chebyshev(wcs_dict):
