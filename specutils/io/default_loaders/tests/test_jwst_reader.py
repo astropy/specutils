@@ -96,10 +96,10 @@ def create_wfss_hdu(srctype=None, ver=1, name='EXTRACT1D'):
     data = [[1, 2, 3], [[10, 20, 30] * u.um] * 3, [[2, 3, 4] * u.Jy] * 3,
             [[0.1, 0.1, 0.1] * u.Jy] * 3,
             [[2, 3, 4 ]* u.MJy/u.sr] * 3, [[0.1, 0.1, 0.1] * u.MJy/u.sr] * 3,
-            [0, 0, 0]]
+            [0, 0, 0], ['POINT', 'POINT', 'EXTENDED']]
 
     table = Table(data=data, names=['SOURCE_ID','WAVELENGTH', 'FLUX', 'FLUX_ERROR', 'SURF_BRIGHT',
-                                    'SB_ERROR', 'DQ'])
+                                    'SB_ERROR', 'DQ', 'SOURCE_TYPE'])
 
     hdu = fits.BinTableHDU(table, name=name)
 
@@ -108,7 +108,6 @@ def create_wfss_hdu(srctype=None, ver=1, name='EXTRACT1D'):
     hdu.header['TUNIT4'] = 'Jy'
     hdu.header['TUNIT5'] = 'MJy/sr'
     hdu.header['TUNIT6'] = 'MJy/sr'
-    hdu.header['SRCTYPE'] = srctype
     hdu.ver = ver
 
     return hdu
@@ -166,8 +165,11 @@ def test_jwst_wfss_multi_reader(tmp_path, spec_multi_new, format):
         assert isinstance(item, Spectrum)
 
     assert data[0].shape == (3,)
+    assert data[0].flux.unit == u.Jy
     assert data[1].shape == (3,)
+    assert data[1].flux.unit == u.Jy
     assert data[2].shape == (3,)
+    assert data[2].flux.unit == u.MJy/u.sr
 
 
 @pytest.mark.parametrize('spec_single, format',
