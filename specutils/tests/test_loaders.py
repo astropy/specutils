@@ -402,21 +402,35 @@ def test_iraf_linear(remote_data_path):
     spectrum_1d = Spectrum.read(remote_data_path, format='iraf')
 
     assert isinstance(spectrum_1d, Spectrum)
-    assert quantity_allclose(spectrum_1d.wavelength[0],
-                             u.Quantity(3514.56625402, unit='Angstrom'))
-    assert quantity_allclose(spectrum_1d.wavelength[100],
-                             u.Quantity(3514.56625402, unit='Angstrom') +
-                             u.Quantity(0.653432383823 * 100, unit='Angstrom'))
+    assert quantity_allclose(
+        spectrum_1d.wavelength[0], u.Quantity(3514.56625402, unit="Angstrom")
+    )
+    assert quantity_allclose(
+        spectrum_1d.wavelength[100],
+        u.Quantity(3514.56625402, unit="Angstrom")
+        + u.Quantity(0.653432383823 * 100, unit="Angstrom"),
+    )
 
 
-@pytest.mark.filterwarnings('ignore:linear Solution')
+@pytest.mark.filterwarnings("ignore:Flux unit was not provided")
+@pytest.mark.filterwarnings("ignore:FITSFixedWarning")
+@pytest.mark.filterwarnings("ignore:linear Solution")
 @pytest.mark.filterwarnings('ignore:non-ASCII characters are present in the FITS file header')
 @remote_access([{'id': '3359180', 'filename': 'log-linear_fits_solution.fits'}])
 def test_iraf_log_linear(remote_data_path):
-    """Non-linear wavelength solution for DTYPE=1 (log-linear) encoded IRAF-style (not implemented).
-    """
-    with pytest.raises(NotImplementedError):
-        assert Spectrum.read(remote_data_path, format='iraf')
+    """Non-linear wavelength solution for DTYPE=1 (log-linear) encoded IRAF-style."""
+    spectrum_1d = Spectrum.read(remote_data_path, format="iraf")
+
+    assert isinstance(spectrum_1d, Spectrum)
+    assert quantity_allclose(
+        spectrum_1d.wavelength[0], u.Quantity(4619.77720706116, unit="Angstrom")
+    )
+    assert quantity_allclose(
+        spectrum_1d.wavelength[100],
+        u.Quantity(
+            10 ** (3.66462103181651 + 100 * 3.31047113835551e-5), unit="Angstrom"
+        ),
+    )
 
 
 @pytest.mark.filterwarnings('ignore:Flux unit was not provided')
