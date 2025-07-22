@@ -407,7 +407,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
                 # In this case we have multiple spectra packed into a single extension, one target
                 # per row of the table
                 for row in data:
-                    if np.all(row['WAVELENGTH'].mask):
+                    if hasattr(row['WAVELENGTH'], 'mask') and np.all(row['WAVELENGTH'].mask):
                         # If everything is masked out we don't bother to read it in at all
                         continue
                     spec = _jwst_spectrum_from_table(row, header, primary_header, flux_col)
