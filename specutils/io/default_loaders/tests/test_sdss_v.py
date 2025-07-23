@@ -470,6 +470,7 @@ def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
         assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
         os.remove(tmpfile)
 
+
 def test_mwm_1d_baddatasum(tmp_path):
     """ test load a mwm star file with a bad datasum"""
     tmpfile = tmp_path / "mwm-temp.fits"
@@ -483,6 +484,7 @@ def test_mwm_1d_baddatasum(tmp_path):
     with pytest.warns(AstropyUserWarning, match="HDU not specified. Loading spectrum at (HDU3)*"):
         data = Spectrum.read(tmpfile, format='SDSS-V mwm')
         assert isinstance(data, Spectrum)
+
 
 # TEST MWM loaders
 @pytest.mark.parametrize(
