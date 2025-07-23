@@ -466,19 +466,18 @@ def load_sdss_mwm_1d(file_obj,
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Check if file is empty first
         datasums = []
-        for i in range(1, len(hdulist)):
-            datasums.append(int(hdulist[i].header.get("DATASUM")))
+        for i, hduext in enumerate(hdulist[1:]):
+            datasums.append(int(hduext.header.get("DATASUM")))
         if (np.array(datasums) == 0).all():
             raise ValueError("Specified file is empty.")
 
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
         if hdu is None:
-            for i in range(1, len(hdulist)):
-                if hdulist[i].header.get("DATASUM") != "0":
+            for i, hduext in enumerate(hdulist):
+                if hduext.header.get("DATASUM") != "0" and len(hduext.data) > 0:
                     hdu = i
                     warnings.warn(
-                        'HDU not specified. Loading spectrum at (HDU{})'.
-                        format(i), AstropyUserWarning)
+                        f'HDU not specified. Loading spectrum at (HDU{i})', AstropyUserWarning)
                     break
 
         # load spectra and return
@@ -512,17 +511,17 @@ def load_sdss_mwm_list(file_obj, **kwargs):
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Check if file is empty first
         datasums = []
-        for hdu in range(1, len(hdulist)):
-            datasums.append(int(hdulist[hdu].header.get("DATASUM")))
+        for hduext in hdulist[1:]:
+            datasums.append(int(hduext.header.get("DATASUM")))
         if (np.array(datasums) == 0).all():
             raise ValueError("Specified file is empty.")
 
         # Now load file
-        for hdu in range(1, len(hdulist)):
-            if hdulist[hdu].header.get("DATASUM") == "0":
+        for i, hduext in enumerate(hdulist):
+            if hduext.header.get("DATASUM") == "0" or len(hduext.data) == 0:
                 # Skip zero data HDU's
                 continue
-            spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, hdu))
+            spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, i))
     return spectra
 
 
