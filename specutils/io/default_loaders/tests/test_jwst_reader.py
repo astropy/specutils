@@ -91,6 +91,44 @@ def spec_multi(request):
     return hdulist
 
 
+def create_wfss_hdu(name='EXTRACT1D'):
+    # Each row contains arrays defining the spectrum of a single source
+    data = [[1, 2, 3], [[10, 20, 30] * u.um] * 3, [[2, 3, 4] * u.Jy] * 3,
+            [[0.1, 0.1, 0.1] * u.Jy] * 3,
+            [[2, 3, 4 ]* u.MJy/u.sr] * 3, [[0.1, 0.1, 0.1] * u.MJy/u.sr] * 3,
+            [0, 0, 0], ['POINT', 'POINT', 'EXTENDED']]
+
+    table = Table(data=data, names=['SOURCE_ID','WAVELENGTH', 'FLUX', 'FLUX_ERROR', 'SURF_BRIGHT',
+                                    'SB_ERROR', 'DQ', 'SOURCE_TYPE'])
+
+    hdu = fits.BinTableHDU(table, name=name)
+
+    hdu.header['TUNIT2'] = 'um'
+    hdu.header['TUNIT3'] = 'Jy'
+    hdu.header['TUNIT4'] = 'Jy'
+    hdu.header['TUNIT5'] = 'MJy/sr'
+    hdu.header['TUNIT6'] = 'MJy/sr'
+    hdu.ver = 1
+
+    return hdu
+
+
+@pytest.fixture(scope="function")
+def spec_multi_new(request):
+    """
+    Mock a JWST c1d/x1d multispec HDUList with 3 spectra in the new (as of July 2025)
+    format with all spectra packed into a single extension
+    """
+    name = request.param
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
+    hdulist["PRIMARY"].header["TELESCOP"] = "JWST"
+
+    hdulist.append(create_wfss_hdu(name=name))
+
+    return hdulist
+
+
 @pytest.mark.parametrize('spec_multi, format',
                          [('EXTRACT1D', 'JWST x1d multi'),
                           ('COMBINE1D', 'JWST c1d multi')], indirect=['spec_multi'])
@@ -109,6 +147,29 @@ def test_jwst_1d_multi_reader(tmp_path, spec_multi, format):
     assert data[0].shape == (100,)
     assert data[1].shape == (120,)
     assert data[2].shape == (110,)
+
+
+@pytest.mark.parametrize('spec_multi_new, format',
+                         [('EXTRACT1D', 'JWST x1d multi'),
+                          ('COMBINE1D', 'JWST c1d multi')], indirect=['spec_multi_new'])
+def test_jwst_wfss_multi_reader(tmp_path, spec_multi_new, format):
+    """Test SpectrumList.read for JWST c1d/x1d multi data"""
+    tmpfile = str(tmp_path / 'jwst.fits')
+    spec_multi_new.writeto(tmpfile)
+
+    data = SpectrumList.read(tmpfile, format=format)
+    assert type(data) is SpectrumList
+    assert len(data) == 3
+
+    for item in data:
+        assert isinstance(item, Spectrum)
+
+    assert data[0].shape == (3,)
+    assert data[0].flux.unit == u.Jy
+    assert data[1].shape == (3,)
+    assert data[1].flux.unit == u.Jy
+    assert data[2].shape == (3,)
+    assert data[2].flux.unit == u.MJy/u.sr
 
 
 @pytest.mark.parametrize('spec_single, format',
