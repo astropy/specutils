@@ -91,8 +91,8 @@ def spec_multi(request):
     return hdulist
 
 
-def create_wfss_hdu(srctype=None, ver=1, name='EXTRACT1D'):
-    # Each row contains arrays defining the specturm of a single source
+def create_wfss_hdu(name='EXTRACT1D'):
+    # Each row contains arrays defining the spectrum of a single source
     data = [[1, 2, 3], [[10, 20, 30] * u.um] * 3, [[2, 3, 4] * u.Jy] * 3,
             [[0.1, 0.1, 0.1] * u.Jy] * 3,
             [[2, 3, 4 ]* u.MJy/u.sr] * 3, [[0.1, 0.1, 0.1] * u.MJy/u.sr] * 3,
@@ -108,7 +108,7 @@ def create_wfss_hdu(srctype=None, ver=1, name='EXTRACT1D'):
     hdu.header['TUNIT4'] = 'Jy'
     hdu.header['TUNIT5'] = 'MJy/sr'
     hdu.header['TUNIT6'] = 'MJy/sr'
-    hdu.ver = ver
+    hdu.ver = 1
 
     return hdu
 
@@ -124,7 +124,7 @@ def spec_multi_new(request):
     hdulist.append(fits.PrimaryHDU())
     hdulist["PRIMARY"].header["TELESCOP"] = "JWST"
 
-    hdulist.append(create_wfss_hdu('POINT', ver=1, name=name))
+    hdulist.append(create_wfss_hdu(name=name))
 
     return hdulist
 
