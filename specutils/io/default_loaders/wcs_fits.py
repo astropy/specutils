@@ -266,7 +266,7 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
         ddisp = (wcs.all_pix2world(np.arange(len(disp)), 0) - disp.value) / disp.value
     if np.abs(ddisp).max() > 1.e-10:
         m = np.abs(ddisp).argmax()
-        raise ValueError('Relative difference between WCS spectral axis and'
+        raise ValueError('Relative difference between WCS spectral axis and '
                          f'spectral_axis at {m:}: {ddisp[m]}')
 
     if update_header:
