@@ -471,6 +471,19 @@ def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
         os.remove(tmpfile)
 
 
+def test_mwm_1d_baddatasum():
+    """ test load a mwm star file with a bad datasum"""
+    hdulist = mwm_HDUList([1,0,1,0], True, nvisits=1)
+    hdulist[1].data = fits.FITS_rec.from_columns([])
+
+    assert hdulist[1].header['DATASUM'] != "0"
+    assert len(hdulist[1].data) == 0
+
+    with pytest.warns(AstropyUserWarning, match="HDU not specified. Loading spectrum at (HDU3)*"):
+        data = Spectrum.read(hdulist, format='SDSS-V mwm')
+        assert isinstance(data, Spectrum)
+
+
 # TEST MWM loaders
 @pytest.mark.parametrize(
     "file_obj, hdu, with_wl, hduflags, nvisits",
