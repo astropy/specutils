@@ -681,7 +681,7 @@ def _set_math_model(wcs_dict, verbose=False):
 
         -1: None, no wavelength solution available
         0: Linear wavelength solution
-        1: Log-Linear wavelength solution (not implemented)
+        1: Log-Linear wavelength solution
         2: Non-Linear solutions
             ftype:
                 1: Chebyshev
