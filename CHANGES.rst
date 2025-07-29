@@ -7,6 +7,10 @@ New Features
 - Add new ``flux_col`` keyword argument to JWST x1d reader to override flux column
   auto-detected from source type column (point vs surface brightness). [#1244]
 
+- The readers can now read IRAF MULTISPEC files with linear and log-linear wavelength
+  solutions; at the same time the IRAF equispec format gains the ability to read log-linear
+  wavelength solutions. [#1254]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
