@@ -277,7 +277,14 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
                                            axes_type=['Spectral',],
                                            axes_order=(spectral_axis_index,))
     else:
-        spectral_frame = cf.SpectralFrame(unit=array.unit, axes_order=(spectral_axis_index,))
+        if array.unit.physical_type == 'length':
+            axes_names = ['wavelength',]
+        elif array.unit.physical_type == 'frequency':
+            axes_names = ['frequency',]
+        else:
+            raise ValueError("Only length and frequency units are supported for spectral axis")
+        spectral_frame = cf.SpectralFrame(unit=array.unit, axes_order=(spectral_axis_index,),
+                                          axes_names=axes_names)
 
     if naxes > 1:
         axes_order.remove(spectral_axis_index)
