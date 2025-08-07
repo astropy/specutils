@@ -8,11 +8,19 @@ from ..spectra import Spectrum, SpectralRegion
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
 
-def _edge_value_to_pixel(edge_value, spectrum, order, side):
-    spectral_axis = spectrum.spectral_axis
-
+def _edge_value_to_pixel(edge_value, spectrum, order, side, axis=None):    
+    spectral_axis = spectrum.spectral_axis if axis is None else axis
+    try:
+        edge_value = edge_value.to(spectral_axis.unit, u.spectral())
+    except Exception:
+        pass
     if order == 'ascending':
-        index = np.searchsorted(spectral_axis, edge_value, side=side)
+        if side == 'right':
+            index = np.searchsorted(spectral_axis, edge_value, side='right')
+            if np.isclose(spectral_axis[index-1].value, edge_value.value):
+                index += 1
+        else:
+            index = np.searchsorted(spectral_axis, edge_value, side='left')
         return index
 
     elif order == 'descending':
@@ -45,14 +53,6 @@ def _subregion_to_edge_pixels(subregion, spectrum):
 
     """
     spectral_axis = spectrum.spectral_axis
-    if spectral_axis[-1] > spectral_axis[0]:
-        order = "ascending"
-        left_func = min
-        right_func = max
-    else:
-        order = "descending"
-        left_func = max
-        right_func = min
 
     # Left/lower side of sub region
     if subregion[0].unit.is_equivalent(u.pix):
@@ -72,10 +72,16 @@ def _subregion_to_edge_pixels(subregion, spectrum):
                 if (spectral_axis[left_index] > subregion[0]) and (left_index >= 1):
                     left_index -= 1
     else:
-        # Convert lower value to spectrum spectral_axis units
-        left_reg_in_spec_unit = left_func(subregion).to(spectral_axis.unit,
-                                                        u.spectral())
-        left_index = _edge_value_to_pixel(left_reg_in_spec_unit, spectrum, order, "left")
+        # Convert lower value to the appropriate axis and compute order on that axis
+        try:
+            axis_to_use = spectral_axis
+            left_reg_in_spec_unit = subregion[0].to(axis_to_use.unit, u.spectral())
+        except u.UnitConversionError:
+            axis_to_use = _get_axis_in_matching_unit(subregion[0].unit, spectrum)
+            left_reg_in_spec_unit = subregion[0].to(axis_to_use.unit, u.spectral())
+
+        order_left = "ascending" if axis_to_use[-1] > axis_to_use[0] else "descending"
+        left_index = _edge_value_to_pixel(left_reg_in_spec_unit, spectrum, order_left, "left", axis=axis_to_use)
 
     # Right/upper side of sub region
     if subregion[1].unit.is_equivalent(u.pix):
@@ -95,11 +101,16 @@ def _subregion_to_edge_pixels(subregion, spectrum):
                 if (spectral_axis[right_index] < subregion[1]) and (right_index < len(spectral_axis)):
                     right_index += 1
     else:
-        # Convert upper value to spectrum spectral_axis units
-        right_reg_in_spec_unit = right_func(subregion).to(spectral_axis.unit,
-                                                 u.spectral())
+        # Convert upper value to the appropriate axis and compute order on that axis
+        try:
+            axis_to_use_r = spectral_axis
+            right_reg_in_spec_unit = subregion[1].to(axis_to_use_r.unit, u.spectral())
+        except u.UnitConversionError:
+            axis_to_use_r = _get_axis_in_matching_unit(subregion[1].unit, spectrum)
+            right_reg_in_spec_unit = subregion[1].to(axis_to_use_r.unit, u.spectral())
 
-        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order, "right")
+        order_right = "ascending" if axis_to_use_r[-1] > axis_to_use_r[0] else "descending"
+        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order_right, "right", axis=axis_to_use_r)
 
     # If the spectrum is in wavelength and region is in Hz (for example), these still might be reversed
     if left_index < right_index:
@@ -108,7 +119,7 @@ def _subregion_to_edge_pixels(subregion, spectrum):
         return right_index, left_index
 
 
-def extract_region(spectrum, region, return_single_spectrum=False):
+def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=False):
     """
     Extract a region from the input `~specutils.Spectrum`
     defined by the lower and upper bounds defined by the ``region``
@@ -127,6 +138,10 @@ def extract_region(spectrum, region, return_single_spectrum=False):
         If ``region`` has multiple sections, whether to return a single spectrum
         instead of multiple `~specutils.Spectrum` objects.  The returned spectrum
         will be a unique, concatenated, spectrum of all sub-regions.
+
+    preserve_wcs: `bool`
+        If True, the WCS will be adjusted and retained in the output spectrum(s).
+        If False (default), WCS will be dropped.
 
     Returns
     -------
@@ -170,7 +185,21 @@ def extract_region(spectrum, region, return_single_spectrum=False):
                 slices = slices[0]
             else:
                 slices = tuple(slices)
-            extracted_spectrum.append(spectrum[slices])
+            sliced = spectrum[slices]
+
+            # Adjust WCS properly
+            if preserve_wcs and spectrum.wcs is not None:
+                original_wcs = spectrum.wcs.deepcopy()
+
+                # Set CRPIX = 1.0 (FITS convention: reference pixel is 1-indexed)
+                original_wcs.wcs.crpix[0] = 1.0
+
+                # Set CRVAL to match the first spectral axis value in the sliced spectrum
+                original_wcs.wcs.crval[0] = sliced.spectral_axis[0].to_value(original_wcs.wcs.cunit[0])
+
+                sliced._wcs = original_wcs
+
+            extracted_spectrum.append(sliced)
 
     # If there is only one subregion in the region then we will
     # just return a spectrum.
@@ -285,3 +314,39 @@ def extract_bounding_spectral_region(spectrum, region):
     single_region = SpectralRegion(min(min_list), max(max_list))
 
     return extract_region(spectrum, single_region)
+
+
+def _get_axis_in_matching_unit(unit, spectrum):
+    """
+    Return the appropriate spectral axis (wavelength, frequency, or velocity)
+    from the input Spectrum object that matches the given unit.
+
+    Parameters
+    ----------
+    unit : astropy.units.Unit
+        The unit to match (e.g., km/s, Hz, micron).
+    
+    spectrum : specutils.Spectrum
+        The spectrum from which to select the appropriate axis.
+
+    Returns
+    -------
+    Quantity
+        The corresponding axis: one of spectrum.spectral_axis, spectrum.velocity,
+        or spectrum.frequency.
+
+    Raises
+    ------
+    UnitConversionError
+        If the unit is not compatible with any of the known spectral axes.
+    """
+    if unit.is_equivalent(spectrum.spectral_axis.unit):
+        return spectrum.spectral_axis
+    elif unit.is_equivalent(u.km / u.s):
+        return spectrum.velocity
+    elif unit.is_equivalent(u.Hz):
+        return spectrum.frequency
+    else:
+        raise u.UnitConversionError(
+            f"Cannot convert subregion unit {unit} to any known spectral axis"
+        )
