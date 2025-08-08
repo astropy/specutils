@@ -4,9 +4,9 @@ from numpy.testing import assert_allclose
 import pytest
 from astropy.wcs import WCS
 
-from ..spectra.spectrum import Spectrum
-from ..spectra.spectral_region import SpectralRegion
-from ..manipulation import extract_region
+from specutils.spectra.spectrum import Spectrum
+from specutils.spectra.spectral_region import SpectralRegion
+from specutils.manipulation import extract_region
 
 @pytest.fixture
 def frequency_spectrum():
@@ -54,3 +54,24 @@ def test_extract_region_velocity_on_frequency_axis(frequency_spectrum):
     assert np.isclose(sub.wcs.wcs.crpix[0], 1)
     assert np.isclose(sub.wcs.wcs.cdelt[0], spec.wcs.wcs.cdelt[0])
     assert sub.wcs.wcs.restfrq == spec.wcs.wcs.restfrq
+
+def test_extract_region_drops_wcs_when_disabled(frequency_spectrum):
+    spec = frequency_spectrum
+
+    # Define velocity range
+    region = SpectralRegion(-500 * u.km / u.s, 500 * u.km / u.s)
+
+    # Extract region without WCS preservation
+    sub = extract_region(spec, region, preserve_wcs=False)
+
+    # Basic content check
+    velocities = spec.velocity.to(u.km / u.s)
+    mask = (velocities >= -500 * u.km / u.s) & (velocities <= 500 * u.km / u.s)
+    expected_flux = spec.flux[mask]
+
+    assert_allclose(sub.flux.to_value(u.Jy),
+                    expected_flux.to_value(u.Jy),
+                    rtol=0, atol=0)
+
+    # Ensure WCS is removed
+    assert not hasattr(sub, "wcs") or sub.wcs is None

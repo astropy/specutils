@@ -12,7 +12,7 @@ def _edge_value_to_pixel(edge_value, spectrum, order, side, axis=None):
     spectral_axis = spectrum.spectral_axis if axis is None else axis
     try:
         edge_value = edge_value.to(spectral_axis.unit, u.spectral())
-    except Exception:
+    except u.UnitConversionError:
         pass
     if order == 'ascending':
         if side == 'right':
@@ -189,15 +189,17 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
 
             # Adjust WCS properly
             if preserve_wcs and spectrum.wcs is not None:
-                original_wcs = spectrum.wcs.deepcopy()
+                new_wcs = spectrum.wcs.deepcopy()
 
                 # Set CRPIX = 1.0 (FITS convention: reference pixel is 1-indexed)
-                original_wcs.wcs.crpix[0] = 1.0
+                new_wcs.wcs.crpix[0] = 1.0
 
                 # Set CRVAL to match the first spectral axis value in the sliced spectrum
-                original_wcs.wcs.crval[0] = sliced.spectral_axis[0].to_value(original_wcs.wcs.cunit[0])
+                new_wcs.wcs.crval[0] = sliced.spectral_axis[0].to_value(new_wcs.wcs.cunit[0])
 
-                sliced._wcs = original_wcs
+                sliced._wcs = new_wcs
+            else:
+                sliced._wcs = None
 
             extracted_spectrum.append(sliced)
 
