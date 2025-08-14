@@ -10,6 +10,15 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.1.1 (unreleased)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- Add appropriate axes_names to resulting GWCS when a ``Spectrum`` is created with a spectral axis
+  specified and no WCS, based on the spectral axis units. [#1264]
+
 2.1.0 (2025-07-30)
 ------------------
 
