@@ -296,6 +296,13 @@ def _jwst_spectrum_from_table(data, hdu_header, primary_header, flux_col=None, s
 
     wavelength = Quantity(data['WAVELENGTH'])
 
+    if hasattr(wavelength, 'mask'):
+        # In this case the spectra have been padded to make their arrays have equal length
+        unpadded_indices = np.where(~wavelength.mask)[0]
+        wavelength = wavelength[unpadded_indices].unmasked
+    else:
+        unpadded_indices = slice(None)
+
     # Determine if FLUX or SURF_BRIGHT column should be returned
     # based on whether it is point or extended source. This will be overridden
     # if flux_col is input by the user.
@@ -348,6 +355,11 @@ def _jwst_spectrum_from_table(data, hdu_header, primary_header, flux_col=None, s
     meta = {'header': header}
     if 'SOURCE_ID' in data.colnames:
         meta['source_id'] = data['SOURCE_ID']
+
+    if unpadded_indices != slice(None):
+        # In this case the spectra arrays have been padded to make them have consistent length
+        flux = flux[unpadded_indices].unmasked
+        uncertainty = uncertainty[unpadded_indices].unmasked
 
     return Spectrum(flux=flux, spectral_axis=wavelength,
                         uncertainty=uncertainty, meta=meta)
