@@ -22,6 +22,8 @@ Bug Fixes
 - Add appropriate axes_names to resulting GWCS when a ``Spectrum`` is created with a spectral axis
   specified and no WCS, based on the spectral axis units. [#1264]
 
+- Fix spectra resulting from new JWST WFSS format having `MaskedQuantity` spectral_axis. [#1266]
+
 2.1.0 (2025-07-30)
 ------------------
 
