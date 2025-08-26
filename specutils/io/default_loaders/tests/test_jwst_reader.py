@@ -6,8 +6,9 @@ from astropy import units as u
 from astropy.io import fits
 from astropy.io.registry import IORegistryError
 from astropy.modeling import models
-from astropy.table import Table
+from astropy.table import Table, QTable
 from astropy.utils.exceptions import AstropyUserWarning
+from astropy.utils.masked import Masked
 from gwcs.wcs import WCS
 
 from specutils import Spectrum, SpectrumList
@@ -93,12 +94,21 @@ def spec_multi(request):
 
 def create_wfss_hdu(name='EXTRACT1D'):
     # Each row contains arrays defining the spectrum of a single source
-    data = [[1, 2, 3], [[10, 20, 30] * u.um] * 3, [[2, 3, 4] * u.Jy] * 3,
+    data = [[1, 2, 3],
+            [Masked([10, 20, 30] * u.um, mask=[False, False, True]),
+             Masked([10, 20, 30] * u.um, mask=[True, False, False]),
+             Masked([10, 20, 30] * u.um, mask=[False, False, False])],
+            [Masked([2, 3, 4] * u.Jy, mask=[False, False, True]),
+             Masked([2, 3, 4] * u.Jy, mask=[True, False, False]),
+             Masked([2, 3, 4] * u.Jy, mask=[False, False, False])],
             [[0.1, 0.1, 0.1] * u.Jy] * 3,
-            [[2, 3, 4 ]* u.MJy/u.sr] * 3, [[0.1, 0.1, 0.1] * u.MJy/u.sr] * 3,
+            [Masked([2, 3, 4] * u.MJy/u.sr, mask=[False, False, True]),
+             Masked([2, 3, 4] * u.MJy/u.sr, mask=[True, False, False]),
+             Masked([2, 3, 4] * u.MJy/u.sr, mask=[False, False, False])],
+            [[0.1, 0.1, 0.1] * u.MJy/u.sr] * 3,
             [0, 0, 0], ['POINT', 'POINT', 'EXTENDED']]
 
-    table = Table(data=data, names=['SOURCE_ID','WAVELENGTH', 'FLUX', 'FLUX_ERROR', 'SURF_BRIGHT',
+    table = QTable(data=data, names=['SOURCE_ID','WAVELENGTH', 'FLUX', 'FLUX_ERROR', 'SURF_BRIGHT',
                                     'SB_ERROR', 'DQ', 'SOURCE_TYPE'])
 
     hdu = fits.BinTableHDU(table, name=name)
@@ -164,9 +174,9 @@ def test_jwst_wfss_multi_reader(tmp_path, spec_multi_new, format):
     for item in data:
         assert isinstance(item, Spectrum)
 
-    assert data[0].shape == (3,)
+    assert data[0].shape == (2,)
     assert data[0].flux.unit == u.Jy
-    assert data[1].shape == (3,)
+    assert data[1].shape == (2,)
     assert data[1].flux.unit == u.Jy
     assert data[2].shape == (3,)
     assert data[2].flux.unit == u.MJy/u.sr
