@@ -10,6 +10,9 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Dropped support for python 3.10 and bumped the minimum required version of Astropy
+  to 7.0. [#1267]
+
 2.1.1 (unreleased)
 ------------------
 
