@@ -12,7 +12,6 @@ from astropy.utils.exceptions import AstropyUserWarning
 from ...spectra import Spectrum, SpectrumList
 from ..parsing_utils import read_fileobj_or_hdulist
 from ..registers import data_loader
-from ..parsing_utils import read_fileobj_or_hdulist
 
 __all__ = [
     "load_sdss_apVisit_1D",
@@ -338,42 +337,6 @@ def load_sdss_apVisit_list(file_obj, **kwargs):
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
-    dtype=Spectrum1D,
-    priority=5,
-    extensions=["fits"],
-)
-def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
-    """
-    Load a given BOSS spec file as a Spectrum1D object.
-
-    Parameters
-    ----------
-    file_obj : str, file-like, or HDUList
-        FITS file name, file object, or HDUList..
-    hdu : int
-        The specified HDU to load a given spectra from.
-
-    Returns
-    -------
-    Spectrum1D
-        The spectrum contained in the file at the specified HDU.
-    """
-    if hdu is None:
-        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
-        warnings.warn("HDU not specified. Loading coadd spectrum (HDU1)",
-                      AstropyUserWarning)
-        hdu = 1  # defaulting to coadd
-        # raise ValueError("HDU not specified! Please specify a HDU to load.")
-    elif hdu in [2, 3, 4]:
-        raise ValueError("Invalid HDU! HDU{} is not spectra.".format(hdu))
-    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
-        # directly load the coadd at HDU1
-        return _load_BOSS_HDU(hdulist, hdu, **kwargs)
-
-
-@data_loader(
-    "SDSS-V spec",
-    identifier=spec_sdss5_identify,
     dtype=Spectrum,
     priority=5,
     extensions=["fits"],
@@ -396,12 +359,12 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     """
     if hdu is None:
         # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
-        warnings.warn('HDU not specified. Loading coadd spectrum (HDU1)',
+        warnings.warn("HDU not specified. Loading coadd spectrum (HDU1)",
                       AstropyUserWarning)
         hdu = 1  # defaulting to coadd
         # raise ValueError("HDU not specified! Please specify a HDU to load.")
     elif hdu in [2, 3, 4]:
-        raise ValueError("Invalid HDU! HDU{} is not spectra.".format(hdu))
+        raise ValueError(f"Invalid HDU! HDU{hdu} is not spectra.")
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # directly load the coadd at HDU1
         return _load_BOSS_HDU(hdulist, hdu, **kwargs)
@@ -672,13 +635,13 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 @data_loader(
     "SDSS-V astra model",
     identifier=astra_identify,
-    dtype=Spectrum1D,
+    dtype=Spectrum,
     priority=20,
     extensions=["fits"],
 )
 def load_astra_1d(file_obj, hdu: Optional[int] = None, **kwargs):
     """
-    Load an astra model spectrum file as a Spectrum1D.
+    Load an astra model spectrum file as a Spectrum.
 
     Parameters
     ----------
@@ -689,7 +652,7 @@ def load_astra_1d(file_obj, hdu: Optional[int] = None, **kwargs):
 
     Returns
     -------
-    spectrum : Spectrum1D
+    spectrum : Spectrum
         The spectra contained in the file from the provided HDU OR the first entry.
     """
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
@@ -767,7 +730,7 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     Returns
     -------
-    list[Spectrum1D]
+    list[Spectrum]
         List of spectrum with 1D flux contained in the HDU.
 
     """
@@ -834,10 +797,10 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, **kwargs):
         meta["name"] = hdulist[hdu].name
         meta["sdss_id"] = hdulist[hdu].data["sdss_id"]
 
-    # drop back a list of Spectrum1Ds to unpack
+    # drop back a list of Spectrum objects to unpack
     metadicts = _split_mwm_meta_dict(meta)
     return [
-        Spectrum1D(
+        Spectrum(
             spectral_axis=spectral_axis,
             flux=flux[i],
             uncertainty=e_flux[i],

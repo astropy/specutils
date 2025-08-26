@@ -491,14 +491,14 @@ def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
     ],
 )
 def test_astra_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
-    """Test astra Spectrum1D loader when HDU isn't specified"""
+    """Test astra Spectrum loader when HDU isn't specified"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList(hduflags, with_wl, nvisits=nvisits,
                 astra=True).writeto(tmpfile, overwrite=True)
 
     with pytest.warns(AstropyUserWarning):
-        data = Spectrum1D.read(tmpfile, hdu=hdu)
-        assert isinstance(data, Spectrum1D)
+        data = Spectrum.read(tmpfile, hdu=hdu)
+        assert isinstance(data, Spectrum)
         assert isinstance(data.meta["header"], fits.Header)
 
         if data.meta["instrument"].lower() == "apogee":
@@ -583,13 +583,13 @@ def test_mwm_1d(file_obj, hdu, with_wl, hduflags, nvisits):
     ],
 )
 def test_astra_1d(file_obj, hdu, with_wl, hduflags, nvisits):
-    """Test astra Spectrum1D loader"""
+    """Test astra Spectrum loader"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList(hduflags, with_wl, nvisits=nvisits,
                 astra=True).writeto(tmpfile, overwrite=True)
 
-    data = Spectrum1D.read(tmpfile, hdu=hdu)
-    assert isinstance(data, Spectrum1D)
+    data = Spectrum.read(tmpfile, hdu=hdu)
+    assert isinstance(data, Spectrum)
     assert isinstance(data.meta["header"], fits.Header)
     if data.meta["instrument"].lower() == "apogee":
         length = 8575
@@ -681,7 +681,7 @@ def test_astra_list(file_obj, with_wl, hduflags):
     data = SpectrumList.read(tmpfile)
     assert isinstance(data, SpectrumList)
     for i in range(len(data)):
-        assert isinstance(data[i], Spectrum1D)
+        assert isinstance(data[i], Spectrum)
         assert isinstance(data[i].meta["header"], fits.Header)
         if data[i].meta["instrument"].lower() == "apogee":
             length = 8575
@@ -746,13 +746,13 @@ def test_mwm_1d_fail(file_obj, with_wl):
     ],
 )
 def test_astra_1d_fail(file_obj, with_wl):
-    """Test astra Spectrum1D loader fail on empty"""
+    """Test astra Spectrum loader fail on empty"""
     tmpfile = str(file_obj) + ".fits"
     mwm_HDUList([0, 0, 0, 0], with_wl, astra=True).writeto(tmpfile,
                                                            overwrite=True)
 
     with pytest.raises(ValueError):
-        Spectrum1D.read(tmpfile)
+        Spectrum.read(tmpfile)
     os.remove(tmpfile)
 
 
