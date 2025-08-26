@@ -141,7 +141,7 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
 
     preserve_wcs: `bool`
         If True, the WCS will be adjusted and retained in the output spectrum(s).
-        If False (default), WCS will be dropped.
+        If False (default), the original WCS will be dropped and replaced by a lookuptable WCS.
 
     Returns
     -------
