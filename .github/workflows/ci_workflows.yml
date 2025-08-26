@@ -37,15 +37,20 @@ jobs:
             python: '3.12'
             toxenv: py312-test
 
-          - name: Python 3.10 (MacOS)
+          - name: Python 3.11 (MacOS)
             os: macos-latest
-            python: '3.10'
-            toxenv: py310-test
+            python: '3.11'
+            toxenv: py311-test
 
-          - name: Python 3.10 with oldest supported version of key dependencies
+          - name: Python 3.13 (MacOS)
+            os: macos-latest
+            python: '3.13'
+            toxenv: py313-test
+
+          - name: Python 3.11 with oldest supported version of key dependencies
             os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test-oldestdeps
+            python: '3.11'
+            toxenv: py311-test-oldestdeps
 
     steps:
     - name: Checkout code
