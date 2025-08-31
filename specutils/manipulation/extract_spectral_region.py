@@ -109,8 +109,18 @@ def _subregion_to_edge_pixels(subregion, spectrum):
             axis_to_use_r = _get_axis_in_matching_unit(subregion[1].unit, spectrum)
             right_reg_in_spec_unit = subregion[1].to(axis_to_use_r.unit, u.spectral())
 
-        order_right = "ascending" if axis_to_use_r[-1] > axis_to_use_r[0] else "descending"
-        right_index = _edge_value_to_pixel(right_reg_in_spec_unit, spectrum, order_right, "right", axis=axis_to_use_r)
+        # Compute stop-exclusive index so [lower, upper] is closed in world coords
+        axis_vals = axis_to_use_r.value
+        upper_val = right_reg_in_spec_unit.value
+
+        if axis_to_use_r[-1] > axis_to_use_r[0]:
+            # ascending: first index strictly greater than upper
+            right_index = int(np.searchsorted(axis_vals, upper_val, side="right"))
+        else:
+            # descending: search on reversed, then map back
+            rvals = axis_vals[::-1]
+            right_r = int(np.searchsorted(rvals, upper_val, side="right"))
+            right_index = len(axis_vals) - right_r
 
     # If the spectrum is in wavelength and region is in Hz (for example), these still might be reversed
     if left_index < right_index:
