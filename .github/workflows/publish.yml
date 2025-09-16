@@ -42,7 +42,7 @@ jobs:
       run: |
         cd ..
         python -m venv testenv
-        testenv/bin/pip install pytest pytest-astropy pytest-tornasync specutils/dist/*.whl
+        testenv/bin/pip install pytest pytest-astropy pytest-tornasync pytest-asdf-plugin specutils/dist/*.whl
         testenv/bin/pytest --astropy-header --remote-data --pyargs specutils
 
     # NOTE: Do not run this part for PR testing.
