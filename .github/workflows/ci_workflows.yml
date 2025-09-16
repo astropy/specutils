@@ -2,6 +2,10 @@ name: CI
 
 on:
   push:
+    branches:
+    - main
+    tags:
+    - '*'
   pull_request:
   schedule:
     # run every Wednesday at 5pm UTC
