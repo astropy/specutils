@@ -2,10 +2,15 @@ name: CI
 
 on:
   push:
+    branches:
+    - main
+    tags:
+    - '*'
   pull_request:
   schedule:
     # run every Wednesday at 5pm UTC
     - cron: '17 0 * * 3'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
