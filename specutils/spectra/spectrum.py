@@ -373,6 +373,10 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 else:
                     spec_axis = self.wcs.spectral.pixel_to_world(
                                     np.arange(self.flux.shape[self.spectral_axis_index]))
+                    # wcs.spectral forces units to meters, here we restore the original unit
+                    orig_unit = wcs.world_axis_units[wcs.naxis - self._spectral_axis_index - 1]
+                    if spec_axis.unit != orig_unit:
+                        spec_axis = spec_axis.to(orig_unit)
             else:
                 # We now keep the entire GWCS, including spatial information, so we need to include
                 # all axes in the pixel_to_world call. Note that this assumes/requires that the
