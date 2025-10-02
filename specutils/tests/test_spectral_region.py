@@ -8,6 +8,7 @@ from specutils.spectra.spectrum import Spectrum
 from specutils.spectra.spectral_region import SpectralRegion
 from specutils.manipulation import extract_region
 
+
 @pytest.fixture
 def frequency_spectrum():
     # Create basic frequency WCS
@@ -54,6 +55,7 @@ def test_extract_region_velocity_on_frequency_axis(frequency_spectrum):
     assert np.isclose(sub.wcs.wcs.crpix[0], 1)
     assert np.isclose(sub.wcs.wcs.cdelt[0], spec.wcs.wcs.cdelt[0])
     assert sub.wcs.wcs.restfrq == spec.wcs.wcs.restfrq
+
 
 def test_extract_region_drops_wcs_when_disabled(frequency_spectrum):
     spec = frequency_spectrum

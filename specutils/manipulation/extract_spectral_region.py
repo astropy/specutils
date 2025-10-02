@@ -8,7 +8,7 @@ from ..spectra import Spectrum, SpectralRegion
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
 
-def _edge_value_to_pixel(edge_value, spectrum, order, side, axis=None):    
+def _edge_value_to_pixel(edge_value, spectrum, order, side, axis=None):
     spectral_axis = spectrum.spectral_axis if axis is None else axis
     try:
         edge_value = edge_value.to(spectral_axis.unit, u.spectral())
@@ -337,7 +337,7 @@ def _get_axis_in_matching_unit(unit, spectrum):
     ----------
     unit : astropy.units.Unit
         The unit to match (e.g., km/s, Hz, micron).
-    
+
     spectrum : specutils.Spectrum
         The spectrum from which to select the appropriate axis.
 
