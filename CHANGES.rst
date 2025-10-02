@@ -4,6 +4,8 @@
 New Features
 ^^^^^^^^^^^^
 
+- Add velocity region support and preserving WCS for single regions in spectral extraction. [#1263]
+
 Bug Fixes
 ^^^^^^^^^
 
