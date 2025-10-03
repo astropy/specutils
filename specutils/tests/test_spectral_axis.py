@@ -11,18 +11,8 @@ from ..spectra.spectrum import Spectrum
 from astropy.tests.helper import assert_quantity_allclose
 
 
-def get_greenwich_earthlocation():
-    """
-    A helper function to get an EarthLocation for greenwich (without trying to
-    do a download)
-    """
-    site_registry = EarthLocation._get_site_registry(force_builtin=True)
-    return site_registry.get('greenwich')
-
-
 def test_create_spectral_axis():
-
-    site = get_greenwich_earthlocation()
+    site = EarthLocation(lon=-0.001475 * u.deg, lat=51.477811 * u.deg, height=46 * u.m)
     obstime = time.Time('2018-12-13 9:00')
 
     observer_gcrs = site.get_gcrs(obstime)
