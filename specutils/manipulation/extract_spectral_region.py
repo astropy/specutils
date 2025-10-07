@@ -1,9 +1,13 @@
 from math import floor, ceil  # faster than int(np.floor/ceil(float))
 
 import numpy as np
+import warnings
 
 from astropy import units as u
+from astropy.wcs import WCS
+from gwcs import WCS as GWCS
 from ..spectra import Spectrum, SpectralRegion
+from ..utils.wcs_utils import gwcs_from_array
 
 __all__ = ['extract_region', 'extract_bounding_spectral_region', 'spectral_slab']
 
@@ -150,8 +154,9 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
         will be a unique, concatenated, spectrum of all sub-regions.
 
     preserve_wcs: `bool`
-        If True, the WCS will be adjusted and retained in the output spectrum(s).
-        If False (default), the original WCS will be dropped and replaced by a lookuptable WCS.
+        If True, if the WCS is an astropy.wcs.WCS it will be adjusted and retained in
+        the output spectrum(s). If False (default) or the input WCS is a GWCS, the original
+        WCS will be dropped and replaced by a lookuptable WCS.
 
     Returns
     -------
@@ -198,7 +203,7 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
             sliced = spectrum[slices]
 
             # Adjust WCS properly
-            if preserve_wcs and spectrum.wcs is not None:
+            if preserve_wcs and isinstance(spectrum.wcs, WCS):
                 new_wcs = spectrum.wcs.deepcopy()
 
                 # Set CRPIX = 1.0 (FITS convention: reference pixel is 1-indexed)
@@ -208,8 +213,15 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
                 new_wcs.wcs.crval[0] = sliced.spectral_axis[0].to_value(new_wcs.wcs.cunit[0])
 
                 sliced._wcs = new_wcs
+
             else:
-                sliced._wcs = None
+                if preserve_wcs and isinstance(spectrum.wcs, GWCS):
+                    warnings.warn("preserve_wcs does not currently work with GWCS, the result"
+                                  " will have a spectral lookup table GWCS.")
+                sliced._wcs = gwcs_from_array(sliced._spectral_axis,
+                                              sliced.flux.shape,
+                                              spectral_axis_index=sliced.spectral_axis_index
+                                              )
 
             extracted_spectrum.append(sliced)
 

@@ -57,7 +57,7 @@ def test_extract_region_velocity_on_frequency_axis(frequency_spectrum):
     assert sub.wcs.wcs.restfrq == spec.wcs.wcs.restfrq
 
 
-def test_extract_region_drops_wcs_when_disabled(frequency_spectrum):
+def test_extract_region_lookup_gwcs(frequency_spectrum):
     spec = frequency_spectrum
 
     # Define velocity range
@@ -75,5 +75,5 @@ def test_extract_region_drops_wcs_when_disabled(frequency_spectrum):
                     expected_flux.to_value(u.Jy),
                     rtol=0, atol=0)
 
-    # Ensure WCS is removed
-    assert not hasattr(sub, "wcs") or sub.wcs is None
+    # Ensure WCS has correct values
+    assert sub.wcs.pixel_to_world(0) == 1.418e9 * u.Hz
