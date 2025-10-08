@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 from astropy import units as u
-from astropy.modeling.models import Shift, Identity, Mapping
+from astropy.modeling.models import Identity, Mapping
 from astropy.modeling.tabular import Tabular1D
 from gwcs import WCS as GWCS
 from gwcs import coordinate_frames as cf
@@ -345,43 +345,3 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     #     tabular_gwcs._input_unit = orig_array.unit
 
     return tabular_gwcs
-
-
-def gwcs_slice(self, item):
-    """
-    This is a bit of a hack in order to fix the slicing of the WCS
-    in the spectral dispersion direction.  The NDData slices properly
-    but the spectral dispersion result was not.
-
-    There is code slightly downstream that sets the *number* of entries
-    in the dispersion axis, this is just needed to shift to the correct
-    starting element.
-
-    When WCS gets the ability to do slicing then we might be able to
-    remove this code.
-    """
-    # Create shift of x-axis
-    if isinstance(item, int):
-        shift = item
-    elif isinstance(item, slice):
-        shift = item.start
-    else:
-        raise TypeError('Unknown index type {}, must be int or slice.'.format(item))
-
-    # Create copy as we need to modify this and return it.
-    new_wcs = copy.deepcopy(self)
-
-    if shift == 0:
-        return new_wcs
-
-    shifter = Shift(shift)
-
-    # Get the current forward transform
-    forward = new_wcs.forward_transform
-
-    # Set the new transform
-    new_wcs.set_transform(new_wcs.input_frame,
-                          new_wcs.output_frame,
-                          shifter | forward)
-
-    return new_wcs

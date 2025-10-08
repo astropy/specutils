@@ -30,6 +30,5 @@ Reference/API
     :no-heading:
 
     :skip: GWCS
-    :skip: Shift
     :skip: Tabular1D
     :skip: SpectralGWCS
