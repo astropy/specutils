@@ -1,22 +1,10 @@
-2.2.0 (unreleased)
+2.2.0 (2025-10-08)
 ------------------
 
 New Features
 ^^^^^^^^^^^^
 
-- Add velocity region support and preserving WCS for single regions in spectral extraction. [#1263, #1276]
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Dropped support for python 3.10 and bumped the minimum required version of Astropy
-  to 7.0. [#1267]
-
-2.1.1 (unreleased)
-------------------
+- Add velocity region support and ability to preserve WCS for single regions in spectral extraction. [#1263, #1276]
 
 Bug Fixes
 ^^^^^^^^^
@@ -25,6 +13,12 @@ Bug Fixes
   specified and no WCS, based on the spectral axis units. [#1264]
 
 - Fix spectra resulting from new JWST WFSS format having `MaskedQuantity` spectral_axis. [#1266]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Dropped support for python 3.10 and bumped the minimum required version of Astropy
+  to 7.0. [#1267]
 
 2.1.0 (2025-07-30)
 ------------------
