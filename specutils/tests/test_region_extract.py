@@ -31,6 +31,11 @@ def test_region_simple(simulated_spectra):
 
     assert_quantity_allclose(sub_spectrum.flux.value, sub_spectrum_flux_expected)
 
+    # Check that arithmetic doesn't drop the spectral axis units after extraction
+    subtracted = sub_spectrum - 1000
+    assert subtracted.spectral_axis.unit == u.um
+    assert_quantity_allclose(subtracted.flux.value, sub_spectrum_flux_expected - 1000)
+
 
 def test_pixel_spectralaxis_extraction():
     """
