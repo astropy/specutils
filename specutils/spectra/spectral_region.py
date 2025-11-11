@@ -4,6 +4,7 @@ import sys
 
 from astropy.table import QTable
 import astropy.units as u
+import numpy as np
 
 
 __all__ = ['SpectralRegion', 'CompoundSpectralRegion']
@@ -283,6 +284,20 @@ class SpectralRegion:
         """
         return max(x[1] for x in self._subregions)
 
+    def contains(self, spectral_value):
+        """
+        Determine whether a spectral axis value is within the defined spectral region.
+
+        Parameters
+        ----------
+
+        spectral_value : `Astropy.units.Quantity`
+            The value (wavelength, frequency, etc) to check for inclusion in the SpectralRegion.
+        """
+        return np.any([spectral_value >= sr[0] and spectral_value < sr[1] for sr
+                       in self._subregions])
+
+
     def intersection(self, other):
         """
         Return a region representing the intersection of this region
@@ -483,6 +498,12 @@ class CompoundSpectralRegion:
     def operator(self):
         return self._operator
 
-    def contains(self, spectralcoord, wcs):
-        return self.operator(self.region1.contains(spectralcoord, wcs),
-                             self.region2.contains(spectralcoord, wcs))
+    def contains(self, spectral_value):
+        return self.operator(self.region1.contains(spectral_value),
+                             self.region2.contains(spectral_value))
+
+    def to_simple_region(self):
+        '''
+        Method to convert the compound region to a simple SpectralRegion defining the same subregions.
+        '''
+        pass
