@@ -16,6 +16,8 @@ Other Changes and Additions
 Bug Fixes
 ^^^^^^^^^
 
+- Fix an indexing bug when passing a region to analysis width functions when a mask is present. [#1280]
+
 2.2.0 (2025-10-08)
 ------------------
 
