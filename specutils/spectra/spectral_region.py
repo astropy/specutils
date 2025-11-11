@@ -1,9 +1,12 @@
 import itertools
+import operator
 import sys
 
 from astropy.table import QTable
 import astropy.units as u
 
+
+__all__ = ['SpectralRegion', 'CompoundSpectralRegion']
 
 class SpectralRegion:
     """
@@ -280,6 +283,55 @@ class SpectralRegion:
         """
         return max(x[1] for x in self._subregions)
 
+    def intersection(self, other):
+        """
+        Return a region representing the intersection of this region
+        with ``other``.
+
+        Parameters
+        ----------
+        other : `Region`
+            The other region to use for the intersection.
+        """
+        return CompoundSpectralRegion(region1=self, region2=other,
+                                 operator=operator.and_)
+
+    def symmetric_difference(self, other):
+        """
+        Return the union of the two regions minus any areas contained in
+        the intersection of the two regions.
+
+        Parameters
+        ----------
+        other : `Region`
+            The other region to use for the symmetric difference.
+        """
+        return CompoundSpectralRegion(region1=self, region2=other,
+                                 operator=operator.xor)
+
+    def union(self, other):
+        """
+        Return a region representing the union of this region with
+        ``other``.
+
+        Parameters
+        ----------
+        other : `Region`
+            The other region to use for the union.
+        """
+        return CompoundSpectralRegion(region1=self, region2=other,
+                                 operator=operator.or_)
+
+    def __and__(self, other):
+        return self.intersection(other)
+
+    def __or__(self, other):
+        return self.union(other)
+
+    def __xor__(self, other):
+        return self.symmetric_difference(other)
+
+
     def invert_from_spectrum(self, spectrum):
         """
         Invert a SpectralRegion based on the extent of the
@@ -400,3 +452,37 @@ class SpectralRegion:
             raise ValueError("SpectralRegions can only be written out to ecsv files.")
 
         self._table.write(filename, overwrite=overwrite)
+
+class CompoundSpectralRegion:
+    """
+    A class that represents the logical combination of two regions in
+    sky coordinates.
+
+    Parameters
+    ----------
+    region1 : `~specutils.SpectralRegion`
+        The first spectral region.
+    region2 : `~regions.SpectralRegion`
+        The second spectral region.
+    operator : callable
+        A callable binary operator.
+    meta : `~regions.RegionMeta`, optional
+        A dictionary that stores the meta attributes of this region.
+
+    """
+    def __init__(self, region1, region2, operator):
+        if not callable(operator):
+            raise TypeError('operator must be callable')
+
+        self.region1 = region1
+        self.region2 = region2
+
+        self._operator = operator
+
+    @property
+    def operator(self):
+        return self._operator
+
+    def contains(self, spectralcoord, wcs):
+        return self.operator(self.region1.contains(spectralcoord, wcs),
+                             self.region2.contains(spectralcoord, wcs))
