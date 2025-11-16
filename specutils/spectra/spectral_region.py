@@ -454,9 +454,17 @@ class SpectralRegion:
         return QTable([lower_bounds, upper_bounds], names=("lower_bound", "upper_bound"))
 
     def as_table(self):
-        """Returns an `~astropy.table.QTable` with the upper and lower bound
-        of each subregion in the ``SpectralRegion``."""
+        """
+        Returns an `~astropy.table.QTable` with the upper and lower bound
+        of each subregion in the ``SpectralRegion``.
+        """
         return self._table
+
+    def to_subregions(self):
+        """
+        Dummy method to allow simpler recursion in CompoundSpectralRegion
+        """
+        return self
 
     def write(self, filename="spectral_region.ecsv", overwrite=True):
         """
@@ -502,8 +510,61 @@ class CompoundSpectralRegion:
         return self.operator(self.region1.contains(spectral_value),
                              self.region2.contains(spectral_value))
 
-    def to_simple_region(self):
+    def to_mask(self, spectrum):
         '''
-        Method to convert the compound region to a simple SpectralRegion defining the same subregions.
+        Create a mask based on the input Spectrum's spectral_axis.
+
+        Parameters
+        ----------
+        spectrum : specutils.Spectrum
+            The input spectrum for which to make a mask from the compound spectral region.
         '''
-        pass
+        return [~self.contains(spectral_value) for spectral_value in spectrum.spectral_axis]
+
+    def to_subregions(self):
+        '''
+        Method to convert the compound region to a SpectralRegion defining the same subregions.
+        '''
+        output_subregions = []
+        r1_sub = self.region1.to_subregions()
+        r2_sub = self.region2.to_subregions()
+
+        def overlap(subregion1, subregion2):
+            return (subregion1.contains(subregion2.lower) or
+                    subregion1.contains(subregion2.upper) or
+                    subregion2.contains(subregion1.lower) or
+                    subregion2.contains(subregion1.upper)
+                    )
+
+        # Find any overlapping regions
+        all_sr2_with_overlap = []
+        for sr1 in r1_sub:
+            overlapped = [sr2 for sr2 in r2_sub if overlap(sr1, sr2)]
+            print(f"{sr1} overlapped with {overlapped}")
+            all_sr2_with_overlap += overlapped
+            if not len(overlapped):
+                if self.operator == operator.or_:
+                    output_subregions.append([sr1.lower, sr1.upper])
+
+            for sr2 in overlapped:
+                if self.operator == operator.and_:
+                    output_subregions.append([max(sr1.lower, sr2.lower),
+                                              min(sr1.upper, sr2.upper)])
+                elif self.operator == operator.or_:
+                    output_subregions.append([min(sr1.lower, sr2.lower),
+                                              max(sr1.upper, sr2.upper)])
+
+        print(f"all_sr2_with_overlap: {all_sr2_with_overlap}")
+
+        if self.operator in (operator.or_,):
+            for sr2 in r2_sub:
+                # Checking this using the `in` operator doesn't seem to work
+                for overlapped in all_sr2_with_overlap:
+                    if overlapped.upper == sr2.upper and overlapped.lower == sr2.lower:
+                        break
+                else:
+                    output_subregions.append([sr2.lower, sr2.upper])
+
+        print(output_subregions)
+
+        return SpectralRegion(output_subregions)
