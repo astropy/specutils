@@ -9,6 +9,7 @@ import numpy as np
 
 __all__ = ['SpectralRegion', 'CompoundSpectralRegion']
 
+
 class SpectralRegion:
     """
     A `SpectralRegion` is a container class for regions (intervals) along a
@@ -297,7 +298,6 @@ class SpectralRegion:
         return np.any([spectral_value >= sr[0] and spectral_value < sr[1] for sr
                        in self._subregions])
 
-
     def intersection(self, other):
         """
         Return a region representing the intersection of this region
@@ -345,7 +345,6 @@ class SpectralRegion:
 
     def __xor__(self, other):
         return self.symmetric_difference(other)
-
 
     def invert_from_spectrum(self, spectrum):
         """
@@ -476,6 +475,7 @@ class SpectralRegion:
 
         self._table.write(filename, overwrite=overwrite)
 
+
 class CompoundSpectralRegion:
     """
     A class that represents the logical combination of two regions in
@@ -558,7 +558,7 @@ class CompoundSpectralRegion:
             elif self.operator == operator.xor:
                 # Get the non-overlapping region on the left
                 output_subregions.append([min(sr1.lower, overlapped[0].lower),
-                                          max(sr1.lower, overlapped[0].lower])
+                                          max(sr1.lower, overlapped[0].lower)])
                 # Get any non-overlapping regions in the middle if there are multiple
                 # subregions from the second region overlapping this subregion from the first
                 if len(overlapped) > 1:
@@ -567,15 +567,15 @@ class CompoundSpectralRegion:
 
                 # Get the non-overlapping region on the right
                 output_subregions.append([min(sr1.upper, overlapped[0].upper),
-                                          max(sr1.upper, overlapped[0].upper])
+                                          max(sr1.upper, overlapped[0].upper)])
 
         # Check that region 2 subregions didn't overlap multiple region 1 subregions for xor
         if self.operator == operator.xor:
-        for i in range(len(output_subregions)-1):
-            if output_subregions[i][1] > output_subregions[i+1][0]:
-                new_upper_lower = output_subregions[i][1]
-                output_subregions[i][1] = output_subregions[i+1][0]
-                output_subregions[i+1][0] = new_upper_lower
+            for i in range(len(output_subregions)-1):
+                if output_subregions[i][1] > output_subregions[i+1][0]:
+                    new_upper_lower = output_subregions[i][1]
+                    output_subregions[i][1] = output_subregions[i+1][0]
+                    output_subregions[i+1][0] = new_upper_lower
 
         # Check for subregions from region 2 that have no overlap
         if self.operator in (operator.or_, operator.xor):

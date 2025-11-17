@@ -204,6 +204,7 @@ def test_read_write(tmp_path):
     assert sr3.subregions[0] == sr.subregions[0]
     assert sr3.subregions[1] == sr.subregions[1]
 
+
 def test_compound_to_subregions():
     region1 = SpectralRegion([(0.3*u.um, 1.0*u.um), (0.04*u.um, 0.05*u.um)])
     region2 = SpectralRegion([(0.02*u.um, 0.045*u.um), (0.6*u.um, 1.2*u.um),
