@@ -543,20 +543,42 @@ class CompoundSpectralRegion:
             print(f"{sr1} overlapped with {overlapped}")
             all_sr2_with_overlap += overlapped
             if not len(overlapped):
-                if self.operator == operator.or_:
+                # These operators include regions with no overlap
+                if self.operator in (operator.or_, operator.xor):
                     output_subregions.append([sr1.lower, sr1.upper])
 
-            for sr2 in overlapped:
-                if self.operator == operator.and_:
-                    output_subregions.append([max(sr1.lower, sr2.lower),
-                                              min(sr1.upper, sr2.upper)])
-                elif self.operator == operator.or_:
-                    output_subregions.append([min(sr1.lower, sr2.lower),
-                                              max(sr1.upper, sr2.upper)])
+            if self.operator in (operator.and_, operator.or_):
+                for sr2 in overlapped:
+                    if self.operator == operator.and_:
+                        output_subregions.append([max(sr1.lower, sr2.lower),
+                                                min(sr1.upper, sr2.upper)])
+                    elif self.operator == operator.or_:
+                        output_subregions.append([min(sr1.lower, sr2.lower),
+                                                max(sr1.upper, sr2.upper)])
+            elif self.operator == operator.xor:
+                # Get the non-overlapping region on the left
+                output_subregions.append([min(sr1.lower, overlapped[0].lower),
+                                          max(sr1.lower, overlapped[0].lower])
+                # Get any non-overlapping regions in the middle if there are multiple
+                # subregions from the second region overlapping this subregion from the first
+                if len(overlapped) > 1:
+                    for i in range(1, len(overlapped)):
+                        output_subregions.append([overlapped[i-1].upper, overlapped[i].lower])
 
-        print(f"all_sr2_with_overlap: {all_sr2_with_overlap}")
+                # Get the non-overlapping region on the right
+                output_subregions.append([min(sr1.upper, overlapped[0].upper),
+                                          max(sr1.upper, overlapped[0].upper])
 
-        if self.operator in (operator.or_,):
+        # Check that region 2 subregions didn't overlap multiple region 1 subregions for xor
+        if self.operator == operator.xor:
+        for i in range(len(output_subregions)-1):
+            if output_subregions[i][1] > output_subregions[i+1][0]:
+                new_upper_lower = output_subregions[i][1]
+                output_subregions[i][1] = output_subregions[i+1][0]
+                output_subregions[i+1][0] = new_upper_lower
+
+        # Check for subregions from region 2 that have no overlap
+        if self.operator in (operator.or_, operator.xor):
             for sr2 in r2_sub:
                 # Checking this using the `in` operator doesn't seem to work
                 for overlapped in all_sr2_with_overlap:
