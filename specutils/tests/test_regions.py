@@ -230,3 +230,16 @@ def test_compound_to_subregions():
     assert compound_to_sub[1].upper == 1.2*u.um
     assert compound_to_sub[2].lower == 1.5*u.um
     assert compound_to_sub[2].upper == 1.8*u.um
+
+    compound_region = CompoundSpectralRegion(region1, region2, operator.xor)
+    compound_to_sub = compound_region.to_subregions()
+    assert compound_to_sub[0].lower == 0.02*u.um
+    assert compound_to_sub[0].upper == 0.04*u.um
+    assert compound_to_sub[1].lower == 0.045*u.um
+    assert compound_to_sub[1].upper == 0.05*u.um
+    assert compound_to_sub[2].lower == 0.3*u.um
+    assert compound_to_sub[2].upper == 0.6*u.um
+    assert compound_to_sub[3].lower == 1.0*u.um
+    assert compound_to_sub[3].upper == 1.2*u.um
+    assert compound_to_sub[4].lower == 1.5*u.um
+    assert compound_to_sub[4].upper == 1.8*u.um
