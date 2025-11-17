@@ -587,6 +587,4 @@ class CompoundSpectralRegion:
                 else:
                     output_subregions.append([sr2.lower, sr2.upper])
 
-        print(output_subregions)
-
         return SpectralRegion(output_subregions)
