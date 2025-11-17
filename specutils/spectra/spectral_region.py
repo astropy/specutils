@@ -292,7 +292,7 @@ class SpectralRegion:
         Parameters
         ----------
 
-        spectral_value : `Astropy.units.Quantity`
+        spectral_value : `~astropy.units.Quantity`
             The value (wavelength, frequency, etc) to check for inclusion in the SpectralRegion.
         """
         return np.any([spectral_value >= sr[0] and spectral_value < sr[1] for sr
@@ -489,9 +489,6 @@ class CompoundSpectralRegion:
         The second spectral region.
     operator : callable
         A callable binary operator.
-    meta : `~regions.RegionMeta`, optional
-        A dictionary that stores the meta attributes of this region.
-
     """
     def __init__(self, region1, region2, operator):
         if not callable(operator):
