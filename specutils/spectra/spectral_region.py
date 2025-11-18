@@ -546,6 +546,7 @@ class CompoundSpectralRegion:
                 # These operators include regions with no overlap
                 if self.operator in (operator.or_, operator.xor):
                     output_subregions.append([sr1[0], sr1[1]])
+                continue
 
             if self.operator in (operator.and_, operator.or_):
                 for sr2 in overlapped:
