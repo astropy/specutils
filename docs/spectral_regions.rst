@@ -325,7 +325,7 @@ object, for example:
 
 To determine if a spectral value falls withing the defined region, you can use `~specutils.CompoundSpectralRegion.contains`:
     >>> compound.contains(4.5*u.um)
-      np.True_
+      True
 
 The `~specutils.CompoundSpectralRegion` object can also be converted either to a mask (by passing a `~specutils.Spectrum`
 object to the ``to_mask`` method) or to a `~specutils.SpectralRegion` defining the same spectral regions with a set of simple
@@ -333,7 +333,7 @@ sub-regions rather than with operators using the ``to_subregions`` method.
 
     >>> spectrum = Spectrum(spectral_axis=np.arange(1, 10) * u.um, flux=np.ones(9)*u.Jy)
     >>> compound.to_mask(spectrum)
-      [np.True_, np.True_, np.True_, np.False_, np.False_, np.False_, np.False_, np.True_, np.True_]
+      [True, True, True, False, False, False, False, True, True]
     >>> compound.to_subregions()
       Spectral Region, 1 sub-regions:
         (4.0 um, 8.0 um)

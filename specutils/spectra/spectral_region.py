@@ -295,8 +295,8 @@ class SpectralRegion:
         spectral_value : `~astropy.units.Quantity`
             The value (wavelength, frequency, etc) to check for inclusion in the SpectralRegion.
         """
-        return np.any([spectral_value >= sr[0] and spectral_value < sr[1] for sr
-                       in self._subregions])
+        return bool(np.any([spectral_value >= sr[0] and spectral_value < sr[1] for sr
+                            in self._subregions]))
 
     def intersection(self, other):
         """
@@ -508,8 +508,8 @@ class CompoundSpectralRegion:
         return self._operator
 
     def contains(self, spectral_value):
-        return self.operator(self.region1.contains(spectral_value),
-                             self.region2.contains(spectral_value))
+        return bool(self.operator(self.region1.contains(spectral_value),
+                                  self.region2.contains(spectral_value)))
 
     def to_mask(self, spectrum):
         '''
@@ -520,7 +520,7 @@ class CompoundSpectralRegion:
         spectrum : specutils.Spectrum
             The input spectrum for which to make a mask from the compound spectral region.
         '''
-        return [~self.contains(spectral_value) for spectral_value in spectrum.spectral_axis]
+        return [not self.contains(spectral_value) for spectral_value in spectrum.spectral_axis]
 
     def to_subregions(self):
         '''

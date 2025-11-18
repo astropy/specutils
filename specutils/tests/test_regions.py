@@ -213,7 +213,7 @@ def test_compound_to_subregions():
     compound_region = CompoundSpectralRegion(region1, region2, operator.and_)
 
     assert compound_region.contains(0.9*u.um)
-    assert ~compound_region.contains(0.4*u.um)
+    assert not compound_region.contains(0.4*u.um)
 
     compound_to_sub = compound_region.to_subregions()
     assert len(compound_to_sub.subregions) == 2
