@@ -305,11 +305,11 @@ class SpectralRegion:
 
         Parameters
         ----------
-        other : `Region`
+        other : `~specutils.SpectralRegion`
             The other region to use for the intersection.
         """
         return CompoundSpectralRegion(region1=self, region2=other,
-                                 operator=operator.and_)
+                                      op=operator.and_)
 
     def symmetric_difference(self, other):
         """
@@ -318,11 +318,11 @@ class SpectralRegion:
 
         Parameters
         ----------
-        other : `Region`
+        other : `~specutils.SpectralRegion`
             The other region to use for the symmetric difference.
         """
         return CompoundSpectralRegion(region1=self, region2=other,
-                                 operator=operator.xor)
+                                      op=operator.xor)
 
     def union(self, other):
         """
@@ -331,11 +331,11 @@ class SpectralRegion:
 
         Parameters
         ----------
-        other : `Region`
+        other : `~specutils.SpectralRegion`
             The other region to use for the union.
         """
         return CompoundSpectralRegion(region1=self, region2=other,
-                                 operator=operator.or_)
+                                      op=operator.or_)
 
     def __and__(self, other):
         return self.intersection(other)
@@ -463,7 +463,7 @@ class SpectralRegion:
         """
         Dummy method to allow simpler recursion in CompoundSpectralRegion
         """
-        return self
+        return self.subregions
 
     def write(self, filename="spectral_region.ecsv", overwrite=True):
         """
@@ -485,19 +485,23 @@ class CompoundSpectralRegion:
     ----------
     region1 : `~specutils.SpectralRegion`
         The first spectral region.
-    region2 : `~regions.SpectralRegion`
+    region2 : `~specutils.SpectralRegion`
         The second spectral region.
     operator : callable
         A callable binary operator.
     """
-    def __init__(self, region1, region2, operator):
-        if not callable(operator):
+    def __init__(self, region1, region2, op):
+        if not callable(op):
             raise TypeError('operator must be callable')
+
+        if op not in (operator.and_, operator.or_, operator.xor):
+            raise ValueError("Operator must be one of operator.and_, operator.or_, or"
+                             " operator.xor")
 
         self.region1 = region1
         self.region2 = region2
 
-        self._operator = operator
+        self._operator = op
 
     @property
     def operator(self):
@@ -527,44 +531,43 @@ class CompoundSpectralRegion:
         r2_sub = self.region2.to_subregions()
 
         def overlap(subregion1, subregion2):
-            return (subregion1.contains(subregion2.lower) or
-                    subregion1.contains(subregion2.upper) or
-                    subregion2.contains(subregion1.lower) or
-                    subregion2.contains(subregion1.upper)
+            return (subregion1[0] <= subregion2[0] < subregion1[1] or
+                    subregion1[0] <= subregion2[1] < subregion1[1] or
+                    subregion2[0] <= subregion1[0] < subregion2[1] or
+                    subregion2[0] <= subregion1[1] < subregion2[1]
                     )
 
         # Find any overlapping regions
         all_sr2_with_overlap = []
         for sr1 in r1_sub:
             overlapped = [sr2 for sr2 in r2_sub if overlap(sr1, sr2)]
-            print(f"{sr1} overlapped with {overlapped}")
             all_sr2_with_overlap += overlapped
             if not len(overlapped):
                 # These operators include regions with no overlap
                 if self.operator in (operator.or_, operator.xor):
-                    output_subregions.append([sr1.lower, sr1.upper])
+                    output_subregions.append([sr1[0], sr1[1]])
 
             if self.operator in (operator.and_, operator.or_):
                 for sr2 in overlapped:
                     if self.operator == operator.and_:
-                        output_subregions.append([max(sr1.lower, sr2.lower),
-                                                min(sr1.upper, sr2.upper)])
+                        output_subregions.append([max(sr1[0], sr2[0]),
+                                                  min(sr1[1], sr2[1])])
                     elif self.operator == operator.or_:
-                        output_subregions.append([min(sr1.lower, sr2.lower),
-                                                max(sr1.upper, sr2.upper)])
+                        output_subregions.append([min(sr1[0], sr2[0]),
+                                                  max(sr1[1], sr2[1])])
             elif self.operator == operator.xor:
                 # Get the non-overlapping region on the left
-                output_subregions.append([min(sr1.lower, overlapped[0].lower),
-                                          max(sr1.lower, overlapped[0].lower)])
+                output_subregions.append([min(sr1[0], overlapped[0][0]),
+                                          max(sr1[0], overlapped[0][0])])
                 # Get any non-overlapping regions in the middle if there are multiple
                 # subregions from the second region overlapping this subregion from the first
                 if len(overlapped) > 1:
                     for i in range(1, len(overlapped)):
-                        output_subregions.append([overlapped[i-1].upper, overlapped[i].lower])
+                        output_subregions.append([overlapped[i-1][1], overlapped[i][0]])
 
                 # Get the non-overlapping region on the right
-                output_subregions.append([min(sr1.upper, overlapped[0].upper),
-                                          max(sr1.upper, overlapped[0].upper)])
+                output_subregions.append([min(sr1[1], overlapped[0][1]),
+                                          max(sr1[1], overlapped[0][1])])
 
         # Check that region 2 subregions didn't overlap multiple region 1 subregions for xor
         if self.operator == operator.xor:
@@ -579,9 +582,19 @@ class CompoundSpectralRegion:
             for sr2 in r2_sub:
                 # Checking this using the `in` operator doesn't seem to work
                 for overlapped in all_sr2_with_overlap:
-                    if overlapped.upper == sr2.upper and overlapped.lower == sr2.lower:
+                    if overlapped[1] == sr2[1] and overlapped[0] == sr2[0]:
                         break
                 else:
-                    output_subregions.append([sr2.lower, sr2.upper])
+                    output_subregions.append([sr2[0], sr2[1]])
+
+        # Finally, merge any regions that still overlap for or
+        if self.operator == operator.or_:
+            temp = [output_subregions[0]]
+            for i in range(1, len(output_subregions)):
+                if output_subregions[i][0] < temp[-1][1]:
+                    temp[-1][1] = output_subregions[i][1]
+                else:
+                    temp.append(output_subregions[i])
+            output_subregions = temp
 
         return SpectralRegion(output_subregions)
