@@ -4,6 +4,8 @@
 New Features
 ^^^^^^^^^^^^
 
+- Added ``CompoundSpectralRegion`` class to enable combining ``SpectralRegion`` with operators. [#1282]
+
 Bug Fixes
 ^^^^^^^^^
 
