@@ -105,7 +105,6 @@ Reference/API
     :no-heading:
     :no-inheritance-diagram:
 
-    :skip: QTable
     :skip: Spectrum
     :skip: SpectralRegion
     :skip: SpectralAxis

@@ -1,3 +1,5 @@
+import operator
+
 import astropy.units as u
 import numpy as np
 import pytest
@@ -5,7 +7,7 @@ from astropy.modeling.models import Gaussian1D
 from astropy.tests.helper import assert_quantity_allclose
 
 from specutils.fitting import find_lines_derivative
-from specutils.spectra import Spectrum, SpectralRegion
+from specutils.spectra import Spectrum, SpectralRegion, CompoundSpectralRegion
 
 
 def test_lower_upper():
@@ -201,3 +203,50 @@ def test_read_write(tmp_path):
     sr3 = SpectralRegion.from_qtable(sr2.as_table())
     assert sr3.subregions[0] == sr.subregions[0]
     assert sr3.subregions[1] == sr.subregions[1]
+
+
+def test_compound_to_subregions():
+    region1 = SpectralRegion([(0.04*u.um, 0.05*u.um), (0.3*u.um, 1.0*u.um), (2*u.um, 2.5*u.um)])
+    region2 = SpectralRegion([(0.02*u.um, 0.045*u.um), (0.6*u.um, 0.8*u.um),
+                              (0.9*u.um, 1.2*u.um), (1.5*u.um, 1.8*u.um)])
+
+    compound_region = CompoundSpectralRegion(region1, region2, operator.and_)
+
+    assert compound_region.contains(0.9*u.um)
+    assert not compound_region.contains(0.4*u.um)
+
+    compound_to_sub = compound_region.to_subregions()
+    assert len(compound_to_sub.subregions) == 3
+    assert compound_to_sub[0].lower == 0.04*u.um
+    assert compound_to_sub[0].upper == 0.045*u.um
+    assert compound_to_sub[1].lower == 0.6*u.um
+    assert compound_to_sub[1].upper == 0.8*u.um
+    assert compound_to_sub[2].lower == 0.9*u.um
+    assert compound_to_sub[2].upper == 1.0*u.um
+
+    compound_region = CompoundSpectralRegion(region1, region2, operator.or_)
+    compound_to_sub = compound_region.to_subregions()
+    assert len(compound_to_sub.subregions) == 4
+    assert compound_to_sub[0].lower == 0.02*u.um
+    assert compound_to_sub[0].upper == 0.05*u.um
+    assert compound_to_sub[1].lower == 0.3*u.um
+    assert compound_to_sub[1].upper == 1.2*u.um
+    assert compound_to_sub[2].lower == 1.5*u.um
+    assert compound_to_sub[2].upper == 1.8*u.um
+
+    compound_region = CompoundSpectralRegion(region1, region2, operator.xor)
+    compound_to_sub = compound_region.to_subregions()
+    assert compound_to_sub[0].lower == 0.02*u.um
+    assert compound_to_sub[0].upper == 0.04*u.um
+    assert compound_to_sub[1].lower == 0.045*u.um
+    assert compound_to_sub[1].upper == 0.05*u.um
+    assert compound_to_sub[2].lower == 0.3*u.um
+    assert compound_to_sub[2].upper == 0.6*u.um
+    assert compound_to_sub[3].lower == 0.8*u.um
+    assert compound_to_sub[3].upper == 0.9*u.um
+    assert compound_to_sub[4].lower == 1.0*u.um
+    assert compound_to_sub[4].upper == 1.2*u.um
+    assert compound_to_sub[5].lower == 1.5*u.um
+    assert compound_to_sub[5].upper == 1.8*u.um
+    assert compound_to_sub[6].lower == 2.0*u.um
+    assert compound_to_sub[6].upper == 2.5*u.um

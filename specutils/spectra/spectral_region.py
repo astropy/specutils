@@ -1,8 +1,13 @@
 import itertools
+import operator
 import sys
 
 from astropy.table import QTable
 import astropy.units as u
+import numpy as np
+
+
+__all__ = ['SpectralRegion', 'CompoundSpectralRegion']
 
 
 class SpectralRegion:
@@ -280,6 +285,67 @@ class SpectralRegion:
         """
         return max(x[1] for x in self._subregions)
 
+    def contains(self, spectral_value):
+        """
+        Determine whether a spectral axis value is within the defined spectral region.
+
+        Parameters
+        ----------
+
+        spectral_value : `~astropy.units.Quantity`
+            The value (wavelength, frequency, etc) to check for inclusion in the SpectralRegion.
+        """
+        return bool(np.any([spectral_value >= sr[0] and spectral_value < sr[1] for sr
+                            in self._subregions]))
+
+    def intersection(self, other):
+        """
+        Return a region representing the intersection of this region
+        with ``other``.
+
+        Parameters
+        ----------
+        other : `~specutils.SpectralRegion`
+            The other region to use for the intersection.
+        """
+        return CompoundSpectralRegion(region1=self, region2=other,
+                                      op=operator.and_)
+
+    def symmetric_difference(self, other):
+        """
+        Return the union of the two regions minus any areas contained in
+        the intersection of the two regions.
+
+        Parameters
+        ----------
+        other : `~specutils.SpectralRegion`
+            The other region to use for the symmetric difference.
+        """
+        return CompoundSpectralRegion(region1=self, region2=other,
+                                      op=operator.xor)
+
+    def union(self, other):
+        """
+        Return a region representing the union of this region with
+        ``other``.
+
+        Parameters
+        ----------
+        other : `~specutils.SpectralRegion`
+            The other region to use for the union.
+        """
+        return CompoundSpectralRegion(region1=self, region2=other,
+                                      op=operator.or_)
+
+    def __and__(self, other):
+        return self.intersection(other)
+
+    def __or__(self, other):
+        return self.union(other)
+
+    def __xor__(self, other):
+        return self.symmetric_difference(other)
+
     def invert_from_spectrum(self, spectrum):
         """
         Invert a SpectralRegion based on the extent of the
@@ -387,9 +453,17 @@ class SpectralRegion:
         return QTable([lower_bounds, upper_bounds], names=("lower_bound", "upper_bound"))
 
     def as_table(self):
-        """Returns an `~astropy.table.QTable` with the upper and lower bound
-        of each subregion in the ``SpectralRegion``."""
+        """
+        Returns an `~astropy.table.QTable` with the upper and lower bound
+        of each subregion in the ``SpectralRegion``.
+        """
         return self._table
+
+    def to_subregions(self):
+        """
+        Dummy method to allow simpler recursion in CompoundSpectralRegion
+        """
+        return self.subregions
 
     def write(self, filename="spectral_region.ecsv", overwrite=True):
         """
@@ -400,3 +474,128 @@ class SpectralRegion:
             raise ValueError("SpectralRegions can only be written out to ecsv files.")
 
         self._table.write(filename, overwrite=overwrite)
+
+
+class CompoundSpectralRegion:
+    """
+    A class that represents the logical combination of two regions in
+    sky coordinates.
+
+    Parameters
+    ----------
+    region1 : `~specutils.SpectralRegion`
+        The first spectral region.
+    region2 : `~specutils.SpectralRegion`
+        The second spectral region.
+    operator : callable
+        A callable binary operator.
+    """
+    def __init__(self, region1, region2, op):
+        if not callable(op):
+            raise TypeError('operator must be callable')
+
+        if op not in (operator.and_, operator.or_, operator.xor):
+            raise ValueError("Operator must be one of operator.and_, operator.or_, or"
+                             " operator.xor")
+
+        self.region1 = region1
+        self.region2 = region2
+
+        self._operator = op
+
+    @property
+    def operator(self):
+        return self._operator
+
+    def contains(self, spectral_value):
+        return bool(self.operator(self.region1.contains(spectral_value),
+                                  self.region2.contains(spectral_value)))
+
+    def to_mask(self, spectrum):
+        '''
+        Create a mask based on the input Spectrum's spectral_axis.
+
+        Parameters
+        ----------
+        spectrum : specutils.Spectrum
+            The input spectrum for which to make a mask from the compound spectral region.
+        '''
+        return [not self.contains(spectral_value) for spectral_value in spectrum.spectral_axis]
+
+    def to_subregions(self):
+        '''
+        Method to convert the compound region to a SpectralRegion defining the same subregions.
+        '''
+        output_subregions = []
+        r1_sub = self.region1.to_subregions()
+        r2_sub = self.region2.to_subregions()
+
+        def overlap(subregion1, subregion2):
+            return (subregion1[0] <= subregion2[0] < subregion1[1] or
+                    subregion1[0] <= subregion2[1] < subregion1[1] or
+                    subregion2[0] <= subregion1[0] < subregion2[1] or
+                    subregion2[0] <= subregion1[1] < subregion2[1]
+                    )
+
+        # Find any overlapping regions
+        all_sr2_with_overlap = []
+        for sr1 in r1_sub:
+            overlapped = [sr2 for sr2 in r2_sub if overlap(sr1, sr2)]
+            all_sr2_with_overlap += overlapped
+            if not len(overlapped):
+                # These operators include regions with no overlap
+                if self.operator in (operator.or_, operator.xor):
+                    output_subregions.append([sr1[0], sr1[1]])
+                continue
+
+            if self.operator in (operator.and_, operator.or_):
+                for sr2 in overlapped:
+                    if self.operator == operator.and_:
+                        output_subregions.append([max(sr1[0], sr2[0]),
+                                                  min(sr1[1], sr2[1])])
+                    elif self.operator == operator.or_:
+                        output_subregions.append([min(sr1[0], sr2[0]),
+                                                  max(sr1[1], sr2[1])])
+            elif self.operator == operator.xor:
+                # Get the non-overlapping region on the left
+                output_subregions.append([min(sr1[0], overlapped[0][0]),
+                                          max(sr1[0], overlapped[0][0])])
+                # Get any non-overlapping regions in the middle if there are multiple
+                # subregions from the second region overlapping this subregion from the first
+                if len(overlapped) > 1:
+                    for i in range(1, len(overlapped)):
+                        output_subregions.append([overlapped[i-1][1], overlapped[i][0]])
+
+                # Get the non-overlapping region on the right
+                output_subregions.append([min(sr1[1], overlapped[-1][1]),
+                                          max(sr1[1], overlapped[-1][1])])
+
+        output_subregions.sort()
+        # Check that region 2 subregions didn't overlap multiple region 1 subregions for xor
+        if self.operator == operator.xor:
+            for i in range(len(output_subregions)-1):
+                if output_subregions[i][1] > output_subregions[i+1][0]:
+                    new_upper_lower = output_subregions[i][1]
+                    output_subregions[i][1] = output_subregions[i+1][0]
+                    output_subregions[i+1][0] = new_upper_lower
+
+        # Check for subregions from region 2 that have no overlap
+        if self.operator in (operator.or_, operator.xor):
+            for sr2 in r2_sub:
+                # Checking this using the `in` operator doesn't seem to work
+                if sr2 not in all_sr2_with_overlap:
+                    output_subregions.append(list(sr2))
+
+        # Finally, merge any regions that still overlap for or
+        output_subregions.sort()
+        # Check that region 2
+        if self.operator == operator.or_:
+            temp = [output_subregions[0]]
+            for i in range(1, len(output_subregions)):
+                if output_subregions[i][0] < temp[-1][1]:
+                    temp[-1][1] = output_subregions[i][1]
+                else:
+                    temp.append(output_subregions[i])
+            output_subregions = temp
+
+        return SpectralRegion(output_subregions)
