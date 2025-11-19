@@ -567,9 +567,10 @@ class CompoundSpectralRegion:
                         output_subregions.append([overlapped[i-1][1], overlapped[i][0]])
 
                 # Get the non-overlapping region on the right
-                output_subregions.append([min(sr1[1], overlapped[0][1]),
-                                          max(sr1[1], overlapped[0][1])])
+                output_subregions.append([min(sr1[1], overlapped[-1][1]),
+                                          max(sr1[1], overlapped[-1][1])])
 
+        output_subregions.sort()
         # Check that region 2 subregions didn't overlap multiple region 1 subregions for xor
         if self.operator == operator.xor:
             for i in range(len(output_subregions)-1):
@@ -582,13 +583,12 @@ class CompoundSpectralRegion:
         if self.operator in (operator.or_, operator.xor):
             for sr2 in r2_sub:
                 # Checking this using the `in` operator doesn't seem to work
-                for overlapped in all_sr2_with_overlap:
-                    if overlapped[1] == sr2[1] and overlapped[0] == sr2[0]:
-                        break
-                else:
-                    output_subregions.append([sr2[0], sr2[1]])
+                if sr2 not in all_sr2_with_overlap:
+                    output_subregions.append(list(sr2))
 
         # Finally, merge any regions that still overlap for or
+        output_subregions.sort()
+        # Check that region 2
         if self.operator == operator.or_:
             temp = [output_subregions[0]]
             for i in range(1, len(output_subregions)):
