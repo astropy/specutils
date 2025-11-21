@@ -159,8 +159,8 @@ def _compute_fwzi(spectrum, regions=None):
     # Create a copy of the flux array to ensure the value on the spectrum
     # object is not altered.
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
-        disp = calc_spectrum.spectral_axis[~spectrum.mask]
-        flux = calc_spectrum.flux[~spectrum.mask].copy()
+        disp = calc_spectrum.spectral_axis[~calc_spectrum.mask]
+        flux = calc_spectrum.flux[~calc_spectrum.mask].copy()
     else:
         disp = calc_spectrum.spectral_axis
         flux = calc_spectrum.flux.copy()
@@ -232,8 +232,8 @@ def _compute_gaussian_sigma_width(spectrum, regions=None, analytic=True):
         flux_uncert = np.zeros_like(calc_spectrum.flux)
 
     if hasattr(spectrum, 'mask') and spectrum.mask is not None:
-        flux = calc_spectrum.flux[~spectrum.mask]
-        spectral_axis = calc_spectrum.spectral_axis[~spectrum.mask].quantity
+        flux = calc_spectrum.flux[~calc_spectrum.mask]
+        spectral_axis = calc_spectrum.spectral_axis[~calc_spectrum.mask].quantity
         flux_uncert = flux_uncert[~calc_spectrum.mask]
     else:
         flux = calc_spectrum.flux
