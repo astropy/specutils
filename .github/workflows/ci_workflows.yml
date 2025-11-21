@@ -57,6 +57,39 @@ jobs:
             python: '3.11'
             toxenv: py311-test-oldestdeps
 
+          - name: Python 3.13 with remote data
+            os: ubuntu-latest
+            python: '3.13'
+            toxenv: py313-test
+            toxargs: -v
+            toxposargs: --remote-data=any
+
+          - name: Python 3.14
+            os: ubuntu-latest
+            python: '3.14'
+            toxenv: py314-test
+
+          - name: Python 3.14 with remote data
+            os: ubuntu-latest
+            python: '3.14'
+            toxenv: py314-test
+            toxargs: -v
+            toxposargs: --remote-data=any
+
+          - name: Python 3.14 (macOS) with remote data
+            os: macos-latest
+            python: '3.14'
+            toxenv: py314-test
+            toxargs: -v
+            toxposargs: --remote-data=any
+
+          - name: Python 3.14 (Windows) with remote data
+            os: windows-latest
+            python: '3.14'
+            toxenv: py314-test
+            toxargs: -v
+            toxposargs: --remote-data=any
+
     steps:
     - name: Checkout code
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
