@@ -7,6 +7,7 @@ from astropy.coordinates import SpectralCoord
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
 from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataArray
+from astropy.wcs import WCS
 from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
@@ -802,6 +803,9 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             raise ValueError(
                 "Only one of redshift or radial_velocity can be used."
             )
+
+        old_redshift = self.redshift
+
         if redshift is not None:
             # with_radial_velocity_shift(redshift) looks wrong but astropy SpectralCoord handles
             # redshift input to that method
@@ -818,14 +822,26 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 -self.spectral_axis.radial_velocity
             ).with_radial_velocity_shift(radial_velocity)
             self._spectral_axis = new_spectral_axis
+            redshift = radial_velocity.to(u.Unit(''), u.doppler_redshift())
         else:
             raise ValueError("One of redshift or radial_velocity must be set.")
 
-        # Also store an updated WCS
-        self._original_wcs = self.wcs
-        self.wcs = None
-        self.wcs = gwcs_from_array(new_spectral_axis, self.flux.shape,
-                                   spectral_axis_index=self.spectral_axis_index)
+        # Also store an updated WCS if we can update it.
+        if isinstance(self.wcs, WCS):
+            wcs_spectral_index = self.wcs.naxis - self.spectral_axis_index
+            h = self.wcs.to_header()
+            z_factor = (1 + redshift) / (1 + old_redshift)
+            h[f'CRVAL_{wcs_spectral_index}'] *= z_factor
+            h[f'PC{wcs_spectral_index}_{wcs_spectral_index}'] *= z_factor
+            self.wcs = None
+            self.wcs = WCS(h)
+        else:
+            # I don't know how to update a GWCS cleanly so for now, we replace it and store the
+            # old one to retain any spatial information in the original
+            self._original_wcs = self.wcs
+            self.wcs = None
+            self.wcs = gwcs_from_array(new_spectral_axis, self.flux.shape,
+                                    spectral_axis_index=self.spectral_axis_index)
 
     def with_spectral_axis_last(self):
         """
