@@ -803,10 +803,12 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 "Only one of redshift or radial_velocity can be used."
             )
         if redshift is not None:
-            new_spec_coord = self.spectral_axis.with_radial_velocity_shift(
+            # with_radial_velocity_shift(redshift) looks wrong but astropy SpectralCoord handles
+            # redshift input to that method
+            new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
                 -self.spectral_axis.radial_velocity
             ).with_radial_velocity_shift(redshift)
-            self._spectral_axis = new_spec_coord
+            self._spectral_axis = new_spectral_axis
         elif radial_velocity is not None:
             if radial_velocity is not None:
                 if not radial_velocity.unit.is_equivalent(u.km/u.s):
@@ -819,6 +821,12 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         else:
             raise ValueError("One of redshift or radial_velocity must be set.")
 
+        # Also store an updated WCS
+        self._original_wcs = self.wcs
+        self.wcs = None
+        self.wcs = gwcs_from_array(new_spectral_axis, self.flux.shape,
+                                   spectral_axis_index=self.spectral_axis_index)
+
     def with_spectral_axis_last(self):
         """
         Convenience method to return a new copy of the Spectrum with the spectral axis last.
@@ -826,12 +834,6 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return Spectrum(flux=self.flux, wcs=self.wcs,
                           mask=self.mask, uncertainty=self.uncertainty,
                           redshift=self.redshift, move_spectral_axis="last")
-
-    def _return_with_redshift(self, result):
-        # We need actual spectral units to shift
-        if result.spectral_axis.unit not in ('', 'pix', 'pixels'):
-            result.shift_spectrum_to(redshift=self.redshift)
-        return result
 
     def _check_input(self, other, force_quantity=False):
         # NDArithmetic mixin will try to turn other into a Spectrum, which will fail
@@ -856,12 +858,13 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         func = getattr(operand1, arith_func)
         new_flux = func(other)
-        return self._return_with_redshift(Spectrum(new_flux.data*new_flux.unit,
-                                                   wcs=self.wcs,
-                                                   meta=self.meta,
-                                                   uncertainty=new_flux.uncertainty,
-                                                   mask = new_flux.mask,
-                                                   spectral_axis_index=self.spectral_axis_index))
+        return Spectrum(new_flux.data*new_flux.unit,
+                        wcs=self.wcs,
+                        meta=self.meta,
+                        uncertainty=new_flux.uncertainty,
+                        mask = new_flux.mask,
+                        spectral_axis_index=self.spectral_axis_index,
+                        redshift = self.redshift)
 
     def __add__(self, other):
         other = self._check_input(other, force_quantity=True)
