@@ -12,6 +12,8 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Bumped minimum supported GWCS version to 0.24. [#1286]
+
 2.2.1 (unreleased)
 ------------------
 
