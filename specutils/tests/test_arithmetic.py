@@ -155,6 +155,16 @@ def test_with_constants(simulated_spectra):
     assert_quantity_allclose(r_sub_result.flux, l_sub_result.flux)
 
 
+def test_arithmetic_with_redshift():
+    spec1 = Spectrum(flux=np.ones(20) * u.Jy,
+                     spectral_axis=np.arange(1, 21) * u.nm,
+                     redshift=1)
+    spec2 = spec1 * 2
+
+    assert_quantity_allclose(spec2.spectral_axis, spec1.spectral_axis)
+    assert_quantity_allclose(spec2.flux, 2*u.Jy)
+
+
 def test_arithmetic_after_shift(simulated_spectra):
     spec = simulated_spectra.s1_um_mJy_e1
     spec.shift_spectrum_to(redshift = 1)
