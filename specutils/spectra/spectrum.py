@@ -828,11 +828,16 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
 
         # Also store an updated WCS if we can update it.
         if isinstance(self.wcs, WCS):
-            wcs_spectral_index = self.wcs.naxis - self.spectral_axis_index
+            wcs_spectral_index = self.wcs.wcs.spec + 1
             h = self.wcs.to_header()
+            spec_ctype = h[f'CTYPE{wcs_spectral_index}']
             z_factor = (1 + redshift) / (1 + old_redshift)
-            h[f'CRVAL_{wcs_spectral_index}'] *= z_factor
+            if spec_ctype[0:4] != 'WAVE':
+                # Frequency, wavenumber and energy all invert this factor
+                z_factor = 1 / z_factor
+            h[f'CRVAL{wcs_spectral_index}'] *= z_factor
             h[f'PC{wcs_spectral_index}_{wcs_spectral_index}'] *= z_factor
+            # WCS doesn't allow updating, but you can set it to None and then assign a new value
             self.wcs = None
             self.wcs = WCS(h)
         else:
