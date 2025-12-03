@@ -898,6 +898,34 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
     def __rsub__(self, other):
         return -1 * (self - other)
 
+    def __pow__(self, value):
+        # This is mostly a copy of the sunpy.NDCube.__pow__ method with a different return to
+        # avoid conflicting behavior with NDCube._new_instance.
+        new_data = self.data ** value
+        new_unit = self.unit if self.unit is None else self.unit ** value
+        new_uncertainty = self.uncertainty
+
+        if self.uncertainty is not None:
+            try:
+                new_uncertainty = new_uncertainty.propagate(np.power, self, self.data ** value, correlation=1)
+            except ValueError as e:
+                if "unsupported operation" in e.args[0]:
+                    new_uncertainty = None
+                    warnings.warn(f"{type(self.uncertainty)} does not support propagation of uncertainties for power. "
+                              f"Setting uncertainties to None.")
+                elif "does not support uncertainty propagation" in e.args[0]:
+                    new_uncertainty = None
+                    warnings.warn(f"{e.args[0]} Setting uncertainties to None.")
+                else:
+                    raise e
+
+        return Spectrum(new_data*new_unit,
+                        wcs=self.wcs,
+                        meta=self.meta,
+                        uncertainty=new_uncertainty,
+                        mask = self.mask,
+                        spectral_axis_index=self.spectral_axis_index)
+
     def _format_array_summary(self, label, array):
         array_str = np.array2string(array, threshold=8, prefix=label)
         if len(array) >= 1:

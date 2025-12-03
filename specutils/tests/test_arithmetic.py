@@ -1,3 +1,4 @@
+from astropy.nddata import StdDevUncertainty
 import astropy.units as u
 from astropy.tests.helper import assert_quantity_allclose
 import numpy as np
@@ -93,6 +94,25 @@ def test_add_diff_spectral_axis(simulated_spectra):
     # We now raise an error if the spectra aren't on the same spectral axis
     with pytest.raises(ValueError, match="Spectral axis of both operands must match"):
         spec3 = simulated_spectra.s1_um_mJy_e1 + simulated_spectra.s1_AA_mJy_e3  # noqa
+
+
+def test_rdiv_and_pow():
+    # Thanks to @astrofle for the failing example
+    s1 = Spectrum(flux=np.array([1,2,3])*u.Jy, spectral_axis=np.array([1,2,3])*u.m)
+    s2 = Spectrum(flux=np.array([4,5,6])*u.Jy, spectral_axis=np.array([1,2,3])*u.m)
+    s3 = Spectrum(flux=np.array([1,2,3])*u.Jy, spectral_axis=np.array([1,2,3])*u.m,
+                uncertainty=StdDevUncertainty([.1, .2, .1]*u.Jy))
+
+    # Do some math.
+    r = s1/s2 - 1
+    inverse_r = 1/r # This used to raise an error.
+    assert_quantity_allclose(inverse_r.flux, [-1.33333333, -1.66666667, -2.]*u.Unit(''))
+    assert_quantity_allclose(inverse_r.spectral_axis, s1.spectral_axis)
+
+    with pytest.warns(UserWarning, match="Setting uncertainties to None"):
+        inverse_s3 = 1/s3
+        assert inverse_s3.uncertainty is None
+        assert_quantity_allclose(inverse_s3.flux, [1, 0.5, 0.33333333] * u.Unit('1/Jy'))
 
 
 def test_masks(simulated_spectra):
