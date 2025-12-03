@@ -899,8 +899,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
         return -1 * (self - other)
 
     def __pow__(self, value):
-        # This is mostly a copy of the sunpy.NDCube.__pow__ method with a different return to
-        # avoid conflicting behavior with NDCube._new_instance.
+        # This is mostly a copy of the sunpy.NDCube.__pow__ method written by @hayesla with a
+        # different return to avoid conflicting behavior with NDCube._new_instance.
         new_data = self.data ** value
         new_unit = self.unit if self.unit is None else self.unit ** value
         new_uncertainty = self.uncertainty
