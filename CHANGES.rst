@@ -9,6 +9,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Fix bug due to incompatibility with the `__pow__` method inherited from NDCube. [#1291]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
