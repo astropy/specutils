@@ -105,7 +105,7 @@ def test_rdiv_and_pow():
 
     # Do some math.
     r = s1/s2 - 1
-    inverse_r = 1/r # This used to raise an error.
+    inverse_r = 1/r  # This used to raise an error.
     assert_quantity_allclose(inverse_r.flux, [-1.33333333, -1.66666667, -2.]*u.Unit(''))
     assert_quantity_allclose(inverse_r.spectral_axis, s1.spectral_axis)
 
