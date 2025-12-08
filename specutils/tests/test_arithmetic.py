@@ -1,6 +1,7 @@
 from astropy.nddata import StdDevUncertainty
 import astropy.units as u
 from astropy.tests.helper import assert_quantity_allclose
+from astropy.wcs import WCS
 import numpy as np
 import pytest
 
@@ -165,10 +166,17 @@ def test_arithmetic_with_redshift():
     assert_quantity_allclose(spec2.flux, 2*u.Jy)
 
 
-def test_arithmetic_after_shift(simulated_spectra):
-    spec = simulated_spectra.s1_um_mJy_e1
+def test_arithmetic_after_shift():
+    hdr = {'CTYPE1': 'WAVE', 'CUNIT1': 'Angstrom',
+           'CRPIX1': 1, 'CRVAL1': 10000, 'CDELT1': 100}
+    spec = Spectrum(flux=np.ones(20) * u.Jy,
+                    wcs=WCS(hdr, preserve_units=True))
     spec.shift_spectrum_to(redshift = 1)
+
+    # Check that the WCS updated when shifting to new redshift
+    assert spec.wcs.to_header()['CRVAL1'] == 20000
+    assert spec.wcs.to_header()['CDELT1'] == 200
 
     # Test that doing arithmetic preserves the shifted spectral axis
     spec *= 2
-    assert_quantity_allclose(spec.spectral_axis, 2*np.linspace(0.4, 1.05, 100)*u.um)
+    assert_quantity_allclose(spec.spectral_axis, np.linspace(20000, 23800, 20)*u.AA)

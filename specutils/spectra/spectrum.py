@@ -814,9 +814,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             ).with_radial_velocity_shift(redshift)
             self._spectral_axis = new_spectral_axis
         elif radial_velocity is not None:
-            if radial_velocity is not None:
-                if not radial_velocity.unit.is_equivalent(u.km/u.s):
-                    raise u.UnitsError("Radial velocity must be a velocity.")
+            if not radial_velocity.unit.is_equivalent(u.km/u.s):
+                raise u.UnitsError("Radial velocity must be a velocity.")
 
             new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
                 -self.spectral_axis.radial_velocity
@@ -836,11 +835,17 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
                 # Frequency, wavenumber and energy all invert this factor. Note that the FITS
                 # keyword for wavenumber is WAVN, which won't match here.
                 z_factor = 1 / z_factor
-            h[f'CRVAL{wcs_spectral_index}'] *= z_factor
-            h[f'PC{wcs_spectral_index}_{wcs_spectral_index}'] *= z_factor
+            new_crval = h[f'CRVAL{wcs_spectral_index}'] * z_factor
+            h[f'CRVAL{wcs_spectral_index}'] = new_crval.value
+            pc_key = f'PC{wcs_spectral_index}_{wcs_spectral_index}'
+            if pc_key in h:
+                h[pc_key] *= z_factor
+            if f'CDELT{wcs_spectral_index}' in h:
+                new_cdelt = h[f'CDELT{wcs_spectral_index}'] * z_factor
+                h[f'CDELT{wcs_spectral_index}'] = new_cdelt.value
             # WCS doesn't allow updating, but you can set it to None and then assign a new value
             self.wcs = None
-            self.wcs = WCS(h)
+            self.wcs = WCS(h, preserve_units=True)
         else:
             # I don't know how to update a GWCS cleanly so for now, we replace it and store the
             # old one to retain any spatial information in the original
