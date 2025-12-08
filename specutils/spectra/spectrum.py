@@ -833,7 +833,8 @@ class Spectrum(OneDSpectrumMixin, NDCube, NDIOMixin, NDArithmeticMixin):
             spec_ctype = h[f'CTYPE{wcs_spectral_index}']
             z_factor = (1 + redshift) / (1 + old_redshift)
             if spec_ctype[0:4] != 'WAVE':
-                # Frequency, wavenumber and energy all invert this factor
+                # Frequency, wavenumber and energy all invert this factor. Note that the FITS
+                # keyword for wavenumber is WAVN, which won't match here.
                 z_factor = 1 / z_factor
             h[f'CRVAL{wcs_spectral_index}'] *= z_factor
             h[f'PC{wcs_spectral_index}_{wcs_spectral_index}'] *= z_factor
