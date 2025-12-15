@@ -6,8 +6,14 @@ New Features
 
 - Added ``CompoundSpectralRegion`` class to enable combining ``SpectralRegion`` with operators. [#1282]
 
+- Using ``Spectrum.shift_spectrum_to()`` will now also update the WCS when applying the redshift or radial
+  velocity if a FITS WCS is present. A GWCS will be replaced with the original stored in an
+  ``_original_wcs`` attribute. [#1287]
+
 Bug Fixes
 ^^^^^^^^^
+
+- Doing arithmetic with ``Spectrum`` objects no longer improperly redshifts the spectral axis in some cases. [#1287]
 
 - Fix bug due to incompatibility with the `__pow__` method inherited from NDCube. [#1291]
 
