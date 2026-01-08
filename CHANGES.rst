@@ -22,6 +22,8 @@ Other Changes and Additions
 
 - Bumped minimum supported GWCS version to 0.24. [#1286]
 
+- Updated documentation about uncertainties and air-to-vac wavelength conversion. [#1299]
+
 2.2.1 (unreleased)
 ------------------
 
