@@ -12,7 +12,7 @@ and thus in specutils 1.17.0 we have changed from using that method as the defau
 using the Morton (2000) equation by default, which is consistent with the IAU standard.
 
 The source of the discrepancy between Griesen (2006) and the other methods seems to be
-that Griesen (2006) assumes an air temperature of 0C, vs an apparent assumed air temperature of 15C
+that Griesen (2006) assumes an air temperature of 0C, versus an apparent assumed air temperature of 15C
 for the other methods (thanks to Jon Holtzman for investigating this). Users should keep this
 in mind when choosing which method to use for air to vacuum conversions.
 
