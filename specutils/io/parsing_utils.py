@@ -1,17 +1,23 @@
-import numpy as np
+import contextlib
+import io
 import os
 import re
 import urllib
-import io
-import contextlib
+import warnings
 
+import astropy.units as u
+import numpy as np
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
-import astropy.units as u
-import warnings
 
 from specutils.spectra import Spectrum
+
+# Optional ASDF support
+try:
+    import asdf
+except ImportError:
+    asdf = None
 
 
 @contextlib.contextmanager
@@ -50,6 +56,57 @@ def read_fileobj_or_hdulist(*args, **kwargs):
                 fileobj.seek(0)
             except (AttributeError, io.UnsupportedOperation):
                 hdulist.close()
+
+
+@contextlib.contextmanager
+def read_fileobj_or_asdftree(*args, **kwargs):
+    """Context manager for reading a filename or file object
+
+    Returns
+    -------
+    af : :class:`~asdf._asdf.AsdfFile`
+        Provides a generator-iterator representing the open file object handle.
+    """
+    if not asdf:
+        raise ImportError("The 'asdf' package is required to read ASDF files.")
+
+    # Access the fileobj or filename arg
+    # Do this so identify functions are useable outside of Spectrum.read context
+    try:
+        fileobj = args[2]
+    except IndexError:
+        fileobj = args[0]
+
+    # astropy's identify registry reuses same open fileobj handle, so try to rewind it
+    try:
+        fileobj.seek(0)
+    except (AttributeError, io.UnsupportedOperation, OSError):
+        pass
+
+    # read the asdf file
+    if isinstance(fileobj, asdf.AsdfFile):
+        if fileobj._fd is None:
+            # file is closed if _fd is None, otherwise it's a subclass of asdf.generic_io.GenericFile
+            af = asdf.open(fileobj.uri, **kwargs)
+        else:
+            af = fileobj
+    elif isinstance(fileobj, io.BufferedReader):
+        # fileobj.name avoids issues caused by the unified reader when no format is specified where
+        # the binary blob is read twice but not rewound in between, resulting in an
+        # "invalid ASDF file" error message
+        af = asdf.open(fileobj.name, **kwargs)
+    else:
+        af = asdf.open(fileobj, **kwargs)
+
+    try:
+        yield af
+    # Cleanup even after identifier function has thrown an exception: rewind generic file handles.
+    finally:
+        if not isinstance(fileobj, asdf.AsdfFile):
+            try:
+                fileobj.seek(0)
+            except (AttributeError, io.UnsupportedOperation):
+                af.close()
 
 
 def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
