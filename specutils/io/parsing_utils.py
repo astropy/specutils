@@ -107,6 +107,10 @@ def read_fileobj_or_asdftree(*args, **kwargs):
                 fileobj.seek(0)
             except (AttributeError, io.UnsupportedOperation):
                 af.close()
+            finally:
+                af.close()
+        else:
+            af.close()
 
 
 def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
