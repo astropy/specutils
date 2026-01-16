@@ -17,6 +17,8 @@ Bug Fixes
 
 - Fix bug due to incompatibility with the `__pow__` method inherited from NDCube. [#1291]
 
+- Fixed bugs in uncertainty propagation for smoothing and flux conserving resampler. [#1305]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

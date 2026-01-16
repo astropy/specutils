@@ -73,13 +73,18 @@ def convolution_smooth(spectrum, kernel):
     # Propagate the uncertainty if it exists...
     uncertainty = copy.deepcopy(spectrum.uncertainty)
     if uncertainty is not None:
+        # Note that the squared kernel for uncertainty propagation should not be normalized,
+        # but the kernel getting squared needs to be.
+        input_arr = kernel.array / np.sum(kernel.array)
+        kernel_squared = convolution.CustomKernel(input_arr ** 2)
         if isinstance(uncertainty, StdDevUncertainty):
             # Convert
             values = uncertainty.array
             ivar_values = 1 / values**2
 
             # Propagate
-            prop_ivar_values = convolution.convolve(ivar_values, kernel)
+            prop_ivar_values = convolution.convolve(ivar_values, kernel_squared,
+                                                    normalize_kernel=False)
 
             # Put back in
             uncertainty.array = 1 / np.sqrt(prop_ivar_values)
@@ -90,7 +95,8 @@ def convolution_smooth(spectrum, kernel):
             ivar_values = 1 / values
 
             # Propagate
-            prop_ivar_values = convolution.convolve(ivar_values, kernel)
+            prop_ivar_values = convolution.convolve(ivar_values, kernel_squared,
+                                                    normalize_kernel=False)
 
             # Put back in
             uncertainty.array = 1 / prop_ivar_values
@@ -100,7 +106,8 @@ def convolution_smooth(spectrum, kernel):
             ivar_values = uncertainty.array
 
             # Propagate
-            prop_ivar_values = convolution.convolve(ivar_values, kernel)
+            prop_ivar_values = convolution.convolve(ivar_values, kernel_squared,
+                                                    normalize_kernel=False)
 
             # Put back in
             uncertainty.array = prop_ivar_values

@@ -210,8 +210,7 @@ class FluxConservingResampler(ResamplerBase):
                 output_fluxes[i] = final_flux
 
                 if errs is not None:
-                    final_err = np.sum((errs[first_bin:final_bin+1] * p_ij) ** 2) / (sum_pij * sum_pij)
-                    output_errs[i] = np.sqrt(final_err)
+                    output_errs[i] = np.sum((errs[first_bin:final_bin+1] * p_ij**2)) / (sum_pij * sum_pij)  # noqa
 
         if errs is not None:
             output_errs = InverseVariance(np.reciprocal(output_errs))
