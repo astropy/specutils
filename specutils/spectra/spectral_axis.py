@@ -53,6 +53,11 @@ class SpectralAxis(SpectralCoord):
         centers, with the two outer edges based on extrapolated centers added
         to the beginning and end of the spectral axis.
         """
+        diffs = centers[1:] - centers[:-1]
+        if not np.all(diffs == diffs[0]):
+            raise ValueError("Cannot calculate consistent bin edges from"
+                             " unevenly spaced bin centers")
+
         a = np.insert(centers, 0, 2*centers[0] - centers[1])
         b = np.append(centers, 2*centers[-1] - centers[-2])
         edges = (a + b) / 2
