@@ -4,6 +4,8 @@ import os
 import re
 import urllib
 import warnings
+import weakref
+from functools import lru_cache
 
 import astropy.units as u
 import numpy as np
@@ -13,11 +15,42 @@ from astropy.utils.exceptions import AstropyUserWarning
 
 from specutils.spectra import Spectrum
 
+obj_cache = weakref.WeakKeyDictionary()
+
+
 # Optional ASDF support
 try:
     import asdf
 except ImportError:
     asdf = None
+
+@lru_cache(maxsize=8)
+def open_cache(key: str):
+    return asdf.open(key)
+
+
+def clear_cache():
+    # clear object cache
+    for af in list(obj_cache.values()):
+        try:
+            af.close()
+        except Exception:
+            pass
+    obj_cache.clear()
+
+    # clear lru_cache
+    open_cache.cache_clear()
+
+
+def get_cached_object(fileobj, **kwargs):
+    if isinstance(fileobj, (str, os.PathLike)):
+        return open_cache(fileobj)
+    else:
+        af = obj_cache.get(fileobj)
+        if af is None:
+            af = asdf.open(fileobj, **kwargs)
+            obj_cache[fileobj] = af
+        return af
 
 
 @contextlib.contextmanager
@@ -58,6 +91,37 @@ def read_fileobj_or_hdulist(*args, **kwargs):
                 hdulist.close()
 
 
+def open_input(fileobj, cache_asdf: bool = None, **kwargs):
+    # Caller passed an AsdfFile: reuse it if open; reopen if closed and uri available.
+    if isinstance(fileobj, asdf.AsdfFile):
+        if fileobj._fd is not None:
+            return fileobj
+        if getattr(fileobj, "uri", None):
+            if cache_asdf:
+                return open_cache(fileobj.uri)
+            return asdf.open(fileobj.uri, **kwargs)
+
+    # Cache-enabled path: cache by stable key when possible, otherwise by object identity.
+    if cache_asdf:
+        if isinstance(fileobj, (str, os.PathLike)):
+            return open_cache(os.fspath(fileobj))
+
+        # BufferedReader: prefer reopening via name when available (avoids “blob read twice” issues)
+        if isinstance(fileobj, io.BufferedReader) and getattr(fileobj, "name", None):
+            return open_cache(fileobj.name)
+
+        af = obj_cache.get(fileobj)
+        if af is None:
+            af = asdf.open(fileobj, **kwargs)
+            obj_cache[fileobj] = af
+        return af
+
+    # Non-cached path: always create a transient handle we close on exit.
+    if isinstance(fileobj, io.BufferedReader) and getattr(fileobj, "name", None):
+        return asdf.open(fileobj.name, **kwargs)
+    return asdf.open(fileobj, **kwargs)
+
+
 @contextlib.contextmanager
 def read_fileobj_or_asdftree(*args, **kwargs):
     """Context manager for reading a filename or file object
@@ -83,35 +147,29 @@ def read_fileobj_or_asdftree(*args, **kwargs):
     except (AttributeError, io.UnsupportedOperation, OSError):
         pass
 
-    # read the asdf file
-    if isinstance(fileobj, asdf.AsdfFile):
-        if fileobj._fd is None:
-            # file is closed if _fd is None, otherwise it's a subclass of asdf.generic_io.GenericFile
-            af = asdf.open(fileobj.uri, **kwargs)
-        else:
-            af = fileobj
-    elif isinstance(fileobj, io.BufferedReader):
-        # fileobj.name avoids issues caused by the unified reader when no format is specified where
-        # the binary blob is read twice but not rewound in between, resulting in an
-        # "invalid ASDF file" error message
-        af = asdf.open(fileobj.name, **kwargs)
-    else:
-        af = asdf.open(fileobj, **kwargs)
+    # caching options
+    # Close only when we are not caching AND the caller did not provide an already-open AsdfFile.
+    cache_asdf = kwargs.pop("cache_asdf", None)
+    should_close = (not cache_asdf) and not (isinstance(fileobj, asdf.AsdfFile) and fileobj._fd is not None)
+
+    af = open_input(fileobj, cache_asdf=cache_asdf, **kwargs)
 
     try:
         yield af
     # Cleanup even after identifier function has thrown an exception: rewind generic file handles.
     finally:
+        if should_close:
+            try:
+                af.close()
+            except Exception:
+                pass
+
+        # Always best-effort rewind of non-AsdfFile inputs (keep your current logic)
         if not isinstance(fileobj, asdf.AsdfFile):
             try:
                 fileobj.seek(0)
-            except (AttributeError, io.UnsupportedOperation):
-                af.close()
-            finally:
-                af.close()
-        else:
-            af.close()
-
+            except (AttributeError, io.UnsupportedOperation, OSError):
+                pass
 
 def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
     """

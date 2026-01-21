@@ -17,25 +17,6 @@ except ImportError:
     roman_gdps = None
 
 
-# class SpectrumList(SpectrumList):
-#     def __getitem__(self, value):
-#         n_items = len(self)
-#         meta = getattr(super().__getitem__(0), 'meta', None)
-#         smap = meta.get('source_map', {})
-
-#         if isinstance(value, int):
-#             if value < n_items:
-#                 return super().__getitem__(value)
-#             elif str(value) in smap:
-#                 return super().__getitem__(smap[str(value)])
-#             else:
-#                 raise IndexError("list index out of range")
-
-#         if isinstance(value, str):
-#             if smap and value in smap:
-#                 return super().__getitem__(smap[value])
-
-
 def _identify_roman_1d(*args, mode: str, units: str=None, **kwargs) -> bool:
     """Identify a Roman SSC spectral file
 
@@ -122,7 +103,7 @@ def _load_roman_spectrum(roman: dict, source: str) -> Spectrum:
 
 def _load_roman_first(file_obj, source=None, **kwargs):
     """Load the Roman spectrum for the first source found"""
-    with read_fileobj_or_asdftree(file_obj, *kwargs) as af:
+    with read_fileobj_or_asdftree(file_obj, **kwargs) as af:
         roman = af["roman"]
         if source is None:
             source = next(iter(roman['data']))
@@ -132,6 +113,28 @@ def _load_roman_first(file_obj, source=None, **kwargs):
             raise ValueError(f"Invalid source! Source {source} is not spectra.")
 
         return _load_roman_spectrum(roman, source)
+
+
+def _lazy_load_roman(file_obj, *, cache_size=0, **kwargs):
+    """Lazy loader for SpectrumList"""
+    with read_fileobj_or_asdftree(file_obj, **kwargs) as af:
+        roman = af["roman"]
+        sources = list(roman["data"].keys())
+        source_idx_map = dict(zip(sources, range(len(sources))))
+
+    def _loader(i: int) -> Spectrum:
+        source = sources[i]
+        with read_fileobj_or_asdftree(file_obj, **kwargs) as af2:
+            roman2 = af2["roman"]
+            return _load_roman_spectrum(roman2, source)
+
+    sl = SpectrumList.from_lazy(length=len(sources), loader=_loader, cache_size=cache_size, labels=sources)
+
+    # Optional / independent: enable string indexing for Roman IDs
+    sl.set_id_map(source_idx_map)
+
+    return sl
+
 
 def _load_roman_multisource(file_obj, **kwargs) -> SpectrumList:
     """Load all Roman spectra into a SpectrumList"""
@@ -143,7 +146,7 @@ def _load_roman_multisource(file_obj, **kwargs) -> SpectrumList:
         source_idx_map = dict(zip(sources, range(len(sources))))
 
         meta['source_map'] = source_idx_map
-
+        spectra.set_id_map(source_idx_map)
         for source in roman["data"]:
             spectrum = _load_roman_spectrum(roman, source)
             spectra.append(spectrum)
@@ -183,10 +186,14 @@ def roman_1d_spectrum_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    "Roman 1d combined", identifier=identify_1d_combined, dtype=Spectrum,
-    extensions=['asdf'], priority=10,
+    "Roman 1d combined",
+    identifier=identify_1d_combined,
+    dtype=Spectrum,
+    extensions=["asdf"],
+    priority=10,
+    autogenerate_spectrumlist=False,
 )
-def roman_1d_combined(file_obj, source:str=None, **kwargs):
+def roman_1d_combined(file_obj, source: str = None, **kwargs):
     """Load Roman 1d combined extracted spectra
 
     Loads a set of extracted spectra from a Roman 1d combined ASDF file.
@@ -208,8 +215,13 @@ def roman_1d_combined(file_obj, source:str=None, **kwargs):
 
 
 @data_loader(
-    "Roman 1d combined", identifier=identify_1d_combined, dtype=SpectrumList,
-    extensions=['asdf'], priority=10, force=True
+    "Roman 1d combined",
+    identifier=identify_1d_combined,
+    dtype=SpectrumList,
+    extensions=["asdf"],
+    priority=10,
+    force=True,
+    lazy_factory=_lazy_load_roman,
 )
 def roman_1d_combined_list(file_obj, **kwargs):
     """Load all Roman 1d combined extracted spectra

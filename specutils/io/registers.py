@@ -10,7 +10,7 @@ from functools import wraps
 
 from astropy.io import registry as io_registry
 
-from ..spectra import Spectrum, SpectrumList, SpectrumCollection
+from ..spectra import Spectrum, SpectrumCollection, SpectrumList
 
 __all__ = ['data_loader', 'custom_writer', 'get_loaders_by_extension', 'identify_spectrum_format']
 
@@ -25,8 +25,17 @@ def _astropy_has_priorities():
     return False
 
 
-def data_loader(label, identifier=None, dtype=Spectrum, extensions=None,
-                priority=0, force=False, autogenerate_spectrumlist=True, verbose=False):
+def data_loader(
+    label,
+    identifier=None,
+    dtype=Spectrum,
+    extensions=None,
+    priority=0,
+    force=False,
+    autogenerate_spectrumlist=True,
+    verbose=False,
+    lazy_factory=None,
+):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
     file reading.
@@ -56,7 +65,8 @@ def data_loader(label, identifier=None, dtype=Spectrum, extensions=None,
         data_loader that reads Spectrum objects.  Default is ``True``.
     verbose : bool
         Print extra info.
-
+    lazy_factory : Callable, optional
+        A factory function to create a lazy-loading SpectrumList.
     """
     def identifier_wrapper(ident):
         def wrapper(*args, **kwargs):
@@ -70,13 +80,44 @@ def data_loader(label, identifier=None, dtype=Spectrum, extensions=None,
         return wrapper
 
     def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if dtype is SpectrumList:
+                lazy_load = bool(kwargs.pop("lazy_load", False))
+                cache_size = kwargs.pop("cache_size", None)
+
+                if lazy_load and lazy_factory is not None:
+                    # file_obj = args[0] if args else None
+                    # if lazy_requires_path and not isinstance(file_obj, (str, os.PathLike)):
+                    #     return func(*args, **kwargs)
+
+                    # Let the factory build the list; registry only passes cache_size optionally
+                    if cache_size is not None:
+                        return lazy_factory(*args, cache_size=int(cache_size), **kwargs)
+                    return lazy_factory(*args, **kwargs)
+
+                # If not lazy, don’t leak these into eager loaders
+                return func(*args, **kwargs)
+
+            # non-SpectrumList readers
+            kwargs.pop("lazy_load", None)
+            kwargs.pop("cache_size", None)
+            return func(*args, **kwargs)
+
         if _astropy_has_priorities():
             io_registry.register_reader(
-                label, dtype, func, priority=priority, force=force,
+                label,
+                dtype,
+                wrapper,
+                priority=priority,
+                force=force,
             )
         else:
             io_registry.register_reader(
-                label, dtype, func, force=force,
+                label,
+                dtype,
+                wrapper,
+                force=force,
             )
 
         if identifier is None:
@@ -103,7 +144,7 @@ def data_loader(label, identifier=None, dtype=Spectrum, extensions=None,
         )
 
         # Include the file extensions as attributes on the function object
-        func.extensions = extensions
+        wrapper.extensions = extensions
 
         if verbose:
             print(f"Successfully loaded reader \"{label}\".")
@@ -133,9 +174,7 @@ def data_loader(label, identifier=None, dtype=Spectrum, extensions=None,
             if verbose:
                 print(f"Created SpectrumList reader for \"{label}\".")
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
+
         return wrapper
     return decorator
 
