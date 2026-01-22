@@ -15,8 +15,8 @@ from astropy.utils.exceptions import AstropyUserWarning
 
 from specutils.spectra import Spectrum
 
+# for caching objects
 obj_cache = weakref.WeakKeyDictionary()
-
 
 # Optional ASDF support
 try:
@@ -24,12 +24,15 @@ try:
 except ImportError:
     asdf = None
 
+
 @lru_cache(maxsize=8)
 def open_cache(key: str):
+    """Open asdf file and cache it"""
     return asdf.open(key)
 
 
 def clear_cache():
+    """Clear object and lru caches"""
     # clear object cache
     for af in list(obj_cache.values()):
         try:
@@ -43,14 +46,26 @@ def clear_cache():
 
 
 def get_cached_object(fileobj, **kwargs):
+    """Get the cached object"""
+    # cache by path-like input
     if isinstance(fileobj, (str, os.PathLike)):
-        return open_cache(fileobj)
-    else:
-        af = obj_cache.get(fileobj)
-        if af is None:
-            af = asdf.open(fileobj, **kwargs)
-            obj_cache[fileobj] = af
-        return af
+        return open_cache(os.fspath(fileobj))
+
+    # cache by uri for asdf input
+    if isinstance(fileobj, asdf.AsdfFile):
+        return open_cache(fileobj.uri)
+
+    # prefer caching by filename for file-like objects
+    name = getattr(fileobj, "name", None)
+    if isinstance(name, str) and name:
+        return open_cache(name)
+
+    # fallback to cache by object
+    af = obj_cache.get(fileobj)
+    if af is None:
+        af = asdf.open(fileobj, **kwargs)
+        obj_cache[fileobj] = af
+    return af
 
 
 @contextlib.contextmanager
@@ -92,33 +107,23 @@ def read_fileobj_or_hdulist(*args, **kwargs):
 
 
 def open_input(fileobj, cache_asdf: bool = None, **kwargs):
+    """Open the asdf info with or without cache"""
     # Caller passed an AsdfFile: reuse it if open; reopen if closed and uri available.
     if isinstance(fileobj, asdf.AsdfFile):
         if fileobj._fd is not None:
             return fileobj
         if getattr(fileobj, "uri", None):
             if cache_asdf:
-                return open_cache(fileobj.uri)
+                return get_cached_object(fileobj, **kwargs)
             return asdf.open(fileobj.uri, **kwargs)
 
-    # Cache-enabled path: cache by stable key when possible, otherwise by object identity.
     if cache_asdf:
-        if isinstance(fileobj, (str, os.PathLike)):
-            return open_cache(os.fspath(fileobj))
-
-        # BufferedReader: prefer reopening via name when available (avoids “blob read twice” issues)
-        if isinstance(fileobj, io.BufferedReader) and getattr(fileobj, "name", None):
-            return open_cache(fileobj.name)
-
-        af = obj_cache.get(fileobj)
-        if af is None:
-            af = asdf.open(fileobj, **kwargs)
-            obj_cache[fileobj] = af
-        return af
+        return get_cached_object(fileobj, **kwargs)
 
     # Non-cached path: always create a transient handle we close on exit.
-    if isinstance(fileobj, io.BufferedReader) and getattr(fileobj, "name", None):
-        return asdf.open(fileobj.name, **kwargs)
+    name = getattr(fileobj, "name", None)
+    if isinstance(name, str) and name:
+        return asdf.open(name, **kwargs)
     return asdf.open(fileobj, **kwargs)
 
 
@@ -140,6 +145,11 @@ def read_fileobj_or_asdftree(*args, **kwargs):
         fileobj = args[2]
     except IndexError:
         fileobj = args[0]
+
+    # If Astropy opened a transient file object, it may be closed by the time a
+    # lazy loader re-enters here. If we can recover a filename, do so.
+    if getattr(fileobj, "closed", False) and getattr(fileobj, "name", None):
+        fileobj = fileobj.name
 
     # astropy's identify registry reuses same open fileobj handle, so try to rewind it
     try:
