@@ -34,7 +34,7 @@ def data_loader(
     force=False,
     autogenerate_spectrumlist=True,
     verbose=False,
-    lazy_factory=None,
+    lazy_loader=None,
 ):
     """
     Wraps a function that can be added to an `~astropy.io.registry` for custom
@@ -65,8 +65,8 @@ def data_loader(
         data_loader that reads Spectrum objects.  Default is ``True``.
     verbose : bool
         Print extra info.
-    lazy_factory : Callable, optional
-        A factory function to create a lazy-loading SpectrumList.
+    lazy_loader : Callable, optional
+        A loader function to create a lazy-loading SpectrumList.
     """
     def identifier_wrapper(ident):
         def wrapper(*args, **kwargs):
@@ -88,8 +88,8 @@ def data_loader(
 
             # check SpectrumList loaders for lazy option
             if dtype is SpectrumList:
-                if lazy_load and lazy_factory is not None:
-                    return lazy_factory(*args, **kwargs)
+                if lazy_load and lazy_loader is not None:
+                    return lazy_loader(*args, **kwargs)
 
                 # If not lazy, use eager loader
                 kwargs.pop("cache_size", None)
