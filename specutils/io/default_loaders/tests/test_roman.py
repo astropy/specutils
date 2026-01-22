@@ -153,16 +153,33 @@ def test_roman_1d_combined_list(roman_multi):
         assert "source_map" in sp.meta
         assert sp.meta["source_map"][f"40{i}"] == i
 
-
 def test_roman_altid_index(roman_multi):
+    """test we can select on alternate id"""
     speclist = SpectrumList.read(roman_multi, format="Roman 1d combined")
     spec1 = speclist[1]
     spec2 = speclist["401"]
     spec3 = speclist["1"]
     assert spec1 == spec2 == spec3
 
+def test_roman_alid_fails(roman_multi):
+    """test we fail on altid"""
+    speclist = SpectrumList.read(roman_multi, format="Roman 1d combined")
+    with pytest.raises(IndexError, match="list index out of range"):
+        speclist[10]
+
+    with pytest.raises(IndexError, match="list index out of range"):
+        speclist["410"]
+
+    with pytest.raises(KeyError, match="not found in id mapping, and cannot resolve to a list"):
+        speclist["ab"]
+
+    speclist._id_map = None
+    with pytest.raises(KeyError, match="No id mapping provided for alternate indexing"):
+        speclist["ab"]
+
 
 def test_roman_lazy_loaded_spectrum(roman_multi):
+    """test we can lazy load spectra"""
     speclist = SpectrumList.read(roman_multi, format="Roman 1d combined", lazy_load=True, cache_asdf=True)
     assert speclist.is_lazy is True
     assert speclist.n_loaded == 0
