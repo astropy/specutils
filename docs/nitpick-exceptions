@@ -33,6 +33,7 @@ py:obj ndcube.NDCube.plotter
 py:obj ndcube.NDCubeABC
 py:obj ndcube.NDCubeSequence
 py:obj ndcube.utils.cube.propagate_rebin_uncertainties
+py:obj arithmetic
 
 # SpectralAxis inherits methods which have warnings we can't fix here.
 # FIXME: https://github.com/astropy/sphinx-automodapi/issues/101
