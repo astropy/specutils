@@ -117,22 +117,27 @@ def _load_roman_first(file_obj, source=None, **kwargs):
 
 def _lazy_load_roman(file_obj, **kwargs):
     """Lazy loader for SpectrumList"""
+
+    # read the file and get the sources
     with read_fileobj_or_asdftree(file_obj, **kwargs) as af:
         roman = af["roman"]
         sources = list(roman["data"].keys())
         source_idx_map = dict(zip(sources, range(len(sources))))
 
+    # define the lazy loader
     def _loader(i: int) -> Spectrum:
         source = sources[i]
         with read_fileobj_or_asdftree(file_obj, **kwargs) as af2:
             roman2 = af2["roman"]
             return _load_roman_spectrum(roman2, source)
 
+    # create the lazy object
+    cache_size = kwargs.get("cache_size", None)
     sl = SpectrumList.from_lazy(
-        length=len(sources), loader=_loader, cache_size=kwargs.get("cache_size", None), labels=sources
+        length=len(sources), loader=_loader, cache_size=cache_size, labels=sources
     )
 
-    # Optional / independent: enable string indexing for Roman IDs
+    # set the sources ids as alternate indices
     sl.set_id_map(source_idx_map)
 
     return sl
@@ -140,15 +145,18 @@ def _lazy_load_roman(file_obj, **kwargs):
 
 def _load_roman_multisource(file_obj, **kwargs) -> SpectrumList:
     """Load all Roman spectra into a SpectrumList"""
+
     spectra = SpectrumList()
     with read_fileobj_or_asdftree(file_obj, **kwargs) as af:
         roman = af["roman"]
         meta = roman["meta"]
         sources = list(roman['data'].keys())
-        source_idx_map = dict(zip(sources, range(len(sources))))
 
+        # set the alternate ids to roman source ids
+        source_idx_map = dict(zip(sources, range(len(sources))))
         meta['source_map'] = source_idx_map
         spectra.set_id_map(source_idx_map)
+        # load the spectra
         for source in roman["data"]:
             spectrum = _load_roman_spectrum(roman, source)
             spectra.append(spectrum)
@@ -245,8 +253,12 @@ def roman_1d_combined_list(file_obj, **kwargs):
 
 
 @data_loader(
-    "Roman 1d individual", identifier=identify_1d_individual, dtype=Spectrum,
-    extensions=['asdf'], priority=10
+    "Roman 1d individual",
+    identifier=identify_1d_individual,
+    dtype=Spectrum,
+    extensions=["asdf"],
+    priority=10,
+    autogenerate_spectrumlist=False,
 )
 def roman_1d_individual(file_obj, source: str=None, **kwargs):
     """Load Roman 1d individual extracted spectra
@@ -270,8 +282,13 @@ def roman_1d_individual(file_obj, source: str=None, **kwargs):
 
 
 @data_loader(
-    "Roman 1d individual", identifier=identify_1d_individual, dtype=SpectrumList,
-    extensions=['asdf'], priority=10, force=True
+    "Roman 1d individual",
+    identifier=identify_1d_individual,
+    dtype=SpectrumList,
+    extensions=["asdf"],
+    priority=10,
+    force=True,
+    lazy_loader=_lazy_load_roman,
 )
 def roman_1d_individual_list(file_obj, **kwargs):
     """Load all Roman 1d individual extracted spectra
