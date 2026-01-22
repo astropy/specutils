@@ -115,7 +115,7 @@ def _load_roman_first(file_obj, source=None, **kwargs):
         return _load_roman_spectrum(roman, source)
 
 
-def _lazy_load_roman(file_obj, *, cache_size=0, **kwargs):
+def _lazy_load_roman(file_obj, **kwargs):
     """Lazy loader for SpectrumList"""
     with read_fileobj_or_asdftree(file_obj, **kwargs) as af:
         roman = af["roman"]
@@ -128,7 +128,9 @@ def _lazy_load_roman(file_obj, *, cache_size=0, **kwargs):
             roman2 = af2["roman"]
             return _load_roman_spectrum(roman2, source)
 
-    sl = SpectrumList.from_lazy(length=len(sources), loader=_loader, cache_size=cache_size, labels=sources)
+    sl = SpectrumList.from_lazy(
+        length=len(sources), loader=_loader, cache_size=kwargs.get("cache_size", None), labels=sources
+    )
 
     # Optional / independent: enable string indexing for Roman IDs
     sl.set_id_map(source_idx_map)

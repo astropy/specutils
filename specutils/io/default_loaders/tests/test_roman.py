@@ -31,7 +31,7 @@ def _roman_tree(mode='single', optel="GRISM", unit="W m**(-2) nm**(-1)", nsrc=1)
     elif mode == 'multi':
         data = {}
         for i in range(nsrc):
-            data[str(i)] = {
+            data[f"40{i}"] = {
                 "wl": wl,
                 "flux": (np.arange(5, dtype=float) + 1.0) * (i + 1),
                 "flux_error": np.full_like(flux, 0.1 * (i + 1)),
@@ -117,9 +117,9 @@ def test_roman_1d_spectrum(roman_single):
 
 def test_roman_1d_combined_load_specific_source(roman_multi):
     """test loading a roman 1d combined spectrum for a specific source"""
-    spec = Spectrum.read(roman_multi, format="Roman 1d combined", source="2")
+    spec = Spectrum.read(roman_multi, format="Roman 1d combined", source="402")
     assert isinstance(spec, Spectrum)
-    assert spec.meta["source_id"] == "2"
+    assert spec.meta["source_id"] == "402"
     assert spec.spectral_axis.unit == u.nm
     assert spec.unit == u.Unit("W m**(-2) nm**(-1)")
     assert spec.shape == (5,)
@@ -130,7 +130,7 @@ def test_roman_1d_combined_load_first_source(roman_multi):
     with pytest.warns(AstropyUserWarning, match="source not specified"):
         spec = Spectrum.read(roman_multi, format="Roman 1d combined")
 
-    assert spec.meta["source_id"] == "0"
+    assert spec.meta["source_id"] == "400"
 
 
 def test_roman_1d_combined_invalid_source(roman_multi):
@@ -144,13 +144,31 @@ def test_roman_1d_combined_list(roman_multi):
     speclist = SpectrumList.read(roman_multi, format="Roman 1d combined")
 
     assert isinstance(speclist, SpectrumList)
+    assert speclist.is_lazy is False
+    assert speclist.n_loaded == 3
     assert len(speclist) == 3
     for i, sp in enumerate(speclist):
         assert isinstance(sp, Spectrum)
-        assert sp.meta["source_id"] == str(i)
+        assert sp.meta["source_id"] == f"40{i}"
         assert "source_map" in sp.meta
-        assert sp.meta["source_map"][str(i)] == i
+        assert sp.meta["source_map"][f"40{i}"] == i
 
+
+def test_roman_altid_index(roman_multi):
+    speclist = SpectrumList.read(roman_multi, format="Roman 1d combined")
+    spec1 = speclist[1]
+    spec2 = speclist["401"]
+    spec3 = speclist["1"]
+    assert spec1 == spec2 == spec3
+
+
+def test_roman_lazy_loaded_spectrum(roman_multi):
+    speclist = SpectrumList.read(roman_multi, format="Roman 1d combined", lazy_load=True, cache_asdf=True)
+    assert speclist.is_lazy is True
+    assert speclist.n_loaded == 0
+    spec = speclist[0]
+    assert isinstance(spec, Spectrum)
+    assert speclist.n_loaded == 1
 
 def test_roman_1d_individual_list(roman_file):
     """test we can load a 1d individual list"""
@@ -161,9 +179,9 @@ def test_roman_1d_individual_list(roman_file):
     assert len(speclist) == 3
     assert speclist[0].unit == u.Unit("DN/s")
     assert speclist[0].spectral_axis.unit == u.nm
-    assert speclist[0].meta["source_id"] == "0"
-    assert speclist[1].meta["source_id"] == "1"
-    assert speclist[2].meta["source_id"] == "2"
+    assert speclist[0].meta["source_id"] == "400"
+    assert speclist[1].meta["source_id"] == "401"
+    assert speclist[2].meta["source_id"] == "402"
 
 
 data_input = ["file", "asdf", "blob"]

@@ -82,27 +82,23 @@ def data_loader(
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            lazy_load = bool(kwargs.pop("lazy_load", False))
+            if lazy_load and dtype is Spectrum:
+                raise ValueError("Lazy loading is not supported for Spectrum objects.")
+
+            # check SpectrumList loaders for lazy option
             if dtype is SpectrumList:
-                lazy_load = bool(kwargs.pop("lazy_load", False))
-                cache_size = kwargs.pop("cache_size", None)
-
                 if lazy_load and lazy_factory is not None:
-                    # file_obj = args[0] if args else None
-                    # if lazy_requires_path and not isinstance(file_obj, (str, os.PathLike)):
-                    #     return func(*args, **kwargs)
-
-                    # Let the factory build the list; registry only passes cache_size optionally
-                    if cache_size is not None:
-                        return lazy_factory(*args, cache_size=int(cache_size), **kwargs)
                     return lazy_factory(*args, **kwargs)
 
-                # If not lazy, don’t leak these into eager loaders
+                # If not lazy, use eager loader
+                kwargs.pop("cache_size", None)
                 return func(*args, **kwargs)
 
-            # non-SpectrumList readers
-            kwargs.pop("lazy_load", None)
+            # Spectrum loaders
             kwargs.pop("cache_size", None)
             return func(*args, **kwargs)
+
 
         if _astropy_has_priorities():
             io_registry.register_reader(
