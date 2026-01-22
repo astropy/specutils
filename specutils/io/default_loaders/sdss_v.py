@@ -354,6 +354,33 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
         return _load_BOSS_HDU(hdulist, hdu, **kwargs)
 
 
+def _lazy_sdss_spec_loader(fileobj, **kwargs):
+    """Lazy loader example for SDSS-V spec files"""
+    # Build list of HDU indices + labels once
+    with read_fileobj_or_hdulist(fileobj, memmap=False, **kwargs) as hdulist:
+        hdu_indices = []
+        labels = []
+        for idx in range(1, len(hdulist)):
+            name = hdulist[idx].name
+            if name in ["SPALL", "ZALL", "ZLINE"]:
+                continue
+            hdu_indices.append(idx)
+            labels.append(name)
+
+    def _loader(i: int) -> Spectrum:
+        hdu_idx = hdu_indices[i]
+        with read_fileobj_or_hdulist(fileobj, memmap=False, **kwargs) as hdulist:
+            return _load_BOSS_HDU(hdulist, hdu_idx, **kwargs)
+
+    sl = SpectrumList.from_lazy(
+        length=len(hdu_indices),
+        loader=_loader,
+        labels=labels,  # optional
+    )
+    sl.set_id_map(dict(zip(labels, range(len(labels)))))  # optional
+    return sl
+
+
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -361,6 +388,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     force=True,
     priority=5,
     extensions=["fits"],
+    lazy_loader=_lazy_sdss_spec_loader
 )
 def load_sdss_spec_list(file_obj, **kwargs):
     """
