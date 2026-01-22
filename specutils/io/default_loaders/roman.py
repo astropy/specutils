@@ -223,7 +223,7 @@ def roman_1d_combined(file_obj, source: str = None, **kwargs):
     extensions=["asdf"],
     priority=10,
     force=True,
-    lazy_factory=_lazy_load_roman,
+    lazy_loader=_lazy_load_roman,
 )
 def roman_1d_combined_list(file_obj, **kwargs):
     """Load all Roman 1d combined extracted spectra
