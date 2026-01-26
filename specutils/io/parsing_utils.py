@@ -108,7 +108,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
 
 def open_input(fileobj, cache_asdf: bool = None, **kwargs):
     """Open the asdf info with or without cache"""
-    # Caller passed an AsdfFile: reuse it if open; reopen if closed and uri available.
+    # handle an input open or closed asdf instance
     if isinstance(fileobj, asdf.AsdfFile):
         if fileobj._fd is not None:
             return fileobj
@@ -120,7 +120,7 @@ def open_input(fileobj, cache_asdf: bool = None, **kwargs):
     if cache_asdf:
         return get_cached_object(fileobj, **kwargs)
 
-    # Non-cached path: always create a transient handle we close on exit.
+    # non-cached; return a temp handle we can close
     name = getattr(fileobj, "name", None)
     if isinstance(name, str) and name:
         return asdf.open(name, **kwargs)
@@ -158,7 +158,7 @@ def read_fileobj_or_asdftree(*args, **kwargs):
         pass
 
     # caching options
-    # Close only when we are not caching AND the caller did not provide an already-open AsdfFile.
+    # close when we aren't caching or when an already-open AsdfFile is provided.
     cache_asdf = kwargs.pop("cache_asdf", None)
     should_close = (not cache_asdf) and not (isinstance(fileobj, asdf.AsdfFile) and fileobj._fd is not None)
 
@@ -174,7 +174,7 @@ def read_fileobj_or_asdftree(*args, **kwargs):
             except Exception:
                 pass
 
-        # Always best-effort rewind of non-AsdfFile inputs (keep your current logic)
+        # cleanup
         if not isinstance(fileobj, asdf.AsdfFile):
             try:
                 fileobj.seek(0)
