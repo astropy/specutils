@@ -10,7 +10,7 @@ from ..utils.wcs_utils import refraction_index, vac_to_air, air_to_vac
 
 wavelengths = [300, 500, 1000] * u.nm
 data_index_refraction = {
-    'Griesen2006': np.array([3.07393068, 2.9434858 , 2.8925797 ]),
+    'Greisen2006': np.array([3.07393068, 2.9434858 , 2.8925797 ]),
     'Edlen1953': np.array([2.91557413, 2.78963801, 2.74148172]),
     'Edlen1966': np.array([2.91554272, 2.7895973 , 2.74156098]),
     'PeckReeder1972': np.array([2.91554211, 2.78960005, 2.74152561]),
