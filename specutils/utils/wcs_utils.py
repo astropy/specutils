@@ -56,7 +56,7 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
         'Morton2000' (default) - from Morton (2000, ApJS, 130, 403), eqn 8. Used by VALD,
             the Vienna Atomic Line Database. Very similar to Edlen (1966).
 
-        'Griesen2006' - from Greisen et al. (2006, A&A 446, 747),
+        'Greisen2006' - from Greisen et al. (2006, A&A 446, 747),
             eqn. 65, standard used by International Union of Geodesy and Geophysics
 
         'Edlen1953' - from Edlen (1953, J. Opt. Soc. Am, 43, 339). Standard
@@ -75,8 +75,8 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
             the international temperature scale and adjust the results for
             CO2 concentration. Arguably most accurate conversion available.
 
-        Note that all options except for 'Griesen2006' have singularities in the far
-        UV. 'Griesen2006' gives values that are slightly inconsistent with the
+        Note that all options except for 'Greisen2006' have singularities in the far
+        UV. 'Greisen2006' gives values that are slightly inconsistent with the
         other methods (~0.07 Angstrom difference at visible wavelengths), but it is
         the best option in the FUV due to the mathematical singularities in the others.
         See https://specutils.readthedocs.io/en/latest/wcs_utils.html for more detail, or
@@ -91,17 +91,17 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
     refr : number or sequence
         Index of refraction at each given air wavelength.
     """
-    VALID_METHODS = ['Griesen2006', 'Edlen1953', 'Edlen1966', 'Morton2000',
+    VALID_METHODS = ['Greisen2006', 'Edlen1953', 'Edlen1966', 'Morton2000',
                      'PeckReeder1972', 'Ciddor1996']
     assert isinstance(method, str), 'method must be a string'
-    if method != 'Griesen2006' and wavelength.min() < 200 * u.nm:
+    if method != 'Greisen2006' and wavelength.min() < 200 * u.nm:
         raise ValueError("The chosen method is invalid for wavelengths below 250 nm."
-                         " 'Griesen2006' is the only option for this wavelength range -"
+                         " 'Greisen2006' is the only option for this wavelength range -"
                          " see the specutils.utils.wcs_utils.refraction_index docstring"
                          " for more detail.")
     method = method.lower()
     sigma2 = (1 / wavelength.to(u.um).value)**2
-    if method == 'griesen2006':
+    if method == 'greisen2006':
         refr = 1e-6 * (287.6155 + 1.62887 * sigma2 + 0.01360 * sigma2**2)
     elif method == 'edlen1953':
         refr = 6.4328e-5 + 2.94981e-2 / (146 - sigma2) + 2.5540e-4 / (41 - sigma2)
@@ -157,7 +157,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
         How to convert from vacuum to air wavelengths. Options are:
 
             * 'inversion' (default) - result is simply the inversion (1 / n) of the
-              refraction index of air. Griesen et al. (2006) report that the error
+              refraction index of air. Greisen et al. (2006) report that the error
               in naively inverting is less than 10^-9.
 
             * 'Piskunov' - uses an analytical solution derived by Nikolai Piskunov
@@ -217,7 +217,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
     return wavelength * refr
 
 
-def air_to_vac_deriv(wavelength, method='Griesen2006'):
+def air_to_vac_deriv(wavelength, method='Greisen2006'):
     """
     Calculates the derivative d(wave_vacuum) / d(wave_air) using different
     methods.
@@ -229,14 +229,14 @@ def air_to_vac_deriv(wavelength, method='Griesen2006'):
 
     method : str, optional
         Method used to convert wavelength derivative. Options are:
-        'Griesen2006' (default) - from Greisen et al. (2006, A&A 446, 747), eqn. 66.
+        'Greisen2006' (default) - from Greisen et al. (2006, A&A 446, 747), eqn. 66.
 
     Returns
     -------
     wave_deriv : `Quantity` object (number or sequence)
         Derivative d(wave_vacuum) / d(wave_air).
     """
-    assert method.lower() == 'griesen2006', "Only supported method is 'Griesen2006'"
+    assert method.lower() == 'greisen2006', "Only supported method is 'Greisen2006'"
     wlum = wavelength.to(u.um).value
     return (1 + 1e-6 * (287.6155 - 1.62887 / wlum**2 - 0.04080 / wlum**4))
 
