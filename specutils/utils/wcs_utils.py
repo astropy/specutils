@@ -4,8 +4,10 @@ import numpy as np
 from astropy import units as u
 from astropy.modeling.models import Identity, Mapping
 from astropy.modeling.tabular import Tabular1D
+from astropy.utils.exceptions import AstropyDeprecationWarning
 from gwcs import WCS as GWCS
 from gwcs import coordinate_frames as cf
+import warnings
 
 
 class SpectralGWCS(GWCS):
@@ -102,6 +104,10 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
     method = method.lower()
     sigma2 = (1 / wavelength.to(u.um).value)**2
     if method == 'greisen2006':
+        refr = 1e-6 * (287.6155 + 1.62887 * sigma2 + 0.01360 * sigma2**2)
+    elif method == 'griesen2006':
+        warnings.warn("The spelling of this option has been corrected to 'greisen2006',"
+                      " please update to use the corrected spelling.", AstropyDeprecationWarning)
         refr = 1e-6 * (287.6155 + 1.62887 * sigma2 + 0.01360 * sigma2**2)
     elif method == 'edlen1953':
         refr = 6.4328e-5 + 2.94981e-2 / (146 - sigma2) + 2.5540e-4 / (41 - sigma2)
@@ -236,7 +242,10 @@ def air_to_vac_deriv(wavelength, method='Greisen2006'):
     wave_deriv : `Quantity` object (number or sequence)
         Derivative d(wave_vacuum) / d(wave_air).
     """
-    assert method.lower() == 'greisen2006', "Only supported method is 'Greisen2006'"
+    assert method.lower() in ('greisen2006', 'griesen2006'), "Only supported method is 'Greisen2006'"
+    if method == 'griesen2006':
+        warnings.warn("The spelling of this option has been corrected to 'greisen2006',"
+                      " please update to use the corrected spelling.", AstropyDeprecationWarning)
     wlum = wavelength.to(u.um).value
     return (1 + 1e-6 * (287.6155 - 1.62887 / wlum**2 - 0.04080 / wlum**4))
 
