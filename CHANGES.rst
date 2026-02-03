@@ -1,4 +1,4 @@
-2.3.0 (unreleased)
+2.3.0 (2026-02-03)
 ------------------
 
 New Features
@@ -12,6 +12,8 @@ New Features
 
 Bug Fixes
 ^^^^^^^^^
+
+- Fix an indexing bug when passing a region to analysis width functions when a mask is present. [#1280]
 
 - Doing arithmetic with ``Spectrum`` objects no longer improperly redshifts the spectral axis in some cases. [#1287]
 
@@ -28,14 +30,6 @@ Other Changes and Additions
 
 - Fixed misspellings of Greisen (from "Griesen") in air-to-vac wavelength conversion citations. Note that this
   also deprecates the "griesen2006" method option and changes it to "greisen2006". [#1312, #1315]
-
-2.2.1 (unreleased)
-------------------
-
-Bug Fixes
-^^^^^^^^^
-
-- Fix an indexing bug when passing a region to analysis width functions when a mask is present. [#1280]
 
 2.2.0 (2025-10-08)
 ------------------
