@@ -26,8 +26,8 @@ Other Changes and Additions
 
 - Updated documentation about uncertainties and air-to-vac wavelength conversion. [#1299]
 
-- Fixed misspellings of Greisen (from "Grieson") in air-to-vac wavelength conversion citations. Note that this
-  also changes the method option. [#1312]
+- Fixed misspellings of Greisen (from "Griesen") in air-to-vac wavelength conversion citations. Note that this
+  also changes the method option. [#1312, #1315]
 
 2.2.1 (unreleased)
 ------------------
