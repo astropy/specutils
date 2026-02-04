@@ -1,6 +1,6 @@
 from functools import lru_cache
 from typing import Callable, Optional
-
+from collections import Counter
 from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumList']
@@ -56,6 +56,12 @@ class SpectrumList(list, NDIOMixin):
         id_map : dict[str, int]
             Mapping of string keys to list indices
         """
+        if not isinstance(id_map, dict):
+            raise TypeError("input id map must be a dictionary")
+
+        # sanity check the keys are unique
+        self.check_unique_labels(list(id_map.keys()))
+
         self._id_map = dict(id_map)
 
     def _resolve_key(self, key: str) -> int:
@@ -147,6 +153,13 @@ class SpectrumList(list, NDIOMixin):
         return repr(item)
 
     @classmethod
+    def check_unique_labels(cls, labels: list[str]):
+        """Check that labels are unique"""
+        nonuniq = {k for k,v in Counter(labels).items() if v > 1}
+        if nonuniq:
+            raise ValueError(f"Labels must be unique! Non-unique labels: {nonuniq}")
+
+    @classmethod
     def from_lazy(
         cls, length: int, loader: Callable, cache_size: Optional[int] = None, labels: list = None
     ) -> "SpectrumList":
@@ -186,6 +199,10 @@ class SpectrumList(list, NDIOMixin):
         if cache_size:
             cache_size = max(int(cache_size), 0)
             loader = lru_cache(maxsize=cache_size)(loader)
+
+        # check labels
+        if labels:
+            cls.check_unique_labels(labels)
 
         # set lazy parameters
         speclist._lazy_loader = loader

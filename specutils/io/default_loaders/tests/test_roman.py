@@ -178,6 +178,13 @@ def test_roman_alid_fails(roman_multi):
         speclist["ab"]
 
 
+def test_roman_nonunique_altid_fails():
+    """test we fail on non-unique altid"""
+    with pytest.raises(ValueError, match="Labels must be unique! Non-unique labels:"):
+        a = ['400', '401', '402', '403', '401']
+        SpectrumList.from_lazy(len(a), lambda x: x, labels=a)
+
+
 def test_roman_lazy_loaded_spectrum(roman_multi):
     """test we can lazy load spectra"""
     speclist = SpectrumList.read(roman_multi, format="Roman 1d combined", lazy_load=True, cache_asdf=True)
