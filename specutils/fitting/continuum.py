@@ -30,7 +30,7 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
     fitter : `~astropy.modeling.fitting.Fitter`
         The astropy fitter to use for fitting the model.
         Default: `~astropy.modeling.fitting.TRFLSQFitter`
-    exclude_regions : list of 2-tuples
+    exclude_regions : `~specutils.SpectralRegion` or None
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
     weights : list  (NOT IMPLEMENTED YET)
@@ -72,7 +72,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=TRFLSQFitter(),
     fitter : `~astropy.modeling.fitting.Fitter`
         The astropy fitter to use for fitting the model.
         Default: `~astropy.modeling.fitting.TRFLSQFitter`
-    exclude_regions : list of 2-tuples
+    exclude_regions : `~specutils.SpectralRegion` or None
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
     exclude_region_upper_bounds : bool, optional
