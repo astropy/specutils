@@ -194,7 +194,7 @@ def test_roman_repr(roman_multi):
     assert speclist.is_lazy is True
     assert speclist.n_loaded == 0
     assert "lazy list: 0 items loaded; access an index to load a spectrum:" in repr(speclist)
-    assert "['402849'" in repr(speclist)
+    assert "['400'" in repr(speclist)
 
     # load 1
     speclist[0]
