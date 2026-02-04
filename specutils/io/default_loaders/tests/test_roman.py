@@ -187,6 +187,25 @@ def test_roman_lazy_loaded_spectrum(roman_multi):
     assert isinstance(spec, Spectrum)
     assert speclist.n_loaded == 1
 
+
+def test_roman_repr(roman_multi):
+    """test we get a lazy repr"""
+    speclist = SpectrumList.read(roman_multi, format="Roman 1d combined", lazy_load=True, cache_asdf=True)
+    assert speclist.is_lazy is True
+    assert speclist.n_loaded == 0
+    assert "lazy list: 0 items loaded; access an index to load a spectrum:" in repr(speclist)
+    assert "['402849'" in repr(speclist)
+
+    # load 1
+    speclist[0]
+    assert "lazy list: 1 items loaded;" in repr(speclist)
+    assert "[<Spectrum(flux=" in repr(speclist)
+
+    # load the rest
+    speclist[0:]
+    assert "lazy list:" not in repr(speclist)
+
+
 def test_roman_1d_individual_list(roman_file):
     """test we can load a 1d individual list"""
     roman_indiv = roman_file(mode='multi', unit="DN/s", nsrc=3)
