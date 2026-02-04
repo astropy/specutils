@@ -122,11 +122,12 @@ class SpectrumList(list, NDIOMixin):
         item repr is used.
         """
         # use normal repr
-        if not self.is_lazy:
+        if not self.is_lazy or self.n_loaded == len(self):
             return super().__repr__()
 
         # build the lazy repr
-        return f"[{', '.join(self._lazy_repr(i) for i in range(len(self)))}]"
+        prefix = f"lazy list: {self.n_loaded} items loaded; access an index to load a spectrum:\n"
+        return prefix + f"[{', '.join(self._lazy_repr(i) for i in range(len(self)))}]"
 
     def _lazy_repr(self, ii: int):
         """Return item repr without triggering a lazy load"""
