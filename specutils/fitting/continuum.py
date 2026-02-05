@@ -19,18 +19,18 @@ def fit_generic_continuum(spectrum, median_window=3, model=Chebyshev1D(3),
 
     Parameters
     ----------
-    spectrum : Spectrum
-        The spectrum object overwhich the equivalent width will be calculated.
-    model : list of `~astropy.modeling.Model`
-        The list of models that contain the initial guess.
+    spectrum : `~specutils.Spectrum1D`
+        The spectrum object whose continuum will be fitted.
+    model : `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
+        The model or list of models that contain the initial guess.
     median_window : float
         The width of the median smoothing kernel used to filter the data before
         fitting the continuum. See the ``kernel_size`` parameter of
         `~scipy.signal.medfilt` for more information.
-    fitter : `~astropy.fitting._FitterMeta`
+    fitter : `~astropy.modeling.fitting.Fitter`
         The astropy fitter to use for fitting the model.
         Default: `~astropy.modeling.fitting.TRFLSQFitter`
-    exclude_regions : list of 2-tuples
+    exclude_regions : `~specutils.SpectralRegion` or None
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
     weights : list  (NOT IMPLEMENTED YET)
@@ -65,14 +65,14 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=TRFLSQFitter(),
 
     Parameters
     ----------
-    spectrum : Spectrum
-        The spectrum object overwhich the equivalent width will be calculated.
-    model: list of `~astropy.modeling.Model`
-        The list of models that contain the initial guess.
-    fitter : `~astropy.fitting._FitterMeta`
+    spectrum : `~specutils.Spectrum1D`
+        The spectrum object whose continuum will be fitted.
+    model : `~astropy.modeling.Model` or list of `~astropy.modeling.Model`
+        The model or list of models that contain the initial guess.
+    fitter : `~astropy.modeling.fitting.Fitter`
         The astropy fitter to use for fitting the model.
         Default: `~astropy.modeling.fitting.TRFLSQFitter`
-    exclude_regions : list of 2-tuples
+    exclude_regions : `~specutils.SpectralRegion` or None
         List of regions to exclude in the fitting. Passed through
         to the fitmodels routine.
     exclude_region_upper_bounds : bool, optional
@@ -87,7 +87,7 @@ def fit_continuum(spectrum, model=Chebyshev1D(3), fitter=TRFLSQFitter(),
 
     Returns
     -------
-    models : list of `~astropy.modeling.Model`
+    models : list of `~astropy.modeling.core.Model`
         The list of models that contain the fitted model parameters.
     """
     if weights is not None:
