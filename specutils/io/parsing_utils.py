@@ -1,17 +1,71 @@
-import numpy as np
+import contextlib
+import io
 import os
 import re
 import urllib
-import io
-import contextlib
+import warnings
+import weakref
+from functools import lru_cache
 
+import astropy.units as u
+import numpy as np
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
-import astropy.units as u
-import warnings
 
 from specutils.spectra import Spectrum
+
+# for caching objects
+obj_cache = weakref.WeakKeyDictionary()
+
+# Optional ASDF support
+try:
+    import asdf
+except ImportError:
+    asdf = None
+
+
+@lru_cache(maxsize=8)
+def open_cache(key: str):
+    """Open asdf file and cache it"""
+    return asdf.open(key)
+
+
+def clear_cache():
+    """Clear object and lru caches"""
+    # clear object cache
+    for af in list(obj_cache.values()):
+        try:
+            af.close()
+        except Exception:
+            pass
+    obj_cache.clear()
+
+    # clear lru_cache
+    open_cache.cache_clear()
+
+
+def get_cached_object(fileobj, **kwargs):
+    """Get the cached object"""
+    # cache by path-like input
+    if isinstance(fileobj, (str, os.PathLike)):
+        return open_cache(os.fspath(fileobj))
+
+    # cache by uri for asdf input
+    if isinstance(fileobj, asdf.AsdfFile):
+        return open_cache(fileobj.uri)
+
+    # prefer caching by filename for file-like objects
+    name = getattr(fileobj, "name", None)
+    if isinstance(name, str) and name:
+        return open_cache(name)
+
+    # fallback to cache by object
+    af = obj_cache.get(fileobj)
+    if af is None:
+        af = asdf.open(fileobj, **kwargs)
+        obj_cache[fileobj] = af
+    return af
 
 
 @contextlib.contextmanager
@@ -51,6 +105,81 @@ def read_fileobj_or_hdulist(*args, **kwargs):
             except (AttributeError, io.UnsupportedOperation):
                 hdulist.close()
 
+
+def open_input(fileobj, cache_asdf: bool = None, **kwargs):
+    """Open the asdf info with or without cache"""
+    # handle an input open or closed asdf instance
+    if isinstance(fileobj, asdf.AsdfFile):
+        if fileobj._fd is not None:
+            return fileobj
+        if getattr(fileobj, "uri", None):
+            if cache_asdf:
+                return get_cached_object(fileobj, **kwargs)
+            return asdf.open(fileobj.uri, **kwargs)
+
+    if cache_asdf:
+        return get_cached_object(fileobj, **kwargs)
+
+    # non-cached; return a temp handle we can close
+    name = getattr(fileobj, "name", None)
+    if isinstance(name, str) and name:
+        return asdf.open(name, **kwargs)
+    return asdf.open(fileobj, **kwargs)
+
+
+@contextlib.contextmanager
+def read_fileobj_or_asdftree(*args, **kwargs):
+    """Context manager for reading a filename or file object
+
+    Returns
+    -------
+    af : :class:`~asdf._asdf.AsdfFile`
+        Provides a generator-iterator representing the open file object handle.
+    """
+    if not asdf:
+        raise ImportError("The 'asdf' package is required to read ASDF files.")
+
+    # Access the fileobj or filename arg
+    # Do this so identify functions are useable outside of Spectrum.read context
+    try:
+        fileobj = args[2]
+    except IndexError:
+        fileobj = args[0]
+
+    # If Astropy opened a transient file object, it may be closed by the time a
+    # lazy loader re-enters here. If we can recover a filename, do so.
+    if getattr(fileobj, "closed", False) and getattr(fileobj, "name", None):
+        fileobj = fileobj.name
+
+    # astropy's identify registry reuses same open fileobj handle, so try to rewind it
+    try:
+        fileobj.seek(0)
+    except (AttributeError, io.UnsupportedOperation, OSError):
+        pass
+
+    # caching options
+    # close when we aren't caching or when an already-open AsdfFile is provided.
+    cache_asdf = kwargs.pop("cache_asdf", None)
+    should_close = (not cache_asdf) and not (isinstance(fileobj, asdf.AsdfFile) and fileobj._fd is not None)
+
+    af = open_input(fileobj, cache_asdf=cache_asdf, **kwargs)
+
+    try:
+        yield af
+    # Cleanup even after identifier function has thrown an exception: rewind generic file handles.
+    finally:
+        if should_close:
+            try:
+                af.close()
+            except Exception:
+                pass
+
+        # cleanup
+        if not isinstance(fileobj, asdf.AsdfFile):
+            try:
+                fileobj.seek(0)
+            except (AttributeError, io.UnsupportedOperation, OSError):
+                pass
 
 def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
     """
