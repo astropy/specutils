@@ -369,16 +369,17 @@ class SpectralRegion:
         ----------
         lower_bound : `~astropy.units.Quantity`
            The lower bound of the region. Can be scalar with pixel or any
-           valid ``spectral_axis`` unit
+           valid ``spectral_axis`` unit that is equal to or compatible with the
+           unit of ``lower_bound``.
         upper_bound : `~astropy.units.Quantity`
            The upper bound of the region. Can be scalar with pixel or any
-              valid ``spectral_axis`` unit. If compatible with ``lower_bound``,
-              this value is converted to ``lower_bound`` units.
+           valid ``spectral_axis`` unit that is equal to or compatible with the
+           unit of ``lower_bound``.
 
         Returns
         -------
         spectral_region : `~specutils.SpectralRegion`
-           Spectral region of the non-selected regions
+           Spectral region of the non-selected regions.
 
         Raises
         ------
@@ -411,7 +412,7 @@ class SpectralRegion:
         #
         min_num = -sys.maxsize-1
         max_num = sys.maxsize
-        
+
         rs = self._subregions + [(min_num* lower_bound.unit, lower_bound),
                                  (upper_bound, max_num * upper_bound.unit)]
 

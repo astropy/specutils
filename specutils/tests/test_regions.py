@@ -178,14 +178,23 @@ def test_invert_converts_upper_bound_units():
     different (but compatible units) that the upper_bound is correctly converted
     to the units of lower_bound.
     """
-    sr = SpectralRegion([(4500*u.AA, 6000*u.AA), (8000*u.AA, 9000*u.AA)])
+    sr = (SpectralRegion(0.15*u.um, *u.um) +
+          SpectralRegion(0.3*u.um, 0.4*u.um) +
+          SpectralRegion(0.45*u.um, 0.6*u.um) +
+          SpectralRegion(0.8*u.um, 0.9*u.um) +
+          SpectralRegion(1.0*u.um, 1.2*u.um) +
+          SpectralRegion(1.3*u.um, 1.5*u.um))
 
-    # upper_bound is provided in nm and converted to lower_bound units (AA).
-    sr_inverted = sr.invert(3000*u.AA, 1000*u.nm)
+    sr_inverted_expected = [(0.05*u.um, 0.15*u.um), (0.2*u.um, 0.3*u.um),
+                            (0.4*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um),
+                            (0.9*u.um, 1.0*u.um), (1.2*u.um, 1.3*u.um),
+                            (1.5*u.um, 3.0*u.um)]
 
-    expected = [(3000*u.AA, 4500*u.AA), (6000*u.AA, 8000*u.AA), (9000*u.AA, 10000*u.AA)]
-    for ii, exp in enumerate(expected):
-        assert sr_inverted.subregions[ii] == exp
+    # Invert from range.
+    sr_inverted = sr.invert(0.05*u.um, 3000*u.nm)
+
+    for ii, expected in enumerate(sr_inverted_expected):
+        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
 
 def test_invert_incompatible_bounds_units_raises():
