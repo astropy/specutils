@@ -178,7 +178,7 @@ def test_invert_converts_upper_bound_units():
     different (but compatible units) that the upper_bound is correctly converted
     to the units of lower_bound.
     """
-    sr = (SpectralRegion(0.15*u.um, *u.um) +
+    sr = (SpectralRegion(0.15*u.um, 0.2*u.um) +
           SpectralRegion(0.3*u.um, 0.4*u.um) +
           SpectralRegion(0.45*u.um, 0.6*u.um) +
           SpectralRegion(0.8*u.um, 0.9*u.um) +
