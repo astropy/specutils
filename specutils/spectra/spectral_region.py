@@ -372,12 +372,19 @@ class SpectralRegion:
            valid ``spectral_axis`` unit
         upper_bound : `~astropy.units.Quantity`
            The upper bound of the region. Can be scalar with pixel or any
-           valid ``spectral_axis`` unit
+              valid ``spectral_axis`` unit. If compatible with ``lower_bound``,
+              this value is converted to ``lower_bound`` units.
 
         Returns
         -------
         spectral_region : `~specutils.SpectralRegion`
            Spectral region of the non-selected regions
+
+        Raises
+        ------
+        ValueError
+            Raised when ``upper_bound`` and ``lower_bound`` do not have
+            compatible units.
 
         Notes
         -----
@@ -394,13 +401,19 @@ class SpectralRegion:
 
         """
 
+        try:
+            upper_bound = upper_bound.to(lower_bound.unit)
+        except u.UnitConversionError as exc:
+            raise ValueError("lower_bound and upper_bound must have compatible units.") from exc
+
         #
         # Create 'rs' region list with left and right extra ranges.
         #
         min_num = -sys.maxsize-1
         max_num = sys.maxsize
-        rs = self._subregions + [(min_num*u.um, lower_bound),
-                                 (upper_bound, max_num*u.um)]
+        
+        rs = self._subregions + [(min_num* lower_bound.unit, lower_bound),
+                                 (upper_bound, max_num * upper_bound.unit)]
 
         #
         # Sort the region list based on lower bound.
@@ -421,8 +434,8 @@ class SpectralRegion:
                 # test for intersection between lower and higher:
                 # we know via sorting that lower[0] <= higher[0]
                 if higher[0] <= lower[1]:
-                    upper_bound = max(lower[1], higher[1])
-                    merged[-1] = (lower[0], upper_bound)  # replace by merged interval
+                    merged_upper = max(lower[1], higher[1])
+                    merged[-1] = (lower[0], merged_upper)  # replace by merged interval
                 else:
                     merged.append(higher)
 

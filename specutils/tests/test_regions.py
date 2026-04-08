@@ -172,6 +172,33 @@ def test_invert():
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
 
+def test_invert_converts_upper_bound_units():
+    """
+    Check that when .invert is called with upper_bound and lower_bound in
+    different (but compatible units) that the upper_bound is correctly converted
+    to the units of lower_bound.
+    """
+    sr = SpectralRegion([(4500*u.AA, 6000*u.AA), (8000*u.AA, 9000*u.AA)])
+
+    # upper_bound is provided in nm and converted to lower_bound units (AA).
+    sr_inverted = sr.invert(3000*u.AA, 1000*u.nm)
+
+    expected = [(3000*u.AA, 4500*u.AA), (6000*u.AA, 8000*u.AA), (9000*u.AA, 10000*u.AA)]
+    for ii, exp in enumerate(expected):
+        assert sr_inverted.subregions[ii] == exp
+
+
+def test_invert_incompatible_bounds_units_raises():
+    """
+    Check that when .invert is called with upper_bound and lower_bound in
+    incompatible units, a ValueError is raised.
+    """
+    sr = SpectralRegion([(0.45*u.um, 0.6*u.um)])
+
+    with pytest.raises(ValueError, match="compatible units"):
+        sr.invert(0.3*u.um, 1*u.s)
+
+
 def test_from_list_list():
     g1 = Gaussian1D(1, 4.6, 0.2)
     g2 = Gaussian1D(2.5, 5.5, 0.1)
