@@ -413,7 +413,7 @@ class SpectralRegion:
         min_num = -sys.maxsize-1
         max_num = sys.maxsize
 
-        rs = self._subregions + [(min_num* lower_bound.unit, lower_bound),
+        rs = self._subregions + [(min_num * lower_bound.unit, lower_bound),
                                  (upper_bound, max_num * upper_bound.unit)]
 
         #

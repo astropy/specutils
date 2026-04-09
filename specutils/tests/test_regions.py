@@ -168,7 +168,7 @@ def test_invert():
     spectrum = Spectrum(spectral_axis=np.linspace(0.05, 3, 20)*u.um,
                           flux=np.random.random(20)*u.Jy)
     sr_inverted = sr.invert_from_spectrum(spectrum)
-    for ii, expected in enumerate(sr_inverted_expected):
+    for ii, _ in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
 
@@ -178,22 +178,22 @@ def test_invert_converts_upper_bound_units():
     different (but compatible units) that the upper_bound is correctly converted
     to the units of lower_bound.
     """
-    sr = (SpectralRegion(0.15*u.um, 0.2*u.um) +
-          SpectralRegion(0.3*u.um, 0.4*u.um) +
-          SpectralRegion(0.45*u.um, 0.6*u.um) +
-          SpectralRegion(0.8*u.um, 0.9*u.um) +
-          SpectralRegion(1.0*u.um, 1.2*u.um) +
-          SpectralRegion(1.3*u.um, 1.5*u.um))
+    sr = (SpectralRegion(1500*u.AA, 2000*u.AA) +
+          SpectralRegion(3000*u.AA, 4000*u.AA) +
+          SpectralRegion(4500*u.AA, 6000*u.AA) +
+          SpectralRegion(8000*u.AA, 9000*u.AA) +
+          SpectralRegion(10000*u.AA, 12000*u.AA) +
+          SpectralRegion(13000*u.AA, 15000*u.AA))
 
-    sr_inverted_expected = [(0.05*u.um, 0.15*u.um), (0.2*u.um, 0.3*u.um),
-                            (0.4*u.um, 0.45*u.um), (0.6*u.um, 0.8*u.um),
-                            (0.9*u.um, 1.0*u.um), (1.2*u.um, 1.3*u.um),
-                            (1.5*u.um, 3.0*u.um)]
+    sr_inverted_expected = [(500*u.AA, 1500*u.AA), (2000*u.AA, 3000*u.AA),
+                            (4000*u.AA, 4500*u.AA), (6000*u.AA, 8000*u.AA),
+                            (9000*u.AA, 10000*u.AA), (12000*u.AA, 13000*u.AA),
+                            (15000*u.AA, 30000*u.AA)]
 
     # Invert from range.
-    sr_inverted = sr.invert(0.05*u.um, 3000*u.nm)
+    sr_inverted = sr.invert(500*u.AA, 3000*u.nm)
 
-    for ii, expected in enumerate(sr_inverted_expected):
+    for ii, _ in enumerate(sr_inverted_expected):
         assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
 
 
