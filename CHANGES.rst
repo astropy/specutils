@@ -6,7 +6,7 @@ New Features
 
 Bug Fixes
 ^^^^^^^^^
-- Fix unit related issues when inverting spectral regions. [#1324]
+- Fix unit related issue when inverting spectral regions. [#1324]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
