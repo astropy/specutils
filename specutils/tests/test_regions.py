@@ -161,15 +161,17 @@ def test_invert():
     # Invert from range.
     sr_inverted = sr.invert(0.05*u.um, 3*u.um)
 
-    for ii, expected in enumerate(sr_inverted_expected):
-        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+    for ii, _ in enumerate(sr_inverted_expected):
+        assert_quantity_allclose(sr_inverted.subregions[ii],
+                                 sr_inverted_expected[ii])
 
     # Invert from spectrum.
     spectrum = Spectrum(spectral_axis=np.linspace(0.05, 3, 20)*u.um,
                           flux=np.random.random(20)*u.Jy)
     sr_inverted = sr.invert_from_spectrum(spectrum)
     for ii, _ in enumerate(sr_inverted_expected):
-        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+        assert_quantity_allclose(sr_inverted.subregions[ii],
+                                 sr_inverted_expected[ii])
 
 
 def test_invert_converts_upper_bound_units():
@@ -194,7 +196,8 @@ def test_invert_converts_upper_bound_units():
     sr_inverted = sr.invert(500*u.AA, 3000*u.nm)
 
     for ii, _ in enumerate(sr_inverted_expected):
-        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+        assert_quantity_allclose(sr_inverted.subregions[ii], 
+                                 sr_inverted_expected[ii])
 
 
 def test_invert_incompatible_bounds_units_raises():
