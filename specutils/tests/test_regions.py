@@ -196,7 +196,7 @@ def test_invert_converts_upper_bound_units():
     sr_inverted = sr.invert(500*u.AA, 3000*u.nm)
 
     for ii, _ in enumerate(sr_inverted_expected):
-        assert_quantity_allclose(sr_inverted.subregions[ii], 
+        assert_quantity_allclose(sr_inverted.subregions[ii],
                                  sr_inverted_expected[ii])
 
 
