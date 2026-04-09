@@ -179,21 +179,27 @@ def test_invert_converts_upper_bound_units():
     Check that when .invert is called with upper_bound and lower_bound in
     different (but compatible units) that the upper_bound is correctly converted
     to the units of lower_bound.
-    """
-    sr = (SpectralRegion(1500*u.AA, 2000*u.AA) +
-          SpectralRegion(3000*u.AA, 4000*u.AA) +
-          SpectralRegion(4500*u.AA, 6000*u.AA) +
-          SpectralRegion(8000*u.AA, 9000*u.AA) +
-          SpectralRegion(10000*u.AA, 12000*u.AA) +
-          SpectralRegion(13000*u.AA, 15000*u.AA))
 
-    sr_inverted_expected = [(500*u.AA, 1500*u.AA), (2000*u.AA, 3000*u.AA),
-                            (4000*u.AA, 4500*u.AA), (6000*u.AA, 8000*u.AA),
-                            (9000*u.AA, 10000*u.AA), (12000*u.AA, 13000*u.AA),
-                            (15000*u.AA, 30000*u.AA)]
+    This regression test covers a previously reported bug where using an
+    arbitrary hard-coded unit for setting the 'zero' and 'inf' values
+    based on sys.maxsize was not wokring in the case where the units were
+    not directly convertable to this hard-coded unit.
+
+    """
+    sr = (SpectralRegion(1500*u.GHz, 2000*u.GHz) +
+        SpectralRegion(3000*u.GHz, 4000*u.GHz) +
+        SpectralRegion(4500*u.GHz, 6000*u.GHz) +
+        SpectralRegion(8000*u.GHz, 9000*u.GHz) +
+        SpectralRegion(10000*u.GHz, 12000*u.GHz) +
+        SpectralRegion(13000*u.GHz, 15000*u.GHz))
+
+    sr_inverted_expected = [(500*u.GHz, 1500*u.GHz), (2000*u.GHz, 3000*u.GHz),
+                    (4000*u.GHz, 4500*u.GHz), (6000*u.GHz, 8000*u.GHz),
+                    (9000*u.GHz, 10000*u.GHz), (12000*u.GHz, 13000*u.GHz),
+                    (15000*u.GHz, 30000*u.GHz)]
 
     # Invert from range.
-    sr_inverted = sr.invert(500*u.AA, 3000*u.nm)
+    sr_inverted = sr.invert(500*u.GHz, 30000000*u.MHz)
 
     for ii, _ in enumerate(sr_inverted_expected):
         assert_quantity_allclose(sr_inverted.subregions[ii],
