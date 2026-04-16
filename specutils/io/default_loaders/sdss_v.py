@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 from astropy.io.fits import BinTableHDU, HDUList, ImageHDU
-from astropy.nddata import InverseVariance, StdDevUncertainty
+from astropy.nddata import InverseVariance, StdDevUncertainty, UnknownUncertainty
 from astropy.units import Angstrom, Quantity, Unit, nanometer
 from astropy.utils.exceptions import AstropyUserWarning
 
@@ -856,8 +856,8 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **k
     if 'ivar' in hdulist[hdu].columns.names:
         e_flux = InverseVariance(array=data["ivar"])
     else:
-        # NOTE: is this a good idea? Model spectra don't have ivar.
-        e_flux = StdDevUncertainty(np.zeros_like(model_flux))
+        # There is no associated uncertainty for model spectra.
+        e_flux = UnknownUncertainty(np.full_like(model_flux, np.nan))
 
     # Collect bitmask
     if "pixel_flags" in hdulist[hdu].columns.names:
