@@ -841,7 +841,7 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **k
     pipeline = get_astra_pipeline(hdulist)
     if pipeline is None:
         raise ValueError(
-            "HDU{} does not appear to be associated with an astra pipeline.".format(hdu)
+            "HDU{} does not appear to be associated with an Astra pipeline.".format(hdu)
         )
 
     header = hdulist[hdu].header
