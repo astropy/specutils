@@ -739,6 +739,9 @@ def load_sdss_astra_1d(
             if hdu is None:
                 raise ValueError("No valid HDU found to load.")
 
+        # The astraVisit files have the same format as astraStar but with
+        # multiple rows per BinTable HDU. If the visit index is not specified,
+        # we default to loading the first spectrum.
         return _load_astra_hdu(hdulist, hdu, visit=(visit or 0), **kwargs)
 
 

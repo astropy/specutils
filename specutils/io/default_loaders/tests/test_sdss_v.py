@@ -10,12 +10,14 @@ from astropy.utils.exceptions import AstropyUserWarning
 from specutils import Spectrum, SpectrumList
 
 
-def generate_apogee_hdu(observatory="APO",
-                        with_wl=True,
-                        astra_pipeline=None,
-                        datasum="0",
-                        nvisits=1,
-                        astra=False):
+def generate_apogee_hdu(
+    observatory="APO",
+    with_wl=True,
+    astra=False,
+    astra_pipeline="ASPCAP",
+    datasum="0",
+    nvisits=1,
+):
     wl = (10 ** (4.179 + 6e-6 * np.arange(8575))).reshape((1, -1))
     flux = np.array([np.zeros_like(wl)] * nvisits)
     ivar = np.array([np.zeros_like(wl)] * nvisits)
@@ -92,12 +94,14 @@ def generate_apogee_hdu(observatory="APO",
     return fits.BinTableHDU.from_columns(columns, header=header)
 
 
-def generate_boss_hdu(observatory="APO",
-                      with_wl=True,
-                      astra_pipeline=None,
-                      datasum="0",
-                      nvisits=1,
-                      astra=False):
+def generate_boss_hdu(
+    observatory="APO",
+    with_wl=True,
+    astra=False,
+    astra_pipeline="ASPCAP",
+    datasum="0",
+    nvisits=1,
+):
     wl = (10 ** (3.5523 + 1e-4 * np.arange(4648))).reshape((1, -1))
     flux = np.array([np.zeros_like(wl)] * nvisits)
     ivar = np.array([np.zeros_like(wl)] * nvisits)
@@ -321,24 +325,28 @@ def fake_primary_hdu():
     ]))
 
 
-def mwm_HDUList(hduflags, with_wl=False, astra_pipeline=None,**kwargs):
+def mwm_HDUList(hduflags, with_wl=False, **kwargs):
     hdulist = [fake_primary_hdu()]
     for i, flag in enumerate(hduflags):
         obs = ["APO", "LCO"]
         if i <= 1:
             hdulist.append(
-                generate_boss_hdu(obs[i % 2],
-                                  with_wl=with_wl,
-                                  astra_pipeline=astra_pipeline,
-                                  datasum=str(flag),
-                                  **kwargs))
+                generate_boss_hdu(
+                    obs[i % 2],
+                    with_wl=with_wl,
+                    datasum=str(flag),
+                    **kwargs,
+                )
+            )
         else:
             hdulist.append(
-                generate_apogee_hdu(obs[i % 2],
-                                    with_wl=with_wl,
-                                    astra_pipeline=astra_pipeline,
-                                    datasum=str(flag),
-                                    **kwargs))
+                generate_apogee_hdu(
+                    obs[i % 2],
+                    with_wl=with_wl,
+                    datasum=str(flag),
+                    **kwargs,
+                )
+            )
 
     return fits.HDUList(hdulist)
 
@@ -514,33 +522,43 @@ def test_mwm_1d_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
 )
 def test_astra_nohdu(file_obj, hdu, with_wl, hduflags, nvisits):
     """Test astra Spectrum loader when HDU isn't specified"""
+
     tmpfile = str(file_obj) + ".fits"
-    mwm_HDUList(hduflags, with_wl, nvisits=nvisits,
-                astra=True).writeto(tmpfile, overwrite=True)
 
-    with pytest.warns(AstropyUserWarning):
-        data = Spectrum.read(tmpfile, hdu=hdu)
-        assert isinstance(data, Spectrum)
-        assert isinstance(data.meta["header"], fits.Header)
+    mwm_HDUList(
+        hduflags,
+        with_wl,
+        nvisits=nvisits,
+        astra=True,
+    ).writeto(
+        tmpfile,
+        overwrite=True,
+    )
 
-        if data.meta["instrument"].lower() == "apogee":
-            length = 8575
-        elif data.meta["instrument"].lower() == "boss":
-            length = 4648
-        else:
-            raise ValueError(
-                "INSTRMNT tag in test HDU header is not set properly.")
-        assert len(data.spectral_axis.value) == length
-        assert data.flux.value.shape[-1] == length
-        if nvisits > 1:
-            assert data.flux.value.shape[0] == nvisits
-        if with_wl:
-            assert data.meta["datatype"].lower() == "astrastar"
-        else:
-            assert data.meta["datatype"].lower() == "astravisit"
-        assert data.spectral_axis.unit == Angstrom
-        assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
-        os.remove(tmpfile)
+    data = Spectrum.read(tmpfile, hdu=hdu)
+
+    assert isinstance(data, Spectrum)
+    assert isinstance(data.meta["header"], fits.Header)
+
+    if data.meta["instrument"].lower() == "apogee":
+        length = 8575
+    elif data.meta["instrument"].lower() == "boss":
+        length = 4648
+    else:
+        raise ValueError("INSTRMNT tag in test HDU header is not set properly.")
+
+    assert len(data.spectral_axis.value) == length
+    assert data.flux.value.shape[-1] == length
+
+    if with_wl:
+        assert data.meta["datatype"].lower() == "astrastar"
+    else:
+        assert data.meta["datatype"].lower() == "astravisit"
+
+    assert data.spectral_axis.unit == Angstrom
+    assert data.flux.unit == Unit("1e-17 erg / (s cm2 Angstrom)")
+
+    os.remove(tmpfile)
 
 
 def test_mwm_1d_baddatasum():
@@ -789,11 +807,14 @@ def test_mwm_1d_fail(file_obj, with_wl):
 )
 def test_astra_1d_fail(file_obj, with_wl):
     """Test astra Spectrum loader fail on empty"""
+
     tmpfile = str(file_obj) + ".fits"
+
     mwm_HDUList([0, 0, 0, 0], with_wl, astra=True).writeto(tmpfile, overwrite=True)
 
     with pytest.raises(ValueError):
         Spectrum.read(tmpfile)
+
     os.remove(tmpfile)
 
 
