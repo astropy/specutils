@@ -94,17 +94,75 @@ def mwm_identify(origin, *args, **kwargs):
                         for i in range(1, 5)))
 
 
+def get_astra_pipeline(hdulist: HDUList) -> Optional[str]:
+    """Identify the pipeline that generated the astraStar/astraVisit file.
+
+    Currently there is no direct keyword in the astraStar files with the pipeline
+    name. We use a unique column in the data HDUs as a proxy.
+
+    Parameters
+    ----------
+    hdulist : HDUList
+        The HDUList to classify.
+
+    Returns
+    -------
+    str
+        The name of the pipeline, or ``None`` if it cannot be identified.
+
+    """
+
+    pipeline = None
+
+    # Check that at least one extension table has data.
+    has_data = False
+    for hdu in hdulist[1:]:
+        if len(hdu.data) > 0:
+            has_data = True
+            break
+
+    if not has_data:
+        return None
+
+    # astraStar/Visit files must have at least 5 extensions
+    if len(hdulist) < 5:
+        return None
+
+    for hdu in hdulist[1:]:
+        if len(hdu.data) == 0:
+            continue
+
+        try:
+            if "rho_fe_h_c12_c13" in hdu.data.names:
+                pipeline = "ThePayne"
+            elif "p_dc_ms" in hdu.data.names:
+                pipeline = "SnowWhite"
+            elif "model_flux_nd_h" in hdu.data.names:
+                pipeline = "ASPCAP"
+        except Exception:
+            pass
+
+    return pipeline
+
+
 def astra_identify(origin, *args, **kwargs):
     """
     Check whether given input is FITS and has SDSS-V astra model spectra
     BINTABLE in all 4 extensions. This is used for Astropy I/O Registry.
     """
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
-        return (("V_ASTRA" in hdulist[0].header.keys()) and len(hdulist) > 0
-                and ("SDSS_ID" in hdulist[0].header.keys())
-                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
-                and all("model_flux" in hdulist[i].columns.names
-                        for i in range(1, 5)))
+        if (
+            len(hdulist) > 0
+            and ("V_ASTRA" in hdulist[0].header.keys())
+            and ("SDSS_ID" in hdulist[0].header.keys())
+            and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
+            and all("model_flux" in hdulist[i].columns.names for i in range(1, 5))
+        ):
+            # Confirm that this file can be associated with a known astra pipeline
+            pipeline = get_astra_pipeline(hdulist)
+            if pipeline is not None:
+                return True
+        return False
 
 
 def _wcs_log_linear(naxis, cdelt, crval):
@@ -634,7 +692,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
 
 @data_loader(
-    "SDSS-V Astra model spectrum",
+    "SDSS-V astra",
     identifier=astra_identify,
     dtype=Spectrum,
     priority=20,
@@ -646,7 +704,7 @@ def load_sdss_astra_1d(
     visit: Optional[int] = None,
     **kwargs,
 ):
-    """Load an Astra model spectrum file as a `~specutils.Spectrum`.
+    """Load an Astra model spectrum file (astraStar/Visit) as a `~specutils.Spectrum`.
 
     Parameters
     ----------
@@ -685,7 +743,7 @@ def load_sdss_astra_1d(
 
 
 @data_loader(
-    "SDSS-V Astra model",
+    "SDSS-V astra",
     identifier=astra_identify,
     force=True,
     dtype=SpectrumList,
@@ -693,7 +751,7 @@ def load_sdss_astra_1d(
     extensions=["fits"],
 )
 def load_sdss_astra_list(file_obj, **kwargs):
-    """Load an astra model spectrum file as a `~specutils.SpectrumList`.
+    """Load an astraStar/astraVisit model spectrum file as a `~specutils.SpectrumList`.
 
     Parameters
     ----------
@@ -731,7 +789,7 @@ def load_sdss_astra_list(file_obj, **kwargs):
 
 
 def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **kwargs):
-    """HDU loader subfunction for astra model spectrum files
+    """HDU loader subfunction for astraStar/astraVisit model spectrum files
 
     Parameters
     ----------
@@ -753,16 +811,26 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **k
     if hdulist[hdu].header.get("DATASUM") == "0":
         raise IndexError("Attemped to load an empty HDU at HDU{}".format(hdu))
 
-    # Fetch wavelength
-    # encoded as WCS for visit, and 'wavelength' for star
-    try:
-        wavelength = np.array(hdulist[hdu].data["wavelength"])[0]
-    except KeyError:
-        wavelength = _wcs_log_linear(
-            hdulist[hdu].header.get("NPIXELS"),
-            hdulist[hdu].header.get("CDELT"),
-            hdulist[hdu].header.get("CRVAL"),
+    pipeline = get_astra_pipeline(hdulist)
+    if pipeline is None:
+        raise ValueError(
+            "HDU{} does not appear to be associated with an astra pipeline.".format(hdu)
         )
+
+    header = hdulist[hdu].header
+    data = hdulist[hdu].data
+
+    # Fetch wavelength encoded as WCS for visit, and 'wavelength' for star
+    wavelength = None
+    try:
+        wavelength = np.array(data["wavelength"])[0]
+    except KeyError:
+        if "CTYPE" in header.keys() and header["CTYPE"].upper() == "LOG-LINEAR":
+            wavelength = _wcs_log_linear(
+                header.get("NPIXELS"),
+                header.get("CDELT"),
+                header.get("CRVAL"),
+            )
     finally:
         if wavelength is None:
             raise ValueError("Couldn't find wavelength data in HDU{}.".format(hdu))
@@ -770,23 +838,27 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **k
 
     # Fetch flux, e_flux
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
-    model_flux = hdulist[hdu].data["model_flux"]
+    model_flux = data["model_flux"]
 
-    if "continuum" in hdulist[hdu].columns.names:
-        continuum = hdulist[hdu].data["continuum"]
+    if pipeline in ["ThePayne", "SnowWhite"]:
+        # In The Payne and SnowWhite the model_flux includes the continuum.
+        flux = Quantity(model_flux, unit=flux_unit)
+    elif pipeline in ["ASPCAP"]:
+        # In ASPCAP the model_flux is normalized to the continuum at each wavelength.
+        continuum = data["continuum"]
         flux = Quantity(model_flux * continuum, unit=flux_unit)
     else:
-        flux = Quantity(model_flux, unit=flux_unit)
+        raise ValueError("Invalid astra pipeline {!r}.".format(pipeline))
 
     if 'ivar' in hdulist[hdu].columns.names:
-        e_flux = InverseVariance(array=hdulist[hdu].data["ivar"])
+        e_flux = InverseVariance(array=data["ivar"])
     else:
         # NOTE: is this a good idea? Model spectra don't have ivar.
         e_flux = StdDevUncertainty(np.zeros_like(model_flux))
 
     # Collect bitmask
     if "pixel_flags" in hdulist[hdu].columns.names:
-        mask = hdulist[hdu].data["pixel_flags"]
+        mask = data["pixel_flags"]
         # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
         mask = mask != 0
     else:
@@ -797,24 +869,25 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **k
     meta["header"] = hdulist[0].header
 
     # Add identifiers (obj, telescope, mjd, datatype)
-    meta["telescope"] = hdulist[hdu].data["telescope"]
+    meta["telescope"] = data["telescope"]
     meta["instrument"] = "BOSS" if hdu <= 2 else "APOGEE"
     try:  # get obj if exists
-        meta["obj"] = hdulist[hdu].data["obj"]
+        meta["obj"] = data["obj"]
     except KeyError:
         pass
 
     # choose between mwmVisit/Star via KeyError except
     try:
-        meta["mjd"] = hdulist[hdu].data["mjd"]
+        meta["mjd"] = data["mjd"]
         meta["datatype"] = "astraVisit"
     except KeyError:
-        meta["min_mjd"] = str(hdulist[hdu].data["min_mjd"][0])
-        meta["max_mjd"] = str(hdulist[hdu].data["max_mjd"][0])
+        meta["min_mjd"] = str(data["min_mjd"][0])
+        meta["max_mjd"] = str(data["max_mjd"][0])
         meta["datatype"] = "astraStar"
     finally:
         meta["name"] = hdulist[hdu].name
         meta["sdss_id"] = hdulist[0].header["sdss_id"]
+        meta["pipeline"] = pipeline
 
     # drop back a list of Spectrum objects to unpack
     metadicts = _split_mwm_meta_dict(meta)
