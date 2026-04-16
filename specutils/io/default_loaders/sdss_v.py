@@ -90,8 +90,34 @@ def mwm_identify(origin, *args, **kwargs):
         return (("V_ASTRA" in hdulist[0].header.keys()) and len(hdulist) > 0
                 and ("SDSS_ID" in hdulist[0].header.keys())
                 and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
+                and has_data(hdulist)
+                and all("flux" in hdulist[i].columns.names for i in range(1, 5))
                 and all("model_flux" not in hdulist[i].columns.names
                         for i in range(1, 5)))
+
+
+def has_data(hdulist: HDUList) -> bool:
+    """Check if any of the HDU's in the given HDUList have data."""
+
+    has_data = False
+    for hdu in hdulist:
+        if hdu.data is not None and len(hdu.data) > 0:
+            has_data = True
+            break
+    return has_data
+
+
+def has_model_flux(hdulist: HDUList) -> bool:
+    """Check if any of the HDU's in the given HDUList have a 'model_flux' column."""
+
+    if not has_data(hdulist):
+        return False
+
+    for hdu in hdulist:
+        if hdu.data is not None and "model_flux" in hdu.data.names:
+            return True
+
+    return False
 
 
 def get_astra_pipeline(hdulist: HDUList) -> Optional[str]:
@@ -115,13 +141,7 @@ def get_astra_pipeline(hdulist: HDUList) -> Optional[str]:
     pipeline = None
 
     # Check that at least one extension table has data.
-    has_data = False
-    for hdu in hdulist[1:]:
-        if len(hdu.data) > 0:
-            has_data = True
-            break
-
-    if not has_data:
+    if not has_data(hdulist):
         return None
 
     # astraStar/Visit files must have at least 5 extensions
@@ -156,7 +176,8 @@ def astra_identify(origin, *args, **kwargs):
             and ("V_ASTRA" in hdulist[0].header.keys())
             and ("SDSS_ID" in hdulist[0].header.keys())
             and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
-            and all("model_flux" in hdulist[i].columns.names for i in range(1, 5))
+            and has_data(hdulist)
+            and has_model_flux(hdulist)
         ):
             # Confirm that this file can be associated with a known astra pipeline
             pipeline = get_astra_pipeline(hdulist)
@@ -813,6 +834,9 @@ def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **k
 
     if hdulist[hdu].header.get("DATASUM") == "0":
         raise IndexError("Attemped to load an empty HDU at HDU{}".format(hdu))
+
+    if not has_data(hdulist):
+        raise ValueError("The specified file does not contain any data.")
 
     pipeline = get_astra_pipeline(hdulist)
     if pipeline is None:
