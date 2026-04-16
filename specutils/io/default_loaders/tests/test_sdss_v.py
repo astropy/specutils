@@ -4,6 +4,7 @@ import warnings  # noqa ; required for pytest
 import numpy as np
 import pytest
 from astropy.io import fits
+from astropy.table import Table
 from astropy.units import Angstrom, Unit
 from astropy.utils.exceptions import AstropyUserWarning
 
@@ -844,6 +845,23 @@ def test_astra_list_fail(file_obj, with_wl):
 
     with pytest.raises(ValueError):
         SpectrumList.read(tmpfile)
+    os.remove(tmpfile)
+
+
+def test_astra_no_model_flux_fail():
+    """Test astra loader fail when no model flux is present in the HDUList"""
+
+    tmpfile = "astra-temp.fits"
+    hdul = mwm_HDUList([0, 0, 1, 0], True, astra=True)
+    for hdu in hdul[1:]:
+        tt = Table(hdu.data)
+        tt.remove_column("model_flux")
+        hdu.data = tt.as_array()
+    hdul.writeto(tmpfile, overwrite=True)
+
+    with pytest.raises(OSError):
+        Spectrum.read(tmpfile, hdu=3)
+
     os.remove(tmpfile)
 
 
