@@ -40,6 +40,12 @@ def test_create_with_bin_edges():
     assert np.all(spectral_axis.bin_edges == wavelengths)
     assert np.all(spectral_axis == [505., 530., 555., 575.]*u.AA)
 
+def test_uneven_centers():
+
+    wavelengths = [10,15,25,28]*u.AA
+
+    with pytest.raises(ValueError):
+        spectral_axis.bin_edges
 
 # GENERAL TESTS
 
