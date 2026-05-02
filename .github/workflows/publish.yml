@@ -16,7 +16,11 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     if: github.repository == 'astropy/specutils'
-
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/project/specutils
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
@@ -49,6 +53,3 @@ jobs:
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e  # v1.13.0
       if: github.event_name != 'pull_request'
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
