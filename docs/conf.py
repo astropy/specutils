@@ -32,7 +32,7 @@ from importlib import import_module
 import doctest
 
 try:
-    from sphinx_astropy.conf.v1 import *  # noqa
+    from sphinx_astropy.conf.v3 import *  # noqa
 except ImportError:
     print('ERROR: the documentation requires the sphinx-astropy package to be installed')
     sys.exit(1)
@@ -117,20 +117,6 @@ release = package.__version__
 # a list of builtin themes. To override the custom theme, set this to the
 # name of a builtin theme or the name of a custom theme in html_theme_path.
 html_static_path = ['_static']  # html_theme = None
-html_style = 'specutils.css'
-
-
-html_theme_options = {
-    'logotext1': 'spec',  # white,  semi-bold
-    'logotext2': 'utils',  # orange, light
-    'logotext3': ':docs'   # white,  light
-    }
-
-
-# Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
-html_sidebars['**'] = ['localtoc.html']
-html_sidebars['index'] = ['globaltoc.html', 'localtoc.html']
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -140,6 +126,7 @@ html_sidebars['index'] = ['globaltoc.html', 'localtoc.html']
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
 html_favicon = '_static/logo_icon.ico'
+html_logo = '_static/logo_icon.png'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -171,18 +158,6 @@ latex_documents = [('index', project + '.tex', project + u' Documentation',
 man_pages = [('index', project.lower(), project + u' Documentation',
               [author], 1)]
 
-
-# -- Options for the edit_on_github extension ---------------------------------
-
-if setup_cfg.get('edit_on_github').lower() == 'true':
-
-    extensions += ['sphinx_astropy.ext.edit_on_github']
-
-    edit_on_github_project = setup_cfg['github_project']
-    edit_on_github_branch = "main"
-
-    edit_on_github_source_root = ""
-    edit_on_github_doc_root = "docs"
 
 # -- Resolving issue number to links in changelog -----------------------------
 github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_project'])
