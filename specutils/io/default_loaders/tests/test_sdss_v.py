@@ -853,10 +853,10 @@ def test_astra_no_model_flux_fail():
 
     tmpfile = "astra-temp.fits"
     hdul = mwm_HDUList([0, 0, 1, 0], True, astra=True)
-    for hdu in hdul[1:]:
-        tt = Table(hdu.data)
+    for hdu_i in range(1, len(hdul)):
+        tt = Table(hdul[hdu_i].data)
         tt.remove_column("model_flux")
-        hdu.data = tt.as_array()
+        hdul[hdu_i] = fits.BinTableHDU(tt)
     hdul.writeto(tmpfile, overwrite=True)
 
     with pytest.raises(OSError):
