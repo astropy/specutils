@@ -1,4 +1,4 @@
-2.4.0 (unreleased)
+2.4.0 (2026-06-01)
 ------------------
 
 New Features
@@ -13,6 +13,8 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated Sphinx configuration to use astropy-unified theme for documentation. [#1328]
 
 2.3.1 (unreleased)
 ------------------
