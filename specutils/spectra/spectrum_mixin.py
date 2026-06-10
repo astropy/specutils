@@ -5,6 +5,9 @@ import astropy.units.equivalencies as eq
 from astropy import units as u
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.decorators import deprecated
+from astropy.wcs import WCS
+
+from ..utils.wcs_utils import gwcs_from_array
 
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
@@ -13,6 +16,123 @@ DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
 __all__ = ['OneDSpectrumMixin']
 
+
+class RedshiftMixin():
+    '''
+    Mixin to define properties and methods related to redshift and radial
+    velocity that are common to `~specutils.Spectrum` and `~specutils.SpectrumCollection`.
+    '''
+
+    @property
+    def redshift(self):
+        """
+        The redshift(s) of the objects represented by this spectrum.  May be
+        scalar (if this spectrum's ``flux`` is 1D) or vector.  Note that
+        the concept of "redshift of a spectrum" can be ambiguous, so the
+        interpretation is set to some extent by either the user, or operations
+        (like template fitting) that set this attribute when they are run on
+        a spectrum.
+        """
+        return self.spectral_axis.redshift
+
+    @property
+    def radial_velocity(self):
+        """
+        The radial velocity(s) of the objects represented by this spectrum.  May
+        be scalar (if this spectrum's ``flux`` is 1D) or vector.  Note that
+        the concept of "RV of a spectrum" can be ambiguous, so the
+        interpretation is set to some extent by either the user, or operations
+        (like template fitting) that set this attribute when they are run on
+        a spectrum.
+        """
+        return self.spectral_axis.radial_velocity
+
+    def set_redshift_to(self, redshift):
+        """
+        This sets the redshift of the spectrum to be `redshift` *without*
+        changing the values of the `spectral_axis`.
+
+        If you want to shift the `spectral_axis` based on this value, use
+        `shift_spectrum_to`.
+        """
+        new_spec_coord = self.spectral_axis.replicate(redshift=redshift)
+        self._spectral_axis = new_spec_coord
+
+    def set_radial_velocity_to(self, radial_velocity):
+        """
+        This sets the radial velocity of the spectrum to be `radial_velocity`
+        *without* changing the values of the `spectral_axis`.
+
+        If you want to shift the `spectral_axis` based on this value, use
+        `shift_spectrum_to`.
+        """
+        new_spec_coord = self.spectral_axis.replicate(
+            radial_velocity=radial_velocity
+        )
+        self._spectral_axis = new_spec_coord
+
+    def shift_spectrum_to(self, *, redshift=None, radial_velocity=None):
+        """
+        This shifts in-place the values of the `spectral_axis`, given either a
+        redshift or radial velocity.
+
+        If you do *not* want to change the `spectral_axis`, use
+        `set_redshift_to` or `set_radial_velocity_to`.
+        """
+        if redshift is not None and radial_velocity is not None:
+            raise ValueError(
+                "Only one of redshift or radial_velocity can be used."
+            )
+
+        old_redshift = self.redshift
+
+        if redshift is not None:
+            # with_radial_velocity_shift(redshift) looks wrong but astropy SpectralCoord handles
+            # redshift input to that method
+            new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
+                -self.spectral_axis.radial_velocity
+            ).with_radial_velocity_shift(redshift)
+            self._spectral_axis = new_spectral_axis
+        elif radial_velocity is not None:
+            if not radial_velocity.unit.is_equivalent(u.km/u.s):
+                raise u.UnitsError("Radial velocity must be a velocity.")
+
+            new_spectral_axis = self.spectral_axis.with_radial_velocity_shift(
+                -self.spectral_axis.radial_velocity
+            ).with_radial_velocity_shift(radial_velocity)
+            self._spectral_axis = new_spectral_axis
+            redshift = radial_velocity.to(u.Unit(''), u.doppler_redshift())
+        else:
+            raise ValueError("One of redshift or radial_velocity must be set.")
+
+        # Also store an updated WCS if we can update it.
+        if isinstance(self.wcs, WCS):
+            wcs_spectral_index = self.wcs.wcs.spec + 1
+            h = self.wcs.to_header()
+            spec_ctype = h[f'CTYPE{wcs_spectral_index}']
+            z_factor = (1 + redshift) / (1 + old_redshift)
+            if spec_ctype[0:4] != 'WAVE':
+                # Frequency, wavenumber and energy all invert this factor. Note that the FITS
+                # keyword for wavenumber is WAVN, which won't match here.
+                z_factor = 1 / z_factor
+            new_crval = h[f'CRVAL{wcs_spectral_index}'] * z_factor
+            h[f'CRVAL{wcs_spectral_index}'] = new_crval.value
+            pc_key = f'PC{wcs_spectral_index}_{wcs_spectral_index}'
+            if pc_key in h:
+                h[pc_key] *= z_factor
+            if f'CDELT{wcs_spectral_index}' in h:
+                new_cdelt = h[f'CDELT{wcs_spectral_index}'] * z_factor
+                h[f'CDELT{wcs_spectral_index}'] = new_cdelt.value
+            # WCS doesn't allow updating, but you can set it to None and then assign a new value
+            self.wcs = None
+            self.wcs = WCS(h, preserve_units=True)
+        elif self.wcs is not None:
+            # I don't know how to update a GWCS cleanly so for now, we replace it and store the
+            # old one to retain any spatial information in the original
+            self._original_wcs = self.wcs
+            self.wcs = None
+            self.wcs = gwcs_from_array(new_spectral_axis, self.flux.shape,
+                                    spectral_axis_index=self.spectral_axis_index)
 
 class OneDSpectrumMixin():
     @property
@@ -60,6 +180,69 @@ class OneDSpectrumMixin():
         Returns the SpectralCoord object.
         """
         return self._spectral_axis
+
+    @property
+    def velocity_convention(self):
+        """
+        Returns the velocity convention
+        """
+        return self.spectral_axis.doppler_convention
+
+    def with_velocity_convention(self, velocity_convention):
+        return self.__class__(flux=self.flux, wcs=self.wcs, meta=self.meta,
+                              velocity_convention=velocity_convention)
+
+    @property
+    def rest_value(self):
+        return self.spectral_axis.doppler_rest
+
+    @rest_value.setter
+    def rest_value(self, value):
+        self.spectral_axis.doppler_rest = value
+
+    @property
+    def velocity(self):
+        """
+        Converts the spectral axis array to the given velocity space unit given
+        the rest value.
+
+        These aren't input parameters but required Spectrum attributes
+
+        Parameters
+        ----------
+        unit : str or ~`astropy.units.Unit`
+            The unit to convert the dispersion array to.
+        rest : ~`astropy.units.Quantity`
+            Any quantity supported by the standard spectral equivalencies
+            (wavelength, energy, frequency, wave number).
+        type : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
+            The type of doppler spectral equivalency.
+        redshift or radial_velocity
+            If present, this shift is applied to the final output velocity to
+            get into the rest frame of the object.
+
+        Returns
+        -------
+        new_data : `~astropy.units.Quantity`
+            The converted dispersion array in the new dispersion space.
+        """
+        if self.rest_value is None:
+            raise ValueError("Cannot get velocity representation of spectral "
+                             "axis without specifying a reference value.")
+        if self.velocity_convention is None:
+            raise ValueError("Cannot get velocity representation of spectral "
+                             "axis without specifying a velocity convention.")
+
+        equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
+            self.velocity_convention))(self.rest_value)
+
+        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv).quantity
+
+        # if redshift/rv is present, apply it:
+        if self.spectral_axis.radial_velocity is not None:
+            new_data += self.spectral_axis.radial_velocity
+
+        return new_data
 
     @property
     def flux(self):
