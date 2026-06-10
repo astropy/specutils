@@ -134,6 +134,7 @@ class RedshiftMixin():
             self.wcs = gwcs_from_array(new_spectral_axis, self.flux.shape,
                                     spectral_axis_index=self.spectral_axis_index)
 
+
 class OneDSpectrumMixin():
     @property
     def spectral_axis_index(self):
@@ -182,67 +183,12 @@ class OneDSpectrumMixin():
         return self._spectral_axis
 
     @property
-    def velocity_convention(self):
-        """
-        Returns the velocity convention
-        """
-        return self.spectral_axis.doppler_convention
-
-    def with_velocity_convention(self, velocity_convention):
-        return self.__class__(flux=self.flux, wcs=self.wcs, meta=self.meta,
-                              velocity_convention=velocity_convention)
-
-    @property
     def rest_value(self):
         return self.spectral_axis.doppler_rest
 
     @rest_value.setter
     def rest_value(self, value):
         self.spectral_axis.doppler_rest = value
-
-    @property
-    def velocity(self):
-        """
-        Converts the spectral axis array to the given velocity space unit given
-        the rest value.
-
-        These aren't input parameters but required Spectrum attributes
-
-        Parameters
-        ----------
-        unit : str or ~`astropy.units.Unit`
-            The unit to convert the dispersion array to.
-        rest : ~`astropy.units.Quantity`
-            Any quantity supported by the standard spectral equivalencies
-            (wavelength, energy, frequency, wave number).
-        type : {"doppler_relativistic", "doppler_optical", "doppler_radio"}
-            The type of doppler spectral equivalency.
-        redshift or radial_velocity
-            If present, this shift is applied to the final output velocity to
-            get into the rest frame of the object.
-
-        Returns
-        -------
-        new_data : `~astropy.units.Quantity`
-            The converted dispersion array in the new dispersion space.
-        """
-        if self.rest_value is None:
-            raise ValueError("Cannot get velocity representation of spectral "
-                             "axis without specifying a reference value.")
-        if self.velocity_convention is None:
-            raise ValueError("Cannot get velocity representation of spectral "
-                             "axis without specifying a velocity convention.")
-
-        equiv = getattr(u.equivalencies, 'doppler_{0}'.format(
-            self.velocity_convention))(self.rest_value)
-
-        new_data = self.spectral_axis.to(u.km/u.s, equivalencies=equiv).quantity
-
-        # if redshift/rv is present, apply it:
-        if self.spectral_axis.radial_velocity is not None:
-            new_data += self.spectral_axis.radial_velocity
-
-        return new_data
 
     @property
     def flux(self):

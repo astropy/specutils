@@ -7,7 +7,6 @@ from astropy.coordinates import SpectralCoord
 from astropy.utils.decorators import lazyproperty
 from astropy.utils.decorators import deprecated
 from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataArray
-from astropy.wcs import WCS
 from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
