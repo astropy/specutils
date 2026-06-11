@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 import pytest
 from astropy.nddata import StdDevUncertainty
 from astropy.coordinates import SpectralCoord
+from astropy.tests.helper import assert_quantity_allclose
 from gwcs.wcs import WCS as GWCS
 
 from ..spectra.spectrum import Spectrum
@@ -158,3 +159,16 @@ def test_len(scshape, expected_len):
 
     assert sc2d.shape == scshape[:-1]
     assert len(sc2d) == expected_len
+
+
+def test_shift_redshift():
+    flux = u.Quantity(np.random.sample((5, 10)), unit='Jy')
+    spectral_axis = u.Quantity(np.arange(50).reshape((5, 10)) + 1, unit='AA')
+
+    with pytest.raises(ValueError, match='Cannot set a different redshift'):
+        spec_coord = SpectralCoord(spectral_axis, redshift=1)
+        bad_sc = SpectrumCollection(flux=flux, spectral_axis=spec_coord, redshift=2)
+
+    sc = SpectrumCollection(flux=flux, spectral_axis=spectral_axis, redshift=1)
+    sc.shift_spectrum_to(redshift=2)
+    assert_quantity_allclose(sc.spectral_axis, (np.arange(50).reshape((5, 10)) + 1) * 1.5 * u.AA)

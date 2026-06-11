@@ -78,7 +78,8 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
             raise ValueError("Cannot set both radial_velocity and redshift at "
                              "the same time.")
 
-        if redshift is not None and not isinstance(redshift, (int, float)):
+        if redshift is not None and not (isinstance(redshift, (int, float)) or
+                (isinstance(redshift, u.Quantity) and redshift.ndim == 0)):
             raise ValueError("Only single-value redshifts are supported at this time.")
 
         if radial_velocity is not None and (not isinstance(radial_velocity, u.Quantity)
@@ -88,10 +89,18 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         if spectral_axis is not None:
             if not isinstance(spectral_axis, u.Quantity):
                 raise u.UnitsError("Spectral axis must be a `Quantity`.")
-            spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
-                                          radial_velocity=radial_velocity,
-                                          doppler_rest=rest_value,
-                                          doppler_convention=velocity_convention)
+            if isinstance(spectral_axis, SpectralCoord):
+                if redshift is None:
+                    redshift = spectral_axis.redshift
+                else:
+                    if redshift != spectral_axis.redshift:
+                        raise ValueError("Cannot set a different redshift than defined on the"
+                                         " spectral_axis.")
+            else:
+                spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
+                                            radial_velocity=radial_velocity,
+                                            doppler_rest=rest_value,
+                                            doppler_convention=velocity_convention)
 
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
@@ -213,13 +222,18 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
             warnings.warn("Not all spectra have associated masks, "
                           "skipping masks.")
 
+        # Check that all redshifts are equal
+        redshift = spectra[0].redshift
+        if (not all((x.redshift == redshift for x in spectra))):
+            warnings.warn("Not all redshifts are equal, using redshift of first spectrum.")
+
         # Store the wcs and meta as lists
         wcs = [spec.wcs for spec in spectra]
         meta = [spec.meta for spec in spectra]
 
         return cls(flux=flux, spectral_axis=spectral_axis,
                    uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta,
-                   spectral_axis_index=spectral_axis_index)
+                   spectral_axis_index=spectral_axis_index, redshift=redshift)
 
     @property
     def flux(self):
