@@ -51,10 +51,10 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         present, must match the dimensionality of ``flux``.
     redshift : float or None
         A single value to apply to every spectrum in the collection.
-        Cannot be specified if radial_velocity is specified.
+        Cannot be specified if ``radial_velocity`` is specified.
     radial_velocity : `~astropy.units.Quantity`
         A single value to apply to all spectra in the collection.
-        Cannot be specified if redshift is specified.
+        Cannot be specified if ``redshift`` is specified.
     velocity_convention : {"relativistic", "optical", "radio"}
         Convention used for velocity conversions.
     rest_value : `~astropy.units.Quantity`

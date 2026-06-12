@@ -96,7 +96,7 @@ and ``M`` is the length of the output dispersion grid.
     >>> print(spec_coll.flux.shape)
     (2, 50)
 
-It is important to understand that `~specutils.SpectrumCollection` does *not* store
+~specutils.SpectrumCollection` does *not* store
 the data as a collection of individual `~specutils.Spectrum`
 objects, but rather contains single multi-dimensional flux and spectral axis arrays, and
 constructs a `~specutils.Spectrum` on the fly from the corresponding slices of these
