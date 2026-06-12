@@ -226,6 +226,9 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         wcs = [spec.wcs for spec in spectra]
         meta = [spec.meta for spec in spectra]
 
+        # Grab the first redshift, since they all must be equal for now.
+        redshift = spectra[0].redshift
+
         return cls(flux=flux, spectral_axis=spectral_axis,
                    uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta,
                    spectral_axis_index=spectral_axis_index, redshift=redshift)

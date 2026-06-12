@@ -172,7 +172,7 @@ def test_shift_redshift():
 
     with pytest.raises(ValueError, match='Cannot set a different redshift'):
         spec_coord = SpectralCoord(spectral_axis, redshift=1)
-        bad_sc = SpectrumCollection(flux=flux, spectral_axis=spec_coord, redshift=2)
+        SpectrumCollection(flux=flux, spectral_axis=spec_coord, redshift=2)
 
     sc = SpectrumCollection(flux=flux, spectral_axis=spectral_axis, redshift=1)
     sc.shift_spectrum_to(redshift=2)
