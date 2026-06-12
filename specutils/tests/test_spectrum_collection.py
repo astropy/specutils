@@ -99,6 +99,11 @@ def test_create_collection_from_spectrum():
     assert spec.flux.unit == spec_coll.flux.unit
     assert_allclose(spec_coll.spectral_axis.redshift.value, 0.1)
 
+    # Make sure we don't allow collections with different redshifts, for now
+    spec1.shift_spectrum_to(redshift=1)
+    with pytest.raises(ValueError, match="SpectralCoord objects must have the same parameters"):
+        spec_coll = SpectrumCollection.from_spectra([spec, spec1])
+
 
 @pytest.mark.filterwarnings('ignore:Not all spectra have associated masks')
 def test_create_collection_from_collections():
