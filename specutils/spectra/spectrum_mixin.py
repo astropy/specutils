@@ -14,7 +14,7 @@ DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
 DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
 DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
-__all__ = ['OneDSpectrumMixin']
+__all__ = ['OneDSpectrumMixin', 'RedshiftMixin']
 
 
 class RedshiftMixin():
@@ -22,6 +22,13 @@ class RedshiftMixin():
     Mixin to define properties and methods related to redshift and radial
     velocity that are common to `~specutils.Spectrum` and `~specutils.SpectrumCollection`.
     '''
+
+    @property
+    def spectral_axis(self):
+        """
+        Returns the SpectralCoord object.
+        """
+        return self._spectral_axis
 
     @property
     def redshift(self):
