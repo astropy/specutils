@@ -1,3 +1,18 @@
+2.5.0 (unreleased)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- ``SpectrumCollection`` now allows setting scalar redshift or radial velocity,
+  analagously to ``Spectrum``. [#1332]
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 2.4.0 (2026-06-01)
 ------------------
 

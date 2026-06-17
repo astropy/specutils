@@ -6,12 +6,13 @@ from astropy.nddata import NDUncertainty, StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 
 from .spectrum import Spectrum
+from .spectrum_mixin import RedshiftMixin
 from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
 
 
-class SpectrumCollection(NDIOMixin):
+class SpectrumCollection(NDIOMixin, RedshiftMixin):
     """
     A class to represent a heterogeneous set of spectra that are the same length
     but have different spectral axes. Spectra that meet this requirement can be
@@ -48,20 +49,58 @@ class SpectrumCollection(NDIOMixin):
     mask : ndarray or None
         The n-dimensional mask information associated with each spectrum. If
         present, must match the dimensionality of ``flux``.
+    redshift : float or None
+        A single value to apply to every spectrum in the collection.
+        Cannot be specified if ``radial_velocity`` is specified.
+    radial_velocity : `~astropy.units.Quantity`
+        A single value to apply to all spectra in the collection.
+        Cannot be specified if ``redshift`` is specified.
+    velocity_convention : {"relativistic", "optical", "radio"}
+        Convention used for velocity conversions.
+    rest_value : `~astropy.units.Quantity`
+        Any quantity supported by the standard spectral equivalencies
+        (wavelength, energy, frequency, wave number). Describes the rest value
+        of the spectral axis for use with velocity conversions.
+
     meta : list
         The list of dictionaries containing meta data to be associated with
         each spectrum in the collection.
     """
     def __init__(self, flux, spectral_axis=None, wcs=None, uncertainty=None,
-                 mask=None, meta=None, spectral_axis_index=None):
+                 mask=None, meta=None, spectral_axis_index=None, redshift=None,
+                 radial_velocity=None, rest_value=None, velocity_convention=None):
         # Check for quantity
         if not isinstance(flux, u.Quantity):
             raise u.UnitsError("Flux must be a `Quantity`.")
 
+        # Ensure that only one or neither of these parameters is set
+        if redshift is not None and radial_velocity is not None:
+            raise ValueError("Cannot set both radial_velocity and redshift at "
+                             "the same time.")
+
+        if redshift is not None and not (np.isscalar(redshift) or
+                (isinstance(redshift, u.Quantity) and redshift.isscalar)):
+            raise ValueError("Only single-value redshifts are supported at this time.")
+
+        if radial_velocity is not None and (not isinstance(radial_velocity, u.Quantity)
+                                            or radial_velocity.ndim > 0):
+            raise ValueError("radial_velocity must be a scalar `Quantity`.")
+
         if spectral_axis is not None:
             if not isinstance(spectral_axis, u.Quantity):
                 raise u.UnitsError("Spectral axis must be a `Quantity`.")
-            spectral_axis = SpectralCoord(spectral_axis)
+            if isinstance(spectral_axis, SpectralCoord):
+                if redshift is None:
+                    redshift = spectral_axis.redshift
+                else:
+                    if redshift != spectral_axis.redshift:
+                        raise ValueError("Cannot set a different redshift than defined on the"
+                                         " spectral_axis.")
+            else:
+                spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
+                                            radial_velocity=radial_velocity,
+                                            doppler_rest=rest_value,
+                                            doppler_convention=velocity_convention)
 
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
@@ -104,6 +143,8 @@ class SpectrumCollection(NDIOMixin):
         uncertainty = None if self.uncertainty is None else self.uncertainty[key]
         wcs = None if self.wcs is None else self.wcs[key]
         mask = None if self.mask is None else self.mask[key]
+        # Currently only allow scalar redshift
+        redshift = self.redshift
         if self.meta is None:
             meta = None
         else:
@@ -114,7 +155,7 @@ class SpectrumCollection(NDIOMixin):
 
         return Spectrum(flux=flux, spectral_axis=spectral_axis,
                           uncertainty=uncertainty, wcs=wcs, mask=mask,
-                          meta=meta)
+                          meta=meta, redshift=redshift)
 
     @classmethod
     def from_spectra(cls, spectra):
@@ -185,9 +226,12 @@ class SpectrumCollection(NDIOMixin):
         wcs = [spec.wcs for spec in spectra]
         meta = [spec.meta for spec in spectra]
 
+        # Grab the first redshift, since they all must be equal for now.
+        redshift = spectra[0].redshift
+
         return cls(flux=flux, spectral_axis=spectral_axis,
                    uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta,
-                   spectral_axis_index=spectral_axis_index)
+                   spectral_axis_index=spectral_axis_index, redshift=redshift)
 
     @property
     def flux(self):
@@ -244,6 +288,30 @@ class SpectrumCollection(NDIOMixin):
     def meta(self):
         """A dictionary of metadata for theis spectrum collection, or `None`."""
         return self._meta
+
+    @property
+    def redshift(self):
+        """
+        The redshift(s) of the objects represented by this spectrum.  May be
+        scalar (if this spectrum's ``flux`` is 1D) or vector.  Note that
+        the concept of "redshift of a spectrum" can be ambiguous, so the
+        interpretation is set to some extent by either the user, or operations
+        (like template fitting) that set this attribute when they are run on
+        a spectrum.
+        """
+        return self.spectral_axis.redshift
+
+    @property
+    def radial_velocity(self):
+        """
+        The radial velocity(s) of the objects represented by this spectrum.  May
+        be scalar (if this spectrum's ``flux`` is 1D) or vector.  Note that
+        the concept of "RV of a spectrum" can be ambiguous, so the
+        interpretation is set to some extent by either the user, or operations
+        (like template fitting) that set this attribute when they are run on
+        a spectrum.
+        """
+        return self.spectral_axis.radial_velocity
 
     @property
     def shape(self):
