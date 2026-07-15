@@ -10,6 +10,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Smoothing functions now accept NumPy integer values for their width parameters. [#1224]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
