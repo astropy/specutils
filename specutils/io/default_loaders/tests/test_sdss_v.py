@@ -455,34 +455,10 @@ def spec_HDUList(n_spectra, model=True):
     # Init the key HDU's (flux, error, bitmask, spectral)
     names = ["COADD", "SPALL", "ZALL", "ZLINE"]
     for i in range(4):
-        # cols = [
-        #     fits.Column(name="FLUX", format="E", array=np.random.random(10)),
-        #     fits.Column(name="LOGLAM",
-        #                 format="E",
-        #                 array=np.random.random(10).sort()),
-        #     fits.Column(name="IVAR", format="E", array=np.random.random(10)),
-        #     fits.Column(name="AND_MASK",
-        #                 format="E",
-        #                 array=np.random.random(10)),
-        #     fits.Column(name="OR_MASK", format="E",
-        #                 array=np.random.random(10)),
-        # ]
         hdu = fits.BinTableHDU.from_columns(cols)
         hdu.name = names[i]
         hdulist.append(hdu)
     for i in range(n_spectra):
-        # hdu = fits.BinTableHDU.from_columns([
-        #     fits.Column(name="LOGLAM",
-        #                 format="E",
-        #                 array=np.random.random(10).sort()),
-        #     fits.Column(name="FLUX", format="E", array=np.random.random(10)),
-        #     fits.Column(name="IVAR", format="E", array=np.random.random(10)),
-        #     fits.Column(name="AND_MASK",
-        #                 format="E",
-        #                 array=np.random.random(10)),
-        #     fits.Column(name="OR_MASK", format="E",
-        #                 array=np.random.random(10)),
-        # ])
         hdu = fits.BinTableHDU.from_columns(cols)
         hdu.name = f"spectrum{i}"
         hdulist.append(hdu)
