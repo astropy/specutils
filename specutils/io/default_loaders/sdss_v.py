@@ -481,7 +481,7 @@ def load_sdss_spec_list(file_obj, **kwargs):
         return SpectrumList(spectra)
 
 
-def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
+def _load_BOSS_HDU(hdulist: HDUList, hdu: int, model: bool = False, **kwargs):
     """
     HDU processor for BOSS spectra redux HDU's
 
@@ -503,7 +503,14 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
     spectral_axis = Quantity(10**hdulist[hdu].data["LOGLAM"], unit=Angstrom)
 
-    flux = Quantity(hdulist[hdu].data["FLUX"], unit=flux_unit)
+    if model and 'MODEL' not in hdulist[hdu].data.names:
+        raise ValueError(f"MODEL column not found in HDU{hdu}. Cannot load model spectrum.")
+
+    if model:
+        # set the model spectrum as the "flux" ; until specutils supports models
+        flux = Quantity(hdulist[hdu].data["MODEL"], unit=flux_unit)
+    else:
+        flux = Quantity(hdulist[hdu].data["FLUX"], unit=flux_unit)
     # no e_flux, so we use inverse of variance
     ivar = InverseVariance(hdulist[hdu].data["IVAR"])
 
@@ -522,6 +529,7 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     meta = dict()
     meta["header"] = hdulist[0].header
     meta["name"] = hdulist[hdu].name
+    meta["is_model"] = model
 
     return Spectrum(spectral_axis=spectral_axis,
                       flux=flux,

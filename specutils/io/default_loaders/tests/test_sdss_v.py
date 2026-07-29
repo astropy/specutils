@@ -420,7 +420,7 @@ def apVisit_HDUList():
     return hdulist
 
 
-def spec_HDUList(n_spectra):
+def spec_HDUList(n_spectra, model=True):
     """Mock an BOSS spec HDUList of n_spectra spectra + 1 coadd."""
     np.random.seed(20)
 
@@ -437,36 +437,53 @@ def spec_HDUList(n_spectra):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU(header=hdr))
 
+    cols = [
+            fits.Column(name="FLUX", format="E", array=np.random.random(10)),
+            fits.Column(name="LOGLAM",
+                        format="E",
+                        array=np.random.random(10).sort()),
+            fits.Column(name="IVAR", format="E", array=np.random.random(10)),
+            fits.Column(name="AND_MASK",
+                        format="E",
+                        array=np.random.random(10)),
+            fits.Column(name="OR_MASK", format="E",
+                        array=np.random.random(10)),
+        ]
+    if model:
+        cols.append(fits.Column(name="MODEL", format="E", array=np.random.random(10)))
+
     # Init the key HDU's (flux, error, bitmask, spectral)
     names = ["COADD", "SPALL", "ZALL", "ZLINE"]
     for i in range(4):
-        hdu = fits.BinTableHDU.from_columns([
-            fits.Column(name="FLUX", format="E", array=np.random.random(10)),
-            fits.Column(name="LOGLAM",
-                        format="E",
-                        array=np.random.random(10).sort()),
-            fits.Column(name="IVAR", format="E", array=np.random.random(10)),
-            fits.Column(name="AND_MASK",
-                        format="E",
-                        array=np.random.random(10)),
-            fits.Column(name="OR_MASK", format="E",
-                        array=np.random.random(10)),
-        ])
+        # cols = [
+        #     fits.Column(name="FLUX", format="E", array=np.random.random(10)),
+        #     fits.Column(name="LOGLAM",
+        #                 format="E",
+        #                 array=np.random.random(10).sort()),
+        #     fits.Column(name="IVAR", format="E", array=np.random.random(10)),
+        #     fits.Column(name="AND_MASK",
+        #                 format="E",
+        #                 array=np.random.random(10)),
+        #     fits.Column(name="OR_MASK", format="E",
+        #                 array=np.random.random(10)),
+        # ]
+        hdu = fits.BinTableHDU.from_columns(cols)
         hdu.name = names[i]
         hdulist.append(hdu)
     for i in range(n_spectra):
-        hdu = fits.BinTableHDU.from_columns([
-            fits.Column(name="LOGLAM",
-                        format="E",
-                        array=np.random.random(10).sort()),
-            fits.Column(name="FLUX", format="E", array=np.random.random(10)),
-            fits.Column(name="IVAR", format="E", array=np.random.random(10)),
-            fits.Column(name="AND_MASK",
-                        format="E",
-                        array=np.random.random(10)),
-            fits.Column(name="OR_MASK", format="E",
-                        array=np.random.random(10)),
-        ])
+        # hdu = fits.BinTableHDU.from_columns([
+        #     fits.Column(name="LOGLAM",
+        #                 format="E",
+        #                 array=np.random.random(10).sort()),
+        #     fits.Column(name="FLUX", format="E", array=np.random.random(10)),
+        #     fits.Column(name="IVAR", format="E", array=np.random.random(10)),
+        #     fits.Column(name="AND_MASK",
+        #                 format="E",
+        #                 array=np.random.random(10)),
+        #     fits.Column(name="OR_MASK", format="E",
+        #                 array=np.random.random(10)),
+        # ])
+        hdu = fits.BinTableHDU.from_columns(cols)
         hdu.name = f"spectrum{i}"
         hdulist.append(hdu)
 
@@ -934,6 +951,28 @@ def test_spec_1d_fail_hdu(file_obj, hdu):
 
     with pytest.raises(ValueError):
         Spectrum.read(tmpfile, hdu=hdu)
+    os.remove(tmpfile)
+
+
+def test_spec_model():
+    """Test if model spectrum can be loaded"""
+    tmpfile = "spec-temp.fits"
+    spec_HDUList(1, model=True).writeto(tmpfile, overwrite=True)
+
+    flux = Spectrum.read(tmpfile, hdu=1, model=False)
+    model = Spectrum.read(tmpfile, hdu=1, model=True)
+    assert flux != model
+    assert flux.meta["is_model"] is False
+    assert model.meta["is_model"] is True
+    os.remove(tmpfile)
+
+def test_spec_model_fail():
+    """Test if model spectrum can be loaded"""
+    tmpfile = "spec-temp.fits"
+    spec_HDUList(1, model=False).writeto(tmpfile, overwrite=True)
+
+    with pytest.raises(ValueError, match='MODEL column not found in HDU'):
+        Spectrum.read(tmpfile, hdu=1, model=True)
     os.remove(tmpfile)
 
 
