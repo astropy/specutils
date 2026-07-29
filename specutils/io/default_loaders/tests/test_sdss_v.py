@@ -943,7 +943,7 @@ def test_spec_model():
     os.remove(tmpfile)
 
 def test_spec_model_fail():
-    """Test if model spectrum can be loaded"""
+    """Test if model spectrum is not available """
     tmpfile = "spec-temp.fits"
     spec_HDUList(1, model=False).writeto(tmpfile, overwrite=True)
 
