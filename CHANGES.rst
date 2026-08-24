@@ -7,6 +7,8 @@ New Features
 - ``SpectrumCollection`` now allows setting scalar redshift or radial velocity,
   analagously to ``Spectrum``. [#1332]
 
+- Added a flag to return the model spectra for SDSS BHM spec files. [#1339]
+
 Bug Fixes
 ^^^^^^^^^
 

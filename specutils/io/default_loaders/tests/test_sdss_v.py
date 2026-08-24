@@ -448,7 +448,7 @@ def spec_HDUList(n_spectra, model=True):
                         array=np.random.random(10)),
             fits.Column(name="OR_MASK", format="E",
                         array=np.random.random(10)),
-        ]
+           ]
     if model:
         cols.append(fits.Column(name="MODEL", format="E", array=np.random.random(10)))
 
@@ -941,6 +941,7 @@ def test_spec_model():
     assert flux.meta["is_model"] is False
     assert model.meta["is_model"] is True
     os.remove(tmpfile)
+
 
 def test_spec_model_fail():
     """Test if model spectrum is not available """
