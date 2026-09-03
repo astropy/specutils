@@ -450,6 +450,20 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
         return _load_BOSS_HDU(hdulist, hdu, **kwargs)
 
 
+def _lazy_sdss_spec_loader(fileobj, **kwargs):
+    """Lazy loader for SDSS-V spec files."""
+
+    def _select(ext):
+        return ext.name not in ["SPALL", "ZALL", "ZLINE"]
+
+    def _load(hdulist, hdu_idx):
+        return _load_BOSS_HDU(hdulist, hdu_idx, **kwargs)
+
+    return _sdss_lazy_loader(
+        fileobj, select_hdu=_select, load_source=_load, **kwargs
+    )
+
+
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -457,6 +471,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     force=True,
     priority=5,
     extensions=["fits"],
+    lazy_loader=_lazy_sdss_spec_loader
 )
 def load_sdss_spec_list(file_obj, **kwargs):
     """
@@ -473,12 +488,15 @@ def load_sdss_spec_list(file_obj, **kwargs):
         The spectra contained in the file.
     """
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
-        spectra = list()
+        spectra = SpectrumList()
+        labels = []
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].name in ["SPALL", "ZALL", "ZLINE"]:
                 continue
             spectra.append(_load_BOSS_HDU(hdulist, hdu, **kwargs))
-        return SpectrumList(spectra)
+            labels.append(hdulist[hdu].name)
+        _set_labels(spectra, labels)
+        return spectra
 
 
 def _load_BOSS_HDU(hdulist: HDUList, hdu: int, model: bool = False, **kwargs):
@@ -538,6 +556,83 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, model: bool = False, **kwargs):
                       meta=meta)
 
 
+def _set_labels(spectra: SpectrumList, labels: list):
+    """Set the labels for each index in a SpectrumList object"""
+    spectra.set_id_map(dict(zip(labels, range(len(labels)))))
+
+
+def _sdss_lazy_loader(fileobj: object, select_hdu: callable, load_source: callable, **kwargs) -> SpectrumList:
+    """Make a SDSS lazy loader
+
+    Create a lazy loader callable that looks up the individual
+    spectrum to load from an HDU extension on demand.  Also
+    builds a list of labels based on the HDU extension name.
+
+    Parameters
+    ----------
+    fileobj : object
+        the file object to load
+    select_hdu : callable
+        function to determine which HDUs to load
+    load_source : callable
+        function to load a specific source from an HDU
+
+    Returns
+    -------
+    SpectrumList
+        The list of spectra contained in the file
+    """
+    # Build list of HDU indices + labels once
+    hdu_indices = []
+    labels = []
+    with read_fileobj_or_hdulist(fileobj, memmap=False, **kwargs) as hdulist:
+        for idx in range(1, len(hdulist)):
+            ext = hdulist[idx]
+            # skip the HDU
+            if not select_hdu(ext):
+                continue
+            hdu_indices.append(idx)
+            labels.append(ext.name)
+
+    # create the lazy loader callable for SpectrumList
+    def _loader(i: int) -> Spectrum:
+        hdu_idx = hdu_indices[i]
+        with read_fileobj_or_hdulist(fileobj, memmap=False, **kwargs) as hdulist:
+            return load_source(hdulist, hdu_idx, **kwargs)
+
+    sl = SpectrumList.from_lazy(length=len(hdu_indices), loader=_loader, labels=labels)
+    _set_labels(sl, labels)
+    return sl
+
+
+def _lazy_sdss_mwm_loader(fileobj, **kwargs):
+    """Lazy loader example for SDSS-V mwm files"""
+
+    def _select(ext):
+        return ext.header.get("DATASUM") != "0" and len(ext.data) > 0
+
+    def _load(hdulist, hdu_idx, **kwargs):
+        return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu_idx, **kwargs)
+
+    return _sdss_lazy_loader(
+        fileobj, select_hdu=_select, load_source=_load, **kwargs
+    )
+
+
+def _lazy_sdss_astra_loader(fileobj, **kwargs):
+    """Lazy loader for SDSS-V astra files."""
+
+    def _select(ext):
+        return ext.header.get("DATASUM") != "0" and len(ext.data) > 0
+
+    def _load(hdulist, hdu_idx, **kwargs):
+        return _load_astra_hdu(hdulist, hdu_idx, visit=0, **kwargs)
+
+    return _sdss_lazy_loader(
+        fileobj, select_hdu=_select, load_source=_load, **kwargs
+    )
+
+
 # MWM LOADERS
 @data_loader(
     "SDSS-V mwm",
@@ -594,6 +689,7 @@ def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],
+    lazy_loader=_lazy_sdss_mwm_loader
 )
 def load_sdss_mwm_list(file_obj, **kwargs):
     """
@@ -610,6 +706,7 @@ def load_sdss_mwm_list(file_obj, **kwargs):
         A list of spectra from each visit with each instrument at each observatory (mwmVisit),
         or the coadd from each instrument/observatory (mwmStar).
     """
+    labels = []
     spectra = SpectrumList()
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Check if file is empty first
@@ -624,7 +721,10 @@ def load_sdss_mwm_list(file_obj, **kwargs):
             if hduext.header.get("DATASUM") == "0" or len(hduext.data) == 0:
                 # Skip zero data HDU's
                 continue
+            labels.append(hduext.name)
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, i))
+    #
+    _set_labels(spectra, labels)
     return spectra
 
 
@@ -781,6 +881,7 @@ def load_sdss_astra_1d(
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],
+    lazy_loader=_lazy_sdss_astra_loader
 )
 def load_sdss_astra_list(file_obj, **kwargs):
     """Load an astraStar/astraVisit model spectrum file as a `~specutils.SpectrumList`.
@@ -798,7 +899,7 @@ def load_sdss_astra_list(file_obj, **kwargs):
     """
 
     spectra = SpectrumList()
-
+    labels = []
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Check if file is empty first
         datasums = []
@@ -812,7 +913,10 @@ def load_sdss_astra_list(file_obj, **kwargs):
             if hdulist[hdu].header.get("DATASUM") == "0":
                 # Skip zero data HDU's
                 continue
+            labels.append(hdulist[hdu].name)
             spectra.extend(_load_astra_hdu(hdulist, hdu))
+
+    _set_labels(spectra, labels)
 
     if len(spectra) == 0:
         raise ValueError("No valid HDU found to load.")

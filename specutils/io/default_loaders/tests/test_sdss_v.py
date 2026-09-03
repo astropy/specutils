@@ -699,6 +699,36 @@ def test_mwm_list(file_obj, with_wl, hduflags):
     os.remove(tmpfile)
 
 
+def test_mwm_lazy_load_with_labels():
+    """test SDSS-V mwm lazy loader with labels"""
+    tmpfile = "mwm-lazy-temp.fits"
+    hduflags = [1, 0, 1, 1]
+    nvisits = 3
+    mwm_HDUList(hduflags, with_wl=False, nvisits=nvisits).writeto(
+        tmpfile,
+        overwrite=True,
+    )
+
+    data = SpectrumList.read(tmpfile, format="SDSS-V mwm", lazy_load=True)
+    assert isinstance(data, SpectrumList)
+    assert data.is_lazy
+    assert data.n_loaded == 0
+
+    assert isinstance(data.labels, dict)
+    assert "BOSS/APO" in data.labels
+    assert "APOGEE/APO" in data.labels
+
+    first = data["BOSS/APO"]
+    assert isinstance(first, Spectrum)
+    assert data.n_loaded == 1
+
+    second = data[1]
+    assert isinstance(second, Spectrum)
+    assert data.n_loaded == 2
+
+    os.remove(tmpfile)
+
+
 @pytest.mark.parametrize(
     "file_obj, with_wl, hduflags, pipeline",
     [
@@ -908,6 +938,27 @@ def test_spec_list(file_obj, n_spectra):
         assert data[i].spectral_axis.unit == Angstrom
         assert len(data[i].mask) == 10
         assert data[i].meta["header"].get("foobar") == "barfoo"
+    os.remove(tmpfile)
+
+
+def test_spec_lazy_load_with_labels():
+    """test SDSS-V spec lazy loader"""
+    tmpfile = "spec-lazy-temp.fits"
+    n_spectra = 5
+    spec_HDUList(n_spectra).writeto(tmpfile, overwrite=True)
+
+    data = SpectrumList.read(tmpfile, format="SDSS-V spec", lazy_load=True)
+    assert isinstance(data, SpectrumList)
+    assert data.is_lazy
+    assert data.n_loaded == 0
+
+    assert isinstance(data.labels, dict)
+    assert "COADD" in data.labels
+
+    coadd = data["COADD"]
+    assert isinstance(coadd, Spectrum)
+    assert data.n_loaded == 1
+
     os.remove(tmpfile)
 
 
