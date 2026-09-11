@@ -14,7 +14,7 @@ from gwcs.wcs import WCS
 from specutils import Spectrum, SpectrumList
 
 try:
-    from stdatamodels import asdf_in_fits
+    import stdatamodels.jwst.datamodels
 except ImportError:
     HAS_STDATAMODELS = False
 else:
@@ -468,72 +468,26 @@ def generate_s3d_wcs():
     return WCS(pipeline)
 
 
-@pytest.fixture()
-def tmp_asdf():
-    # Create some data
-    sequence = np.arange(100)
-    squares  = sequence**2
-    random = np.random.random(100)
-
-    # Store the data in an arbitrarily nested dictionary
-    tree = {
-        'foo': 42,
-        'name': 'Monty',
-        'sequence': sequence,
-        'powers': { 'squares' : squares },
-        'random': random,
-        'meta': {
-            'wcs' : generate_s3d_wcs()
-        }
-    }
-
-    yield tree
-    tree = {}
-
-
-def create_image_hdu(name='SCI', data=None, shape=None, hdrs=[], ndim=3):
-    """ Mock an Image HDU """
-    if data is None:
-        if not shape:
-            shape = [4, 2, 3] if ndim == 3 else [2, 2] if ndim == 2 else [2]
-        data = np.zeros(shape)
-    hdu = fits.ImageHDU(name=name, data=data, header=fits.Header(hdrs))
-    hdu.ver = 1
-    return hdu
-
-
 @pytest.fixture(scope='function')
-def cube(tmp_path, tmp_asdf):
+def cube():
     """ Mock a JWST s3d cube """
-    prihdu = fits.PrimaryHDU()
-    prihdu.header["TELESCOP"] = ("JWST", "comment")
-    prihdu.header["FLUXEXT"] = ("ERR", "comment")
-    prihdu.header["ERREXT"] = ("ERR", "comment")
-    prihdu.header["MASKEXT"] = ("DQ", "comment")
-    hdulist = fits.HDUList([prihdu])
-
-    # Add ImageHDU for cubes
+    cube_model = stdatamodels.jwst.datamodels.IFUCubeModel()
     shape = (30, 10, 10)
-    hdulist.append(create_image_hdu(name='SCI', shape=shape, hdrs=[("BUNIT", 'MJy')]))
-    hdulist.append(create_image_hdu(name='ERR', shape=shape,
-                                    hdrs=[("BUNIT", 'MJy'), ('ERRTYPE', 'ERR')]))
-    hdulist.append(create_image_hdu(name='DQ', shape=shape))
-
-    # Mock the ASDF extension
-    hdulist.append(fits.BinTableHDU(name='ASDF'))
-
-    if HAS_STDATAMODELS:
-        tmpfile = str(tmp_path / 'jwst_embedded_asdf.fits')
-        asdf_in_fits.write(tmpfile, tmp_asdf, hdulist=hdulist, overwrite=True)
-
-    return hdulist
+    cube_model.data = np.zeros(shape)
+    cube_model.meta.bunit_data = 'MJy'
+    cube_model.err = np.zeros(shape)
+    cube_model.meta.bunit_err = 'MJy'
+    cube_model.meta.ifu.error_type = 'ERR'
+    cube_model.dq = np.zeros(shape)
+    cube_model.meta.wcs = generate_s3d_wcs()
+    return cube_model
 
 
 @pytest.mark.skipif(not HAS_STDATAMODELS, reason="requires stdatamodels")
 def test_jwst_s3d_single(tmp_path, cube):
     """Test Spectrum.read for JWST x1d data"""
     tmpfile = str(tmp_path / 'jwst_s3d.fits')
-    cube.writeto(tmpfile)
+    cube.save(tmpfile)
 
     data = Spectrum.read(tmpfile, format='JWST s3d')
     assert type(data) is Spectrum
