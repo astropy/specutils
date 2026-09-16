@@ -675,3 +675,59 @@ def test_spectral_axis_metadata_from_header():
     assert spectral_axis_metadata_from_header(fits.Header(), location=apo)['location'] is apo
     with pytest.raises(TypeError):
         spectral_axis_metadata_from_header(fits.Header(), location=3)
+
+
+# ---------------------------------------------------------------------------
+# SpectrumCollection
+# ---------------------------------------------------------------------------
+
+def test_spectrum_collection_metadata(apo, obstime, moving_target):
+    from ..spectra.spectrum_collection import SpectrumCollection
+
+    flux = np.ones((3, 11)) * u.Jy
+    spectral_axis = np.tile(np.linspace(5000, 5010, 11), (3, 1)) * u.AA
+    collection = SpectrumCollection(flux, spectral_axis=spectral_axis, medium='vacuum',
+                                    frame='TOPOCENT', obstime=obstime, location=apo,
+                                    target=moving_target)
+    assert collection.medium.is_vacuum
+    assert collection.frame == 'TOPOCENT'
+    assert collection.obstime == obstime
+    assert collection.location is apo
+    assert collection.observer is not None
+    assert collection.in_rest_frame is False
+    assert_quantity_allclose(collection.barycentric_correction, -9.41 * KMS, atol=0.01 * KMS)
+    assert "Medium:              vacuum" in repr(collection)
+
+    # Individual spectra carry the metadata, and can be recombined
+    spec = collection[1]
+    assert spec.frame == 'TOPOCENT' and spec.medium.is_vacuum and spec.target is not None
+    assert_quantity_allclose(spec.radial_velocity, collection.radial_velocity)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)  # no uncertainties or masks
+        rebuilt = SpectrumCollection.from_spectra([collection[i] for i in range(3)])
+    assert rebuilt.frame == 'TOPOCENT' and rebuilt.medium.is_vacuum
+    assert rebuilt.obstime == obstime and rebuilt.location is apo
+    assert_quantity_allclose(rebuilt.radial_velocity, collection.radial_velocity)
+
+    # Frame and medium conversions work on the whole collection
+    rest = collection.to_rest()
+    assert rest.frame == 'SOURCE'
+    assert_quantity_allclose(rest.radial_velocity, 0 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(rest.spectral_axis[1], collection[1].to_rest().spectral_axis)
+    air = collection.with_medium('air')
+    assert air.medium.is_air
+    assert_quantity_allclose(air.spectral_axis[0], collection[0].with_medium('air').spectral_axis)
+
+    # Mixed metadata cannot be combined
+    topo = Spectrum(spectral_axis=spectral_axis[0], flux=flux[0], frame='TOPOCENT')
+    bary = Spectrum(spectral_axis=spectral_axis[0], flux=flux[0], frame='BARYCENT')
+    with pytest.raises(ValueError, match="must have the same frame"), \
+            warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)
+        SpectrumCollection.from_spectra([topo, bary])
+    with pytest.raises(ValueError, match="Cannot separately set frame"):
+        SpectrumCollection(flux, spectral_axis=collection.spectral_axis, frame='BARYCENT')
+
+    plain = SpectrumCollection(flux, spectral_axis=spectral_axis)
+    assert plain.medium is None and plain.frame is None and plain.in_rest_frame is None
+    assert plain.barycentric_correction is None
