@@ -4,6 +4,7 @@ from copy import deepcopy
 import astropy.units as u
 import numpy as np
 import pytest
+from astropy.constants import c
 from astropy.coordinates import EarthLocation, SkyCoord
 from astropy.nddata import StdDevUncertainty
 from astropy.time import Time
@@ -344,3 +345,166 @@ def test_manipulation_keeps_metadata(spectrum):
     with pytest.warns(AstropyUserWarning, match="interpreted in the frame of the input"):
         resampled = LinearInterpolatedResampler()(spectrum, grid)
     assert resampled.frame == 'TOPOCENT'
+
+
+# ---------------------------------------------------------------------------
+# Frame and medium conversions
+# ---------------------------------------------------------------------------
+
+KMS = u.km / u.s
+
+
+@pytest.fixture
+def moving_target():
+    return SkyCoord(ra=120 * u.deg, dec=-30 * u.deg, radial_velocity=50 * KMS,
+                    distance=100 * u.pc)
+
+
+@pytest.fixture
+def topocentric(apo, obstime, moving_target):
+    wavelength = np.linspace(5000, 5010, 11) * u.AA
+    return Spectrum(spectral_axis=wavelength, flux=np.ones(11) * u.Jy, medium='vacuum',
+                    frame='TOPOCENT', obstime=obstime, location=apo, target=moving_target)
+
+
+def _doppler(wavelength, velocity):
+    beta = (velocity / c).to_value(u.one)
+    return wavelength * np.sqrt((1 + beta) / (1 - beta))
+
+
+def test_with_frame_from_observer_and_target(topocentric):
+    spec = topocentric
+    # Topocentric radial velocity is the source velocity plus the observer's motion
+    bc = spec.barycentric_correction
+    assert_quantity_allclose(bc, -9.41 * KMS, atol=0.01 * KMS)
+    assert_quantity_allclose(spec.radial_velocity, 50 * KMS - bc)
+    # ...which agrees with astropy's independent calculation to a few m/s
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', AstropyUserWarning)
+        astropy_bc = SkyCoord(spec.target).radial_velocity_correction(
+            'barycentric', obstime=spec.obstime, location=spec.location)
+    assert_quantity_allclose(bc, astropy_bc, atol=0.01 * KMS)
+
+    bary = spec.with_frame('BARYCENT')
+    assert bary.frame == 'BARYCENT'
+    assert_quantity_allclose(bary.radial_velocity, 50 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(bary.barycentric_correction, 0 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(bary.spectral_axis, _doppler(spec.spectral_axis, bc))
+    assert 'original_wcs' in bary.meta
+
+    rest = spec.to_rest()
+    assert rest.frame == 'SOURCE'
+    assert rest.in_rest_frame
+    assert_quantity_allclose(rest.radial_velocity, 0 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(rest.spectral_axis,
+                             _doppler(spec.spectral_axis, -spec.radial_velocity))
+    assert_quantity_allclose(bary.to_rest().spectral_axis, rest.spectral_axis)
+
+    # Round trip back to the telescope frame
+    back = rest.with_frame('TOPOCENT')
+    assert back.frame == 'TOPOCENT'
+    assert_quantity_allclose(back.spectral_axis, spec.spectral_axis)
+    assert_quantity_allclose(back.radial_velocity, spec.radial_velocity)
+
+    helio = spec.with_frame('heliocentric')
+    assert helio.frame == 'HELIOCEN'
+    assert_quantity_allclose(helio.radial_velocity, 50 * KMS, atol=0.02 * KMS)
+    assert spec.with_frame('LSRK').frame == 'LSRK'
+
+    same = spec.with_frame('TOPOCENT')
+    assert same is not spec and same.frame == 'TOPOCENT'
+    assert_quantity_allclose(same.spectral_axis, spec.spectral_axis)
+
+    with pytest.raises(ValueError, match="astropy has no coordinate frame"):
+        spec.with_frame('CMBDIPOL')
+    with pytest.raises(ValueError, match="already in the 'TOPOCENT' frame"):
+        spec.with_frame('TOPOCENT', velocity=1 * KMS)
+    with pytest.raises(ValueError, match="A frame must be given"):
+        spec.with_frame(None)
+
+
+def test_with_frame_from_velocity(topocentric):
+    reference = topocentric
+    bc = reference.barycentric_correction
+    spec = Spectrum(spectral_axis=reference.spectral_axis.quantity, flux=reference.flux,
+                    frame='TOPOCENT', radial_velocity=reference.radial_velocity)
+    assert spec.barycentric_correction is None
+
+    bary = spec.with_frame('BARYCENT', velocity=bc)
+    assert bary.frame == 'BARYCENT'
+    assert_quantity_allclose(bary.radial_velocity, 50 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(bary.spectral_axis, reference.with_frame('BARYCENT').spectral_axis)
+
+    rest = bary.to_rest()
+    assert rest.frame == 'SOURCE'
+    assert_quantity_allclose(rest.radial_velocity, 0 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(rest.spectral_axis, reference.to_rest().spectral_axis)
+
+    with pytest.raises(ValueError, match="without either the ``velocity``"):
+        spec.with_frame('BARYCENT')
+    with pytest.raises(u.UnitsError):
+        spec.with_frame('BARYCENT', velocity=3 * u.AA)
+    with pytest.raises(ValueError, match="current frame of the spectrum is unknown"):
+        Spectrum(spectral_axis=spec.spectral_axis.quantity, flux=spec.flux).to_rest()
+
+    # Applying a velocity with an observer and target moves the observer
+    mixed = reference.with_frame('BARYCENT', velocity=bc)
+    assert_quantity_allclose(mixed.radial_velocity, 50 * KMS, atol=1e-6 * KMS)
+    assert_quantity_allclose(mixed.barycentric_correction, 0 * KMS, atol=1e-6 * KMS)
+
+
+def test_with_frame_rebuilds_observer(apo, obstime):
+    wavelength = np.linspace(5000, 5010, 11) * u.AA
+    spec = Spectrum(spectral_axis=wavelength, flux=np.ones(11) * u.Jy, frame='TOPOCENT',
+                    obstime=obstime, location=apo, radial_velocity=10 * KMS)
+    assert spec.observer is not None and spec.target is None
+
+    bary = spec.with_frame('BARYCENT', velocity=-9.41 * KMS)
+    assert bary.frame == 'BARYCENT'
+    assert bary.observer.__class__.__name__ == 'ICRS'
+    assert_quantity_allclose(bary.radial_velocity, 0.59 * KMS)
+
+    # Without a location the observer cannot follow the frame and is dropped
+    spec = Spectrum(spectral_axis=wavelength, flux=np.ones(11) * u.Jy, frame='TOPOCENT',
+                    observer=apo.get_gcrs(obstime), radial_velocity=10 * KMS)
+    with pytest.warns(AstropyUserWarning, match="Dropping the observer"):
+        bary = spec.with_frame('BARYCENT', velocity=-9.41 * KMS)
+    assert bary.observer is None
+
+
+def test_with_medium(topocentric):
+    from ..utils.wcs_utils import vac_to_air
+
+    spec = topocentric
+    air = spec.with_medium('air')
+    assert air.medium == SpectralMedium('air')
+    assert_quantity_allclose(air.spectral_axis, vac_to_air(spec.spectral_axis.quantity))
+    # Frame and observer metadata are untouched
+    assert air.frame == spec.frame
+    assert_quantity_allclose(air.radial_velocity, spec.radial_velocity)
+    assert 'original_wcs' in air.meta
+
+    vacuum = air.with_medium('vacuum', scheme='iteration')
+    assert vacuum.medium.is_vacuum
+    assert_quantity_allclose(vacuum.spectral_axis, spec.spectral_axis, atol=1e-9 * u.AA)
+
+    conditions = SpectralMedium('air', pressure=700 * u.hPa, temperature=5 * u.deg_C)
+    thin_air = air.with_medium(conditions)
+    assert thin_air.medium == conditions
+    assert_quantity_allclose(thin_air.spectral_axis,
+                             vac_to_air(spec.spectral_axis.quantity, pressure=700 * u.hPa,
+                                        temperature=5 * u.deg_C))
+
+    same = air.with_medium('air')
+    assert same is not air
+    assert_quantity_allclose(same.spectral_axis, air.spectral_axis)
+
+    with pytest.warns(AstropyUserWarning, match="velocity shift to air wavelengths"):
+        air.to_rest()
+
+    with pytest.raises(ValueError, match="medium of this spectrum is unknown"):
+        Spectrum(spectral_axis=spec.spectral_axis.quantity, flux=spec.flux).with_medium('air')
+    with pytest.raises(u.UnitsError, match="must be in wavelength units"):
+        spec.with_spectral_axis_unit(u.GHz).with_medium('air')
+    with pytest.raises(ValueError, match="A medium must be given"):
+        spec.with_medium(None)

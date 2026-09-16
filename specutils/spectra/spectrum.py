@@ -622,6 +622,14 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, SpectralFrameMixin, NDCube, NDI
 
         return self.__class__(**alt_kwargs)
 
+    def _with_spectral_axis(self, spectral_axis):
+        """
+        Return a copy of this spectrum with a new spectral axis. The original
+        WCS is stored in ``meta['original_wcs']`` and replaced by a lookup
+        table built from the new axis.
+        """
+        return self._copy(spectral_axis=spectral_axis)
+
     def _spectral_slice(self, item):
         """
         Perform a region extraction given a slice on the spectral axis.

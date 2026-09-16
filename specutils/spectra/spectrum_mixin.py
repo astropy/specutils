@@ -1,13 +1,18 @@
 from copy import deepcopy
+import warnings
 
 import numpy as np
 import astropy.units.equivalencies as eq
 from astropy import units as u
+from astropy.coordinates import SpectralCoord
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.decorators import deprecated
+from astropy.utils.exceptions import AstropyUserWarning
 from astropy.wcs import WCS
 
 from ..utils.wcs_utils import gwcs_from_array
+from .spectral_axis import SpectralAxis, observer_for_frame
+from .spectral_frame import SpectralMedium, SPECTRAL_FRAMES, normalize_frame
 
 DOPPLER_CONVENTIONS = {}
 DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
@@ -85,6 +90,199 @@ class SpectralFrameMixin():
         `~astropy.coordinates.EarthLocation`, or `None`.
         """
         return self.spectral_axis.location
+
+    @property
+    def barycentric_correction(self):
+        """
+        The velocity to add to radial velocities measured in the current
+        `frame` to obtain barycentric radial velocities, computed from the
+        `observer` and `target`. This is the standard barycentric correction
+        for a topocentric spectrum, and zero once the spectrum is in the
+        ``'BARYCENT'`` frame. `None` if the observer or target is unknown.
+        """
+        axis = self.spectral_axis
+        if axis.observer is None or axis.target is None:
+            return None
+        probe = SpectralCoord(1 * u.AA, observer=axis.observer, target=axis.target)
+        shifted = probe.with_observer_stationary_relative_to('icrs')
+        return (shifted.radial_velocity - probe.radial_velocity).to(u.km / u.s)
+
+    def _with_spectral_axis(self, spectral_axis):
+        """
+        Return a copy of this object with ``spectral_axis`` in place of the
+        current one. Implemented by the concrete classes.
+        """
+        raise NotImplementedError
+
+    def with_medium(self, medium, scheme='inversion'):
+        """
+        Return a copy of this spectrum with the spectral axis converted to a
+        different `~specutils.spectra.spectral_frame.SpectralMedium`.
+
+        Parameters
+        ----------
+        medium : `~specutils.spectra.spectral_frame.SpectralMedium`, {'vacuum', 'air'} or dict
+            The medium to convert to. For air, the refraction formula and air
+            conditions of the target medium are used for the conversion; when
+            converting from air, those of the current medium are.
+        scheme : str, optional
+            How to invert the refractive index when converting from air, see
+            `~specutils.utils.wcs_utils.air_to_vac`.
+
+        Returns
+        -------
+        `~specutils.Spectrum`
+            A copy in the new medium. The original WCS is stored in
+            ``meta['original_wcs']`` and replaced by a lookup table.
+        """
+        from ..utils.wcs_utils import vac_to_air, air_to_vac
+
+        new_medium = SpectralMedium.from_input(medium)
+        if new_medium is None:
+            raise ValueError("A medium must be given.")
+        current = self.medium
+        if current is None:
+            raise ValueError("The medium of this spectrum is unknown, so it cannot be "
+                             "converted. Specify it with the ``medium`` argument when "
+                             "creating the spectrum.")
+
+        axis = self.spectral_axis
+        if current == new_medium:
+            return self._with_spectral_axis(axis)
+        if axis.unit is u.pixel:
+            raise u.UnitsError("Cannot convert the medium of a spectral axis in pixel units.")
+        if not axis.unit.is_equivalent(u.m):
+            raise u.UnitsError("The spectral axis must be in wavelength units to convert "
+                               f"between media, not '{axis.unit}'. Use "
+                               "``with_spectral_axis_unit`` first.")
+
+        wavelengths = axis.quantity
+        if current.is_air:
+            wavelengths = air_to_vac(wavelengths, scheme=scheme, **current.refraction_kwargs)
+        if new_medium.is_air:
+            wavelengths = vac_to_air(wavelengths, **new_medium.refraction_kwargs)
+
+        return self._with_spectral_axis(axis.replicate(value=wavelengths, medium=new_medium))
+
+    def with_frame(self, frame, velocity=None):
+        """
+        Return a copy of this spectrum with the spectral axis transformed to a
+        different reference frame.
+
+        When both `observer` and `target` are known (for instance because the
+        spectrum was created with ``frame``, ``location``, ``obstime`` and
+        ``target``), the transformation is computed from them with
+        `~astropy.coordinates.SpectralCoord.with_observer_stationary_relative_to`.
+        Otherwise, a transformation to the ``'SOURCE'`` (rest) frame applies
+        the spectrum's `radial_velocity`, and any other transformation
+        requires ``velocity``.
+
+        Parameters
+        ----------
+        frame : str
+            FITS ``SPECSYS`` code of the frame to transform to, e.g.
+            ``'BARYCENT'`` or ``'SOURCE'``. See
+            `~specutils.spectra.spectral_frame.SPECTRAL_FRAMES`.
+        velocity : `~astropy.units.Quantity` ['speed'], optional
+            The correction to add to radial velocities measured in the current
+            frame to obtain those in ``frame`` (for example the barycentric
+            correction reported by a pipeline, when going from
+            ``'TOPOCENT'`` to ``'BARYCENT'``). A positive value shifts the
+            spectral axis to longer wavelengths.
+
+        Returns
+        -------
+        `~specutils.Spectrum`
+            A copy in the new frame. Its `radial_velocity` is the velocity of
+            the source relative to the new frame (zero in ``'SOURCE'``). The
+            original WCS is stored in ``meta['original_wcs']`` and replaced by
+            a lookup table.
+        """
+        frame = normalize_frame(frame)
+        if frame is None:
+            raise ValueError("A frame must be given.")
+        axis = self.spectral_axis
+        if axis.unit is u.pixel:
+            raise u.UnitsError("Cannot transform the frame of a spectral axis in pixel units.")
+        if axis.medium is not None and axis.medium.is_air:
+            warnings.warn("Applying a velocity shift to air wavelengths; the refractive "
+                          "index is assumed constant over the shift. Convert to vacuum "
+                          "first for full accuracy.", AstropyUserWarning)
+
+        if frame == self.frame:
+            if velocity is not None:
+                raise ValueError(f"The spectrum is already in the '{frame}' frame; "
+                                 "cannot also apply a velocity.")
+            return self._with_spectral_axis(axis)
+
+        has_observer_and_target = axis.observer is not None and axis.target is not None
+
+        if velocity is not None:
+            velocity = u.Quantity(velocity)
+            if not velocity.unit.is_equivalent(u.km / u.s):
+                raise u.UnitsError("velocity must have units of speed.")
+            if has_observer_and_target:
+                # Move the observer along the line of sight so that the
+                # radial velocity changes by +velocity
+                new_axis = axis.with_radial_velocity_shift(observer_shift=-velocity)
+            else:
+                new_axis = axis.with_radial_velocity_shift(target_shift=velocity)
+                new_axis = self._rebuild_observer(new_axis, frame)
+        elif has_observer_and_target:
+            if frame == 'SOURCE':
+                reference = axis.target
+            elif frame == 'TOPOCENT':
+                if axis.location is None or axis.obstime is None:
+                    raise ValueError("Transforming to the 'TOPOCENT' frame requires the "
+                                     "location and obstime of the observation.")
+                reference = observer_for_frame(frame, axis.location, axis.obstime)
+            else:
+                reference = SPECTRAL_FRAMES[frame]
+                if reference is None:
+                    raise ValueError(f"astropy has no coordinate frame for '{frame}'; "
+                                     "pass the ``velocity`` to apply instead.")
+            new_axis = axis.with_observer_stationary_relative_to(reference)
+        elif frame == 'SOURCE':
+            if self.frame is None:
+                raise ValueError("The current frame of the spectrum is unknown. Specify "
+                                 "it with the ``frame`` argument when creating the spectrum.")
+            new_axis = axis.to_rest()
+        else:
+            raise ValueError(
+                f"Cannot transform from '{self.frame}' to '{frame}' without either the "
+                "``velocity`` to apply, or both an observer and a target (create the "
+                "spectrum with ``target``, ``location`` and ``obstime``).")
+
+        return self._with_spectral_axis(new_axis.replicate(frame=frame))
+
+    @staticmethod
+    def _rebuild_observer(axis, frame):
+        """
+        After a manual velocity shift of an axis without a target, replace any
+        observer with one at rest in ``frame`` so that the observer stays
+        consistent with the frame, or drop it if that is not possible.
+        """
+        if axis.observer is None:
+            return axis
+        observer = None
+        if axis.location is not None and axis.obstime is not None:
+            observer = observer_for_frame(frame, axis.location, axis.obstime)
+        if observer is None:
+            warnings.warn(f"Dropping the observer of the spectral axis, which cannot be "
+                          f"transformed to the '{frame}' frame.", AstropyUserWarning)
+        return SpectralAxis(axis.quantity, radial_velocity=axis.radial_velocity,
+                            doppler_rest=axis.doppler_rest,
+                            doppler_convention=axis.doppler_convention,
+                            observer=observer, **axis._metadata)
+
+    def to_rest(self):
+        """
+        Return a copy of this spectrum in the rest frame of the source
+        (``frame == 'SOURCE'``), with `radial_velocity` zero. Equivalent to
+        ``with_frame('SOURCE')``. Unlike `shift_spectrum_to`, this records the
+        frame of the result and does not modify the spectrum in place.
+        """
+        return self.with_frame('SOURCE')
 
 
 class RedshiftMixin():
