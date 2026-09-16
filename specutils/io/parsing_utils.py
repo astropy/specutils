@@ -66,30 +66,30 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False,
 
     column_mapping : dict
         A dictionary describing the relation between the table columns
-        and the arguments of the `Spectrum` class, along with unit
+        and the arguments of the `~specutils.Spectrum` class, along with unit
         information. The dictionary keys should be the table column names
         while the values should be a two-tuple where the first element is the
-        associated `Spectrum` keyword argument, and the second element is the
+        associated `~specutils.Spectrum` keyword argument, and the second element is the
         unit for the file column (or ``None`` to take unit from the table header)::
 
             column_mapping = {'FLUX': ('flux', 'Jy'),
                               'WAVE': ('spectral_axis', 'um')}
 
-    wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
+    wcs : :class:`~astropy.wcs.WCS` or :class:`~gwcs.wcs.WCS`
         WCS object passed to the Spectrum initializer.
 
     verbose : bool
         Print extra info.
 
     spectrum_kwargs : dict, optional
-        Additional keyword arguments passed to the `Spectrum` initializer,
+        Additional keyword arguments passed to the `~specutils.Spectrum` initializer,
         e.g. from `spectral_axis_metadata_from_header`.
 
     Returns
     -------
     :class:`~specutils.Spectrum`
         The spectrum with 'spectral_axis', 'flux' and optionally 'uncertainty'
-        as identified by `column_mapping`.
+        as identified by ``column_mapping``.
     """
     spec_kwargs = dict(spectrum_kwargs or {})
 
@@ -149,15 +149,15 @@ def generic_spectrum_from_table(table, wcs=None, spectrum_kwargs=None):
     Load spectrum from an Astropy table into a Spectrum object.
     Uses the following logic to figure out which column is which:
 
-     * Spectral axis (dispersion) is the first column with units
-     compatible with ``u.spectral()`` or with length units such as 'pix'.
-     Need not be present, if a valid ``wcs`` parameter is passed.
+    * Spectral axis (dispersion) is the first column with units
+      compatible with ``u.spectral()`` or with length units such as 'pix'.
+      Need not be present, if a valid ``wcs`` parameter is passed.
 
-     * Flux is taken from the first column with units compatible with
-     ``u.spectral_density()``, or with other likely culprits such as
-     'adu' or 'cts/s'.
+    * Flux is taken from the first column with units compatible with
+      ``u.spectral_density()``, or with other likely culprits such as
+      'adu' or 'cts/s'.
 
-     * Uncertainty comes from the next column with the same units as flux.
+    * Uncertainty comes from the next column with the same units as flux.
 
     Parameters
     ----------
@@ -168,7 +168,7 @@ def generic_spectrum_from_table(table, wcs=None, spectrum_kwargs=None):
         A FITS WCS object. If this is present, the machinery will fall back
         and default to using the ``wcs`` to find the dispersion information.
     spectrum_kwargs : dict, optional
-        Additional keyword arguments passed to the `Spectrum` initializer,
+        Additional keyword arguments passed to the `~specutils.Spectrum` initializer,
         e.g. from `spectral_axis_metadata_from_header`.
 
     Returns
@@ -513,7 +513,7 @@ def spectral_axis_metadata_from_header(header, medium=None, frame=None, location
         The ``(RA, DEC)`` keyword pair(s) holding the target position, given as
         numbers in degrees or sexagesimal strings, in the frame given by
         ``RADESYS`` (ICRS by default). Defaults to a list of common pairs,
-        see `TARGET_KEYS`.
+        see ``TARGET_KEYS``.
     time_key : str, optional
         Keyword holding the mid-point of the observation, as an ISO date/time
         string or an MJD. If not given, the mid-point is taken from

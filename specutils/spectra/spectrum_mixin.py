@@ -95,8 +95,8 @@ class SpectralFrameMixin():
     def barycentric_correction(self):
         """
         The velocity to add to radial velocities measured in the current
-        `frame` to obtain barycentric radial velocities, computed from the
-        `observer` and `target`. This is the standard barycentric correction
+        ``frame`` to obtain barycentric radial velocities, computed from the
+        ``observer`` and ``target``. This is the standard barycentric correction
         for a topocentric spectrum, and zero once the spectrum is in the
         ``'BARYCENT'`` frame. `None` if the observer or target is unknown.
         """
@@ -169,12 +169,12 @@ class SpectralFrameMixin():
         Return a copy of this spectrum with the spectral axis transformed to a
         different reference frame.
 
-        When both `observer` and `target` are known (for instance because the
+        When both ``observer`` and ``target`` are known (for instance because the
         spectrum was created with ``frame``, ``location``, ``obstime`` and
         ``target``), the transformation is computed from them with
         `~astropy.coordinates.SpectralCoord.with_observer_stationary_relative_to`.
         Otherwise, a transformation to the ``'SOURCE'`` (rest) frame applies
-        the spectrum's `radial_velocity`, and any other transformation
+        the spectrum's ``radial_velocity``, and any other transformation
         requires ``velocity``.
 
         Parameters
@@ -193,7 +193,7 @@ class SpectralFrameMixin():
         Returns
         -------
         `~specutils.Spectrum`
-            A copy in the new frame. Its `radial_velocity` is the velocity of
+            A copy in the new frame. Its ``radial_velocity`` is the velocity of
             the source relative to the new frame (zero in ``'SOURCE'``). The
             original WCS is stored in ``meta['original_wcs']`` and replaced by
             a lookup table.
@@ -278,8 +278,8 @@ class SpectralFrameMixin():
     def to_rest(self):
         """
         Return a copy of this spectrum in the rest frame of the source
-        (``frame == 'SOURCE'``), with `radial_velocity` zero. Equivalent to
-        ``with_frame('SOURCE')``. Unlike `shift_spectrum_to`, this records the
+        (``frame == 'SOURCE'``), with ``radial_velocity`` zero. Equivalent to
+        ``with_frame('SOURCE')``. Unlike ``shift_spectrum_to``, this records the
         frame of the result and does not modify the spectrum in place.
         """
         return self.with_frame('SOURCE')
