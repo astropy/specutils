@@ -42,10 +42,71 @@ class SpectralGWCS(GWCS):
         return copy.deepcopy(self)
 
 
-def refraction_index(wavelength, method='Morton2000', co2=None):
+# Reference conditions of the "standard air" the refraction formulae below
+# describe: 15 degrees Celsius, 101325 Pa, dry.
+_STANDARD_TEMPERATURE = 15.0  # deg C
+_STANDARD_PRESSURE = 101325.0  # Pa
+
+
+def _air_density_factor(temperature, pressure):
     """
-    Calculates the index of refraction of dry air at standard temperature
-    and pressure, at different wavelengths, using different methods.
+    Density scaling of ``n - 1`` with temperature (deg C) and pressure (Pa)
+    from Birch & Downs (1994, Metrologia 31, 315), eqn 1.
+    """
+    return (pressure * (1 + 1e-8 * (0.601 - 0.00972 * temperature) * pressure)
+            / (96095.43 * (1 + 0.003661 * temperature)))
+
+
+def _saturation_vapour_pressure(temperature):
+    """
+    Saturation vapour pressure of water in Pa at ``temperature`` in deg C,
+    from Buck (1981, J. Appl. Meteorol. 20, 1527).
+    """
+    return 611.21 * np.exp((18.678 - temperature / 234.5)
+                           * (temperature / (257.14 + temperature)))
+
+
+def _apply_air_conditions(refr_minus_one, wavelength, temperature=None,
+                          pressure=None, humidity=None):
+    """
+    Scale ``n - 1`` of standard air to the given temperature, pressure and
+    relative humidity, following Birch & Downs (1994) eqns 1 and 3.
+    """
+    if temperature is None and pressure is None and humidity is None:
+        return refr_minus_one
+
+    if temperature is None:
+        temperature = _STANDARD_TEMPERATURE
+    else:
+        temperature = u.Quantity(temperature).to_value(u.deg_C, equivalencies=u.temperature())
+    if pressure is None:
+        pressure = _STANDARD_PRESSURE
+    else:
+        pressure = u.Quantity(pressure).to_value(u.Pa)
+
+    scale = (_air_density_factor(temperature, pressure)
+             / _air_density_factor(_STANDARD_TEMPERATURE, _STANDARD_PRESSURE))
+    refr_minus_one = refr_minus_one * scale
+
+    if humidity is not None:
+        humidity = u.Quantity(humidity).to_value(u.one)
+        if not 0 <= humidity <= 1:
+            raise ValueError("humidity must be a fraction between 0 and 1, "
+                             "or a percentage Quantity")
+        vapour_pressure = humidity * _saturation_vapour_pressure(temperature)
+        sigma2 = (1 / wavelength.to(u.um).value)**2
+        refr_minus_one = refr_minus_one - vapour_pressure * (3.7345 - 0.0401 * sigma2) * 1e-10
+
+    return refr_minus_one
+
+
+def refraction_index(wavelength, method='Morton2000', co2=None, temperature=None,
+                     pressure=None, humidity=None):
+    """
+    Calculates the index of refraction of air at different wavelengths, using
+    different methods. By default this is for dry air at standard temperature
+    and pressure (15 degrees Celsius, 101325 Pa); other conditions can be
+    given.
 
     Parameters
     ----------
@@ -88,6 +149,25 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
         CO2 concentration in ppm. Only used for method='Ciddor1996'. If not
         given, a default concentration of 450 ppm is used.
 
+    temperature : `Quantity` ['temperature'], optional
+        Air temperature. If not given, the standard 15 degrees Celsius is
+        assumed.
+
+    pressure : `Quantity` ['pressure'], optional
+        Air pressure. If not given, the standard 101325 Pa is assumed.
+
+    humidity : number or `Quantity`, optional
+        Relative humidity as a fraction between 0 and 1, or a percentage
+        `Quantity`. If not given, dry air is assumed.
+
+        The temperature and pressure dependence of ``n - 1`` follows the
+        density scaling of Birch & Downs (1994, Metrologia 31, 315), which
+        assumes the chosen ``method`` describes standard air at 15 degrees
+        Celsius and 101325 Pa; the water vapour term is from the same paper.
+        Note that 'Greisen2006' appears to assume 0 degrees Celsius instead
+        (see the specutils documentation), so the scaling is approximate for
+        that method.
+
     Returns
     -------
     refr : number or sequence
@@ -123,10 +203,13 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
             refr *= 1 + 0.534e-6 * (co2 - 450)
     else:
         raise ValueError("Method must be one of " + ", ".join(VALID_METHODS))
+    refr = _apply_air_conditions(refr, wavelength, temperature=temperature,
+                                 pressure=pressure, humidity=humidity)
     return refr + 1
 
 
-def vac_to_air(wavelength, method='Morton2000', co2=None):
+def vac_to_air(wavelength, method='Morton2000', co2=None, temperature=None,
+               pressure=None, humidity=None):
     """
     Converts vacuum to air wavelengths using different methods.
 
@@ -139,18 +222,23 @@ def vac_to_air(wavelength, method='Morton2000', co2=None):
     co2 : number, optional
         Atmospheric CO2 concentration in ppm. Only used for method='Ciddor1996'.
         If not given, a default concentration of 450 ppm is used.
+    temperature, pressure, humidity : optional
+        Air conditions, see `refraction_index`. Standard dry air is assumed
+        if not given.
 
     Returns
     -------
     air_wavelength : `Quantity` object (number or sequence)
         Air wavelengths with the same unit as wavelength.
     """
-    refr = refraction_index(wavelength, method=method, co2=co2)
+    refr = refraction_index(wavelength, method=method, co2=co2, temperature=temperature,
+                            pressure=pressure, humidity=humidity)
     return wavelength / refr
 
 
 def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
-               precision=1e-12, maxiter=30):
+               precision=1e-12, maxiter=30, temperature=None, pressure=None,
+               humidity=None):
     """
     Converts air to vacuum wavelengths using different methods.
 
@@ -186,6 +274,10 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
     maxiter : integer
         Maximum number of iterations to run. Only used if scheme='iteration'.
 
+    temperature, pressure, humidity : optional
+        Air conditions, see `refraction_index`. Standard dry air is assumed
+        if not given. Not supported with scheme='Piskunov'.
+
     Returns
     -------
     vac_wavelength : `Quantity` object (number or sequence)
@@ -194,8 +286,12 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
     VALID_SCHEMES = ['inversion', 'iteration', 'piskunov']
     assert isinstance(scheme, str), 'scheme must be a string'
     scheme = scheme.lower()
+    conditions = dict(temperature=temperature, pressure=pressure, humidity=humidity)
+    if scheme == 'piskunov' and any(v is not None for v in conditions.values()):
+        raise ValueError("Air conditions (temperature, pressure, humidity) are not "
+                         "supported with scheme='Piskunov'")
     if scheme == 'inversion':
-        refr = refraction_index(wavelength, method=method, co2=co2)
+        refr = refraction_index(wavelength, method=method, co2=co2, **conditions)
     elif scheme == 'piskunov':
         wlum = wavelength.to(u.angstrom).value
         sigma2 = (1e4 / wlum)**2
@@ -207,7 +303,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
         # is consistent with the reverse transformation.
         counter = 0
         result = wavelength.copy()
-        refr = refraction_index(wavelength, method=method, co2=co2)
+        refr = refraction_index(wavelength, method=method, co2=co2, **conditions)
         while True:
             counter += 1
             diff = wavelength * refr - result
@@ -217,7 +313,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
                 raise RuntimeError("Reached maximum number of iterations "
                                    "without reaching desired precision level.")
             result += diff
-            refr = refraction_index(result, method=method, co2=co2)
+            refr = refraction_index(result, method=method, co2=co2, **conditions)
     else:
         raise ValueError("Method must be one of " + ", ".join(VALID_SCHEMES))
     return wavelength * refr

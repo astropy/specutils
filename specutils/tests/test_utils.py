@@ -65,3 +65,42 @@ def test_air_to_vac(method):
                       air_to_vac(vac_to_air(wavelengths, method=method),
                                  method=method, scheme='iteration').value,
                       atol=1e-12).all()
+
+
+def test_refraction_index_conditions():
+    standard = refraction_index(wavelengths)
+
+    # Standard conditions leave the result unchanged, in either temperature unit
+    assert np.allclose(refraction_index(wavelengths, temperature=15 * u.deg_C,
+                                        pressure=101325 * u.Pa), standard, rtol=0, atol=1e-15)
+    assert np.allclose(refraction_index(wavelengths, temperature=288.15 * u.K),
+                       standard, rtol=0, atol=1e-15)
+
+    # n - 1 scales roughly with density: lower pressure and higher temperature
+    # both reduce it
+    low_pressure = refraction_index(wavelengths, pressure=700 * u.hPa, temperature=5 * u.deg_C)
+    density_ratio = (700e2 / 101325) * (288.15 / 278.15)
+    assert np.allclose((low_pressure - 1) / (standard - 1), density_ratio, rtol=2e-3)
+    assert np.all(refraction_index(wavelengths, temperature=30 * u.deg_C) < standard)
+
+    # Water vapour lowers the refractive index slightly, by ~3e-7 at 50% humidity
+    humid = refraction_index(wavelengths, humidity=0.5)
+    assert np.all(humid < standard)
+    assert np.allclose(standard - humid, 3e-7, rtol=0.1)
+    assert np.allclose(refraction_index(wavelengths, humidity=50 * u.percent), humid)
+
+    with pytest.raises(ValueError, match="humidity must be"):
+        refraction_index(wavelengths, humidity=1.5)
+    with pytest.raises(u.UnitConversionError):
+        refraction_index(wavelengths, pressure=5 * u.K)
+
+
+def test_air_to_vac_conditions():
+    conditions = dict(temperature=5 * u.deg_C, pressure=700 * u.hPa, humidity=0.2)
+    air = vac_to_air(wavelengths, **conditions)
+    assert np.all(air > vac_to_air(wavelengths))  # thinner air refracts less
+    for scheme in ('inversion', 'iteration'):
+        assert np.allclose(air_to_vac(air, scheme=scheme, **conditions).value,
+                           wavelengths.value, atol=1e-6)
+    with pytest.raises(ValueError, match="not supported with scheme='Piskunov'"):
+        air_to_vac(air, scheme='Piskunov', **conditions)
