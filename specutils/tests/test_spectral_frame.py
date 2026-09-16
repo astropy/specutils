@@ -7,6 +7,7 @@ import pytest
 from astropy.coordinates import EarthLocation, SkyCoord
 from astropy.nddata import StdDevUncertainty
 from astropy.time import Time
+from astropy.utils.exceptions import AstropyUserWarning
 from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectral_axis import SpectralAxis, observer_for_frame
@@ -300,3 +301,46 @@ def test_spectrum_metadata_cube():
         assert other.frame == 'BARYCENT'
         assert other.medium.is_vacuum
         assert_quantity_allclose(other.redshift, 0.01)
+
+
+# ---------------------------------------------------------------------------
+# Manipulation functions
+# ---------------------------------------------------------------------------
+
+def test_manipulation_keeps_metadata(spectrum):
+    from ..manipulation import (FluxConservingResampler, LinearInterpolatedResampler,
+                                SplineInterpolatedResampler, extract_region, excise_regions,
+                                gaussian_smooth)
+    from ..spectra.spectral_region import SpectralRegion
+
+    grid = np.linspace(5001, 5009, 5) * u.AA
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        derived = {
+            'flux conserving': FluxConservingResampler()(spectrum, grid),
+            'linear': LinearInterpolatedResampler()(spectrum, grid),
+            'spline': SplineInterpolatedResampler()(spectrum, grid),
+            'truncated': LinearInterpolatedResampler('truncate')(
+                spectrum, np.linspace(4990, 5009, 5) * u.AA),
+            'extract': extract_region(spectrum, SpectralRegion(5002 * u.AA, 5006 * u.AA)),
+            'extract joined': extract_region(
+                spectrum, SpectralRegion([(5001 * u.AA, 5003 * u.AA),
+                                          (5006 * u.AA, 5008 * u.AA)]),
+                return_single_spectrum=True),
+            'extract empty': extract_region(spectrum, SpectralRegion(6000 * u.AA, 6010 * u.AA)),
+            'excise': excise_regions(spectrum, [SpectralRegion(5002 * u.AA, 5006 * u.AA)]),
+            'smooth': gaussian_smooth(spectrum, 1),
+        }
+    for name, other in derived.items():
+        assert other.medium == spectrum.medium, name
+        assert other.frame == spectrum.frame, name
+        assert other.obstime == spectrum.obstime, name
+        assert other.observer is not None, name
+        assert other.target is not None, name
+
+    # A new grid carrying different metadata is interpreted in the frame of
+    # the spectrum being resampled, with a warning
+    grid = SpectralAxis(grid, frame='BARYCENT')
+    with pytest.warns(AstropyUserWarning, match="interpreted in the frame of the input"):
+        resampled = LinearInterpolatedResampler()(spectrum, grid)
+    assert resampled.frame == 'TOPOCENT'
