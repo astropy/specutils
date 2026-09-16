@@ -1,7 +1,9 @@
 """Helpers for testing specutils objects in ASDF files.
 These are similar to those in ``asdf_astropy.testing.helpers``.
 """
-from asdf_astropy.testing.helpers import assert_spectral_coord_equal
+import astropy.units as u
+from asdf_astropy.testing.helpers import assert_frame_equal
+from astropy.coordinates import SkyCoord
 from astropy.tests.helper import assert_quantity_allclose
 from numpy.testing import assert_allclose, assert_array_equal
 
@@ -12,7 +14,26 @@ def assert_spectral_axis_equal(a, b):
     """Equality test for use in ASDF unit tests for SpectralAxis."""
     __tracebackhide__ = True
 
-    assert_spectral_coord_equal(a, b)
+    assert type(a) is type(b)
+    assert_quantity_allclose(a.quantity, b.quantity)
+    assert_frame_equal(a.target, b.target)
+    # The observer may come back in a different representation; compare
+    # its position and velocity instead
+    assert (a.observer is None) == (b.observer is None)
+    if a.observer is not None:
+        a_obs, b_obs = SkyCoord(a.observer).icrs, SkyCoord(b.observer).icrs
+        assert_quantity_allclose(a_obs.cartesian.xyz, b_obs.cartesian.xyz)
+        assert_quantity_allclose(a_obs.velocity.d_xyz, b_obs.velocity.d_xyz)
+    assert a.medium == b.medium
+    assert a.frame == b.frame
+    assert a.obstime == b.obstime
+    if a.location is None:
+        assert b.location is None
+    else:
+        assert_quantity_allclose(a.location.geocentric, b.location.geocentric)
+    assert_quantity_allclose(a.radial_velocity, b.radial_velocity, atol=1e-6 * u.km / u.s)
+    assert a.doppler_rest == b.doppler_rest
+    assert a.doppler_convention == b.doppler_convention
 
 
 def assert_spectrum_equal(a, b):
