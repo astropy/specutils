@@ -12,8 +12,9 @@ import numpy as np
 import shlex
 
 from ...spectra import Spectrum, SpectrumCollection
+from ...utils.wcs_utils import update_header_from_spectral_axis
 from ..registers import data_loader, custom_writer
-from ..parsing_utils import read_fileobj_or_hdulist
+from ..parsing_utils import read_fileobj_or_hdulist, spectral_axis_metadata_from_header
 
 __all__ = ['wcs1d_fits_loader', 'non_linear_wcs1d_fits', 'non_linear_multispec_fits']
 
@@ -216,8 +217,12 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
     if wcs.naxis > 4:
         raise ValueError('FITS file input to wcs1d_fits_loader is > 4D')
 
+    # Target position from the header; medium, frame, time and location come
+    # from the WCS keywords (see spectral_axis_metadata_from_wcs) or the header.
+    spectrum_kwargs = spectral_axis_metadata_from_header(header)
+
     return Spectrum(flux=data, wcs=wcs, mask=mask, uncertainty=uncertainty,
-                      meta=meta, spectral_axis_index=spectral_axis_index)
+                    meta=meta, spectral_axis_index=spectral_axis_index, **spectrum_kwargs)
 
 
 @custom_writer("wcs1d-fits")
@@ -275,6 +280,14 @@ def wcs1d_fits_writer(spectrum, file_name, hdu=0, update_header=False,
         header.update([keyword for keyword in spectrum.meta.items() if
                        (isinstance(keyword[1], hdr_types) and
                         keyword[0] not in ('NAXIS', 'NAXIS1', 'NAXIS2'))])
+
+    # Record the medium, frame, time, location and target of the spectral axis
+    spectral_axis_number = None
+    if hasattr(wcs, 'wcs') and wcs.wcs.spec >= 0:
+        spectral_axis_number = wcs.wcs.spec + 1
+    elif wcs.naxis == 1:
+        spectral_axis_number = 1
+    update_header_from_spectral_axis(header, disp, spectral_axis_number=spectral_axis_number)
 
     # Add flux array and unit
     ftype = kwargs.pop('dtype', spectrum.flux.dtype)

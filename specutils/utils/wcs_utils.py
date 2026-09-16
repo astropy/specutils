@@ -4,7 +4,8 @@ import numpy as np
 from astropy import units as u
 from astropy.modeling.models import Identity, Mapping
 from astropy.modeling.tabular import Tabular1D
-from astropy.utils.exceptions import AstropyDeprecationWarning
+from astropy.utils.exceptions import AstropyDeprecationWarning, AstropyUserWarning
+from astropy.wcs import WCS
 from gwcs import WCS as GWCS
 from gwcs import coordinate_frames as cf
 import warnings
@@ -453,3 +454,136 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     #     tabular_gwcs._input_unit = orig_array.unit
 
     return tabular_gwcs
+
+
+# FITS spectral CTYPE codes and the medium their wavelengths (or equivalents)
+# refer to. Velocity types are omitted since they carry no medium.
+_CTYPE_MEDIUM = {'AWAV': 'air', 'WAVE': 'vacuum', 'FREQ': 'vacuum',
+                 'ENER': 'vacuum', 'WAVN': 'vacuum'}
+
+
+def spectral_axis_metadata_from_wcs(wcs):
+    """
+    Read the medium, reference frame, observation time and observatory
+    location of the spectral axis from the keywords of a FITS WCS.
+
+    Parameters
+    ----------
+    wcs : `~astropy.wcs.WCS`
+        A FITS WCS with a spectral axis.
+
+    Returns
+    -------
+    dict
+        Keyword arguments for `~specutils.SpectralAxis`: ``medium`` from the
+        spectral ``CTYPE`` (``'AWAV'`` is air, ``'WAVE'``, ``'FREQ'``,
+        ``'ENER'`` and ``'WAVN'`` are vacuum), ``frame`` from ``SPECSYS``,
+        ``obstime`` from ``MJD-AVG``, the mid-point of ``MJD-BEG`` and
+        ``MJD-END``, or ``MJD-OBS`` (in that order of preference, in the
+        ``TIMESYS`` time scale), and ``location`` from ``OBSGEO-[XYZ]`` or
+        ``OBSGEO-[LBH]``. Only the entries that are present are returned.
+    """
+    from astropy.coordinates import EarthLocation
+    from astropy.time import Time
+    from ..spectra.spectral_frame import normalize_frame
+
+    metadata = {}
+    if not isinstance(wcs, WCS):
+        return metadata
+    wcsprm = wcs.wcs
+
+    if wcsprm.spec >= 0:
+        ctype = wcsprm.ctype[wcsprm.spec][:4]
+        if ctype in _CTYPE_MEDIUM:
+            metadata['medium'] = _CTYPE_MEDIUM[ctype]
+
+    if wcsprm.specsys:
+        try:
+            metadata['frame'] = normalize_frame(wcsprm.specsys)
+        except ValueError:
+            warnings.warn(f"Ignoring unrecognised SPECSYS '{wcsprm.specsys}' in WCS.",
+                          AstropyUserWarning)
+
+    mjd = None
+    if np.isfinite(wcsprm.mjdavg):
+        mjd = wcsprm.mjdavg
+    elif np.isfinite(wcsprm.mjdbeg) and np.isfinite(wcsprm.mjdend):
+        mjd = 0.5 * (wcsprm.mjdbeg + wcsprm.mjdend)
+    elif np.isfinite(wcsprm.mjdobs):
+        mjd = wcsprm.mjdobs
+    if mjd is not None:
+        scale = wcsprm.timesys.lower() if wcsprm.timesys else 'utc'
+        if scale not in Time.SCALES:
+            warnings.warn(f"Unrecognised TIMESYS '{wcsprm.timesys}' in WCS, assuming UTC.",
+                          AstropyUserWarning)
+            scale = 'utc'
+        metadata['obstime'] = Time(mjd, format='mjd', scale=scale)
+
+    obsgeo = wcsprm.obsgeo
+    if np.all(np.isfinite(obsgeo[:3])):
+        metadata['location'] = EarthLocation.from_geocentric(*obsgeo[:3], unit=u.m)
+    elif np.all(np.isfinite(obsgeo[3:])):
+        metadata['location'] = EarthLocation.from_geodetic(
+            lon=obsgeo[3] * u.deg, lat=obsgeo[4] * u.deg, height=obsgeo[5] * u.m)
+
+    return metadata
+
+
+def update_header_from_spectral_axis(header, spectral_axis, spectral_axis_number=None):
+    """
+    Write the medium, reference frame, observation time, observatory location
+    and target position of a `~specutils.SpectralAxis` into a FITS header.
+
+    Parameters
+    ----------
+    header : `~astropy.io.fits.Header`
+        The header to update in place.
+    spectral_axis : `~specutils.SpectralAxis`
+        The spectral axis whose metadata to write.
+    spectral_axis_number : int, optional
+        FITS (1-based) number of the spectral axis, whose ``CTYPE`` is set to
+        ``'AWAV'`` or ``'WAVE'`` according to the medium if it is a
+        wavelength axis. If not given, the ``CTYPE`` is not changed.
+
+    Notes
+    -----
+    Writes ``SPECSYS`` from the frame, ``MJD-AVG`` and ``DATE-AVG`` from the
+    observation time (with ``TIMESYS``), ``OBSGEO-X``, ``OBSGEO-Y`` and
+    ``OBSGEO-Z`` from the location, and ``RA`` and ``DEC`` (ICRS, in degrees)
+    from the target.
+    """
+    from astropy.coordinates import SkyCoord
+
+    medium = getattr(spectral_axis, 'medium', None)
+    if medium is not None and spectral_axis_number is not None:
+        key = f'CTYPE{spectral_axis_number}'
+        ctype = header.get(key, '')
+        if ctype[:4] in ('WAVE', 'AWAV'):
+            new_ctype = ('AWAV' if medium.is_air else 'WAVE') + ctype[4:]
+            header[key] = (new_ctype, 'Air wavelength' if medium.is_air else 'Vacuum wavelength')
+
+    frame = getattr(spectral_axis, 'frame', None)
+    if frame is not None:
+        header['SPECSYS'] = (frame, 'Reference frame of spectral coordinates')
+
+    obstime = getattr(spectral_axis, 'obstime', None)
+    if obstime is not None:
+        header['TIMESYS'] = (obstime.scale.upper(), 'Time scale')
+        header['MJD-AVG'] = (obstime.mjd, '[d] MJD at midpoint of observation')
+        header['DATE-AVG'] = (obstime.isot, 'ISO-8601 time at midpoint of observation')
+
+    location = getattr(spectral_axis, 'location', None)
+    if location is not None:
+        x, y, z = location.geocentric
+        header['OBSGEO-X'] = (x.to_value(u.m), '[m] observatory X-coordinate')
+        header['OBSGEO-Y'] = (y.to_value(u.m), '[m] observatory Y-coordinate')
+        header['OBSGEO-Z'] = (z.to_value(u.m), '[m] observatory Z-coordinate')
+
+    target = getattr(spectral_axis, 'target', None)
+    if target is not None:
+        icrs = SkyCoord(target).icrs
+        header['RADESYS'] = ('ICRS', 'Equatorial coordinate system of RA and DEC')
+        header['RA'] = (float(icrs.ra.deg), '[deg] Right ascension of target')
+        header['DEC'] = (float(icrs.dec.deg), '[deg] Declination of target')
+
+    return header

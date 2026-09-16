@@ -5,6 +5,7 @@ import urllib
 import io
 import contextlib
 
+from astropy import log
 from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.utils.exceptions import AstropyUserWarning
@@ -52,7 +53,8 @@ def read_fileobj_or_hdulist(*args, **kwargs):
                 hdulist.close()
 
 
-def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
+def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False,
+                                 spectrum_kwargs=None):
     """
     Given a table and a mapping of the table column names to attributes
     on the Spectrum object, parse the information into a Spectrum.
@@ -79,13 +81,17 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     verbose : bool
         Print extra info.
 
+    spectrum_kwargs : dict, optional
+        Additional keyword arguments passed to the `Spectrum` initializer,
+        e.g. from `spectral_axis_metadata_from_header`.
+
     Returns
     -------
     :class:`~specutils.Spectrum`
         The spectrum with 'spectral_axis', 'flux' and optionally 'uncertainty'
         as identified by `column_mapping`.
     """
-    spec_kwargs = {}
+    spec_kwargs = dict(spectrum_kwargs or {})
 
     # Associate columns of the file with the appropriate Spectrum arguments
     for col_name, (kwarg_name, cm_unit) in column_mapping.items():
@@ -138,7 +144,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     return Spectrum(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
 
 
-def generic_spectrum_from_table(table, wcs=None):
+def generic_spectrum_from_table(table, wcs=None, spectrum_kwargs=None):
     """
     Load spectrum from an Astropy table into a Spectrum object.
     Uses the following logic to figure out which column is which:
@@ -161,6 +167,9 @@ def generic_spectrum_from_table(table, wcs=None):
     wcs : :class:`~astropy.wcs.WCS`
         A FITS WCS object. If this is present, the machinery will fall back
         and default to using the ``wcs`` to find the dispersion information.
+    spectrum_kwargs : dict, optional
+        Additional keyword arguments passed to the `Spectrum` initializer,
+        e.g. from `spectral_axis_metadata_from_header`.
 
     Returns
     -------
@@ -296,8 +305,8 @@ def generic_spectrum_from_table(table, wcs=None):
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
         # For > 1D spectral axis transpose to row-major format and return SpectrumCollection
         spectrum = Spectrum(flux=flux, spectral_axis=spectral_axis,
-                              uncertainty=err, meta={'header': table.meta}, wcs=wcs,
-                              mask=mask)
+                            uncertainty=err, meta={'header': table.meta}, wcs=wcs,
+                            mask=mask, **(spectrum_kwargs or {}))
 
     return spectrum
 
@@ -350,3 +359,215 @@ def _fits_identify_by_name(origin, fileinp, *args,
         fileobj.close()
 
     return check
+
+
+# Header keyword pairs commonly used for the target position, in order of preference.
+TARGET_KEYS = (('RA_TARG', 'DEC_TARG'), ('TARG_RA', 'TARG_DEC'), ('OBJRA', 'OBJDEC'),
+               ('OBJCTRA', 'OBJCTDEC'), ('RA_OBJ', 'DEC_OBJ'), ('PLUG_RA', 'PLUG_DEC'),
+               ('CAT-RA', 'CAT-DEC'), ('RA', 'DEC'))
+
+
+def _parse_angle(value, unit):
+    """Parse a header angle given as a number (degrees) or a sexagesimal string."""
+    from astropy.coordinates import Angle
+
+    if isinstance(value, str):
+        value = value.strip()
+        try:
+            return float(value) * u.deg
+        except ValueError:
+            return Angle(value, unit=unit)
+    return float(value) * u.deg
+
+
+def _target_from_header(header, target_keys):
+    from astropy.coordinates import SkyCoord, FK4, FK5, ICRS
+
+    for ra_key, dec_key in target_keys:
+        ra, dec = header.get(ra_key), header.get(dec_key)
+        if ra is None or dec is None or ra == '' or dec == '':
+            continue
+        try:
+            ra = _parse_angle(ra, u.hourangle)
+            dec = _parse_angle(dec, u.deg)
+        except (ValueError, TypeError, u.UnitsError) as err:
+            log.debug(f"Could not parse target position from {ra_key}/{dec_key}: {err}")
+            continue
+
+        radesys = str(header.get('RADESYS', header.get('RADECSYS', 'ICRS'))).strip().upper()
+        equinox = header.get('EQUINOX')
+        if radesys.startswith('FK5'):
+            frame = FK5(equinox=f'J{equinox}') if equinox else FK5()
+        elif radesys.startswith('FK4'):
+            frame = FK4(equinox=f'B{equinox}') if equinox else FK4()
+        else:
+            frame = ICRS()
+        return SkyCoord(ra=ra, dec=dec, frame=frame)
+    return None
+
+
+def _time_from_header(header, key, scale):
+    """Parse a DATE-like (ISO) or MJD-like (float) header value into a Time."""
+    from astropy.time import Time
+
+    value = header.get(key)
+    if value is None or value == '':
+        return None
+    if isinstance(value, str):
+        value = value.strip()
+        if key.startswith('DATE') and 'T' not in value and len(value) == 10:
+            time_key = 'TIME' + key[4:]
+            if header.get(time_key):
+                value = f"{value}T{str(header[time_key]).strip()}"
+        return Time(value, scale=scale)
+    return Time(float(value), format='mjd', scale=scale)
+
+
+def _obstime_from_header(header, time_key=None):
+    """
+    The mid-point of the exposure: DATE-AVG/MJD-AVG, the mid-point of
+    DATE-BEG/DATE-END or MJD-BEG/MJD-END, or the start (DATE-OBS, MJD-OBS or
+    MJD) plus half of EXPTIME.
+    """
+    from astropy.time import Time
+
+    scale = str(header.get('TIMESYS', 'UTC')).strip().lower()
+    if scale not in Time.SCALES:
+        scale = 'utc'
+
+    try:
+        if time_key is not None:
+            return _time_from_header(header, time_key, scale)
+
+        for key in ('DATE-AVG', 'MJD-AVG'):
+            obstime = _time_from_header(header, key, scale)
+            if obstime is not None:
+                return obstime
+
+        for beg_key, end_key in (('DATE-BEG', 'DATE-END'), ('MJD-BEG', 'MJD-END')):
+            beg = _time_from_header(header, beg_key, scale)
+            end = _time_from_header(header, end_key, scale)
+            if beg is not None and end is not None:
+                return beg + (end - beg) / 2
+
+        for key in ('DATE-OBS', 'MJD-OBS', 'MJD'):
+            start = _time_from_header(header, key, scale)
+            if start is not None:
+                exptime = header.get('EXPTIME', header.get('EXPOSURE'))
+                if exptime is not None and exptime != '':
+                    return start + float(exptime) * u.s / 2
+                return start
+    except (ValueError, TypeError) as err:
+        log.debug(f"Could not parse the observation time from the header: {err}")
+    return None
+
+
+def _location_from_header(header, location=None):
+    from astropy.coordinates import EarthLocation
+
+    if isinstance(location, EarthLocation):
+        return location
+    if isinstance(location, str):
+        return EarthLocation.of_site(location)
+    if location is not None:
+        raise TypeError("location must be an EarthLocation or the name of a site")
+
+    xyz = [header.get(f'OBSGEO-{axis}') for axis in 'XYZ']
+    if all(value is not None for value in xyz):
+        return EarthLocation.from_geocentric(*[float(v) for v in xyz], unit=u.m)
+    lbh = [header.get(f'OBSGEO-{axis}') for axis in 'LBH']
+    if all(value is not None for value in lbh):
+        return EarthLocation.from_geodetic(lon=float(lbh[0]) * u.deg, lat=float(lbh[1]) * u.deg,
+                                           height=float(lbh[2]) * u.m)
+    return None
+
+
+def spectral_axis_metadata_from_header(header, medium=None, frame=None, location=None,
+                                       target_keys=None, time_key=None):
+    """
+    Read the medium, reference frame, target position, observation time and
+    observatory location of a spectrum from a FITS header, for use as keyword
+    arguments to `~specutils.Spectrum`.
+
+    This is intended for loaders: pass what is known about the data format
+    explicitly (for instance ``medium='vacuum', frame='BARYCENT'``) and let
+    the standard header keywords supply the rest.
+
+    Parameters
+    ----------
+    header : `~astropy.io.fits.Header` or dict-like
+        The header to read from.
+    medium : `~specutils.spectra.spectral_frame.SpectralMedium`, {'vacuum', 'air'} or dict, optional
+        The medium of the wavelengths. If not given, it is inferred from a
+        spectral ``CTYPEn`` (or ``TCTYPn`` for a table column) when present:
+        ``'AWAV'`` is air; ``'WAVE'``, ``'FREQ'``, ``'ENER'`` and ``'WAVN'``
+        are vacuum.
+    frame : str, optional
+        FITS ``SPECSYS`` code of the reference frame. If not given, the
+        ``SPECSYS`` keyword is used when present.
+    location : `~astropy.coordinates.EarthLocation` or str, optional
+        Where the spectrum was recorded, or the name of a site known to
+        `~astropy.coordinates.EarthLocation.of_site`. If not given, the
+        ``OBSGEO-[XYZ]`` or ``OBSGEO-[LBH]`` keywords are used when present.
+    target_keys : tuple of str or list of tuple, optional
+        The ``(RA, DEC)`` keyword pair(s) holding the target position, given as
+        numbers in degrees or sexagesimal strings, in the frame given by
+        ``RADESYS`` (ICRS by default). Defaults to a list of common pairs,
+        see `TARGET_KEYS`.
+    time_key : str, optional
+        Keyword holding the mid-point of the observation, as an ISO date/time
+        string or an MJD. If not given, the mid-point is taken from
+        ``DATE-AVG`` or ``MJD-AVG``, or the middle of ``DATE-BEG``/``DATE-END``
+        or ``MJD-BEG``/``MJD-END``, or ``DATE-OBS`` (plus ``TIME-OBS`` if the
+        date has no time), ``MJD-OBS`` or ``MJD`` plus half of ``EXPTIME``
+        (or the start of the exposure if there is no ``EXPTIME``). Times are
+        in the ``TIMESYS`` scale, UTC by default.
+
+    Returns
+    -------
+    dict
+        The ``medium``, ``frame``, ``target``, ``obstime`` and ``location``
+        that could be determined; entries that could not are omitted.
+    """
+    from ..spectra.spectral_frame import SpectralMedium, normalize_frame
+    from ..utils.wcs_utils import _CTYPE_MEDIUM
+
+    metadata = {}
+
+    medium = SpectralMedium.from_input(medium)
+    if medium is None:
+        # Image axes (CTYPEn) or table columns (TCTYPn)
+        for key in [f'{prefix}{i}' for i in range(1, 10) for prefix in ('CTYPE', 'TCTYP')]:
+            ctype = str(header.get(key, ''))[:4]
+            if ctype in _CTYPE_MEDIUM:
+                medium = SpectralMedium(_CTYPE_MEDIUM[ctype])
+                break
+    if medium is not None:
+        metadata['medium'] = medium
+
+    if frame is None and header.get('SPECSYS'):
+        try:
+            frame = normalize_frame(str(header['SPECSYS']))
+        except ValueError:
+            warnings.warn(f"Ignoring unrecognised SPECSYS '{header['SPECSYS']}' in header.",
+                          AstropyUserWarning)
+    if frame is not None:
+        metadata['frame'] = normalize_frame(frame)
+
+    if target_keys is None:
+        target_keys = TARGET_KEYS
+    elif isinstance(target_keys[0], str):
+        target_keys = [target_keys]
+    target = _target_from_header(header, target_keys)
+    if target is not None:
+        metadata['target'] = target
+
+    obstime = _obstime_from_header(header, time_key=time_key)
+    if obstime is not None:
+        metadata['obstime'] = obstime
+
+    location = _location_from_header(header, location=location)
+    if location is not None:
+        metadata['location'] = location
+
+    return metadata

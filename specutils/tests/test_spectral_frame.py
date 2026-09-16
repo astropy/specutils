@@ -508,3 +508,170 @@ def test_with_medium(topocentric):
         spec.with_spectral_axis_unit(u.GHz).with_medium('air')
     with pytest.raises(ValueError, match="A medium must be given"):
         spec.with_medium(None)
+
+
+# ---------------------------------------------------------------------------
+# FITS keywords
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def linear_wcs_header():
+    return {'CTYPE1': 'WAVE', 'CUNIT1': 'Angstrom', 'CRPIX1': 1, 'CRVAL1': 5000, 'CDELT1': 1}
+
+
+def test_metadata_from_fits_wcs(linear_wcs_header):
+    from astropy.wcs import WCS
+
+    flux = np.arange(1, 11) * u.Jy
+    header = dict(linear_wcs_header, SPECSYS='BARYCENT', **{'MJD-OBS': 60000.0, 'MJD-BEG': 60000.0,
+                  'MJD-END': 60000.02, 'ZSOURCE': 0.001, 'TIMESYS': 'TAI',
+                  'OBSGEO-X': -1463969.3, 'OBSGEO-Y': -5166673.3, 'OBSGEO-Z': 3434985.7})
+    spec = Spectrum(flux=flux, wcs=WCS(header))
+    assert spec.medium.is_vacuum
+    assert spec.frame == 'BARYCENT'
+    assert spec.obstime.scale == 'tai'
+    assert_quantity_allclose(spec.obstime.mjd, 60000.01)
+    assert_quantity_allclose(spec.location.geodetic.lat, 32.78 * u.deg, atol=1e-3 * u.deg)
+    assert_quantity_allclose(spec.redshift, 0.001)
+
+    # Air wavelengths, MJD-AVG preferred, ZSOURCE meaningless in the rest frame
+    header = dict(linear_wcs_header, CTYPE1='AWAV', SPECSYS='SOURCE', ZSOURCE=0.001,
+                  **{'MJD-AVG': 60000.5, 'MJD-OBS': 60000.0})
+    spec = Spectrum(flux=flux, wcs=WCS(header))
+    assert spec.medium.is_air
+    assert spec.frame == 'SOURCE'
+    assert spec.obstime.scale == 'utc' and spec.obstime.mjd == 60000.5
+    assert spec.redshift == 0
+    assert spec.location is None
+
+    # Explicit arguments take precedence over the WCS
+    spec = Spectrum(flux=flux, wcs=WCS(header), medium='vacuum', frame='TOPOCENT')
+    assert spec.medium.is_vacuum and spec.frame == 'TOPOCENT'
+
+    # Unknown SPECSYS is ignored with a warning; frequency axes are vacuum
+    header = dict(linear_wcs_header, CTYPE1='FREQ', CUNIT1='GHz', SPECSYS='NOPE')
+    with pytest.warns(AstropyUserWarning, match="Ignoring unrecognised SPECSYS"):
+        spec = Spectrum(flux=flux, wcs=WCS(header))
+    assert spec.frame is None and spec.medium.is_vacuum
+
+    # Nothing is invented for a bare WCS
+    spec = Spectrum(flux=flux, wcs=WCS(dict(linear_wcs_header, CTYPE1='VRAD', CUNIT1='km/s')))
+    assert spec.medium is None and spec.frame is None and spec.obstime is None
+
+
+@pytest.mark.parametrize('fmt', ['wcs1d-fits', 'tabular-fits'])
+def test_fits_metadata_round_trip(tmp_path, fmt, linear_wcs_header, apo, obstime, target):
+    from astropy.io import fits
+    from astropy.wcs import WCS
+
+    flux = np.arange(1, 11) * u.Jy
+    spec = Spectrum(flux=flux, wcs=WCS(linear_wcs_header), medium='air', frame='TOPOCENT',
+                    obstime=obstime, location=apo, target=target)
+    path = tmp_path / 'spec.fits'
+    if fmt == 'wcs1d-fits':
+        spec.write(path, format=fmt, hdu=0)
+    else:
+        spec.write(path, format=fmt)
+
+    with fits.open(path) as hdulist:
+        header = fits.Header(hdulist[0].header)
+        header.update(hdulist[-1].header)
+    assert header['SPECSYS'] == 'TOPOCENT'
+    assert header['TIMESYS'] == 'UTC'
+    assert_quantity_allclose(header['MJD-AVG'], obstime.mjd)
+    assert header['DATE-AVG'] == obstime.isot
+    assert header['RADESYS'] == 'ICRS'
+    assert_quantity_allclose(header['RA'], 120)
+    assert_quantity_allclose(header['DEC'], -30)
+    assert header['CTYPE1' if fmt == 'wcs1d-fits' else 'TCTYP1'] == 'AWAV'
+    assert_quantity_allclose(header['OBSGEO-X'], apo.geocentric[0].to_value(u.m), rtol=1e-6)
+
+    other = Spectrum.read(path, format=fmt)
+    assert other.medium == spec.medium
+    assert other.frame == spec.frame
+    assert other.obstime.isot == obstime.isot
+    assert_quantity_allclose(other.location.geodetic.height, apo.geodetic.height, atol=1 * u.m)
+    assert_quantity_allclose(SkyCoord(other.target).separation(target), 0 * u.deg,
+                             atol=1e-6 * u.deg)
+    assert_quantity_allclose(other.radial_velocity, spec.radial_velocity, atol=1e-3 * KMS)
+    assert_quantity_allclose(other.spectral_axis, spec.spectral_axis)
+
+    # Spectra without metadata write none
+    Spectrum(flux=flux, wcs=WCS(linear_wcs_header)).write(path, format=fmt, overwrite=True,
+                                                          **({'hdu': 0} if 'wcs' in fmt else {}))
+    with fits.open(path) as hdulist:
+        for hdu in hdulist:
+            assert not any(key in hdu.header for key in ('SPECSYS', 'MJD-AVG', 'RA', 'OBSGEO-X'))
+
+
+def test_spectral_axis_metadata_from_header():
+    from astropy.io import fits
+    from ..io.parsing_utils import spectral_axis_metadata_from_header
+
+    def read(**keywords):
+        header = fits.Header()
+        header.update(keywords)
+        return spectral_axis_metadata_from_header(header)
+
+    assert read() == {}
+
+    # Observation time: the mid-point of the exposure
+    assert read(**{'DATE-OBS': '2024-03-01T05:00:00', 'EXPTIME': 600.0})['obstime'].isot == \
+        '2024-03-01T05:05:00.000'
+    assert read(**{'DATE-OBS': '2024-03-01', 'TIME-OBS': '05:00:00',
+                   'EXPTIME': 600.0})['obstime'].isot == '2024-03-01T05:05:00.000'
+    assert read(**{'DATE-BEG': '2024-03-01T05:00:00',
+                   'DATE-END': '2024-03-01T05:10:00'})['obstime'].isot == '2024-03-01T05:05:00.000'
+    assert read(**{'MJD-BEG': 60000.0, 'MJD-END': 60000.02})['obstime'].mjd == 60000.01
+    assert read(**{'DATE-OBS': '2024-03-01T05:00:00', 'EXPTIME': 600.0,
+                   'MJD-AVG': 60000.5})['obstime'].mjd == 60000.5
+    assert read(**{'MJD': 60000.0})['obstime'].mjd == 60000.0  # no EXPTIME: the start
+    tai = read(**{'MJD-AVG': 60000.5, 'TIMESYS': 'TAI'})['obstime']
+    assert tai.scale == 'tai' and tai.mjd == 60000.5
+    assert 'obstime' not in read(**{'DATE-OBS': '01/03/24'})
+
+    header = fits.Header()
+    header['MIDTIME'] = 60000.25
+    assert spectral_axis_metadata_from_header(header, time_key='MIDTIME')['obstime'].mjd == \
+        60000.25
+
+    # Target position in degrees or sexagesimal, in the RADESYS frame
+    target = read(RA=120.0, DEC=-30.0)['target']
+    assert target.frame.name == 'icrs'
+    assert_quantity_allclose([target.ra.deg, target.dec.deg], [120, -30])
+    target = read(RA='08:00:00.0', DEC='-30:00:00', RADESYS='FK5', EQUINOX=2000.0)['target']
+    assert target.frame.name == 'fk5'
+    assert_quantity_allclose([target.ra.deg, target.dec.deg], [120, -30])
+    target = read(RA='08 00 00', DEC='-30 00 00')['target']
+    assert_quantity_allclose([target.ra.deg, target.dec.deg], [120, -30])
+    target = read(RA_TARG=121.0, DEC_TARG=-31.0, RA=1.0, DEC=1.0)['target']
+    assert_quantity_allclose(target.ra.deg, 121)
+    assert 'target' not in read(RA='N/A', DEC='N/A')
+    header = fits.Header()
+    header.update(dict(RA=1.0, DEC=1.0, MYRA=120.0, MYDEC=-30.0))
+    target = spectral_axis_metadata_from_header(header, target_keys=('MYRA', 'MYDEC'))['target']
+    assert_quantity_allclose(target.ra.deg, 120)
+
+    # Medium and frame from the WCS keywords, or given explicitly
+    assert read(NAXIS=1, CTYPE1='AWAV', SPECSYS='TOPOCENT') == {
+        'medium': SpectralMedium('air'), 'frame': 'TOPOCENT'}
+    assert read(NAXIS=2, CTYPE1='RA---TAN', CTYPE2='FREQ')['medium'].is_vacuum
+    assert read(TCTYP1='WAVE')['medium'].is_vacuum
+    assert 'medium' not in read(NAXIS=1, CTYPE1='VRAD')
+    with pytest.warns(AstropyUserWarning, match="Ignoring unrecognised SPECSYS"):
+        assert 'frame' not in read(SPECSYS='NOPE')
+    header = fits.Header()
+    header.update(dict(CTYPE1='AWAV', SPECSYS='TOPOCENT'))
+    assert spectral_axis_metadata_from_header(header, medium='vacuum', frame='barycentric') == {
+        'medium': SpectralMedium('vacuum'), 'frame': 'BARYCENT'}
+
+    # Location from OBSGEO keywords or given explicitly
+    location = read(**{'OBSGEO-X': -1463969.3, 'OBSGEO-Y': -5166673.3,
+                       'OBSGEO-Z': 3434985.7})['location']
+    assert_quantity_allclose(location.geodetic.lat, 32.78 * u.deg, atol=1e-3 * u.deg)
+    location = read(**{'OBSGEO-L': -105.82, 'OBSGEO-B': 32.78, 'OBSGEO-H': 2788.0})['location']
+    assert_quantity_allclose(location.geodetic.lon, -105.82 * u.deg)
+    apo = EarthLocation(lat=32.78 * u.deg, lon=-105.82 * u.deg, height=2788 * u.m)
+    assert spectral_axis_metadata_from_header(fits.Header(), location=apo)['location'] is apo
+    with pytest.raises(TypeError):
+        spectral_axis_metadata_from_header(fits.Header(), location=3)

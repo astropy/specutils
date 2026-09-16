@@ -7,8 +7,10 @@ import astropy.units as u
 from astropy.wcs import WCS
 
 from ...spectra import Spectrum
+from ...utils.wcs_utils import update_header_from_spectral_axis
 from ..registers import data_loader, custom_writer
-from ..parsing_utils import (generic_spectrum_from_table,
+from ..parsing_utils import (spectral_axis_metadata_from_header,
+                             generic_spectrum_from_table,
                              spectrum_from_column_mapping,
                              read_fileobj_or_hdulist)
 
@@ -86,6 +88,11 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
             tab.meta = hdulist[hdu].header
         else:
             tab.meta = hdulist[0].header
+        # Medium, frame, target, time and location from standard keywords in
+        # either header
+        combined_header = hdulist[0].header.copy()
+        combined_header.update(hdulist[hdu].header)
+        spectrum_kwargs = spectral_axis_metadata_from_header(combined_header)
 
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
@@ -97,9 +104,10 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     # If no column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, wcs=wcs)
+        return generic_spectrum_from_table(tab, wcs=wcs, spectrum_kwargs=spectrum_kwargs)
 
-    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs)
+    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs,
+                                        spectrum_kwargs=spectrum_kwargs)
 
 
 @custom_writer("tabular-fits")
@@ -147,6 +155,9 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     # Strip header of FITS reserved keywords
     for keyword in ['NAXIS', 'NAXIS1', 'NAXIS2']:
         header.remove(keyword, ignore_missing=True)
+
+    # Record the medium, frame, time, location and target of the spectral axis
+    update_header_from_spectral_axis(header, spectrum.spectral_axis)
 
     # Add dispersion array and unit
     wtype = kwargs.pop('wtype', spectrum.spectral_axis.dtype)
@@ -212,6 +223,12 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
 
     # This will overwrite any 'EXTNAME' previously read from a valid header; should it?
     hdu1.header.update(EXTNAME='DATA')
+
+    # Record the medium of a wavelength column with the column WCS type
+    medium = spectrum.spectral_axis.medium
+    if medium is not None and wunit.is_equivalent(u.m):
+        hdu1.header['TCTYP1'] = ('AWAV' if medium.is_air else 'WAVE',
+                                 'Air wavelength' if medium.is_air else 'Vacuum wavelength')
 
     hdulist = fits.HDUList([hdu0, hdu1])
 

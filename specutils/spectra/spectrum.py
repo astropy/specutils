@@ -12,7 +12,7 @@ from gwcs.wcs import WCS as GWCS
 from .spectral_axis import SpectralAxis
 from .spectrum_mixin import OneDSpectrumMixin, RedshiftMixin, SpectralFrameMixin
 from .spectral_region import SpectralRegion
-from ..utils.wcs_utils import gwcs_from_array
+from ..utils.wcs_utils import gwcs_from_array, spectral_axis_metadata_from_wcs
 
 from ndcube import NDCube
 
@@ -443,6 +443,20 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, SpectralFrameMixin, NDCube, NDI
             except AttributeError:
                 raise AttributeError(f"spec_axis does not have unit: "
                                      f"{type(spec_axis)} {spec_axis}")
+
+            # A FITS WCS may describe the medium, frame, time and location of
+            # the observation; use them unless given explicitly.
+            for key, value in spectral_axis_metadata_from_wcs(self.wcs).items():
+                spectral_axis_metadata.setdefault(key, value)
+            # ZSOURCE gives the redshift of the source relative to the frame,
+            # unless it will be derived from an observer and target instead.
+            has_observer = ('observer' in spectral_axis_metadata or all(
+                key in spectral_axis_metadata for key in ('frame', 'location', 'obstime')))
+            if (redshift is None and radial_velocity is None
+                    and hasattr(self.wcs, 'wcs') and np.isfinite(self.wcs.wcs.zsource)
+                    and spectral_axis_metadata.get('frame') != 'SOURCE'
+                    and not ('target' in spectral_axis_metadata and has_observer)):
+                redshift = self.wcs.wcs.zsource
 
             self._spectral_axis = SpectralAxis(
                 spec_axis,

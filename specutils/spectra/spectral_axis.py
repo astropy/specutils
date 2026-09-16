@@ -4,7 +4,7 @@ import astropy.units as u
 from astropy.utils.decorators import lazyproperty
 from astropy.coordinates import (SpectralCoord, EarthLocation, CartesianDifferential,
                                  frame_transform_graph)
-from astropy.coordinates.spectral_coordinate import NoVelocityWarning
+from astropy.coordinates.spectral_coordinate import NoVelocityWarning, NoDistanceWarning
 from astropy.time import Time
 import numpy as np
 
@@ -170,7 +170,12 @@ class SpectralAxis(SpectralCoord):
             bin_edges = value
             value = SpectralAxis._centers_from_edges(value)
 
-        obj = super().__new__(cls, value, *args, **kwargs)
+        # A target or observer without a distance is taken to be very distant
+        # (a source) or in the solar system (an observer), which is what we
+        # want for positions read from headers; no need to warn about it.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', NoDistanceWarning)
+            obj = super().__new__(cls, value, *args, **kwargs)
 
         if bin_specification == "edges":
             obj._bin_edges = bin_edges
@@ -243,6 +248,11 @@ class SpectralAxis(SpectralCoord):
                                 target=target, radial_velocity=radial_velocity,
                                 redshift=redshift, doppler_convention=doppler_convention,
                                 doppler_rest=doppler_rest, copy=copy)
+        # SpectralCoord.replicate turns an unset radial velocity into an
+        # explicit zero; keep it unset so that the replica behaves the same.
+        if (radial_velocity is None and redshift is None and self._radial_velocity is None
+                and (new.observer is None or new.target is None)):
+            new._radial_velocity = None
         new._medium = (SpectralMedium.from_input(medium) if medium is not None
                        else self._medium)
         new._frame = normalize_frame(frame) if frame is not None else self._frame
