@@ -5,10 +5,12 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.nddata import StdDevUncertainty
 from astropy.time import Time
 from astropy.tests.helper import assert_quantity_allclose
 
 from ..spectra.spectral_axis import SpectralAxis, observer_for_frame
+from ..spectra.spectrum import Spectrum
 from ..spectra.spectral_frame import SpectralMedium, SPECTRAL_FRAMES, normalize_frame
 
 
@@ -189,3 +191,112 @@ def test_spectral_axis_metadata_validation(apo):
         SpectralAxis([5000.] * u.AA, location=(1, 2, 3))
     with pytest.raises(ValueError):
         SpectralAxis([5000.] * u.AA, obstime='not a time')
+
+
+# ---------------------------------------------------------------------------
+# Spectrum metadata
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def spectrum(apo, obstime, target):
+    wavelength = np.linspace(5000, 5010, 11) * u.AA
+    flux = np.ones(11) * u.Jy
+    uncertainty = StdDevUncertainty(0.1 * np.ones(11) * u.Jy)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        return Spectrum(spectral_axis=wavelength, flux=flux, uncertainty=uncertainty,
+                        medium='air', frame='TOPOCENT', obstime=obstime, location=apo,
+                        target=target)
+
+
+def test_spectrum_metadata(spectrum, apo, obstime):
+    assert spectrum.medium == SpectralMedium('air')
+    assert spectrum.frame == 'TOPOCENT'
+    assert spectrum.in_rest_frame is False
+    assert spectrum.obstime == obstime
+    assert spectrum.location is apo
+    assert spectrum.observer is not None
+    assert spectrum.target is not None
+    # Topocentric radial velocity of a target with no velocity is the
+    # observer's own motion
+    assert_quantity_allclose(spectrum.radial_velocity, 9.41 * u.km / u.s,
+                             atol=0.01 * u.km / u.s)
+    assert "medium=air; frame=TOPOCENT" in repr(spectrum)
+    assert "Medium=air\nFrame=TOPOCENT" in str(spectrum)
+
+    plain = Spectrum(spectral_axis=spectrum.spectral_axis.quantity, flux=spectrum.flux)
+    assert plain.medium is None and plain.frame is None and plain.in_rest_frame is None
+    assert plain.target is None and plain.observer is None
+    assert plain.obstime is None and plain.location is None
+    assert "medium" not in repr(plain)
+
+
+def test_spectrum_metadata_propagates(spectrum):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        derived = {
+            'slice': spectrum[2:5],
+            'world slice': spectrum[5002 * u.AA:5006 * u.AA],
+            'multiply': spectrum * 2,
+            'add': spectrum + 1 * u.Jy,
+            'subtract': spectrum - spectrum,
+            'divide': spectrum / spectrum,
+            'power': spectrum ** 2,
+            'copy': spectrum._copy(),
+            'spectral unit': spectrum.with_spectral_axis_unit(u.nm),
+            'flux unit': spectrum.with_flux_unit(u.mJy),
+            'velocity convention': spectrum.with_velocity_convention('optical'),
+        }
+    for name, other in derived.items():
+        assert other.medium == spectrum.medium, name
+        assert other.frame == spectrum.frame, name
+        assert other.obstime == spectrum.obstime, name
+        assert other.location is spectrum.location, name
+        assert other.observer is not None, name
+        assert other.target is not None, name
+        assert_quantity_allclose(other.radial_velocity, spectrum.radial_velocity)
+
+
+def test_spectrum_metadata_from_spectral_axis(spectrum):
+    axis = SpectralAxis(np.linspace(5000, 5010, 11) * u.AA, medium='air')
+    flux = np.ones(11) * u.Jy
+
+    # Metadata missing from the axis can be supplied alongside it...
+    spec = Spectrum(spectral_axis=axis, flux=flux, frame='BARYCENT')
+    assert spec.medium.is_air
+    assert spec.frame == 'BARYCENT'
+
+    # ...but metadata already on the axis cannot be overridden
+    with pytest.raises(ValueError, match="Cannot separately set medium"):
+        Spectrum(spectral_axis=axis, flux=flux, medium='vacuum')
+    with pytest.raises(ValueError, match="Cannot separately set frame, target"):
+        Spectrum(spectral_axis=spectrum.spectral_axis, flux=flux, frame='SOURCE',
+                 target=spectrum.target)
+
+    # The air guard applies to the Spectrum conveniences too
+    with pytest.raises(u.UnitConversionError):
+        spec.frequency
+    with pytest.raises(u.UnitConversionError):
+        spec.energy
+    with pytest.raises(u.UnitConversionError):
+        spec.with_spectral_axis_unit(u.GHz)
+    assert spec.wavelength.unit == u.AA
+
+
+def test_spectrum_metadata_cube():
+    from astropy.wcs import WCS
+
+    flux = np.arange(24).reshape([2, 3, 4]) * u.Jy
+    wcs = WCS({"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE-LOG",
+               "CRVAL1": 205, "CRVAL2": 27, "CRVAL3": 3.622e-7,
+               "CDELT1": -0.0001, "CDELT2": 0.0001, "CDELT3": 8e-11,
+               "CRPIX1": 0, "CRPIX2": 0, "CRPIX3": 0})
+    spec = Spectrum(flux=flux, wcs=wcs, frame='BARYCENT', medium='vacuum', redshift=0.01)
+    assert spec.frame == 'BARYCENT'
+    assert spec.medium.is_vacuum
+
+    for other in (spec.with_spectral_axis_last(), spec[:, 1:, :], spec[:, 1, 2],
+                  spec.mean(axis='spatial')):
+        assert other.frame == 'BARYCENT'
+        assert other.medium.is_vacuum
+        assert_quantity_allclose(other.redshift, 0.01)

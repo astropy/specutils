@@ -174,6 +174,8 @@ class SpectralAxis(SpectralCoord):
 
         if bin_specification == "edges":
             obj._bin_edges = bin_edges
+        elif isinstance(value, SpectralAxis) and hasattr(value, '_bin_edges'):
+            obj._bin_edges = value._bin_edges
 
         obj._medium = medium
         obj._frame = frame

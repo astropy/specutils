@@ -10,7 +10,7 @@ from astropy.nddata import NDUncertainty, NDIOMixin, NDArithmeticMixin, NDDataAr
 from gwcs.wcs import WCS as GWCS
 
 from .spectral_axis import SpectralAxis
-from .spectrum_mixin import OneDSpectrumMixin, RedshiftMixin
+from .spectrum_mixin import OneDSpectrumMixin, RedshiftMixin, SpectralFrameMixin
 from .spectral_region import SpectralRegion
 from ..utils.wcs_utils import gwcs_from_array
 
@@ -19,7 +19,8 @@ from ndcube import NDCube
 __all__ = ['Spectrum1D', 'Spectrum']
 
 
-class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmeticMixin):
+class Spectrum(OneDSpectrumMixin, RedshiftMixin, SpectralFrameMixin, NDCube, NDIOMixin,
+               NDArithmeticMixin):
     """
     Spectrum container for N-dimensional data with one spectral axis.
 
@@ -69,6 +70,29 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
     bin_specification : str
         Either "edges" or "centers" to indicate whether the `spectral_axis`
         values represent edges of the wavelength bin, or centers of the bin.
+    medium : `~specutils.spectra.spectral_frame.SpectralMedium`, {'vacuum', 'air'} or dict
+        The medium the wavelengths of the spectral axis are expressed in. An
+        air medium can also record the refraction formula and air conditions
+        it corresponds to. See `medium`.
+    frame : str
+        FITS ``SPECSYS`` code for the reference frame the spectral axis values
+        are measured in, e.g. ``'TOPOCENT'``, ``'BARYCENT'`` or ``'SOURCE'``
+        for the rest frame of the source. See `frame` and
+        `~specutils.spectra.spectral_frame.SPECTRAL_FRAMES`.
+    target : `~astropy.coordinates.SkyCoord`
+        Position of the source, optionally with its velocity. If both
+        ``target`` and ``observer`` are set (the latter possibly constructed
+        from ``frame``, ``location`` and ``obstime``), the radial velocity is
+        derived from them and ``radial_velocity`` or ``redshift`` cannot also
+        be given.
+    observer : `~astropy.coordinates.SkyCoord` or `~astropy.coordinates.BaseCoordinateFrame`
+        Position and velocity of the observer whose rest frame the spectral
+        axis is expressed in. Normally constructed automatically from
+        ``frame``, ``location`` and ``obstime`` rather than given directly.
+    obstime : `~astropy.time.Time` or str
+        Mid-point of the observation.
+    location : `~astropy.coordinates.EarthLocation`
+        Where the spectrum was recorded.
     uncertainty : `~astropy.nddata.NDUncertainty`
         Contains uncertainty information along with propagation rules for
         spectrum arithmetic. Can take a unit, but if none is given, will use
@@ -84,7 +108,13 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
     def __init__(self, flux=None, spectral_axis=None, spectral_axis_index=None,
                  wcs=None, velocity_convention=None, rest_value=None,
                  redshift=None, radial_velocity=None, bin_specification=None,
-                 move_spectral_axis=None, **kwargs):
+                 move_spectral_axis=None, medium=None, frame=None, target=None,
+                 observer=None, obstime=None, location=None, **kwargs):
+
+        spectral_axis_metadata = {
+            key: value for key, value in dict(
+                medium=medium, frame=frame, target=target, observer=observer,
+                obstime=obstime, location=location).items() if value is not None}
 
         if spectral_axis_index == -1:
             spectral_axis_index = flux.ndim - 1
@@ -323,15 +353,26 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
                     spectral_axis, redshift=redshift,
                     radial_velocity=radial_velocity, doppler_rest=rest_value,
                     doppler_convention=velocity_convention,
-                    bin_specification=bin_specification)
+                    bin_specification=bin_specification,
+                    **spectral_axis_metadata)
             # If a SpectralAxis object is provided, we assume it doesn't need
-            # information from other keywords added
+            # information from other keywords added, except for metadata it
+            # does not already carry.
             else:
                 for a in [radial_velocity, redshift]:
                     if a is not None:
                         raise ValueError("Cannot separately set redshift or "
                                          "radial_velocity if a SpectralAxis "
                                          "object is input to spectral_axis")
+
+                conflicts = [key for key in spectral_axis_metadata
+                             if getattr(spectral_axis, key) is not None]
+                if conflicts:
+                    raise ValueError("Cannot separately set {} if a SpectralAxis object "
+                                     "that already has it set is input to spectral_axis"
+                                     "".format(", ".join(conflicts)))
+                if spectral_axis_metadata:
+                    spectral_axis = SpectralAxis(spectral_axis, **spectral_axis_metadata)
 
                 self._spectral_axis = spectral_axis
 
@@ -407,7 +448,8 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
                 spec_axis,
                 redshift=redshift, radial_velocity=radial_velocity,
                 doppler_rest=rest_value,
-                doppler_convention=velocity_convention)
+                doppler_convention=velocity_convention,
+                **spectral_axis_metadata)
 
         # make sure that spectral axis is strictly increasing or decreasing,
         # raise an error if not.
@@ -746,9 +788,13 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
         """
         Convenience method to return a new copy of the Spectrum with the spectral axis last.
         """
-        return Spectrum(flux=self.flux, wcs=self.wcs,
-                          mask=self.mask, uncertainty=self.uncertainty,
-                          redshift=self.redshift, move_spectral_axis="last")
+        new_spec = Spectrum(flux=self.flux, wcs=self.wcs,
+                            mask=self.mask, uncertainty=self.uncertainty,
+                            redshift=self.redshift, move_spectral_axis="last")
+        new_spec._spectral_axis = SpectralAxis(
+            new_spec.spectral_axis, observer=self.observer, target=self.target,
+            **self.spectral_axis._metadata)
+        return new_spec
 
     def _check_input(self, other, force_quantity=False):
         # NDArithmetic mixin will try to turn other into a Spectrum, which will fail
@@ -774,12 +820,12 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
         func = getattr(operand1, arith_func)
         new_flux = func(other)
         return Spectrum(new_flux.data*new_flux.unit,
+                        spectral_axis=self.spectral_axis,
                         wcs=self.wcs,
                         meta=self.meta,
                         uncertainty=new_flux.uncertainty,
-                        mask = new_flux.mask,
-                        spectral_axis_index=self.spectral_axis_index,
-                        redshift = self.redshift)
+                        mask=new_flux.mask,
+                        spectral_axis_index=self.spectral_axis_index)
 
     def __add__(self, other):
         other = self._check_input(other, force_quantity=True)
@@ -838,10 +884,11 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
                     raise e
 
         return Spectrum(new_data*new_unit,
+                        spectral_axis=self.spectral_axis,
                         wcs=self.wcs,
                         meta=self.meta,
                         uncertainty=new_uncertainty,
-                        mask = self.mask,
+                        mask=self.mask,
                         spectral_axis_index=self.spectral_axis_index)
 
     def _format_array_summary(self, label, array):
@@ -862,6 +909,10 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
 
         # Add information about spectral axis
         result += self._format_array_summary('Spectral Axis=', self.spectral_axis)
+        if self.medium is not None:
+            result += f'\nMedium={self.medium}'
+        if self.frame is not None:
+            result += f'\nFrame={self.frame}'
 
         # Add information about uncertainties if available
         if self.uncertainty:
@@ -893,6 +944,12 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
 
         if self.uncertainty is not None:
             inner_str += f"; uncertainty={self.uncertainty.__class__.__name__}"
+
+        if hasattr(self, "_spectral_axis"):
+            if self.medium is not None:
+                inner_str += f"; medium={self.medium}"
+            if self.frame is not None:
+                inner_str += f"; frame={self.frame}"
 
         result = "<Spectrum({})>".format(inner_str)
 

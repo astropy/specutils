@@ -14,7 +14,77 @@ DOPPLER_CONVENTIONS['radio'] = u.doppler_radio
 DOPPLER_CONVENTIONS['optical'] = u.doppler_optical
 DOPPLER_CONVENTIONS['relativistic'] = u.doppler_relativistic
 
-__all__ = ['OneDSpectrumMixin', 'RedshiftMixin']
+__all__ = ['OneDSpectrumMixin', 'RedshiftMixin', 'SpectralFrameMixin']
+
+
+class SpectralFrameMixin():
+    '''
+    Mixin exposing the medium, reference frame and observation metadata
+    carried by the `~specutils.SpectralAxis` of a `~specutils.Spectrum` or
+    `~specutils.SpectrumCollection`.
+    '''
+
+    @property
+    def medium(self):
+        """
+        The `~specutils.spectra.spectral_frame.SpectralMedium` the wavelengths
+        of the spectral axis are expressed in, or `None` if unknown.
+        """
+        return self.spectral_axis.medium
+
+    @property
+    def frame(self):
+        """
+        FITS ``SPECSYS`` code of the reference frame the spectral axis values
+        are measured in (e.g. ``'TOPOCENT'``, ``'BARYCENT'``, ``'SOURCE'``),
+        or `None` if unknown. See
+        `~specutils.spectra.spectral_frame.SPECTRAL_FRAMES`.
+
+        The ``radial_velocity`` and ``redshift`` of the spectrum are the
+        velocity of the source relative to an observer at rest in this frame,
+        i.e. the shift still to be applied to reach the ``'SOURCE'`` (rest)
+        frame, where they are zero.
+        """
+        return self.spectral_axis.frame
+
+    @property
+    def in_rest_frame(self):
+        """
+        `True` if the spectral axis is in the rest frame of the source
+        (``frame == 'SOURCE'``), `False` if it is in another frame, and `None`
+        if the frame is unknown.
+        """
+        frame = self.frame
+        return None if frame is None else frame == 'SOURCE'
+
+    @property
+    def target(self):
+        """
+        The position (and, if known, velocity) of the source as an
+        `~astropy.coordinates.SkyCoord` or coordinate frame, or `None`.
+        """
+        return self.spectral_axis.target
+
+    @property
+    def observer(self):
+        """
+        The position and velocity of the observer whose rest frame the spectral
+        axis is expressed in, or `None`.
+        """
+        return self.spectral_axis.observer
+
+    @property
+    def obstime(self):
+        """The mid-point of the observation as a `~astropy.time.Time`, or `None`."""
+        return self.spectral_axis.obstime
+
+    @property
+    def location(self):
+        """
+        Where the spectrum was recorded, as an
+        `~astropy.coordinates.EarthLocation`, or `None`.
+        """
+        return self.spectral_axis.location
 
 
 class RedshiftMixin():
@@ -273,8 +343,11 @@ class OneDSpectrumMixin():
         return self.spectral_axis.doppler_convention
 
     def with_velocity_convention(self, velocity_convention):
-        return self.__class__(flux=self.flux, wcs=self.wcs, meta=self.meta,
-                              velocity_convention=velocity_convention)
+        new_spectral_axis = self.spectral_axis.replicate(
+            doppler_convention=velocity_convention)
+        return self.__class__(flux=self.flux, spectral_axis=new_spectral_axis, wcs=self.wcs,
+                              meta=self.meta, uncertainty=self.uncertainty, mask=self.mask,
+                              spectral_axis_index=self.spectral_axis_index)
 
     @property
     def rest_value(self):
