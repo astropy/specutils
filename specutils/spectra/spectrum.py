@@ -281,11 +281,11 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
                         wcs = wcs.swapaxes(self._spectral_axis_index, move_to_index)
                         if flux is not None:
                             flux = np.swapaxes(flux, self._spectral_axis_index, move_to_index)
-                        if kwargs.get("mask", None) is not None:
+                        if kwargs.get("mask") is not None:
                             kwargs["mask"] = np.swapaxes(
                                 kwargs["mask"], self._spectral_axis_index, move_to_index
                             )
-                        if kwargs.get("uncertainty", None) is not None:
+                        if kwargs.get("uncertainty") is not None:
                             if isinstance(kwargs["uncertainty"], NDUncertainty):
                                 # TODO: Make a NDUncertainty.swapaxes and/or
                                 # NDUncertainty.transpose function

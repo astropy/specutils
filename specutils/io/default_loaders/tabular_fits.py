@@ -137,7 +137,6 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     **kwargs
         Additional optional keywords passed to :func:`~astropy.io.fits.HDUList.writeto`.
     """
-    # TODO: `hdu` is not used below.  Is this necessary?
     if hdu < 1:
         raise ValueError(f'FITS does not support BINTABLE extension in HDU {hdu}.')
 
@@ -216,7 +215,6 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
         colnames.append('mask')
 
     # For > 1D data transpose from row-major format
-    # TODO: revisit this
     for c in range(1, len(columns)):
         if columns[c].ndim > 1:
             columns[c] = columns[c].T
