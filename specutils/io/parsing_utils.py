@@ -135,7 +135,14 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
         spec_kwargs['uncertainty'] = StdDevUncertainty(
             spec_kwargs.get('uncertainty'))
 
-    return Spectrum(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
+    # Create the Spectrum object and return it; raise an exception if the
+    # minimum requirements to instantiate a Spectrum are not met.
+    if wcs is not None or 'spectral_axis' in spec_kwargs and 'flux' in spec_kwargs:
+        return Spectrum(**spec_kwargs, wcs=wcs, meta={'header': table.meta})
+    raise ValueError(
+        'To instantiate a Spectrum, a WCS must be defined or both spectral and flux axes must be '
+        'present.'
+    )
 
 
 def generic_spectrum_from_table(table, wcs=None):
@@ -158,9 +165,9 @@ def generic_spectrum_from_table(table, wcs=None):
     table : :class:`~astropy.table.Table`
         Table containing a column of ``flux``, and optionally ``spectral_axis``
         and ``uncertainty`` as defined above.
-    wcs : :class:`~astropy.wcs.WCS`
+    wcs : :class:`~astropy.wcs.WCS`, optional
         A FITS WCS object. If this is present, the machinery will fall back
-        and default to using the ``wcs`` to find the dispersion information.
+        to using the ``wcs`` to find the dispersion information.
 
     Returns
     -------
@@ -292,14 +299,17 @@ def generic_spectrum_from_table(table, wcs=None):
     else:
         mask = None
 
-    # Create the Spectrum object and return it
+    # Create the Spectrum object and return it; raise an exception if the
+    # minimum requirements to instantiate a Spectrum are not met.
     if wcs is not None or spectral_axis_column is not None and flux_column is not None:
-        # For > 1D spectral axis transpose to row-major format and return SpectrumCollection
-        spectrum = Spectrum(flux=flux, spectral_axis=spectral_axis,
-                              uncertainty=err, meta={'header': table.meta}, wcs=wcs,
-                              mask=mask)
-
-    return spectrum
+        return Spectrum(
+            flux=flux, spectral_axis=spectral_axis, uncertainty=err, meta={'header': table.meta},
+            wcs=wcs, mask=mask
+        )
+    raise ValueError(
+        'To instantiate a Spectrum, a WCS must be defined or both spectral and flux axes must be '
+        'present.'
+    )
 
 
 def _fits_identify_by_name(origin, fileinp, *args,

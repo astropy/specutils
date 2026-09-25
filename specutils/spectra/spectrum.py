@@ -37,8 +37,10 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
     Parameters
     ----------
     flux : `~astropy.units.Quantity`
-        The flux data for this spectrum. This can be a simple `~astropy.units.Quantity`,
-        or an existing `~Spectrum` or `~ndcube.NDCube` object.
+        The flux data for this spectrum. This can be a simple
+        `~astropy.units.Quantity`, or an existing `~Spectrum` or
+        `~ndcube.NDCube` object.  If an `~ndcube.NDCube` object, all other
+        arguments are ignored.
     spectral_axis : `~astropy.units.Quantity` or `~specutils.SpectralAxis`
         Dispersion information with the same shape as the last (or only)
         dimension of flux, or one greater than the last dimension of flux
@@ -277,22 +279,26 @@ class Spectrum(OneDSpectrumMixin, RedshiftMixin, NDCube, NDIOMixin, NDArithmetic
                         wcs = wcs.swapaxes(self._spectral_axis_index, move_to_index)
                         if flux is not None:
                             flux = np.swapaxes(flux, self._spectral_axis_index, move_to_index)
-                        if "mask" in kwargs:
-                            if kwargs["mask"] is not None:
-                                kwargs["mask"] = np.swapaxes(kwargs["mask"],
-                                                    self._spectral_axis_index, move_to_index)
-                        if "uncertainty" in kwargs:
-                            if kwargs["uncertainty"] is not None:
-                                if isinstance(kwargs["uncertainty"], NDUncertainty):
-                                    # Account for Astropy uncertainty types
-                                    temp_unc = np.swapaxes(kwargs["uncertainty"].array,
-                                                           self._spectral_axis_index, move_to_index)
-                                    if kwargs["uncertainty"].unit is not None:
-                                        temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
-                                    kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
-                                else:
-                                    kwargs["uncertainty"] = np.swapaxes(kwargs["uncertainty"],
-                                                            self._spectral_axis_index, move_to_index)
+                        if kwargs.get("mask", None) is not None:
+                            kwargs["mask"] = np.swapaxes(
+                                kwargs["mask"], self._spectral_axis_index, move_to_index
+                            )
+                        if kwargs.get("uncertainty", None) is not None:
+                            if isinstance(kwargs["uncertainty"], NDUncertainty):
+                                # TODO: Make a NDUncertainty.swapaxes and/or
+                                # NDUncertainty.transpose function
+                                # Account for Astropy uncertainty types
+                                temp_unc = np.swapaxes(
+                                    kwargs["uncertainty"].array, self._spectral_axis_index,
+                                    move_to_index
+                                )
+                                if kwargs["uncertainty"].unit is not None:
+                                    temp_unc = temp_unc * u.Unit(kwargs["uncertainty"].unit)
+                                kwargs["uncertainty"] = type(kwargs["uncertainty"])(temp_unc)
+                            else:
+                                kwargs["uncertainty"] = np.swapaxes(
+                                    kwargs["uncertainty"], self._spectral_axis_index, move_to_index
+                                )
 
                         self._spectral_axis_index = move_to_index
 
