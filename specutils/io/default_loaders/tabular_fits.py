@@ -1,7 +1,7 @@
 import numpy as np
 
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, Covariance
 from astropy.table import Table
 import astropy.units as u
 from astropy.wcs import WCS
@@ -10,7 +10,8 @@ from ...spectra import Spectrum
 from ..registers import data_loader, custom_writer
 from ..parsing_utils import (generic_spectrum_from_table,
                              spectrum_from_column_mapping,
-                             read_fileobj_or_hdulist)
+                             read_fileobj_or_hdulist,
+                             _covar_transpose_multidim_data)
 
 __all__ = ['tabular_fits_loader', 'tabular_fits_writer']
 
@@ -88,6 +89,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
         else:
             tab.meta = hdulist[0].header
 
+        # Determine if there is a covariance matrix
+        covar = Table.read(hdulist['COVAR']) if 'COVAR' in [h.name for h in hdulist] else None
+
     # Minimal checks for wcs consistency with table data -
     # assume 1D spectral axis (having shape (0, NAXIS1),
     # or alternatively compare against shape of 1st column.
@@ -98,9 +102,9 @@ def tabular_fits_loader(file_obj, column_mapping=None, hdu=1, store_data_header=
     # If no column mapping is given, attempt to parse the file using
     # unit information
     if column_mapping is None:
-        return generic_spectrum_from_table(tab, wcs=wcs)
+        return generic_spectrum_from_table(tab, wcs=wcs, covar=covar, **kwargs)
 
-    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs)
+    return spectrum_from_column_mapping(tab, column_mapping, wcs=wcs, covar=covar)
 
 
 @custom_writer("tabular-fits")
@@ -170,21 +174,33 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
     columns = [disp.astype(wtype), flux.astype(ftype)]
     colnames = [dispname, "flux"]
 
-    # Include uncertainty - units to be inferred from spectrum.flux
+    # Include uncertainty - units to be inferred from spectrum.flux.  If the
+    # uncertainty is a Covariance object, the data are written to a separate
+    # covar table and *no* "uncertainty" column is provided.
+    covar = None
     if spectrum.uncertainty is not None:
-        try:
-            unc = (
-                spectrum
-                .uncertainty
-                .represent_as(StdDevUncertainty)
-                .quantity
-                .to(funit, equivalencies=u.spectral_density(disp))
-            )
-            columns.append(unc.astype(ftype))
-            colnames.append("uncertainty")
-        except RuntimeWarning:
-            raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
-                             " to divide-by-zero error.")
+        if isinstance(spectrum.uncertainty, Covariance):
+            # *Assume* that the data should be transposed if the .data_shape
+            # attribute indicates the spectrum flux array is multidimensional.
+            covar = (
+                _covar_transpose_multidim_data(spectrum.uncertainty)
+                if len(spectrum.uncertainty.data_shape) > 1
+                else spectrum.uncertainty
+            ).to_table()
+        else:
+            try:
+                unc = (
+                    spectrum
+                    .uncertainty
+                    .represent_as(StdDevUncertainty)
+                    .quantity
+                    .to(funit, equivalencies=u.spectral_density(disp))
+                )
+                columns.append(unc.astype(ftype))
+                colnames.append("uncertainty")
+            except RuntimeWarning:
+                raise ValueError("Could not convert uncertainty to StdDevUncertainty due"
+                                " to divide-by-zero error.")
 
     # Add mask column if present
     if spectrum.mask is not None:
@@ -214,6 +230,8 @@ def tabular_fits_writer(spectrum, file_name, hdu=1, update_header=False, store_d
         hdu1 = fits.BinTableHDU(data=tab, name='DATA')
 
     hdulist = fits.HDUList([hdu0, hdu1])
+    if covar is not None:
+        hdulist.append(fits.BinTableHDU(data=covar, name='COVAR'))
 
     # TODO: Use output_verify options to check for valid FITS
     hdulist.writeto(file_name, **kwargs)

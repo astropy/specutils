@@ -6,10 +6,11 @@ import io
 import contextlib
 
 from astropy.io import fits
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, Covariance
 from astropy.utils.exceptions import AstropyUserWarning
 import astropy.units as u
 import warnings
+from scipy import sparse
 
 from specutils.spectra import Spectrum
 
@@ -51,8 +52,97 @@ def read_fileobj_or_hdulist(*args, **kwargs):
             except (AttributeError, io.UnsupportedOperation):
                 hdulist.close()
 
+# NOTE: This should be moved to become a method in the Covariance class.
+def _covar_transpose_multidim_data(covar):
+    """
+    Reorder the covariance matrix such that it matches its source data array
+    after it has been transposed.  Recall that for multidimensional source
+    arrays, the covariance matrix indices are for the flattened array.  This
+    operation reindexes the covariance matrix to reflect the flattening order of
+    the transposed data array.
 
-def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False):
+    Parameters
+    ----------
+    covar : :class:`~astropy.nddata.covariance.Covariance`
+        Original covariance matrix
+
+    Returns
+    -------
+    :class:`~astropy.nddata.covariance.Covariance`
+        Reindexed covariance matrix
+    """
+    # The transpose is meaningless if the data array is 1D.
+    if len(covar.data_shape) == 1:
+        return covar
+    # Re-order the covariance indices to reflect the change in the
+    # flattening order of the parent data array.
+    transposed_shape = covar.data_shape[::-1]
+    # Get the covariance data with the indices in the data array frame.  When
+    # reshaping, e.g., `i_data` is a tuple of arrays, where each array provides
+    # the index of each point in each dimension.  So to reflect the transpose in
+    # the parent data array, we just have to reverse the order of the tuple.
+    i_data, j_data, c = covar.coordinate_data(reshape=True)
+    # Flip the index ordering and construct the new flattened indices
+    i_cov = np.ravel_multi_index(i_data[::-1], transposed_shape)
+    j_cov = np.ravel_multi_index(j_data[::-1], transposed_shape)
+    # Ensure that entries are only in the upper triangle (i < j)
+    indx = i_cov > j_cov
+    i_cov[indx], j_cov[indx] = j_cov[indx], i_cov[indx]
+    # Rebuild the covariance matrix
+    return Covariance(
+        array=sparse.coo_matrix((c, (i_cov, j_cov)), shape=covar.shape).tocsr(),
+        data_shape=transposed_shape, assume_symmetric=True, unit=covar.unit
+    )
+
+def _parse_covar(covar, transpose=False, expected_data_shape=None):
+    """
+    Convenience function used to parse covariance data from a table and raise a
+    meaningful exception if it fails.
+
+    This also handles correcting the covariance matrix indexing if the source
+    data array has been transposed.
+
+    Parameters
+    ----------
+    covar : :class:`~astropy.table.Table`
+        Table with covariance data following the expected format; see
+        :meth:`~astropy.nddata.covariance.Covariance.to_table`.
+
+    transpose : bool, optional
+        Reorder the covariance matrix such that it matches its source data array
+        after it has been transposed; see
+        :func:`_covar_transpose_multidim_data`.
+
+    expected_data_shape : tuple, optional
+        The shape of the data array for this covariance matrix.  If provided,
+        this is checked against the parsed
+        :class:`~astropy.nddata.covariance.Covariance` object.  No check is
+        performed if the input is None.  If not None and ``transpose`` is True,
+        this is the shape of the data *after* being transposed.
+
+    Returns
+    -------
+    :class:`~astropy.ndddata.covariance.Covariance`
+        Covariance matrix object.
+    """
+    try:
+        cov = Covariance.from_table(covar)
+    except (ValueError, TypeError) as err:
+        raise type(err)('Unable to parse covariance data table for this specutils spectrum.')
+
+    if transpose:
+        cov = _covar_transpose_multidim_data(cov)
+
+    if expected_data_shape is not None and cov.data_shape != expected_data_shape:
+        raise ValueError(
+            f'Shape of data array determined by the covariance matrix, {cov.data_shape}, does '
+            f'not match the expected shape, {expected_data_shape}.'
+        )
+
+    return cov
+
+
+def spectrum_from_column_mapping(table, column_mapping, wcs=None, covar=None, verbose=False):
     """
     Given a table and a mapping of the table column names to attributes
     on the Spectrum object, parse the information into a Spectrum.
@@ -76,6 +166,10 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     wcs : :class:`~astropy.wcs.WCS` or :class:`gwcs.WCS`
         WCS object passed to the Spectrum initializer.
 
+    covar : :class:`~astropy.table.Table`, optional
+        Table providing a covariance matrix for the uncertainties in coordinate
+        format; see :class:`~astropy.nddata.Covariance`.
+
     verbose : bool
         Print extra info.
 
@@ -88,6 +182,8 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     spec_kwargs = {}
 
     # Associate columns of the file with the appropriate Spectrum arguments
+    transposed = False
+    expected_data_shape = None
     for col_name, (kwarg_name, cm_unit) in column_mapping.items():
         # If the table object couldn't parse any unit information,
         # fallback to the column mapper defined unit
@@ -127,13 +223,22 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
         # Transpose > 1D data to row-major format
         if kwarg_val.ndim > 1:
             kwarg_val = kwarg_val.T
+            transposed = True
+            expected_data_shape = kwarg_val.shape
 
         spec_kwargs.setdefault(kwarg_name, kwarg_val)
 
-    # Ensure that the uncertainties are a subclass of NDUncertainty
-    if spec_kwargs.get('uncertainty') is not None:
-        spec_kwargs['uncertainty'] = StdDevUncertainty(
-            spec_kwargs.get('uncertainty'))
+    # Parse the uncertainty data: Precedence is given to the covariance, if it
+    # is provided.  If parsing the covariance table into a Covariance object
+    # fails, the entire function fails.  I.e., the code will *not* quietly
+    # fallback to an uncertainty entry in the spec_kwargs dictionary if it is
+    # present.
+    if covar is not None:
+        spec_kwargs['uncertainty'] = _parse_covar(
+            covar, transpose=transposed, expected_data_shape=expected_data_shape
+        )
+    elif spec_kwargs.get('uncertainty') is not None:
+        spec_kwargs['uncertainty'] = StdDevUncertainty(spec_kwargs.get('uncertainty'))
 
     # Create the Spectrum object and return it; raise an exception if the
     # minimum requirements to instantiate a Spectrum are not met.
@@ -145,7 +250,7 @@ def spectrum_from_column_mapping(table, column_mapping, wcs=None, verbose=False)
     )
 
 
-def generic_spectrum_from_table(table, wcs=None):
+def generic_spectrum_from_table(table, wcs=None, covar=None, **kwargs):
     """
     Load spectrum from an Astropy table into a Spectrum object.
     Uses the following logic to figure out which column is which:
@@ -168,6 +273,9 @@ def generic_spectrum_from_table(table, wcs=None):
     wcs : :class:`~astropy.wcs.WCS`, optional
         A FITS WCS object. If this is present, the machinery will fall back
         to using the ``wcs`` to find the dispersion information.
+    covar : :class:`~astropy.table.Table`, optional
+        Table providing a covariance matrix for the uncertainties in coordinate
+        format; see :class:`~astropy.nddata.Covariance`.
 
     Returns
     -------
@@ -268,28 +376,35 @@ def generic_spectrum_from_table(table, wcs=None):
     flux = table[flux_column].to(table[flux_column].unit)
     colnames.remove(flux_column)
     # For > 1D data transpose to row-major format
+    transposed = False
     if flux.ndim > 1:
+        transposed = True
         flux = flux.T
 
-    # Use the next column with the same units as flux as the uncertainty
-    # Interpret it as a standard deviation and check if it has zeros or negative values
-    err_column = None
-    for c in colnames:
-        if table[c].unit == table[flux_column].unit:
-            err_column = c
-            break
-    if err_column is not None:
-        if table[err_column].ndim > 1:
-            err = table[err_column].T
-        elif flux.ndim > 1:  # Repeat uncertainties over all flux columns
-            err = np.tile(table[err_column], flux.shape[0], 1)
-        else:
-            err = table[err_column]
-        err = StdDevUncertainty(err.to(err.unit))
-        if np.min(table[err_column]) <= 0.:
-            warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
+    err = None
+    if covar is not None:
+        # If the covariance is provided, try to parse it
+        err = _parse_covar(covar, transpose=transposed, expected_data_shape=flux.shape)
     else:
-        err = None
+        # If the covariance was *not* provided, use the next column with the same
+        # units as flux as the uncertainty.  This limits the forms in which the user
+        # is allowed to provide uncertainties; i.e., interpret it as a standard
+        # deviation and check if it has zeros or negative values
+        err_column = None
+        for c in colnames:
+            if table[c].unit == table[flux_column].unit:
+                err_column = c
+                break
+        if err_column is not None:
+            if table[err_column].ndim > 1:
+                err = table[err_column].T
+            elif flux.ndim > 1:  # Repeat uncertainties over all flux columns
+                err = np.tile(table[err_column], flux.shape[0], 1)
+            else:
+                err = table[err_column]
+            err = StdDevUncertainty(err.to(err.unit))
+            if np.min(table[err_column]) <= 0.:
+                warnings.warn("Standard Deviation has values of 0 or less", AstropyUserWarning)
 
     # Check for mask
     if 'mask' in table.colnames:
