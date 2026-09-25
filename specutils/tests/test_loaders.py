@@ -653,7 +653,89 @@ def test_tabular_fits_cov_io(tmp_path):
     assert quantity_allclose(spectrum.flux, _spectrum.flux)
     assert np.array_equal(spectrum.uncertainty.to_dense(), _spectrum.uncertainty.to_dense())
 
-    # TODO: Add test for multidim
+
+@pytest.mark.parametrize("data_shape", [(3, 20), (2, 3, 20)])
+@pytest.mark.parametrize(
+    "column_mapping", [None, {'wavelength': ('spectral_axis', 'AA'), 'flux': ('flux', 'Jy')}]
+)
+def test_tabular_fits_cov_io_multid(tmp_path, data_shape, column_mapping):
+    # Create a fake multidimensional spectrum
+    nwave = data_shape[-1]
+    wave = np.linspace(4500., 5500., nwave) * u.AA
+    rng = np.random.default_rng(99)
+    flux = rng.random(data_shape) * u.Jy
+    # And a banded covariance matrix for the flattened (row-major) data array.
+    # The band crosses the boundaries between spectra, so reindexing the
+    # covariance for the transposed data array in the file moves some elements
+    # from the upper to the lower triangle.  A heteroscedastic variance makes
+    # each covariance value distinct, so any errors in the reindexing are
+    # caught.
+    npix = np.prod(data_shape)
+    cov_diags = [
+        np.ones(npix, dtype=float),
+        np.full(npix-1, 0.5, dtype=float),
+        np.full(npix-2, 0.2, dtype=float),
+    ]
+    cov = Covariance(
+        array=sparse.diags(cov_diags, [0, 1, 2]), data_shape=data_shape, assume_symmetric=True
+    ).apply_new_variance(1. + rng.random(npix))
+    # NOTE: apply_new_variance does not propagate the units, so they are added
+    # here.
+    cov = Covariance(
+        array=cov.to_sparse(), data_shape=data_shape, unit=u.Jy**2, assume_symmetric=True
+    )
+
+    # Create the Spectrum
+    spectrum = Spectrum(flux=flux, spectral_axis=wave, uncertainty=cov)
+    # Simple test of ingestion
+    assert spectrum.uncertainty.data_shape == data_shape, 'Covariance data shape changed'
+    assert np.array_equal(spectrum.uncertainty.to_dense(), cov.to_dense()), (
+        'Covariance not included correctly'
+    )
+    # Write it
+    tmpfile = str(tmp_path / '_tst.fits')
+    spectrum.write(tmpfile, format='tabular-fits')
+
+    # Check the output file
+    with fits.open(tmpfile) as hdu:
+        assert np.array_equal([h.name for h in hdu], ['PRIMARY', 'DATA', 'COVAR']), (
+            'Extension names are wrong'
+        )
+        assert 'uncertainty' not in hdu['DATA'].columns.names, (
+            'Uncertainty column should not be written when covariance is provided'
+        )
+        assert len(hdu['COVAR'].data) == cov.stored_nnz, (
+            'Number of non-zero cov elements mismatch'
+        )
+        assert hdu['COVAR'].data['INDXI'].shape == (cov.stored_nnz, len(data_shape)), (
+            'Covariance indices should be provided for each data array dimension'
+        )
+        # The covariance in the file should be for the transposed data array,
+        # as stored in the table column
+        file_cov = Covariance.from_table(Table.read(hdu['COVAR']))
+        assert file_cov.data_shape == hdu['DATA'].data['flux'].shape, (
+            'Covariance in file does not match the shape of the tabulated flux'
+        )
+
+    # Read it
+    _spectrum = Spectrum.read(tmpfile, format='tabular-fits', column_mapping=column_mapping)
+    assert spectrum.flux.unit == _spectrum.flux.unit, 'Flux unit not read correctly'
+    assert spectrum.spectral_axis.unit == _spectrum.spectral_axis.unit, (
+        'Wavelength unit not read correctly'
+    )
+    assert quantity_allclose(spectrum.spectral_axis, _spectrum.spectral_axis), (
+        'Wavelengths not read correctly'
+    )
+    assert _spectrum.flux.shape == data_shape, 'Flux array shape changed'
+    assert quantity_allclose(spectrum.flux, _spectrum.flux), 'Flux not read correctly'
+    assert isinstance(_spectrum.uncertainty, Covariance), (
+        'Uncertainty should be a Covariance object'
+    )
+    assert _spectrum.uncertainty.data_shape == data_shape, 'Covariance.data_shape changed'
+    assert _spectrum.uncertainty.unit == spectrum.uncertainty.unit, 'Covariance unit changed'
+    assert np.array_equal(spectrum.uncertainty.to_dense(), _spectrum.uncertainty.to_dense()), (
+        'Covariance data changed'
+    )
 
 
 @pytest.mark.parametrize("ndim", range(1, 4))
