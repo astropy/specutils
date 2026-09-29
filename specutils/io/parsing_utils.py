@@ -52,6 +52,7 @@ def read_fileobj_or_hdulist(*args, **kwargs):
             except (AttributeError, io.UnsupportedOperation):
                 hdulist.close()
 
+
 # NOTE: This should be moved to become a method in the Covariance class.
 def _covar_transpose_multidim_data(covar):
     """
@@ -93,6 +94,7 @@ def _covar_transpose_multidim_data(covar):
         array=sparse.coo_matrix((c, (i_cov, j_cov)), shape=covar.shape).tocsr(),
         data_shape=transposed_shape, assume_symmetric=True, unit=covar.unit
     )
+
 
 def _parse_covar(covar, transpose=False, expected_data_shape=None):
     """

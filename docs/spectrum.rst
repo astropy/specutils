@@ -140,13 +140,16 @@ or any object, like a `dict`, that can instantiate one) as the header of the
 Including Uncertainties
 -----------------------
 
-The :class:`~specutils.Spectrum` class supports
-`Astropy uncertainties <https://docs.astropy.org/en/stable/nddata/nddata.html#uncertainties>`__.
-Specifically, when initializing a :class:`~specutils.Spectrum`, any provided uncertainty should
-be an instance of `~astropy.nddata.StdDevUncertainty`, `~astropy.nddata.VarianceUncertainty`,
-or `~astropy.nddata.InverseVariance`. These subclasses of :class:`~astropy.nddata.NDData` have
-propagation rules implemented at the class level, which are used by ``specutils`` to propagate
-uncertainties when doing arithmetic on `~specutils.Spectrum` objects.
+The :class:`~specutils.Spectrum` class supports `Astropy uncertainties
+<https://docs.astropy.org/en/stable/nddata/nddata.html#uncertainties>`__.
+Specifically, when initializing a :class:`~specutils.Spectrum`, any provided
+uncertainty should be an instance of `~astropy.nddata.StdDevUncertainty`,
+`~astropy.nddata.VarianceUncertainty`, `~astropy.nddata.InverseVariance`, or
+`~astropy.nddata.Covariance`. With the exception of
+`~astropy.nddata.Covariance`, these subclasses of
+:class:`~astropy.nddata.NDUncertainty` have propagation rules implemented at the
+class level that are used by ``specutils`` to propagate uncertainties when
+doing arithmetic on `~specutils.Spectrum` objects.
 
 .. code-block:: python
 
@@ -155,9 +158,78 @@ uncertainties when doing arithmetic on `~specutils.Spectrum` objects.
 
     >>> spec = Spectrum(spectral_axis=np.arange(5000, 5010) * u.AA, flux=np.random.sample(10) * u.Jy, uncertainty=StdDevUncertainty(np.random.sample(10) * 0.1))
 
-.. warning:: Not defining an uncertainty class will result in an
-             :class:`~astropy.nddata.UnknownUncertainty` object which will not
-             propagate uncertainties in arithmetic operations.
+.. warning::
+    
+    Not defining an uncertainty class will result in an
+    :class:`~astropy.nddata.UnknownUncertainty` object, which will not propagate
+    uncertainties in arithmetic operations.
+
+Covariance Matrices
+~~~~~~~~~~~~~~~~~~~
+
+Functionality provided for `~astropy.nddata.Covariance` is currently limited to
+convenience methods for storage and access.  For more details regarding the use
+of the `~astropy.nddata.Covariance` object itself, see the Astropy documentation
+`here <https://docs.astropy.org/en/stable/nddata/covariance.html>`__.
+
+Here is a brief round-trip demonstration of building, storing, and reloading a
+spectrum covariance matrix using the ``tabular-fits`` format:
+
+.. code-block:: python
+
+    from astropy.nddata import Covariance
+    import astropy.units as u
+    import numpy as np
+    from scipy import sparse
+    from specutils import Spectrum
+
+    # Build the components of a synthetic spectrum
+    wave = np.arange(4500., 5500., 1.) * u.AA
+    flux = np.full(len(wave), 1e-5) * u.Jy
+
+    # Build a synthetic covariance matrix and instantiate it.  We only need to
+    # define its upper triangle.
+    cov_diags = [
+        np.ones(1000, dtype=float),
+        np.full(1000-1, 0.5, dtype=float),
+        np.full(1000-2, 0.2, dtype=float),
+    ]
+    cov = Covariance(
+        array=sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2, assume_symmetric=True
+    )
+
+    # Instantiate the Spectrum
+    spectrum = Spectrum(flux=flux, spectral_axis=wave, uncertainty=cov)
+
+    # Save the spectrum and its covariance to a file using the tabular-fits
+    # format
+    test_file = 'test_spectrum_covariance.fits'
+    spectrum.write(test_file, format='tabular-fits')
+
+    # Reload it
+    _spectrum = Spectrum.read(test_file)
+
+Note that there are generally far more non-zero covariance matrix elements than
+there are spectrum samples, potentially as many as :math:`N^2` for a spectrum of
+length :math:`N`.  This means that covariance data are saved in a separate
+extension from the spectrum itself.  In the example above:
+
+.. code-block:: python
+
+    >>> from astropy.io import fits
+    >>> hdu = fits.open('test_spectrum_covariance.fits')
+    >>> hdu.info()
+    Filename: test_spectrum_covariance.fits
+    No.    Name      Ver    Type      Cards   Dimensions   Format
+      0  PRIMARY       1 PrimaryHDU       4   ()
+      1  DATA          1 BinTableHDU     15   1000R x 2C   [D, D]
+      2  COVAR         1 BinTableHDU     17   2997R x 3C   [K, K, D]
+    >>> hdu['COVAR'].columns.names
+    ['INDXI', 'INDXJ', 'COVARIJ']
+
+For more information regarding the sparse storage format for
+`~astropy.nddata.Covariance` objects, see `here
+<https://docs.astropy.org/en/stable/nddata/covariance.html#file-io>`__.
 
 
 Including Masks
