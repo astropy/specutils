@@ -38,6 +38,7 @@ py:obj ndcube.utils.cube.propagate_rebin_uncertainties
 # FIXME: https://github.com/astropy/sphinx-automodapi/issues/101
 py:class QuantityInfoBase
 py:obj Quantity
+py:class QuantityInfoBase
 py:obj a
 py:obj n
 py:obj axis1

@@ -177,58 +177,42 @@ spectrum covariance matrix using the ``tabular-fits`` format:
 
 .. code-block:: python
 
-    from astropy.nddata import Covariance
-    import astropy.units as u
-    import numpy as np
-    from scipy import sparse
-    from specutils import Spectrum
-
-    # Build the components of a synthetic spectrum
-    wave = np.arange(4500., 5500., 1.) * u.AA
-    flux = np.full(len(wave), 1e-5) * u.Jy
-
-    # Build a synthetic covariance matrix and instantiate it.  We only need to
-    # define its upper triangle.
-    cov_diags = [
-        np.ones(1000, dtype=float),
-        np.full(1000-1, 0.5, dtype=float),
-        np.full(1000-2, 0.2, dtype=float),
-    ]
-    cov = Covariance(
-        array=sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2, assume_symmetric=True
-    )
-
-    # Instantiate the Spectrum
-    spectrum = Spectrum(flux=flux, spectral_axis=wave, uncertainty=cov)
-
-    # Save the spectrum and its covariance to a file using the tabular-fits
-    # format
-    test_file = 'test_spectrum_covariance.fits'
-    spectrum.write(test_file, format='tabular-fits')
-
-    # Reload it
-    _spectrum = Spectrum.read(test_file)
+    >>> from astropy.io import fits
+    >>> from astropy.nddata import Covariance
+    >>> import astropy.units as u
+    >>> import numpy as np
+    >>> from scipy import sparse
+    >>> from specutils import Spectrum
+    >>> 
+    >>> # Build the components of a synthetic spectrum
+    >>> wave = np.arange(4500., 5500., 1.) * u.AA
+    >>> flux = np.full(len(wave), 1e-5) * u.Jy
+    >>>
+    >>> # Build a synthetic covariance matrix and instantiate it.  We only need to
+    >>> # define its upper triangle.
+    >>> cov_diags = [ np.ones(1000, dtype=float), np.full(1000-1, 0.5, dtype=float), np.full(1000-2, 0.2, dtype=float) ]
+    >>> cov = Covariance(array=sparse.diags(cov_diags, [0, 1, 2]), unit=u.Jy**2, assume_symmetric=True)
+    >>>
+    >>> # Instantiate the Spectrum
+    >>> spectrum = Spectrum(flux=flux, spectral_axis=wave, uncertainty=cov)
+    >>>
+    >>> # Save the spectrum and its covariance to a file using the tabular-fits
+    >>> # format
+    >>> test_file = 'test_spectrum_covariance.fits'
+    >>> spectrum.write(test_file, format='tabular-fits', overwrite=True)
+    >>>
+    >>> # Reload it
+    >>> _spectrum = Spectrum.read(test_file)
 
 Note that there are generally far more non-zero covariance matrix elements than
 there are spectrum samples, potentially as many as :math:`N^2` for a spectrum of
 length :math:`N`.  This means that covariance data are saved in a separate
-extension from the spectrum itself.  In the example above:
-
-.. code-block:: python
-
-    >>> from astropy.io import fits
-    >>> hdu = fits.open('test_spectrum_covariance.fits')
-    >>> hdu.info()
-    Filename: test_spectrum_covariance.fits
-    No.    Name      Ver    Type      Cards   Dimensions   Format
-      0  PRIMARY       1 PrimaryHDU       4   ()
-      1  DATA          1 BinTableHDU     15   1000R x 2C   [D, D]
-      2  COVAR         1 BinTableHDU     17   2997R x 3C   [K, K, D]
-    >>> hdu['COVAR'].columns.names
-    ['INDXI', 'INDXJ', 'COVARIJ']
-
-For more information regarding the sparse storage format for
-`~astropy.nddata.Covariance` objects, see `here
+extension from the spectrum itself.  In the example above, the FITS file
+contains three extensions: (1) an empty `~astropy.io.fits.PrimaryHDU`, (2) a
+`~astropy.io.fits.BinTableHDU` extension named ``DATA`` with the spectral data,
+and (3) a `~astropy.io.fits.BinTableHDU` extension named ``COVAR`` with the
+non-zero covariance values.  For more information regarding the sparse storage
+format for `~astropy.nddata.Covariance` objects, see `here
 <https://docs.astropy.org/en/stable/nddata/covariance.html#file-io>`__.
 
 
