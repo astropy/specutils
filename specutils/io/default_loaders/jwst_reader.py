@@ -159,9 +159,21 @@ def jwst_c1d_single_loader(file_obj, **kwargs):
                            "Use SpectrumList.read() instead.")
 
 
+def _lazy_jwst_c1d_loader(fileobj, **kwargs):
+    return _jwst_spec1d_lazy_loader(fileobj, extname="COMBINE1D", **kwargs)
+
+
+def _lazy_jwst_x1d_loader(fileobj, **kwargs):
+    return _jwst_spec1d_lazy_loader(fileobj, extname="EXTRACT1D", **kwargs)
+
+
 @data_loader(
-    "JWST c1d multi", identifier=identify_jwst_c1d_multi_fits,
-    dtype=SpectrumList, extensions=['fits'], priority=10,
+    "JWST c1d multi",
+    identifier=identify_jwst_c1d_multi_fits,
+    dtype=SpectrumList,
+    extensions=["fits"],
+    priority=10,
+    lazy_loader=_lazy_jwst_c1d_loader,
 )
 def jwst_c1d_multi_loader(file_obj, **kwargs):
     """
@@ -208,8 +220,12 @@ def jwst_x1d_single_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    "JWST x1d multi", identifier=identify_jwst_x1d_multi_fits,
-    dtype=SpectrumList, extensions=['fits'], priority=10,
+    "JWST x1d multi",
+    identifier=identify_jwst_x1d_multi_fits,
+    dtype=SpectrumList,
+    extensions=["fits"],
+    priority=10,
+    lazy_loader=_lazy_jwst_x1d_loader,
 )
 def jwst_x1d_multi_loader(file_obj, **kwargs):
     """
@@ -230,8 +246,11 @@ def jwst_x1d_multi_loader(file_obj, **kwargs):
 
 
 @data_loader(
-    "JWST x1d MIRI MRS", identifier=identify_jwst_miri_mrs, dtype=SpectrumList,
-    extensions=['*'], priority=10,
+    "JWST x1d MIRI MRS",
+    identifier=identify_jwst_miri_mrs,
+    dtype=SpectrumList,
+    extensions=["*"],
+    priority=10,
 )
 def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
     """
@@ -276,13 +295,14 @@ def jwst_x1d_miri_mrs_loader(input, missing="raise", **kwargs):
             sp = _jwst_spec1d_loader(file_obj, **kwargs)
         except FileNotFoundError as e:
             if missing.lower() == "warn":
-                warnings.warn(f'Failed to load {file_obj}: {repr(e)}')
+                warnings.warn(f"Failed to load {file_obj}: {repr(e)}")
                 continue
             elif missing.lower() == "silent":
                 continue
             else:
-                raise FileNotFoundError(f"Failed to load {file_obj}: {repr(e)}. "
-                                        "To suppress this error, set argument missing='warn'")
+                raise FileNotFoundError(
+                    f"Failed to load {file_obj}: {repr(e)}. To suppress this error, set argument missing='warn'"
+                )
 
         spectra.append(sp)
 
@@ -356,7 +376,7 @@ def _jwst_spectrum_from_table(data, hdu_header, primary_header, flux_col=None, s
         meta['source_id'] = data['SOURCE_ID']
 
     if unpadded_indices is not None:
-        # In this case the spectra arrays have been padded to make them have consistent length
+        # In this case the spectra arrays have been padded to make their arrays have consistent length
         flux = flux[unpadded_indices].unmasked
         uncertainty = uncertainty[unpadded_indices]
 
@@ -400,11 +420,7 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
 
             header = hdu.header
 
-            # Correct some known bad unit strings before reading the table
-            bad_units = {"(MJy/sr)^2": "MJy2 sr-2"}
-            for c in hdu.columns:
-                if c.unit in bad_units:
-                    c.unit = bad_units[c.unit]
+            _normalize_jwst_column_units(hdu)
 
             data = QTable.read(hdu)
 
@@ -426,9 +442,86 @@ def _jwst_spec1d_loader(file_obj, extname='EXTRACT1D', flux_col=None, **kwargs):
     return SpectrumList(spectra)
 
 
+def _normalize_jwst_column_units(hdu):
+    """Normalize known malformed JWST table column unit strings in-place."""
+    bad_units = {"(MJy/sr)^2": "MJy2 sr-2"}
+    for column in hdu.columns:
+        if column.unit in bad_units:
+            column.unit = bad_units[column.unit]
+
+
+def _get_jwst_spec1d_labels(file_obj, extname="EXTRACT1D", **kwargs):
+    """Build lazy-load data entries and labels for JWST 1D spectra."""
+    entries = []
+    labels = []
+
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        for hdu_idx, hdu in enumerate(hdulist):
+            if hdu.name != extname:
+                continue
+
+            _normalize_jwst_column_units(hdu)
+            data = QTable.read(hdu)
+
+            if data[0]["WAVELENGTH"].shape != ():
+                for row_idx, row in enumerate(data):
+                    if hasattr(row["WAVELENGTH"], "mask") and np.all(row["WAVELENGTH"].mask):
+                        continue
+
+                    if "SOURCE_ID" in data.colnames:
+                        label = f"hdu{hdu_idx}_source_{row['SOURCE_ID']}"
+                    else:
+                        label = f"hdu{hdu_idx}_{row_idx}"
+
+                    entries.append((hdu_idx, row_idx))
+                    labels.append(label)
+            else:
+                entries.append((hdu_idx, None))
+                labels.append(f"{hdu.name}_{hdu_idx}")
+
+    return entries, labels
+
+
+def _load_jwst_spec1d_lazy_source(file_obj, entry, flux_col=None, **kwargs):
+    """Load a single JWST 1D spectrum from a lazy entry tuple."""
+    hdu_idx, row_idx = entry
+
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        primary_header = hdulist["PRIMARY"].header
+        hdu = hdulist[hdu_idx]
+
+        _normalize_jwst_column_units(hdu)
+        data = QTable.read(hdu)
+
+        if row_idx is None:
+            return _jwst_spectrum_from_table(data, hdu.header, primary_header, flux_col)
+
+        row = data[row_idx]
+        return _jwst_spectrum_from_table(row, hdu.header, primary_header, flux_col, row["SOURCE_TYPE"])
+
+
+def _jwst_spec1d_lazy_loader(file_obj, extname="EXTRACT1D", flux_col=None, **kwargs):
+    """Lazy loader for JWST x1d/c1d 1-D spectral data in FITS format."""
+
+    # get the data labels and rows
+    entries, labels = _get_jwst_spec1d_labels(file_obj, extname=extname, **kwargs)
+    if len(entries) == 0:
+        raise ValueError("No valid HDU found to load.")
+
+    # the single source loader fxn
+    def _loader(i: int) -> Spectrum:
+        return _load_jwst_spec1d_lazy_source(file_obj, entries[i], flux_col=flux_col, **kwargs)
+
+    sl = SpectrumList.from_lazy(length=len(entries), loader=_loader, labels=labels)
+    return sl
+
+
 @data_loader(
-    "JWST s2d", identifier=identify_jwst_s2d_fits, dtype=Spectrum,
-    extensions=['fits'], priority=10,
+    "JWST s2d",
+    identifier=identify_jwst_s2d_fits,
+    dtype=Spectrum,
+    extensions=["fits"],
+    priority=10,
 )
 def jwst_s2d_single_loader(filename, **kwargs):
     """
@@ -448,8 +541,7 @@ def jwst_s2d_single_loader(filename, **kwargs):
     if len(spectrum_list) == 1:
         return spectrum_list[0]
     elif len(spectrum_list) > 1:
-        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. "
-                           "Use SpectrumList.read() instead.")
+        raise RuntimeError(f"Input data has {len(spectrum_list)} spectra. Use SpectrumList.read() instead.")
     else:
         raise RuntimeError(f"Input data has {len(spectrum_list)} spectra.")
 

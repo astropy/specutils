@@ -161,15 +161,60 @@ def test_invert():
     # Invert from range.
     sr_inverted = sr.invert(0.05*u.um, 3*u.um)
 
-    for ii, expected in enumerate(sr_inverted_expected):
-        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+    for ii, _ in enumerate(sr_inverted_expected):
+        assert_quantity_allclose(sr_inverted.subregions[ii],
+                                 sr_inverted_expected[ii])
 
     # Invert from spectrum.
     spectrum = Spectrum(spectral_axis=np.linspace(0.05, 3, 20)*u.um,
                           flux=np.random.random(20)*u.Jy)
     sr_inverted = sr.invert_from_spectrum(spectrum)
-    for ii, expected in enumerate(sr_inverted_expected):
-        assert sr_inverted.subregions[ii] == sr_inverted_expected[ii]
+    for ii, _ in enumerate(sr_inverted_expected):
+        assert_quantity_allclose(sr_inverted.subregions[ii],
+                                 sr_inverted_expected[ii])
+
+
+def test_invert_converts_upper_bound_units():
+    """
+    Check that when .invert is called with upper_bound and lower_bound in
+    different (but compatible units) that the upper_bound is correctly converted
+    to the units of lower_bound.
+
+    This regression test covers a previously reported bug where using an
+    arbitrary hard-coded unit for setting the 'zero' and 'inf' values
+    based on sys.maxsize was not wokring in the case where the units were
+    not directly convertable to this hard-coded unit.
+
+    """
+    sr = (SpectralRegion(1500*u.GHz, 2000*u.GHz) +
+        SpectralRegion(3000*u.GHz, 4000*u.GHz) +
+        SpectralRegion(4500*u.GHz, 6000*u.GHz) +
+        SpectralRegion(8000*u.GHz, 9000*u.GHz) +
+        SpectralRegion(10000*u.GHz, 12000*u.GHz) +
+        SpectralRegion(13000*u.GHz, 15000*u.GHz))
+
+    sr_inverted_expected = [(500*u.GHz, 1500*u.GHz), (2000*u.GHz, 3000*u.GHz),
+                    (4000*u.GHz, 4500*u.GHz), (6000*u.GHz, 8000*u.GHz),
+                    (9000*u.GHz, 10000*u.GHz), (12000*u.GHz, 13000*u.GHz),
+                    (15000*u.GHz, 30000*u.GHz)]
+
+    # Invert from range.
+    sr_inverted = sr.invert(500*u.GHz, 30000000*u.MHz)
+
+    for ii, _ in enumerate(sr_inverted_expected):
+        assert_quantity_allclose(sr_inverted.subregions[ii],
+                                 sr_inverted_expected[ii])
+
+
+def test_invert_incompatible_bounds_units_raises():
+    """
+    Check that when .invert is called with upper_bound and lower_bound in
+    incompatible units, a ValueError is raised.
+    """
+    sr = SpectralRegion([(0.45*u.um, 0.6*u.um)])
+
+    with pytest.raises(ValueError, match="compatible units"):
+        sr.invert(0.3*u.um, 1*u.s)
 
 
 def test_from_list_list():

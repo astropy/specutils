@@ -140,13 +140,13 @@ or any object, like a `dict`, that can instantiate one) as the header of the
 Including Uncertainties
 -----------------------
 
-The :class:`~specutils.Spectrum` class supports uncertainties, and
-arithmetic operations performed with :class:`~specutils.Spectrum`
-objects will propagate uncertainties.
-
-Uncertainties are a special subclass of :class:`~astropy.nddata.NDData`, and their
-propagation rules are implemented at the class level. Therefore, users must
-specify the uncertainty type at creation time.
+The :class:`~specutils.Spectrum` class supports
+`Astropy uncertainties <https://docs.astropy.org/en/stable/nddata/nddata.html#uncertainties>`__.
+Specifically, when initializing a :class:`~specutils.Spectrum`, any provided uncertainty should
+be an instance of `~astropy.nddata.StdDevUncertainty`, `~astropy.nddata.VarianceUncertainty`,
+or `~astropy.nddata.InverseVariance`. These subclasses of :class:`~astropy.nddata.NDData` have
+propagation rules implemented at the class level, which are used by ``specutils`` to propagate
+uncertainties when doing arithmetic on `~specutils.Spectrum` objects.
 
 .. code-block:: python
 

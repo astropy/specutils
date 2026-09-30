@@ -59,11 +59,11 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       with:
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # v6.1.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python }}
     - name: Install Python dependencies
@@ -73,7 +73,7 @@ jobs:
     # TODO: Do we need --gcov-glob "*cextern*" ?
     - name: Upload coverage to artifacts
       if: ${{ contains(matrix.toxenv,'-cov') }}
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
       with:
         name: coverage_${{ matrix.toxenv }}.xml
         path: coverage.xml
@@ -88,16 +88,16 @@ jobs:
     steps:
     # work around CodeCov upload issue
     # see: https://github.com/codecov/codecov-action/issues/1801
-    - uses: actions/checkout@v6.0.0
+    - uses: actions/checkout@v7.0.1
     - name: Download coverage artifacts
-      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
       with:
         path: coverage
         pattern: coverage_*
         merge-multiple: true
     - name: Upload report to Codecov
       if: ${{ hashFiles('coverage/') != '' }}
-      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7  # v5.5.1
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         directory: coverage
@@ -125,11 +125,11 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       with:
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # v6.1.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python }}
     - name: Install Python dependencies

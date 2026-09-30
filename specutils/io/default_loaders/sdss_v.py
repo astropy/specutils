@@ -4,8 +4,8 @@ from typing import Optional
 
 import numpy as np
 from astropy.io.fits import BinTableHDU, HDUList, ImageHDU
-from astropy.nddata import InverseVariance, StdDevUncertainty
-from astropy.units import Angstrom, Quantity, Unit
+from astropy.nddata import InverseVariance, StdDevUncertainty, UnknownUncertainty
+from astropy.units import Angstrom, Quantity, Unit, nanometer
 from astropy.utils.exceptions import AstropyUserWarning
 
 from ...spectra import Spectrum, SpectrumList
@@ -21,6 +21,8 @@ __all__ = [
     "load_sdss_spec_list",
     "load_sdss_mwm_1d",
     "load_sdss_mwm_list",
+    "load_sdss_astra_1d",
+    "load_sdss_astra_list",
 ]
 
 
@@ -87,7 +89,101 @@ def mwm_identify(origin, *args, **kwargs):
     with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
         return (("V_ASTRA" in hdulist[0].header.keys()) and len(hdulist) > 0
                 and ("SDSS_ID" in hdulist[0].header.keys())
-                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5)))
+                and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
+                and has_data(hdulist)
+                and all("flux" in hdulist[i].columns.names for i in range(1, 5))
+                and all("model_flux" not in hdulist[i].columns.names
+                        for i in range(1, 5)))
+
+
+def has_data(hdulist: HDUList) -> bool:
+    """Check if any of the HDU's in the given HDUList have data."""
+
+    has_data = False
+    for hdu in hdulist:
+        if hdu.data is not None and len(hdu.data) > 0:
+            has_data = True
+            break
+    return has_data
+
+
+def has_model_flux(hdulist: HDUList) -> bool:
+    """Check if any of the HDU's in the given HDUList have a 'model_flux' column."""
+
+    if not has_data(hdulist):
+        return False
+
+    for hdu in hdulist:
+        if hdu.data is not None and "model_flux" in hdu.data.names:
+            return True
+
+    return False
+
+
+def get_astra_pipeline(hdulist: HDUList) -> Optional[str]:
+    """Identify the pipeline that generated the astraStar/astraVisit file.
+
+    Currently there is no direct keyword in the astraStar files with the pipeline
+    name. We use a unique column in the data HDUs as a proxy.
+
+    Parameters
+    ----------
+    hdulist : HDUList
+        The HDUList to classify.
+
+    Returns
+    -------
+    str
+        The name of the pipeline, or ``None`` if it cannot be identified.
+
+    """
+
+    pipeline = None
+
+    # Check that at least one extension table has data.
+    if not has_data(hdulist):
+        return None
+
+    # astraStar/Visit files must have at least 5 extensions
+    if len(hdulist) < 5:
+        return None
+
+    for hdu in hdulist[1:]:
+        if len(hdu.data) == 0:
+            continue
+
+        try:
+            if "rho_fe_h_c12_c13" in hdu.data.names:
+                pipeline = "ThePayne"
+            elif "p_dc_ms" in hdu.data.names:
+                pipeline = "SnowWhite"
+            elif "model_flux_nd_h" in hdu.data.names:
+                pipeline = "ASPCAP"
+        except Exception:
+            pass
+
+    return pipeline
+
+
+def astra_identify(origin, *args, **kwargs):
+    """
+    Check whether given input is FITS and has SDSS-V astra model spectra
+    BINTABLE in all 4 extensions. This is used for Astropy I/O Registry.
+    """
+    with read_fileobj_or_hdulist(*args, **kwargs) as hdulist:
+        if (
+            len(hdulist) > 0
+            and ("V_ASTRA" in hdulist[0].header.keys())
+            and ("SDSS_ID" in hdulist[0].header.keys())
+            and (isinstance(hdulist[i], BinTableHDU) for i in range(1, 5))
+            and has_data(hdulist)
+            and has_model_flux(hdulist)
+        ):
+            # Confirm that this file can be associated with a known astra pipeline
+            pipeline = get_astra_pipeline(hdulist)
+            if pipeline is not None:
+                return True
+        return False
 
 
 def _wcs_log_linear(naxis, cdelt, crval):
@@ -354,6 +450,20 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
         return _load_BOSS_HDU(hdulist, hdu, **kwargs)
 
 
+def _lazy_sdss_spec_loader(fileobj, **kwargs):
+    """Lazy loader for SDSS-V spec files."""
+
+    def _select(ext):
+        return ext.name not in ["SPALL", "ZALL", "ZLINE"]
+
+    def _load(hdulist, hdu_idx):
+        return _load_BOSS_HDU(hdulist, hdu_idx, **kwargs)
+
+    return _sdss_lazy_loader(
+        fileobj, select_hdu=_select, load_source=_load, **kwargs
+    )
+
+
 @data_loader(
     "SDSS-V spec",
     identifier=spec_sdss5_identify,
@@ -361,6 +471,7 @@ def load_sdss_spec_1D(file_obj, *args, hdu: Optional[int] = None, **kwargs):
     force=True,
     priority=5,
     extensions=["fits"],
+    lazy_loader=_lazy_sdss_spec_loader
 )
 def load_sdss_spec_list(file_obj, **kwargs):
     """
@@ -377,15 +488,18 @@ def load_sdss_spec_list(file_obj, **kwargs):
         The spectra contained in the file.
     """
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
-        spectra = list()
+        spectra = SpectrumList()
+        labels = []
         for hdu in range(1, len(hdulist)):
             if hdulist[hdu].name in ["SPALL", "ZALL", "ZLINE"]:
                 continue
             spectra.append(_load_BOSS_HDU(hdulist, hdu, **kwargs))
-        return SpectrumList(spectra)
+            labels.append(hdulist[hdu].name)
+        _set_labels(spectra, labels)
+        return spectra
 
 
-def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
+def _load_BOSS_HDU(hdulist: HDUList, hdu: int, model: bool = False, **kwargs):
     """
     HDU processor for BOSS spectra redux HDU's
 
@@ -407,7 +521,14 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
     spectral_axis = Quantity(10**hdulist[hdu].data["LOGLAM"], unit=Angstrom)
 
-    flux = Quantity(hdulist[hdu].data["FLUX"], unit=flux_unit)
+    if model and 'MODEL' not in hdulist[hdu].data.names:
+        raise ValueError(f"MODEL column not found in HDU{hdu}. Cannot load model spectrum.")
+
+    if model:
+        # set the model spectrum as the "flux" ; until specutils supports models
+        flux = Quantity(hdulist[hdu].data["MODEL"], unit=flux_unit)
+    else:
+        flux = Quantity(hdulist[hdu].data["FLUX"], unit=flux_unit)
     # no e_flux, so we use inverse of variance
     ivar = InverseVariance(hdulist[hdu].data["IVAR"])
 
@@ -426,12 +547,90 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     meta = dict()
     meta["header"] = hdulist[0].header
     meta["name"] = hdulist[hdu].name
+    meta["is_model"] = model
 
     return Spectrum(spectral_axis=spectral_axis,
                       flux=flux,
                       uncertainty=ivar,
                       mask=mask,
                       meta=meta)
+
+
+def _set_labels(spectra: SpectrumList, labels: list):
+    """Set the labels for each index in a SpectrumList object"""
+    spectra.set_id_map(dict(zip(labels, range(len(labels)))))
+
+
+def _sdss_lazy_loader(fileobj: object, select_hdu: callable, load_source: callable, **kwargs) -> SpectrumList:
+    """Make a SDSS lazy loader
+
+    Create a lazy loader callable that looks up the individual
+    spectrum to load from an HDU extension on demand.  Also
+    builds a list of labels based on the HDU extension name.
+
+    Parameters
+    ----------
+    fileobj : object
+        the file object to load
+    select_hdu : callable
+        function to determine which HDUs to load
+    load_source : callable
+        function to load a specific source from an HDU
+
+    Returns
+    -------
+    SpectrumList
+        The list of spectra contained in the file
+    """
+    # Build list of HDU indices + labels once
+    hdu_indices = []
+    labels = []
+    with read_fileobj_or_hdulist(fileobj, memmap=False, **kwargs) as hdulist:
+        for idx in range(1, len(hdulist)):
+            ext = hdulist[idx]
+            # skip the HDU
+            if not select_hdu(ext):
+                continue
+            hdu_indices.append(idx)
+            labels.append(ext.name)
+
+    # create the lazy loader callable for SpectrumList
+    def _loader(i: int) -> Spectrum:
+        hdu_idx = hdu_indices[i]
+        with read_fileobj_or_hdulist(fileobj, memmap=False, **kwargs) as hdulist:
+            return load_source(hdulist, hdu_idx, **kwargs)
+
+    sl = SpectrumList.from_lazy(length=len(hdu_indices), loader=_loader, labels=labels)
+    _set_labels(sl, labels)
+    return sl
+
+
+def _lazy_sdss_mwm_loader(fileobj, **kwargs):
+    """Lazy loader example for SDSS-V mwm files"""
+
+    def _select(ext):
+        return ext.header.get("DATASUM") != "0" and len(ext.data) > 0
+
+    def _load(hdulist, hdu_idx, **kwargs):
+        return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu_idx, **kwargs)
+
+    return _sdss_lazy_loader(
+        fileobj, select_hdu=_select, load_source=_load, **kwargs
+    )
+
+
+def _lazy_sdss_astra_loader(fileobj, **kwargs):
+    """Lazy loader for SDSS-V astra files."""
+
+    def _select(ext):
+        return ext.header.get("DATASUM") != "0" and len(ext.data) > 0
+
+    def _load(hdulist, hdu_idx, **kwargs):
+        return _load_astra_hdu(hdulist, hdu_idx, visit=0, **kwargs)
+
+    return _sdss_lazy_loader(
+        fileobj, select_hdu=_select, load_source=_load, **kwargs
+    )
 
 
 # MWM LOADERS
@@ -442,12 +641,9 @@ def _load_BOSS_HDU(hdulist: HDUList, hdu: int, **kwargs):
     priority=20,
     extensions=["fits"],
 )
-def load_sdss_mwm_1d(file_obj,
-                     hdu: Optional[int] = None,
-                     visit: Optional[int] = None,
-                     **kwargs):
+def load_sdss_mwm_1d(file_obj, hdu: Optional[int] = None, **kwargs):
     """
-    Load an unspecified spec file as a Spectrum.
+    Load an unspecified MWM spec file as a Spectrum.
 
     Parameters
     ----------
@@ -471,7 +667,6 @@ def load_sdss_mwm_1d(file_obj,
         if (np.array(datasums) == 0).all():
             raise ValueError("Specified file is empty.")
 
-        # TODO: how should we handle this -- multiple things in file, but the user cannot choose.
         if hdu is None:
             for i, hduext in enumerate(hdulist):
                 if hduext.header.get("DATASUM") != "0" and len(hduext.data) > 0:
@@ -479,6 +674,9 @@ def load_sdss_mwm_1d(file_obj,
                     warnings.warn(
                         f'HDU not specified. Loading spectrum at (HDU{i})', AstropyUserWarning)
                     break
+
+            if hdu is None:
+                raise ValueError("No valid HDU found to load.")
 
         # load spectra and return
         return _load_mwmVisit_or_mwmStar_hdu(hdulist, hdu)
@@ -491,6 +689,7 @@ def load_sdss_mwm_1d(file_obj,
     dtype=SpectrumList,
     priority=20,
     extensions=["fits"],
+    lazy_loader=_lazy_sdss_mwm_loader
 )
 def load_sdss_mwm_list(file_obj, **kwargs):
     """
@@ -507,6 +706,7 @@ def load_sdss_mwm_list(file_obj, **kwargs):
         A list of spectra from each visit with each instrument at each observatory (mwmVisit),
         or the coadd from each instrument/observatory (mwmStar).
     """
+    labels = []
     spectra = SpectrumList()
     with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
         # Check if file is empty first
@@ -521,7 +721,10 @@ def load_sdss_mwm_list(file_obj, **kwargs):
             if hduext.header.get("DATASUM") == "0" or len(hduext.data) == 0:
                 # Skip zero data HDU's
                 continue
+            labels.append(hduext.name)
             spectra.append(_load_mwmVisit_or_mwmStar_hdu(hdulist, i))
+    #
+    _set_labels(spectra, labels)
     return spectra
 
 
@@ -597,7 +800,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
 
     # choose between mwmVisit/Star via KeyError except
     try:
-        meta['mjd'] = hdulist[hdu].data['mjd']
+        meta["mjd"] = hdulist[hdu].data["mjd"]
         meta["datatype"] = "mwmVisit"
     except KeyError:
         meta["min_mjd"] = str(hdulist[hdu].data["min_mjd"][0])
@@ -605,7 +808,7 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         meta["datatype"] = "mwmStar"
     finally:
         meta["name"] = hdulist[hdu].name
-        meta["sdss_id"] = hdulist[hdu].data['sdss_id']
+        meta["sdss_id"] = hdulist[hdu].data["sdss_id"]
 
     # drop back a list of Spectrum objects to unpack
     return Spectrum(
@@ -615,3 +818,269 @@ def _load_mwmVisit_or_mwmStar_hdu(hdulist: HDUList, hdu: int, **kwargs):
         mask=mask,
         meta=meta,
     )
+
+
+@data_loader(
+    "SDSS-V astra",
+    identifier=astra_identify,
+    dtype=Spectrum,
+    priority=20,
+    extensions=["fits"],
+)
+def load_sdss_astra_1d(
+    file_obj,
+    hdu: Optional[int] = None,
+    visit: Optional[int] = None,
+    **kwargs,
+):
+    """Load an Astra model spectrum file (astraStar/Visit) as a `~specutils.Spectrum`.
+
+    Parameters
+    ----------
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
+    hdu : int
+        Specified HDU to load.
+    visit : Optional[int]
+        Specified visit index to load.
+
+    Returns
+    -------
+    spectrum : `~specutils.Spectrum`
+        The spectra contained in the file from the provided HDU OR the first entry.
+
+    """
+
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # Check if file is empty first
+        datasums = []
+        for i in range(1, len(hdulist)):
+            datasums.append(int(hdulist[i].header.get("DATASUM")))
+        if (np.array(datasums) == 0).all():
+            raise ValueError("Specified file is empty.")
+
+        if hdu is None:
+            for i in range(1, len(hdulist)):
+                if hdulist[i].header.get("DATASUM") != "0":
+                    hdu = i
+                    break
+
+            if hdu is None:
+                raise ValueError("No valid HDU found to load.")
+
+        # The astraVisit files have the same format as astraStar but with
+        # multiple rows per BinTable HDU. If the visit index is not specified,
+        # we default to loading the first spectrum.
+        return _load_astra_hdu(hdulist, hdu, visit=(visit or 0), **kwargs)
+
+
+@data_loader(
+    "SDSS-V astra",
+    identifier=astra_identify,
+    force=True,
+    dtype=SpectrumList,
+    priority=20,
+    extensions=["fits"],
+    lazy_loader=_lazy_sdss_astra_loader
+)
+def load_sdss_astra_list(file_obj, **kwargs):
+    """Load an astraStar/astraVisit model spectrum file as a `~specutils.SpectrumList`.
+
+    Parameters
+    ----------
+    file_obj : str, file-like, or HDUList
+        FITS file name, file object, or HDUList.
+
+    Returns
+    -------
+    spectra: `~specutils.SpectrumList`
+        All of the spectra contained in the file.
+
+    """
+
+    spectra = SpectrumList()
+    labels = []
+    with read_fileobj_or_hdulist(file_obj, memmap=False, **kwargs) as hdulist:
+        # Check if file is empty first
+        datasums = []
+        for hdu in range(1, len(hdulist)):
+            datasums.append(int(hdulist[hdu].header.get("DATASUM")))
+        if (np.array(datasums) == 0).all():
+            raise ValueError("Specified file is empty.")
+
+        # Now load file
+        for hdu in range(1, len(hdulist)):
+            if hdulist[hdu].header.get("DATASUM") == "0":
+                # Skip zero data HDU's
+                continue
+            labels.append(hdulist[hdu].name)
+            spectra.extend(_load_astra_hdu(hdulist, hdu))
+
+    _set_labels(spectra, labels)
+
+    if len(spectra) == 0:
+        raise ValueError("No valid HDU found to load.")
+
+    return spectra
+
+
+def _load_astra_hdu(hdulist: HDUList, hdu: int, visit: Optional[int] = None, **kwargs):
+    """HDU loader subfunction for astraStar/astraVisit model spectrum files
+
+    Parameters
+    ----------
+    hdulist: HDUList
+        HDUList generated from imported file.
+    hdu: int
+        Specified HDU to load.
+    visit: Optional[int]
+        Specified visit index to load. If None, returns a list of
+        all spectra in the HDU.
+
+    Returns
+    -------
+    list[Spectrum]
+        List of spectrum with 1D flux contained in the HDU.
+
+    """
+
+    if hdulist[hdu].header.get("DATASUM") == "0":
+        raise IndexError("Attemped to load an empty HDU at HDU{}".format(hdu))
+
+    if not has_data(hdulist):
+        raise ValueError("The specified file does not contain any data.")
+
+    pipeline = get_astra_pipeline(hdulist)
+    if pipeline is None:
+        raise ValueError(
+            "HDU{} does not appear to be associated with an Astra pipeline.".format(hdu)
+        )
+
+    header = hdulist[hdu].header
+    data = hdulist[hdu].data
+
+    # Fetch wavelength encoded as WCS for visit, and 'wavelength' for star
+    wavelength = None
+    try:
+        wavelength = np.array(data["wavelength"])[0]
+    except KeyError:
+        if "CTYPE" in header.keys() and header["CTYPE"].upper() == "LOG-LINEAR":
+            wavelength = _wcs_log_linear(
+                header.get("NPIXELS"),
+                header.get("CDELT"),
+                header.get("CRVAL"),
+            )
+    finally:
+        if wavelength is None:
+            raise ValueError("Couldn't find wavelength data in HDU{}.".format(hdu))
+        spectral_axis = Quantity(wavelength, unit=nanometer * 0.1)
+
+    # Fetch flux, e_flux
+    flux_unit = Unit("1e-17 erg / (Angstrom cm2 s)")  # NOTE: hardcoded unit
+    model_flux = data["model_flux"]
+
+    if pipeline in ["ThePayne", "SnowWhite"]:
+        # In The Payne and SnowWhite the model_flux includes the continuum.
+        flux = Quantity(model_flux, unit=flux_unit)
+    elif pipeline in ["ASPCAP"]:
+        # In ASPCAP the model_flux is normalized to the continuum at each wavelength.
+        continuum = data["continuum"]
+        flux = Quantity(model_flux * continuum, unit=flux_unit)
+    else:
+        raise ValueError("Invalid astra pipeline {!r}.".format(pipeline))
+
+    if 'ivar' in hdulist[hdu].columns.names:
+        e_flux = InverseVariance(array=data["ivar"])
+    else:
+        # There is no associated uncertainty for model spectra.
+        e_flux = UnknownUncertainty(np.full_like(model_flux, np.nan))
+
+    # Collect bitmask
+    if "pixel_flags" in hdulist[hdu].columns.names:
+        mask = data["pixel_flags"]
+        # NOTE: specutils considers 0/False as valid values, simlar to numpy convention
+        mask = mask != 0
+    else:
+        mask = ~np.isfinite(flux)
+
+    # Create metadata
+    meta = dict()
+    meta["header"] = hdulist[0].header
+
+    # Add identifiers (obj, telescope, mjd, datatype)
+    meta["telescope"] = data["telescope"]
+    meta["instrument"] = "BOSS" if hdu <= 2 else "APOGEE"
+    try:  # get obj if exists
+        meta["obj"] = data["obj"]
+    except KeyError:
+        pass
+
+    # choose between mwmVisit/Star via KeyError except
+    try:
+        meta["mjd"] = data["mjd"]
+        meta["datatype"] = "astraVisit"
+    except KeyError:
+        meta["min_mjd"] = str(data["min_mjd"][0])
+        meta["max_mjd"] = str(data["max_mjd"][0])
+        meta["datatype"] = "astraStar"
+    finally:
+        meta["name"] = hdulist[hdu].name
+        meta["sdss_id"] = hdulist[0].header["sdss_id"]
+        meta["pipeline"] = pipeline
+
+    # drop back a list of Spectrum objects to unpack
+    metadicts = _split_mwm_meta_dict(meta)
+
+    spectra = [
+        Spectrum(
+            spectral_axis=spectral_axis,
+            flux=flux[i],
+            uncertainty=e_flux[i],
+            mask=mask[i],
+            meta=metadicts[i],
+        )
+        for i in (range(flux.shape[0]) if visit is None else [visit])
+    ]
+
+    if len(spectra) == 1 and visit is not None:
+        return spectra[0]
+
+    return spectra
+
+
+def _split_mwm_meta_dict(d):
+    """
+    Metadata sub-loader subfunction for MWM files.
+
+    Parameters
+    ----------
+    d: dict
+        Initial metadata dictionary.
+
+    Returns
+    -------
+    dicts: list[dict]
+        List of dicts with unpacked metadata for length > 1 array objects.
+
+    """
+    # find the length of entries
+    N = max(len(v) if isinstance(v, np.ndarray) else 1 for v in d.values())
+
+    # create N dictionaries to hold the split results
+    dicts = [{} for _ in range(N)]
+
+    for key, value in d.items():
+        if isinstance(value, np.ndarray):
+            # Ensure that the length of the list matches N
+            if len(value) != N:
+                # an error case we ignore
+                continue
+            # distribute each element to the corresponding metadict
+            for i in range(N):
+                dicts[i][key] = value[i]
+        else:
+            # if it's a single object, copy it to each metadict
+            for i in range(N):
+                dicts[i][key] = value
+
+    return dicts

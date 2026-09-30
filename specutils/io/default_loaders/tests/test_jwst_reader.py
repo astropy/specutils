@@ -182,6 +182,38 @@ def test_jwst_wfss_multi_reader(tmp_path, spec_multi_new, format):
     assert data[2].flux.unit == u.MJy/u.sr
 
 
+@pytest.mark.parametrize(
+    "spec_multi_new, format",
+    [("EXTRACT1D", "JWST x1d multi"), ("COMBINE1D", "JWST c1d multi")],
+    indirect=["spec_multi_new"],
+)
+def test_jwst_wfss_multi_lazy_load_with_labels(tmp_path, spec_multi_new, format):
+    """Test lazy loading and label-based access for JWST c1d/x1d packed multi data."""
+    tmpfile = str(tmp_path / "jwst-lazy.fits")
+    spec_multi_new.writeto(tmpfile)
+
+    data = SpectrumList.read(tmpfile, format=format, lazy_load=True)
+    assert isinstance(data, SpectrumList)
+    assert data.is_lazy
+    assert data.n_loaded == 0
+    assert len(data) == 3
+
+    # Before string-key access, lazy labels are exposed as a list.
+    assert isinstance(data.labels, list)
+    assert "hdu1_source_1" in data.labels
+    assert "hdu1_source_2" in data.labels
+    assert "hdu1_source_3" in data.labels
+
+    first = data["hdu1_source_1"]
+    assert isinstance(first, Spectrum)
+    assert data.n_loaded == 1
+
+    second = data[1]
+    assert isinstance(second, Spectrum)
+    assert data.n_loaded == 2
+    assert len(data) == 3
+
+
 @pytest.mark.parametrize('spec_single, format',
                          [('EXTRACT1D', 'JWST x1d'),
                           ('COMBINE1D', 'JWST c1d')], indirect=['spec_single'])

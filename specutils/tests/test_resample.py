@@ -65,7 +65,7 @@ def test_stddev_uncert_propogation():
     results = inst(input_spectra, [25, 35, 50, 55]*u.AA)
 
     assert np.allclose(results.uncertainty.array,
-                       np.array([31.59810022, 38.89549208, 21.30305717, 31.59810022]))
+                       np.array([55.17241394, 73.52940911, 27.94759955, 55.17241394]))
 
 
 def delta_wl(saxis):
@@ -128,9 +128,9 @@ def test_multi_dim_spectrum():
                                        [6., 6., 6., 6.],
                                        [7., 7., 7., 7.]]) * u.Jy)
     assert np.allclose(results.uncertainty.array,
-                       np.array([[6.53197265, 6.53197265, 6.53197265, 6.53197265],
-                                 [4.53609212, 4.53609212, 4.53609212, 4.53609212],
-                                 [3.33263911, 3.33263911, 3.33263911, 3.33263911]]))
+                       np.array([[10.66666667, 10.66666667, 10.66666667, 10.66666667],
+                                 [7.40740741, 7.40740741, 7.40740741, 7.40740741],
+                                 [5.44217687, 5.44217687, 5.44217687, 5.44217687]]))
 
 
 def test_expanded_grid_interp_linear():
@@ -253,7 +253,7 @@ def test_fluxconservingresampler_against_spectres():
     # implementing (slightly differently, but results should always agree)
 
     spectres_fluxes = np.array([2., 3., 3.66666667, 6.3125])
-    spectres_errs = np.array([0.25, 0.15, 0.30413813, 0.49193694])
+    spectres_errs = np.array([0.25, 0.15, 0.21666667, 0.19785156])
 
     flux = [1, 2, 3, 4, 5, 6, 7]*u.AB
     spectral_axis = [1, 2, 3, 7, 9, 10, 14]*u.AA

@@ -68,3 +68,4 @@ py:obj i
 py:obj j
 py:obj a.transpose()
 py:obj ndarray_subclass
+py:obj v

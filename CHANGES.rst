@@ -1,4 +1,47 @@
-2.3.0 (unreleased)
+2.5.0 (unreleased)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- ``SpectrumCollection`` now allows setting scalar redshift or radial velocity,
+  analagously to ``Spectrum``. [#1332]
+
+- Added lazy loading functionality to SpectrumList. [#1338]
+
+- Added a flag to return the model spectra for SDSS BHM spec files. [#1339]
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+2.4.0 (2026-06-01)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- Added new SDSS-V ``Spectrum1D`` and ``SpectrumList`` default loaders for
+  ``astraStar`` and ``astraVisit`` model spectra datatypes. [#1325, #1330]
+
+Bug Fixes
+^^^^^^^^^
+- Fix units related issue when inverting spectral regions. [#1324]
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated Sphinx configuration to use astropy-unified theme for documentation. [#1328]
+
+2.3.1 (unreleased)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+
+2.3.0 (2026-02-03)
 ------------------
 
 New Features
@@ -6,23 +49,30 @@ New Features
 
 - Added ``CompoundSpectralRegion`` class to enable combining ``SpectralRegion`` with operators. [#1282]
 
+- Using ``Spectrum.shift_spectrum_to()`` will now also update the WCS when applying the redshift or radial
+  velocity if a FITS WCS is present. A GWCS will be replaced with the original stored in an
+  ``_original_wcs`` attribute. [#1287]
+
 Bug Fixes
 ^^^^^^^^^
 
+- Fix an indexing bug when passing a region to analysis width functions when a mask is present. [#1280]
+
+- Doing arithmetic with ``Spectrum`` objects no longer improperly redshifts the spectral axis in some cases. [#1287]
+
 - Fix bug due to incompatibility with the `__pow__` method inherited from NDCube. [#1291]
+
+- Fixed bugs in uncertainty propagation for smoothing and flux conserving resampler. [#1305]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Bumped minimum supported GWCS version to 0.24. [#1286]
 
-2.2.1 (unreleased)
-------------------
+- Updated documentation about uncertainties and air-to-vac wavelength conversion. [#1299]
 
-Bug Fixes
-^^^^^^^^^
-
-- Fix an indexing bug when passing a region to analysis width functions when a mask is present. [#1280]
+- Fixed misspellings of Greisen (from "Griesen") in air-to-vac wavelength conversion citations. Note that this
+  also deprecates the "griesen2006" method option and changes it to "greisen2006". [#1312, #1315]
 
 2.2.0 (2025-10-08)
 ------------------
@@ -181,11 +231,17 @@ Bug Fixes
 - Fixed extracting a spectral region when one of spectrum/region is in wavelength
   and the other is in frequency units. [#1187]
 
+- Fixed ``mwmVisit`` SDSS-V ``Spectrum1D`` and ``SpectrumList`` default loader being unable to load files containing only BOSS instrument spectra. [#1185]
+
+- Fixed automatic format detection for SDSS-V ``SpectrumList`` default loaders. [#1185]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Replaced ``LevMarLSQFitter`` with ``TRFLSQFitter`` as the former is no longer
   recommended by ``astropy``. [#1180]
+
+- "Multi" loaders have been removed from SDSS-V ``SpectrumList`` default loaders. [#1185]
 
 1.17.0 (2024-10-04)
 -------------------
