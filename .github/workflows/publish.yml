@@ -22,6 +22,8 @@ jobs:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish_pure_python.yml@22ddf09dfabb443adddfb9f861b7d41a787d6b1a # v3.0.3
     if: github.repository == 'astropy/specutils'
     with:
+      env: |
+        PY_IGNORE_IMPORTMISMATCH: 1
       # We use trusted publishing so the upload is handled in a separate job below
       upload_to_pypi: false
       save_artifacts: true
