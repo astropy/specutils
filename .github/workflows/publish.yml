@@ -27,7 +27,7 @@ jobs:
       save_artifacts: true
       upload_to_anaconda: false
       test_extras: test
-      test_command: pytest --astropy-header --remote-data --pyargs specutils
+      test_command: pytest --astropy-header --pyargs specutils
   
   upload:
     name: Publish to PyPI
