@@ -28,7 +28,7 @@ jobs:
 
           # We do not use remote data here, since
           # that gives too many false positives due to URL timeouts.
-          - name: Linux - current Python, pre-release dependencies
+          - name: Linux - Python 3.14, pre-release dependencies
             os: ubuntu-latest
             python: '3.14'
             toxenv: py314-test-predeps

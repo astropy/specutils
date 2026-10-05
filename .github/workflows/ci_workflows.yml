@@ -17,12 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Job names describe roles ("oldest"/"intermediate"/"current"/"latest" Python)
-  # rather than versions, so they stay stable if they are made required status
-  # checks. When bumping Python versions, change the python/toxenv values below
-  # (and in ci_cron_weekly.yml), not the names. "latest" (devdeps) moves to a
-  # new Python first. When 3.11 is dropped, "oldest" becomes 3.12 and both
-  # "intermediate" jobs become 3.13.
   tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -36,32 +30,37 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Linux - oldest Python, base dependencies
+          - name: Linux - Python 3.11, base dependencies
             os: ubuntu-latest
             python: '3.11'
             toxenv: py311-test
 
-          - name: Linux - oldest Python, oldest dependencies
+          - name: Linux - Python 3.11, oldest dependencies
             os: ubuntu-latest
             python: '3.11'
             toxenv: py311-test-oldestdeps
 
-          - name: Linux - intermediate Python, base dependencies
+          - name: Linux - Python 3.12, base dependencies
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py312-test
+
+          - name: Linux - Python 3.13, base dependencies
             os: ubuntu-latest
             python: '3.13'
             toxenv: py313-test
 
-          - name: Windows - intermediate Python, base dependencies
+          - name: Windows - Python 3.14, base dependencies
             os: windows-latest
-            python: '3.12'
-            toxenv: py312-test
+            python: '3.14'
+            toxenv: py314-test
 
-          - name: macOS - current Python, base dependencies
+          - name: macOS - Python 3.14, base dependencies
             os: macos-latest
             python: '3.14'
             toxenv: py314-test
 
-          - name: Linux - current Python, remote data, coverage
+          - name: Linux - Python 3.14, remote data, coverage
             os: ubuntu-latest
             python: '3.14'
             toxenv: py314-test-cov
@@ -122,7 +121,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: (Allowed Failure) Linux - latest Python, dev dependencies, remote data
+          - name: (Allowed Failure) Linux - Python 3.15, dev dependencies, remote data
             os: ubuntu-latest
             python: '3.15'
             toxenv: py315-test-devdeps
