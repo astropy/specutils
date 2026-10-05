@@ -17,9 +17,11 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Added Python 3.14 to the CI test matrix, with Linux base-dependency jobs on
-  Python 3.11 through 3.14 and the Windows and macOS jobs on 3.14. The
-  dev-dependencies job now runs on Python 3.15. [#1349]
+- Added Python 3.14 to the CI test matrix and made it the default version for
+  most jobs, including Windows, macOS, remote-data and coverage, and the weekly
+  pre-release dependencies and link check jobs. Linux base-dependency jobs
+  cover Python 3.11 through 3.14, and the dev-dependencies job now runs on
+  Python 3.15. [#1349]
 
 2.4.0 (2026-06-01)
 ------------------
