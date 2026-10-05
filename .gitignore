@@ -72,3 +72,7 @@ pip-wheel-metadata/
 .jukit
 venv
 .venv
+
+# AI agent instruction files (pending project policy)
+CLAUDE.md
+AGENTS.md
