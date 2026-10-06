@@ -1185,6 +1185,53 @@ def test_wcs1d_fits_hdus(tmp_path, hdu):
         assert quantity_allclose(hdulist[hdu].data * flu, flux)
 
 
+def test_parse_spectral_bunit_iraf_A_is_angstrom_not_ampere():
+    """Bare ``A`` in a spectral flux BUNIT is Angstrom, not Ampere."""
+    from specutils.io.default_loaders.wcs_fits import _parse_spectral_bunit
+
+    wav = u.erg / (u.Angstrom * u.s * u.cm**2)
+    amp = u.erg / (u.A * u.s * u.cm**2)
+    parsed = _parse_spectral_bunit('erg/A/s/cm2')
+    assert parsed.is_equivalent(wav)
+    assert not parsed.is_equivalent(amp)
+    assert _parse_spectral_bunit('erg/Angstrom/s/cm2').is_equivalent(wav)
+    assert _parse_spectral_bunit('erg/AA/s/cm2').is_equivalent(wav)
+    assert _parse_spectral_bunit('A').is_equivalent(u.A)
+    assert not _parse_spectral_bunit('A').is_equivalent(u.Angstrom)
+
+
+@pytest.mark.filterwarnings('ignore:.*multiple slashes.*')
+def test_wcs1d_fits_bunit_iraf_angstrom_A(tmp_path):
+    """wcs1d-fits: IRAF BUNIT ``erg/A/s/cm2`` converts as Angstrom flux.
+
+    Regression for https://github.com/astropy/specutils/issues/1245.
+    The issue did not attach a public file. Data label:
+    reconstructed_128px_bunit_A_from_issue_1245. Keywords follow the
+    reported BUNIT plus a LINEAR-style WAVE WCS.
+    """
+    hdr = {
+        'CTYPE1': 'WAVE',
+        'CUNIT1': 'Angstrom',
+        'CRPIX1': 1,
+        'CRVAL1': 5000.0,
+        'CDELT1': 1.0,
+        'BUNIT': 'erg/A/s/cm2',
+    }
+    flux = np.linspace(1.0, 2.0, 128, dtype=np.float64)
+    hdu = fits.PrimaryHDU(flux, header=fits.Header(hdr))
+    tmpfile = tmp_path / 'iraf_bunit_A.fits'
+    hdu.writeto(tmpfile)
+
+    spec = Spectrum.read(tmpfile, format='wcs1d-fits')
+    wav = u.erg / (u.Angstrom * u.s * u.cm**2)
+    assert spec.flux.unit.is_equivalent(wav)
+    assert not spec.flux.unit.is_equivalent(u.erg / (u.A * u.s * u.cm**2))
+
+    spec2 = Spectrum.read(tmpfile, format='wcs1d-fits', flux_unit=wav)
+    assert spec2.flux.unit.is_equivalent(wav)
+    assert quantity_allclose(spec2.flux, flux * wav)
+
+
 @pytest.mark.parametrize("spectral_axis",
                          ['WAVE', 'FREQ', 'ENER', 'WAVN'])
 def test_wcs1d_fits_multid(tmp_path, spectral_axis):
