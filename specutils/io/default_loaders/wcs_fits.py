@@ -513,16 +513,28 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
     """
     with read_fileobj_or_hdulist(file_obj, **kwargs) as hdulist:
         header = hdulist[0].header
+        spectral_axis = None
         for wcsdim in range(1, header['WCSDIM'] + 1):
             ctypen = header['CTYPE{:d}'.format(wcsdim)]
             if ctypen == 'LINEAR':
+                # A MULTISPEC file can have auxiliary linear axes, e.g. a
+                # science/background axis in addition to order and pixel.
+                # Once the per-order wavelength solutions have been read,
+                # that auxiliary axis is not a spectral axis.
+                if spectral_axis is not None:
+                    continue
                 warnings.warn("linear Solution: Try using `format='wcs1d-fits'` instead")
                 wcs = WCS(header)
                 spectral_axis = _read_linear_iraf_wcs(wcs=wcs, dc_flag=header['DC-FLAG'])
             elif ctypen == 'MULTISPE':
                 if verbose:
                     print("Multi spectral or non-linear solution")
-                spectral_axis = _read_non_linear_iraf_wcs(header=header, wcsdim=wcsdim)
+                axis = _read_non_linear_iraf_wcs(header=header, wcsdim=wcsdim)
+                # WAT1 carries global metadata, while WAT2 contains the
+                # individual order solutions. Do not replace a populated
+                # solution with WAT metadata that has no ``spec*`` entries.
+                if axis.size:
+                    spectral_axis = axis
             else:
                 raise NotImplementedError
 
@@ -545,6 +557,14 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
         if verbose:
             print(f"Extracted spectral axis unit '{spectral_axis_unit}' from 'WAT1_001'")
     spectral_axis *= u.Unit(spectral_axis_unit)
+
+    # SpectrumCollection permits multi-dimensional collections, but requires
+    # flux and spectral axis to have the same shape. A MULTISPEC wavelength
+    # solution is defined once per order and applies unchanged to a leading
+    # science/background (or comparable) axis.
+    if (spectral_axis.ndim < data.ndim
+            and data.shape[-spectral_axis.ndim:] == spectral_axis.shape):
+        spectral_axis = np.broadcast_to(spectral_axis, data.shape, subok=True)
 
     return spectral_axis, data, dict(header=header)
 

@@ -1,7 +1,9 @@
+import numpy as np
+from astropy.io import fits
 from astropy.io.fits import Header
 import pytest
 
-from ..wcs_fits import _read_non_linear_iraf_wcs
+from ..wcs_fits import _read_non_linear_iraf_fits, _read_non_linear_iraf_wcs
 
 
 MULTISPEC_LINEAR_HEADER = Header(
@@ -74,3 +76,30 @@ def test_multispec_loglinear_wcs():
     out = _read_non_linear_iraf_wcs(MULTISPEC_LOGLINEAR_HEADER, 2)
     assert out[0][0:3] == pytest.approx([10000., 10232.92992281, 10471.28548051])
     assert out[1][0:3] == pytest.approx([10232.92992281, 10471.28548051, 10715.19305238])
+
+
+def test_multispec_with_auxiliary_linear_axis():
+    """Retain and broadcast WAT2 wavelengths for a science/background axis.
+
+    Regression for https://github.com/astropy/specutils/issues/1316.
+    IRAF files can store a leading science/background axis as ``CTYPE3 =
+    LINEAR``. It is not a wavelength solution and must not overwrite the
+    populated per-order MULTISPEC solution from WAT2.
+    """
+    header = MULTISPEC_LINEAR_HEADER.copy()
+    header["WAT1_001"] = "wtype=multispec label=Wavelength units=Angstroms"
+    header["BUNIT"] = "adu"
+    header["WCSDIM"] = 3
+    header["CTYPE3"] = "LINEAR"
+    header["CD3_3"] = 1.0
+    header["WAT3_001"] = "wtype=linear"
+    hdul = fits.HDUList([fits.PrimaryHDU(np.ones((2, 3, 256)), header=header)])
+
+    spectral_axis, flux, _ = _read_non_linear_iraf_fits(hdul)
+
+    assert flux.shape == (2, 3, 256)
+    assert spectral_axis.shape == flux.shape
+    assert spectral_axis[0, 0, :3].value == pytest.approx(
+        [4955.44287109, 4955.49976639, 4955.55666169]
+    )
+    assert np.array_equal(spectral_axis[0].value, spectral_axis[1].value)
