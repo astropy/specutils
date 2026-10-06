@@ -70,7 +70,7 @@ built on open source, and we'd love to have you hang out in our community.
 
 Please see the `Astropy generative AI policy <https://github.com/astropy/astropy-project/blob/main/policies/ai-policy.md>`
 for expectations and standards around the use of generative AI by contributors.
-Notably, pull requests open by autonomous agents rather than a human contributor
+Notably, pull requests opened by an autonomous agent rather than a human contributor
 will be closed without review.
 
 **Imposter syndrome disclaimer**: We want your help. No, really.
