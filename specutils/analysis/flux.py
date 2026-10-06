@@ -188,7 +188,7 @@ def _compute_equivalent_width(spectrum, continuum=1, regions=None,
 
     # Calculate equivalent width
     dx = np.abs(np.diff(spectrum.spectral_axis.bin_edges))
-    ew = np.sum((1 - line_flux / cont_flux) * dx)
+    ew = np.sum((1 - spectrum.flux / continuum) * dx)
 
     # NOTE: uncertainty gets lost during unit translation, so we have to convert first
     ew = ew.to(spectrum.spectral_axis.unit)

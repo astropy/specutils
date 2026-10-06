@@ -14,6 +14,8 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- ``equivalent_width`` now integrates ``(1 - flux/continuum)`` per spectral bin, so a non-constant continuum is not replaced by the ratio of two scalar fluxes. [#1302]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

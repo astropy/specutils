@@ -206,6 +206,30 @@ def test_equivalent_width_absorption():
 
 
 @pytest.mark.parametrize('bin_specification', ["centers", "edges"])
+
+def test_equivalent_width_sloped_continuum():
+    """Per-bin flux/continuum, not the ratio of two scalar integrals.
+
+    On a sloped continuum the scalar form used before #1302 is 20% low
+    for this lattice point. Constant-continuum cases stay unchanged.
+    """
+    lam = np.linspace(6500.0, 6700.0, 401) * u.AA
+    slope = -0.004
+    cont = (1.0 + slope * (lam.value - 6600.0)) * u.Jy
+    depth = 0.1
+    sigma = 2.0
+    center = 6650.0
+    line = depth * np.exp(-0.5 * ((lam.value - center) / sigma) ** 2)
+    flux = cont * (1.0 - line)
+    spectrum = Spectrum(spectral_axis=lam, flux=flux)
+    result = equivalent_width(spectrum, continuum=cont)
+    dx = np.abs(np.diff(spectrum.spectral_axis.bin_edges))
+    expected = np.sum((1 - flux / cont) * dx)
+    assert quantity_allclose(result, expected, rtol=1e-10)
+    scalar = np.sum((1 - np.sum(flux * dx) / np.sum(cont * dx)) * dx)
+    assert abs((result - scalar) / expected) > 0.1
+
+
 def test_equivalent_width_bin_edges(bin_specification):
     """
     Test spectrum with bin specifications as centers or edges, and at modest sampling.
