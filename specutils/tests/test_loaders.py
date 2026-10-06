@@ -1185,6 +1185,39 @@ def test_wcs1d_fits_hdus(tmp_path, hdu):
         assert quantity_allclose(hdulist[hdu].data * flu, flux)
 
 
+def test_wcs1d_fits_linear_leftover_cunit2(tmp_path):
+    """1-D LINEAR wavelength plus leftover IRAF CUNIT2 (specutils#1246).
+
+    Public X-shooter keywords from
+    https://github.com/astropy/specutils/issues/1246 (attachment
+    21008273): CTYPE1=LINEAR, CUNIT1=nm, CUNIT2=arcsec, NAXIS=1.
+    The flux array here is reconstructed; the public file's pixel
+    buffer is truncated. Data label:
+    reconstructed_128px_header_from_public_keywords.
+    """
+    hdr = {
+        'CTYPE1': 'LINEAR',
+        'CUNIT1': 'nm',
+        'CUNIT2': 'arcsec',
+        'CRPIX1': -1316.02868326581,
+        'CRVAL1': 533.65885533784,
+        'CDELT1': 0.0200004335492849,
+        'CD1_1': 0.0200004335492849,
+        'BUNIT': 'erg/s/cm2/Angstrom',
+    }
+    flux = np.linspace(1.0, 2.0, 128, dtype=np.float32)
+    hdu = fits.PrimaryHDU(flux, header=fits.Header(hdr))
+    tmpfile = tmp_path / 'xshooter_linear_cunit2.fits'
+    hdu.writeto(tmpfile)
+
+    spec = Spectrum.read(tmpfile, format='wcs1d-fits')
+    assert spec.flux.shape == (128,)
+    assert spec.spectral_axis.unit.is_equivalent(u.nm)
+    assert spec.spectral_axis[0].to_value(u.nm) == pytest.approx(560.0)
+    spec0 = Spectrum.read(tmpfile, format='wcs1d-fits', spectral_axis_index=0)
+    assert spec0.spectral_axis.unit.is_equivalent(u.nm)
+
+
 @pytest.mark.parametrize("spectral_axis",
                          ['WAVE', 'FREQ', 'ENER', 'WAVN'])
 def test_wcs1d_fits_multid(tmp_path, spectral_axis):
