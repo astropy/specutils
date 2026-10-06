@@ -30,32 +30,42 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.11 with remote data and coverage
+          - name: Linux - Python 3.11, base dependencies
             os: ubuntu-latest
-            python: '3.11'
-            toxenv: py311-test-cov
-            toxargs: -v
-            toxposargs: --remote-data=any
-
-          - name: Python 3.12 (Windows)
-            os: windows-latest
-            python: '3.12'
-            toxenv: py312-test
-
-          - name: Python 3.11 (MacOS)
-            os: macos-latest
             python: '3.11'
             toxenv: py311-test
 
-          - name: Python 3.13 (MacOS)
-            os: macos-latest
-            python: '3.13'
-            toxenv: py313-test
-
-          - name: Python 3.11 with oldest supported version of key dependencies
+          - name: Linux - Python 3.11, oldest dependencies
             os: ubuntu-latest
             python: '3.11'
             toxenv: py311-test-oldestdeps
+
+          - name: Linux - Python 3.12, base dependencies
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py312-test
+
+          - name: Linux - Python 3.13, base dependencies
+            os: ubuntu-latest
+            python: '3.13'
+            toxenv: py313-test
+
+          - name: Windows - Python 3.14, base dependencies
+            os: windows-latest
+            python: '3.14'
+            toxenv: py314-test
+
+          - name: macOS - Python 3.14, base dependencies
+            os: macos-latest
+            python: '3.14'
+            toxenv: py314-test
+
+          - name: Linux - Python 3.14, remote data, coverage
+            os: ubuntu-latest
+            python: '3.14'
+            toxenv: py314-test-cov
+            toxargs: -v
+            toxposargs: --remote-data=any
 
     steps:
     - name: Checkout code
@@ -111,17 +121,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: (Allowed Failure) Python 3.12 with remote data and dev version of key dependencies
+          - name: (Allowed Failure) Linux - Python 3.15, dev dependencies, remote data
             os: ubuntu-latest
-            python: '3.12'
-            toxenv: py312-test-devdeps
+            python: '3.15'
+            toxenv: py315-test-devdeps
             toxposargs: --remote-data=any
-
-          # doctest failure due to different no. of significant digits on arm64 (#1146)
-          - name: Python 3.12 (macOS)
-            os: macos-latest
-            python: '3.12'
-            toxenv: py312-test
 
     steps:
     - name: Checkout code
@@ -132,6 +136,7 @@ jobs:
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python }}
+        allow-prereleases: true
     - name: Install Python dependencies
       run: python -m pip install --upgrade tox
     - name: Run tests

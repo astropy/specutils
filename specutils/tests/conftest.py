@@ -30,4 +30,5 @@ def remote_data_path(request, tmp_path):
     with urllib.request.urlopen(url) as r, open(file_path, 'wb') as tmp_file:
         tmp_file.write(r.read())
 
-        yield file_path
+    # Yield only after the file is closed, so all of it has been written to disk
+    yield file_path

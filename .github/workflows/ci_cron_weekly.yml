@@ -28,14 +28,14 @@ jobs:
 
           # We do not use remote data here, since
           # that gives too many false positives due to URL timeouts.
-          - name: Python 3.12 with pre-release version of key dependencies
+          - name: Linux - Python 3.14, pre-release dependencies
             os: ubuntu-latest
-            python: '3.12'
-            toxenv: py312-test-predeps
+            python: '3.14'
+            toxenv: py314-test-predeps
 
           - name: Documentation link check
             os: ubuntu-latest
-            python: '3.12'
+            python: '3.14'
             toxenv: linkcheck
 
     steps:

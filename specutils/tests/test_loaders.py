@@ -196,22 +196,22 @@ def test_sdss_spec(tmp_path):
         with open(file_path, 'wb') as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            # Read from local disk via filename
-            spec = Spectrum.read(tmp_file.name)
-            assert isinstance(spec, Spectrum)
-            assert spec.flux.size > 0
+    # Read from local disk via filename
+    spec = Spectrum.read(file_path)
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.size > 0
 
-            # Read from HDUList object
-            with fits.open(tmp_file.name) as hdulist:
-                spec = Spectrum.read(hdulist)
-            assert isinstance(spec, Spectrum)
-            assert spec.flux.size > 0
+    # Read from HDUList object
+    with fits.open(file_path) as hdulist:
+        spec = Spectrum.read(hdulist)
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.size > 0
 
-            # Read from file handle
-            with open(tmp_file.name, mode='rb') as fileio:
-                spec = Spectrum.read(fileio)
-            assert isinstance(spec, Spectrum)
-            assert spec.flux.size > 0
+    # Read from file handle
+    with open(file_path, mode='rb') as fileio:
+        spec = Spectrum.read(fileio)
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.size > 0
 
 
 @pytest.mark.remote_data
@@ -230,28 +230,28 @@ def test_sdss_spspec(tmp_path):
         with open(file_path, 'wb') as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', FITSFixedWarning)
-                spec = Spectrum.read(tmp_file.name)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        spec = Spectrum.read(file_path)
 
-            assert isinstance(spec, Spectrum)
-            assert spec.flux.size > 0
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.size > 0
 
-            # Read from HDUList object
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', FITSFixedWarning)
-                with fits.open(tmp_file.name) as hdulist:
-                    spec = Spectrum.read(hdulist)
-            assert isinstance(spec, Spectrum)
-            assert spec.flux.size > 0
+    # Read from HDUList object
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        with fits.open(file_path) as hdulist:
+            spec = Spectrum.read(hdulist)
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.size > 0
 
-            # Read from file handle
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', FITSFixedWarning)
-                with open(tmp_file.name, mode='rb') as fileio:
-                    spec = Spectrum.read(fileio)
-            assert isinstance(spec, Spectrum)
-            assert spec.flux.size > 0
+    # Read from file handle
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', FITSFixedWarning)
+        with open(file_path, mode='rb') as fileio:
+            spec = Spectrum.read(fileio)
+    assert isinstance(spec, Spectrum)
+    assert spec.flux.size > 0
 
 
 @pytest.mark.remote_data
