@@ -232,6 +232,18 @@ def test_smooth_median_bad(simulated_spectra, width):
         median_smooth(spec1, width)
 
 
+@pytest.mark.parametrize(
+    "smooth",
+    [box_smooth, gaussian_smooth, trapezoid_smooth, median_smooth],
+)
+def test_smooth_numpy_integer(simulated_spectra, smooth):
+    spec1 = simulated_spectra.s1_um_mJy_e1
+    numpy_result = smooth(spec1, np.int64(3))
+    python_result = smooth(spec1, 3)
+
+    assert np.allclose(numpy_result.flux, python_result.flux)
+
+
 def test_smooth_custom_kernel_uncertainty(simulated_spectra):
     """
     Test CustomKernel smoothing with correct parameters.
