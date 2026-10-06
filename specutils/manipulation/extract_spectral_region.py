@@ -4,6 +4,7 @@ import numpy as np
 import warnings
 
 from astropy import units as u
+from astropy.nddata import Covariance
 from astropy.wcs import WCS
 from gwcs import WCS as GWCS
 from ..spectra import Spectrum, SpectralRegion
@@ -246,6 +247,10 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
                 uncert = sps[0].uncertainty
                 if uncert is None:
                     return None
+                if isinstance(uncert, Covariance):
+                    raise NotImplementedError(
+                        'Cannot yet combine spectral regions with covariant uncertainties.'
+                    )
                 uncert._array = np.concatenate([sp.uncertainty._array for sp in sps])
                 return uncert[unique_inds] if unique_inds is not None else uncert
             elif key in concat_keys or key == 'spectral_axis':
