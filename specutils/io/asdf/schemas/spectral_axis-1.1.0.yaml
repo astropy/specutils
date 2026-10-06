@@ -1,0 +1,84 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://astropy.org/schemas/specutils/spectra/spectral_axis-1.1.0"
+
+title: >
+  Represents a spectral axis
+description: |
+  This schema represents a SpectralAxis object from specutils: the spectral
+  values together with the velocity of the source, the medium the wavelengths
+  are expressed in, the reference frame of the values, and where and when the
+  spectrum was recorded.
+
+type: object
+properties:
+  value:
+    description: |
+      The spectral values
+    anyOf:
+      - $ref: "http://stsci.edu/schemas/asdf/core/ndarray-1.0.0"
+      - type: number
+  unit:
+    description: |
+      The unit of the spectral values
+    $ref: "http://stsci.edu/schemas/asdf/unit/unit-1.0.0"
+  radial_velocity:
+    description: |
+      Velocity of the source relative to an observer at rest in the frame.
+      Omitted when it is derived from the observer and target.
+    $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
+  doppler_rest:
+    description: |
+      Rest value used for velocity conversions
+    $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
+  doppler_convention:
+    description: |
+      Convention used for velocity conversions
+    type: string
+    enum: [relativistic, optical, radio]
+  medium:
+    description: |
+      The medium the wavelengths are expressed in, with the refraction formula
+      and air conditions for air
+    type: object
+    properties:
+      kind:
+        type: string
+        enum: [vacuum, air]
+      refraction_method:
+        type: string
+      temperature:
+        $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
+      pressure:
+        $ref: "http://stsci.edu/schemas/asdf/unit/quantity-1.1.0"
+      humidity:
+        type: number
+      co2:
+        type: number
+    required: [kind]
+  frame:
+    description: |
+      FITS SPECSYS code of the reference frame the values are measured in
+    type: string
+    enum: [TOPOCENT, GEOCENTR, BARYCENT, HELIOCEN, LSRK, LSRD, GALACTOC, LOCALGRP,
+           CMBDIPOL, SOURCE]
+  obstime:
+    description: |
+      Mid-point of the observation
+    tag: "tag:stsci.edu:asdf/time/time-1.*"
+  location:
+    description: |
+      Where the spectrum was recorded
+    tag: "tag:astropy.org:astropy/coordinates/earthlocation-1.*"
+  target:
+    description: |
+      Position (and velocity) of the source
+    tag: "tag:astropy.org:astropy/coordinates/skycoord-1.*"
+  observer:
+    description: |
+      Position and velocity of the observer. Omitted when it can be rebuilt
+      from the frame, location and obstime.
+    tag: "tag:astropy.org:astropy/coordinates/skycoord-1.*"
+required: [value, unit]
+...

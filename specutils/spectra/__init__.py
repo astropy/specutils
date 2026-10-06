@@ -7,3 +7,4 @@ from .spectral_region import *  # noqa
 from .spectrum_collection import *  # noqa
 from .spectrum_list import * # noqa
 from .spectral_axis import *  # noqa
+from .spectral_frame import SpectralMedium  # noqa
