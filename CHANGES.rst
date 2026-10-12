@@ -14,6 +14,9 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- ``fwzi`` now returns the width in spectral axis units. It previously returned
+  the width in pixels with the spectral axis unit attached. [#1356]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

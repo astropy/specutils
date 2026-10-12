@@ -957,8 +957,18 @@ def test_fwzi():
     spec = Spectrum(spectral_axis=disp, flux=flux)
     spec_with_noise = Spectrum(spectral_axis=disp, flux=flux_with_noise)
 
-    assert quantity_allclose(fwzi(spec), 226.89732509 * u.AA)
-    assert quantity_allclose(fwzi(spec_with_noise), 106.99998944 * u.AA)
+    assert quantity_allclose(fwzi(spec), 22.71244495 * u.AA)
+    assert quantity_allclose(fwzi(spec_with_noise), 10.71070965 * u.AA)
+
+
+@pytest.mark.parametrize("step", [0.1, 1.0, 2.0])
+def test_fwzi_spectral_axis_step(step):
+    disp = np.arange(0, 100, step)
+    flux = np.where(np.abs(disp - 50) < 10, 1 - np.abs(disp - 50) / 10, 0)
+
+    spec = Spectrum(spectral_axis=disp * u.AA, flux=flux * u.Jy)
+
+    assert quantity_allclose(fwzi(spec), 20 * u.AA, rtol=1e-6)
 
 
 def test_fwzi_masked():
@@ -980,7 +990,7 @@ def test_fwzi_masked():
     spec = Spectrum(spectral_axis=disp, flux=flux, uncertainty=uncertainty,
                       mask=mask)
 
-    assert quantity_allclose(fwzi(spec), 35.9996284 * u.AA)
+    assert quantity_allclose(fwzi(spec), 58.58548323 * u.AA)
 
 
 def test_fwzi_multi_spectrum():
@@ -1000,7 +1010,7 @@ def test_fwzi_multi_spectrum():
 
     spec = Spectrum(spectral_axis=disp, flux=flux * u.Jy)
 
-    expected = [113.51706001 * u.AA, 567.21252727 * u.AA, 499.5024546 * u.AA]
+    expected = [11.36306907 * u.AA, 56.77803076 * u.AA, 50.00024571 * u.AA]
 
     assert quantity_allclose(fwzi(spec), expected)
 

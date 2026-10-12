@@ -178,10 +178,14 @@ def _compute_fwzi(spectrum, regions=None):
             np.array(peaks) - np.argmin(np.abs(data - np.max(data)))))]]
 
         # Calculate the width for the given feature
-        widths, _, _, _ = \
+        _, _, left_ips, right_ips = \
             peak_widths(data, peak_ind, rel_height=1-1e-7)
 
-        return widths[0] * disp.unit
+        # Convert the fractional pixel positions to spectral axis values
+        idx = np.arange(len(disp))
+        left, right = np.interp([left_ips[0], right_ips[0]], idx, disp.value)
+
+        return np.abs(right - left) * disp.unit
 
     if flux.ndim > 1:
         tot_widths = []
