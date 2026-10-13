@@ -23,6 +23,8 @@ Other Changes and Additions
   cover Python 3.11 through 3.14, and the dev-dependencies job now runs on
   Python 3.15. [#1349]
 
+- Added reference to Astropy's AI policy to README and docs. [#1353]
+
 2.4.0 (2026-06-01)
 ------------------
 
