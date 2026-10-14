@@ -14,6 +14,10 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Parse IRAF spectral ``BUNIT`` ``erg/A/s/cm2`` as Angstrom flux, not
+  Ampere, so ``wcs1d-fits`` ``flux_unit`` conversion succeeds.
+  [#1345]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

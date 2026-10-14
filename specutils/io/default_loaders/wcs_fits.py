@@ -1,3 +1,4 @@
+import re
 import warnings
 import _io
 
@@ -24,6 +25,43 @@ UNCERT_REF = {'STD': StdDevUncertainty,
               'IVAR': InverseVariance}
 
 UNCERT_EXP = {'std': 1, 'var': 2, 'ivar': -2}
+
+# IRAF 1-D extractions write Angstrom as a bare ``A`` in BUNIT
+# (``erg/A/s/cm2``). Astropy's generic parser treats that token as
+# Ampere, so the spectrum silently carries an electric-current unit
+# and ``flux_unit`` conversion to a wavelength spectral flux fails
+# (astropy/specutils#1245). Rewrite only when the Angstrom reading is
+# a wavelength spectral flux density.
+_IRAF_ANGSTROM_A = re.compile(r'(?<![A-Za-z0-9])A(?![A-Za-z])')
+_SPECTRAL_FLUX_WAV = u.Unit('erg / (Angstrom s cm2)')
+
+
+def _parse_spectral_bunit(bunit):
+    """Parse a FITS/IRAF spectral ``BUNIT``.
+
+    A bare ``A`` is Ampere in astropy and Angstrom in IRAF. Keep the
+    Ampere reading unless replacing that token with ``Angstrom`` yields
+    a wavelength spectral flux density.
+
+    Planted: ``erg/A/s/cm2`` must become
+    ``erg / (Angstrom s cm2)``, not Ampere; a lone ``A`` stays Ampere.
+    """
+    if bunit is None:
+        return None
+    raw = str(bunit)
+    parsed = u.Unit(raw)
+    if u.A not in getattr(parsed, 'bases', ()):
+        return parsed
+    rewritten = _IRAF_ANGSTROM_A.sub('Angstrom', raw)
+    if rewritten == raw:
+        return parsed
+    try:
+        alt = u.Unit(rewritten)
+    except (ValueError, TypeError):
+        return parsed
+    if alt.is_equivalent(_SPECTRAL_FLUX_WAV):
+        return alt
+    return parsed
 
 
 def identify_wcs1d_fits(origin, *args, **kwargs):
@@ -77,6 +115,9 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         Units of the flux for this spectrum. If not given (or None), the unit
         will be inferred from the BUNIT keyword in the header. Note that this
         unit will attempt to convert from BUNIT if BUNIT is present.
+        IRAF often writes Angstrom as a bare ``A`` (``erg/A/s/cm2``);
+        that token is rewritten to Angstrom so the conversion is a
+        spectral-flux conversion, not Ampere (see specutils#1245).
     hdu : int, str or None, optional
         The index or name of the HDU to load into this spectrum
         (default: find 1st applicable `ImageHDU`).
@@ -132,7 +173,8 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
         wcs = WCS(header)
 
         if 'BUNIT' in header:
-            data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
+            data = u.Quantity(hdulist[hdu].data,
+                              unit=_parse_spectral_bunit(header['BUNIT']))
             if flux_unit is not None:
                 data = data.to(flux_unit)
         else:
@@ -187,7 +229,9 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
             else:
                 raise ValueError(f"Invalid uncertainty type: '{uncertainty_type}'; "
                                  "should be one of 'std', 'var', 'ivar'.")
-            uunit = u.Unit(header.get('BUNIT', flux_unit))
+            raw_bunit = header.get('BUNIT', flux_unit)
+            uunit = (_parse_spectral_bunit(raw_bunit)
+                     if raw_bunit is not None else u.dimensionless_unscaled)
             if unc_type != 'STD':
                 uunit = uunit**UNCERT_EXP[unc_type.lower()]
             uncertainty = UNCERT_REF[unc_type](u.Quantity(uncertainty, unit=uunit))
@@ -529,7 +573,8 @@ def _read_non_linear_iraf_fits(file_obj, spectral_axis_unit=None, flux_unit=None
         if flux_unit is not None:
             data = hdulist[0].data * u.Unit(flux_unit)
         elif 'BUNIT' in header:
-            data = u.Quantity(hdulist[0].data, unit=header['BUNIT'])
+            data = u.Quantity(hdulist[0].data,
+                              unit=_parse_spectral_bunit(header['BUNIT']))
         else:
             warnings.warn("Flux unit was not provided, nor found in the header. Assuming ADU.")
             data = u.Quantity(hdulist[0].data, unit='adu')
