@@ -130,6 +130,13 @@ def wcs1d_fits_loader(file_obj, spectral_axis_unit=None, flux_unit=None,
 
         header = hdulist[hdu].header
         wcs = WCS(header)
+        # IRAF 1-D extractions often keep leftover spatial cards
+        # (CUNIT2, CRDER2, …) so WCS reports more axes than the image.
+        # A LINEAR + wavelength CUNIT1 axis is then no longer spectral
+        # (astropy/specutils#1246). Drop the leftover WCS axes.
+        n_img = np.ndim(hdulist[hdu].data)
+        if n_img and wcs.naxis > n_img:
+            wcs = WCS(header, naxis=n_img)
 
         if 'BUNIT' in header:
             data = u.Quantity(hdulist[hdu].data, unit=header['BUNIT'])
