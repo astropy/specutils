@@ -65,8 +65,13 @@ more information.
 Contributing
 ------------
 
-We love contributions! specutils is open source,
+We love contributions! Specutils is open source,
 built on open source, and we'd love to have you hang out in our community.
+
+Please see the `Astropy generative AI policy <https://github.com/astropy/astropy-project/blob/main/policies/ai-policy.md>`_
+for expectations and standards around the use of generative AI by contributors.
+Notably, pull requests opened by an autonomous agent rather than a human contributor
+will be closed without review.
 
 **Imposter syndrome disclaimer**: We want your help. No, really.
 
@@ -97,11 +102,14 @@ specutils based on its use in the README file for the
 If you locally cloned this repo before 22 Mar 2021
 --------------------------------------------------
 
-The primary branch for this repo has been transitioned from ``master`` to ``main``.  If you have a local clone of this repository and want to keep your local branch in sync with this repo, you'll need to do the following in your local clone from your terminal::
+The primary branch for this repo has been transitioned from ``master`` to ``main``.  If you have a
+local clone of this repository and want to keep your local branch in sync with this repo, you'll
+need to do the following in your local clone from your terminal::
 
    git fetch --all --prune
    # you can stop here if you don't use your local "master"/"main" branch
    git branch -m master main
    git branch -u origin/main main
 
-If you are using a GUI to manage your repos you'll have to find the equivalent commands as it's different for different programs. Alternatively, you can just delete your local clone and re-clone!
+If you are using a GUI to manage your repos you'll have to find the equivalent commands as it's
+different for different programs. Alternatively, you can just delete your local clone and re-clone!
