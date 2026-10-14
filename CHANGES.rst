@@ -14,6 +14,10 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- The IRAF MULTISPEC loader now accepts files with an auxiliary linear
+  science/background axis and broadcasts the per-order spectral axis over it.
+  [#1316]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
