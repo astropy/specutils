@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import astropy.units as u
 from astropy import constants as const
 
@@ -262,3 +263,39 @@ def test_correlation_random_lines():
     v_fit = _fit_peak(corr, lag, maximum)
     # checks against 1.5 * 10**(-decimal)
     np.testing.assert_almost_equal(v_fit.value, expected_lag.value, -1)
+
+
+def test_template_logwl_resample_caps_min_dlog10_nsamples():
+    """Default min-dlog10 step must not allocate an unbounded axis.
+
+    Data label: specutils_2.4.0_template_logwl_nsamples_from_min_dlog10.
+    On specutils 2.4.0 a 1e-6 Å gap at 4000 Å with a 3500–9000 Å
+    template yields nsamples = 3777847337 (~30 GiB for one float64
+    log axis) and then a Python loop. Regression for
+    https://github.com/astropy/specutils/issues/965.
+    """
+    wave = np.array([4000.0, 4000.0 + 1e-6, 8000.0]) * u.AA
+    flux = np.ones(3) * u.Jy
+    tmpl_w = np.array([3500.0, 9000.0]) * u.AA
+    tmpl_f = np.ones(2) * u.Jy
+    spec = Spectrum(spectral_axis=wave, flux=flux)
+    tmpl = Spectrum(spectral_axis=tmpl_w, flux=tmpl_f)
+
+    with pytest.raises(ValueError, match="3777847337"):
+        correlation.template_logwl_resample(spec, tmpl)
+
+    out_s, out_t = correlation.template_logwl_resample(
+        spec, tmpl, delta_log_wavelength=1e-4
+    )
+    assert out_s.spectral_axis.size == out_t.spectral_axis.size
+    assert out_s.spectral_axis.size < correlation.MAX_LOGWL_NSAMPLES
+
+
+def test_template_logwl_resample_rejects_nonpositive_dw():
+    wave = np.array([4000.0, 4000.0, 8000.0]) * u.AA
+    flux = np.ones(3) * u.Jy
+    tmpl = Spectrum(spectral_axis=np.array([3500.0, 9000.0]) * u.AA,
+                    flux=np.ones(2) * u.Jy)
+    spec = Spectrum(spectral_axis=wave, flux=flux)
+    with pytest.raises(ValueError, match="must be positive"):
+        correlation.template_logwl_resample(spec, tmpl)

@@ -14,6 +14,10 @@ New Features
 Bug Fixes
 ^^^^^^^^^
 
+- Cap ``template_logwl_resample`` when the default min-dlog10 step
+  would allocate an unbounded log-wavelength axis, and build that
+  axis with ``arange`` instead of a Python loop. [#1346]
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

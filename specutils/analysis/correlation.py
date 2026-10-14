@@ -9,9 +9,14 @@ from scipy.signal import correlate
 from ..manipulation import LinearInterpolatedResampler
 from .. import Spectrum
 
-__all__ = ['template_correlate', 'template_logwl_resample']
+__all__ = ['template_correlate', 'template_logwl_resample', 'MAX_LOGWL_NSAMPLES']
 
 _KMS = u.Unit('km/s')  # for use below without having to create a composite unit
+
+# Default min-dlog10 sampling can request billions of bins when one
+# observed interval is tiny (astropy/specutils#965). Refuse before
+# allocating. 1e7 float64 samples is 80 MiB for the log axis.
+MAX_LOGWL_NSAMPLES = 10_000_000
 
 
 def template_correlate(observed_spectrum, template_spectrum, lag_units=_KMS,
@@ -157,7 +162,10 @@ def template_logwl_resample(spectrum, template, wblue=None, wred=None,
         Wavelength limits to include in the correlation.
     delta_log_wavelength: float
         Log-wavelength step to use to build the log-wavelength
-        scale. If None, use limits defined as explained above.
+        scale. If None, use the smallest log10 interval in the
+        observed spectrum. If that default would allocate more
+        than ``MAX_LOGWL_NSAMPLES`` bins, a ``ValueError`` is
+        raised; pass an explicit step (for example ``1e-4``).
     resampler
         A specutils resampler to use to actually do the resampling.  Defaults to
         using a `~specutils.manipulation.LinearInterpolatedResampler`.
@@ -200,11 +208,31 @@ def template_logwl_resample(spectrum, template, wblue=None, wred=None,
     else:
         dw = delta_log_wavelength
 
-    nsamples = int((w1 - w0) / dw)
+    if not np.isfinite(dw) or dw <= 0:
+        raise ValueError(
+            "delta_log_wavelength must be positive; got "
+            f"{dw}. Pass delta_log_wavelength explicitly or remove "
+            "duplicate / non-increasing wavelength bins."
+        )
 
-    log_wave_array = np.ones(nsamples) * w0
-    for i in range(nsamples):
-        log_wave_array[i] += dw * i
+    nsamples = int((w1 - w0) / dw)
+    if nsamples < 2:
+        raise ValueError(
+            f"template_logwl_resample computed nsamples={nsamples} "
+            f"from delta_log_wavelength={dw}."
+        )
+    if nsamples > MAX_LOGWL_NSAMPLES:
+        raise ValueError(
+            f"template_logwl_resample would allocate {nsamples} "
+            f"log-wavelength samples (delta_log_wavelength={dw}). "
+            f"That exceeds the {MAX_LOGWL_NSAMPLES} sample cap. "
+            "Pass a larger delta_log_wavelength (for example 1e-4) "
+            "to template_logwl_resample, or "
+            "resample=dict(delta_log_wavelength=1e-4) to "
+            "template_correlate. See astropy/specutils#965."
+        )
+
+    log_wave_array = w0 + dw * np.arange(nsamples, dtype=float)
 
     # Build the corresponding wavelength array
     wave_array = np.power(10., log_wave_array) * spectrum.spectral_axis.unit
