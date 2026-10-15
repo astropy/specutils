@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+import warnings
 
 import numpy as np
+import astropy.units as u
 from astropy.nddata import VarianceUncertainty, InverseVariance
 from astropy.units import Quantity
+from astropy.utils.exceptions import AstropyUserWarning
 from scipy.interpolate import CubicSpline
 
 from ..spectra import Spectrum, SpectralAxis
@@ -32,7 +35,20 @@ class ResamplerBase(ABC):
     def __call__(self, orig_spectrum, fin_spec_axis):
         """
         Return the resulting `~specutils.Spectrum` of the resampling.
+
+        The new spectral axis is interpreted in the same medium and reference
+        frame as ``orig_spectrum``, whose spectral axis metadata (medium,
+        frame, observer, target, radial velocity) is carried over to the
+        result.
         """
+        if isinstance(fin_spec_axis, SpectralAxis):
+            for attr in ('medium', 'frame'):
+                new, old = getattr(fin_spec_axis, attr), getattr(orig_spectrum, attr)
+                if new is not None and old is not None and new != old:
+                    warnings.warn(f"The new spectral axis has {attr} '{new}' but the "
+                                  f"spectrum has {attr} '{old}'. The resampled spectrum "
+                                  f"is interpreted in the {attr} of the input spectrum.",
+                                  AstropyUserWarning)
         return self.resample1d(orig_spectrum, fin_spec_axis)
 
     @abstractmethod
@@ -42,6 +58,14 @@ class ResamplerBase(ABC):
         object.
         """
         return NotImplemented
+
+
+def _output_spectral_axis(orig_spectrum, fin_spec_axis):
+    """
+    Build the spectral axis of a resampled spectrum: the new grid values,
+    carrying the medium, frame and observer metadata of the original spectrum.
+    """
+    return orig_spectrum.spectral_axis.replicate(value=u.Quantity(fin_spec_axis))
 
 
 class FluxConservingResampler(ResamplerBase):
@@ -297,10 +321,11 @@ class FluxConservingResampler(ResamplerBase):
                 new_errs = new_errs[np.where(~np.isnan(output_fluxes))]
             output_fluxes = output_fluxes[np.where(~np.isnan(output_fluxes))]
 
-        resampled_spectrum = Spectrum(flux=output_fluxes,
-                                        spectral_axis=fin_spec_axis,
-                                        uncertainty=new_errs,
-                                        spectral_axis_index = orig_spectrum.spectral_axis_index)
+        resampled_spectrum = Spectrum(
+            flux=output_fluxes,
+            spectral_axis=_output_spectral_axis(orig_spectrum, fin_spec_axis),
+            uncertainty=new_errs,
+            spectral_axis_index=orig_spectrum.spectral_axis_index)
 
         return resampled_spectrum
 
@@ -381,10 +406,10 @@ class LinearInterpolatedResampler(ResamplerBase):
                 new_unc = new_unc[np.where(~np.isnan(out_flux))]
             out_flux = out_flux[np.where(~np.isnan(out_flux))]
 
-        return Spectrum(spectral_axis=fin_spec_axis,
-                          flux=out_flux,
-                          uncertainty=new_unc,
-                          spectral_axis_index = orig_spectrum.spectral_axis_index)
+        return Spectrum(spectral_axis=_output_spectral_axis(orig_spectrum, fin_spec_axis),
+                        flux=out_flux,
+                        uncertainty=new_unc,
+                        spectral_axis_index=orig_spectrum.spectral_axis_index)
 
 
 class SplineInterpolatedResampler(ResamplerBase):
@@ -474,7 +499,7 @@ class SplineInterpolatedResampler(ResamplerBase):
                 new_unc = new_unc[np.where(~np.isnan(out_flux_val))]
             out_flux_val = out_flux_val[np.where(~np.isnan(out_flux_val))]
 
-        return Spectrum(spectral_axis=fin_spec_axis,
-                          flux=out_flux_val*orig_spectrum.flux.unit,
-                          uncertainty=new_unc,
-                          spectral_axis_index = orig_spectrum.spectral_axis_index)
+        return Spectrum(spectral_axis=_output_spectral_axis(orig_spectrum, fin_spec_axis),
+                        flux=out_flux_val*orig_spectrum.flux.unit,
+                        uncertainty=new_unc,
+                        spectral_axis_index=orig_spectrum.spectral_axis_index)

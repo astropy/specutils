@@ -5,14 +5,15 @@ import numpy as np
 from astropy.nddata import NDUncertainty, StdDevUncertainty
 from astropy.coordinates import SpectralCoord
 
+from .spectral_axis import SpectralAxis
 from .spectrum import Spectrum
-from .spectrum_mixin import RedshiftMixin
+from .spectrum_mixin import RedshiftMixin, SpectralFrameMixin
 from astropy.nddata import NDIOMixin
 
 __all__ = ['SpectrumCollection']
 
 
-class SpectrumCollection(NDIOMixin, RedshiftMixin):
+class SpectrumCollection(NDIOMixin, RedshiftMixin, SpectralFrameMixin):
     """
     A class to represent a heterogeneous set of spectra that are the same length
     but have different spectral axes. Spectra that meet this requirement can be
@@ -61,6 +62,9 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         Any quantity supported by the standard spectral equivalencies
         (wavelength, energy, frequency, wave number). Describes the rest value
         of the spectral axis for use with velocity conversions.
+    medium, frame, target, observer, obstime, location
+        Metadata about the spectral axes shared by all spectra in the
+        collection; see `~specutils.Spectrum` for their meaning.
 
     meta : list
         The list of dictionaries containing meta data to be associated with
@@ -68,7 +72,13 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
     """
     def __init__(self, flux, spectral_axis=None, wcs=None, uncertainty=None,
                  mask=None, meta=None, spectral_axis_index=None, redshift=None,
-                 radial_velocity=None, rest_value=None, velocity_convention=None):
+                 radial_velocity=None, rest_value=None, velocity_convention=None,
+                 medium=None, frame=None, target=None, observer=None, obstime=None,
+                 location=None):
+        spectral_axis_metadata = {
+            key: value for key, value in dict(
+                medium=medium, frame=frame, target=target, observer=observer,
+                obstime=obstime, location=location).items() if value is not None}
         # Check for quantity
         if not isinstance(flux, u.Quantity):
             raise u.UnitsError("Flux must be a `Quantity`.")
@@ -96,11 +106,21 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
                     if redshift != spectral_axis.redshift:
                         raise ValueError("Cannot set a different redshift than defined on the"
                                          " spectral_axis.")
+                if isinstance(spectral_axis, SpectralAxis):
+                    conflicts = [key for key in spectral_axis_metadata
+                                 if getattr(spectral_axis, key) is not None]
+                    if conflicts:
+                        raise ValueError("Cannot separately set {} if a SpectralAxis object "
+                                         "that already has it set is input to spectral_axis"
+                                         "".format(", ".join(conflicts)))
+                if spectral_axis_metadata or not isinstance(spectral_axis, SpectralAxis):
+                    spectral_axis = SpectralAxis(spectral_axis, **spectral_axis_metadata)
             else:
-                spectral_axis = SpectralCoord(spectral_axis, redshift=redshift,
-                                            radial_velocity=radial_velocity,
-                                            doppler_rest=rest_value,
-                                            doppler_convention=velocity_convention)
+                spectral_axis = SpectralAxis(spectral_axis, redshift=redshift,
+                                             radial_velocity=radial_velocity,
+                                             doppler_rest=rest_value,
+                                             doppler_convention=velocity_convention,
+                                             **spectral_axis_metadata)
 
             # Ensure that the input values are the same shape
             if not (flux.shape == spectral_axis.shape):
@@ -139,12 +159,11 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         if flux.ndim != 1:
             raise ValueError("Currently only 1D data structures may be "
                              "returned from slice operations.")
+        # Indexing the axis keeps its redshift, medium, frame and observer
         spectral_axis = self.spectral_axis[key]
         uncertainty = None if self.uncertainty is None else self.uncertainty[key]
         wcs = None if self.wcs is None else self.wcs[key]
         mask = None if self.mask is None else self.mask[key]
-        # Currently only allow scalar redshift
-        redshift = self.redshift
         if self.meta is None:
             meta = None
         else:
@@ -154,8 +173,7 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
                 meta = self.meta
 
         return Spectrum(flux=flux, spectral_axis=spectral_axis,
-                          uncertainty=uncertainty, wcs=wcs, mask=mask,
-                          meta=meta, redshift=redshift)
+                        uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta)
 
     @classmethod
     def from_spectra(cls, spectra):
@@ -178,7 +196,7 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         flux = u.Quantity([spec.flux for spec in spectra])
 
         # Check that the spectral parameters are the same for each input
-        # spectral_axis and create the multi-dimensional SpectralCoord
+        # spectral_axis and create the multi-dimensional SpectralAxis
         sa = [x.spectral_axis for x in spectra]
         if (not all(x.radial_velocity == sa[0].radial_velocity for x in sa) or
                 not all(x.target == sa[0].target for x in sa) or
@@ -188,12 +206,17 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
                 not all(x.doppler_rest == sa[0].doppler_rest for x in sa)):
             raise ValueError("All input spectral_axis SpectralCoord "
                              "objects must have the same parameters.")
-        spectral_axis = SpectralCoord(sa,
-                            radial_velocity=sa[0].radial_velocity,
-                            doppler_rest=sa[0].doppler_rest,
-                            doppler_convention=sa[0].doppler_convention,
-                            observer=sa[0].observer,
-                            target=sa[0].target)
+        for attr in SpectralAxis._metadata_attributes:
+            first = getattr(sa[0], attr, None)
+            if not all(_same(getattr(x, attr, None), first) for x in sa):
+                raise ValueError(f"All input spectra must have the same {attr}.")
+        spectral_axis = SpectralAxis(u.Quantity(sa),
+                                     radial_velocity=sa[0]._radial_velocity,
+                                     doppler_rest=sa[0].doppler_rest,
+                                     doppler_convention=sa[0].doppler_convention,
+                                     observer=sa[0].observer,
+                                     target=sa[0].target,
+                                     **getattr(sa[0], '_metadata', {}))
 
         spectral_axis_index = spectra[0].spectral_axis_index
 
@@ -226,12 +249,18 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         wcs = [spec.wcs for spec in spectra]
         meta = [spec.meta for spec in spectra]
 
-        # Grab the first redshift, since they all must be equal for now.
-        redshift = spectra[0].redshift
-
         return cls(flux=flux, spectral_axis=spectral_axis,
                    uncertainty=uncertainty, wcs=wcs, mask=mask, meta=meta,
-                   spectral_axis_index=spectral_axis_index, redshift=redshift)
+                   spectral_axis_index=spectral_axis_index)
+
+    def _with_spectral_axis(self, spectral_axis):
+        """
+        Return a copy of this collection with a new spectral axis (used by
+        `with_frame`, `to_rest` and `with_medium`). The WCS is dropped.
+        """
+        return self.__class__(flux=self.flux, spectral_axis=spectral_axis,
+                              uncertainty=self.uncertainty, mask=self.mask, meta=self.meta,
+                              spectral_axis_index=self.spectral_axis_index)
 
     @property
     def flux(self):
@@ -342,9 +371,24 @@ class SpectrumCollection(NDIOMixin, RedshiftMixin):
         return self.flux.shape[-1]
 
     def __repr__(self):
-        return """SpectrumCollection(ndim={}, shape={})
+        result = """SpectrumCollection(ndim={}, shape={})
     Flux units:          {}
     Spectral axis units: {}
     Uncertainty type:    {}""".format(
             self.ndim, self.shape, self.flux.unit, self.spectral_axis.unit,
             self.uncertainty.uncertainty_type if self.uncertainty is not None else None)
+        if self.medium is not None:
+            result += f"\n    Medium:              {self.medium}"
+        if self.frame is not None:
+            result += f"\n    Frame:               {self.frame}"
+        return result
+
+
+def _same(a, b):
+    """Equality of metadata values that may be None, Time, EarthLocation, etc."""
+    if a is None or b is None:
+        return a is b
+    try:
+        return bool(np.all(a == b))
+    except Exception:
+        return False

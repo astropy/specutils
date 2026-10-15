@@ -379,3 +379,4 @@ Reference/API
     :skip: Spectrum
     :skip: SpectrumCollection
     :skip: SpectralAxis
+    :skip: SpectralMedium

@@ -190,8 +190,8 @@ def extract_region(spectrum, region, return_single_spectrum=False, preserve_wcs=
 
         # If both indices are out of bounds then return an empty spectrum
         if left_index == right_index:
-            empty_spectrum = Spectrum(spectral_axis=[]*spectrum.spectral_axis.unit,
-                                        flux=[]*spectrum.flux.unit)
+            empty_spectrum = Spectrum(spectral_axis=spectrum.spectral_axis[:0],
+                                      flux=[]*spectrum.flux.unit)
             extracted_spectrum.append(empty_spectrum)
         else:
             slices = [slice(None),] * len(spectrum.shape)

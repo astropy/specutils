@@ -224,6 +224,168 @@ An example of the different treatments of the ``spectral_axis`` is shown below.
           redshift=0.016819635148755285)
       [5000., 5001., 5002., 5003., 5004., 5005., 5006., 5007., 5008., 5009.] Angstrom>
 
+Medium, Reference Frame and Observation Metadata
+------------------------------------------------
+
+The values of a ``spectral_axis`` only have a definite meaning once you know
+the medium the wavelengths refer to (vacuum or air), the reference frame in
+which they were measured (the telescope, the solar system barycentre, the
+rest frame of the source, ...), and, to convert between frames, where the
+source is and when and where it was observed. :class:`~specutils.Spectrum`
+records all of these on its :class:`~specutils.SpectralAxis`, and they are
+carried through slicing, arithmetic, resampling and region extraction:
+
+.. code-block:: python
+
+    >>> from astropy.coordinates import EarthLocation, SkyCoord
+    >>> from astropy.time import Time
+    >>> from specutils import SpectralMedium
+    >>> apo = EarthLocation(lat=32.78 * u.deg, lon=-105.82 * u.deg, height=2788 * u.m)
+    >>> spec = Spectrum(spectral_axis=np.linspace(5000, 5010, 11) * u.AA,
+    ...                 flux=np.ones(11) * u.Jy,
+    ...                 medium='air', frame='TOPOCENT',
+    ...                 obstime=Time('2024-03-01T05:00:00'), location=apo,
+    ...                 target=SkyCoord(ra=120 * u.deg, dec=-30 * u.deg))
+    >>> spec.medium
+    SpectralMedium(kind='air', refraction_method='Morton2000')
+    >>> spec.frame
+    'TOPOCENT'
+    >>> spec.in_rest_frame
+    False
+    >>> spec[2:5].frame
+    'TOPOCENT'
+
+The metadata is:
+
+* ``medium``: a :class:`~specutils.SpectralMedium`, or simply ``'vacuum'`` or
+  ``'air'``. An air medium can also record which formula for the refractive
+  index of air the wavelengths correspond to, and the air ``temperature``,
+  ``pressure``, ``humidity`` and ``co2`` concentration (see
+  `~specutils.utils.wcs_utils.refraction_index`). Air wavelengths cannot be
+  converted to frequency, energy or velocity, since those relations only hold
+  in vacuum; convert the spectrum to vacuum first.
+* ``frame``: the reference frame the spectral values are measured in, using the
+  FITS ``SPECSYS`` vocabulary: ``'TOPOCENT'``, ``'GEOCENTR'``, ``'BARYCENT'``,
+  ``'HELIOCEN'``, ``'LSRK'``, ``'LSRD'``, ``'GALACTOC'``, ``'LOCALGRP'``,
+  ``'CMBDIPOL'`` or ``'SOURCE'``, the rest frame of the source (see
+  `~specutils.spectra.spectral_frame.SPECTRAL_FRAMES`; a few long forms such
+  as ``'barycentric'`` or ``'rest'`` are also accepted). The ``radial_velocity``
+  and ``redshift`` of the spectrum are the velocity of the source relative to an
+  observer at rest in this frame, that is, the shift still to be applied to
+  reach the ``'SOURCE'`` frame, where they are zero.
+* ``target``: the position of the source as a
+  :class:`~astropy.coordinates.SkyCoord`, optionally with its velocity.
+* ``obstime`` and ``location``: the mid-point of the observation and the
+  :class:`~astropy.coordinates.EarthLocation` of the telescope. Together with
+  ``frame``, these define the ``observer`` whose rest frame the values are
+  expressed in.
+
+When both the observer and the target are known, the radial velocity is
+computed from them, as for :class:`~astropy.coordinates.SpectralCoord`, so
+``radial_velocity`` or ``redshift`` cannot also be given: set the velocity of
+the source on the ``target`` instead. For a target with no velocity, the
+topocentric radial velocity is just the motion of the observer, and the
+``barycentric_correction`` is the velocity to add to velocities measured in
+the current frame to obtain barycentric ones:
+
+.. code-block:: python
+
+    >>> spec.radial_velocity  # doctest: +FLOAT_CMP
+    <Quantity 9.4102236 km / s>
+    >>> spec.barycentric_correction  # doctest: +FLOAT_CMP
+    <Quantity -9.4102236 km / s>
+
+Converting between media and frames
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:meth:`~specutils.Spectrum.with_medium` returns a copy of the spectrum with
+the spectral axis converted between vacuum and air (or between different air
+conditions) using `~specutils.utils.wcs_utils.vac_to_air` and
+`~specutils.utils.wcs_utils.air_to_vac`:
+
+.. code-block:: python
+
+    >>> vac = spec.with_medium('vacuum')
+    >>> vac.medium
+    SpectralMedium(kind='vacuum')
+    >>> vac.spectral_axis.quantity[:3]  # doctest: +FLOAT_CMP
+    <Quantity [5001.39486701, 5002.39513281, 5003.39539861] Angstrom>
+    >>> thin_air = vac.with_medium(SpectralMedium('air', temperature=5 * u.deg_C,
+    ...                                           pressure=700 * u.hPa))
+    >>> thin_air.spectral_axis.quantity[:3]  # doctest: +FLOAT_CMP
+    <Quantity [5000.39659203, 5001.3966676 , 5002.39674317] Angstrom>
+
+:meth:`~specutils.Spectrum.with_frame` returns a copy transformed to another
+reference frame, and :meth:`~specutils.Spectrum.to_rest` to the rest frame of
+the source. When the observer and target are known the transformation is
+computed from them; the result records its new ``frame`` and its
+``radial_velocity`` is relative to that frame:
+
+.. code-block:: python
+
+    >>> bary = vac.with_frame('BARYCENT')
+    >>> bary.frame, bary.radial_velocity, bary.barycentric_correction
+    ('BARYCENT', <Quantity 0. km / s>, <Quantity 0. km / s>)
+    >>> rest = vac.to_rest()
+    >>> rest.frame, rest.in_rest_frame, rest.radial_velocity
+    ('SOURCE', True, <Quantity 0. km / s>)
+
+When they are not, the ``radial_velocity`` of the spectrum is enough to reach
+the rest frame, and any other transformation needs the ``velocity`` to apply,
+for instance the barycentric correction reported by a pipeline:
+
+.. code-block:: python
+
+    >>> obs = Spectrum(spectral_axis=np.linspace(5000, 5010, 11) * u.AA,
+    ...                flux=np.ones(11) * u.Jy, frame='TOPOCENT',
+    ...                radial_velocity=42 * u.km / u.s)
+    >>> bary = obs.with_frame('BARYCENT', velocity=-9.41 * u.km / u.s)
+    >>> bary.radial_velocity  # doctest: +FLOAT_CMP
+    <Quantity 32.59 km / s>
+    >>> bary.to_rest().radial_velocity
+    <Quantity 0. km / s>
+
+These methods replace the WCS of the spectrum with a lookup table built from
+the new spectral axis, storing the original in ``meta['original_wcs']``, like
+:meth:`~specutils.Spectrum.with_spectral_axis_unit`. Note that a velocity shift
+of air wavelengths is only approximate (the refractive index is taken to be
+constant over the shift), so convert to vacuum first, as above.
+
+FITS keywords and loaders
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A spectrum created from a FITS WCS takes its medium from the spectral
+``CTYPE`` (``'AWAV'`` for air, ``'WAVE'``, ``'FREQ'``, ``'ENER'`` or
+``'WAVN'`` for vacuum), its frame from ``SPECSYS``, its observation time from
+``MJD-AVG`` (or the middle of ``MJD-BEG`` and ``MJD-END``, or ``MJD-OBS``) and
+its location from the ``OBSGEO-*`` keywords. The ``wcs1d-fits`` and
+``tabular-fits`` writers record these, along with the ``RA`` and ``DEC`` of
+the target, and the corresponding loaders read them back.
+
+Loaders for other formats can use
+`~specutils.io.parsing_utils.spectral_axis_metadata_from_header`, which reads
+the target position, the mid-point of the exposure and the location from the
+usual header keywords, and takes what is known about the format (such as
+``medium='vacuum'`` and ``frame='BARYCENT'``) explicitly:
+
+.. code-block:: python
+
+    >>> from specutils.io.parsing_utils import spectral_axis_metadata_from_header
+    >>> header = {'RA': 120.0, 'DEC': -30.0, 'DATE-OBS': '2024-03-01T05:00:00',
+    ...           'EXPTIME': 600.0}
+    >>> metadata = spectral_axis_metadata_from_header(header, medium='vacuum',
+    ...                                               frame='BARYCENT')
+    >>> sorted(metadata)
+    ['frame', 'medium', 'obstime', 'target']
+    >>> metadata['obstime']
+    <Time object: scale='utc' format='isot' value=2024-03-01T05:05:00.000>
+    >>> spec = Spectrum(spectral_axis=np.linspace(5000, 5010, 11) * u.AA,
+    ...                 flux=np.ones(11) * u.Jy, **metadata)
+    >>> spec.frame
+    'BARYCENT'
+
+The metadata is also preserved when writing to and reading from ASDF.
+
 .. _spectrum-defining-wcs:
 
 Defining WCS
@@ -378,7 +540,7 @@ value will apply to the lower bound input.
         (observer to target:
            radial_velocity=0.0 km / s
            redshift=0.0)
-      [4.90049987e-06] m> (length=1))>
+      [4.90049987e-06] m> (length=1); medium=vacuum; frame=BARYCENT)>
 
 Collapsing
 ----------
@@ -432,3 +594,12 @@ Reference/API
 
     :skip: SpectrumCollection
     :skip: SpectralRegion
+
+.. automodapi:: specutils.spectra.spectral_frame
+    :no-main-docstr:
+    :no-heading:
+    :no-inheritance-diagram:
+    :include-all-objects:
+    :headings: -~
+
+    :skip: SpectralMedium

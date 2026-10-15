@@ -29,11 +29,7 @@ Arithmetic support includes addition, subtract, multiplication, and division.
     >>> spec2 = Spectrum(spectral_axis=np.arange(1, 50) * u.nm, flux=rng.random(49)*u.Jy)
     >>> spec3 = spec1 + spec2
     >>> spec3  # doctest: +FLOAT_CMP
-    <Spectrum(flux=[0.8559405665668484 ... 0.9711264429515736] Jy (shape=(49,), mean=0.91592 Jy); spectral_axis=<SpectralAxis
-       (observer to target:
-          radial_velocity=0.0 km / s
-          redshift=0.0)
-      [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
+    <Spectrum(flux=[0.8559405665668484 ... 0.9711264429515736] Jy (shape=(49,), mean=0.91592 Jy); spectral_axis=<SpectralAxis [ 1.  2.  3. ... 47. 48. 49.] nm> (length=49))>
 
 
 Propagation of Uncertainties

@@ -116,3 +116,4 @@ Reference/API
     :skip: Spectrum
     :skip: SpectralRegion
     :skip: SpectralAxis
+    :skip: SpectralMedium
