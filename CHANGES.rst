@@ -11,6 +11,8 @@ New Features
 
 - Added a flag to return the model spectra for SDSS BHM spec files. [#1339]
 
+- Added support for writing ``Spectrum`` objects to ECSV files. [#1357]
+
 Bug Fixes
 ^^^^^^^^^
 
