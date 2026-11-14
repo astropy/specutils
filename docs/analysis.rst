@@ -176,7 +176,7 @@ again by computing an approximation of the standard deviation.
 
 Both of these functions assume that the spectrum is approximately gaussian, and
 also have an ``analytic`` input argument that can be set to ``False`` to use
-an `~astropy.uncertainty` Monte Carlo distribution in the same was as
+an `~astropy.uncertainty` Monte Carlo distribution in the same way as
 `specutils.analysis.centroid`.
 
 The function `~fwhm` provides an estimate of the full width of the spectrum at
