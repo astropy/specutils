@@ -40,7 +40,7 @@ except ImportError:
 else:
     HAS_LZMA = True
 
-EBOSS_SPECTRUM_URL = 'https://data.sdss.org/sas/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/4055/spec-4055-55359-0596.fits'
+EBOSS_SPECTRUM_URL = 'https://dr16.sdss.org/sas/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/4055/spec-4055-55359-0596.fits'
 
 
 def test_get_loaders_by_extension():
@@ -331,7 +331,7 @@ def test_sdss_spplate(tmp_path):
         assert spec.flux.size > 0
         specid = spec.meta['header']['FIBERID']
 
-    with urllib.request.urlopen('https://data.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
+    with urllib.request.urlopen('https://dr8.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
         # Read "plate" spectrum with 2D flux array from open file object
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', FITSFixedWarning)
@@ -343,7 +343,7 @@ def test_sdss_spplate(tmp_path):
         assert quantity_allclose(spec.flux, plate.flux[specid-1])
 
     file_path = str(tmp_path / 'spPlate-0273-51957.fits')
-    with urllib.request.urlopen('https://data.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
+    with urllib.request.urlopen('https://dr8.sdss.org/sas/dr8/sdss/spectro/redux/26/0273/spPlate-0273-51957.fits') as response:
         with open(file_path , 'wb') as tmp_file:
             shutil.copyfileobj(response, tmp_file)
 
@@ -1300,7 +1300,7 @@ def test_wcs1d_fits_compressed(compress, tmp_path):
 def test_apstar_loader():
     """Test remote read and automatic recognition of apStar spec from URL.
     """
-    apstar_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
+    apstar_url = ("https://dr16.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
                   "stars/apo25m/N7789/apStar-r12-2M00005414+5522241.fits")
     spec = Spectrum.read(apstar_url)
 
@@ -1314,7 +1314,7 @@ def test_apstar_loader():
 def test_apvisit_loader():
     """Test remote read and automatic recognition of apvisit spec from URL.
     """
-    apvisit_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
+    apvisit_url = ("https://dr16.sdss.org/sas/dr16/apogee/spectro/redux/r12/"
                    "visit/apo25m/N7789/5094/55874/"
                    "apVisit-r12-5094-55874-123.fits")
     spec = Spectrum.read(apvisit_url)
@@ -1329,7 +1329,7 @@ def test_apvisit_loader():
 def test_aspcapstar_loader():
     """Test remote read and automatic recognition of aspcapStar spec from URL.
     """
-    aspcap_url = ("https://data.sdss.org/sas/dr16/apogee/spectro/aspcap/r12/"
+    aspcap_url = ("https://dr16.sdss.org/sas/dr16/apogee/spectro/aspcap/r12/"
                   "l33/apo25m/N7789/aspcapStar-r12-2M00005414+5522241.fits")
     spec = Spectrum.read(aspcap_url)
 
