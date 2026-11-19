@@ -11,6 +11,9 @@ New Features
 
 - Added a flag to return the model spectra for SDSS BHM spec files. [#1339]
 
+- Enabled I/O of ``astropy.nddata.Covariance`` matrices for multidimensional
+  spectral data [#1154]
+
 Bug Fixes
 ^^^^^^^^^
 
