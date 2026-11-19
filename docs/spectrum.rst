@@ -66,7 +66,7 @@ information to automatically identify a loader.
 
     >>> from specutils import Spectrum
     >>> import urllib
-    >>> spec = urllib.request.urlopen('https://data.sdss.org/sas/dr14/sdss/spectro/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
+    >>> spec = urllib.request.urlopen('https://dr20.sdss.org/sas/dr20/spectro/sdss/redux/26/spectra/0751/spec-0751-52251-0160.fits') # doctest: +REMOTE_DATA
     >>> Spectrum.read(spec, format="SDSS-III/IV spec") # doctest: +REMOTE_DATA
     <Spectrum(flux=[30.59662628173828 ... 51.70271682739258] 1e-17 erg / (Angstrom s cm2) (shape=(3841,), mean=51.88042 1e-17 erg / (Angstrom s cm2)); spectral_axis=<SpectralAxis [3799.2686 3800.1426 3801.0188 ... 9193.905  9196.0205 9198.141 ] Angstrom> (length=3841); uncertainty=InverseVariance)>
 

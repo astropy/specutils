@@ -96,7 +96,7 @@ may have downloaded from some archive, or reduced from your own observations.
 
     Now we load the dataset from its canonical source:
 
-    >>> filename = 'https://data.sdss.org/sas/dr16/sdss/spectro/redux/26/spectra/1323/spec-1323-52797-0012.fits'
+    >>> filename = 'https://dr20.sdss.org/sas/dr20/spectro/sdss/redux/26/spectra/1323/spec-1323-52797-0012.fits'
     >>> # The spectrum is in the second HDU of this file.
     >>> with fits.open(filename) as f:  # doctest: +IGNORE_OUTPUT +REMOTE_DATA
     ...     specdata = f[1].data  # doctest: +REMOTE_DATA
