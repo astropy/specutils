@@ -1,5 +1,6 @@
 import copy
 import warnings
+from numbers import Real
 
 import astropy.units as u
 import numpy as np
@@ -149,7 +150,7 @@ def box_smooth(spectrum, width):
 
     """
     # Parameter checks
-    if not isinstance(width, (int, float)) or width <= 0:
+    if not isinstance(width, Real) or width <= 0:
         raise ValueError("The width parameter, {}, must be a number greater "
                          "than 0".format(width))
 
@@ -186,7 +187,7 @@ def gaussian_smooth(spectrum, stddev):
 
     """
     # Parameter checks
-    if not isinstance(stddev, (int, float)) or stddev <= 0:
+    if not isinstance(stddev, Real) or stddev <= 0:
         raise ValueError("The stddev parameter, {}, must be a number greater "
                          "than 0".format(stddev))
 
@@ -224,7 +225,7 @@ def trapezoid_smooth(spectrum, width):
 
     """
     # Parameter checks
-    if not isinstance(width, (int, float)) or width <= 0:
+    if not isinstance(width, Real) or width <= 0:
         raise ValueError("The stddev parameter, {}, must be a number greater "
                          "than 0".format(width))
 
@@ -265,7 +266,7 @@ def median_smooth(spectrum, width):
     if not isinstance(spectrum, Spectrum):
         raise ValueError('The spectrum parameter must be a Spectrum object')
 
-    if not isinstance(width, (int, float)) or width <= 0:
+    if not isinstance(width, Real) or width <= 0:
         raise ValueError("The stddev parameter, {}, must be a number greater "
                          "than 0".format(width))
 
