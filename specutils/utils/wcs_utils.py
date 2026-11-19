@@ -4,7 +4,8 @@ import numpy as np
 from astropy import units as u
 from astropy.modeling.models import Identity, Mapping
 from astropy.modeling.tabular import Tabular1D
-from astropy.utils.exceptions import AstropyDeprecationWarning
+from astropy.utils.exceptions import AstropyDeprecationWarning, AstropyUserWarning
+from astropy.wcs import WCS
 from gwcs import WCS as GWCS
 from gwcs import coordinate_frames as cf
 import warnings
@@ -42,10 +43,71 @@ class SpectralGWCS(GWCS):
         return copy.deepcopy(self)
 
 
-def refraction_index(wavelength, method='Morton2000', co2=None):
+# Reference conditions of the "standard air" the refraction formulae below
+# describe: 15 degrees Celsius, 101325 Pa, dry.
+_STANDARD_TEMPERATURE = 15.0  # deg C
+_STANDARD_PRESSURE = 101325.0  # Pa
+
+
+def _air_density_factor(temperature, pressure):
     """
-    Calculates the index of refraction of dry air at standard temperature
-    and pressure, at different wavelengths, using different methods.
+    Density scaling of ``n - 1`` with temperature (deg C) and pressure (Pa)
+    from Birch & Downs (1994, Metrologia 31, 315), eqn 1.
+    """
+    return (pressure * (1 + 1e-8 * (0.601 - 0.00972 * temperature) * pressure)
+            / (96095.43 * (1 + 0.003661 * temperature)))
+
+
+def _saturation_vapour_pressure(temperature):
+    """
+    Saturation vapour pressure of water in Pa at ``temperature`` in deg C,
+    from Buck (1981, J. Appl. Meteorol. 20, 1527).
+    """
+    return 611.21 * np.exp((18.678 - temperature / 234.5)
+                           * (temperature / (257.14 + temperature)))
+
+
+def _apply_air_conditions(refr_minus_one, wavelength, temperature=None,
+                          pressure=None, humidity=None):
+    """
+    Scale ``n - 1`` of standard air to the given temperature, pressure and
+    relative humidity, following Birch & Downs (1994) eqns 1 and 3.
+    """
+    if temperature is None and pressure is None and humidity is None:
+        return refr_minus_one
+
+    if temperature is None:
+        temperature = _STANDARD_TEMPERATURE
+    else:
+        temperature = u.Quantity(temperature).to_value(u.deg_C, equivalencies=u.temperature())
+    if pressure is None:
+        pressure = _STANDARD_PRESSURE
+    else:
+        pressure = u.Quantity(pressure).to_value(u.Pa)
+
+    scale = (_air_density_factor(temperature, pressure)
+             / _air_density_factor(_STANDARD_TEMPERATURE, _STANDARD_PRESSURE))
+    refr_minus_one = refr_minus_one * scale
+
+    if humidity is not None:
+        humidity = u.Quantity(humidity).to_value(u.one)
+        if not 0 <= humidity <= 1:
+            raise ValueError("humidity must be a fraction between 0 and 1, "
+                             "or a percentage Quantity")
+        vapour_pressure = humidity * _saturation_vapour_pressure(temperature)
+        sigma2 = (1 / wavelength.to(u.um).value)**2
+        refr_minus_one = refr_minus_one - vapour_pressure * (3.7345 - 0.0401 * sigma2) * 1e-10
+
+    return refr_minus_one
+
+
+def refraction_index(wavelength, method='Morton2000', co2=None, temperature=None,
+                     pressure=None, humidity=None):
+    """
+    Calculates the index of refraction of air at different wavelengths, using
+    different methods. By default this is for dry air at standard temperature
+    and pressure (15 degrees Celsius, 101325 Pa); other conditions can be
+    given.
 
     Parameters
     ----------
@@ -88,6 +150,25 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
         CO2 concentration in ppm. Only used for method='Ciddor1996'. If not
         given, a default concentration of 450 ppm is used.
 
+    temperature : `Quantity` ['temperature'], optional
+        Air temperature. If not given, the standard 15 degrees Celsius is
+        assumed.
+
+    pressure : `Quantity` ['pressure'], optional
+        Air pressure. If not given, the standard 101325 Pa is assumed.
+
+    humidity : number or `Quantity`, optional
+        Relative humidity as a fraction between 0 and 1, or a percentage
+        `Quantity`. If not given, dry air is assumed.
+
+        The temperature and pressure dependence of ``n - 1`` follows the
+        density scaling of Birch & Downs (1994, Metrologia 31, 315), which
+        assumes the chosen ``method`` describes standard air at 15 degrees
+        Celsius and 101325 Pa; the water vapour term is from the same paper.
+        Note that 'Greisen2006' appears to assume 0 degrees Celsius instead
+        (see the specutils documentation), so the scaling is approximate for
+        that method.
+
     Returns
     -------
     refr : number or sequence
@@ -123,10 +204,13 @@ def refraction_index(wavelength, method='Morton2000', co2=None):
             refr *= 1 + 0.534e-6 * (co2 - 450)
     else:
         raise ValueError("Method must be one of " + ", ".join(VALID_METHODS))
+    refr = _apply_air_conditions(refr, wavelength, temperature=temperature,
+                                 pressure=pressure, humidity=humidity)
     return refr + 1
 
 
-def vac_to_air(wavelength, method='Morton2000', co2=None):
+def vac_to_air(wavelength, method='Morton2000', co2=None, temperature=None,
+               pressure=None, humidity=None):
     """
     Converts vacuum to air wavelengths using different methods.
 
@@ -139,18 +223,23 @@ def vac_to_air(wavelength, method='Morton2000', co2=None):
     co2 : number, optional
         Atmospheric CO2 concentration in ppm. Only used for method='Ciddor1996'.
         If not given, a default concentration of 450 ppm is used.
+    temperature, pressure, humidity : optional
+        Air conditions, see `refraction_index`. Standard dry air is assumed
+        if not given.
 
     Returns
     -------
     air_wavelength : `Quantity` object (number or sequence)
         Air wavelengths with the same unit as wavelength.
     """
-    refr = refraction_index(wavelength, method=method, co2=co2)
+    refr = refraction_index(wavelength, method=method, co2=co2, temperature=temperature,
+                            pressure=pressure, humidity=humidity)
     return wavelength / refr
 
 
 def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
-               precision=1e-12, maxiter=30):
+               precision=1e-12, maxiter=30, temperature=None, pressure=None,
+               humidity=None):
     """
     Converts air to vacuum wavelengths using different methods.
 
@@ -186,6 +275,10 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
     maxiter : integer
         Maximum number of iterations to run. Only used if scheme='iteration'.
 
+    temperature, pressure, humidity : optional
+        Air conditions, see `refraction_index`. Standard dry air is assumed
+        if not given. Not supported with scheme='Piskunov'.
+
     Returns
     -------
     vac_wavelength : `Quantity` object (number or sequence)
@@ -194,8 +287,12 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
     VALID_SCHEMES = ['inversion', 'iteration', 'piskunov']
     assert isinstance(scheme, str), 'scheme must be a string'
     scheme = scheme.lower()
+    conditions = dict(temperature=temperature, pressure=pressure, humidity=humidity)
+    if scheme == 'piskunov' and any(v is not None for v in conditions.values()):
+        raise ValueError("Air conditions (temperature, pressure, humidity) are not "
+                         "supported with scheme='Piskunov'")
     if scheme == 'inversion':
-        refr = refraction_index(wavelength, method=method, co2=co2)
+        refr = refraction_index(wavelength, method=method, co2=co2, **conditions)
     elif scheme == 'piskunov':
         wlum = wavelength.to(u.angstrom).value
         sigma2 = (1e4 / wlum)**2
@@ -207,7 +304,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
         # is consistent with the reverse transformation.
         counter = 0
         result = wavelength.copy()
-        refr = refraction_index(wavelength, method=method, co2=co2)
+        refr = refraction_index(wavelength, method=method, co2=co2, **conditions)
         while True:
             counter += 1
             diff = wavelength * refr - result
@@ -217,7 +314,7 @@ def air_to_vac(wavelength, scheme='inversion', method='Morton2000', co2=None,
                 raise RuntimeError("Reached maximum number of iterations "
                                    "without reaching desired precision level.")
             result += diff
-            refr = refraction_index(result, method=method, co2=co2)
+            refr = refraction_index(result, method=method, co2=co2, **conditions)
     else:
         raise ValueError("Method must be one of " + ", ".join(VALID_SCHEMES))
     return wavelength * refr
@@ -357,3 +454,136 @@ def gwcs_from_array(array, flux_shape, spectral_axis_index=None):
     #     tabular_gwcs._input_unit = orig_array.unit
 
     return tabular_gwcs
+
+
+# FITS spectral CTYPE codes and the medium their wavelengths (or equivalents)
+# refer to. Velocity types are omitted since they carry no medium.
+_CTYPE_MEDIUM = {'AWAV': 'air', 'WAVE': 'vacuum', 'FREQ': 'vacuum',
+                 'ENER': 'vacuum', 'WAVN': 'vacuum'}
+
+
+def spectral_axis_metadata_from_wcs(wcs):
+    """
+    Read the medium, reference frame, observation time and observatory
+    location of the spectral axis from the keywords of a FITS WCS.
+
+    Parameters
+    ----------
+    wcs : `~astropy.wcs.WCS`
+        A FITS WCS with a spectral axis.
+
+    Returns
+    -------
+    dict
+        Keyword arguments for `~specutils.SpectralAxis`: ``medium`` from the
+        spectral ``CTYPE`` (``'AWAV'`` is air, ``'WAVE'``, ``'FREQ'``,
+        ``'ENER'`` and ``'WAVN'`` are vacuum), ``frame`` from ``SPECSYS``,
+        ``obstime`` from ``MJD-AVG``, the mid-point of ``MJD-BEG`` and
+        ``MJD-END``, or ``MJD-OBS`` (in that order of preference, in the
+        ``TIMESYS`` time scale), and ``location`` from ``OBSGEO-[XYZ]`` or
+        ``OBSGEO-[LBH]``. Only the entries that are present are returned.
+    """
+    from astropy.coordinates import EarthLocation
+    from astropy.time import Time
+    from ..spectra.spectral_frame import normalize_frame
+
+    metadata = {}
+    if not isinstance(wcs, WCS):
+        return metadata
+    wcsprm = wcs.wcs
+
+    if wcsprm.spec >= 0:
+        ctype = wcsprm.ctype[wcsprm.spec][:4]
+        if ctype in _CTYPE_MEDIUM:
+            metadata['medium'] = _CTYPE_MEDIUM[ctype]
+
+    if wcsprm.specsys:
+        try:
+            metadata['frame'] = normalize_frame(wcsprm.specsys)
+        except ValueError:
+            warnings.warn(f"Ignoring unrecognised SPECSYS '{wcsprm.specsys}' in WCS.",
+                          AstropyUserWarning)
+
+    mjd = None
+    if np.isfinite(wcsprm.mjdavg):
+        mjd = wcsprm.mjdavg
+    elif np.isfinite(wcsprm.mjdbeg) and np.isfinite(wcsprm.mjdend):
+        mjd = 0.5 * (wcsprm.mjdbeg + wcsprm.mjdend)
+    elif np.isfinite(wcsprm.mjdobs):
+        mjd = wcsprm.mjdobs
+    if mjd is not None:
+        scale = wcsprm.timesys.lower() if wcsprm.timesys else 'utc'
+        if scale not in Time.SCALES:
+            warnings.warn(f"Unrecognised TIMESYS '{wcsprm.timesys}' in WCS, assuming UTC.",
+                          AstropyUserWarning)
+            scale = 'utc'
+        metadata['obstime'] = Time(mjd, format='mjd', scale=scale)
+
+    obsgeo = wcsprm.obsgeo
+    if np.all(np.isfinite(obsgeo[:3])):
+        metadata['location'] = EarthLocation.from_geocentric(*obsgeo[:3], unit=u.m)
+    elif np.all(np.isfinite(obsgeo[3:])):
+        metadata['location'] = EarthLocation.from_geodetic(
+            lon=obsgeo[3] * u.deg, lat=obsgeo[4] * u.deg, height=obsgeo[5] * u.m)
+
+    return metadata
+
+
+def update_header_from_spectral_axis(header, spectral_axis, spectral_axis_number=None):
+    """
+    Write the medium, reference frame, observation time, observatory location
+    and target position of a `~specutils.SpectralAxis` into a FITS header.
+
+    Parameters
+    ----------
+    header : `~astropy.io.fits.Header`
+        The header to update in place.
+    spectral_axis : `~specutils.SpectralAxis`
+        The spectral axis whose metadata to write.
+    spectral_axis_number : int, optional
+        FITS (1-based) number of the spectral axis, whose ``CTYPE`` is set to
+        ``'AWAV'`` or ``'WAVE'`` according to the medium if it is a
+        wavelength axis. If not given, the ``CTYPE`` is not changed.
+
+    Notes
+    -----
+    Writes ``SPECSYS`` from the frame, ``MJD-AVG`` and ``DATE-AVG`` from the
+    observation time (with ``TIMESYS``), ``OBSGEO-X``, ``OBSGEO-Y`` and
+    ``OBSGEO-Z`` from the location, and ``RA`` and ``DEC`` (ICRS, in degrees)
+    from the target.
+    """
+    from astropy.coordinates import SkyCoord
+
+    medium = getattr(spectral_axis, 'medium', None)
+    if medium is not None and spectral_axis_number is not None:
+        key = f'CTYPE{spectral_axis_number}'
+        ctype = header.get(key, '')
+        if ctype[:4] in ('WAVE', 'AWAV'):
+            new_ctype = ('AWAV' if medium.is_air else 'WAVE') + ctype[4:]
+            header[key] = (new_ctype, 'Air wavelength' if medium.is_air else 'Vacuum wavelength')
+
+    frame = getattr(spectral_axis, 'frame', None)
+    if frame is not None:
+        header['SPECSYS'] = (frame, 'Reference frame of spectral coordinates')
+
+    obstime = getattr(spectral_axis, 'obstime', None)
+    if obstime is not None:
+        header['TIMESYS'] = (obstime.scale.upper(), 'Time scale')
+        header['MJD-AVG'] = (obstime.mjd, '[d] MJD at midpoint of observation')
+        header['DATE-AVG'] = (obstime.isot, 'ISO-8601 time at midpoint of observation')
+
+    location = getattr(spectral_axis, 'location', None)
+    if location is not None:
+        x, y, z = location.geocentric
+        header['OBSGEO-X'] = (x.to_value(u.m), '[m] observatory X-coordinate')
+        header['OBSGEO-Y'] = (y.to_value(u.m), '[m] observatory Y-coordinate')
+        header['OBSGEO-Z'] = (z.to_value(u.m), '[m] observatory Z-coordinate')
+
+    target = getattr(spectral_axis, 'target', None)
+    if target is not None:
+        icrs = SkyCoord(target).icrs
+        header['RADESYS'] = ('ICRS', 'Equatorial coordinate system of RA and DEC')
+        header['RA'] = (float(icrs.ra.deg), '[deg] Right ascension of target')
+        header['DEC'] = (float(icrs.dec.deg), '[deg] Declination of target')
+
+    return header

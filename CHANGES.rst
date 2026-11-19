@@ -11,6 +11,29 @@ New Features
 
 - Added a flag to return the model spectra for SDSS BHM spec files. [#1339]
 
+- ``Spectrum``, ``SpectrumCollection`` and ``SpectralAxis`` can now record the
+  medium the wavelengths are expressed in (``medium``, a ``SpectralMedium``
+  of vacuum or air with its refraction formula and air conditions), the
+  reference frame of the spectral axis (``frame``, using the FITS ``SPECSYS``
+  vocabulary, with ``'SOURCE'`` for the rest frame), the position of the
+  ``target``, and the ``obstime`` and ``location`` of the observation, from
+  which the ``observer`` is constructed. This metadata is carried through
+  slicing, arithmetic, resampling and region extraction, and read from and
+  written to FITS WCS keywords (``AWAV``/``WAVE``, ``SPECSYS``, ``MJD-AVG``,
+  ``OBSGEO-*``, ``RA``/``DEC``) and ASDF. New methods ``with_medium``,
+  ``with_frame`` and ``to_rest`` convert between media and frames, and the
+  ``barycentric_correction`` property gives the correction implied by the
+  observer and target. Converting air wavelengths to frequency or energy now
+  raises an error. [#1348]
+
+- ``refraction_index``, ``vac_to_air`` and ``air_to_vac`` accept the air
+  ``temperature``, ``pressure`` and ``humidity``. [#1348]
+
+- Added ``specutils.io.parsing_utils.spectral_axis_metadata_from_header`` for
+  loaders to read the medium, frame, target, mid-point observation time and
+  location from standard FITS header keywords; the ``wcs1d-fits`` and
+  ``tabular-fits`` loaders and writers use it. [#1348]
+
 Bug Fixes
 ^^^^^^^^^
 
